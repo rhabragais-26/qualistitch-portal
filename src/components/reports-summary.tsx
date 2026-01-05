@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 
 type Order = {
   quantity: number;
+  productType: string;
   [key: string]: any;
 };
 
@@ -166,6 +167,32 @@ export function ReportsSummary() {
         quantity,
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [leads]);
+  
+  const soldQtyByProductType = useMemo(() => {
+    if (!leads) {
+      return [];
+    }
+
+    const quantityByProductType = leads.reduce((acc, lead) => {
+      lead.orders.forEach(order => {
+        const productType = order.productType;
+        const quantity = order.quantity;
+
+        if (!acc[productType]) {
+          acc[productType] = 0;
+        }
+        acc[productType] += quantity;
+      });
+      return acc;
+    }, {} as { [key: string]: number });
+
+    return Object.entries(quantityByProductType)
+      .map(([name, quantity]) => ({
+        name,
+        quantity,
+      }))
+      .sort((a, b) => b.quantity - a.quantity);
   }, [leads]);
 
 
@@ -410,6 +437,41 @@ export function ReportsSummary() {
                       <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" />
                     </Line>
                   </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+       <div className="mt-8">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle>Sold QTY by Product Type</CardTitle>
+            <CardDescription>Total quantity of items sold for each product type.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div style={{ height: '300px' }}>
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={soldQtyByProductType}
+                    layout="vertical"
+                    margin={{
+                      top: 20, right: 30, left: 20, bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
+                    <Tooltip
+                      cursor={{ fill: 'hsl(var(--muted))' }}
+                      content={<ChartTooltipContent />}
+                    />
+                    <Legend />
+                    <Bar dataKey="quantity" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]}>
+                      <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </div>
