@@ -112,7 +112,6 @@ export function LeadForm() {
   const {toast} = useToast();
   const [dateTime, setDateTime] = useState('');
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
-  const [newOrderValue, setNewOrderValue] = useState('');
   const [newOrderProductType, setNewOrderProductType] = useState('');
 
 
@@ -177,9 +176,8 @@ export function LeadForm() {
   }
 
   const handleAddOrder = () => {
-    if (newOrderProductType && newOrderValue.trim()) {
-      append({ value: `${newOrderProductType}: ${newOrderValue.trim()}` });
-      setNewOrderValue('');
+    if (newOrderProductType) {
+      append({ value: newOrderProductType });
       setNewOrderProductType('');
       setIsOrderDialogOpen(false);
     }
@@ -291,7 +289,7 @@ export function LeadForm() {
                     <DialogHeader>
                       <DialogTitle>Add Order Details</DialogTitle>
                       <DialogDescription>
-                        Select a product type and enter the details for the new order.
+                        Select a product type for the new order.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -307,12 +305,6 @@ export function LeadForm() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Input
-                        id="new-order"
-                        value={newOrderValue}
-                        onChange={(e) => setNewOrderValue(e.target.value)}
-                        placeholder="Enter order details"
-                      />
                     </div>
                     <DialogFooter>
                       <DialogClose asChild>
@@ -320,7 +312,7 @@ export function LeadForm() {
                           Close
                         </Button>
                       </DialogClose>
-                      <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType || !newOrderValue.trim()}>
+                      <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType}>
                         Add
                       </Button>
                     </DialogFooter>
