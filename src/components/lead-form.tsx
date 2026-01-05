@@ -45,8 +45,8 @@ const formSchema = z.object({
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   productType: z.string().min(2, {message: 'Product type is required.'}),
-  productSource: z.string().min(2, {message: 'Product source is required.'}),
   csr: z.string().min(2, {message: 'CSR name is required.'}),
+  productSource: z.string().min(2, {message: 'Product source is required.'}),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -78,9 +78,11 @@ export function LeadForm() {
       customerName: '',
       contactNo: '',
       location: '',
-      csr: '',
+      paymentType: 'Partially Paid',
+      orderType: undefined,
       priorityType: 'Regular',
       productType: '',
+      csr: '',
       productSource: '',
     },
   });
@@ -123,7 +125,7 @@ export function LeadForm() {
                           <Input {...field} />
                         </FormControl>
                       ) : fieldInfo.type === 'select' ? (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder={fieldInfo.name === 'orderType' ? 'Select order Type' : `Select a ${fieldInfo.label.toLowerCase()}`} />
