@@ -7,7 +7,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
-import { format, startOfWeek, endOfWeek, isWithinInterval, startOfMonth, endOfMonth, getMonth } from 'date-fns';
+import { format, startOfWeek, endOfWeek, isWithinInterval, startOfMonth, endOfMonth, getMonth, getYear } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
 type Order = {
@@ -147,28 +147,20 @@ export function ReportsSummary() {
       return [];
     }
   
-    const now = new Date();
-    const startOfThisMonth = startOfMonth(now);
-    const endOfThisMonth = endOfMonth(now);
+    const salesByMonth = leads.reduce((acc, lead) => {
+      const submissionDate = new Date(lead.submissionDateTime);
+      const month = format(submissionDate, 'MMM yyyy');
+      const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
   
-    const salesByDay = leads
-      .filter(lead => {
-        const submissionDate = new Date(lead.submissionDateTime);
-        return isWithinInterval(submissionDate, { start: startOfThisMonth, end: endOfThisMonth });
-      })
-      .reduce((acc, lead) => {
-        const date = format(new Date(lead.submissionDateTime), 'MMM d, yyyy');
-        const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+      if (!acc[month]) {
+        acc[month] = 0;
+      }
+      acc[month] += leadQuantity;
+      
+      return acc;
+    }, {} as { [key: string]: number });
   
-        if (!acc[date]) {
-          acc[date] = 0;
-        }
-        acc[date] += leadQuantity;
-        
-        return acc;
-      }, {} as { [key: string]: number });
-  
-    return Object.entries(salesByDay)
+    return Object.entries(salesByMonth)
       .map(([date, quantity]) => ({
         date,
         quantity,
@@ -394,7 +386,7 @@ export function ReportsSummary() {
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>Monthly Sold QTY</CardTitle>
-            <CardDescription>Total quantity of items sold each day for the current month.</CardDescription>
+            <CardDescription>Total quantity of items sold each month.</CardDescription>
           </CardHeader>
           <CardContent>
             <div style={{ height: '300px' }}>
