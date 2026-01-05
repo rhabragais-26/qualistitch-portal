@@ -217,7 +217,7 @@ export function LeadForm() {
   };
 
   return (
-    <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-black text-white">
+    <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-gray-900 text-white">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
