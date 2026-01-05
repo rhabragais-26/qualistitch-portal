@@ -143,7 +143,7 @@ export function LeadForm() {
   const [newOrderProductType, setNewOrderProductType] = useState('');
   const [newOrderColor, setNewOrderColor] = useState('');
   const [newOrderSize, setNewOrderSize] = useState('');
-  const [newOrderQuantity, setNewOrderQuantity] = useState(0);
+  const [newOrderQuantity, setNewOrderQuantity] = useState<number | string>(0);
 
 
   useEffect(() => {
@@ -207,12 +207,13 @@ export function LeadForm() {
   }
 
   const handleAddOrder = () => {
-    if (newOrderProductType && newOrderColor && newOrderSize && newOrderQuantity > 0) {
+    const quantity = typeof newOrderQuantity === 'string' ? parseInt(newOrderQuantity, 10) : newOrderQuantity;
+    if (newOrderProductType && newOrderColor && newOrderSize && quantity > 0) {
       append({
         productType: newOrderProductType,
         color: newOrderColor,
         size: newOrderSize,
-        quantity: newOrderQuantity
+        quantity: quantity
       });
       setNewOrderProductType('');
       setNewOrderColor('');
@@ -401,11 +402,26 @@ export function LeadForm() {
                       </div>
                        <div className="flex items-center gap-2 justify-center">
                         <FormLabel>Quantity:</FormLabel>
-                        <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => Math.max(0, q - 1))} disabled={newOrderQuantity === 0}>
+                        <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => Math.max(0, (typeof q === 'string' ? parseInt(q, 10) || 0 : q) - 1))} disabled={newOrderQuantity === 0}>
                           <Minus className="h-4 w-4" />
                         </Button>
-                        <Input type="number" value={newOrderQuantity} readOnly className="w-16 text-center" />
-                        <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => q + 1)}>
+                        <Input
+                          type="text"
+                          value={newOrderQuantity}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '' || /^[0-9\b]+$/.test(value)) {
+                              setNewOrderQuantity(value === '' ? '' : parseInt(value, 10));
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === '') {
+                              setNewOrderQuantity(0);
+                            }
+                          }}
+                          className="w-16 text-center"
+                        />
+                        <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => (typeof q === 'string' ? parseInt(q, 10) || 0 : q) + 1)}>
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
