@@ -19,10 +19,19 @@ import {
 } from '@/components/ui/card';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 export function RecordsTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
+  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
 
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -32,6 +41,10 @@ export function RecordsTable() {
   const { data: leads, isLoading: isLeadsLoading, error } = useCollection(leadsQuery);
 
   const isLoading = isAuthLoading || isLeadsLoading;
+
+  const toggleLeadDetails = (leadId: string) => {
+    setOpenLeadId(openLeadId === leadId ? null : leadId);
+  };
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-gray-500/10 text-black">
@@ -67,26 +80,68 @@ export function RecordsTable() {
                   <TableHead>Priority</TableHead>
                   <TableHead>Payment</TableHead>
                   <TableHead>Order Type</TableHead>
+                  <TableHead className="text-right">Items</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {leads?.map((lead) => (
-                  <TableRow key={lead.id}>
-                    <TableCell className="text-sm">
-                      {new Date(lead.submissionDateTime).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-sm">{lead.customerName}</TableCell>
-                    <TableCell className="text-sm">{lead.contactNumber}</TableCell>
-                    <TableCell className="text-sm">{lead.location}</TableCell>
-                    <TableCell className="text-sm">{lead.csr}</TableCell>
-                    <TableCell>
-                      <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                        {lead.priorityType}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">{lead.paymentType}</TableCell>
-                    <TableCell className="text-sm">{lead.orderType}</TableCell>
-                  </TableRow>
+                  <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
+                    <>
+                      <TableRow>
+                        <TableCell className="text-sm">
+                          {new Date(lead.submissionDateTime).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-sm">{lead.customerName}</TableCell>
+                        <TableCell className="text-sm">{lead.contactNumber}</TableCell>
+                        <TableCell className="text-sm">{lead.location}</TableCell>
+                        <TableCell className="text-sm">{lead.csr}</TableCell>
+                        <TableCell>
+                          <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                            {lead.priorityType}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">{lead.paymentType}</TableCell>
+                        <TableCell className="text-sm">{lead.orderType}</TableCell>
+                        <TableCell className="text-right">
+                          <CollapsibleTrigger asChild>
+                             <Button variant="ghost" size="sm">
+                              View
+                              {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                            </Button>
+                          </CollapsibleTrigger>
+                        </TableCell>
+                      </TableRow>
+                      <CollapsibleContent asChild>
+                        <TableRow>
+                          <TableCell colSpan={9} className="p-0">
+                            <div className="p-4 bg-muted/50">
+                               <h4 className="font-semibold mb-2">Ordered Items</h4>
+                               <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Product Type</TableHead>
+                                    <TableHead>Color</TableHead>
+                                    <TableHead>Size</TableHead>
+                                    <TableHead>Quantity</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {lead.orders?.map((order: any, index: number) => (
+                                    <TableRow key={index}>
+                                      <TableCell>{order.productType}</TableCell>
+                                      <TableCell>{order.color}</TableCell>
+                                      <TableCell>{order.size}</TableCell>
+                                      <TableCell>{order.quantity}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      </CollapsibleContent>
+                    </>
+                  </Collapsible>
                 ))}
               </TableBody>
             </Table>
