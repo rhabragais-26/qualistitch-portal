@@ -36,7 +36,8 @@ import {
   X,
   PlusCircle,
   Plus,
-  Minus
+  Minus,
+  PhoneForwarded,
 } from 'lucide-react';
 import {RadioGroup, RadioGroupItem} from './ui/radio-group';
 import { cn } from '@/lib/utils';
@@ -80,6 +81,7 @@ const formSchema = z.object({
   customerName: z.string().min(2, {message: 'Customer name must be at least 2 characters.'}),
   companyName: z.string().optional(),
   contactNo: z.string().regex(/^\d{4}-\d{3}-\d{4}$/, {message: 'Contact number must be in 0000-000-0000 format.'}),
+  landlineNo: z.string().optional(),
   location: z.string().min(2, {message: 'Location is required.'}),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
@@ -102,6 +104,7 @@ const formFields: {
   {name: 'customerName', label: 'Customer Name', icon: User, type: 'input'},
   {name: 'companyName', label: 'Company Name (Optional)', icon: Building, type: 'input'},
   {name: 'contactNo', label: 'Contact No.', icon: Phone, type: 'tel'},
+  {name: 'landlineNo', label: 'Landline No. (Optional)', icon: PhoneForwarded, type: 'input'},
   {name: 'location', label: 'Location', icon: MapPin, type: 'input'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
@@ -184,6 +187,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       customerName: '',
       companyName: '',
       contactNo: '',
+      landlineNo: '',
       location: '',
       paymentType: undefined,
       orderType: undefined,
@@ -229,6 +233,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       customerName: '',
       companyName: '',
       contactNo: '',
+      landlineNo: '',
       location: '',
       paymentType: undefined,
       orderType: undefined,
@@ -274,6 +279,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       customerName: toTitleCase(values.customerName),
       companyName: values.companyName ? toTitleCase(values.companyName) : '-',
       contactNumber: values.contactNo,
+      landlineNumber: values.landlineNo || '-',
       location: toTitleCase(values.location),
       paymentType: values.paymentType,
       salesRepresentative: values.salesRepresentative,
@@ -603,3 +609,5 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </Card>
   );
 }
+
+    

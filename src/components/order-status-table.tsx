@@ -34,6 +34,7 @@ type Lead = {
   id: string;
   customerName: string;
   contactNumber: string;
+  landlineNumber?: string;
   orders: Order[];
 }
 
@@ -107,6 +108,7 @@ export function OrderStatusTable() {
                 <TableRow>
                   <TableHead className="text-card-foreground">Customer Name</TableHead>
                   <TableHead className="text-card-foreground">Contact No.</TableHead>
+                  <TableHead className="text-card-foreground">Landline No.</TableHead>
                   <TableHead className="text-card-foreground text-center">Ordered Items</TableHead>
                 </TableRow>
               </TableHeader>
@@ -116,6 +118,7 @@ export function OrderStatusTable() {
                   <TableRow>
                       <TableCell className="font-medium text-card-foreground align-top">{lead.customerName}</TableCell>
                       <TableCell className="text-card-foreground align-top">{lead.contactNumber}</TableCell>
+                      <TableCell className="text-card-foreground align-top">{lead.landlineNumber || '-'}</TableCell>
                       <TableCell className="text-center">
                         <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2">
                           View
@@ -125,7 +128,7 @@ export function OrderStatusTable() {
                   </TableRow>
                   {openLeadId === lead.id && (
                     <TableRow className="bg-muted/50">
-                      <TableCell colSpan={3}>
+                      <TableCell colSpan={4}>
                         <div className="p-4">
                           <Table>
                             <TableHeader>
@@ -161,3 +164,5 @@ export function OrderStatusTable() {
     </Card>
   );
 }
+
+    
