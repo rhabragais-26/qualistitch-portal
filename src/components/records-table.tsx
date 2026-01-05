@@ -489,7 +489,7 @@ export function RecordsTable() {
                   </TableRow>
                   {openLeadId === lead.id && (
                     <TableRow className="bg-gray-50">
-                      <TableCell colSpan={13} className="p-0">
+                      <TableCell colSpan={12} className="p-0">
                          <div className="p-4">
                           <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
                            <Table>
@@ -859,7 +859,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Priority Type</Label>
-              <RadioGroup onValuechange={(v) => setPriorityType(v as 'Rush' | 'Regular')} value={priorityType} className="flex pt-2">
+              <RadioGroup onValueChange={(v) => setPriorityType(v as 'Rush' | 'Regular')} value={priorityType} className="flex pt-2">
                 {priorityTypes.map(o => <div key={o} className="flex items-center space-x-2"><RadioGroupItem value={o} id={`priority-${o}`}/><Label htmlFor={`priority-${o}`}>{o}</Label></div>)}
               </RadioGroup>
             </div>
