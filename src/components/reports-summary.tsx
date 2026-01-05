@@ -249,7 +249,7 @@ export function ReportsSummary() {
             <CardDescription>Total quantity of orders for each priority type.</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col justify-between">
-            <div className="flex-1 h-[250px]">
+            <div className="flex-1 h-[250px] -mt-4">
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -260,7 +260,7 @@ export function ReportsSummary() {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      innerRadius="60%"
+                      innerRadius="40%"
                       outerRadius="80%"
                       labelLine={false}
                       label={({
