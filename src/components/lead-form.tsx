@@ -203,7 +203,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const orderType = form.watch('orderType');
 
   useEffect(() => {
-    if (orderType === 'MTO') {
+    if (orderType === 'MTO' || orderType === 'Stock (Jacket Only)') {
       form.setValue('priorityType', 'Rush');
     }
   }, [orderType, form.setValue]);
@@ -348,7 +348,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                             onValueChange={field.onChange}
                             value={field.value}
                             className={cn("flex items-center space-x-4 pt-2", fieldInfo.className)}
-                            disabled={fieldInfo.name === 'priorityType' && orderType === 'MTO'}
+                            disabled={fieldInfo.name === 'priorityType' && (orderType === 'MTO' || orderType === 'Stock (Jacket Only)')}
                           >
                             {fieldInfo.options?.map((option) => (
                               <FormItem key={option} className="flex items-center space-x-2 space-y-0">
