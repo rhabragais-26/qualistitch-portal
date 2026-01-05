@@ -153,7 +153,7 @@ export function ReportsSummary() {
     }
 
     const salesByDay = filteredLeads.reduce((acc, lead) => {
-        const date = format(new Date(lead.submissionDateTime), 'MMM d, yyyy');
+        const date = format(new Date(lead.submissionDateTime), 'MMM-dd-yyyy');
         const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
 
         if (!acc[date]) {
