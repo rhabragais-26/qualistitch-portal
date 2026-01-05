@@ -81,7 +81,7 @@ export function RecordsTable() {
                   <TableHead>Priority</TableHead>
                   <TableHead>Payment</TableHead>
                   <TableHead>Order Type</TableHead>
-                  <TableHead className="text-right">Items</TableHead>
+                  <TableHead className="text-center">Items</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -103,7 +103,7 @@ export function RecordsTable() {
                         </TableCell>
                         <TableCell className="text-sm align-middle">{lead.paymentType}</TableCell>
                         <TableCell className="text-sm align-middle">{lead.orderType}</TableCell>
-                        <TableCell className="text-right align-middle">
+                        <TableCell className="text-center align-middle">
                           <CollapsibleTrigger asChild>
                              <Button variant="ghost" size="sm">
                               View
