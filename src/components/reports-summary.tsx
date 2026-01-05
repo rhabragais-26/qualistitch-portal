@@ -229,12 +229,12 @@ export function ReportsSummary() {
             </div>
           </CardContent>
         </Card>
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm flex flex-col">
           <CardHeader>
             <CardTitle>QTY by Priority Type</CardTitle>
             <CardDescription>Total quantity of orders for each priority type.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 flex flex-col justify-between">
             <div style={{ height: '250px' }}>
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -285,7 +285,7 @@ export function ReportsSummary() {
                 </ResponsiveContainer>
               </ChartContainer>
             </div>
-            <div className="mt-4">
+            <div className="mt-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -329,7 +329,7 @@ export function ReportsSummary() {
                       top: 20, right: 30, left: 20, bottom: 5,
                     }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <CartesianGrid strokeDasharray="3-3" vertical={false} />
                     <XAxis dataKey="date" tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
