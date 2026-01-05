@@ -27,9 +27,9 @@
   }
 
   .dark {
-    --background: 220 12% 12%;
+    --background: 220 12% 8%;
     --foreground: 220 10% 85%;
-    --card: 220 12% 16%;
+    --card: 240 5% 12%;
     --card-foreground: 220 10% 85%;
     --popover: 220 12% 16%;
     --popover-foreground: 220 10% 85%;
