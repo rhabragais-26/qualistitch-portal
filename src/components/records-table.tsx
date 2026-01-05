@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
@@ -446,9 +446,9 @@ export function RecordsTable() {
                        <div className="text-gray-500">{formatDateTime(lead.lastModified).dayOfWeek}</div>
                     </TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName || '-'}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber || '-'}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber === '-' ? '' : lead.contactNumber}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber === '-' ? '' : lead.landlineNumber}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.location}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
                     <TableCell className="align-middle py-2">

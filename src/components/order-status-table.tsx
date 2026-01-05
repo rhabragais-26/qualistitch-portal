@@ -118,8 +118,8 @@ export function OrderStatusTable() {
                 <React.Fragment key={lead.id}>
                   <TableRow>
                       <TableCell className="font-medium text-card-foreground align-top">{lead.customerName}</TableCell>
-                      <TableCell className="text-card-foreground align-top">{lead.contactNumber}</TableCell>
-                      <TableCell className="text-card-foreground align-top">{lead.landlineNumber || '-'}</TableCell>
+                      <TableCell className="text-card-foreground align-top">{lead.contactNumber === '-' ? '' : lead.contactNumber}</TableCell>
+                      <TableCell className="text-card-foreground align-top">{lead.landlineNumber === '-' ? '' : lead.landlineNumber}</TableCell>
                       <TableCell className="text-center">
                         <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2">
                           View
