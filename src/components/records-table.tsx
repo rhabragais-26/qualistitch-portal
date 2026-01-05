@@ -527,16 +527,8 @@ export function RecordsTable() {
                                     <TableCell className="py-1 text-xs text-black">{order.productType}</TableCell>
                                     <TableCell className="py-1 text-xs text-black">{order.color}</TableCell>
                                     <TableCell className="py-1 text-xs text-black">{order.size}</TableCell>
-                                    <TableCell className="py-1 text-xs text-black">
-                                      <div className="flex items-center gap-2 justify-center">
-                                        <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderQuantity(lead.id, index, order.quantity - 1)} disabled={order.quantity <= 1}>
-                                          <Minus className="h-3 w-3" />
-                                        </Button>
-                                        <span className="w-8 text-center">{order.quantity}</span>
-                                        <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderQuantity(lead.id, index, order.quantity + 1)}>
-                                          <Plus className="h-3 w-3" />
-                                        </Button>
-                                      </div>
+                                    <TableCell className="py-1 text-xs text-black text-center">
+                                      {order.quantity}
                                     </TableCell>
                                     <TableCell className="text-right py-1">
                                       <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
@@ -858,7 +850,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
             <div className="space-y-2">
               <Label htmlFor="paymentType">Payment Type</Label>
               <Select onValueChange={setPaymentType} value={paymentType}>
-                <SelectTrigger id="paymentType"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="paymentType"><SelectValue /></SelectValue>
                 <SelectContent>{paymentTypes.map(o => <SelectItem key={o} value={o}>{o === 'COD' ? 'COD (Cash on Delivery)' : o}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -866,7 +858,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
           <div className="space-y-2">
             <Label htmlFor="orderType">Order Type</Label>
             <Select onValueChange={setOrderType} value={orderType}>
-              <SelectTrigger id="orderType"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="orderType"><SelectValue /></SelectValue>
               <SelectContent>{orderTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
             </Select>
           </div>
@@ -1019,3 +1011,4 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
 }
 
     
+
