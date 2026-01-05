@@ -352,18 +352,21 @@ export function LeadForm() {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                       <Select onValueChange={setNewOrderProductType} value={newOrderProductType}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a Product Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {productTypes.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="space-y-2">
+                        <FormLabel>Product Type:</FormLabel>
+                        <Select onValueChange={setNewOrderProductType} value={newOrderProductType}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a Product Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {productTypes.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className='grid grid-cols-2 gap-4'>
                         <div className="flex items-center gap-2">
                           <FormLabel className='text-sm'>Color:</FormLabel>
