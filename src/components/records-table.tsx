@@ -1,6 +1,6 @@
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import {
   Table,
@@ -22,13 +22,16 @@ import { Skeleton } from './ui/skeleton';
 
 export function RecordsTable() {
   const firestore = useFirestore();
+  const { user, isUserLoading: isAuthLoading } = useUser();
 
   const leadsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !user) return null;
     return query(collection(firestore, 'leads'), orderBy('submissionDateTime', 'desc'));
-  }, [firestore]);
+  }, [firestore, user]);
 
-  const { data: leads, isLoading, error } = useCollection(leadsQuery);
+  const { data: leads, isLoading: isLeadsLoading, error } = useCollection(leadsQuery);
+
+  const isLoading = isAuthLoading || isLeadsLoading;
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-gray-500/10 text-black">
