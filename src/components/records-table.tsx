@@ -59,6 +59,7 @@ const productTypes = [
 const productColors = [
   'Black',
   'Brown',
+
   'Dark Khaki',
   'Light Khaki',
   'Olive Green',
@@ -191,71 +192,69 @@ export function RecordsTable() {
               </TableHeader>
               <TableBody>
                 {leads?.map((lead) => (
-                  <React.Fragment key={lead.id}>
-                    <TableRow>
-                        <TableCell className="text-sm align-middle py-2">
-                          {new Date(lead.submissionDateTime).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-sm align-middle py-2">{lead.customerName}</TableCell>
-                        <TableCell className="text-sm align-middle py-2">{lead.contactNumber}</TableCell>
-                        <TableCell className="text-sm align-middle py-2">{lead.location}</TableCell>
-                        <TableCell className="text-sm align-middle py-2">{lead.csr}</TableCell>
-                        <TableCell className="align-middle py-2">
-                          <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                            {lead.priorityType}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm align-middle py-2">{lead.paymentType}</TableCell>
-                        <TableCell className="text-sm align-middle py-2">{lead.orderType}</TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                          <Collapsible asChild open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
+                  <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
+                    <React.Fragment>
+                      <TableRow>
+                          <TableCell className="text-sm align-middle py-2">
+                            {new Date(lead.submissionDateTime).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-sm align-middle py-2">{lead.customerName}</TableCell>
+                          <TableCell className="text-sm align-middle py-2">{lead.contactNumber}</TableCell>
+                          <TableCell className="text-sm align-middle py-2">{lead.location}</TableCell>
+                          <TableCell className="text-sm align-middle py-2">{lead.csr}</TableCell>
+                          <TableCell className="align-middle py-2">
+                            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                              {lead.priorityType}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm align-middle py-2">{lead.paymentType}</TableCell>
+                          <TableCell className="text-sm align-middle py-2">{lead.orderType}</TableCell>
+                          <TableCell className="text-center align-middle py-2">
                             <CollapsibleTrigger asChild>
                                <Button variant="ghost" size="sm">
                                 View
                                 {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
                               </Button>
                             </CollapsibleTrigger>
-                          </Collapsible>
-                        </TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                            <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
-                              <PlusCircle className="h-4 w-4 mr-1" />
-                              Add Order
-                            </Button>
-                        </TableCell>
-                      </TableRow>
-                    {openLeadId === lead.id && (
-                      <TableRow>
-                        <TableCell colSpan={10} className="p-0">
-                           <CollapsibleContent>
-                            <div className="p-4 bg-muted/50">
-                               <h4 className="font-semibold mb-2">Ordered Items</h4>
-                               <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead className="py-1">Product Type</TableHead>
-                                    <TableHead className="py-1">Color</TableHead>
-                                    <TableHead className="py-1">Size</TableHead>
-                                    <TableHead className="py-1">Quantity</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {lead.orders?.map((order: any, index: number) => (
-                                    <TableRow key={index}>
-                                      <TableCell className="py-1">{order.productType}</TableCell>
-                                      <TableCell className="py-1">{order.color}</TableCell>
-                                      <TableCell className="py-1">{order.size}</TableCell>
-                                      <TableCell className="py-1">{order.quantity}</TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </div>
-                           </CollapsibleContent>
                           </TableCell>
-                      </TableRow>
-                    )}
-                  </React.Fragment>
+                          <TableCell className="text-center align-middle py-2">
+                              <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
+                                <PlusCircle className="h-4 w-4 mr-1" />
+                                Add Order
+                              </Button>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell colSpan={10} className="p-0">
+                             <CollapsibleContent>
+                              <div className="p-4 bg-muted/50">
+                                 <h4 className="font-semibold mb-2">Ordered Items</h4>
+                                 <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead className="py-1">Product Type</TableHead>
+                                      <TableHead className="py-1">Color</TableHead>
+                                      <TableHead className="py-1">Size</TableHead>
+                                      <TableHead className="py-1">Quantity</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {lead.orders?.map((order: any, index: number) => (
+                                      <TableRow key={index}>
+                                        <TableCell className="py-1">{order.productType}</TableCell>
+                                        <TableCell className="py-1">{order.color}</TableCell>
+                                        <TableCell className="py-1">{order.size}</TableCell>
+                                        <TableCell className="py-1">{order.quantity}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                             </CollapsibleContent>
+                            </TableCell>
+                        </TableRow>
+                      </React.Fragment>
+                  </Collapsible>
                 ))}
               </TableBody>
             </Table>
