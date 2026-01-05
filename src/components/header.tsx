@@ -93,12 +93,12 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                   <LineChart className="mr-2" />
                   Reports
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/order-status')}>
-                  <ListOrdered className="mr-2" />
-                  Order Status
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <Button variant="ghost" onClick={() => handleNavigation('/order-status')}>
+              <ListOrdered className="mr-2" />
+              Order Status
+            </Button>
           </nav>
         </div>
       </header>
