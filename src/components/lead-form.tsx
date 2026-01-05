@@ -212,6 +212,17 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     onDirtyChange(isDirty);
   }, [isDirty, onDirtyChange]);
 
+  const isPatches = newOrderProductType === 'Patches';
+
+  useEffect(() => {
+    if (isPatches) {
+      setNewOrderColor('N/A');
+      setNewOrderSize('N/A');
+    } else {
+      setNewOrderColor('');
+      setNewOrderSize('');
+    }
+  }, [isPatches]);
 
   const handleReset = () => {
     form.reset({
@@ -269,11 +280,15 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
 
   const handleAddOrder = () => {
     const quantity = typeof newOrderQuantity === 'string' ? parseInt(newOrderQuantity, 10) : newOrderQuantity;
-    if (newOrderProductType && newOrderColor && newOrderSize && quantity > 0) {
+    const isProductPatches = newOrderProductType === 'Patches';
+    const color = isProductPatches ? 'N/A' : newOrderColor;
+    const size = isProductPatches ? 'N/A' : newOrderSize;
+
+    if (newOrderProductType && color && size && quantity > 0) {
       append({
         productType: newOrderProductType,
-        color: newOrderColor,
-        size: newOrderSize,
+        color: color,
+        size: size,
         quantity: quantity
       });
       toast({
@@ -454,7 +469,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       <div className='grid grid-cols-2 gap-4'>
                         <div className="space-y-2">
                           <FormLabel>Color:</FormLabel>
-                          <Select onValueChange={setNewOrderColor} value={newOrderColor}>
+                          <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={isPatches}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a Color" />
                             </SelectTrigger>
@@ -469,7 +484,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         </div>
                         <div className="space-y-2">
                           <FormLabel>Size:</FormLabel>
-                          <Select onValueChange={setNewOrderSize} value={newOrderSize}>
+                          <Select onValueChange={setNewOrderSize} value={newOrderSize} disabled={isPatches}>
                             <SelectTrigger>
                               <SelectValue placeholder="Size" />
                             </SelectTrigger>
@@ -515,7 +530,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           Close
                         </Button>
                       </DialogClose>
-                      <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType || !newOrderColor || !newOrderSize || newOrderQuantity === 0}>
+                      <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType || (!isPatches && (!newOrderColor || !newOrderSize)) || newOrderQuantity === 0}>
                         Add
                       </Button>
                     </DialogFooter>
