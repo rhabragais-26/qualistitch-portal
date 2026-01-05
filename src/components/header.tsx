@@ -69,15 +69,8 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
           <div className="mr-4 flex items-center">
-            <Link href="/" className="mr-6 flex items-center pl-24">
-              <Image 
-                src="https://storage.googleapis.com/project-os-frontend/images/unnamed.png"
-                alt="Qualistitch Inc. Logo"
-                width={150}
-                height={40}
-                priority
-                className="mix-blend-screen"
-              />
+            <Link href="/" className="mr-6 flex items-center pl-12">
+              <span className="text-2xl font-bold text-yellow-400">Qualistitch Inc.</span>
             </Link>
           </div>
           <nav className="flex items-center gap-4">
