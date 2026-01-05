@@ -1,7 +1,7 @@
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
-import {useForm} from 'react-hook-form';
+import {useForm, useFieldArray} from 'react-hook-form';
 import * as z from 'zod';
 import {useState, useEffect} from 'react';
 
@@ -33,6 +33,8 @@ import {
   ShoppingBag,
   User,
   UserCheck,
+  X,
+  PlusCircle
 } from 'lucide-react';
 import {RadioGroup, RadioGroupItem} from './ui/radio-group';
 import { cn } from '@/lib/utils';
@@ -47,6 +49,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Separator } from './ui/separator';
 
 // Define the form schema using Zod
 const formSchema = z.object({
@@ -58,12 +61,13 @@ const formSchema = z.object({
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   productSource: z.enum(['Client Provided', 'Stock'], {required_error: "You need to select a product source."}),
   csr: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a CSR."}),
+  orders: z.array(z.object({ value: z.string().min(1, "Order cannot be empty.") })).optional()
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 const formFields: {
-  name: keyof FormValues;
+  name: keyof Omit<FormValues, 'orders'>;
   label: string;
   icon: React.ElementType;
   type: 'input' | 'select' | 'radio';
@@ -106,7 +110,13 @@ export function LeadForm() {
       priorityType: 'Regular',
       productSource: 'Stock',
       csr: undefined,
+      orders: [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "orders"
   });
 
   const handleReset = () => {
@@ -119,6 +129,7 @@ export function LeadForm() {
       priorityType: 'Regular',
       productSource: 'Stock',
       csr: undefined,
+      orders: [],
     });
   }
 
@@ -208,6 +219,47 @@ export function LeadForm() {
                   )}
                 />
               ))}
+            </div>
+
+            <Separator />
+            
+            <div>
+              <FormLabel>Orders</FormLabel>
+              <div className="space-y-4 mt-2">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="flex items-center gap-2">
+                    <FormField
+                      control={form.control}
+                      name={`orders.${index}.value`}
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <Input placeholder={`Order #${index + 1}`} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => remove(index)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                 <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => append({ value: "" })}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Order
+                  </Button>
+              </div>
             </div>
 
             <div className="flex justify-end pt-4 gap-4">
