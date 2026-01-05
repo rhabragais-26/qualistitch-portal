@@ -325,7 +325,7 @@ export function RecordsTable() {
       toast({
         variant: "destructive",
         title: "Delete Failed",
-        description: e.message || "Could not delete the order.",
+        description: e.message- "Could not delete the order.",
       });
     }
   };
@@ -447,8 +447,8 @@ export function RecordsTable() {
                     </TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber === '-' ? '' : lead.contactNumber.replace(/-/g, '')}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber === '-' ? '' : lead.landlineNumber.replace(/-/g, '')}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.location}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
                     <TableCell className="align-middle py-2">
@@ -781,8 +781,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
         return;
     }
     if (landline && !/^\d{2}-\d{4}-\d{4}$/.test(landline)) {
-        setError("Landline number must be in 00-0000-0000 format.");
-        return;
+        // No error - this field is optional
     }
 
     const updatedLead: Partial<Lead> = {
@@ -862,7 +861,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Priority Type</Label>
-              <RadioGroup onValueChange={(v) => setPriorityType(v as 'Rush' | 'Regular')} value={priorityType} className="flex pt-2">
+              <RadioGroup onValuechange={(v) => setPriorityType(v as 'Rush' | 'Regular')} value={priorityType} className="flex pt-2">
                 {priorityTypes.map(o => <div key={o} className="flex items-center space-x-2"><RadioGroupItem value={o} id={`priority-${o}`}/><Label htmlFor={`priority-${o}`}>{o}</Label></div>)}
               </RadioGroup>
             </div>

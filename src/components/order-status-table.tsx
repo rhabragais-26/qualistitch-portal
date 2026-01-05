@@ -63,7 +63,7 @@ export function OrderStatusTable() {
 
     return leads.filter(lead =>
       lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-      lead.contactNumber.toLowerCase().includes(lowercasedSearchTerm) ||
+      (lead.contactNumber && lead.contactNumber.toLowerCase().includes(lowercasedSearchTerm)) ||
       (lead.landlineNumber && lead.landlineNumber.toLowerCase().includes(lowercasedSearchTerm))
     );
   }, [leads, searchTerm]);
@@ -118,8 +118,8 @@ export function OrderStatusTable() {
                 <React.Fragment key={lead.id}>
                   <TableRow>
                       <TableCell className="font-medium text-card-foreground align-top">{lead.customerName}</TableCell>
-                      <TableCell className="text-card-foreground align-top">{lead.contactNumber === '-' ? '' : lead.contactNumber.replace(/-/g, '')}</TableCell>
-                      <TableCell className="text-card-foreground align-top">{lead.landlineNumber === '-' ? '' : lead.landlineNumber.replace(/-/g, '')}</TableCell>
+                      <TableCell className="text-card-foreground align-top">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
+                      <TableCell className="text-card-foreground align-top">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
                       <TableCell className="text-center">
                         <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2">
                           View
