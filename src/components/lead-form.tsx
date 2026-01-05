@@ -108,11 +108,28 @@ const productTypes = [
   'Client Owned',
 ];
 
+const productColors = [
+  'Black',
+  'Brown',
+  'Dark Khaki',
+  'Light Khaki',
+  'Olive Green',
+  'Navy Blue',
+  'Light Gray',
+  'Dark Gray',
+  'Khaki',
+  'Black/Khaki',
+  'Black/Navy Blue',
+  'Army Green',
+  'Polo Color',
+]
+
 export function LeadForm() {
   const {toast} = useToast();
   const [dateTime, setDateTime] = useState('');
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [newOrderProductType, setNewOrderProductType] = useState('');
+  const [newOrderColor, setNewOrderColor] = useState('');
 
 
   useEffect(() => {
@@ -176,9 +193,10 @@ export function LeadForm() {
   }
 
   const handleAddOrder = () => {
-    if (newOrderProductType) {
-      append({ value: newOrderProductType });
+    if (newOrderProductType && newOrderColor) {
+      append({ value: `${newOrderProductType} - ${newOrderColor}` });
       setNewOrderProductType('');
+      setNewOrderColor('');
       setIsOrderDialogOpen(false);
     }
   };
@@ -305,6 +323,18 @@ export function LeadForm() {
                           ))}
                         </SelectContent>
                       </Select>
+                      <Select onValueChange={setNewOrderColor} value={newOrderColor}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a Color" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {productColors.map((color) => (
+                            <SelectItem key={color} value={color}>
+                              {color}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <DialogFooter>
                       <DialogClose asChild>
@@ -312,7 +342,7 @@ export function LeadForm() {
                           Close
                         </Button>
                       </DialogClose>
-                      <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType}>
+                      <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType || !newOrderColor}>
                         Add
                       </Button>
                     </DialogFooter>
