@@ -154,7 +154,7 @@ export function ReportsSummary() {
      return <p>No data available to generate reports.</p>;
   }
 
-  const { salesRepData, priorityData, monthlySalesData, soldQtyByProductType, availableYears, availableWeeks } = reportData;
+  const { salesRepData, priorityData, dailySalesData, soldQtyByProductType, availableYears, availableWeeks } = reportData;
 
   return (
     <>
@@ -384,28 +384,28 @@ export function ReportsSummary() {
       <div className="mt-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
-            <CardTitle>Monthly Sold QTY</CardTitle>
-            <CardDescription>Total quantity of items sold each month for the selected year.</CardDescription>
+            <CardTitle>Daily Sales Data</CardTitle>
+            <CardDescription>Total quantity of items sold each day for the selected period.</CardDescription>
           </CardHeader>
           <CardContent>
             <div style={{ height: '300px' }}>
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={monthlySalesData}
+                    data={dailySalesData}
                     margin={{
                       top: 20, right: 30, left: 20, bottom: 5,
                     }}
                   >
                     <CartesianGrid strokeDasharray="3-3" vertical={false} />
-                    <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM yyyy', new Date()), 'MMM')} tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM-dd-yyyy', new Date()), 'MMM dd')} tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
                     />
                     <Bar dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]}>
-                      {monthlySalesData.map((entry, index) => (
+                      {dailySalesData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                       <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" />

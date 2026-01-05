@@ -66,12 +66,6 @@ const GenerateReportOutputSchema = z.object({
       quantity: z.number(),
     })
   ),
-  monthlySalesData: z.array(
-    z.object({
-      date: z.string(),
-      quantity: z.number(),
-    })
-  ),
   soldQtyByProductType: z.array(
     z.object({
       name: z.string(),
@@ -117,7 +111,7 @@ const generateReportFlow = ai.defineFlow(
     )).sort((a,b) => {
         const a_start = parse(a.split('-')[0], 'MM.dd', new Date(year, 0, 1));
         const b_start = parse(b.split('-')[0], 'MM.dd', new Date(year, 0, 1));
-        return b_start.getTime() - a_start.getTime();
+        return a_start.getTime() - b_start.getTime();
     });
 
     const filteredLeads = (() => {
@@ -140,7 +134,7 @@ const generateReportFlow = ai.defineFlow(
             const submissionDate = new Date(lead.submissionDateTime);
             return (
               getYear(submissionDate) === year &&
-              getMonth(submissionDate) === month
+              (selectedWeek ? true : getMonth(submissionDate) === month)
             );
           });
     })();
@@ -240,48 +234,6 @@ const generateReportFlow = ai.defineFlow(
         );
     })();
 
-    const monthlySalesData = (() => {
-      const salesByMonth = typedLeads
-        .filter((lead) => {
-          if (!selectedYear) return true;
-          const submissionDate = new Date(lead.submissionDateTime);
-          return getYear(submissionDate) === parseInt(selectedYear);
-        })
-        .reduce(
-          (acc, lead) => {
-            const submissionDate = new Date(lead.submissionDateTime);
-            const month = format(submissionDate, 'MMM yyyy');
-            const leadQuantity = lead.orders
-              .filter(o => o.productType !== 'Patches')
-              .reduce(
-                (sum, order) => sum + order.quantity,
-                0
-              );
-            
-            if (leadQuantity > 0) {
-              if (!acc[month]) {
-                acc[month] = 0;
-              }
-              acc[month] += leadQuantity;
-            }
-
-            return acc;
-          },
-          {} as { [key: string]: number }
-        );
-
-      return Object.entries(salesByMonth)
-        .map(([date, quantity]) => ({
-          date,
-          quantity,
-        }))
-        .sort(
-          (a, b) =>
-            parse(a.date, 'MMM yyyy', new Date()).getTime() -
-            parse(b.date, 'MMM yyyy', new Date()).getTime()
-        );
-    })();
-
     const soldQtyByProductType = (() => {
       const quantityByProductType = filteredLeads.reduce(
         (acc, lead) => {
@@ -313,7 +265,6 @@ const generateReportFlow = ai.defineFlow(
       salesRepData,
       priorityData,
       dailySalesData,
-      monthlySalesData,
       soldQtyByProductType,
       availableYears,
       availableWeeks,
