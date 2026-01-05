@@ -203,7 +203,7 @@ export function LeadForm() {
                <Button type="button" variant="outline" size="lg" onClick={handleReset}>
                 Reset
               </Button>
-              <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95" disabled={!form.formState.isValid}>
+              <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95">
                 Submit
               </Button>
             </div>
