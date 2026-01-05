@@ -81,7 +81,7 @@ const formSchema = z.object({
   customerName: z.string().min(2, {message: 'Customer name must be at least 2 characters.'}),
   companyName: z.string().optional(),
   contactNo: z.string().regex(/^\d{4}-\d{3}-\d{4}$/, {message: 'Contact number must be in 0000-000-0000 format.'}),
-  landlineNo: z.string().optional(),
+  landlineNo: z.string().regex(/^\d{2}-\d{4}-\d{4}$/, {message: 'Landline number must be in 00-0000-0000 format.'}).optional().or(z.literal('')),
   location: z.string().min(2, {message: 'Location is required.'}),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
@@ -104,7 +104,7 @@ const formFields: {
   {name: 'customerName', label: 'Customer Name', icon: User, type: 'input'},
   {name: 'companyName', label: 'Company Name (Optional)', icon: Building, type: 'input'},
   {name: 'contactNo', label: 'Contact No.', icon: Phone, type: 'tel'},
-  {name: 'landlineNo', label: 'Landline No. (Optional)', icon: PhoneForwarded, type: 'input'},
+  {name: 'landlineNo', label: 'Landline No. (Optional)', icon: PhoneForwarded, type: 'tel'},
   {name: 'location', label: 'Location', icon: MapPin, type: 'input'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
@@ -268,6 +268,23 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     }
   };
 
+  const handleLandlineNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+    const rawValue = e.target.value.replace(/\D/g, '');
+    if (rawValue.length <= 10) {
+      let formattedValue = '';
+      if (rawValue.length > 0) {
+        formattedValue = rawValue.substring(0, 2);
+      }
+      if (rawValue.length > 2) {
+        formattedValue += '-' + rawValue.substring(2, 6);
+      }
+      if (rawValue.length > 6) {
+        formattedValue += '-' + rawValue.substring(6, 10);
+      }
+      field.onChange(formattedValue);
+    }
+  };
+
   function onSubmit(values: FormValues) {
     const leadId = uuidv4();
     const leadsRef = collection(firestore, 'leads');
@@ -366,11 +383,15 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           <Input
                             type={fieldInfo.type}
                             {...field}
-                            onChange={(e) =>
-                              fieldInfo.name === 'contactNo'
-                                ? handleContactNoChange(e, field)
-                                : field.onChange(e)
-                            }
+                            onChange={(e) => {
+                              if (fieldInfo.name === 'contactNo') {
+                                handleContactNoChange(e, field);
+                              } else if (fieldInfo.name === 'landlineNo') {
+                                handleLandlineNoChange(e, field);
+                              } else {
+                                field.onChange(e);
+                              }
+                            }}
                           />
                         </FormControl>
                       ) : fieldInfo.type === 'select' ? (
@@ -609,5 +630,3 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </Card>
   );
 }
-
-    
