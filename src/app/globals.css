@@ -80,9 +80,10 @@
   }
 
   .shining-metal {
-    @apply bg-gradient-to-r from-yellow-400 via-white to-amber-500 bg-clip-text text-transparent;
+    @apply from-yellow-400 via-white to-amber-500 bg-clip-text text-transparent;
     background-size: 200% auto;
     animation: shining-metal 3s linear infinite;
+    background-image: linear-gradient(110deg, var(--tw-gradient-stops));
   }
 }
 
