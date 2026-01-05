@@ -367,39 +367,6 @@ export function ReportsSummary() {
       <div className="mt-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
-            <CardTitle>Daily Sold QTY</CardTitle>
-            <CardDescription>Total quantity of items sold each day for the selected month.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div style={{ height: '300px' }}>
-              <ChartContainer config={chartConfig} className="w-full h-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={dailySalesData}
-                    margin={{
-                      top: 20, right: 30, left: 20, bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3-3" vertical={false} />
-                    <XAxis dataKey="date" tickFormatter={(value) => format(new Date(value), 'd')} tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <Tooltip
-                      cursor={{ fill: 'hsl(var(--muted))' }}
-                      content={<ChartTooltipContent labelFormatter={(label, payload) => format(new Date(label), 'MMM-dd-yyyy')} />}
-                    />
-                    <Line type="monotone" dataKey="quantity" name="Quantity" stroke="hsl(var(--chart-1))" strokeWidth={2} activeDot={{ r: 8 }}>
-                      <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" />
-                    </Line>
-                  </LineChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="mt-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
-          <CardHeader>
             <CardTitle>Monthly Sold QTY</CardTitle>
             <CardDescription>Total quantity of items sold each month for the selected year.</CardDescription>
           </CardHeader>
