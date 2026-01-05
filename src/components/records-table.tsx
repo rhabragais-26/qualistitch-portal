@@ -447,8 +447,8 @@ export function RecordsTable() {
                     </TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber === '-' ? '' : lead.contactNumber}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber === '-' ? '' : lead.landlineNumber}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber === '-' ? '' : lead.contactNumber.replace(/-/g, '')}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber === '-' ? '' : lead.landlineNumber.replace(/-/g, '')}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.location}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
                     <TableCell className="align-middle py-2">
@@ -1006,12 +1006,3 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
-
-    
-
-    
-
-
-
-
-    
