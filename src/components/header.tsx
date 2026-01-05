@@ -2,6 +2,7 @@
 
 import {
   ClipboardList,
+  PenSquare,
   Database,
   PlusSquare,
   ChevronDown,
@@ -71,7 +72,7 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost">
-                  <Database className="mr-2" />
+                  <PenSquare className="mr-2" />
                   Data Entry
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
