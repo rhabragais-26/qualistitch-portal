@@ -132,10 +132,13 @@ export function RecordsTable() {
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
     if (!searchTerm) return leads;
+    
+    const lowercasedSearchTerm = searchTerm.toLowerCase();
 
     return leads.filter(lead =>
-      lead.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.contactNumber.toLowerCase().includes(searchTerm.toLowerCase())
+      lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
+      lead.contactNumber.toLowerCase().includes(lowercasedSearchTerm) ||
+      (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm))
     );
   }, [leads, searchTerm]);
 
