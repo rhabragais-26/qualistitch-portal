@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import {
   AlertDialog,
@@ -39,6 +39,11 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
   const pathname = usePathname();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [nextUrl, setNextUrl] = useState('');
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleNavigation = (url: string) => {
     if (isNewOrderPageDirty && pathname === '/' && pathname !== url) {
@@ -72,29 +77,31 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
             </Link>
           </div>
           <nav className="flex items-center gap-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost">
-                  <PenSquare className="mr-2" />
-                  Data Entry
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleNavigation('/')}>
-                  <PlusSquare className="mr-2" />
-                  New Order
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/records')}>
-                  <Database className="mr-2" />
-                  View Records
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/reports')}>
-                  <LineChart className="mr-2" />
-                  Reports
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {isClient && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost">
+                    <PenSquare className="mr-2" />
+                    Data Entry
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleNavigation('/')}>
+                    <PlusSquare className="mr-2" />
+                    New Order
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/records')}>
+                    <Database className="mr-2" />
+                    View Records
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/reports')}>
+                    <LineChart className="mr-2" />
+                    Reports
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <Button variant="ghost" onClick={() => handleNavigation('/order-status')}>
               <ListOrdered className="mr-2" />
               Order Status
