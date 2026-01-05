@@ -231,7 +231,7 @@ export function LeadForm() {
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="font-headline text-3xl">Create New Lead Entry for Master Tracker</CardTitle>
+            <CardTitle className="font-headline text-2xl">Create New Lead Entry for Master Tracker</CardTitle>
             <CardDescription>Fill in the details below to create a new lead. All fields are required.</CardDescription>
           </div>
           <div className="text-sm text-muted-foreground font-mono whitespace-nowrap pt-1">
