@@ -7,6 +7,7 @@ import {
   PlusSquare,
   ChevronDown,
   LineChart,
+  ListOrdered,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -91,6 +92,10 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                 <DropdownMenuItem onClick={() => handleNavigation('/reports')}>
                   <LineChart className="mr-2" />
                   Reports
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation('/order-status')}>
+                  <ListOrdered className="mr-2" />
+                  Order Status
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
