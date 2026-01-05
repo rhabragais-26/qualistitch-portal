@@ -443,8 +443,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         </Select>
                       </div>
                       <div className='grid grid-cols-2 gap-4'>
-                        <div className="flex items-center gap-2">
-                          <FormLabel className='text-sm'>Color:</FormLabel>
+                        <div className="space-y-2">
+                          <FormLabel>Color:</FormLabel>
                           <Select onValueChange={setNewOrderColor} value={newOrderColor}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a Color" />
@@ -458,10 +458,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                             </SelectContent>
                           </Select>
                         </div>
-                        <RadioGroup onValueChange={setNewOrderSize} value={newOrderSize} className="flex items-center space-x-2">
-                          <FormLabel className='text-sm'>Size:</FormLabel>
+                        <div className="space-y-2">
+                          <FormLabel>Size:</FormLabel>
                           <Select onValueChange={setNewOrderSize} value={newOrderSize}>
-                            <SelectTrigger className="w-[100px]">
+                            <SelectTrigger>
                               <SelectValue placeholder="Size" />
                             </SelectTrigger>
                             <SelectContent>
@@ -472,7 +472,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                               ))}
                             </SelectContent>
                           </Select>
-                        </RadioGroup>
+                        </div>
                       </div>
                        <div className="flex items-center gap-2 justify-center">
                         <FormLabel>Quantity:</FormLabel>

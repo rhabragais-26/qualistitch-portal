@@ -263,39 +263,40 @@ export function RecordsTable() {
     }
   };
 
-  const handleUpdateOrderField = async (leadId: string, orderIndex: number, field: 'quantity' | 'color' | 'size', value: string | number) => {
+  const handleUpdateOrderQuantity = async (leadId: string, orderIndex: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+
     const lead = leads?.find(l => l.id === leadId);
     if (!lead) return;
 
-    if (field === 'quantity' && typeof value === 'number' && value < 1) return;
-
     const updatedOrders = lead.orders.map((order, index) => {
-      if (index === orderIndex) {
-        return { ...order, [field]: value };
-      }
-      return order;
+        if (index === orderIndex) {
+            return { ...order, quantity: newQuantity };
+        }
+        return order;
     });
 
     const leadDocRef = doc(firestore, 'leads', leadId);
 
     try {
-      await updateDoc(leadDocRef, {
-        orders: updatedOrders,
-        lastModified: new Date().toISOString(),
-      });
-      toast({
-        title: `Order ${field.charAt(0).toUpperCase() + field.slice(1)} Updated!`,
-        description: `The order ${field} has been updated.`,
-      });
+        await updateDoc(leadDocRef, {
+            orders: updatedOrders,
+            lastModified: new Date().toISOString(),
+        });
+        toast({
+            title: "Quantity Updated!",
+            description: "The order quantity has been updated.",
+        });
     } catch (e: any) {
-      console.error(`Error updating order ${field}: `, e);
-      toast({
-        variant: "destructive",
-        title: "Update Failed",
-        description: e.message || `Could not update the order ${field}.`,
-      });
+        console.error("Error updating quantity: ", e);
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: e.message || "Could not update the quantity.",
+        });
     }
-  };
+};
+
   
   const handleDeleteOrder = async (leadId: string, orderIndex: number) => {
     const lead = leads?.find(l => l.id === leadId);
@@ -499,33 +500,15 @@ export function RecordsTable() {
                               {lead.orders?.map((order: any, index: number) => (
                                 <TableRow key={index}>
                                   <TableCell className="py-1 text-xs text-card-foreground">{order.productType}</TableCell>
-                                  <TableCell className="py-1 text-xs text-card-foreground">
-                                    <Select value={order.color} onValueChange={(value) => handleUpdateOrderField(lead.id, index, 'color', value)}>
-                                      <SelectTrigger className="text-xs h-7 w-[130px]">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {productColors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                      </SelectContent>
-                                    </Select>
-                                  </TableCell>
-                                  <TableCell className="py-1 text-xs text-card-foreground">
-                                     <Select value={order.size} onValueChange={(value) => handleUpdateOrderField(lead.id, index, 'size', value)}>
-                                      <SelectTrigger className="text-xs h-7 w-[80px]">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {productSizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                                      </SelectContent>
-                                    </Select>
-                                  </TableCell>
+                                  <TableCell className="py-1 text-xs text-card-foreground">{order.color}</TableCell>
+                                  <TableCell className="py-1 text-xs text-card-foreground">{order.size}</TableCell>
                                   <TableCell className="py-1 text-xs text-card-foreground">
                                     <div className="flex items-center gap-2 justify-center">
-                                      <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderField(lead.id, index, 'quantity', order.quantity - 1)} disabled={order.quantity <= 1}>
+                                      <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderQuantity(lead.id, index, order.quantity - 1)} disabled={order.quantity <= 1}>
                                         <Minus className="h-3 w-3" />
                                       </Button>
                                       <span className="w-8 text-center">{order.quantity}</span>
-                                      <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderField(lead.id, index, 'quantity', order.quantity + 1)}>
+                                      <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderQuantity(lead.id, index, order.quantity + 1)}>
                                         <Plus className="h-3 w-3" />
                                       </Button>
                                     </div>
