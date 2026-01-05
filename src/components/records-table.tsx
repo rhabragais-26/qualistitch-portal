@@ -466,16 +466,15 @@ export function RecordsTable() {
                               <TableRow>
                                 <TableCell colSpan={3} className="text-right font-bold text-card-foreground">Total Quantity</TableCell>
                                 <TableCell className="font-bold text-card-foreground">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
-                                <TableCell></TableCell>
+                                <TableCell className='text-right'>
+                                  <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
+                                    <PlusCircle className="h-4 w-4 mr-1" />
+                                    Add Order
+                                  </Button>
+                                </TableCell>
                               </TableRow>
                             </TableFooter>
                           </Table>
-                          <div className="mt-2">
-                             <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
-                              <PlusCircle className="h-4 w-4 mr-1" />
-                              Add Order
-                            </Button>
-                          </div>
                         </div>
                        </TableCell>
                     </TableRow>
