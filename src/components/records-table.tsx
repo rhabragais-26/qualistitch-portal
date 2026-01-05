@@ -379,12 +379,12 @@ export function RecordsTable() {
   };
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-card-foreground">Lead Records</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-black">Lead Records</CardTitle>
+              <CardDescription className="text-gray-600">
                 Here are all the lead entries submitted through the form.
               </CardDescription>
             </div>
@@ -393,6 +393,7 @@ export function RecordsTable() {
                 placeholder="Search by customer name or contact no..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-gray-100 text-black placeholder:text-gray-500"
               />
             </div>
         </div>
@@ -401,7 +402,7 @@ export function RecordsTable() {
         {isLoading && (
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
+              <Skeleton key={i} className="h-12 w-full bg-gray-200" />
             ))}
           </div>
         )}
@@ -415,57 +416,57 @@ export function RecordsTable() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-card-foreground">Date &amp; Time</TableHead>
-                  <TableHead className="text-card-foreground">Last Modified</TableHead>
-                  <TableHead className="text-card-foreground">Customer Name</TableHead>
-                  <TableHead className="text-card-foreground">Company Name</TableHead>
-                  <TableHead className="text-card-foreground">Contact No.</TableHead>
-                  <TableHead className="text-card-foreground">Location</TableHead>
-                  <TableHead className="text-card-foreground">CSR</TableHead>
-                  <TableHead className="text-card-foreground">Priority</TableHead>
-                  <TableHead className="text-card-foreground">Payment</TableHead>
-                  <TableHead className="text-card-foreground">Order Type</TableHead>
-                  <TableHead className="text-center text-card-foreground">Items</TableHead>
-                  <TableHead className="text-center text-card-foreground">Actions</TableHead>
+                  <TableHead className="text-black">Date &amp; Time</TableHead>
+                  <TableHead className="text-black">Last Modified</TableHead>
+                  <TableHead className="text-black">Customer Name</TableHead>
+                  <TableHead className="text-black">Company Name</TableHead>
+                  <TableHead className="text-black">Contact No.</TableHead>
+                  <TableHead className="text-black">Location</TableHead>
+                  <TableHead className="text-black">CSR</TableHead>
+                  <TableHead className="text-black">Priority</TableHead>
+                  <TableHead className="text-black">Payment</TableHead>
+                  <TableHead className="text-black">Order Type</TableHead>
+                  <TableHead className="text-center text-black">Items</TableHead>
+                  <TableHead className="text-center text-black">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
               {filteredLeads.map((lead) => (
                 <React.Fragment key={lead.id}>
                   <TableRow>
-                    <TableCell className="text-xs align-middle py-2 text-card-foreground">
+                    <TableCell className="text-xs align-middle py-2 text-black">
                        <div>{formatDateTime(lead.submissionDateTime).dateTime}</div>
-                       <div className="text-muted-foreground">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
+                       <div className="text-gray-500">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
                     </TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-card-foreground">
+                    <TableCell className="text-xs align-middle py-2 text-black">
                        <div>{formatDateTime(lead.lastModified).dateTime}</div>
-                       <div className="text-muted-foreground">{formatDateTime(lead.lastModified).dayOfWeek}</div>
+                       <div className="text-gray-500">{formatDateTime(lead.lastModified).dayOfWeek}</div>
                     </TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.customerName}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.companyName || '-'}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.contactNumber}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.location}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.salesRepresentative}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName || '-'}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.location}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
                     <TableCell className="align-middle py-2">
                       <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                         {lead.priorityType}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.paymentType}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.orderType}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.paymentType}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-black">{lead.orderType}</TableCell>
                     <TableCell className="text-center align-middle py-2">
-                      <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2">
+                      <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                         View
                         {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
                       </Button>
                     </TableCell>
                     <TableCell className="text-center align-middle py-2">
-                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditLeadDialog(lead)}>
+                         <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
                             <Edit className="h-4 w-4" />
                           </Button>
                          <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </AlertDialogTrigger>
@@ -485,27 +486,27 @@ export function RecordsTable() {
                     </TableCell>
                   </TableRow>
                   {openLeadId === lead.id && (
-                    <TableRow className="bg-muted/50">
+                    <TableRow className="bg-gray-50">
                       <TableCell colSpan={12} className="p-0">
                          <div className="p-4">
-                          <h4 className="font-semibold text-card-foreground mb-2">Ordered Items</h4>
+                          <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
                            <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead className="py-1 text-card-foreground">Product Type</TableHead>
-                                <TableHead className="py-1 text-card-foreground">Color</TableHead>
-                                <TableHead className="py-1 text-card-foreground">Size</TableHead>
-                                <TableHead className="py-1 text-card-foreground text-center">Quantity</TableHead>
-                                <TableHead className="text-right py-1 text-card-foreground pr-8">Action</TableHead>
+                                <TableHead className="py-1 text-black">Product Type</TableHead>
+                                <TableHead className="py-1 text-black">Color</TableHead>
+                                <TableHead className="py-1 text-black">Size</TableHead>
+                                <TableHead className="py-1 text-black text-center">Quantity</TableHead>
+                                <TableHead className="text-right py-1 text-black pr-8">Action</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
                               {lead.orders?.map((order: any, index: number) => (
                                 <TableRow key={index}>
-                                  <TableCell className="py-1 text-xs text-card-foreground">{order.productType}</TableCell>
-                                  <TableCell className="py-1 text-xs text-card-foreground">{order.color}</TableCell>
-                                  <TableCell className="py-1 text-xs text-card-foreground">{order.size}</TableCell>
-                                  <TableCell className="py-1 text-xs text-card-foreground">
+                                  <TableCell className="py-1 text-xs text-black">{order.productType}</TableCell>
+                                  <TableCell className="py-1 text-xs text-black">{order.color}</TableCell>
+                                  <TableCell className="py-1 text-xs text-black">{order.size}</TableCell>
+                                  <TableCell className="py-1 text-xs text-black">
                                     <div className="flex items-center gap-2 justify-center">
                                       <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderQuantity(lead.id, index, order.quantity - 1)} disabled={order.quantity <= 1}>
                                         <Minus className="h-3 w-3" />
@@ -517,12 +518,12 @@ export function RecordsTable() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-right py-1">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
                                       <Edit className="h-4 w-4" />
                                     </Button>
                                      <AlertDialog>
                                       <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
                                           <Trash2 className="h-4 w-4" />
                                         </Button>
                                       </AlertDialogTrigger>
@@ -545,8 +546,8 @@ export function RecordsTable() {
                             </TableBody>
                             <TableFooter>
                                <TableRow>
-                                <TableCell colSpan={4} className="text-right font-bold text-card-foreground">Total Quantity</TableCell>
-                                <TableCell className="font-bold text-card-foreground text-center">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
+                                <TableCell colSpan={4} className="text-right font-bold text-black">Total Quantity</TableCell>
+                                <TableCell className="font-bold text-black text-center">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
                                 <TableCell className='text-right'>
                                   <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
                                     <PlusCircle className="h-4 w-4 mr-1" />
