@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -23,9 +23,20 @@ type Lead = {
 const chartConfig = {
   quantity: {
     label: 'Quantity',
-    color: 'hsl(var(--primary))',
   },
 };
+
+const COLORS = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+  'hsl(220, 70%, 60%)',
+  'hsl(340, 70%, 60%)',
+  'hsl(100, 70%, 60%)',
+  'hsl(20, 70%, 60%)',
+];
 
 export function ReportsSummary() {
   const firestore = useFirestore();
@@ -94,8 +105,11 @@ export function ReportsSummary() {
                   cursor={{ fill: 'hsl(var(--muted))' }}
                   content={<ChartTooltipContent />}
                 />
-                <Bar dataKey="quantity" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="quantity" radius={[4, 4, 0, 0]}>
                    <LabelList dataKey="quantity" position="top" style={{ fill: 'hsl(var(--foreground))' }} />
+                   {csrData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
