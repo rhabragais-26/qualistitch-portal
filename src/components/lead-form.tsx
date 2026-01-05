@@ -252,17 +252,21 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       const now = new Date();
       const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
       setDayOfWeek(days[now.getDay()]);
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const month = months[now.getMonth()];
-      const day = String(now.getDate()).padStart(2, '0');
-      const year = now.getFullYear();
-      let hours = now.getHours();
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      hours = hours ? hours : 12; // the hour '0' should be '12'
-      const strTime = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
-      setDateTime(`${month}-${day}-${year} ${strTime}`);
+      
+      const dateString = now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric'
+      }).replace(/,/g, '');
+
+      const timeString = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+      
+      setDateTime(`${dateString} - ${dayOfWeek} | ${timeString}`);
     };
     updateDateTime();
     const intervalId = setInterval(updateDateTime, 1000);
@@ -431,7 +435,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
           </div>
           <div className="text-sm text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
             <div>{dateTime}</div>
-            <div>{dayOfWeek}</div>
           </div>
         </div>
       </CardHeader>
