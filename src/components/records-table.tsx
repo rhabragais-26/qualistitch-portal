@@ -363,6 +363,7 @@ export function RecordsTable() {
                   <TableRow>
                     <TableCell className="text-sm align-middle py-2 text-card-foreground">
                       {new Date(lead.submissionDateTime).toLocaleString([], {
+                        weekday: 'short',
                         year: 'numeric',
                         month: 'numeric',
                         day: 'numeric',
