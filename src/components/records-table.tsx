@@ -371,7 +371,7 @@ export function RecordsTable() {
               {filteredLeads.map((lead) => (
                 <React.Fragment key={lead.id}>
                   <TableRow>
-                    <TableCell className="text-sm align-middle py-2 text-card-foreground">
+                    <TableCell className="text-xs align-middle py-2 text-card-foreground">
                       {new Date(lead.submissionDateTime).toLocaleString([], {
                         weekday: 'short',
                         year: 'numeric',
@@ -381,18 +381,18 @@ export function RecordsTable() {
                         minute: '2-digit',
                       })}
                     </TableCell>
-                    <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.customerName}</TableCell>
-                    <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.companyName || '-'}</TableCell>
-                    <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.contactNumber}</TableCell>
-                    <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.location}</TableCell>
-                    <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.csr}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.customerName}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.companyName || '-'}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.contactNumber}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.location}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.csr}</TableCell>
                     <TableCell className="align-middle py-2">
                       <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                         {lead.priorityType}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.paymentType}</TableCell>
-                    <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.orderType}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.paymentType}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.orderType}</TableCell>
                     <TableCell className="text-center align-middle py-2">
                       <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)}>
                         View
@@ -442,10 +442,10 @@ export function RecordsTable() {
                             <TableBody>
                               {lead.orders?.map((order: any, index: number) => (
                                 <TableRow key={index}>
-                                  <TableCell className="py-1 text-card-foreground">{order.productType}</TableCell>
-                                  <TableCell className="py-1 text-card-foreground">{order.color}</TableCell>
-                                  <TableCell className="py-1 text-card-foreground">{order.size}</TableCell>
-                                  <TableCell className="py-1 text-card-foreground">{order.quantity}</TableCell>
+                                  <TableCell className="py-1 text-xs text-card-foreground">{order.productType}</TableCell>
+                                  <TableCell className="py-1 text-xs text-card-foreground">{order.color}</TableCell>
+                                  <TableCell className="py-1 text-xs text-card-foreground">{order.size}</TableCell>
+                                  <TableCell className="py-1 text-xs text-card-foreground">{order.quantity}</TableCell>
                                   <TableCell className="text-right py-1">
                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
                                       <Edit className="h-4 w-4" />
