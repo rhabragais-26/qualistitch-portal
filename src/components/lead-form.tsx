@@ -34,6 +34,7 @@ import {
   User,
   UserCheck,
 } from 'lucide-react';
+import {RadioGroup, RadioGroupItem} from './ui/radio-group';
 
 // Define the form schema using Zod
 const formSchema = z.object({
@@ -43,7 +44,7 @@ const formSchema = z.object({
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD']),
   csr: z.string().min(2, {message: 'CSR name is required.'}),
   orderType: z.string().min(2, {message: 'Order type is required.'}),
-  priorityType: z.string().min(2, {message: 'Priority type is required.'}),
+  priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   productType: z.string().min(2, {message: 'Product type is required.'}),
   productSource: z.string().min(2, {message: 'Product source is required.'}),
 });
@@ -55,7 +56,7 @@ const formFields: {
   label: string;
   icon: React.ElementType;
   placeholder?: string;
-  type: 'input' | 'select';
+  type: 'input' | 'select' | 'radio';
   options?: string[];
 }[] = [
   {name: 'customerName', label: 'Customer/Company Name', icon: User, placeholder: 'John Doe Inc.', type: 'input'},
@@ -64,7 +65,7 @@ const formFields: {
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD']},
   {name: 'csr', label: 'CSR', icon: UserCheck, placeholder: 'Jane Smith', type: 'input'},
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, placeholder: 'Wholesale', type: 'input'},
-  {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, placeholder: 'High', type: 'input'},
+  {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular']},
   {name: 'productType', label: 'Product Type', icon: Package, placeholder: 'Electronics', type: 'input'},
   {name: 'productSource', label: 'Product Source', icon: Building, placeholder: 'Local Warehouse', type: 'input'},
 ];
@@ -79,7 +80,7 @@ export function LeadForm() {
       location: '',
       csr: '',
       orderType: '',
-      priorityType: '',
+      priorityType: 'Regular',
       productType: '',
       productSource: '',
     },
@@ -122,7 +123,7 @@ export function LeadForm() {
                         <FormControl>
                           <Input placeholder={fieldInfo.placeholder} {...field} />
                         </FormControl>
-                      ) : (
+                      ) : fieldInfo.type === 'select' ? (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -137,6 +138,23 @@ export function LeadForm() {
                             ))}
                           </SelectContent>
                         </Select>
+                      ) : (
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex items-center space-x-4 pt-2"
+                          >
+                            {fieldInfo.options?.map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
                       )}
                       <FormMessage />
                     </FormItem>
