@@ -7,7 +7,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
-import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { format, startOfWeek, endOfWeek, isWithinInterval, startOfMonth, endOfMonth, getMonth } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
 type Order = {
@@ -134,6 +134,40 @@ export function ReportsSummary() {
         return acc;
       }, {} as { [key: string]: number });
 
+    return Object.entries(salesByDay)
+      .map(([date, quantity]) => ({
+        date,
+        quantity,
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [leads]);
+  
+  const monthlySalesData = useMemo(() => {
+    if (!leads) {
+      return [];
+    }
+  
+    const now = new Date();
+    const startOfThisMonth = startOfMonth(now);
+    const endOfThisMonth = endOfMonth(now);
+  
+    const salesByDay = leads
+      .filter(lead => {
+        const submissionDate = new Date(lead.submissionDateTime);
+        return isWithinInterval(submissionDate, { start: startOfThisMonth, end: endOfThisMonth });
+      })
+      .reduce((acc, lead) => {
+        const date = format(new Date(lead.submissionDateTime), 'MMM d, yyyy');
+        const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+  
+        if (!acc[date]) {
+          acc[date] = 0;
+        }
+        acc[date] += leadQuantity;
+        
+        return acc;
+      }, {} as { [key: string]: number });
+  
     return Object.entries(salesByDay)
       .map(([date, quantity]) => ({
         date,
@@ -334,6 +368,40 @@ export function ReportsSummary() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={dailySalesData}
+                    margin={{
+                      top: 20, right: 30, left: 20, bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3-3" vertical={false} />
+                    <XAxis dataKey="date" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <Tooltip
+                      cursor={{ fill: 'hsl(var(--muted))' }}
+                      content={<ChartTooltipContent />}
+                    />
+                    <Legend />
+                    <Line type="monotone" dataKey="quantity" stroke="hsl(var(--chart-1))" strokeWidth={2} activeDot={{ r: 8 }}>
+                      <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" />
+                    </Line>
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="mt-8">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle>Monthly Sold QTY</CardTitle>
+            <CardDescription>Total quantity of items sold each day for the current month.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div style={{ height: '300px' }}>
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={monthlySalesData}
                     margin={{
                       top: 20, right: 30, left: 20, bottom: 5,
                     }}
