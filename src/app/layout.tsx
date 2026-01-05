@@ -3,7 +3,7 @@ import {Toaster} from '@/components/ui/toaster';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'LeadTracker',
+  title: 'Qualistitch Inc.',
   description: 'A web based system to track customer leads.',
 };
 
