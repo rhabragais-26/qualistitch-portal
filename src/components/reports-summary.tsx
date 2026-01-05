@@ -181,7 +181,7 @@ export function ReportsSummary() {
             <CardDescription>Total quantity of orders and number of customers by each CSR.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div style={{ height: '300px' }}>
+            <div style={{ height: '250px' }}>
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={salesRepData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
@@ -208,20 +208,20 @@ export function ReportsSummary() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>CSR</TableHead>
-                    <TableHead className="text-right">Quantity</TableHead>
-                    <TableHead className="text-right">Customers</TableHead>
+                    <TableHead className="text-xs p-2">CSR</TableHead>
+                    <TableHead className="text-right text-xs p-2">Quantity</TableHead>
+                    <TableHead className="text-right text-xs p-2">Customers</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {salesRepData.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium flex items-center">
-                         <span className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                      <TableCell className="font-medium flex items-center text-xs p-2">
+                         <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
                         {item.name}
                       </TableCell>
-                      <TableCell className="text-right">{item.quantity}</TableCell>
-                      <TableCell className="text-right">{item.customerCount}</TableCell>
+                      <TableCell className="text-right text-xs p-2">{item.quantity}</TableCell>
+                      <TableCell className="text-right text-xs p-2">{item.customerCount}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -235,7 +235,7 @@ export function ReportsSummary() {
             <CardDescription>Total quantity of orders for each priority type.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div style={{ height: '300px' }}>
+            <div style={{ height: '250px' }}>
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -289,20 +289,20 @@ export function ReportsSummary() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Priority Type</TableHead>
-                    <TableHead className="text-right">Quantity</TableHead>
-                    <TableHead className="text-right">Percentage</TableHead>
+                    <TableHead className="text-xs p-2">Priority Type</TableHead>
+                    <TableHead className="text-right text-xs p-2">Quantity</TableHead>
+                    <TableHead className="text-right text-xs p-2">Percentage</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {priorityData.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium flex items-center">
-                         <span className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                      <TableCell className="font-medium flex items-center text-xs p-2">
+                         <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
                         {item.name}
                       </TableCell>
-                      <TableCell className="text-right">{item.value}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right text-xs p-2">{item.value}</TableCell>
+                      <TableCell className="text-right text-xs p-2">
                         {totalPriorityQuantity > 0 ? `${((item.value / totalPriorityQuantity) * 100).toFixed(2)}%` : '0.00%'}
                       </TableCell>
                     </TableRow>
