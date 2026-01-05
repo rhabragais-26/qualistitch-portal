@@ -27,6 +27,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { cn } from '@/lib/utils';
 
 export function RecordsTable() {
   const firestore = useFirestore();
@@ -88,21 +89,21 @@ export function RecordsTable() {
                   <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
                     <>
                       <TableRow>
-                        <TableCell className="text-sm">
+                        <TableCell className="text-sm align-middle">
                           {new Date(lead.submissionDateTime).toLocaleDateString()}
                         </TableCell>
-                        <TableCell className="text-sm">{lead.customerName}</TableCell>
-                        <TableCell className="text-sm">{lead.contactNumber}</TableCell>
-                        <TableCell className="text-sm">{lead.location}</TableCell>
-                        <TableCell className="text-sm">{lead.csr}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-sm align-middle">{lead.customerName}</TableCell>
+                        <TableCell className="text-sm align-middle">{lead.contactNumber}</TableCell>
+                        <TableCell className="text-sm align-middle">{lead.location}</TableCell>
+                        <TableCell className="text-sm align-middle">{lead.csr}</TableCell>
+                        <TableCell className="align-middle">
                           <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                             {lead.priorityType}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-sm">{lead.paymentType}</TableCell>
-                        <TableCell className="text-sm">{lead.orderType}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-sm align-middle">{lead.paymentType}</TableCell>
+                        <TableCell className="text-sm align-middle">{lead.orderType}</TableCell>
+                        <TableCell className="text-right align-middle">
                           <CollapsibleTrigger asChild>
                              <Button variant="ghost" size="sm">
                               View
