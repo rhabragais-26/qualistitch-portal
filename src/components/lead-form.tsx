@@ -3,6 +3,7 @@
 import {zodResolver} from '@hookform/resolvers/zod';
 import {useForm} from 'react-hook-form';
 import * as z from 'zod';
+import {useState, useEffect} from 'react';
 
 import {Button} from '@/components/ui/button';
 import {
@@ -44,7 +45,7 @@ const formSchema = z.object({
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
-  productSource: z.enum(['Stock', 'Client Provided'], {required_error: "You need to select a product source."}),
+  productSource: z.enum(['Client Provided', 'Stock'], {required_error: "You need to select a product source."}),
   csr: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a CSR."}),
 });
 
@@ -57,6 +58,7 @@ const formFields: {
   type: 'input' | 'select' | 'radio';
   options?: string[];
   placeholder?: string;
+  className?: string;
 }[] = [
   {name: 'customerName', label: 'Customer/Company Name', icon: User, type: 'input'},
   {name: 'contactNo', label: 'Contact No.', icon: Phone, type: 'input'},
@@ -64,12 +66,24 @@ const formFields: {
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
   {name: 'csr', label: 'CSR', icon: UserCheck, type: 'select', options: ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], placeholder: 'Select CSR'},
-  {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular']},
+  {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular'], className: "md:justify-center"},
   {name: 'productSource', label: 'Product Source', icon: Building, type: 'radio', options: ['Client Provided', 'Stock']},
 ];
 
 export function LeadForm() {
   const {toast} = useToast();
+  const [dateTime, setDateTime] = useState('');
+
+  useEffect(() => {
+    const updateDateTime = () => {
+      const now = new Date();
+      setDateTime(now.toLocaleString());
+    };
+    updateDateTime();
+    const intervalId = setInterval(updateDateTime, 1000);
+    return () => clearInterval(intervalId);
+  }, []);
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -84,6 +98,19 @@ export function LeadForm() {
     },
   });
 
+  const handleReset = () => {
+    form.reset({
+      customerName: '',
+      contactNo: '',
+      location: '',
+      paymentType: undefined,
+      orderType: undefined,
+      priorityType: 'Regular',
+      productSource: 'Stock',
+      csr: undefined,
+    });
+  }
+
   function onSubmit(values: FormValues) {
     // In a real app, you'd send this data to a server.
     console.log(values);
@@ -93,14 +120,21 @@ export function LeadForm() {
       description: 'The new lead for ' + values.customerName + ' has been successfully recorded.',
     });
 
-    form.reset();
+    handleReset();
   }
 
   return (
     <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500">
       <CardHeader>
-        <CardTitle className="font-headline text-3xl">Create New Lead Entry for Master Tracker</CardTitle>
-        <CardDescription>Fill in the details below to create a new lead. All fields are required.</CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="font-headline text-3xl">Create New Lead Entry for Master Tracker</CardTitle>
+            <CardDescription>Fill in the details below to create a new lead. All fields are required.</CardDescription>
+          </div>
+          <div className="text-sm text-muted-foreground font-mono whitespace-nowrap pt-1">
+            {dateTime}
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -122,7 +156,7 @@ export function LeadForm() {
                           <Input {...field} />
                         </FormControl>
                       ) : fieldInfo.type === 'select' ? (
-                        <Select onValueChange={field.onChange} value={field.value}>
+                         <Select onValueChange={field.onChange} value={field.value || ''}>
                           <FormControl>
                             <SelectTrigger className={cn(!field.value && 'text-muted-foreground')}>
                               <SelectValue placeholder={fieldInfo.placeholder || `Select a ${fieldInfo.label.toLowerCase()}`} />
@@ -140,8 +174,8 @@ export function LeadForm() {
                         <FormControl>
                           <RadioGroup
                             onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex justify-center items-center space-x-4 pt-2"
+                            value={field.value}
+                            className={cn("flex items-center space-x-4 pt-2", fieldInfo.className)}
                           >
                             {fieldInfo.options?.map((option) => (
                               <FormItem key={option} className="flex items-center space-x-2 space-y-0">
@@ -162,7 +196,7 @@ export function LeadForm() {
             </div>
 
             <div className="flex justify-end pt-4 gap-4">
-               <Button type="button" variant="outline" size="lg" onClick={() => form.reset()}>
+               <Button type="button" variant="outline" size="lg" onClick={handleReset}>
                 Reset
               </Button>
               <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95">
