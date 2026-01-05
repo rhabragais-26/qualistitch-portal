@@ -15,6 +15,7 @@ type Order = {
 
 type Lead = {
   id: string;
+  customerName: string;
   salesRepresentative: string;
   priorityType: string;
   orders: Order[];
@@ -24,6 +25,9 @@ type Lead = {
 const chartConfig = {
   quantity: {
     label: 'Quantity',
+  },
+  customerCount: {
+    label: 'Customers',
   },
 };
 
@@ -66,21 +70,30 @@ export function ReportsSummary() {
     if (!leads) {
       return [];
     }
-
-    const quantityBySalesRep = leads.reduce((acc, lead) => {
+  
+    const statsBySalesRep = leads.reduce((acc, lead) => {
       const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-      if (acc[lead.salesRepresentative]) {
-        acc[lead.salesRepresentative] += leadQuantity;
-      } else {
-        acc[lead.salesRepresentative] = leadQuantity;
+      const csr = lead.salesRepresentative;
+      
+      if (!acc[csr]) {
+        acc[csr] = { quantity: 0, customers: new Set<string>() };
       }
+      
+      acc[csr].quantity += leadQuantity;
+      acc[csr].customers.add(lead.customerName);
+      
       return acc;
-    }, {} as { [key: string]: number });
+    }, {} as { [key: string]: { quantity: number; customers: Set<string> } });
     
-    const totalQuantity = Object.values(quantityBySalesRep).reduce((sum, q) => sum + q, 0);
-
-    return Object.entries(quantityBySalesRep)
-      .map(([name, quantity]) => ({ name, quantity, percentage: totalQuantity > 0 ? (quantity / totalQuantity) * 100 : 0 }))
+    const totalQuantity = Object.values(statsBySalesRep).reduce((sum, { quantity }) => sum + quantity, 0);
+  
+    return Object.entries(statsBySalesRep)
+      .map(([name, { quantity, customers }]) => ({
+        name,
+        quantity,
+        customerCount: customers.size,
+        percentage: totalQuantity > 0 ? (quantity / totalQuantity) * 100 : 0
+      }))
       .sort((a, b) => b.quantity - a.quantity);
   }, [leads]);
   
@@ -140,7 +153,7 @@ export function ReportsSummary() {
       <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
         <CardHeader>
           <CardTitle>CSR Performance</CardTitle>
-          <CardDescription>Total quantity of orders processed by each CSR.</CardDescription>
+          <CardDescription>Total quantity of orders and number of customers by each CSR.</CardDescription>
         </CardHeader>
         <CardContent>
           <div style={{ height: '300px' }}>
@@ -149,17 +162,17 @@ export function ReportsSummary() {
                 <BarChart data={salesRepData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))' }} />
-                  <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
+                  <YAxis yAxisId="left" orientation="left" tick={{ fill: 'hsl(var(--foreground))' }} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fill: 'hsl(var(--foreground))' }} />
                   <Tooltip
                     cursor={{ fill: 'hsl(var(--muted))' }}
                     content={<ChartTooltipContent />}
                   />
-                  <Bar dataKey="quantity" radius={[4, 4, 0, 0]}>
-                    <LabelList dataKey="percentage" position="top" content={renderCustomizedLabel} />
-                    {salesRepData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
+                  <Legend />
+                  <Bar yAxisId="left" dataKey="quantity" name="Quantity" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]}>
+                     <LabelList dataKey="percentage" position="top" content={renderCustomizedLabel} />
                   </Bar>
+                  <Bar yAxisId="right" dataKey="customerCount" name="Customers" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartContainer>
