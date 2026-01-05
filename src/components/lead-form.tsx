@@ -59,15 +59,15 @@ const formFields: {
   type: 'input' | 'select' | 'radio';
   options?: string[];
 }[] = [
-  {name: 'customerName', label: 'Customer/Company Name', icon: User, placeholder: 'John Doe Inc.', type: 'input'},
-  {name: 'contactNo', label: 'Contact No.', icon: Phone, placeholder: '+1 (555) 123-4567', type: 'input'},
-  {name: 'location', label: 'Location', icon: MapPin, placeholder: 'New York, NY', type: 'input'},
+  {name: 'customerName', label: 'Customer/Company Name', icon: User, placeholder: '', type: 'input'},
+  {name: 'contactNo', label: 'Contact No.', icon: Phone, placeholder: '', type: 'input'},
+  {name: 'location', label: 'Location', icon: MapPin, placeholder: '', type: 'input'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD']},
-  {name: 'csr', label: 'CSR', icon: UserCheck, placeholder: 'Jane Smith', type: 'input'},
-  {name: 'orderType', label: 'Order Type', icon: ShoppingBag, placeholder: 'Wholesale', type: 'input'},
+  {name: 'csr', label: 'CSR', icon: UserCheck, placeholder: '', type: 'input'},
+  {name: 'orderType', label: 'Order Type', icon: ShoppingBag, placeholder: '', type: 'input'},
   {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular']},
-  {name: 'productType', label: 'Product Type', icon: Package, placeholder: 'Electronics', type: 'input'},
-  {name: 'productSource', label: 'Product Source', icon: Building, placeholder: 'Local Warehouse', type: 'input'},
+  {name: 'productType', label: 'Product Type', icon: Package, placeholder: '', type: 'input'},
+  {name: 'productSource', label: 'Product Source', icon: Building, placeholder: '', type: 'input'},
 ];
 
 export function LeadForm() {
