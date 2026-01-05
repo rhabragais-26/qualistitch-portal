@@ -43,7 +43,7 @@ const formSchema = z.object({
   location: z.string().min(2, {message: 'Location is required.'}),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD']),
   csr: z.string().min(2, {message: 'CSR name is required.'}),
-  orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services']),
+  orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   productType: z.string().min(2, {message: 'Product type is required.'}),
   productSource: z.string().min(2, {message: 'Product source is required.'}),
@@ -79,7 +79,6 @@ export function LeadForm() {
       contactNo: '',
       location: '',
       csr: '',
-      orderType: 'MTO',
       priorityType: 'Regular',
       productType: '',
       productSource: '',
@@ -127,7 +126,7 @@ export function LeadForm() {
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder={`Select a ${fieldInfo.label.toLowerCase()}`} />
+                              <SelectValue placeholder={fieldInfo.name === 'orderType' ? 'Select order type' : `Select a ${fieldInfo.label.toLowerCase()}`} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
