@@ -204,6 +204,29 @@ export function ReportsSummary() {
                 </ResponsiveContainer>
               </ChartContainer>
             </div>
+             <div className="mt-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>CSR</TableHead>
+                    <TableHead className="text-right">Quantity</TableHead>
+                    <TableHead className="text-right">Customers</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {salesRepData.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium flex items-center">
+                         <span className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                        {item.name}
+                      </TableCell>
+                      <TableCell className="text-right">{item.quantity}</TableCell>
+                      <TableCell className="text-right">{item.customerCount}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
