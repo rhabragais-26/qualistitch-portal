@@ -365,18 +365,21 @@ export function LeadForm() {
                         </SelectContent>
                       </Select>
                       <div className='grid grid-cols-2 gap-4'>
-                        <Select onValueChange={setNewOrderColor} value={newOrderColor}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a Color" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {productColors.map((color) => (
-                              <SelectItem key={color} value={color}>
-                                {color}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex items-center gap-2">
+                          <FormLabel className='text-sm'>Color:</FormLabel>
+                          <Select onValueChange={setNewOrderColor} value={newOrderColor}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a Color" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {productColors.map((color) => (
+                                <SelectItem key={color} value={color}>
+                                  {color}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                         <RadioGroup onValueChange={setNewOrderSize} value={newOrderSize} className="flex items-center space-x-2">
                           <FormLabel className='text-sm'>Size:</FormLabel>
                           <Select onValueChange={setNewOrderSize} value={newOrderSize}>
