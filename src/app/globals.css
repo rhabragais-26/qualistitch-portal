@@ -85,6 +85,15 @@
     animation: shining-metal 2s linear infinite;
     background-image: linear-gradient(110deg, var(--tw-gradient-stops));
   }
+
+  @keyframes blink-caret {
+    from, to { opacity: 1 }
+    50% { opacity: 0.5 }
+  }
+
+  .blinking-time {
+    animation: blink-caret 1s step-end infinite;
+  }
 }
 
 @media print {

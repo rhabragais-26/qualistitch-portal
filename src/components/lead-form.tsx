@@ -175,7 +175,8 @@ type LeadFormProps = {
 
 export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const {toast} = useToast();
-  const [dateTime, setDateTime] = useState('');
+  const [dateString, setDateString] = useState('');
+  const [timeString, setTimeString] = useState('');
   const [dayOfWeek, setDayOfWeek] = useState('');
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [newOrderProductType, setNewOrderProductType] = useState('');
@@ -253,20 +254,20 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
       setDayOfWeek(days[now.getDay()]);
       
-      const dateString = now.toLocaleDateString('en-US', {
+      const dateStr = now.toLocaleDateString('en-US', {
         month: 'short',
         day: '2-digit',
         year: 'numeric'
       }).replace(/,/g, '');
+      setDateString(dateStr);
 
-      const timeString = now.toLocaleTimeString('en-US', {
+      const timeStr = now.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
         hour12: true
       });
-      
-      setDateTime(`${dateString} - ${dayOfWeek} | ${timeString}`);
+      setTimeString(timeStr);
     };
     updateDateTime();
     const intervalId = setInterval(updateDateTime, 1000);
@@ -434,7 +435,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
             <CardDescription className="text-gray-600">Fill in the details below to create a new lead. All fields are required.</CardDescription>
           </div>
           <div className="text-sm text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
-            <div>{dateTime}</div>
+            <div>{dateString} - {dayOfWeek} | <span className="blinking-time">{timeString}</span></div>
           </div>
         </div>
       </CardHeader>
