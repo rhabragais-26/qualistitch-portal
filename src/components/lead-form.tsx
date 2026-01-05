@@ -128,7 +128,7 @@ export function LeadForm() {
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder={fieldInfo.name === 'orderType' ? 'Select order Type' : `Select a ${fieldInfo.label.toLowerCase()}`} />
+                              <SelectValue placeholder={fieldInfo.name === 'orderType' ? 'Select Order Type' : `Select a ${fieldInfo.label.toLowerCase()}`} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
