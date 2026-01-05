@@ -66,7 +66,7 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b bg-neutral-800 text-neutral-100">
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
           <div className="mr-4 flex items-center">
             <Link href="/" className="mr-6 flex items-center pl-12">
@@ -77,7 +77,7 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost">
+                  <Button variant="ghost" className="text-neutral-100 hover:bg-neutral-700 hover:text-neutral-100">
                     <PenSquare className="mr-2" />
                     Data Entry
                     <ChevronDown className="ml-2 h-4 w-4" />
@@ -99,7 +99,7 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            <Button variant="ghost" onClick={() => handleNavigation('/order-status')}>
+            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className="text-neutral-100 hover:bg-neutral-700 hover:text-neutral-100">
               <ListOrdered className="mr-2" />
               Order Status
             </Button>
