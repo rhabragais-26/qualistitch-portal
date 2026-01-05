@@ -711,6 +711,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   const [paymentType, setPaymentType] = useState(lead.paymentType);
   const [orderType, setOrderType] = useState(lead.orderType);
   const [priorityType, setPriorityType] = useState(lead.priorityType);
+  const [error, setError] = useState<string | null>(null);
 
   const toTitleCase = (str: string) => {
     if (!str) return '';
@@ -733,13 +734,66 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       setPriorityType(lead.priorityType);
     }
   }, [lead]);
+  
+  const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/\D/g, '');
+    if (rawValue.length <= 11) {
+      let formattedValue = '';
+      if (rawValue.length > 0) {
+        formattedValue = rawValue.substring(0, 4);
+      }
+      if (rawValue.length > 4) {
+        formattedValue += '-' + rawValue.substring(4, 7);
+      }
+      if (rawValue.length > 7) {
+        formattedValue += '-' + rawValue.substring(7, 11);
+      }
+      setContactNumber(formattedValue);
+    }
+  };
 
-  const handleSave = () => {
+  const handleLandlineNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/\D/g, '');
+    if (rawValue.length <= 10) {
+      let formattedValue = '';
+      if (rawValue.length > 0) {
+        formattedValue = rawValue.substring(0, 2);
+      }
+      if (rawValue.length > 2) {
+        formattedValue += '-' + rawValue.substring(2, 6);
+      }
+      if (rawValue.length > 6) {
+        formattedValue += '-' + rawValue.substring(6, 10);
+      }
+      setLandlineNumber(formattedValue);
+    }
+  };
+
+
+  const validateAndSave = () => {
+    setError(null);
+
+    const mobile = contactNumber.trim();
+    const landline = landlineNumber.trim();
+    
+    if (!mobile && !landline) {
+        setError("Either Mobile No. or Landline No. must be provided.");
+        return;
+    }
+    if (mobile && !/^\d{4}-\d{3}-\d{4}$/.test(mobile)) {
+        setError("Mobile number must be in 0000-000-0000 format.");
+        return;
+    }
+    if (landline && !/^\d{2}-\d{4}-\d{4}$/.test(landline)) {
+        setError("Landline number must be in 00-0000-0000 format.");
+        return;
+    }
+
     const updatedLead: Partial<Lead> = {
       customerName: toTitleCase(customerName),
       companyName: companyName ? toTitleCase(companyName) : '-',
-      contactNumber,
-      landlineNumber: landlineNumber || '-',
+      contactNumber: mobile || '-',
+      landlineNumber: landline || '-',
       location: toTitleCase(location),
       salesRepresentative,
       paymentType,
@@ -775,11 +829,11 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
            <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="contactNo">Mobile No.</Label>
-              <Input id="contactNo" value={contactNumber === '-' ? '' : contactNumber} onChange={(e) => setContactNumber(e.target.value)} />
+              <Input id="contactNo" value={contactNumber === '-' ? '' : contactNumber} onChange={handleMobileNoChange} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="landlineNo">Landline No.</Label>
-              <Input id="landlineNo" value={landlineNumber === '-' ? '' : landlineNumber} onChange={(e) => setLandlineNumber(e.target.value)} />
+              <Input id="landlineNo" value={landlineNumber === '-' ? '' : landlineNumber} onChange={handleLandlineNoChange} />
             </div>
           </div>
           <div className="space-y-2">
@@ -817,10 +871,11 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
               </RadioGroup>
             </div>
           </div>
+           {error && <p className="text-sm font-medium text-destructive">{error}</p>}
         </div>
         <DialogFooter>
           <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
-          <Button type="button" onClick={handleSave}>Save Changes</Button>
+          <Button type="button" onClick={validateAndSave}>Save Changes</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
