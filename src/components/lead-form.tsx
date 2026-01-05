@@ -67,7 +67,7 @@ const formFields: {
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
   {name: 'csr', label: 'CSR', icon: UserCheck, type: 'select', options: ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], placeholder: 'Select CSR'},
   {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular'], className: "md:justify-center"},
-  {name: 'productSource', label: 'Product Source', icon: Building, type: 'radio', options: ['Client Provided', 'Stock']},
+  {name: 'productSource', label: 'Product Source', icon: Building, type: 'radio', options: ['Client Provided', 'Stock'], className: "md:justify-center"},
 ];
 
 export function LeadForm() {
