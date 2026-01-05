@@ -467,7 +467,6 @@ export function ReportsSummary() {
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
                     />
-                    <Legend />
                     <Bar dataKey="quantity" radius={[0, 4, 4, 0]}>
                       {soldQtyByProductType.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
