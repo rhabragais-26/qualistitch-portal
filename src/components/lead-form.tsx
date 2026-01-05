@@ -28,7 +28,6 @@ import {
   Building,
   CreditCard,
   MapPin,
-  Package,
   Phone,
   ShoppingBag,
   User,
