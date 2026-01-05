@@ -10,6 +10,8 @@ import { Skeleton } from './ui/skeleton';
 import { format, startOfWeek, endOfWeek, isWithinInterval, startOfMonth, endOfMonth, getMonth, getYear, parse, isValid } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from './ui/button';
+import { Printer } from 'lucide-react';
 
 type Order = {
   quantity: number;
@@ -267,33 +269,39 @@ export function ReportsSummary() {
   return (
     <>
       <div className="mb-8 p-4 bg-card/80 backdrop-blur-sm rounded-lg shadow-xl">
-        <div className="flex gap-4 items-center">
-            <div className='flex items-center gap-2'>
-                <span className="text-sm font-medium text-card-foreground">Year:</span>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                    <SelectTrigger className="w-[120px]">
-                        <SelectValue placeholder="Select Year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {availableYears.map(year => (
-                            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+        <div className="flex justify-between items-center">
+            <div className="flex gap-4 items-center">
+                <div className='flex items-center gap-2'>
+                    <span className="text-sm font-medium text-card-foreground">Year:</span>
+                    <Select value={selectedYear} onValueChange={setSelectedYear}>
+                        <SelectTrigger className="w-[120px]">
+                            <SelectValue placeholder="Select Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableYears.map(year => (
+                                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className='flex items-center gap-2'>
+                    <span className="text-sm font-medium text-card-foreground">Month:</span>
+                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select Month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {months.map(month => (
+                                <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
-            <div className='flex items-center gap-2'>
-                <span className="text-sm font-medium text-card-foreground">Month:</span>
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select Month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {months.map(month => (
-                            <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
+            <Button onClick={() => window.print()}>
+                <Printer className="mr-2 h-4 w-4" />
+                Print Report
+            </Button>
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
