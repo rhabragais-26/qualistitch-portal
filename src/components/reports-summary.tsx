@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
 import { format } from 'date-fns';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
 type Order = {
   quantity: number;
@@ -104,6 +105,8 @@ export function ReportsSummary() {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
   }, [leads]);
+
+  const totalPriorityQuantity = useMemo(() => priorityData.reduce((sum, item) => sum + item.value, 0), [priorityData]);
   
   const dailySalesData = useMemo(() => {
     if (!leads) {
@@ -220,7 +223,7 @@ export function ReportsSummary() {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      outerRadius={100}
+                      outerRadius={80}
                       labelLine={false}
                       label={({
                         cx,
@@ -258,6 +261,31 @@ export function ReportsSummary() {
                   </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
+            </div>
+            <div className="mt-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Priority Type</TableHead>
+                    <TableHead className="text-right">Quantity</TableHead>
+                    <TableHead className="text-right">Percentage</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {priorityData.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium flex items-center">
+                         <span className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                        {item.name}
+                      </TableCell>
+                      <TableCell className="text-right">{item.value}</TableCell>
+                      <TableCell className="text-right">
+                        {totalPriorityQuantity > 0 ? `${((item.value / totalPriorityQuantity) * 100).toFixed(2)}%` : '0.00%'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
