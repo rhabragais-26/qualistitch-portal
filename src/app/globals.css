@@ -33,7 +33,7 @@
   .dark {
     --background: 220 12% 5%; /* Darker Matte Black-ish */
     --foreground: 0 0% 98%; /* Almost white */
-    --card: 220 12% 12%; /* Matte Black for card */
+    --card: 220 12% 15%; /* Matte Black for card */
     --card-foreground: 0 0% 98%; /* Almost white */
     --popover: 220 12% 16%;
     --popover-foreground: 0 0% 98%; /* Almost white */
