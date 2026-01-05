@@ -9,6 +9,7 @@ import {
   ListOrdered,
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
@@ -69,9 +70,13 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
           <div className="mr-4 flex items-center">
             <Link href="/" className="mr-6 flex items-center pl-24">
-              <span className="font-bold font-headline sm:inline-block text-primary text-xl">
-                Qualistitch Inc.
-              </span>
+              <Image 
+                src="https://storage.googleapis.com/project-os-frontend/images/unnamed.png"
+                alt="Qualistitch Inc. Logo"
+                width={150}
+                height={40}
+                priority
+              />
             </Link>
           </div>
           <nav className="flex items-center gap-4">
