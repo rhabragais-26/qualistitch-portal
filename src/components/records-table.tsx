@@ -21,7 +21,7 @@ import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
 import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, PlusCircle, Plus, Minus } from 'lucide-react';
+import { ChevronDown, ChevronUp, PlusCircle, Plus, Minus, Edit, Trash2 } from 'lucide-react';
 import {
   Collapsible,
   CollapsibleContent,
@@ -224,10 +224,10 @@ export function RecordsTable() {
                               </Button>
                           </TableCell>
                         </TableRow>
-                        <TableRow>
-                          <TableCell colSpan={10} className="p-0">
-                             <CollapsibleContent>
-                              <div className="p-4 bg-muted/50">
+                        <CollapsibleContent asChild>
+                          <tr className="bg-muted/50">
+                            <TableCell colSpan={10} className="p-0">
+                               <div className="p-4">
                                  <h4 className="font-semibold mb-2">Ordered Items</h4>
                                  <Table>
                                   <TableHeader>
@@ -236,6 +236,7 @@ export function RecordsTable() {
                                       <TableHead className="py-1">Color</TableHead>
                                       <TableHead className="py-1">Size</TableHead>
                                       <TableHead className="py-1">Quantity</TableHead>
+                                      <TableHead className="text-center py-1">Action</TableHead>
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
@@ -245,14 +246,22 @@ export function RecordsTable() {
                                         <TableCell className="py-1">{order.color}</TableCell>
                                         <TableCell className="py-1">{order.size}</TableCell>
                                         <TableCell className="py-1">{order.quantity}</TableCell>
+                                        <TableCell className="text-center py-1">
+                                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                                            <Edit className="h-4 w-4" />
+                                          </Button>
+                                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </TableCell>
                                       </TableRow>
                                     ))}
                                   </TableBody>
                                 </Table>
                               </div>
-                             </CollapsibleContent>
-                            </TableCell>
-                        </TableRow>
+                             </TableCell>
+                          </tr>
+                        </CollapsibleContent>
                       </React.Fragment>
                   </Collapsible>
                 ))}
