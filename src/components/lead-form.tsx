@@ -95,11 +95,26 @@ const formFields: {
   {name: 'productSource', label: 'Product Source', icon: Building, type: 'radio', options: ['Client Provided', 'Stock'], className: "md:justify-center"},
 ];
 
+const productTypes = [
+  'Executive Jacket 1',
+  'Executive Jacket v2 (with lines)',
+  'Turtle Neck Jacket',
+  'Corporate Jacket',
+  'Reversible v1',
+  'Reversible v2',
+  'Polo Shirt (Coolpass)',
+  'Polo Shirt (Cotton Blend)',
+  'Patches',
+  'Client Owned',
+];
+
 export function LeadForm() {
   const {toast} = useToast();
   const [dateTime, setDateTime] = useState('');
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [newOrderValue, setNewOrderValue] = useState('');
+  const [newOrderProductType, setNewOrderProductType] = useState('');
+
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -162,9 +177,10 @@ export function LeadForm() {
   }
 
   const handleAddOrder = () => {
-    if (newOrderValue.trim()) {
-      append({ value: newOrderValue.trim() });
+    if (newOrderProductType && newOrderValue.trim()) {
+      append({ value: `${newOrderProductType}: ${newOrderValue.trim()}` });
       setNewOrderValue('');
+      setNewOrderProductType('');
       setIsOrderDialogOpen(false);
     }
   };
@@ -275,10 +291,22 @@ export function LeadForm() {
                     <DialogHeader>
                       <DialogTitle>Add Order Details</DialogTitle>
                       <DialogDescription>
-                        Enter the details for the new order.
+                        Select a product type and enter the details for the new order.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
+                      <Select onValueChange={setNewOrderProductType} value={newOrderProductType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a Product Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {productTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Input
                         id="new-order"
                         value={newOrderValue}
@@ -292,7 +320,7 @@ export function LeadForm() {
                           Close
                         </Button>
                       </DialogClose>
-                      <Button type="button" onClick={handleAddOrder}>
+                      <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType || !newOrderValue.trim()}>
                         Add
                       </Button>
                     </DialogFooter>
