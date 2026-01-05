@@ -7,7 +7,7 @@ export default function Home() {
   const [isFormDirty, setIsFormDirty] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen">
       <Header isNewOrderPageDirty={isFormDirty} />
       <main className="flex-1 w-full flex items-start md:items-center justify-center p-4 sm:p-6 lg:p-8">
         <LeadForm onDirtyChange={setIsFormDirty} />
