@@ -416,7 +416,7 @@ export function RecordsTable() {
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.paymentType}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.orderType}</TableCell>
                     <TableCell className="text-center align-middle py-2">
-                      <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)}>
+                      <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2">
                         View
                         {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
                       </Button>
