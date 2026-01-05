@@ -59,6 +59,7 @@ export function RecordsTable() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Date</TableHead>
                   <TableHead>Customer Name</TableHead>
                   <TableHead>Contact No.</TableHead>
                   <TableHead>Location</TableHead>
@@ -66,12 +67,14 @@ export function RecordsTable() {
                   <TableHead>Priority</TableHead>
                   <TableHead>Payment</TableHead>
                   <TableHead>Order Type</TableHead>
-                  <TableHead>Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {leads?.map((lead) => (
                   <TableRow key={lead.id}>
+                    <TableCell>
+                      {new Date(lead.submissionDateTime).toLocaleDateString()}
+                    </TableCell>
                     <TableCell>{lead.customerName}</TableCell>
                     <TableCell>{lead.contactNumber}</TableCell>
                     <TableCell>{lead.location}</TableCell>
@@ -83,9 +86,6 @@ export function RecordsTable() {
                     </TableCell>
                     <TableCell>{lead.paymentType}</TableCell>
                     <TableCell>{lead.orderType}</TableCell>
-                    <TableCell>
-                      {new Date(lead.submissionDateTime).toLocaleDateString()}
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
