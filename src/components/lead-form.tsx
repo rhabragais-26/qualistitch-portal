@@ -723,7 +723,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-              <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95">
+              <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
                 Submit
               </Button>
             </div>
