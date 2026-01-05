@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -41,7 +41,8 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+
 
 const productTypes = [
   'Executive Jacket 1',
@@ -75,6 +76,12 @@ const productColors = [
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
+type Order = {
+  productType: string;
+  color: string;
+  size: string;
+  quantity: number;
+}
 
 export function RecordsTable() {
   const firestore = useFirestore();
@@ -88,6 +95,13 @@ export function RecordsTable() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // State for editing an order
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<{ leadId: string; order: Order; index: number } | null>(null);
+  
+  // State for deleting an order
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingOrder, setDeletingOrder] = useState<{ leadId: string; order: Order; } | null>(null);
 
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -130,7 +144,6 @@ export function RecordsTable() {
 
       const leadDocRef = doc(firestore, 'leads', selectedLeadId);
       
-      // We are not using non-blocking updates here to give feedback to user.
       try {
         await updateDoc(leadDocRef, {
           orders: arrayUnion(newOrder)
@@ -151,6 +164,71 @@ export function RecordsTable() {
     }
   };
 
+  const handleOpenEditDialog = (leadId: string, order: Order, index: number) => {
+    setEditingOrder({ leadId, order, index });
+    setIsEditDialogOpen(true);
+  };
+  
+  const handleEditOrder = async (updatedOrder: Order) => {
+    if (!editingOrder) return;
+  
+    const { leadId, index } = editingOrder;
+    const lead = leads?.find(l => l.id === leadId);
+    if (!lead) return;
+  
+    const updatedOrders = [...lead.orders];
+    updatedOrders[index] = updatedOrder;
+  
+    const leadDocRef = doc(firestore, 'leads', leadId);
+  
+    try {
+      await updateDoc(leadDocRef, { orders: updatedOrders });
+      toast({
+        title: "Order Updated!",
+        description: "The order has been successfully updated.",
+      });
+      setIsEditDialogOpen(false);
+      setEditingOrder(null);
+    } catch (e: any) {
+      console.error("Error updating order: ", e);
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: e.message || "Could not update the order.",
+      });
+    }
+  };
+
+  const handleOpenDeleteDialog = (leadId: string, order: Order) => {
+    setDeletingOrder({ leadId, order });
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const handleDeleteOrder = async () => {
+    if (!deletingOrder) return;
+  
+    const { leadId, order } = deletingOrder;
+    const leadDocRef = doc(firestore, 'leads', leadId);
+  
+    try {
+      await updateDoc(leadDocRef, {
+        orders: arrayRemove(order)
+      });
+      toast({
+        title: "Order Deleted!",
+        description: "The order has been removed from the lead.",
+      });
+      setIsDeleteDialogOpen(false);
+      setDeletingOrder(null);
+    } catch (e: any) {
+      console.error("Error deleting order: ", e);
+      toast({
+        variant: "destructive",
+        title: "Delete Failed",
+        description: e.message || "Could not delete the order.",
+      });
+    }
+  };
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
@@ -225,7 +303,7 @@ export function RecordsTable() {
                           </TableCell>
                         </TableRow>
                         <CollapsibleContent asChild>
-                          <tr className="bg-muted/50">
+                           <tr className="bg-muted/50">
                             <TableCell colSpan={10} className="p-0">
                                <div className="p-4">
                                  <h4 className="font-semibold mb-2 text-card-foreground">Ordered Items</h4>
@@ -247,12 +325,28 @@ export function RecordsTable() {
                                         <TableCell className="py-1 text-card-foreground">{order.size}</TableCell>
                                         <TableCell className="py-1 text-card-foreground">{order.quantity}</TableCell>
                                         <TableCell className="text-center py-1">
-                                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
                                             <Edit className="h-4 w-4" />
                                           </Button>
-                                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
+                                           <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                                <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                              <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                  This action cannot be undone. This will permanently delete the ordered item.
+                                                </AlertDialogDescription>
+                                              </AlertDialogHeader>
+                                              <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteOrder(lead.id, order)}>Delete</AlertDialogAction>
+                                              </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                          </AlertDialog>
                                         </TableCell>
                                       </TableRow>
                                     ))}
@@ -370,6 +464,144 @@ export function RecordsTable() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {editingOrder && (
+        <EditOrderDialog 
+          isOpen={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          order={editingOrder.order}
+          onSave={handleEditOrder}
+          onClose={() => setEditingOrder(null)}
+        />
+      )}
     </Card>
+  );
+}
+
+// Separate component for the Edit Order Dialog
+function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  order: Order;
+  onSave: (updatedOrder: Order) => void;
+  onClose: () => void;
+}) {
+  const [productType, setProductType] = useState(order.productType);
+  const [color, setColor] = useState(order.color);
+  const [size, setSize] = useState(order.size);
+  const [quantity, setQuantity] = useState<number | string>(order.quantity);
+
+  React.useEffect(() => {
+    setProductType(order.productType);
+    setColor(order.color);
+    setSize(order.size);
+    setQuantity(order.quantity);
+  }, [order]);
+
+  const handleSave = () => {
+    const numQuantity = typeof quantity === 'string' ? parseInt(quantity, 10) : quantity;
+    if (productType && color && size && numQuantity > 0) {
+      onSave({ productType, color, size, quantity: numQuantity });
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) onClose();
+      onOpenChange(open);
+    }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit Order</DialogTitle>
+          <DialogDescription>
+            Update the details for the selected order.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="edit-product-type">Product Type:</Label>
+            <Select onValueChange={setProductType} value={productType}>
+              <SelectTrigger id="edit-product-type">
+                <SelectValue placeholder="Select a Product Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {productTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className='grid grid-cols-2 gap-4'>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="edit-color" className='text-sm'>Color:</Label>
+              <Select onValueChange={setColor} value={color}>
+                <SelectTrigger id="edit-color">
+                  <SelectValue placeholder="Select a Color" />
+                </SelectTrigger>
+                <SelectContent>
+                  {productColors.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="edit-size" className='text-sm'>Size:</Label>
+              <Select onValueChange={setSize} value={size}>
+                <SelectTrigger id="edit-size" className="w-[100px]">
+                  <SelectValue placeholder="Size" />
+                </SelectTrigger>
+                <SelectContent>
+                  {productSizes.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 justify-center">
+            <Label htmlFor="edit-quantity">Quantity:</Label>
+            <Button type="button" variant="outline" size="icon" onClick={() => setQuantity(q => Math.max(0, (typeof q === 'string' ? parseInt(q, 10) || 0 : q) - 1))} disabled={quantity === 0}>
+              <Minus className="h-4 w-4" />
+            </Button>
+            <Input
+              id="edit-quantity"
+              type="text"
+              value={quantity}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^[0-9\b]+$/.test(value)) {
+                  setQuantity(value === '' ? '' : parseInt(value, 10));
+                }
+              }}
+              onBlur={(e) => {
+                if (e.target.value === '') {
+                  setQuantity(0);
+                }
+              }}
+              className="w-16 text-center"
+            />
+            <Button type="button" variant="outline" size="icon" onClick={() => setQuantity(q => (typeof q === 'string' ? parseInt(q, 10) || 0 : q) + 1)}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Close
+            </Button>
+          </DialogClose>
+          <Button type="button" onClick={handleSave} disabled={!productType || !color || !size || quantity === 0}>
+            Save Changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
