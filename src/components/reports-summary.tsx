@@ -43,18 +43,6 @@ const COLORS = [
   'hsl(20, 70%, 60%)',
 ];
 
-const renderCustomizedLabel = (props: any) => {
-  const { x, y, width, height, value } = props;
-  const percentage = value;
-  if (percentage === 0) return null;
-  return (
-    <text x={x + width / 2} y={y - 10} fill="hsl(var(--foreground))" textAnchor="middle" dominantBaseline="middle" fontSize={12}>
-      {`${percentage.toFixed(1)}%`}
-    </text>
-  );
-};
-
-
 export function ReportsSummary() {
   const firestore = useFirestore();
   const { user } = useUser();
@@ -85,14 +73,11 @@ export function ReportsSummary() {
       return acc;
     }, {} as { [key: string]: { quantity: number; customers: Set<string> } });
     
-    const totalQuantity = Object.values(statsBySalesRep).reduce((sum, { quantity }) => sum + quantity, 0);
-  
     return Object.entries(statsBySalesRep)
       .map(([name, { quantity, customers }]) => ({
         name,
         quantity,
         customerCount: customers.size,
-        percentage: totalQuantity > 0 ? (quantity / totalQuantity) * 100 : 0
       }))
       .sort((a, b) => b.quantity - a.quantity);
   }, [leads]);
@@ -170,7 +155,7 @@ export function ReportsSummary() {
                   />
                   <Legend />
                   <Bar yAxisId="left" dataKey="quantity" name="Quantity" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]}>
-                     <LabelList dataKey="percentage" position="top" content={renderCustomizedLabel} />
+                     <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" fontSize={12} />
                   </Bar>
                   <Bar yAxisId="right" dataKey="customerCount" name="Customers" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
                     <LabelList dataKey="customerCount" position="top" fill="hsl(var(--foreground))" fontSize={12} />
