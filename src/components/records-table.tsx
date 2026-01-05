@@ -414,7 +414,7 @@ export function RecordsTable() {
         {!isLoading && !error && (
           <div className="border rounded-md">
             <Table>
-              <TableHeader className="bg-gray-800">
+              <TableHeader className="bg-neutral-800">
                 <TableRow>
                   <TableHead className="text-white">Date &amp; Time</TableHead>
                   <TableHead className="text-white">Last Modified</TableHead>
