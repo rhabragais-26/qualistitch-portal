@@ -398,7 +398,6 @@ export function ReportsSummary() {
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
                     />
-                    <Legend />
                     <Line type="monotone" dataKey="quantity" stroke="hsl(var(--chart-1))" strokeWidth={2} activeDot={{ r: 8 }}>
                       <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" />
                     </Line>
@@ -432,7 +431,6 @@ export function ReportsSummary() {
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
                     />
-                    <Legend />
                     <Line type="monotone" dataKey="quantity" stroke="hsl(var(--chart-1))" strokeWidth={2} activeDot={{ r: 8 }}>
                       <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" />
                     </Line>
