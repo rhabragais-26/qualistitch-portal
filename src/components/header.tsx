@@ -1,4 +1,4 @@
-import {ClipboardList, Database} from 'lucide-react';
+import {ClipboardList, Database, PlusSquare} from 'lucide-react';
 import Link from 'next/link';
 import { Button } from './ui/button';
 
@@ -13,6 +13,12 @@ export function Header() {
           </Link>
         </div>
         <nav className="flex items-center gap-4">
+          <Button asChild variant="ghost">
+            <Link href="/">
+              <PlusSquare className="mr-2" />
+              New Order
+            </Link>
+          </Button>
           <Button asChild variant="ghost">
             <Link href="/records">
               <Database className="mr-2" />
