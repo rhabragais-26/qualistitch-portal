@@ -138,7 +138,7 @@ export function RecordsTable() {
 
     return leads.filter(lead =>
       lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-      lead.contactNumber.toLowerCase().includes(lowercasedSearchTerm) ||
+      (lead.contactNumber && lead.contactNumber.toLowerCase().includes(lowercasedSearchTerm)) ||
       (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
       (lead.landlineNumber && lead.landlineNumber.toLowerCase().includes(lowercasedSearchTerm))
     );
@@ -424,7 +424,6 @@ export function RecordsTable() {
                   <TableHead className="text-white">Company Name</TableHead>
                   <TableHead className="text-white">Mobile No.</TableHead>
                   <TableHead className="text-white">Landline No.</TableHead>
-                  <TableHead className="text-white">Location</TableHead>
                   <TableHead className="text-white">CSR</TableHead>
                   <TableHead className="text-white">Priority</TableHead>
                   <TableHead className="text-white">Payment</TableHead>
@@ -449,7 +448,6 @@ export function RecordsTable() {
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.location}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
                     <TableCell className="align-middle py-2">
                       <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
