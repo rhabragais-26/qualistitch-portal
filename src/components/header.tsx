@@ -71,11 +71,12 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
           <div className="mr-4 flex items-center">
             <Link href="/" className="mr-6 flex items-center pl-24">
               <Image 
-                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROArADE6OYlJBctLfOeiooO2rFTKlUEg4dQQ&s"
+                src="https://storage.googleapis.com/project-os-frontend/images/unnamed.png"
                 alt="Qualistitch Inc. Logo"
                 width={150}
                 height={40}
                 priority
+                className="mix-blend-screen"
               />
             </Link>
           </div>
