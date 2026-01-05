@@ -73,7 +73,7 @@ const productColors = [
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
-const csrs = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
+const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 const paymentTypes = ['Partially Paid', 'Fully Paid', 'COD'];
 const orderTypes = ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'];
 const priorityTypes = ['Rush', 'Regular'];
@@ -92,7 +92,7 @@ type Lead = {
   companyName?: string;
   contactNumber: string;
   location: string;
-  csr: string;
+  salesRepresentative: string;
   priorityType: string;
   paymentType: string;
   orderType: string;
@@ -372,7 +372,7 @@ export function RecordsTable() {
                   <TableHead className="text-card-foreground">Company Name</TableHead>
                   <TableHead className="text-card-foreground">Contact No.</TableHead>
                   <TableHead className="text-card-foreground">Location</TableHead>
-                  <TableHead className="text-card-foreground">CSR</TableHead>
+                  <TableHead className="text-card-foreground">Sales Rep.</TableHead>
                   <TableHead className="text-card-foreground">Priority</TableHead>
                   <TableHead className="text-card-foreground">Payment</TableHead>
                   <TableHead className="text-card-foreground">Order Type</TableHead>
@@ -392,7 +392,7 @@ export function RecordsTable() {
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.companyName || '-'}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.contactNumber}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.location}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.csr}</TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.salesRepresentative}</TableCell>
                     <TableCell className="align-middle py-2">
                       <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                         {lead.priorityType}
@@ -638,7 +638,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   const [companyName, setCompanyName] = useState(lead.companyName || '');
   const [contactNumber, setContactNumber] = useState(lead.contactNumber);
   const [location, setLocation] = useState(lead.location);
-  const [csr, setCsr] = useState(lead.csr);
+  const [salesRepresentative, setSalesRepresentative] = useState(lead.salesRepresentative);
   const [paymentType, setPaymentType] = useState(lead.paymentType);
   const [orderType, setOrderType] = useState(lead.orderType);
   const [priorityType, setPriorityType] = useState(lead.priorityType);
@@ -657,7 +657,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       setCompanyName(lead.companyName || '');
       setContactNumber(lead.contactNumber);
       setLocation(lead.location);
-      setCsr(lead.csr);
+      setSalesRepresentative(lead.salesRepresentative);
       setPaymentType(lead.paymentType);
       setOrderType(lead.orderType);
       setPriorityType(lead.priorityType);
@@ -670,7 +670,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       companyName: companyName ? toTitleCase(companyName) : '-',
       contactNumber,
       location: toTitleCase(location),
-      csr,
+      salesRepresentative,
       paymentType,
       orderType,
       priorityType,
@@ -713,10 +713,10 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="csr">CSR</Label>
-              <Select onValueChange={setCsr} value={csr}>
-                <SelectTrigger id="csr"><SelectValue /></SelectTrigger>
-                <SelectContent>{csrs.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+              <Label htmlFor="salesRepresentative">Sales Representative</Label>
+              <Select onValueChange={setSalesRepresentative} value={salesRepresentative}>
+                <SelectTrigger id="salesRepresentative"><SelectValue /></SelectTrigger>
+                <SelectContent>{salesRepresentatives.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">

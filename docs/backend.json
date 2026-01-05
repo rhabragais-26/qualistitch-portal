@@ -30,9 +30,9 @@
           "type": "string",
           "description": "Payment type for the lead (Partially Paid, Fully Paid, COD)."
         },
-        "csr": {
+        "salesRepresentative": {
           "type": "string",
-          "description": "CSR (Customer Service Representative) associated with the lead."
+          "description": "Sales Representative associated with the lead."
         },
         "orderType": {
           "type": "string",
@@ -54,7 +54,7 @@
         "contactNumber",
         "location",
         "paymentType",
-        "csr",
+        "salesRepresentative",
         "orderType",
         "priorityType",
         "productType"

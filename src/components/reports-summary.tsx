@@ -15,7 +15,7 @@ type Order = {
 
 type Lead = {
   id: string;
-  csr: string;
+  salesRepresentative: string;
   orders: Order[];
   [key: string]: any;
 };
@@ -49,23 +49,23 @@ export function ReportsSummary() {
 
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
-  const csrData = useMemo(() => {
+  const salesRepData = useMemo(() => {
     if (!leads) {
       return [];
     }
 
-    const quantityByCsr = leads.reduce((acc, lead) => {
+    const quantityBySalesRep = leads.reduce((acc, lead) => {
       const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-      if (acc[lead.csr]) {
-        acc[lead.csr] += leadQuantity;
+      if (acc[lead.salesRepresentative]) {
+        acc[lead.salesRepresentative] += leadQuantity;
       } else {
-        acc[lead.csr] = leadQuantity;
+        acc[lead.salesRepresentative] = leadQuantity;
       }
       return acc;
     }, {} as { [key: string]: number });
 
-    return Object.entries(quantityByCsr)
-      .map(([csr, quantity]) => ({ csr, quantity }))
+    return Object.entries(quantityBySalesRep)
+      .map(([name, quantity]) => ({ name, quantity }))
       .sort((a, b) => b.quantity - a.quantity);
   }, [leads]);
 
@@ -90,16 +90,16 @@ export function ReportsSummary() {
   return (
     <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle>CSR Performance</CardTitle>
-        <CardDescription>Total quantity of orders processed by each CSR.</CardDescription>
+        <CardTitle>Sales Representative Performance</CardTitle>
+        <CardDescription>Total quantity of orders processed by each Sales Representative.</CardDescription>
       </CardHeader>
       <CardContent>
         <div style={{ height: '400px' }}>
           <ChartContainer config={chartConfig} className="w-full h-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={csrData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={salesRepData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis dataKey="csr" tick={{ fill: 'hsl(var(--foreground))' }} />
+                <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))' }} />
                 <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
                 <Tooltip
                   cursor={{ fill: 'hsl(var(--muted))' }}
@@ -107,7 +107,7 @@ export function ReportsSummary() {
                 />
                 <Bar dataKey="quantity" radius={[4, 4, 0, 0]}>
                    <LabelList dataKey="quantity" position="top" style={{ fill: 'hsl(var(--foreground))' }} />
-                   {csrData.map((entry, index) => (
+                   {salesRepData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Bar>

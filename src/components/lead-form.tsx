@@ -84,7 +84,7 @@ const formSchema = z.object({
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
-  csr: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a CSR."}),
+  salesRepresentative: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a Sales Representative."}),
   orders: z.array(orderSchema).min(1, "Please add at least one order."),
 });
 
@@ -105,7 +105,7 @@ const formFields: {
   {name: 'location', label: 'Location', icon: MapPin, type: 'input'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
-  {name: 'csr', label: 'CSR', icon: UserCheck, type: 'select', options: ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], placeholder: 'Select CSR'},
+  {name: 'salesRepresentative', label: 'Sales Representative', icon: UserCheck, type: 'select', options: ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], placeholder: 'Select Sales Representative'},
   {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular'], className: "md:justify-center"},
 ];
 
@@ -188,7 +188,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       paymentType: undefined,
       orderType: undefined,
       priorityType: 'Regular',
-      csr: undefined,
+      salesRepresentative: undefined,
       orders: [],
     },
   });
@@ -214,7 +214,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       paymentType: undefined,
       orderType: undefined,
       priorityType: 'Regular',
-      csr: undefined,
+      salesRepresentative: undefined,
       orders: [],
     });
   }
@@ -239,7 +239,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       contactNumber: values.contactNo,
       location: toTitleCase(values.location),
       paymentType: values.paymentType,
-      csr: values.csr,
+      salesRepresentative: values.salesRepresentative,
       orderType: values.orderType,
       priorityType: values.priorityType,
       productType: values.orders.map(o => o.productType).join(', '),
