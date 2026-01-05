@@ -45,13 +45,13 @@ const COLORS = [
   'hsl(var(--chart-3))',
   'hsl(var(--chart-4))',
   'hsl(var(--chart-5))',
-  'hsl(220, 70%, 60%)',
-  'hsl(340, 70%, 60%)',
-  'hsl(100, 70%, 60%)',
-  'hsl(20, 70%, 60%)',
-  'hsl(260, 70%, 60%)',
-  'hsl(60, 70%, 60%)',
-  'hsl(180, 70%, 60%)',
+  'hsl(220, 70%, 70%)',
+  'hsl(340, 70%, 70%)',
+  'hsl(100, 70%, 70%)',
+  'hsl(20, 70%, 70%)',
+  'hsl(260, 70%, 70%)',
+  'hsl(60, 70%, 70%)',
+  'hsl(180, 70%, 70%)',
 ];
 
 export function ReportsSummary() {
@@ -186,10 +186,6 @@ export function ReportsSummary() {
                     </Select>
                 </div>
             </div>
-            <Button onClick={() => window.print()}>
-                <Printer className="mr-2 h-4 w-4" />
-                Print Report
-            </Button>
         </div>
       </div>
       <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
