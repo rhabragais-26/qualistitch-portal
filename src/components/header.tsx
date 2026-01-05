@@ -29,6 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
@@ -70,7 +71,7 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
           <div className="mr-4 flex items-center">
             <Link href="/" className="mr-6 flex items-center pl-12">
-              <span className="text-2xl font-bold text-primary">Qualistitch Inc.</span>
+              <span className={cn("text-2xl font-bold shining-metal")}>Qualistitch Inc.</span>
             </Link>
           </div>
           <nav className="flex items-center gap-4">
