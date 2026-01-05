@@ -79,7 +79,7 @@ const orderSchema = z.object({
 const formSchema = z.object({
   customerName: z.string().min(2, {message: 'Customer name must be at least 2 characters.'}),
   companyName: z.string().optional(),
-  contactNo: z.string().min(10, {message: 'Please enter a valid contact number.'}).regex(/^[0-9]+$/, {message: "Contact number must be in numerical format."}),
+  contactNo: z.string().regex(/^\d{4}-\d{3}-\d{4}$/, {message: 'Contact number must be in 0000-000-0000 format.'}),
   location: z.string().min(2, {message: 'Location is required.'}),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
@@ -246,6 +246,23 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       .join(' ');
   };
 
+  const handleContactNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+    const rawValue = e.target.value.replace(/\D/g, '');
+    if (rawValue.length <= 11) {
+      let formattedValue = '';
+      if (rawValue.length > 0) {
+        formattedValue = rawValue.substring(0, 4);
+      }
+      if (rawValue.length > 4) {
+        formattedValue += '-' + rawValue.substring(4, 7);
+      }
+      if (rawValue.length > 7) {
+        formattedValue += '-' + rawValue.substring(7, 11);
+      }
+      field.onChange(formattedValue);
+    }
+  };
+
   function onSubmit(values: FormValues) {
     const leadId = uuidv4();
     const leadsRef = collection(firestore, 'leads');
@@ -340,7 +357,15 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       </FormLabel>
                       {fieldInfo.type === 'input' || fieldInfo.type === 'tel' ? (
                         <FormControl>
-                          <Input type={fieldInfo.type} {...field} />
+                          <Input
+                            type={fieldInfo.type}
+                            {...field}
+                            onChange={(e) =>
+                              fieldInfo.name === 'contactNo'
+                                ? handleContactNoChange(e, field)
+                                : field.onChange(e)
+                            }
+                          />
                         </FormControl>
                       ) : fieldInfo.type === 'select' ? (
                          <Select onValueChange={field.onChange} value={field.value || ''}>
