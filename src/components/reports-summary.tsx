@@ -7,7 +7,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
 type Order = {
@@ -113,17 +113,26 @@ export function ReportsSummary() {
       return [];
     }
 
-    const salesByDay = leads.reduce((acc, lead) => {
-      const date = format(new Date(lead.submissionDateTime), 'MMM d, yyyy');
-      const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+    const now = new Date();
+    const startOfThisWeek = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of the week
+    const endOfThisWeek = endOfWeek(now, { weekStartsOn: 1 });
 
-      if (!acc[date]) {
-        acc[date] = 0;
-      }
-      acc[date] += leadQuantity;
-      
-      return acc;
-    }, {} as { [key: string]: number });
+    const salesByDay = leads
+      .filter(lead => {
+        const submissionDate = new Date(lead.submissionDateTime);
+        return isWithinInterval(submissionDate, { start: startOfThisWeek, end: endOfThisWeek });
+      })
+      .reduce((acc, lead) => {
+        const date = format(new Date(lead.submissionDateTime), 'MMM d, yyyy');
+        const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+
+        if (!acc[date]) {
+          acc[date] = 0;
+        }
+        acc[date] += leadQuantity;
+        
+        return acc;
+      }, {} as { [key: string]: number });
 
     return Object.entries(salesByDay)
       .map(([date, quantity]) => ({
@@ -317,7 +326,7 @@ export function ReportsSummary() {
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>Daily Sold QTY</CardTitle>
-            <CardDescription>Total quantity of items sold each day.</CardDescription>
+            <CardDescription>Total quantity of items sold each day for the current week.</CardDescription>
           </CardHeader>
           <CardContent>
             <div style={{ height: '300px' }}>
