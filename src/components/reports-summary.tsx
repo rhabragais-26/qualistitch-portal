@@ -48,6 +48,9 @@ const COLORS = [
   'hsl(340, 70%, 60%)',
   'hsl(100, 70%, 60%)',
   'hsl(20, 70%, 60%)',
+  'hsl(260, 70%, 60%)',
+  'hsl(60, 70%, 60%)',
+  'hsl(180, 70%, 60%)',
 ];
 
 export function ReportsSummary() {
@@ -268,7 +271,7 @@ export function ReportsSummary() {
 
   return (
     <>
-      <div className="mb-8 p-4 bg-card/80 backdrop-blur-sm rounded-lg shadow-xl">
+      <div className="mb-8 p-4 bg-card/80 backdrop-blur-sm rounded-lg shadow-xl no-print">
         <div className="flex justify-between items-center">
             <div className="flex gap-4 items-center">
                 <div className='flex items-center gap-2'>
@@ -304,7 +307,7 @@ export function ReportsSummary() {
             </Button>
         </div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>CSR Performance</CardTitle>

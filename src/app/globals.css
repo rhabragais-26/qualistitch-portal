@@ -80,3 +80,32 @@
     z-index: -1;
   }
 }
+
+@media print {
+  body::before {
+    display: none;
+  }
+  header, .no-print {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  .printable-area {
+    padding: 2rem;
+  }
+  .card {
+    border: 1px solid #ccc;
+    box-shadow: none;
+    background: #fff !important;
+  }
+  .card, .card * {
+    color: #000 !important;
+  }
+  .recharts-wrapper {
+    color: #000 !important;
+  }
+  .recharts-text {
+    fill: #000 !important;
+  }
+}
