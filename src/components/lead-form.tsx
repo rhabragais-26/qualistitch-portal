@@ -55,7 +55,6 @@ const formFields: {
   name: keyof FormValues;
   label: string;
   icon: React.ElementType;
-  placeholder?: string;
   type: 'input' | 'select' | 'radio';
   options?: string[];
 }[] = [
@@ -144,7 +143,7 @@ export function LeadForm() {
                           <RadioGroup
                             onValueChange={field.onChange}
                             defaultValue={field.value}
-                            className="flex items-center space-x-4 pt-2 pl-8"
+                            className="flex justify-center items-center space-x-4 pt-2"
                           >
                             {fieldInfo.options?.map((option) => (
                               <FormItem key={option} className="flex items-center space-x-2 space-y-0">
