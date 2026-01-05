@@ -390,7 +390,7 @@ export function RecordsTable() {
             </div>
              <div className="w-full max-w-sm">
               <Input
-                placeholder="Search by customer name or contact no..."
+                placeholder="Search customer name, company name or contact no."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="bg-gray-100 text-black placeholder:text-gray-500"
