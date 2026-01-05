@@ -251,7 +251,7 @@ export function LeadForm() {
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="font-headline text-2xl">Create New Lead Entry for Master Tracker</CardTitle>
+            <CardTitle className="font-headline text-xl">Create New Lead Entry for Master Tracker</CardTitle>
             <CardDescription>Fill in the details below to create a new lead. All fields are required.</CardDescription>
           </div>
           <div className="text-sm text-muted-foreground font-mono whitespace-nowrap pt-1">
@@ -327,27 +327,27 @@ export function LeadForm() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Product Type</TableHead>
-                        <TableHead>Color</TableHead>
-                        <TableHead>Size</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
+                        <TableHead className="py-2">Product Type</TableHead>
+                        <TableHead className="py-2">Color</TableHead>
+                        <TableHead className="py-2">Size</TableHead>
+                        <TableHead className="py-2">Quantity</TableHead>
+                        <TableHead className="text-right py-2">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {fields.map((field, index) => (
                         <TableRow key={field.id}>
-                          <TableCell>{form.getValues(`orders.${index}.productType`)}</TableCell>
-                          <TableCell>{form.getValues(`orders.${index}.color`)}</TableCell>
-                          <TableCell>{form.getValues(`orders.${index}.size`)}</TableCell>
-                          <TableCell>{form.getValues(`orders.${index}.quantity`)}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="py-2">{form.getValues(`orders.${index}.productType`)}</TableCell>
+                          <TableCell className="py-2">{form.getValues(`orders.${index}.color`)}</TableCell>
+                          <TableCell className="py-2">{form.getValues(`orders.${index}.size`)}</TableCell>
+                          <TableCell className="py-2">{form.getValues(`orders.${index}.quantity`)}</TableCell>
+                          <TableCell className="text-right py-2">
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
                               onClick={() => remove(index)}
-                              className="text-destructive hover:text-destructive"
+                              className="text-destructive hover:text-destructive h-8 w-8"
                             >
                               <X className="h-4 w-4" />
                             </Button>
