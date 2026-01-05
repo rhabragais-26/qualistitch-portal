@@ -59,6 +59,7 @@ export function ReportsSummary() {
   const { user } = useUser();
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
+  const [selectedWeek, setSelectedWeek] = useState<string>('');
   
   const [reportData, setReportData] = useState<GenerateReportOutput | null>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
@@ -89,6 +90,7 @@ export function ReportsSummary() {
         leads,
         selectedYear,
         selectedMonth,
+        selectedWeek,
       });
       setReportData(result);
     } catch (e: any) {
@@ -97,13 +99,13 @@ export function ReportsSummary() {
     } finally {
       setIsReportLoading(false);
     }
-  }, [leads, selectedYear, selectedMonth]);
+  }, [leads, selectedYear, selectedMonth, selectedWeek]);
 
   useEffect(() => {
     if (leads) {
       processReport();
     }
-  }, [leads, selectedYear, selectedMonth, processReport]);
+  }, [leads, selectedYear, selectedMonth, selectedWeek, processReport]);
 
   const totalPriorityQuantity = useMemo(() => reportData?.priorityData.reduce((sum, item) => sum + item.value, 0) || 0, [reportData?.priorityData]);
   
@@ -152,7 +154,7 @@ export function ReportsSummary() {
      return <p>No data available to generate reports.</p>;
   }
 
-  const { salesRepData, priorityData, monthlySalesData, soldQtyByProductType, availableYears } = reportData;
+  const { salesRepData, priorityData, monthlySalesData, soldQtyByProductType, availableYears, availableWeeks } = reportData;
 
   return (
     <>
@@ -161,7 +163,7 @@ export function ReportsSummary() {
             <div className="flex gap-4 items-center">
                 <div className='flex items-center gap-2'>
                     <span className="text-sm font-medium text-card-foreground">Year:</span>
-                    <Select value={selectedYear} onValueChange={setSelectedYear}>
+                    <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setSelectedWeek(''); }}>
                         <SelectTrigger className="w-[120px]">
                             <SelectValue placeholder="Select Year" />
                         </SelectTrigger>
@@ -174,13 +176,27 @@ export function ReportsSummary() {
                 </div>
                 <div className='flex items-center gap-2'>
                     <span className="text-sm font-medium text-card-foreground">Month:</span>
-                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                    <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setSelectedWeek(''); }} disabled={!!selectedWeek}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Select Month" />
                         </SelectTrigger>
                         <SelectContent>
                             {months.map(month => (
                                 <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                 <div className='flex items-center gap-2'>
+                    <span className="text-sm font-medium text-card-foreground">Week:</span>
+                    <Select value={selectedWeek} onValueChange={setSelectedWeek}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select Week" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">All Year</SelectItem>
+                            {availableWeeks.map(week => (
+                                <SelectItem key={week} value={week}>{week}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>

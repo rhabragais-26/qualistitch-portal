@@ -42,6 +42,7 @@ const GenerateReportInputSchema = z.object({
   leads: z.array(z.any()).describe('An array of lead objects.'),
   selectedYear: z.string().describe('The selected year for the report.'),
   selectedMonth: z.string().describe('The selected month for the report.'),
+  selectedWeek: z.string().optional().describe('The selected week for the report (e.g., "mm.dd-mm.dd").'),
 });
 export type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 
@@ -78,6 +79,7 @@ const GenerateReportOutputSchema = z.object({
     })
   ),
   availableYears: z.array(z.number()),
+  availableWeeks: z.array(z.string()),
 });
 export type GenerateReportOutput = z.infer<typeof GenerateReportOutputSchema>;
 
@@ -93,7 +95,7 @@ const generateReportFlow = ai.defineFlow(
     inputSchema: GenerateReportInputSchema,
     outputSchema: GenerateReportOutputSchema,
   },
-  async ({ leads, selectedYear, selectedMonth }) => {
+  async ({ leads, selectedYear, selectedMonth, selectedWeek }) => {
     const typedLeads = leads as Lead[];
 
     const availableYears = Array.from(
@@ -103,8 +105,36 @@ const generateReportFlow = ai.defineFlow(
     const year = parseInt(selectedYear);
     const month = parseInt(selectedMonth) - 1; // month is 0-indexed in Date
 
-    const filteredLeads =
-      isNaN(year) || isNaN(month)
+    const availableWeeks = Array.from(new Set(
+      typedLeads
+        .filter(lead => getYear(new Date(lead.submissionDateTime)) === year)
+        .map(lead => {
+          const date = new Date(lead.submissionDateTime);
+          const start = startOfWeek(date, { weekStartsOn: 1 });
+          const end = endOfWeek(date, { weekStartsOn: 1 });
+          return `${format(start, 'MM.dd')}-${format(end, 'MM.dd')}`;
+        })
+    )).sort((a,b) => {
+        const a_start = parse(a.split('-')[0], 'MM.dd', new Date(year, 0, 1));
+        const b_start = parse(b.split('-')[0], 'MM.dd', new Date(year, 0, 1));
+        return b_start.getTime() - a_start.getTime();
+    });
+
+    const filteredLeads = (() => {
+      if (selectedWeek) {
+        const [startStr, endStr] = selectedWeek.split('-');
+        const weekStart = parse(startStr, 'MM.dd', new Date(year, 0, 1));
+        const weekEnd = parse(endStr, 'MM.dd', new Date(year, 0, 1));
+        
+        if(isValid(weekStart) && isValid(weekEnd)) {
+             return typedLeads.filter(lead => {
+                const submissionDate = new Date(lead.submissionDateTime);
+                return isWithinInterval(submissionDate, { start: weekStart, end: weekEnd });
+            });
+        }
+      }
+      
+      return isNaN(year) || isNaN(month)
         ? typedLeads
         : typedLeads.filter((lead) => {
             const submissionDate = new Date(lead.submissionDateTime);
@@ -113,6 +143,7 @@ const generateReportFlow = ai.defineFlow(
               getMonth(submissionDate) === month
             );
           });
+    })();
 
     const salesRepData = (() => {
       const statsBySalesRep = filteredLeads.reduce(
@@ -285,6 +316,7 @@ const generateReportFlow = ai.defineFlow(
       monthlySalesData,
       soldQtyByProductType,
       availableYears,
+      availableWeeks,
     };
   }
 );
