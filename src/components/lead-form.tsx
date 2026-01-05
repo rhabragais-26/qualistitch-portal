@@ -34,7 +34,9 @@ import {
   User,
   UserCheck,
   X,
-  PlusCircle
+  PlusCircle,
+  Plus,
+  Minus
 } from 'lucide-react';
 import {RadioGroup, RadioGroupItem} from './ui/radio-group';
 import { cn } from '@/lib/utils';
@@ -67,6 +69,7 @@ const orderSchema = z.object({
   productType: z.string().min(1, "Product type cannot be empty."),
   color: z.string().min(1, "Color cannot be empty."),
   size: z.string().min(1, "Size cannot be empty."),
+  quantity: z.number().min(1, "Quantity must be at least 1."),
 });
 
 const formSchema = z.object({
@@ -140,6 +143,7 @@ export function LeadForm() {
   const [newOrderProductType, setNewOrderProductType] = useState('');
   const [newOrderColor, setNewOrderColor] = useState('');
   const [newOrderSize, setNewOrderSize] = useState('');
+  const [newOrderQuantity, setNewOrderQuantity] = useState(0);
 
 
   useEffect(() => {
@@ -203,21 +207,23 @@ export function LeadForm() {
   }
 
   const handleAddOrder = () => {
-    if (newOrderProductType && newOrderColor && newOrderSize) {
+    if (newOrderProductType && newOrderColor && newOrderSize && newOrderQuantity > 0) {
       append({
         productType: newOrderProductType,
         color: newOrderColor,
-        size: newOrderSize
+        size: newOrderSize,
+        quantity: newOrderQuantity
       });
       setNewOrderProductType('');
       setNewOrderColor('');
       setNewOrderSize('');
+      setNewOrderQuantity(0);
       setIsOrderDialogOpen(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-gray-900 text-white">
+    <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-gray-500/10 text-white">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -300,6 +306,7 @@ export function LeadForm() {
                         <TableHead>Product Type</TableHead>
                         <TableHead>Color</TableHead>
                         <TableHead>Size</TableHead>
+                        <TableHead>Quantity</TableHead>
                         <TableHead className="text-right">Action</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -309,6 +316,7 @@ export function LeadForm() {
                           <TableCell>{form.getValues(`orders.${index}.productType`)}</TableCell>
                           <TableCell>{form.getValues(`orders.${index}.color`)}</TableCell>
                           <TableCell>{form.getValues(`orders.${index}.size`)}</TableCell>
+                          <TableCell>{form.getValues(`orders.${index}.quantity`)}</TableCell>
                           <TableCell className="text-right">
                             <Button
                               type="button"
@@ -385,6 +393,16 @@ export function LeadForm() {
                           </Select>
                         </RadioGroup>
                       </div>
+                       <div className="flex items-center gap-2 justify-center">
+                        <FormLabel>Quantity:</FormLabel>
+                        <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => Math.max(0, q - 1))} disabled={newOrderQuantity === 0}>
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <Input type="number" value={newOrderQuantity} readOnly className="w-16 text-center" />
+                        <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => q + 1)}>
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     <DialogFooter>
                       <DialogClose asChild>
@@ -392,7 +410,7 @@ export function LeadForm() {
                           Close
                         </Button>
                       </DialogClose>
-                      <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType || !newOrderColor || !newOrderSize}>
+                      <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType || !newOrderColor || !newOrderSize || newOrderQuantity === 0}>
                         Add
                       </Button>
                     </DialogFooter>
@@ -431,3 +449,5 @@ export function LeadForm() {
     </Card>
   );
 }
+
+    
