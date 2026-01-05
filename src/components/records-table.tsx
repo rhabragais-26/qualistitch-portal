@@ -414,20 +414,20 @@ export function RecordsTable() {
         {!isLoading && !error && (
           <div className="border rounded-md">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-gray-800">
                 <TableRow>
-                  <TableHead className="text-black">Date &amp; Time</TableHead>
-                  <TableHead className="text-black">Last Modified</TableHead>
-                  <TableHead className="text-black">Customer Name</TableHead>
-                  <TableHead className="text-black">Company Name</TableHead>
-                  <TableHead className="text-black">Contact No.</TableHead>
-                  <TableHead className="text-black">Location</TableHead>
-                  <TableHead className="text-black">CSR</TableHead>
-                  <TableHead className="text-black">Priority</TableHead>
-                  <TableHead className="text-black">Payment</TableHead>
-                  <TableHead className="text-black">Order Type</TableHead>
-                  <TableHead className="text-center text-black">Items</TableHead>
-                  <TableHead className="text-center text-black">Actions</TableHead>
+                  <TableHead className="text-white">Date &amp; Time</TableHead>
+                  <TableHead className="text-white">Last Modified</TableHead>
+                  <TableHead className="text-white">Customer Name</TableHead>
+                  <TableHead className="text-white">Company Name</TableHead>
+                  <TableHead className="text-white">Contact No.</TableHead>
+                  <TableHead className="text-white">Location</TableHead>
+                  <TableHead className="text-white">CSR</TableHead>
+                  <TableHead className="text-white">Priority</TableHead>
+                  <TableHead className="text-white">Payment</TableHead>
+                  <TableHead className="text-white">Order Type</TableHead>
+                  <TableHead className="text-center text-white">Items</TableHead>
+                  <TableHead className="text-center text-white">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
