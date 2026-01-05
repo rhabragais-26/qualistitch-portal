@@ -27,7 +27,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -192,69 +191,71 @@ export function RecordsTable() {
               </TableHeader>
               <TableBody>
                 {leads?.map((lead) => (
-                  <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
-                    <React.Fragment>
+                  <React.Fragment key={lead.id}>
+                    <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
                       <TableRow>
-                        <TableCell className="text-sm align-middle py-2">
-                          {new Date(lead.submissionDateTime).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-sm align-middle py-2">{lead.customerName}</TableCell>
-                        <TableCell className="text-sm align-middle py-2">{lead.contactNumber}</TableCell>
-                        <TableCell className="text-sm align-middle py-2">{lead.location}</TableCell>
-                        <TableCell className="text-sm align-middle py-2">{lead.csr}</TableCell>
-                        <TableCell className="align-middle py-2">
-                          <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                            {lead.priorityType}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm align-middle py-2">{lead.paymentType}</TableCell>
-                        <TableCell className="text-sm align-middle py-2">{lead.orderType}</TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                          <CollapsibleTrigger asChild>
-                             <Button variant="ghost" size="sm">
-                              View
-                              {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-                            </Button>
-                          </CollapsibleTrigger>
-                        </TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                           <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
-                              <PlusCircle className="h-4 w-4 mr-1" />
-                              Add Order
-                            </Button>
-                        </TableCell>
-                      </TableRow>
+                          <TableCell className="text-sm align-middle py-2">
+                            {new Date(lead.submissionDateTime).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-sm align-middle py-2">{lead.customerName}</TableCell>
+                          <TableCell className="text-sm align-middle py-2">{lead.contactNumber}</TableCell>
+                          <TableCell className="text-sm align-middle py-2">{lead.location}</TableCell>
+                          <TableCell className="text-sm align-middle py-2">{lead.csr}</TableCell>
+                          <TableCell className="align-middle py-2">
+                            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                              {lead.priorityType}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm align-middle py-2">{lead.paymentType}</TableCell>
+                          <TableCell className="text-sm align-middle py-2">{lead.orderType}</TableCell>
+                          <TableCell className="text-center align-middle py-2">
+                            <CollapsibleTrigger asChild>
+                               <Button variant="ghost" size="sm">
+                                View
+                                {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                              </Button>
+                            </CollapsibleTrigger>
+                          </TableCell>
+                          <TableCell className="text-center align-middle py-2">
+                             <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
+                                <PlusCircle className="h-4 w-4 mr-1" />
+                                Add Order
+                              </Button>
+                          </TableCell>
+                        </TableRow>
+                    </Collapsible>
+                    {openLeadId === lead.id && (
                       <CollapsibleContent asChild>
                         <TableRow>
                           <TableCell colSpan={10} className="p-0">
-                            <div className="p-4 bg-muted/50">
-                               <h4 className="font-semibold mb-2">Ordered Items</h4>
-                               <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead className="py-1">Product Type</TableHead>
-                                    <TableHead className="py-1">Color</TableHead>
-                                    <TableHead className="py-1">Size</TableHead>
-                                    <TableHead className="py-1">Quantity</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {lead.orders?.map((order: any, index: number) => (
-                                    <TableRow key={index}>
-                                      <TableCell className="py-1">{order.productType}</TableCell>
-                                      <TableCell className="py-1">{order.color}</TableCell>
-                                      <TableCell className="py-1">{order.size}</TableCell>
-                                      <TableCell className="py-1">{order.quantity}</TableCell>
+                              <div className="p-4 bg-muted/50">
+                                 <h4 className="font-semibold mb-2">Ordered Items</h4>
+                                 <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead className="py-1">Product Type</TableHead>
+                                      <TableHead className="py-1">Color</TableHead>
+                                      <TableHead className="py-1">Size</TableHead>
+                                      <TableHead className="py-1">Quantity</TableHead>
                                     </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </div>
-                          </TableCell>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {lead.orders?.map((order: any, index: number) => (
+                                      <TableRow key={index}>
+                                        <TableCell className="py-1">{order.productType}</TableCell>
+                                        <TableCell className="py-1">{order.color}</TableCell>
+                                        <TableCell className="py-1">{order.size}</TableCell>
+                                        <TableCell className="py-1">{order.quantity}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </TableCell>
                         </TableRow>
                       </CollapsibleContent>
-                    </React.Fragment>
-                  </Collapsible>
+                    )}
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
