@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
-import { format, startOfWeek, endOfWeek, isWithinInterval, startOfMonth, endOfMonth, getMonth, getYear } from 'date-fns';
+import { format, startOfWeek, endOfWeek, isWithinInterval, startOfMonth, endOfMonth, getMonth, getYear, parse, isValid } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type Order = {
   quantity: number;
@@ -50,6 +51,8 @@ const COLORS = [
 export function ReportsSummary() {
   const firestore = useFirestore();
   const { user } = useUser();
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
 
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -58,12 +61,42 @@ export function ReportsSummary() {
 
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
+  const availableYears = useMemo(() => {
+    if (!leads) return [];
+    const years = new Set(leads.map(lead => getYear(new Date(lead.submissionDateTime))));
+    return Array.from(years).sort((a, b) => b - a);
+  }, [leads]);
+
+  const months = useMemo(() => [
+      { value: '1', label: 'January' }, { value: '2', label: 'February' },
+      { value: '3', label: 'March' }, { value: '4', label: 'April' },
+      { value: '5', label: 'May' }, { value: '6', label: 'June' },
+      { value: '7', label: 'July' }, { value: '8', label: 'August' },
+      { value: '9', label: 'September' }, { value: '10', label: 'October' },
+      { value: '11', label: 'November' }, { value: '12', label: 'December' },
+  ], []);
+
+  const filteredLeads = useMemo(() => {
+    if (!leads) return [];
+    
+    const year = parseInt(selectedYear);
+    const month = parseInt(selectedMonth) - 1; // month is 0-indexed in Date
+
+    if (isNaN(year) || isNaN(month)) return leads;
+
+    return leads.filter(lead => {
+      const submissionDate = new Date(lead.submissionDateTime);
+      return getYear(submissionDate) === year && getMonth(submissionDate) === month;
+    });
+  }, [leads, selectedYear, selectedMonth]);
+
+
   const salesRepData = useMemo(() => {
-    if (!leads) {
+    if (!filteredLeads) {
       return [];
     }
   
-    const statsBySalesRep = leads.reduce((acc, lead) => {
+    const statsBySalesRep = filteredLeads.reduce((acc, lead) => {
       const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
       const csr = lead.salesRepresentative;
       
@@ -84,14 +117,14 @@ export function ReportsSummary() {
         customerCount: customers.size,
       }))
       .sort((a, b) => b.quantity - a.quantity);
-  }, [leads]);
+  }, [filteredLeads]);
   
   const priorityData = useMemo(() => {
-    if (!leads) {
+    if (!filteredLeads) {
       return [];
     }
 
-    const quantityByPriority = leads.reduce((acc, lead) => {
+    const quantityByPriority = filteredLeads.reduce((acc, lead) => {
       const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
       const priority = lead.priorityType || 'Regular';
       if (acc[priority]) {
@@ -105,25 +138,16 @@ export function ReportsSummary() {
     return Object.entries(quantityByPriority)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [leads]);
+  }, [filteredLeads]);
 
   const totalPriorityQuantity = useMemo(() => priorityData.reduce((sum, item) => sum + item.value, 0), [priorityData]);
   
   const dailySalesData = useMemo(() => {
-    if (!leads) {
+    if (!filteredLeads) {
       return [];
     }
 
-    const now = new Date();
-    const startOfThisWeek = startOfWeek(now, { weekStartsOn: 1 }); // Monday as start of the week
-    const endOfThisWeek = endOfWeek(now, { weekStartsOn: 1 });
-
-    const salesByDay = leads
-      .filter(lead => {
-        const submissionDate = new Date(lead.submissionDateTime);
-        return isWithinInterval(submissionDate, { start: startOfThisWeek, end: endOfThisWeek });
-      })
-      .reduce((acc, lead) => {
+    const salesByDay = filteredLeads.reduce((acc, lead) => {
         const date = format(new Date(lead.submissionDateTime), 'MMM d, yyyy');
         const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
 
@@ -141,40 +165,46 @@ export function ReportsSummary() {
         quantity,
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [leads]);
+  }, [filteredLeads]);
   
   const monthlySalesData = useMemo(() => {
     if (!leads) {
       return [];
     }
   
-    const salesByMonth = leads.reduce((acc, lead) => {
-      const submissionDate = new Date(lead.submissionDateTime);
-      const month = format(submissionDate, 'MMM yyyy');
-      const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-  
-      if (!acc[month]) {
-        acc[month] = 0;
-      }
-      acc[month] += leadQuantity;
-      
-      return acc;
-    }, {} as { [key: string]: number });
+    const salesByMonth = leads
+      .filter(lead => {
+        if (!selectedYear) return true;
+        const submissionDate = new Date(lead.submissionDateTime);
+        return getYear(submissionDate) === parseInt(selectedYear);
+      })
+      .reduce((acc, lead) => {
+        const submissionDate = new Date(lead.submissionDateTime);
+        const month = format(submissionDate, 'MMM yyyy');
+        const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+    
+        if (!acc[month]) {
+          acc[month] = 0;
+        }
+        acc[month] += leadQuantity;
+        
+        return acc;
+      }, {} as { [key: string]: number });
   
     return Object.entries(salesByMonth)
       .map(([date, quantity]) => ({
         date,
         quantity,
       }))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [leads]);
+      .sort((a, b) => parse(a.date, 'MMM yyyy', new Date()).getTime() - parse(b.date, 'MMM yyyy', new Date()).getTime());
+  }, [leads, selectedYear]);
   
   const soldQtyByProductType = useMemo(() => {
-    if (!leads) {
+    if (!filteredLeads) {
       return [];
     }
 
-    const quantityByProductType = leads.reduce((acc, lead) => {
+    const quantityByProductType = filteredLeads.reduce((acc, lead) => {
       lead.orders.forEach(order => {
         const productType = order.productType;
         const quantity = order.quantity;
@@ -193,7 +223,7 @@ export function ReportsSummary() {
         quantity,
       }))
       .sort((a, b) => b.quantity - a.quantity);
-  }, [leads]);
+  }, [filteredLeads]);
 
 
   if (isLoading) {
@@ -236,6 +266,37 @@ export function ReportsSummary() {
 
   return (
     <>
+      <div className="mb-8 p-4 bg-card/80 backdrop-blur-sm rounded-lg shadow-xl">
+        <div className="flex gap-4 items-center">
+            <div className='flex items-center gap-2'>
+                <span className="text-sm font-medium text-card-foreground">Year:</span>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                    <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Select Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {availableYears.map(year => (
+                            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div className='flex items-center gap-2'>
+                <span className="text-sm font-medium text-card-foreground">Month:</span>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {months.map(month => (
+                            <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">Filter results by year and month. The CSR, Priority, Daily, and Product Type charts will reflect the selected period. The monthly chart filters by year only.</p>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
           <CardHeader>
@@ -379,7 +440,7 @@ export function ReportsSummary() {
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>Daily Sold QTY</CardTitle>
-            <CardDescription>Total quantity of items sold each day for the current week.</CardDescription>
+            <CardDescription>Total quantity of items sold each day for the selected month.</CardDescription>
           </CardHeader>
           <CardContent>
             <div style={{ height: '300px' }}>
@@ -392,7 +453,7 @@ export function ReportsSummary() {
                     }}
                   >
                     <CartesianGrid strokeDasharray="3-3" vertical={false} />
-                    <XAxis dataKey="date" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <XAxis dataKey="date" tickFormatter={(value) => format(new Date(value), 'd')} tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
@@ -412,7 +473,7 @@ export function ReportsSummary() {
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>Monthly Sold QTY</CardTitle>
-            <CardDescription>Total quantity of items sold each month.</CardDescription>
+            <CardDescription>Total quantity of items sold each month for the selected year.</CardDescription>
           </CardHeader>
           <CardContent>
             <div style={{ height: '300px' }}>
@@ -425,7 +486,7 @@ export function ReportsSummary() {
                     }}
                   >
                     <CartesianGrid strokeDasharray="3-3" vertical={false} />
-                    <XAxis dataKey="date" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <XAxis dataKey="date" tickFormatter={(value) => format(parse(value, 'MMM yyyy', new Date()), 'MMM')} tick={{ fill: 'hsl(var(--foreground))' }} />
                     <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
@@ -448,7 +509,7 @@ export function ReportsSummary() {
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle>Sold QTY by Product Type</CardTitle>
-            <CardDescription>Total quantity of items sold for each product type.</CardDescription>
+            <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
           </CardHeader>
           <CardContent>
             <div style={{ height: '300px' }}>
