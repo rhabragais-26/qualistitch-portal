@@ -45,6 +45,11 @@
         "productType": {
           "type": "string",
           "description": "Type of product for the lead."
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time when the lead was last modified."
         }
       },
       "required": [
@@ -57,7 +62,8 @@
         "salesRepresentative",
         "orderType",
         "priorityType",
-        "productType"
+        "productType",
+        "lastModified"
       ]
     }
   },

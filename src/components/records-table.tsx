@@ -98,6 +98,7 @@ type Lead = {
   orderType: string;
   orders: Order[];
   submissionDateTime: string;
+  lastModified: string;
 }
 
 export function RecordsTable() {
@@ -174,7 +175,8 @@ export function RecordsTable() {
       
       try {
         await updateDoc(leadDocRef, {
-          orders: arrayUnion(newOrder)
+          orders: arrayUnion(newOrder),
+          lastModified: new Date().toISOString(),
         });
         toast({
           title: 'Order Added!',
@@ -203,7 +205,10 @@ export function RecordsTable() {
     const leadDocRef = doc(firestore, 'leads', editingLead.id);
 
     try {
-      await updateDoc(leadDocRef, updatedLead);
+      await updateDoc(leadDocRef, {
+        ...updatedLead,
+        lastModified: new Date().toISOString(),
+      });
       toast({
         title: "Lead Updated!",
         description: "The lead details have been successfully updated.",
@@ -238,7 +243,10 @@ export function RecordsTable() {
     const leadDocRef = doc(firestore, 'leads', leadId);
   
     try {
-      await updateDoc(leadDocRef, { orders: updatedOrders });
+      await updateDoc(leadDocRef, { 
+        orders: updatedOrders,
+        lastModified: new Date().toISOString(),
+      });
       toast({
         title: "Order Updated!",
         description: "The order has been successfully updated.",
@@ -265,7 +273,8 @@ export function RecordsTable() {
   
     try {
       await updateDoc(leadDocRef, { 
-        orders: arrayRemove(orderToDelete)
+        orders: arrayRemove(orderToDelete),
+        lastModified: new Date().toISOString(),
       });
       toast({
         title: "Order Deleted!",
@@ -303,6 +312,7 @@ export function RecordsTable() {
   }
 
   const formatDateTime = (isoString: string) => {
+    if (!isoString) return { dateTime: '-', dayOfWeek: '-' };
     const date = new Date(isoString);
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const dayOfWeek = days[date.getDay()];
@@ -368,6 +378,7 @@ export function RecordsTable() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-card-foreground">Date &amp; Time</TableHead>
+                  <TableHead className="text-card-foreground">Last Modified</TableHead>
                   <TableHead className="text-card-foreground">Customer Name</TableHead>
                   <TableHead className="text-card-foreground">Company Name</TableHead>
                   <TableHead className="text-card-foreground">Contact No.</TableHead>
@@ -387,6 +398,10 @@ export function RecordsTable() {
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">
                        <div>{formatDateTime(lead.submissionDateTime).dateTime}</div>
                        <div className="text-muted-foreground">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
+                    </TableCell>
+                    <TableCell className="text-xs align-middle py-2 text-card-foreground">
+                       <div>{formatDateTime(lead.lastModified).dateTime}</div>
+                       <div className="text-muted-foreground">{formatDateTime(lead.lastModified).dayOfWeek}</div>
                     </TableCell>
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.customerName}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.companyName || '-'}</TableCell>
@@ -433,7 +448,7 @@ export function RecordsTable() {
                   </TableRow>
                   {openLeadId === lead.id && (
                     <TableRow className="bg-muted/50">
-                      <TableCell colSpan={11} className="p-0">
+                      <TableCell colSpan={12} className="p-0">
                          <div className="p-4">
                           <h4 className="font-semibold text-card-foreground mb-2">Ordered Items</h4>
                            <Table>

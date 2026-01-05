@@ -231,6 +231,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     const leadId = uuidv4();
     const leadsRef = collection(firestore, 'leads');
     const leadDocRef = doc(leadsRef, leadId);
+    const now = new Date().toISOString();
 
     const submissionData = {
       id: leadId,
@@ -244,7 +245,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       priorityType: values.priorityType,
       productType: values.orders.map(o => o.productType).join(', '),
       orders: values.orders,
-      submissionDateTime: new Date().toISOString(),
+      submissionDateTime: now,
+      lastModified: now,
     };
 
     setDocumentNonBlocking(leadDocRef, submissionData, { merge: false });
