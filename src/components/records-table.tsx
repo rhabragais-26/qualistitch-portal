@@ -9,6 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from '@/components/ui/table';
 import {
   Card,
@@ -252,15 +253,13 @@ export function RecordsTable() {
   const handleDeleteOrder = async (leadId: string, orderIndex: number) => {
     const lead = leads?.find(l => l.id === leadId);
     if (!lead) return;
-
-    const orderToDelete = lead.orders[orderIndex];
+  
+    const updatedOrders = lead.orders.filter((_, index) => index !== orderIndex);
   
     const leadDocRef = doc(firestore, 'leads', leadId);
   
     try {
-      await updateDoc(leadDocRef, {
-        orders: arrayRemove(orderToDelete)
-      });
+      await updateDoc(leadDocRef, { orders: updatedOrders });
       toast({
         title: "Order Deleted!",
         description: "The order has been removed from the lead.",
@@ -434,6 +433,13 @@ export function RecordsTable() {
                                       </TableRow>
                                     ))}
                                   </TableBody>
+                                  <TableFooter>
+                                    <TableRow>
+                                      <TableCell colSpan={3} className="text-right font-bold text-card-foreground">Total Quantity</TableCell>
+                                      <TableCell className="font-bold text-card-foreground">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
+                                      <TableCell></TableCell>
+                                    </TableRow>
+                                  </TableFooter>
                                 </Table>
                                 <div className="mt-2">
                                    <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
