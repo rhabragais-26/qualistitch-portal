@@ -39,6 +39,18 @@ const COLORS = [
   'hsl(20, 70%, 60%)',
 ];
 
+const renderCustomizedLabel = (props: any) => {
+  const { x, y, width, height, value } = props;
+  const percentage = value;
+  if (percentage === 0) return null;
+  return (
+    <text x={x + width / 2} y={y - 10} fill="hsl(var(--foreground))" textAnchor="middle" dominantBaseline="middle" fontSize={12}>
+      {`${percentage.toFixed(1)}%`}
+    </text>
+  );
+};
+
+
 export function ReportsSummary() {
   const firestore = useFirestore();
   const { user } = useUser();
@@ -64,9 +76,11 @@ export function ReportsSummary() {
       }
       return acc;
     }, {} as { [key: string]: number });
+    
+    const totalQuantity = Object.values(quantityBySalesRep).reduce((sum, q) => sum + q, 0);
 
     return Object.entries(quantityBySalesRep)
-      .map(([name, quantity]) => ({ name, quantity }))
+      .map(([name, quantity]) => ({ name, quantity, percentage: totalQuantity > 0 ? (quantity / totalQuantity) * 100 : 0 }))
       .sort((a, b) => b.quantity - a.quantity);
   }, [leads]);
   
@@ -132,7 +146,7 @@ export function ReportsSummary() {
           <div style={{ height: '300px' }}>
             <ChartContainer config={chartConfig} className="w-full h-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesRepData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <BarChart data={salesRepData} margin={{ top: 30, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis dataKey="name" tick={{ fill: 'hsl(var(--foreground))' }} />
                   <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
@@ -141,7 +155,7 @@ export function ReportsSummary() {
                     content={<ChartTooltipContent />}
                   />
                   <Bar dataKey="quantity" radius={[4, 4, 0, 0]}>
-                    <LabelList dataKey="quantity" position="top" style={{ fill: 'hsl(var(--foreground))' }} />
+                    <LabelList dataKey="percentage" position="top" content={renderCustomizedLabel} />
                     {salesRepData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
@@ -177,11 +191,11 @@ export function ReportsSummary() {
                       midAngle,
                       innerRadius,
                       outerRadius,
-                      value,
+                      percent,
                       index,
                     }) => {
                       const RADIAN = Math.PI / 180;
-                      const radius = 25 + innerRadius + (outerRadius - innerRadius);
+                      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
                       const x = cx + radius * Math.cos(-midAngle * RADIAN);
                       const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
@@ -189,11 +203,12 @@ export function ReportsSummary() {
                         <text
                           x={x}
                           y={y}
-                          fill="hsl(var(--foreground))"
+                          fill="white"
                           textAnchor={x > cx ? "start" : "end"}
                           dominantBaseline="central"
+                          fontSize={14}
                         >
-                          {priorityData[index].name} ({value})
+                          {`${(percent * 100).toFixed(0)}%`}
                         </text>
                       );
                     }}
