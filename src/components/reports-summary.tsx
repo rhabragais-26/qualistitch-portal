@@ -5,13 +5,12 @@ import { collection, query } from 'firebase/firestore';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
 import React, { useMemo } from 'react';
-import { Pie, PieChart, ResponsiveContainer, Cell, Tooltip } from 'recharts';
+import { Pie, PieChart, ResponsiveContainer, Cell, Tooltip, Legend } from 'recharts';
 import { ChartContainer, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 
 
@@ -40,12 +39,12 @@ const chartConfig = {
 } satisfies ChartConfig
 
 const COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
+  "hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))", "hsl(var(--chart-5))", "hsl(20.5, 90.2%, 48.2%)",
+  "hsl(194.5, 84.2%, 48.2%)", "hsl(314.5, 84.2%, 48.2%)", "hsl(104.5, 84.2%, 48.2%)",
+  "hsl(284.5, 84.2%, 48.2%)", "hsl(350, 85%, 60%)", "hsl(170, 75%, 40%)"
 ];
+
 
 export function ReportsSummary() {
   const firestore = useFirestore();
@@ -81,69 +80,35 @@ export function ReportsSummary() {
     const colorSummary: SummaryData[] = Array.from(colorMap.entries()).map(([name, value], index) => ({ name, value, fill: COLORS[index % COLORS.length] })).sort((a, b) => b.value - a.value);
     const sizeSummary: SummaryData[] = Array.from(sizeMap.entries()).map(([name, value], index) => ({ name, value, fill: COLORS[index % COLORS.length] })).sort((a, b) => b.value - a.value);
     
-    // Add quantity to chartConfig dynamically
-    productTypeSummary.forEach(item => { (chartConfig as any)[item.name] = { label: item.name, color: item.fill } });
-    colorSummary.forEach(item => { (chartConfig as any)[item.name] = { label: item.name, color: item.fill } });
-    sizeSummary.forEach(item => { (chartConfig as any)[item.name] = { label: item.name, color: item.fill } });
+    const newChartConfig: ChartConfig = { ...chartConfig };
+    productTypeSummary.forEach(item => { (newChartConfig as any)[item.name] = { label: item.name, color: item.fill } });
+    colorSummary.forEach(item => { (newChartConfig as any)[item.name] = { label: item.name, color: item.fill } });
+    sizeSummary.forEach(item => { (newChartConfig as any)[item.name] = { label: item.name, color: item.fill } });
 
-
-    return { productTypeSummary, colorSummary, sizeSummary };
+    return { productTypeSummary, colorSummary, sizeSummary, chartConfig: newChartConfig };
   }, [leads]);
 
-  const renderSummaryChart = (title: string, data: SummaryData[]) => (
-    <Card className="flex-1 shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+  const renderSummaryChart = (title: string, data: SummaryData[], config: ChartConfig) => (
+    <Card className="flex flex-col flex-1 shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-card-foreground">{title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 flex flex-col">
         {isLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-48 w-full" />
             </div>
           ) : (
-            <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-              <ResponsiveContainer width="100%" height={250}>
+            <ChartContainer config={config} className="w-full flex-1">
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Tooltip cursor={{fill: 'hsl(var(--muted))'}} content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                  <Pie
-                    data={data}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    labelLine={false}
-                    label={({
-                      cx,
-                      cy,
-                      midAngle,
-                      innerRadius,
-                      outerRadius,
-                      value,
-                      index,
-                    }) => {
-                      const RADIAN = Math.PI / 180
-                      const radius = 25 + innerRadius + (outerRadius - innerRadius)
-                      const x = cx + radius * Math.cos(-midAngle * RADIAN)
-                      const y = cy + radius * Math.sin(-midAngle * RADIAN)
-
-                      return (
-                        <text
-                          x={x}
-                          y={y}
-                          className="fill-muted-foreground text-xs"
-                          textAnchor={x > cx ? "start" : "end"}
-                          dominantBaseline="central"
-                        >
-                          {data[index].name} ({value})
-                        </text>
-                      )
-                    }}
-                  >
+                  <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={40} outerRadius={80}>
                      {data.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
+                  <Legend layout="vertical" align="right" verticalAlign="middle" iconSize={10} wrapperStyle={{fontSize: '12px'}}/>
                 </PieChart>
               </ResponsiveContainer>
             </ChartContainer>
@@ -153,11 +118,19 @@ export function ReportsSummary() {
     </Card>
   );
 
+  const dynamicChartConfig = useMemo(() => {
+    const newChartConfig: ChartConfig = { ...chartConfig };
+    if (productTypeSummary) productTypeSummary.forEach(item => { (newChartConfig as any)[item.name] = { label: item.name, color: item.fill } });
+    if (colorSummary) colorSummary.forEach(item => { (newChartConfig as any)[item.name] = { label: item.name, color: item.fill } });
+    if (sizeSummary) sizeSummary.forEach(item => { (newChartConfig as any)[item.name] = { label: item.name, color: item.fill } });
+    return newChartConfig;
+  }, [productTypeSummary, colorSummary, sizeSummary]);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {renderSummaryChart('Quantity by Product Type', productTypeSummary)}
-      {renderSummaryChart('Quantity by Color', colorSummary)}
-      {renderSummaryChart('Quantity by Size', sizeSummary)}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {renderSummaryChart('Quantity by Product Type', productTypeSummary, dynamicChartConfig)}
+      {renderSummaryChart('Quantity by Color', colorSummary, dynamicChartConfig)}
+      {renderSummaryChart('Quantity by Size', sizeSummary, dynamicChartConfig)}
     </div>
   );
 }
