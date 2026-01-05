@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { FormLabel } from './ui/form';
+import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
@@ -192,68 +192,68 @@ export function RecordsTable() {
               <TableBody>
                 {leads?.map((lead) => (
                   <React.Fragment key={lead.id}>
-                    <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
-                      <TableRow>
-                          <TableCell className="text-sm align-middle py-2">
-                            {new Date(lead.submissionDateTime).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell className="text-sm align-middle py-2">{lead.customerName}</TableCell>
-                          <TableCell className="text-sm align-middle py-2">{lead.contactNumber}</TableCell>
-                          <TableCell className="text-sm align-middle py-2">{lead.location}</TableCell>
-                          <TableCell className="text-sm align-middle py-2">{lead.csr}</TableCell>
-                          <TableCell className="align-middle py-2">
-                            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                              {lead.priorityType}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm align-middle py-2">{lead.paymentType}</TableCell>
-                          <TableCell className="text-sm align-middle py-2">{lead.orderType}</TableCell>
-                          <TableCell className="text-center align-middle py-2">
+                    <TableRow>
+                        <TableCell className="text-sm align-middle py-2">
+                          {new Date(lead.submissionDateTime).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-sm align-middle py-2">{lead.customerName}</TableCell>
+                        <TableCell className="text-sm align-middle py-2">{lead.contactNumber}</TableCell>
+                        <TableCell className="text-sm align-middle py-2">{lead.location}</TableCell>
+                        <TableCell className="text-sm align-middle py-2">{lead.csr}</TableCell>
+                        <TableCell className="align-middle py-2">
+                          <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                            {lead.priorityType}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm align-middle py-2">{lead.paymentType}</TableCell>
+                        <TableCell className="text-sm align-middle py-2">{lead.orderType}</TableCell>
+                        <TableCell className="text-center align-middle py-2">
+                          <Collapsible asChild open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
                             <CollapsibleTrigger asChild>
                                <Button variant="ghost" size="sm">
                                 View
                                 {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
                               </Button>
                             </CollapsibleTrigger>
-                          </TableCell>
-                          <TableCell className="text-center align-middle py-2">
-                             <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
-                                <PlusCircle className="h-4 w-4 mr-1" />
-                                Add Order
-                              </Button>
-                          </TableCell>
-                        </TableRow>
-                    </Collapsible>
+                          </Collapsible>
+                        </TableCell>
+                        <TableCell className="text-center align-middle py-2">
+                            <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
+                              <PlusCircle className="h-4 w-4 mr-1" />
+                              Add Order
+                            </Button>
+                        </TableCell>
+                      </TableRow>
                     {openLeadId === lead.id && (
-                      <CollapsibleContent asChild>
-                        <TableRow>
-                          <TableCell colSpan={10} className="p-0">
-                              <div className="p-4 bg-muted/50">
-                                 <h4 className="font-semibold mb-2">Ordered Items</h4>
-                                 <Table>
-                                  <TableHeader>
-                                    <TableRow>
-                                      <TableHead className="py-1">Product Type</TableHead>
-                                      <TableHead className="py-1">Color</TableHead>
-                                      <TableHead className="py-1">Size</TableHead>
-                                      <TableHead className="py-1">Quantity</TableHead>
+                      <TableRow>
+                        <TableCell colSpan={10} className="p-0">
+                           <CollapsibleContent>
+                            <div className="p-4 bg-muted/50">
+                               <h4 className="font-semibold mb-2">Ordered Items</h4>
+                               <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead className="py-1">Product Type</TableHead>
+                                    <TableHead className="py-1">Color</TableHead>
+                                    <TableHead className="py-1">Size</TableHead>
+                                    <TableHead className="py-1">Quantity</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {lead.orders?.map((order: any, index: number) => (
+                                    <TableRow key={index}>
+                                      <TableCell className="py-1">{order.productType}</TableCell>
+                                      <TableCell className="py-1">{order.color}</TableCell>
+                                      <TableCell className="py-1">{order.size}</TableCell>
+                                      <TableCell className="py-1">{order.quantity}</TableCell>
                                     </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                    {lead.orders?.map((order: any, index: number) => (
-                                      <TableRow key={index}>
-                                        <TableCell className="py-1">{order.productType}</TableCell>
-                                        <TableCell className="py-1">{order.color}</TableCell>
-                                        <TableCell className="py-1">{order.size}</TableCell>
-                                        <TableCell className="py-1">{order.quantity}</TableCell>
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
-                                </Table>
-                              </div>
-                            </TableCell>
-                        </TableRow>
-                      </CollapsibleContent>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                           </CollapsibleContent>
+                          </TableCell>
+                      </TableRow>
                     )}
                   </React.Fragment>
                 ))}
@@ -277,9 +277,9 @@ export function RecordsTable() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <FormLabel>Product Type:</FormLabel>
+              <Label htmlFor="product-type">Product Type:</Label>
               <Select onValueChange={setNewOrderProductType} value={newOrderProductType}>
-                <SelectTrigger>
+                <SelectTrigger id="product-type">
                   <SelectValue placeholder="Select a Product Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -293,9 +293,9 @@ export function RecordsTable() {
             </div>
             <div className='grid grid-cols-2 gap-4'>
               <div className="flex items-center gap-2">
-                <FormLabel className='text-sm'>Color:</FormLabel>
+                <Label htmlFor="color" className='text-sm'>Color:</Label>
                 <Select onValueChange={setNewOrderColor} value={newOrderColor}>
-                  <SelectTrigger>
+                  <SelectTrigger id="color">
                     <SelectValue placeholder="Select a Color" />
                   </SelectTrigger>
                   <SelectContent>
@@ -308,9 +308,9 @@ export function RecordsTable() {
                 </Select>
               </div>
               <div className="flex items-center gap-2">
-                <FormLabel className='text-sm'>Size:</FormLabel>
+                <Label htmlFor="size" className='text-sm'>Size:</Label>
                 <Select onValueChange={setNewOrderSize} value={newOrderSize}>
-                  <SelectTrigger className="w-[100px]">
+                  <SelectTrigger id="size" className="w-[100px]">
                     <SelectValue placeholder="Size" />
                   </SelectTrigger>
                   <SelectContent>
@@ -324,11 +324,12 @@ export function RecordsTable() {
               </div>
             </div>
               <div className="flex items-center gap-2 justify-center">
-              <FormLabel>Quantity:</FormLabel>
+              <Label htmlFor="quantity">Quantity:</Label>
               <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => Math.max(0, (typeof q === 'string' ? parseInt(q, 10) || 0 : q) - 1))} disabled={newOrderQuantity === 0}>
                 <Minus className="h-4 w-4" />
               </Button>
               <Input
+                id="quantity"
                 type="text"
                 value={newOrderQuantity}
                 onChange={(e) => {
