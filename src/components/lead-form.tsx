@@ -143,7 +143,7 @@ export function LeadForm() {
                           <RadioGroup
                             onValueChange={field.onChange}
                             defaultValue={field.value}
-                            className="flex items-center space-x-4 pt-2 pl-4"
+                            className="flex items-center space-x-4 pt-2 pl-8"
                           >
                             {fieldInfo.options?.map((option) => (
                               <FormItem key={option} className="flex items-center space-x-2 space-y-0">
