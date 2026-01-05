@@ -124,12 +124,15 @@ const productColors = [
   'Polo Color',
 ]
 
+const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
+
 export function LeadForm() {
   const {toast} = useToast();
   const [dateTime, setDateTime] = useState('');
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [newOrderProductType, setNewOrderProductType] = useState('');
   const [newOrderColor, setNewOrderColor] = useState('');
+  const [newOrderSize, setNewOrderSize] = useState('');
 
 
   useEffect(() => {
@@ -193,10 +196,11 @@ export function LeadForm() {
   }
 
   const handleAddOrder = () => {
-    if (newOrderProductType && newOrderColor) {
-      append({ value: `${newOrderProductType} - ${newOrderColor}` });
+    if (newOrderProductType && newOrderColor && newOrderSize) {
+      append({ value: `${newOrderProductType} - ${newOrderColor} - ${newOrderSize}` });
       setNewOrderProductType('');
       setNewOrderColor('');
+      setNewOrderSize('');
       setIsOrderDialogOpen(false);
     }
   };
@@ -303,15 +307,15 @@ export function LeadForm() {
                       Add Order
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                       <DialogTitle>Add Order Details</DialogTitle>
                       <DialogDescription>
-                        Select a product type for the new order.
+                        Select the product type, color, and size for the new order.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                      <Select onValueChange={setNewOrderProductType} value={newOrderProductType}>
+                       <Select onValueChange={setNewOrderProductType} value={newOrderProductType}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a Product Type" />
                         </SelectTrigger>
@@ -323,18 +327,35 @@ export function LeadForm() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Select onValueChange={setNewOrderColor} value={newOrderColor}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a Color" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {productColors.map((color) => (
-                            <SelectItem key={color} value={color}>
-                              {color}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className='grid grid-cols-2 gap-4'>
+                        <Select onValueChange={setNewOrderColor} value={newOrderColor}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a Color" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {productColors.map((color) => (
+                              <SelectItem key={color} value={color}>
+                                {color}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <RadioGroup onValueChange={setNewOrderSize} value={newOrderSize} className="flex items-center space-x-2">
+                          <FormLabel className='text-sm'>Size:</FormLabel>
+                          <Select onValueChange={setNewOrderSize} value={newOrderSize}>
+                            <SelectTrigger className="w-[100px]">
+                              <SelectValue placeholder="Size" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {productSizes.map((size) => (
+                                <SelectItem key={size} value={size}>
+                                  {size}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </RadioGroup>
+                      </div>
                     </div>
                     <DialogFooter>
                       <DialogClose asChild>
@@ -342,7 +363,7 @@ export function LeadForm() {
                           Close
                         </Button>
                       </DialogClose>
-                      <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType || !newOrderColor}>
+                      <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType || !newOrderColor || !newOrderSize}>
                         Add
                       </Button>
                     </DialogFooter>
