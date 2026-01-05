@@ -221,7 +221,7 @@ export function RecordsTable() {
       });
       setIsEditLeadDialogOpen(false);
       setEditingLead(null);
-    } catch (e: any) => {
+    } catch (e: any) {
       console.error("Error updating lead: ", e);
       toast({
         variant: "destructive",
@@ -415,160 +415,162 @@ export function RecordsTable() {
           </div>
         )}
         {!isLoading && !error && (
-          <ScrollArea className="h-[60vh] w-full border rounded-md">
-            <Table>
-              <TableHeader className="bg-neutral-800 sticky top-0">
-                <TableRow>
-                  <TableHead className="text-white">Date &amp; Time</TableHead>
-                  <TableHead className="text-white">Last Modified</TableHead>
-                  <TableHead className="text-white">Customer Name</TableHead>
-                  <TableHead className="text-white">Company Name</TableHead>
-                  <TableHead className="text-white">Mobile No.</TableHead>
-                  <TableHead className="text-white">Landline No.</TableHead>
-                  <TableHead className="text-white">CSR</TableHead>
-                  <TableHead className="text-white">Priority</TableHead>
-                  <TableHead className="text-white">Payment</TableHead>
-                  <TableHead className="text-white">Order Type</TableHead>
-                  <TableHead className="text-center text-white">Items</TableHead>
-                  <TableHead className="text-center text-white">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-              {filteredLeads.map((lead) => (
-                <React.Fragment key={lead.id}>
+          <div className="h-[calc(100vh-20rem)]" style={{height: 'calc(100vh - 20.5rem)'}}>
+            <ScrollArea className="h-full w-full border rounded-md">
+              <Table>
+                <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableCell className="text-xs align-middle py-2 text-black">
-                       <div>{formatDateTime(lead.submissionDateTime).dateTime}</div>
-                       <div className="text-gray-500">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
-                    </TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">
-                       <div>{formatDateTime(lead.lastModified).dateTime}</div>
-                       <div className="text-gray-500">{formatDateTime(lead.lastModified).dayOfWeek}</div>
-                    </TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
-                    <TableCell className="align-middle py-2">
-                      <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                        {lead.priorityType}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.paymentType}</TableCell>
-                    <TableCell className="text-xs align-middle py-2 text-black">{lead.orderType}</TableCell>
-                    <TableCell className="text-center align-middle py-2">
-                      <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
-                        View
-                        {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-                      </Button>
-                    </TableCell>
-                    <TableCell className="text-center align-middle py-2">
-                         <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the entire lead record.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteLead(lead.id)}>Delete Lead</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                    </TableCell>
+                    <TableHead className="text-white">Date &amp; Time</TableHead>
+                    <TableHead className="text-white">Last Modified</TableHead>
+                    <TableHead className="text-white">Customer Name</TableHead>
+                    <TableHead className="text-white">Company Name</TableHead>
+                    <TableHead className="text-white">Mobile No.</TableHead>
+                    <TableHead className="text-white">Landline No.</TableHead>
+                    <TableHead className="text-white">CSR</TableHead>
+                    <TableHead className="text-white">Priority</TableHead>
+                    <TableHead className="text-white">Payment</TableHead>
+                    <TableHead className="text-white">Order Type</TableHead>
+                    <TableHead className="text-center text-white">Items</TableHead>
+                    <TableHead className="text-center text-white">Actions</TableHead>
                   </TableRow>
-                  {openLeadId === lead.id && (
-                    <TableRow className="bg-gray-50">
-                      <TableCell colSpan={12} className="p-0">
-                         <div className="p-4">
-                          <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
-                           <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="py-1 text-black">Product Type</TableHead>
-                                <TableHead className="py-1 text-black">Color</TableHead>
-                                <TableHead className="py-1 text-black">Size</TableHead>
-                                <TableHead className="py-1 text-black text-center">Quantity</TableHead>
-                                <TableHead className="text-right py-1 text-black pr-8">Action</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {lead.orders?.map((order: any, index: number) => (
-                                <TableRow key={index}>
-                                  <TableCell className="py-1 text-xs text-black">{order.productType}</TableCell>
-                                  <TableCell className="py-1 text-xs text-black">{order.color}</TableCell>
-                                  <TableCell className="py-1 text-xs text-black">{order.size}</TableCell>
-                                  <TableCell className="py-1 text-xs text-black">
-                                    <div className="flex items-center gap-2 justify-center">
-                                      <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderQuantity(lead.id, index, order.quantity - 1)} disabled={order.quantity <= 1}>
-                                        <Minus className="h-3 w-3" />
-                                      </Button>
-                                      <span className="w-8 text-center">{order.quantity}</span>
-                                      <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderQuantity(lead.id, index, order.quantity + 1)}>
-                                        <Plus className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  </TableCell>
-                                  <TableCell className="text-right py-1">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                     <AlertDialog>
-                                      <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
-                                          <Trash2 className="h-4 w-4" />
+                </TableHeader>
+                <TableBody>
+                {filteredLeads.map((lead) => (
+                  <React.Fragment key={lead.id}>
+                    <TableRow>
+                      <TableCell className="text-xs align-middle py-2 text-black">
+                         <div>{formatDateTime(lead.submissionDateTime).dateTime}</div>
+                         <div className="text-gray-500">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
+                      </TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">
+                         <div>{formatDateTime(lead.lastModified).dateTime}</div>
+                         <div className="text-gray-500">{formatDateTime(lead.lastModified).dayOfWeek}</div>
+                      </TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
+                      <TableCell className="align-middle py-2">
+                        <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                          {lead.priorityType}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.paymentType}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.orderType}</TableCell>
+                      <TableCell className="text-center align-middle py-2">
+                        <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
+                          View
+                          {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-center align-middle py-2">
+                           <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                           <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the entire lead record.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteLead(lead.id)}>Delete Lead</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                    {openLeadId === lead.id && (
+                      <TableRow className="bg-gray-50">
+                        <TableCell colSpan={12} className="p-0">
+                           <div className="p-4">
+                            <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
+                             <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="py-1 text-black">Product Type</TableHead>
+                                  <TableHead className="py-1 text-black">Color</TableHead>
+                                  <TableHead className="py-1 text-black">Size</TableHead>
+                                  <TableHead className="py-1 text-black text-center">Quantity</TableHead>
+                                  <TableHead className="text-right py-1 text-black pr-8">Action</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {lead.orders?.map((order: any, index: number) => (
+                                  <TableRow key={index}>
+                                    <TableCell className="py-1 text-xs text-black">{order.productType}</TableCell>
+                                    <TableCell className="py-1 text-xs text-black">{order.color}</TableCell>
+                                    <TableCell className="py-1 text-xs text-black">{order.size}</TableCell>
+                                    <TableCell className="py-1 text-xs text-black">
+                                      <div className="flex items-center gap-2 justify-center">
+                                        <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderQuantity(lead.id, index, order.quantity - 1)} disabled={order.quantity <= 1}>
+                                          <Minus className="h-3 w-3" />
                                         </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete the ordered item.
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => handleDeleteOrder(lead.id, index)}>Delete</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
+                                        <span className="w-8 text-center">{order.quantity}</span>
+                                        <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderQuantity(lead.id, index, order.quantity + 1)}>
+                                          <Plus className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="text-right py-1">
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                       <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              This action cannot be undone. This will permanently delete the ordered item.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteOrder(lead.id, index)}>Delete</AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                              <TableFooter>
+                                 <TableRow>
+                                  <TableCell colSpan={4} className="text-right font-bold text-black">Total Quantity</TableCell>
+                                  <TableCell className="font-bold text-black text-center">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
+                                  <TableCell className='text-right'>
+                                    <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
+                                      <PlusCircle className="h-4 w-4 mr-1" />
+                                      Add Order
+                                    </Button>
                                   </TableCell>
                                 </TableRow>
-                              ))}
-                            </TableBody>
-                            <TableFooter>
-                               <TableRow>
-                                <TableCell colSpan={4} className="text-right font-bold text-black">Total Quantity</TableCell>
-                                <TableCell className="font-bold text-black text-center">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
-                                <TableCell className='text-right'>
-                                  <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
-                                    <PlusCircle className="h-4 w-4 mr-1" />
-                                    Add Order
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            </TableFooter>
-                          </Table>
-                        </div>
-                       </TableCell>
-                    </TableRow>
-                  )}
-                </React.Fragment>
-              ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
+                              </TableFooter>
+                            </Table>
+                          </div>
+                         </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </div>
         )}
       </CardContent>
        <Dialog open={isOrderDialogOpen} onOpenChange={(isOpen) => {
@@ -705,6 +707,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   const [companyName, setCompanyName] = useState(lead.companyName || '');
   const [contactNumber, setContactNumber] = useState(lead.contactNumber || '');
   const [landlineNumber, setLandlineNumber] = useState(lead.landlineNumber || '');
+  const [location, setLocation] = useState(lead.location);
   const [salesRepresentative, setSalesRepresentative] = useState(lead.salesRepresentative);
   const [paymentType, setPaymentType] = useState(lead.paymentType);
   const [orderType, setOrderType] = useState(lead.orderType);
@@ -725,6 +728,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       setCompanyName(lead.companyName || '');
       setContactNumber(lead.contactNumber || '');
       setLandlineNumber(lead.landlineNumber || '');
+      setLocation(lead.location);
       setSalesRepresentative(lead.salesRepresentative);
       setPaymentType(lead.paymentType);
       setOrderType(lead.orderType);
@@ -787,6 +791,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       companyName: companyName ? toTitleCase(companyName) : '-',
       contactNumber: mobile || '-',
       landlineNumber: landline || '-',
+      location: toTitleCase(location),
       salesRepresentative,
       paymentType,
       orderType,
@@ -828,6 +833,10 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
               <Input id="landlineNo" value={landlineNumber === '-' ? '' : landlineNumber} onChange={handleLandlineNoChange} />
             </div>
           </div>
+          <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
+            </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="salesRepresentative">CSR</Label>
