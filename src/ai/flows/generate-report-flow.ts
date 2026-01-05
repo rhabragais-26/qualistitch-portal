@@ -117,18 +117,22 @@ const generateReportFlow = ai.defineFlow(
     const salesRepData = (() => {
       const statsBySalesRep = filteredLeads.reduce(
         (acc, lead) => {
-          const leadQuantity = lead.orders.reduce(
-            (sum, order) => sum + order.quantity,
-            0
-          );
+          const leadQuantity = lead.orders
+            .filter(o => o.productType !== 'Patches')
+            .reduce(
+              (sum, order) => sum + order.quantity,
+              0
+            );
           const csr = lead.salesRepresentative;
 
-          if (!acc[csr]) {
-            acc[csr] = { quantity: 0, customers: new Set<string>() };
-          }
+          if (leadQuantity > 0) {
+            if (!acc[csr]) {
+              acc[csr] = { quantity: 0, customers: new Set<string>() };
+            }
 
-          acc[csr].quantity += leadQuantity;
-          acc[csr].customers.add(lead.customerName);
+            acc[csr].quantity += leadQuantity;
+            acc[csr].customers.add(lead.customerName);
+          }
 
           return acc;
         },
@@ -147,15 +151,20 @@ const generateReportFlow = ai.defineFlow(
     const priorityData = (() => {
       const quantityByPriority = filteredLeads.reduce(
         (acc, lead) => {
-          const leadQuantity = lead.orders.reduce(
-            (sum, order) => sum + order.quantity,
-            0
-          );
+          const leadQuantity = lead.orders
+            .filter(o => o.productType !== 'Patches')
+            .reduce(
+              (sum, order) => sum + order.quantity,
+              0
+            );
           const priority = lead.priorityType || 'Regular';
-          if (acc[priority]) {
-            acc[priority] += leadQuantity;
-          } else {
-            acc[priority] = leadQuantity;
+
+          if (leadQuantity > 0) {
+            if (acc[priority]) {
+              acc[priority] += leadQuantity;
+            } else {
+              acc[priority] = leadQuantity;
+            }
           }
           return acc;
         },
@@ -171,15 +180,19 @@ const generateReportFlow = ai.defineFlow(
       const salesByDay = filteredLeads.reduce(
         (acc, lead) => {
           const date = format(new Date(lead.submissionDateTime), 'MMM-dd-yyyy');
-          const leadQuantity = lead.orders.reduce(
-            (sum, order) => sum + order.quantity,
-            0
-          );
+          const leadQuantity = lead.orders
+            .filter(o => o.productType !== 'Patches')
+            .reduce(
+              (sum, order) => sum + order.quantity,
+              0
+            );
 
-          if (!acc[date]) {
-            acc[date] = 0;
+          if (leadQuantity > 0) {
+            if (!acc[date]) {
+              acc[date] = 0;
+            }
+            acc[date] += leadQuantity;
           }
-          acc[date] += leadQuantity;
 
           return acc;
         },
@@ -207,15 +220,19 @@ const generateReportFlow = ai.defineFlow(
           (acc, lead) => {
             const submissionDate = new Date(lead.submissionDateTime);
             const month = format(submissionDate, 'MMM yyyy');
-            const leadQuantity = lead.orders.reduce(
-              (sum, order) => sum + order.quantity,
-              0
-            );
-
-            if (!acc[month]) {
-              acc[month] = 0;
+            const leadQuantity = lead.orders
+              .filter(o => o.productType !== 'Patches')
+              .reduce(
+                (sum, order) => sum + order.quantity,
+                0
+              );
+            
+            if (leadQuantity > 0) {
+              if (!acc[month]) {
+                acc[month] = 0;
+              }
+              acc[month] += leadQuantity;
             }
-            acc[month] += leadQuantity;
 
             return acc;
           },
@@ -237,15 +254,17 @@ const generateReportFlow = ai.defineFlow(
     const soldQtyByProductType = (() => {
       const quantityByProductType = filteredLeads.reduce(
         (acc, lead) => {
-          lead.orders.forEach((order) => {
-            const productType = order.productType;
-            const quantity = order.quantity;
+          lead.orders
+            .filter(o => o.productType !== 'Patches')
+            .forEach((order) => {
+              const productType = order.productType;
+              const quantity = order.quantity;
 
-            if (!acc[productType]) {
-              acc[productType] = 0;
-            }
-            acc[productType] += quantity;
-          });
+              if (!acc[productType]) {
+                acc[productType] = 0;
+              }
+              acc[productType] += quantity;
+            });
           return acc;
         },
         {} as { [key: string]: number }
