@@ -189,12 +189,12 @@ export function ReportsSummary() {
                 </div>
                  <div className='flex items-center gap-2'>
                     <span className="text-sm font-medium text-card-foreground">Week:</span>
-                    <Select value={selectedWeek} onValueChange={setSelectedWeek}>
+                    <Select value={selectedWeek} onValueChange={(value) => setSelectedWeek(value === 'all' ? '' : value)}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Select Week" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All Year</SelectItem>
+                          <SelectItem value="all">All Year</SelectItem>
                             {availableWeeks.map(week => (
                                 <SelectItem key={week} value={week}>{week}</SelectItem>
                             ))}
