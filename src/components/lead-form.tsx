@@ -43,7 +43,7 @@ const formSchema = z.object({
   location: z.string().min(2, {message: 'Location is required.'}),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD']),
   csr: z.string().min(2, {message: 'CSR name is required.'}),
-  orderType: z.string().min(2, {message: 'Order type is required.'}),
+  orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services']),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   productType: z.string().min(2, {message: 'Product type is required.'}),
   productSource: z.string().min(2, {message: 'Product source is required.'}),
@@ -64,7 +64,7 @@ const formFields: {
   {name: 'location', label: 'Location', icon: MapPin, placeholder: '', type: 'input'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD']},
   {name: 'csr', label: 'CSR', icon: UserCheck, placeholder: '', type: 'input'},
-  {name: 'orderType', label: 'Order Type', icon: ShoppingBag, placeholder: '', type: 'input'},
+  {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services']},
   {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular']},
   {name: 'productType', label: 'Product Type', icon: Package, placeholder: '', type: 'input'},
   {name: 'productSource', label: 'Product Source', icon: Building, placeholder: '', type: 'input'},
@@ -79,7 +79,7 @@ export function LeadForm() {
       contactNo: '',
       location: '',
       csr: '',
-      orderType: '',
+      orderType: 'MTO',
       priorityType: 'Regular',
       productType: '',
       productSource: '',
@@ -127,7 +127,7 @@ export function LeadForm() {
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a payment type" />
+                              <SelectValue placeholder={`Select a ${fieldInfo.label.toLowerCase()}`} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
