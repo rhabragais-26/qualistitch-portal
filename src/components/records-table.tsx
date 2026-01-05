@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, PlusCircle, Plus, Minus, Edit, Trash2 } from 'lucide-react';
 import {
@@ -125,6 +125,7 @@ export function RecordsTable() {
   // State for editing an order
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<{ leadId: string; order: Order; index: number } | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -132,6 +133,16 @@ export function RecordsTable() {
   }, [firestore, user]);
 
   const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
+
+  const filteredLeads = useMemo(() => {
+    if (!leads) return [];
+    if (!searchTerm) return leads;
+
+    return leads.filter(lead =>
+      lead.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.contactNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [leads, searchTerm]);
 
   const isLoading = isAuthLoading || isLeadsLoading;
 
@@ -300,10 +311,21 @@ export function RecordsTable() {
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="text-card-foreground">Lead Records</CardTitle>
-        <CardDescription>
-          Here are all the lead entries submitted through the form.
-        </CardDescription>
+        <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-card-foreground">Lead Records</CardTitle>
+              <CardDescription>
+                Here are all the lead entries submitted through the form.
+              </CardDescription>
+            </div>
+             <div className="w-full max-w-sm">
+              <Input
+                placeholder="Search by customer name or contact no..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading && (
@@ -335,7 +357,7 @@ export function RecordsTable() {
                   <TableHead className="text-center text-card-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
-              {leads?.map((lead) => (
+              {filteredLeads.map((lead) => (
                 <TableBody key={lead.id}>
                   <Collapsible asChild open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
                     <>
@@ -621,7 +643,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   }, [lead]);
 
   const handleSave = () => {
-    const updatedLead: Partial<Lead> = {
+    const updatedLead: Partial<Lead> & { companyName?: string } = {
       customerName,
       contactNumber,
       location,
@@ -839,4 +861,5 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
   );
 }
 
+    
     
