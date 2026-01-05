@@ -24,11 +24,6 @@ import React, { useState, useMemo } from 'react';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, PlusCircle, Plus, Minus, Edit, Trash2 } from 'lucide-react';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -309,6 +304,21 @@ export function RecordsTable() {
     }
   }
 
+  const formatDateTime = (isoString: string) => {
+    const date = new Date(isoString);
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = months[date.getMonth()];
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    const strTime = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+    return `${month}-${day}-${year} ${strTime}`;
+  };
+
   const toTitleCase = (str: string) => {
     if (!str) return '';
     return str
@@ -372,14 +382,7 @@ export function RecordsTable() {
                 <React.Fragment key={lead.id}>
                   <TableRow>
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">
-                      {new Date(lead.submissionDateTime).toLocaleString([], {
-                        weekday: 'short',
-                        year: 'numeric',
-                        month: 'numeric',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatDateTime(lead.submissionDateTime)}
                     </TableCell>
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.customerName}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.companyName || '-'}</TableCell>
@@ -475,7 +478,7 @@ export function RecordsTable() {
                             </TableBody>
                             <TableFooter>
                               <TableRow>
-                                <TableCell colSpan={3} className="text-right font-bold text-card-foreground">Total Quantity</TableCell>
+                                <TableCell colSpan={4} className="text-right font-bold text-card-foreground">Total Quantity</TableCell>
                                 <TableCell className="font-bold text-card-foreground">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
                                 <TableCell className='text-right'>
                                   <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
@@ -882,5 +885,3 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
-
-    

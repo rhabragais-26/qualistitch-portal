@@ -156,7 +156,17 @@ export function LeadForm() {
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
-      setDateTime(now.toLocaleString());
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const month = months[now.getMonth()];
+      const day = String(now.getDate()).padStart(2, '0');
+      const year = now.getFullYear();
+      let hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // the hour '0' should be '12'
+      const strTime = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+      setDateTime(`${month}-${day}-${year} ${strTime}`);
     };
     updateDateTime();
     const intervalId = setInterval(updateDateTime, 1000);
@@ -515,5 +525,3 @@ export function LeadForm() {
     </Card>
   );
 }
-
-    
