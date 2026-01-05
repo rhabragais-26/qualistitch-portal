@@ -341,7 +341,13 @@ export function RecordsTable() {
                     <>
                       <TableRow>
                           <TableCell className="text-sm align-middle py-2 text-card-foreground">
-                            {new Date(lead.submissionDateTime).toLocaleString()}
+                            {new Date(lead.submissionDateTime).toLocaleString([], {
+                              year: 'numeric',
+                              month: 'numeric',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
                           </TableCell>
                           <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.customerName}</TableCell>
                           <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.contactNumber}</TableCell>
