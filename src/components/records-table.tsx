@@ -354,7 +354,7 @@ export function RecordsTable() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-card-foreground">Date & Time</TableHead>
-                  <TableHead className="text-card-foreground">Customer Name</TableHead>
+                  <TableHead className="text-card-foreground">Customer/Company Name</TableHead>
                   <TableHead className="text-card-foreground">Contact No.</TableHead>
                   <TableHead className="text-card-foreground">Location</TableHead>
                   <TableHead className="text-card-foreground">CSR</TableHead>
