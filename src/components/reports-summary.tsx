@@ -295,7 +295,6 @@ export function ReportsSummary() {
                 </Select>
             </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">Filter results by year and month. The CSR, Priority, Daily, and Product Type charts will reflect the selected period. The monthly chart filters by year only.</p>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
