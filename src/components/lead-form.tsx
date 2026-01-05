@@ -63,10 +63,10 @@ const formFields: {
   {name: 'contactNo', label: 'Contact No.', icon: Phone, placeholder: '', type: 'input'},
   {name: 'location', label: 'Location', icon: MapPin, placeholder: '', type: 'input'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD']},
-  {name: 'csr', label: 'CSR', icon: UserCheck, placeholder: '', type: 'input'},
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services']},
   {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular']},
   {name: 'productType', label: 'Product Type', icon: Package, placeholder: '', type: 'input'},
+  {name: 'csr', label: 'CSR', icon: UserCheck, placeholder: '', type: 'input'},
   {name: 'productSource', label: 'Product Source', icon: Building, placeholder: '', type: 'input'},
 ];
 
@@ -126,7 +126,7 @@ export function LeadForm() {
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder={fieldInfo.name === 'orderType' ? 'Select order type' : `Select a ${fieldInfo.label.toLowerCase()}`} />
+                              <SelectValue placeholder={fieldInfo.name === 'orderType' ? 'Select order Type' : `Select a ${fieldInfo.label.toLowerCase()}`} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
