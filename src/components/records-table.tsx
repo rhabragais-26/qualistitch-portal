@@ -262,6 +262,40 @@ export function RecordsTable() {
       });
     }
   };
+
+  const handleUpdateOrderQuantity = async (leadId: string, orderIndex: number, newQuantity: number) => {
+    if (newQuantity < 1) return; // Prevent quantity from going below 1
+
+    const lead = leads?.find(l => l.id === leadId);
+    if (!lead) return;
+
+    const updatedOrders = lead.orders.map((order, index) => {
+      if (index === orderIndex) {
+        return { ...order, quantity: newQuantity };
+      }
+      return order;
+    });
+
+    const leadDocRef = doc(firestore, 'leads', leadId);
+
+    try {
+      await updateDoc(leadDocRef, {
+        orders: updatedOrders,
+        lastModified: new Date().toISOString(),
+      });
+      toast({
+        title: 'Quantity Updated!',
+        description: 'The order quantity has been updated.',
+      });
+    } catch (e: any) {
+      console.error("Error updating quantity: ", e);
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: e.message || "Could not update the quantity.",
+      });
+    }
+  };
   
   const handleDeleteOrder = async (leadId: string, orderIndex: number) => {
     const lead = leads?.find(l => l.id === leadId);
@@ -467,7 +501,17 @@ export function RecordsTable() {
                                   <TableCell className="py-1 text-xs text-card-foreground">{order.productType}</TableCell>
                                   <TableCell className="py-1 text-xs text-card-foreground">{order.color}</TableCell>
                                   <TableCell className="py-1 text-xs text-card-foreground">{order.size}</TableCell>
-                                  <TableCell className="py-1 text-xs text-card-foreground">{order.quantity}</TableCell>
+                                  <TableCell className="py-1 text-xs text-card-foreground">
+                                    <div className="flex items-center gap-2 justify-center">
+                                      <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderQuantity(lead.id, index, order.quantity - 1)} disabled={order.quantity <= 1}>
+                                        <Minus className="h-3 w-3" />
+                                      </Button>
+                                      <span className="w-8 text-center">{order.quantity}</span>
+                                      <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderQuantity(lead.id, index, order.quantity + 1)}>
+                                        <Plus className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
                                   <TableCell className="text-right py-1">
                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
                                       <Edit className="h-4 w-4" />
