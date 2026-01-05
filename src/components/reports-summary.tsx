@@ -467,7 +467,7 @@ export function ReportsSummary() {
                     <YAxis tick={{ fill: 'hsl(var(--foreground))' }} />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted))' }}
-                      content={<ChartTooltipContent />}
+                      content={<ChartTooltipContent labelFormatter={(label, payload) => format(new Date(label), 'MMM-dd-yyyy')} />}
                     />
                     <Line type="monotone" dataKey="quantity" name="Quantity" stroke="hsl(var(--chart-1))" strokeWidth={2} activeDot={{ r: 8 }}>
                       <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" />
