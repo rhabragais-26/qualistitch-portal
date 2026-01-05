@@ -68,8 +68,8 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
           <div className="mr-4 flex items-center">
-            <Link href="/" className="mr-6 flex items-center">
-              <span className="font-bold font-headline sm:inline-block text-primary">
+            <Link href="/" className="mr-6 flex items-center pl-24">
+              <span className="font-bold font-headline sm:inline-block text-primary text-xl">
                 Qualistitch Inc.
               </span>
             </Link>
