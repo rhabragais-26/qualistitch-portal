@@ -398,7 +398,7 @@ export function ReportsSummary() {
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
                     />
-                    <Line type="monotone" dataKey="quantity" stroke="hsl(var(--chart-1))" strokeWidth={2} activeDot={{ r: 8 }}>
+                    <Line type="monotone" dataKey="quantity" name="Quantity" stroke="hsl(var(--chart-1))" strokeWidth={2} activeDot={{ r: 8 }}>
                       <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" />
                     </Line>
                   </LineChart>
@@ -418,7 +418,7 @@ export function ReportsSummary() {
             <div style={{ height: '300px' }}>
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
+                  <BarChart
                     data={monthlySalesData}
                     margin={{
                       top: 20, right: 30, left: 20, bottom: 5,
@@ -431,10 +431,10 @@ export function ReportsSummary() {
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
                     />
-                    <Line type="monotone" dataKey="quantity" stroke="hsl(var(--chart-1))" strokeWidth={2} activeDot={{ r: 8 }}>
+                    <Bar dataKey="quantity" name="Quantity" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]}>
                       <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" />
-                    </Line>
-                  </LineChart>
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </div>
