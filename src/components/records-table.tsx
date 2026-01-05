@@ -153,9 +153,9 @@ export function RecordsTable() {
 
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-gray-500/10 text-black">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm text-black">
       <CardHeader>
-        <CardTitle>Lead Records</CardTitle>
+        <CardTitle className="text-card-foreground">Lead Records</CardTitle>
         <CardDescription>
           Here are all the lead entries submitted through the form.
         </CardDescription>
@@ -178,16 +178,16 @@ export function RecordsTable() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Customer Name</TableHead>
-                  <TableHead>Contact No.</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>CSR</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Payment</TableHead>
-                  <TableHead>Order Type</TableHead>
-                  <TableHead className="text-center">Items</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
+                  <TableHead className="text-card-foreground">Date</TableHead>
+                  <TableHead className="text-card-foreground">Customer Name</TableHead>
+                  <TableHead className="text-card-foreground">Contact No.</TableHead>
+                  <TableHead className="text-card-foreground">Location</TableHead>
+                  <TableHead className="text-card-foreground">CSR</TableHead>
+                  <TableHead className="text-card-foreground">Priority</TableHead>
+                  <TableHead className="text-card-foreground">Payment</TableHead>
+                  <TableHead className="text-card-foreground">Order Type</TableHead>
+                  <TableHead className="text-center text-card-foreground">Items</TableHead>
+                  <TableHead className="text-center text-card-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -195,20 +195,20 @@ export function RecordsTable() {
                   <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
                     <React.Fragment>
                       <TableRow>
-                          <TableCell className="text-sm align-middle py-2">
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">
                             {new Date(lead.submissionDateTime).toLocaleDateString()}
                           </TableCell>
-                          <TableCell className="text-sm align-middle py-2">{lead.customerName}</TableCell>
-                          <TableCell className="text-sm align-middle py-2">{lead.contactNumber}</TableCell>
-                          <TableCell className="text-sm align-middle py-2">{lead.location}</TableCell>
-                          <TableCell className="text-sm align-middle py-2">{lead.csr}</TableCell>
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.customerName}</TableCell>
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.contactNumber}</TableCell>
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.location}</TableCell>
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.csr}</TableCell>
                           <TableCell className="align-middle py-2">
                             <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                               {lead.priorityType}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-sm align-middle py-2">{lead.paymentType}</TableCell>
-                          <TableCell className="text-sm align-middle py-2">{lead.orderType}</TableCell>
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.paymentType}</TableCell>
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.orderType}</TableCell>
                           <TableCell className="text-center align-middle py-2">
                             <CollapsibleTrigger asChild>
                                <Button variant="ghost" size="sm">
@@ -228,24 +228,24 @@ export function RecordsTable() {
                           <tr className="bg-muted/50">
                             <TableCell colSpan={10} className="p-0">
                                <div className="p-4">
-                                 <h4 className="font-semibold mb-2">Ordered Items</h4>
+                                 <h4 className="font-semibold mb-2 text-card-foreground">Ordered Items</h4>
                                  <Table>
                                   <TableHeader>
                                     <TableRow>
-                                      <TableHead className="py-1">Product Type</TableHead>
-                                      <TableHead className="py-1">Color</TableHead>
-                                      <TableHead className="py-1">Size</TableHead>
-                                      <TableHead className="py-1">Quantity</TableHead>
-                                      <TableHead className="text-center py-1">Action</TableHead>
+                                      <TableHead className="py-1 text-card-foreground">Product Type</TableHead>
+                                      <TableHead className="py-1 text-card-foreground">Color</TableHead>
+                                      <TableHead className="py-1 text-card-foreground">Size</TableHead>
+                                      <TableHead className="py-1 text-card-foreground">Quantity</TableHead>
+                                      <TableHead className="text-center py-1 text-card-foreground">Action</TableHead>
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
                                     {lead.orders?.map((order: any, index: number) => (
                                       <TableRow key={index}>
-                                        <TableCell className="py-1">{order.productType}</TableCell>
-                                        <TableCell className="py-1">{order.color}</TableCell>
-                                        <TableCell className="py-1">{order.size}</TableCell>
-                                        <TableCell className="py-1">{order.quantity}</TableCell>
+                                        <TableCell className="py-1 text-card-foreground">{order.productType}</TableCell>
+                                        <TableCell className="py-1 text-card-foreground">{order.color}</TableCell>
+                                        <TableCell className="py-1 text-card-foreground">{order.size}</TableCell>
+                                        <TableCell className="py-1 text-card-foreground">{order.quantity}</TableCell>
                                         <TableCell className="text-center py-1">
                                           <Button variant="ghost" size="icon" className="h-8 w-8">
                                             <Edit className="h-4 w-4" />

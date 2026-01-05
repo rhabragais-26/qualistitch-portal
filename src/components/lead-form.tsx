@@ -247,11 +247,11 @@ export function LeadForm() {
   };
 
   return (
-    <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-gray-500/10 text-black">
+    <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm text-black">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="font-headline text-xl">Create New Lead Entry for Master Tracker</CardTitle>
+            <CardTitle className="font-headline text-xl text-card-foreground">Create New Lead Entry for Master Tracker</CardTitle>
             <CardDescription>Fill in the details below to create a new lead. All fields are required.</CardDescription>
           </div>
           <div className="text-sm text-muted-foreground font-mono whitespace-nowrap pt-1">
@@ -270,7 +270,7 @@ export function LeadForm() {
                   name={fieldInfo.name}
                   render={({field}) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2">
+                      <FormLabel className="flex items-center gap-2 text-card-foreground">
                         <fieldInfo.icon className="h-4 w-4 text-primary" />
                         {fieldInfo.label}
                       </FormLabel>
@@ -305,7 +305,7 @@ export function LeadForm() {
                                 <FormControl>
                                   <RadioGroupItem value={option} />
                                 </FormControl>
-                                <FormLabel className="font-normal">{option}</FormLabel>
+                                <FormLabel className="font-normal text-card-foreground">{option}</FormLabel>
                               </FormItem>
                             ))}
                           </RadioGroup>
@@ -321,26 +321,26 @@ export function LeadForm() {
             <Separator />
             
             <div>
-              <FormLabel>Orders</FormLabel>
+              <FormLabel className="text-card-foreground">Orders</FormLabel>
               <div className="space-y-4 mt-2">
                 <div className="border rounded-md">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="py-2">Product Type</TableHead>
-                        <TableHead className="py-2">Color</TableHead>
-                        <TableHead className="py-2">Size</TableHead>
-                        <TableHead className="py-2">Quantity</TableHead>
-                        <TableHead className="text-right py-2">Action</TableHead>
+                        <TableHead className="py-2 text-card-foreground">Product Type</TableHead>
+                        <TableHead className="py-2 text-card-foreground">Color</TableHead>
+                        <TableHead className="py-2 text-card-foreground">Size</TableHead>
+                        <TableHead className="py-2 text-card-foreground">Quantity</TableHead>
+                        <TableHead className="text-right py-2 text-card-foreground">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {fields.map((field, index) => (
                         <TableRow key={field.id}>
-                          <TableCell className="py-2">{form.getValues(`orders.${index}.productType`)}</TableCell>
-                          <TableCell className="py-2">{form.getValues(`orders.${index}.color`)}</TableCell>
-                          <TableCell className="py-2">{form.getValues(`orders.${index}.size`)}</TableCell>
-                          <TableCell className="py-2">{form.getValues(`orders.${index}.quantity`)}</TableCell>
+                          <TableCell className="py-2 text-card-foreground">{form.getValues(`orders.${index}.productType`)}</TableCell>
+                          <TableCell className="py-2 text-card-foreground">{form.getValues(`orders.${index}.color`)}</TableCell>
+                          <TableCell className="py-2 text-card-foreground">{form.getValues(`orders.${index}.size`)}</TableCell>
+                          <TableCell className="py-2 text-card-foreground">{form.getValues(`orders.${index}.quantity`)}</TableCell>
                           <TableCell className="text-right py-2">
                             <Button
                               type="button"

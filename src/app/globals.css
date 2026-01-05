@@ -54,5 +54,9 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image: url('https://images.unsplash.com/photo-1617094254452-2b6389ed9b2a?q=80&w=1974&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
   }
 }
