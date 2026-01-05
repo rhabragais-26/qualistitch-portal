@@ -42,11 +42,11 @@ const formSchema = z.object({
   contactNo: z.string().min(10, {message: 'Please enter a valid contact number.'}),
   location: z.string().min(2, {message: 'Location is required.'}),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD']),
-  csr: z.string().min(2, {message: 'CSR name is required.'}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   productType: z.string().min(2, {message: 'Product type is required.'}),
   productSource: z.string().min(2, {message: 'Product source is required.'}),
+  csr: z.string().min(2, {message: 'CSR name is required.'}),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -59,15 +59,15 @@ const formFields: {
   type: 'input' | 'select' | 'radio';
   options?: string[];
 }[] = [
-  {name: 'customerName', label: 'Customer/Company Name', icon: User, placeholder: '', type: 'input'},
-  {name: 'contactNo', label: 'Contact No.', icon: Phone, placeholder: '', type: 'input'},
-  {name: 'location', label: 'Location', icon: MapPin, placeholder: '', type: 'input'},
+  {name: 'customerName', label: 'Customer/Company Name', icon: User, type: 'input'},
+  {name: 'contactNo', label: 'Contact No.', icon: Phone, type: 'input'},
+  {name: 'location', label: 'Location', icon: MapPin, type: 'input'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD']},
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services']},
   {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular']},
-  {name: 'productType', label: 'Product Type', icon: Package, placeholder: '', type: 'input'},
-  {name: 'csr', label: 'CSR', icon: UserCheck, placeholder: '', type: 'input'},
-  {name: 'productSource', label: 'Product Source', icon: Building, placeholder: '', type: 'input'},
+  {name: 'productType', label: 'Product Type', icon: Package, type: 'input'},
+  {name: 'csr', label: 'CSR', icon: UserCheck, type: 'input'},
+  {name: 'productSource', label: 'Product Source', icon: Building, type: 'input'},
 ];
 
 export function LeadForm() {
@@ -120,7 +120,7 @@ export function LeadForm() {
                       </FormLabel>
                       {fieldInfo.type === 'input' ? (
                         <FormControl>
-                          <Input placeholder={fieldInfo.placeholder} {...field} />
+                          <Input {...field} />
                         </FormControl>
                       ) : fieldInfo.type === 'select' ? (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -162,7 +162,10 @@ export function LeadForm() {
               ))}
             </div>
 
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end pt-4 gap-4">
+               <Button type="button" variant="outline" size="lg" onClick={() => form.reset()}>
+                Reset
+              </Button>
               <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95">
                 Submit
               </Button>
