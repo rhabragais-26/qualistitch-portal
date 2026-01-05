@@ -152,7 +152,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [newOrderProductType, setNewOrderProductType] = useState('');
   const [newOrderColor, setNewOrderColor] = useState('');
   const [newOrderSize, setNewOrderSize] = useState('');
-  const [newOrderQuantity, setNewOrderQuantity] = useState<number | string>(0);
+  const [newOrderQuantity, setNewOrderQuantity] = useState<number | string>(1);
   const firestore = useFirestore();
 
 
@@ -193,7 +193,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, update } = useFieldArray({
     control: form.control,
     name: "orders"
   });
@@ -275,7 +275,14 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       setNewOrderProductType('');
       setNewOrderColor('');
       setNewOrderSize('');
-      setNewOrderQuantity(0);
+      setNewOrderQuantity(1);
+    }
+  };
+
+  const handleUpdateQuantity = (index: number, newQuantity: number) => {
+    if (newQuantity >= 1) {
+      const currentOrder = fields[index];
+      update(index, { ...currentOrder, quantity: newQuantity });
     }
   };
 
@@ -364,17 +371,27 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <TableHead className="py-2 text-card-foreground">Product Type</TableHead>
                         <TableHead className="py-2 text-card-foreground">Color</TableHead>
                         <TableHead className="py-2 text-card-foreground">Size</TableHead>
-                        <TableHead className="py-2 text-card-foreground">Quantity</TableHead>
+                        <TableHead className="py-2 text-card-foreground text-center">Quantity</TableHead>
                         <TableHead className="text-right py-2 text-card-foreground">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {fields.map((field, index) => (
                         <TableRow key={field.id}>
-                          <TableCell className="py-2 text-card-foreground">{form.getValues(`orders.${index}.productType`)}</TableCell>
-                          <TableCell className="py-2 text-card-foreground">{form.getValues(`orders.${index}.color`)}</TableCell>
-                          <TableCell className="py-2 text-card-foreground">{form.getValues(`orders.${index}.size`)}</TableCell>
-                          <TableCell className="py-2 text-card-foreground">{form.getValues(`orders.${index}.quantity`)}</TableCell>
+                          <TableCell className="py-2 text-card-foreground">{field.productType}</TableCell>
+                          <TableCell className="py-2 text-card-foreground">{field.color}</TableCell>
+                          <TableCell className="py-2 text-card-foreground">{field.size}</TableCell>
+                          <TableCell className="py-2 text-card-foreground">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity - 1)} disabled={field.quantity <= 1}>
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="w-8 text-center">{field.quantity}</span>
+                              <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity + 1)}>
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
                           <TableCell className="text-right py-2">
                             <Button
                               type="button"
@@ -459,7 +476,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       </div>
                        <div className="flex items-center gap-2 justify-center">
                         <FormLabel>Quantity:</FormLabel>
-                        <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => Math.max(0, (typeof q === 'string' ? parseInt(q, 10) || 0 : q) - 1))} disabled={newOrderQuantity === 0}>
+                        <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => Math.max(1, (typeof q === 'string' ? parseInt(q, 10) || 1 : q) - 1))} disabled={newOrderQuantity === 1}>
                           <Minus className="h-4 w-4" />
                         </Button>
                         <Input
@@ -467,13 +484,13 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           value={newOrderQuantity}
                           onChange={(e) => {
                             const value = e.target.value;
-                            if (value === '' || /^[0-9\b]+$/.test(value)) {
-                              setNewOrderQuantity(value === '' ? '' : parseInt(value, 10));
+                            if (value === '' || /^[1-9][0-9]*$/.test(value)) {
+                                setNewOrderQuantity(value === '' ? '' : parseInt(value, 10));
                             }
                           }}
                           onBlur={(e) => {
-                            if (e.target.value === '') {
-                              setNewOrderQuantity(0);
+                            if (e.target.value === '' || parseInt(e.target.value, 10) < 1) {
+                              setNewOrderQuantity(1);
                             }
                           }}
                           className="w-16 text-center"
