@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --background: 220 12% 20%;
+    --foreground: 0 0% 98%;
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
@@ -28,15 +28,16 @@
     --chart-3: 40 70% 50%;
     --chart-4: 280 70% 50%;
     --chart-5: 320 70% 50%;
+    --radius: 0.75rem;
   }
 
   .dark {
     --background: 220 12% 20%;
     --foreground: 0 0% 98%;
-    --card: 220 12% 30%;
-    --card-foreground: 0 0% 98%;
-    --popover: 220 12% 21%;
-    --popover-foreground: 0 0% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
     --primary: 48 96% 48%;
     --primary-foreground: 240 6% 10%;
     --secondary: 220 10% 40%;
@@ -55,6 +56,7 @@
     --chart-3: 40 70% 75%;
     --chart-4: 280 70% 75%;
     --chart-5: 320 70% 75%;
+    --radius: 0.75rem;
   }
 }
 
