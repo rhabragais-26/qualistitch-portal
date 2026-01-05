@@ -9,18 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableFooter,
-} from '@/components/ui/table';
 import { Skeleton } from './ui/skeleton';
 import React, { useMemo } from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Pie, PieChart, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import { ChartContainer, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 
 
@@ -38,15 +29,23 @@ type Lead = {
 
 type SummaryData = {
   name: string;
-  quantity: number;
+  value: number;
+  fill: string;
 }
 
 const chartConfig = {
   quantity: {
     label: "Quantity",
-    color: "hsl(var(--chart-1))",
   },
 } satisfies ChartConfig
+
+const COLORS = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+];
 
 export function ReportsSummary() {
   const firestore = useFirestore();
@@ -72,45 +71,80 @@ export function ReportsSummary() {
 
     leads.forEach(lead => {
       lead.orders.forEach(order => {
-        // Product Type Summary
         productTypeMap.set(order.productType, (productTypeMap.get(order.productType) || 0) + order.quantity);
-
-        // Color Summary
         colorMap.set(order.color, (colorMap.get(order.color) || 0) + order.quantity);
-        
-        // Size Summary
         sizeMap.set(order.size, (sizeMap.get(order.size) || 0) + order.quantity);
       });
     });
 
-    const productTypeSummary: SummaryData[] = Array.from(productTypeMap.entries()).map(([name, quantity]) => ({ name, quantity })).sort((a, b) => b.quantity - a.quantity);
-    const colorSummary: SummaryData[] = Array.from(colorMap.entries()).map(([name, quantity]) => ({ name, quantity })).sort((a, b) => b.quantity - a.quantity);
-    const sizeSummary: SummaryData[] = Array.from(sizeMap.entries()).map(([name, quantity]) => ({ name, quantity })).sort((a, b) => b.quantity - a.quantity);
+    const productTypeSummary: SummaryData[] = Array.from(productTypeMap.entries()).map(([name, value], index) => ({ name, value, fill: COLORS[index % COLORS.length] })).sort((a, b) => b.value - a.value);
+    const colorSummary: SummaryData[] = Array.from(colorMap.entries()).map(([name, value], index) => ({ name, value, fill: COLORS[index % COLORS.length] })).sort((a, b) => b.value - a.value);
+    const sizeSummary: SummaryData[] = Array.from(sizeMap.entries()).map(([name, value], index) => ({ name, value, fill: COLORS[index % COLORS.length] })).sort((a, b) => b.value - a.value);
+    
+    // Add quantity to chartConfig dynamically
+    productTypeSummary.forEach(item => { (chartConfig as any)[item.name] = { label: item.name, color: item.fill } });
+    colorSummary.forEach(item => { (chartConfig as any)[item.name] = { label: item.name, color: item.fill } });
+    sizeSummary.forEach(item => { (chartConfig as any)[item.name] = { label: item.name, color: item.fill } });
+
 
     return { productTypeSummary, colorSummary, sizeSummary };
   }, [leads]);
 
   const renderSummaryChart = (title: string, data: SummaryData[]) => (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+    <Card className="flex-1 shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-card-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
             <div className="space-y-2">
-              {[...Array(3)].map((_, i) => ( <Skeleton key={i} className="h-24 w-full" /> ))}
+              <Skeleton className="h-48 w-full" />
             </div>
           ) : (
             <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-              <ResponsiveContainer width="100%" height={Math.max(300, data.length * 40)}>
-                 <BarChart data={data} layout="vertical" margin={{ left: 30, right: 30 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={150} interval={0} />
-                  <Tooltip cursor={{fill: 'hsl(var(--muted))'}} content={<ChartTooltipContent />} />
-                  <Legend />
-                  <Bar dataKey="quantity" fill="hsl(var(--primary))" radius={4} />
-                </BarChart>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Tooltip cursor={{fill: 'hsl(var(--muted))'}} content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                  <Pie
+                    data={data}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    labelLine={false}
+                    label={({
+                      cx,
+                      cy,
+                      midAngle,
+                      innerRadius,
+                      outerRadius,
+                      value,
+                      index,
+                    }) => {
+                      const RADIAN = Math.PI / 180
+                      const radius = 25 + innerRadius + (outerRadius - innerRadius)
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN)
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN)
+
+                      return (
+                        <text
+                          x={x}
+                          y={y}
+                          className="fill-muted-foreground text-xs"
+                          textAnchor={x > cx ? "start" : "end"}
+                          dominantBaseline="central"
+                        >
+                          {data[index].name} ({value})
+                        </text>
+                      )
+                    }}
+                  >
+                     {data.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                </PieChart>
               </ResponsiveContainer>
             </ChartContainer>
           )
@@ -120,7 +154,7 @@ export function ReportsSummary() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {renderSummaryChart('Quantity by Product Type', productTypeSummary)}
       {renderSummaryChart('Quantity by Color', colorSummary)}
       {renderSummaryChart('Quantity by Size', sizeSummary)}
