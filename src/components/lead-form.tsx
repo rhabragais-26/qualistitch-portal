@@ -81,7 +81,7 @@ const formSchema = z.object({
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   productSource: z.enum(['Client Provided', 'Stock'], {required_error: "You need to select a product source."}),
   csr: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a CSR."}),
-  orders: z.array(orderSchema).optional()
+  orders: z.array(orderSchema).min(1, "Please add at least one order."),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -442,6 +442,15 @@ export function LeadForm() {
                   </DialogContent>
                 </Dialog>
               </div>
+              <FormField
+                control={form.control}
+                name="orders"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <div className="flex justify-end pt-4 gap-4">
