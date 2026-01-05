@@ -123,6 +123,7 @@ export function RecordsTable() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<{ leadId: string; order: Order; index: number } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [csrFilter, setCsrFilter] = useState('All');
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -133,17 +134,21 @@ export function RecordsTable() {
 
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
-    if (!searchTerm) return leads;
-    
-    const lowercasedSearchTerm = searchTerm.toLowerCase();
 
-    return leads.filter(lead =>
-      lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-      (lead.contactNumber && lead.contactNumber.toLowerCase().includes(lowercasedSearchTerm)) ||
-      (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
-      (lead.landlineNumber && lead.landlineNumber.toLowerCase().includes(lowercasedSearchTerm))
-    );
-  }, [leads, searchTerm]);
+    return leads.filter(lead => {
+      const lowercasedSearchTerm = searchTerm.toLowerCase();
+      const matchesSearch = searchTerm ? 
+        (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
+        (lead.contactNumber && lead.contactNumber.toLowerCase().includes(lowercasedSearchTerm)) ||
+        (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
+        (lead.landlineNumber && lead.landlineNumber.toLowerCase().includes(lowercasedSearchTerm)))
+        : true;
+      
+      const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
+
+      return matchesSearch && matchesCsr;
+    });
+  }, [leads, searchTerm, csrFilter]);
 
   const isLoading = isAuthLoading || isLeadsLoading;
 
@@ -391,13 +396,26 @@ export function RecordsTable() {
                 Here are all the lead entries submitted through the form.
               </CardDescription>
             </div>
-             <div className="w-full max-w-sm">
-              <Input
-                placeholder="Search customer name, company name or contact no."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-gray-100 text-black placeholder:text-gray-500"
-              />
+            <div className="flex items-center gap-4">
+              <Select value={csrFilter} onValueChange={setCsrFilter}>
+                <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectValue placeholder="Filter by CSR" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All CSRs</SelectItem>
+                  {salesRepresentatives.map(csr => (
+                    <SelectItem key={csr} value={csr}>{csr}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="w-full max-w-sm">
+                <Input
+                  placeholder="Search customer, company or contact..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+              </div>
             </div>
         </div>
       </CardHeader>
@@ -707,6 +725,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   const [companyName, setCompanyName] = useState(lead.companyName || '');
   const [contactNumber, setContactNumber] = useState(lead.contactNumber || '');
   const [landlineNumber, setLandlineNumber] = useState(lead.landlineNumber || '');
+  const [location, setLocation] = useState(lead.location);
   const [salesRepresentative, setSalesRepresentative] = useState(lead.salesRepresentative);
   const [paymentType, setPaymentType] = useState(lead.paymentType);
   const [orderType, setOrderType] = useState(lead.orderType);
@@ -727,6 +746,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       setCompanyName(lead.companyName || '');
       setContactNumber(lead.contactNumber || '');
       setLandlineNumber(lead.landlineNumber || '');
+      setLocation(lead.location);
       setSalesRepresentative(lead.salesRepresentative);
       setPaymentType(lead.paymentType);
       setOrderType(lead.orderType);
@@ -779,7 +799,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
         setError("Mobile number must be in 0000-000-0000 format.");
         return;
     }
-    if (landline && !/^\d{2}-\d{4}-\d{4}$/.test(landline)) {
+    if (landline && landline && !/^\d{2}-\d{4}-\d{4}$/.test(landline)) {
         setError("Landline number must be in 00-0000-0000 format.");
         return;
     }
@@ -789,6 +809,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       companyName: companyName ? toTitleCase(companyName) : '-',
       contactNumber: mobile || '-',
       landlineNumber: landline || '-',
+      location: toTitleCase(location),
       salesRepresentative,
       paymentType,
       orderType,
@@ -830,6 +851,10 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
               <Input id="landlineNo" value={landlineNumber === '-' ? '' : landlineNumber} onChange={handleLandlineNoChange} />
             </div>
           </div>
+          <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
+            </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="salesRepresentative">CSR</Label>
@@ -1000,3 +1025,5 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
+    
