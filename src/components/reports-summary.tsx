@@ -218,24 +218,24 @@ export function ReportsSummary() {
                 </ResponsiveContainer>
               </ChartContainer>
             </div>
-             <div className="mt-4">
+             <div className="mt-4 mx-4">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs p-2">CSR</TableHead>
-                    <TableHead className="text-right text-xs p-2">Quantity</TableHead>
-                    <TableHead className="text-right text-xs p-2">Customers</TableHead>
+                    <TableHead className="text-xs p-1">CSR</TableHead>
+                    <TableHead className="text-right text-xs p-1">Quantity</TableHead>
+                    <TableHead className="text-right text-xs p-1">Customers</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {salesRepData.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium flex items-center text-xs p-2">
+                      <TableCell className="font-medium flex items-center text-xs p-1">
                          <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
                         {item.name}
                       </TableCell>
-                      <TableCell className="text-right text-xs p-2">{item.quantity}</TableCell>
-                      <TableCell className="text-right text-xs p-2">{item.customerCount}</TableCell>
+                      <TableCell className="text-right text-xs p-1">{item.quantity}</TableCell>
+                      <TableCell className="text-right text-xs p-1">{item.customerCount}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -299,24 +299,24 @@ export function ReportsSummary() {
                 </ResponsiveContainer>
               </ChartContainer>
             </div>
-            <div className="mt-auto">
+            <div className="mt-auto mx-4">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs p-2">Priority Type</TableHead>
-                    <TableHead className="text-right text-xs p-2">Quantity</TableHead>
-                    <TableHead className="text-right text-xs p-2">Percentage</TableHead>
+                    <TableHead className="text-xs p-1">Priority Type</TableHead>
+                    <TableHead className="text-right text-xs p-1">Quantity</TableHead>
+                    <TableHead className="text-right text-xs p-1">Percentage</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {priorityData.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium flex items-center text-xs p-2">
+                      <TableCell className="font-medium flex items-center text-xs p-1">
                          <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
                         {item.name}
                       </TableCell>
-                      <TableCell className="text-right text-xs p-2">{item.value}</TableCell>
-                      <TableCell className="text-right text-xs p-2">
+                      <TableCell className="text-right text-xs p-1">{item.value}</TableCell>
+                      <TableCell className="text-right text-xs p-1">
                         {totalPriorityQuantity > 0 ? `${((item.value / totalPriorityQuantity) * 100).toFixed(2)}%` : '0.00%'}
                       </TableCell>
                     </TableRow>
