@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "Lead": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Lead",
+      "type": "object",
+      "description": "Represents a lead in the LeadTracker application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Lead entity."
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Name of the customer."
+        },
+        "companyName": {
+          "type": "string",
+          "description": "Name of the company associated with the lead."
+        },
+        "contactNumber": {
+          "type": "string",
+          "description": "Contact number for the lead."
+        },
+        "location": {
+          "type": "string",
+          "description": "Location of the lead."
+        },
+        "paymentType": {
+          "type": "string",
+          "description": "Payment type for the lead (Partially Paid, Fully Paid, COD)."
+        },
+        "csr": {
+          "type": "string",
+          "description": "CSR (Customer Service Representative) associated with the lead."
+        },
+        "orderType": {
+          "type": "string",
+          "description": "Type of order for the lead."
+        },
+        "priorityType": {
+          "type": "string",
+          "description": "Priority type for the lead."
+        },
+        "productType": {
+          "type": "string",
+          "description": "Type of product for the lead."
+        },
+        "productSource": {
+          "type": "string",
+          "description": "Source of the product for the lead."
+        }
+      },
+      "required": [
+        "id",
+        "customerName",
+        "companyName",
+        "contactNumber",
+        "location",
+        "paymentType",
+        "csr",
+        "orderType",
+        "priorityType",
+        "productType",
+        "productSource"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/leads/{leadId}",
+        "definition": {
+          "entityName": "Lead",
+          "schema": {
+            "$ref": "#/backend/entities/Lead"
+          },
+          "description": "Stores lead data. Each document represents a single lead in the LeadTracker application.",
+          "params": [
+            {
+              "name": "leadId",
+              "description": "Unique identifier for the lead document."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The data structure is designed to store lead information collected via the LeadTracker application. To ensure security and efficient data retrieval, leads are stored under a collection called `leads`. This design promotes a flat structure, avoiding nested collections and complex queries, especially considering the app's focus is on data input rather than deeply relational data. Each lead document contains all relevant lead data. This simplifies data access and minimizes the need for complex joins or subqueries, aligning with the app's focus on simplicity and ease of use.\n\n**Authorization Independence:** Since there are no explicit user roles, collaborative features, or ownership details mentioned in the requirements, the system assumes open access to leads. If access control becomes a requirement in the future, a `members` map or a separate `/roles` collection would be used in combination with denormalization to achieve authorization independence.\n\n**QAPs (Rules are not Filters):** The structure supports secure `list` operations because all lead data is stored within a single, top-level collection. Security rules can be applied at the collection level, ensuring that only authorized users can access lead data, without needing to filter data based on document content. If more sophisticated access controls are required (e.g., restricting access based on CSR assignment), denormalization of CSR assignment directly into the lead documents combined with security rules based on the `request.auth.uid` will ensure that filtering within the rules is not required."
+  }
+}

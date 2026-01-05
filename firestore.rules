@@ -1,0 +1,89 @@
+/**
+ * This ruleset enforces a simple, authenticated-user security model for the LeadTracker application.
+ *
+ * Core Philosophy:
+ * The primary security requirement is to ensure that only signed-in users can interact with the lead data.
+ * Based on the application's "open access" design, any authenticated user is granted full
+ * read and write permissions on all lead documents. There is no concept of document ownership.
+ *
+ * Data Structure:
+ * The data is organized in a single, top-level collection: /leads/{leadId}. This flat structure
+ * simplifies data access and security rule implementation.
+ *
+ * Key Security Decisions:
+ * - Authenticated Access: All operations (read, create, update, delete) require the user to be signed in.
+ *   Anonymous or unauthenticated requests are denied.
+ * - No Ownership Model: As the data schema for 'Lead' lacks an owner or creator field, the rules
+ *   permit any authenticated user to modify or delete any lead. This is intentional for this
+ *   collaborative, open-access system.
+ * - Flexible Schema: In line with prototyping, these rules do not validate the shape or data types of
+ *   the 'Lead' document beyond the essential 'id' field, allowing for rapid iteration on the data model.
+ *
+ * Denormalization for Authorization:
+ * This ruleset does not currently require denormalization because there are no complex ownership or
+ * role-based relationships. If user-specific access were required in the future, a denormalized 'ownerId'
+ * field would need to be added to each lead document.
+ *
+ * Structural Segregation:
+ * All leads are treated equally within a single collection, as there is no distinction between
+ * public and private data in this application model.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------------
+    // Helper Functions
+    // ------------------------------------------------------------------------
+
+    /**
+     * Checks if a user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Confirms that a document being updated or deleted actually exists.
+     * Prevents modification of non-existent data and provides robust state checking.
+     */
+    function docExists() {
+      return resource != null;
+    }
+
+    /**
+     * For create operations: Validates that the 'id' field within the document's
+     * body matches the document's ID in the path. Enforces data consistency.
+     */
+    function hasConsistentId(docId) {
+      return request.resource.data.id == docId;
+    }
+
+    /**
+     * For update operations: Ensures the 'id' field within the document is immutable.
+     * This prevents the core identifier linking the document to its path from being changed.
+     */
+    function isIdImmutable() {
+      return request.resource.data.id == resource.data.id;
+    }
+
+    // ------------------------------------------------------------------------
+    // Collection Rules: /leads
+    // ------------------------------------------------------------------------
+
+    /**
+     * @description   Manages access to lead documents. Any authenticated user can read, create, update, and delete any lead.
+     * @path          /leads/{leadId}
+     * @allow         (create) An authenticated user creating a new lead document.
+     * @deny          (get) An unauthenticated user trying to read a lead.
+     * @principle     Enforces a simple "logged-in only" security model where all authenticated users have full permissions, as per the application's initial "open access" design.
+     */
+    match /leads/{leadId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && hasConsistentId(leadId);
+      allow update: if isSignedIn() && docExists() && isIdImmutable();
+      allow delete: if isSignedIn() && docExists();
+    }
+  }
+}
