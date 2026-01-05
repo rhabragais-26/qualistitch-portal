@@ -64,8 +64,8 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from './ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { useFirestore } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -107,6 +107,16 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+type Lead = {
+  id: string;
+  customerName: string;
+  companyName: string;
+  contactNumber: string;
+  landlineNumber: string;
+  location: string;
+};
+
+
 const formFields: {
   name: keyof Omit<FormValues, 'orders'>;
   label: string;
@@ -115,9 +125,10 @@ const formFields: {
   options?: string[];
   placeholder?: string;
   className?: string;
+  autoComplete?: 'on' | 'off';
 }[] = [
-  {name: 'customerName', label: 'Customer Name', icon: User, type: 'input'},
-  {name: 'companyName', label: 'Company Name (Optional)', icon: Building, type: 'input'},
+  {name: 'customerName', label: 'Customer Name', icon: User, type: 'input', autoComplete: 'off'},
+  {name: 'companyName', label: 'Company Name (Optional)', icon: Building, type: 'input', autoComplete: 'off'},
   {name: 'mobileNo', label: 'Mobile No. (Optional)', icon: Phone, type: 'tel'},
   {name: 'landlineNo', label: 'Landline No. (Optional)', icon: PhoneForwarded, type: 'tel'},
   {name: 'location', label: 'Location', icon: MapPin, type: 'input'},
@@ -173,6 +184,68 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [newOrderQuantity, setNewOrderQuantity] = useState<number | string>(1);
   const firestore = useFirestore();
 
+  const [customerSuggestions, setCustomerSuggestions] = useState<Lead[]>([]);
+  const [companySuggestions, setCompanySuggestions] = useState<Lead[]>([]);
+
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: leads } = useCollection<Lead>(leadsQuery);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      customerName: '',
+      companyName: '',
+      mobileNo: '',
+      landlineNo: '',
+      location: '',
+      paymentType: undefined,
+      orderType: undefined,
+      priorityType: 'Regular',
+      salesRepresentative: undefined,
+      orders: [],
+    },
+  });
+
+  const handleSuggestionClick = (lead: Lead) => {
+    form.setValue('customerName', toTitleCase(lead.customerName));
+    form.setValue('companyName', lead.companyName ? toTitleCase(lead.companyName) : '');
+    form.setValue('mobileNo', lead.contactNumber || '');
+    form.setValue('landlineNo', lead.landlineNumber || '');
+    form.setValue('location', lead.location ? toTitleCase(lead.location) : '');
+    setCustomerSuggestions([]);
+    setCompanySuggestions([]);
+  };
+
+  const customerNameValue = form.watch('customerName');
+  const companyNameValue = form.watch('companyName');
+
+  useEffect(() => {
+    if (customerNameValue && leads) {
+      const uniqueSuggestions = leads.filter(
+        (lead, index, self) =>
+          lead.customerName.toLowerCase().includes(customerNameValue.toLowerCase()) &&
+          self.findIndex((l) => l.customerName.toLowerCase() === lead.customerName.toLowerCase()) === index
+      );
+      setCustomerSuggestions(uniqueSuggestions);
+    } else {
+      setCustomerSuggestions([]);
+    }
+  }, [customerNameValue, leads]);
+
+  useEffect(() => {
+    if (companyNameValue && leads) {
+      const uniqueSuggestions = leads.filter(
+        (lead, index, self) =>
+          lead.companyName &&
+          lead.companyName.toLowerCase().includes(companyNameValue.toLowerCase()) &&
+          self.findIndex((l) => l.companyName?.toLowerCase() === lead.companyName?.toLowerCase()) === index
+      );
+      setCompanySuggestions(uniqueSuggestions);
+    } else {
+      setCompanySuggestions([]);
+    }
+  }, [companyNameValue, leads]);
+
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -196,22 +269,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     return () => clearInterval(intervalId);
   }, []);
   
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      customerName: '',
-      companyName: '',
-      mobileNo: '',
-      landlineNo: '',
-      location: '',
-      paymentType: undefined,
-      orderType: undefined,
-      priorityType: 'Regular',
-      salesRepresentative: undefined,
-      orders: [],
-    },
-  });
-
   const { fields, append, remove, update } = useFieldArray({
     control: form.control,
     name: "orders"
@@ -388,7 +445,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   control={form.control}
                   name={fieldInfo.name}
                   render={({field}) => (
-                    <FormItem>
+                    <FormItem className="relative">
                       <FormLabel className="flex items-center gap-2 text-black">
                         <fieldInfo.icon className="h-4 w-4 text-primary" />
                         {fieldInfo.label}
@@ -398,6 +455,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           <Input
                             type={fieldInfo.type}
                             {...field}
+                            autoComplete={fieldInfo.autoComplete || 'on'}
                             onChange={(e) => {
                               if (fieldInfo.name === 'mobileNo') {
                                 handleMobileNoChange(e, field);
@@ -442,6 +500,36 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                             ))}
                           </RadioGroup>
                         </FormControl>
+                      )}
+                      {fieldInfo.name === 'customerName' && customerSuggestions.length > 0 && (
+                        <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                          <CardContent className="p-2">
+                            {customerSuggestions.map((lead) => (
+                              <div
+                                key={lead.id}
+                                className="p-2 cursor-pointer hover:bg-gray-100"
+                                onClick={() => handleSuggestionClick(lead)}
+                              >
+                                {toTitleCase(lead.customerName)}
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+                      )}
+                      {fieldInfo.name === 'companyName' && companySuggestions.length > 0 && (
+                        <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                          <CardContent className="p-2">
+                            {companySuggestions.map((lead) => (
+                              <div
+                                key={lead.id}
+                                className="p-2 cursor-pointer hover:bg-gray-100"
+                                onClick={() => handleSuggestionClick(lead)}
+                              >
+                                {lead.companyName ? toTitleCase(lead.companyName) : ''}
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
                       )}
                       <FormMessage />
                     </FormItem>
@@ -645,5 +733,3 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </Card>
   );
 }
-
-    
