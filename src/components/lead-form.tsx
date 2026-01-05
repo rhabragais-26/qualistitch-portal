@@ -35,6 +35,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import {RadioGroup, RadioGroupItem} from './ui/radio-group';
+import { cn } from '@/lib/utils';
 
 // Define the form schema using Zod
 const formSchema = z.object({
@@ -127,7 +128,7 @@ export function LeadForm() {
                       ) : fieldInfo.type === 'select' ? (
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className={cn(!field.value && 'text-muted-foreground')}>
                               <SelectValue placeholder={fieldInfo.placeholder || `Select a ${fieldInfo.label.toLowerCase()}`} />
                             </SelectTrigger>
                           </FormControl>
