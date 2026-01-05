@@ -49,6 +49,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog"
 import { Separator } from './ui/separator';
 
 // Define the form schema using Zod
@@ -88,6 +98,8 @@ const formFields: {
 export function LeadForm() {
   const {toast} = useToast();
   const [dateTime, setDateTime] = useState('');
+  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
+  const [newOrderValue, setNewOrderValue] = useState('');
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -148,6 +160,14 @@ export function LeadForm() {
 
     handleReset();
   }
+
+  const handleAddOrder = () => {
+    if (newOrderValue.trim()) {
+      append({ value: newOrderValue.trim() });
+      setNewOrderValue('');
+      setIsOrderDialogOpen(false);
+    }
+  };
 
   return (
     <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500">
@@ -227,19 +247,8 @@ export function LeadForm() {
               <FormLabel>Orders</FormLabel>
               <div className="space-y-4 mt-2">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="flex items-center gap-2">
-                    <FormField
-                      control={form.control}
-                      name={`orders.${index}.value`}
-                      render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormControl>
-                            <Input placeholder={`Order #${index + 1}`} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <div key={field.id} className="flex items-center gap-2 p-2 border rounded-md bg-muted/20">
+                     <span className="flex-1">{form.getValues(`orders.${index}.value`)}</span>
                     <Button
                       type="button"
                       variant="ghost"
@@ -251,14 +260,44 @@ export function LeadForm() {
                     </Button>
                   </div>
                 ))}
-                 <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => append({ value: "" })}
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Order
-                  </Button>
+                 <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsOrderDialogOpen(true)}
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Order
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add Order Details</DialogTitle>
+                      <DialogDescription>
+                        Enter the details for the new order.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <Input
+                        id="new-order"
+                        value={newOrderValue}
+                        onChange={(e) => setNewOrderValue(e.target.value)}
+                        placeholder="Enter order details"
+                      />
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button type="button" variant="outline">
+                          Close
+                        </Button>
+                      </DialogClose>
+                      <Button type="button" onClick={handleAddOrder}>
+                        Add
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
 
