@@ -195,10 +195,30 @@ export function RecordsTable() {
     }
   };
   
-  const handleDeleteOrder = async (leadId: string, orderToDelete: Order) => {
-    console.log("Delete order:", leadId, orderToDelete);
-    // This is where you'd put the logic to delete the order from Firebase.
-    // For now, it just logs to the console.
+  const handleDeleteOrder = async (leadId: string, orderIndex: number) => {
+    const lead = leads?.find(l => l.id === leadId);
+    if (!lead) return;
+
+    const orderToDelete = lead.orders[orderIndex];
+  
+    const leadDocRef = doc(firestore, 'leads', leadId);
+  
+    try {
+      await updateDoc(leadDocRef, {
+        orders: arrayRemove(orderToDelete)
+      });
+      toast({
+        title: "Order Deleted!",
+        description: "The order has been removed from the lead.",
+      });
+    } catch (e: any) {
+      console.error("Error deleting order: ", e);
+      toast({
+        variant: "destructive",
+        title: "Delete Failed",
+        description: e.message || "Could not delete the order.",
+      });
+    }
   };
 
   const handleDeleteLead = async (leadId: string) => {
@@ -263,109 +283,111 @@ export function RecordsTable() {
               {leads?.map((lead) => (
                 <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
                   <TableBody>
-                    <TableRow>
-                        <TableCell className="text-sm align-middle py-2 text-card-foreground">
-                          {new Date(lead.submissionDateTime).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.customerName}</TableCell>
-                        <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.contactNumber}</TableCell>
-                        <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.location}</TableCell>
-                        <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.csr}</TableCell>
-                        <TableCell className="align-middle py-2">
-                          <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                            {lead.priorityType}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.paymentType}</TableCell>
-                        <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.orderType}</TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                          <CollapsibleTrigger asChild>
-                             <Button variant="ghost" size="sm">
-                              View
-                              {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-                            </Button>
-                          </CollapsibleTrigger>
-                        </TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                            <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
-                              <PlusCircle className="h-4 w-4 mr-1" />
-                              Add Order
-                            </Button>
-                             <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the entire lead record.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteLead(lead.id)}>Delete Lead</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                        </TableCell>
-                      </TableRow>
-                      <CollapsibleContent asChild>
-                         <tr className="bg-muted/50">
-                          <TableCell colSpan={10} className="p-0">
-                             <div className="p-4">
-                               <h4 className="font-semibold mb-2 text-card-foreground">Ordered Items</h4>
-                               <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead className="py-1 text-card-foreground">Product Type</TableHead>
-                                    <TableHead className="py-1 text-card-foreground">Color</TableHead>
-                                    <TableHead className="py-1 text-card-foreground">Size</TableHead>
-                                    <TableHead className="py-1 text-card-foreground">Quantity</TableHead>
-                                    <TableHead className="text-center py-1 text-card-foreground">Action</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {lead.orders?.map((order: any, index: number) => (
-                                    <TableRow key={index}>
-                                      <TableCell className="py-1 text-card-foreground">{order.productType}</TableCell>
-                                      <TableCell className="py-1 text-card-foreground">{order.color}</TableCell>
-                                      <TableCell className="py-1 text-card-foreground">{order.size}</TableCell>
-                                      <TableCell className="py-1 text-card-foreground">{order.quantity}</TableCell>
-                                      <TableCell className="text-center py-1">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
-                                          <Edit className="h-4 w-4" />
-                                        </Button>
-                                         <AlertDialog>
-                                          <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                                              <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                          </AlertDialogTrigger>
-                                          <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                              <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete the ordered item.
-                                              </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                              <AlertDialogAction onClick={() => handleDeleteOrder(lead.id, order)}>Delete</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                          </AlertDialogContent>
-                                        </AlertDialog>
-                                      </TableCell>
+                      <TableRow>
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">
+                            {new Date(lead.submissionDateTime).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.customerName}</TableCell>
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.contactNumber}</TableCell>
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.location}</TableCell>
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.csr}</TableCell>
+                          <TableCell className="align-middle py-2">
+                            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                              {lead.priorityType}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.paymentType}</TableCell>
+                          <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.orderType}</TableCell>
+                          <TableCell className="text-center align-middle py-2">
+                            <CollapsibleTrigger asChild>
+                               <Button variant="ghost" size="sm">
+                                View
+                                {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                              </Button>
+                            </CollapsibleTrigger>
+                          </TableCell>
+                          <TableCell className="text-center align-middle py-2">
+                               <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This action cannot be undone. This will permanently delete the entire lead record.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteLead(lead.id)}>Delete Lead</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                          </TableCell>
+                        </TableRow>
+                        <CollapsibleContent asChild>
+                           <tr className="bg-muted/50">
+                            <TableCell colSpan={10} className="p-0">
+                               <div className="p-4">
+                                <div className="flex justify-between items-center mb-2">
+                                  <h4 className="font-semibold text-card-foreground">Ordered Items</h4>
+                                  <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
+                                    <PlusCircle className="h-4 w-4 mr-1" />
+                                    Add Order
+                                  </Button>
+                                </div>
+                                 <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead className="py-1 text-card-foreground">Product Type</TableHead>
+                                      <TableHead className="py-1 text-card-foreground">Color</TableHead>
+                                      <TableHead className="py-1 text-card-foreground">Size</TableHead>
+                                      <TableHead className="py-1 text-card-foreground">Quantity</TableHead>
+                                      <TableHead className="text-center py-1 text-card-foreground">Action</TableHead>
                                     </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </div>
-                           </TableCell>
-                        </tr>
-                      </CollapsibleContent>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {lead.orders?.map((order: any, index: number) => (
+                                      <TableRow key={index}>
+                                        <TableCell className="py-1 text-card-foreground">{order.productType}</TableCell>
+                                        <TableCell className="py-1 text-card-foreground">{order.color}</TableCell>
+                                        <TableCell className="py-1 text-card-foreground">{order.size}</TableCell>
+                                        <TableCell className="py-1 text-card-foreground">{order.quantity}</TableCell>
+                                        <TableCell className="text-center py-1">
+                                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
+                                            <Edit className="h-4 w-4" />
+                                          </Button>
+                                           <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                                <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                              <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                  This action cannot be undone. This will permanently delete the ordered item.
+                                                </AlertDialogDescription>
+                                              </AlertDialogHeader>
+                                              <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteOrder(lead.id, index)}>Delete</AlertDialogAction>
+                                              </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                          </AlertDialog>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                             </TableCell>
+                          </tr>
+                        </CollapsibleContent>
                     </TableBody>
                 </Collapsible>
               ))}
