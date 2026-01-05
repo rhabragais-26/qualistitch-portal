@@ -42,6 +42,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 
 
 const productTypes = [
@@ -76,11 +77,32 @@ const productColors = [
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
+const csrs = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
+const paymentTypes = ['Partially Paid', 'Fully Paid', 'COD'];
+const orderTypes = ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'];
+const priorityTypes = ['Rush', 'Regular'];
+const productSources = ['Client Provided', 'Stock'];
+
+
 type Order = {
   productType: string;
   color: string;
   size: string;
   quantity: number;
+}
+
+type Lead = {
+  id: string;
+  customerName: string;
+  contactNumber: string;
+  location: string;
+  csr: string;
+  priorityType: string;
+  paymentType: string;
+  orderType: string;
+  productSource: string;
+  orders: Order[];
+  submissionDateTime: string;
 }
 
 export function RecordsTable() {
@@ -95,6 +117,10 @@ export function RecordsTable() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // State for editing a lead
+  const [isEditLeadDialogOpen, setIsEditLeadDialogOpen] = useState(false);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+
   // State for editing an order
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<{ leadId: string; order: Order; index: number } | null>(null);
@@ -104,7 +130,7 @@ export function RecordsTable() {
     return query(collection(firestore, 'leads'), orderBy('submissionDateTime', 'desc'));
   }, [firestore, user]);
 
-  const { data: leads, isLoading: isLeadsLoading, error } = useCollection(leadsQuery);
+  const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
 
   const isLoading = isAuthLoading || isLeadsLoading;
 
@@ -157,6 +183,34 @@ export function RecordsTable() {
           description: e.message || "Could not add the new order.",
         });
       }
+    }
+  };
+  
+  const handleOpenEditLeadDialog = (lead: Lead) => {
+    setEditingLead(lead);
+    setIsEditLeadDialogOpen(true);
+  }
+
+  const handleEditLead = async (updatedLead: Partial<Lead>) => {
+    if (!editingLead) return;
+
+    const leadDocRef = doc(firestore, 'leads', editingLead.id);
+
+    try {
+      await updateDoc(leadDocRef, updatedLead);
+      toast({
+        title: "Lead Updated!",
+        description: "The lead details have been successfully updated.",
+      });
+      setIsEditLeadDialogOpen(false);
+      setEditingLead(null);
+    } catch (e: any) {
+      console.error("Error updating lead: ", e);
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: e.message || "Could not update the lead.",
+      });
     }
   };
 
@@ -307,6 +361,9 @@ export function RecordsTable() {
                             </CollapsibleTrigger>
                           </TableCell>
                           <TableCell className="text-center align-middle py-2">
+                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditLeadDialog(lead)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
                                <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
@@ -332,13 +389,7 @@ export function RecordsTable() {
                            <tr className="bg-muted/50">
                             <TableCell colSpan={10} className="p-0">
                                <div className="p-4">
-                                <div className="flex justify-between items-center mb-2">
-                                  <h4 className="font-semibold text-card-foreground">Ordered Items</h4>
-                                  <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
-                                    <PlusCircle className="h-4 w-4 mr-1" />
-                                    Add Order
-                                  </Button>
-                                </div>
+                                <h4 className="font-semibold text-card-foreground mb-2">Ordered Items</h4>
                                  <Table>
                                   <TableHeader>
                                     <TableRow>
@@ -346,7 +397,7 @@ export function RecordsTable() {
                                       <TableHead className="py-1 text-card-foreground">Color</TableHead>
                                       <TableHead className="py-1 text-card-foreground">Size</TableHead>
                                       <TableHead className="py-1 text-card-foreground">Quantity</TableHead>
-                                      <TableHead className="text-center py-1 text-card-foreground">Action</TableHead>
+                                      <TableHead className="text-right py-1 text-card-foreground pr-8">Action</TableHead>
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
@@ -356,7 +407,7 @@ export function RecordsTable() {
                                         <TableCell className="py-1 text-card-foreground">{order.color}</TableCell>
                                         <TableCell className="py-1 text-card-foreground">{order.size}</TableCell>
                                         <TableCell className="py-1 text-card-foreground">{order.quantity}</TableCell>
-                                        <TableCell className="text-center py-1">
+                                        <TableCell className="text-right py-1">
                                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
                                             <Edit className="h-4 w-4" />
                                           </Button>
@@ -384,6 +435,12 @@ export function RecordsTable() {
                                     ))}
                                   </TableBody>
                                 </Table>
+                                <div className="mt-2">
+                                   <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
+                                    <PlusCircle className="h-4 w-4 mr-1" />
+                                    Add Order
+                                  </Button>
+                                </div>
                               </div>
                              </TableCell>
                           </tr>
@@ -495,6 +552,15 @@ export function RecordsTable() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {editingLead && (
+        <EditLeadDialog
+          isOpen={isEditLeadDialogOpen}
+          onOpenChange={setIsEditLeadDialogOpen}
+          lead={editingLead}
+          onSave={handleEditLead}
+          onClose={() => setEditingLead(null)}
+        />
+      )}
       {editingOrder && (
         <EditOrderDialog 
           isOpen={isEditDialogOpen}
@@ -507,6 +573,126 @@ export function RecordsTable() {
     </Card>
   );
 }
+
+// Separate component for the Edit Lead Dialog
+function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  lead: Lead;
+  onSave: (updatedLead: Partial<Lead>) => void;
+  onClose: () => void;
+}) {
+  const [customerName, setCustomerName] = useState(lead.customerName);
+  const [contactNumber, setContactNumber] = useState(lead.contactNumber);
+  const [location, setLocation] = useState(lead.location);
+  const [csr, setCsr] = useState(lead.csr);
+  const [paymentType, setPaymentType] = useState(lead.paymentType);
+  const [orderType, setOrderType] = useState(lead.orderType);
+  const [priorityType, setPriorityType] = useState(lead.priorityType);
+  const [productSource, setProductSource] = useState(lead.productSource);
+
+  React.useEffect(() => {
+    if (lead) {
+      setCustomerName(lead.customerName);
+      setContactNumber(lead.contactNumber);
+      setLocation(lead.location);
+      setCsr(lead.csr);
+      setPaymentType(lead.paymentType);
+      setOrderType(lead.orderType);
+      setPriorityType(lead.priorityType);
+      setProductSource(lead.productSource);
+    }
+  }, [lead]);
+
+  const handleSave = () => {
+    const updatedLead: Partial<Lead> = {
+      customerName,
+      contactNumber,
+      location,
+      csr,
+      paymentType,
+      orderType,
+      priorityType,
+      productSource,
+      companyName: customerName, // Assuming companyName is same as customerName
+    };
+    onSave(updatedLead);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) onClose();
+      onOpenChange(open);
+    }}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Edit Lead Details</DialogTitle>
+          <DialogDescription>
+            Update the details for the selected lead.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="customerName">Customer/Company Name</Label>
+              <Input id="customerName" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contactNo">Contact No.</Label>
+              <Input id="contactNo" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="location">Location</Label>
+            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="csr">CSR</Label>
+              <Select onValueChange={setCsr} value={csr}>
+                <SelectTrigger id="csr"><SelectValue /></SelectTrigger>
+                <SelectContent>{csrs.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="paymentType">Payment Type</Label>
+              <Select onValueChange={setPaymentType} value={paymentType}>
+                <SelectTrigger id="paymentType"><SelectValue /></SelectTrigger>
+                <SelectContent>{paymentTypes.map(o => <SelectItem key={o} value={o}>{o === 'COD' ? 'COD (Cash on Delivery)' : o}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="orderType">Order Type</Label>
+            <Select onValueChange={setOrderType} value={orderType}>
+              <SelectTrigger id="orderType"><SelectValue /></SelectTrigger>
+              <SelectContent>{orderTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Priority Type</Label>
+              <RadioGroup onValueChange={(v) => setPriorityType(v as 'Rush' | 'Regular')} value={priorityType} className="flex pt-2">
+                {priorityTypes.map(o => <div key={o} className="flex items-center space-x-2"><RadioGroupItem value={o} id={`priority-${o}`}/><Label htmlFor={`priority-${o}`}>{o}</Label></div>)}
+              </RadioGroup>
+            </div>
+            <div className="space-y-2">
+              <Label>Product Source</Label>
+               <RadioGroup onValueChange={(v) => setProductSource(v as 'Client Provided' | 'Stock')} value={productSource} className="flex pt-2">
+                {productSources.map(o => <div key={o} className="flex items-center space-x-2"><RadioGroupItem value={o} id={`source-${o}`}/><Label htmlFor={`source-${o}`}>{o}</Label></div>)}
+              </RadioGroup>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
+          <Button type="button" onClick={handleSave}>Save Changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 // Separate component for the Edit Order Dialog
 function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
@@ -636,3 +822,5 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
+    
