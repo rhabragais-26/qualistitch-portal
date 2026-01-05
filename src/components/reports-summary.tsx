@@ -113,7 +113,7 @@ export function ReportsSummary() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+          <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
             <CardHeader>
               <Skeleton className="h-8 w-1/2" />
               <Skeleton className="h-4 w-3/4" />
@@ -122,7 +122,7 @@ export function ReportsSummary() {
               <Skeleton className="h-[300px] w-full" />
             </CardContent>
           </Card>
-          <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+          <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
             <CardHeader>
               <Skeleton className="h-8 w-1/2" />
               <Skeleton className="h-4 w-3/4" />
@@ -131,7 +131,7 @@ export function ReportsSummary() {
               <Skeleton className="h-[300px] w-full" />
             </CardContent>
           </Card>
-           <Card className="lg:col-span-2 w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+           <Card className="lg:col-span-2 w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
             <CardHeader>
               <Skeleton className="h-8 w-1/2" />
               <Skeleton className="h-4 w-3/4" />
@@ -156,11 +156,11 @@ export function ReportsSummary() {
 
   return (
     <>
-      <div className="mb-8 p-4 bg-white text-black rounded-lg shadow-xl no-print">
+      <div className="mb-8 p-4 bg-card text-card-foreground rounded-lg shadow-xl no-print">
         <div className="flex justify-between items-center">
             <div className="flex gap-4 items-center">
                 <div className='flex items-center gap-2'>
-                    <span className="text-sm font-medium text-black">Year:</span>
+                    <span className="text-sm font-medium text-card-foreground">Year:</span>
                     <Select value={selectedYear} onValueChange={setSelectedYear}>
                         <SelectTrigger className="w-[120px]">
                             <SelectValue placeholder="Select Year" />
@@ -173,7 +173,7 @@ export function ReportsSummary() {
                     </Select>
                 </div>
                 <div className='flex items-center gap-2'>
-                    <span className="text-sm font-medium text-black">Month:</span>
+                    <span className="text-sm font-medium text-card-foreground">Month:</span>
                     <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Select Month" />
@@ -189,7 +189,7 @@ export function ReportsSummary() {
         </div>
       </div>
       <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
             <CardTitle>CSR Performance</CardTitle>
             <CardDescription>Total quantity of orders and number of customers by each CSR.</CardDescription>
@@ -243,13 +243,13 @@ export function ReportsSummary() {
             </div>
           </CardContent>
         </Card>
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black flex flex-col">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground flex flex-col">
           <CardHeader>
             <CardTitle>QTY by Priority Type</CardTitle>
             <CardDescription>Total quantity of orders for each priority type.</CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col justify-between">
-            <div style={{ height: '250px' }}>
+            <div className="flex-1 h-[250px]">
               <ChartContainer config={chartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -260,7 +260,7 @@ export function ReportsSummary() {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      outerRadius={80}
+                      outerRadius="80%"
                       labelLine={false}
                       label={({
                         cx,
@@ -327,8 +327,45 @@ export function ReportsSummary() {
           </CardContent>
         </Card>
       </div>
+       <div className="mt-8">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+          <CardHeader>
+            <CardTitle>Sold QTY by Product Type</CardTitle>
+            <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div style={{ height: '300px' }}>
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={soldQtyByProductType}
+                    layout="vertical"
+                    margin={{
+                      top: 20, right: 30, left: 20, bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
+                    <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
+                    <Tooltip
+                      cursor={{ fill: 'hsl(var(--muted))' }}
+                      content={<ChartTooltipContent />}
+                    />
+                    <Bar dataKey="quantity" radius={[0, 4, 4, 0]}>
+                      {soldQtyByProductType.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                      <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
       <div className="mt-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
             <CardTitle>Daily Sold QTY</CardTitle>
             <CardDescription>Total quantity of items sold each day for the selected month.</CardDescription>
@@ -361,7 +398,7 @@ export function ReportsSummary() {
         </Card>
       </div>
       <div className="mt-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
             <CardTitle>Monthly Sold QTY</CardTitle>
             <CardDescription>Total quantity of items sold each month for the selected year.</CardDescription>
@@ -388,43 +425,6 @@ export function ReportsSummary() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                       <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-       <div className="mt-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
-          <CardHeader>
-            <CardTitle>Sold QTY by Product Type</CardTitle>
-            <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div style={{ height: '300px' }}>
-              <ChartContainer config={chartConfig} className="w-full h-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={soldQtyByProductType}
-                    layout="vertical"
-                    margin={{
-                      top: 20, right: 30, left: 20, bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis type="number" tick={{ fill: 'hsl(var(--foreground))' }} />
-                    <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--foreground))' }} width={150} />
-                    <Tooltip
-                      cursor={{ fill: 'hsl(var(--muted))' }}
-                      content={<ChartTooltipContent />}
-                    />
-                    <Bar dataKey="quantity" radius={[0, 4, 4, 0]}>
-                      {soldQtyByProductType.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                      <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
