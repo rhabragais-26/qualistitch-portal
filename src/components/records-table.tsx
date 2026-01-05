@@ -153,7 +153,7 @@ export function RecordsTable() {
 
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm text-black">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-card-foreground">Lead Records</CardTitle>
         <CardDescription>
@@ -193,7 +193,7 @@ export function RecordsTable() {
               <TableBody>
                 {leads?.map((lead) => (
                   <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
-                    <React.Fragment>
+                    <>
                       <TableRow>
                           <TableCell className="text-sm align-middle py-2 text-card-foreground">
                             {new Date(lead.submissionDateTime).toLocaleDateString()}
@@ -262,7 +262,7 @@ export function RecordsTable() {
                              </TableCell>
                           </tr>
                         </CollapsibleContent>
-                      </React.Fragment>
+                      </>
                   </Collapsible>
                 ))}
               </TableBody>
