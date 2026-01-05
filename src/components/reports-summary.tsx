@@ -152,7 +152,7 @@ export function ReportsSummary() {
      return <p>No data available to generate reports.</p>;
   }
 
-  const { salesRepData, priorityData, dailySalesData, monthlySalesData, soldQtyByProductType, availableYears } = reportData;
+  const { salesRepData, priorityData, monthlySalesData, soldQtyByProductType, availableYears } = reportData;
 
   return (
     <>
@@ -260,6 +260,7 @@ export function ReportsSummary() {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
+                      innerRadius="60%"
                       outerRadius="80%"
                       labelLine={false}
                       label={({
