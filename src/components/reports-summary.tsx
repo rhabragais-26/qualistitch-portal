@@ -468,7 +468,10 @@ export function ReportsSummary() {
                       content={<ChartTooltipContent />}
                     />
                     <Legend />
-                    <Bar dataKey="quantity" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="quantity" radius={[0, 4, 4, 0]}>
+                      {soldQtyByProductType.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
                       <LabelList dataKey="quantity" position="right" fill="hsl(var(--foreground))" fontSize={12} />
                     </Bar>
                   </BarChart>
