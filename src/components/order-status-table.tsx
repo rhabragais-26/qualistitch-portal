@@ -20,6 +20,8 @@ import {
 import { Skeleton } from './ui/skeleton';
 import React, { useState, useMemo } from 'react';
 import { Input } from './ui/input';
+import { Button } from './ui/button';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 type Order = {
   productType: string;
@@ -39,6 +41,7 @@ export function OrderStatusTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
+  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -46,6 +49,10 @@ export function OrderStatusTable() {
   }, [firestore, user]);
 
   const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
+
+  const toggleLeadDetails = (leadId: string) => {
+    setOpenLeadId(openLeadId === leadId ? null : leadId);
+  };
 
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
@@ -84,7 +91,7 @@ export function OrderStatusTable() {
         {isLoading && (
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full" />
+              <Skeleton key={i} className="h-16 w-full" />
             ))}
           </div>
         )}
@@ -100,37 +107,51 @@ export function OrderStatusTable() {
                 <TableRow>
                   <TableHead className="text-card-foreground">Customer Name</TableHead>
                   <TableHead className="text-card-foreground">Contact No.</TableHead>
-                  <TableHead className="text-card-foreground">Ordered Items</TableHead>
+                  <TableHead className="text-card-foreground text-center">Ordered Items</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
               {filteredLeads.map((lead) => (
-                <TableRow key={lead.id}>
-                    <TableCell className="font-medium text-card-foreground align-top">{lead.customerName}</TableCell>
-                    <TableCell className="text-card-foreground align-top">{lead.contactNumber}</TableCell>
-                    <TableCell>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="py-1 text-card-foreground">Product</TableHead>
-                            <TableHead className="py-1 text-card-foreground">Color</TableHead>
-                            <TableHead className="py-1 text-card-foreground">Size</TableHead>
-                            <TableHead className="py-1 text-card-foreground text-right">Quantity</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {lead.orders.map((order, index) => (
-                            <TableRow key={index} className="border-0">
-                              <TableCell className="py-1 text-xs text-card-foreground">{order.productType}</TableCell>
-                              <TableCell className="py-1 text-xs text-card-foreground">{order.color}</TableCell>
-                              <TableCell className="py-1 text-xs text-card-foreground">{order.size}</TableCell>
-                              <TableCell className="py-1 text-xs text-card-foreground text-right">{order.quantity}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableCell>
-                </TableRow>
+                <React.Fragment key={lead.id}>
+                  <TableRow>
+                      <TableCell className="font-medium text-card-foreground align-top">{lead.customerName}</TableCell>
+                      <TableCell className="text-card-foreground align-top">{lead.contactNumber}</TableCell>
+                      <TableCell className="text-center">
+                        <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2">
+                          View
+                          {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                        </Button>
+                      </TableCell>
+                  </TableRow>
+                  {openLeadId === lead.id && (
+                    <TableRow className="bg-muted/50">
+                      <TableCell colSpan={3}>
+                        <div className="p-4">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="py-1 text-card-foreground">Product</TableHead>
+                                <TableHead className="py-1 text-card-foreground">Color</TableHead>
+                                <TableHead className="py-1 text-card-foreground">Size</TableHead>
+                                <TableHead className="py-1 text-card-foreground text-right">Quantity</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {lead.orders.map((order, index) => (
+                                <TableRow key={index} className="border-0">
+                                  <TableCell className="py-1 text-xs text-card-foreground">{order.productType}</TableCell>
+                                  <TableCell className="py-1 text-xs text-card-foreground">{order.color}</TableCell>
+                                  <TableCell className="py-1 text-xs text-card-foreground">{order.size}</TableCell>
+                                  <TableCell className="py-1 text-xs text-card-foreground text-right">{order.quantity}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
               ))}
               </TableBody>
             </Table>
