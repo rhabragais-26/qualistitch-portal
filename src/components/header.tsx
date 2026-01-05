@@ -1,6 +1,11 @@
 'use client';
 
-import { ClipboardList, Database, PlusSquare } from 'lucide-react';
+import {
+  ClipboardList,
+  Database,
+  PlusSquare,
+  ChevronDown,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -15,6 +20,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
@@ -26,7 +37,7 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
   const [nextUrl, setNextUrl] = useState('');
 
   const handleNavigation = (url: string) => {
-    if (isNewOrderPageDirty) {
+    if (isNewOrderPageDirty && router.pathname !== url) {
       setNextUrl(url);
       setShowConfirmDialog(true);
     } else {
@@ -51,23 +62,31 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
           <div className="mr-4 flex items-center">
             <Link href="/" className="mr-6 flex items-center space-x-2">
               <ClipboardList className="h-6 w-6 text-primary" />
-              <span className="font-bold font-headline sm:inline-block">Qualistitch Inc.</span>
+              <span className="font-bold font-headline sm:inline-block">
+                Qualistitch Inc.
+              </span>
             </Link>
           </div>
           <nav className="flex items-center gap-4">
-            <Button asChild variant="ghost">
-              <Link href="/">
-                <PlusSquare className="mr-2" />
-                New Order
-              </Link>
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => handleNavigation('/records')}
-            >
-              <Database className="mr-2" />
-              View Records
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost">
+                  <Database className="mr-2" />
+                  Data Entry
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleNavigation('/')}>
+                  <PlusSquare className="mr-2" />
+                  New Order
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation('/records')}>
+                  <Database className="mr-2" />
+                  View Records
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
         </div>
       </header>
@@ -77,12 +96,15 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Discard Changes?</AlertDialogTitle>
             <AlertDialogDescription>
-              You have unsaved changes. Are you sure you want to discard them and leave the page?
+              You have unsaved changes. Are you sure you want to discard them
+              and leave the page?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelNavigation}>Stay</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmNavigation}>Discard</AlertDialogAction>
+            <AlertDialogAction onClick={confirmNavigation}>
+              Discard
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
