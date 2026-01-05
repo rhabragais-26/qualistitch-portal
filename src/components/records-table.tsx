@@ -193,7 +193,7 @@ export function RecordsTable() {
               <TableBody>
                 {leads?.map((lead) => (
                   <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
-                    <>
+                    <React.Fragment>
                       <TableRow>
                         <TableCell className="text-sm align-middle py-2">
                           {new Date(lead.submissionDateTime).toLocaleDateString()}
@@ -253,7 +253,7 @@ export function RecordsTable() {
                           </TableCell>
                         </TableRow>
                       </CollapsibleContent>
-                    </>
+                    </React.Fragment>
                   </Collapsible>
                 ))}
               </TableBody>
