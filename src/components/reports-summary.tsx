@@ -172,7 +172,9 @@ export function ReportsSummary() {
                   <Bar yAxisId="left" dataKey="quantity" name="Quantity" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]}>
                      <LabelList dataKey="percentage" position="top" content={renderCustomizedLabel} />
                   </Bar>
-                  <Bar yAxisId="right" dataKey="customerCount" name="Customers" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                  <Bar yAxisId="right" dataKey="customerCount" name="Customers" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]}>
+                    <LabelList dataKey="customerCount" position="top" fill="hsl(var(--foreground))" fontSize={12} />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </ChartContainer>
