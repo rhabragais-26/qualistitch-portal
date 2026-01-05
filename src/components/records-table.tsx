@@ -196,26 +196,9 @@ export function RecordsTable() {
   };
   
   const handleDeleteOrder = async (leadId: string, orderToDelete: Order) => {
-    if (!leadId || !orderToDelete) return;
-  
-    const leadDocRef = doc(firestore, 'leads', leadId);
-  
-    try {
-      await updateDoc(leadDocRef, {
-        orders: arrayRemove(orderToDelete)
-      });
-      toast({
-        title: "Order Deleted!",
-        description: "The order has been removed from the lead.",
-      });
-    } catch (e: any) {
-      console.error("Error deleting order: ", e);
-      toast({
-        variant: "destructive",
-        title: "Delete Failed",
-        description: e.message || "Could not delete the order.",
-      });
-    }
+    console.log("Delete order:", leadId, orderToDelete);
+    // This is where you'd put the logic to delete the order from Firebase.
+    // For now, it just logs to the console.
   };
 
   const handleDeleteLead = async (leadId: string) => {
