@@ -71,13 +71,13 @@ export function ReportsSummary() {
 
   if (isLoading) {
     return (
-      <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+      <Card className="w-full max-w-2xl shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
         <CardHeader>
           <Skeleton className="h-8 w-1/2" />
           <Skeleton className="h-4 w-3/4" />
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[400px] w-full" />
+          <Skeleton className="h-[300px] w-full" />
         </CardContent>
       </Card>
     );
@@ -88,13 +88,13 @@ export function ReportsSummary() {
   }
 
   return (
-    <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+    <Card className="w-full max-w-2xl shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle>CSR Performance</CardTitle>
         <CardDescription>Total quantity of orders processed by each CSR.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div style={{ height: '400px' }}>
+        <div style={{ height: '300px' }}>
           <ChartContainer config={chartConfig} className="w-full h-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={salesRepData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
