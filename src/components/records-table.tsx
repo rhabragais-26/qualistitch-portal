@@ -39,6 +39,7 @@ import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { ScrollArea } from './ui/scroll-area';
 
 
 const productTypes = [
@@ -90,7 +91,7 @@ type Lead = {
   id: string;
   customerName: string;
   companyName?: string;
-  contactNumber: string;
+  contactNumber?: string;
   landlineNumber?: string;
   location: string;
   salesRepresentative: string;
@@ -220,7 +221,7 @@ export function RecordsTable() {
       });
       setIsEditLeadDialogOpen(false);
       setEditingLead(null);
-    } catch (e: any) {
+    } catch (e: any) => {
       console.error("Error updating lead: ", e);
       toast({
         variant: "destructive",
@@ -414,9 +415,9 @@ export function RecordsTable() {
           </div>
         )}
         {!isLoading && !error && (
-          <div className="border rounded-md">
+          <ScrollArea className="h-[60vh] w-full border rounded-md">
             <Table>
-              <TableHeader className="bg-neutral-800">
+              <TableHeader className="bg-neutral-800 sticky top-0">
                 <TableRow>
                   <TableHead className="text-white">Date &amp; Time</TableHead>
                   <TableHead className="text-white">Last Modified</TableHead>
@@ -567,7 +568,7 @@ export function RecordsTable() {
               ))}
               </TableBody>
             </Table>
-          </div>
+          </ScrollArea>
         )}
       </CardContent>
        <Dialog open={isOrderDialogOpen} onOpenChange={(isOpen) => {
@@ -702,9 +703,8 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
 }) {
   const [customerName, setCustomerName] = useState(lead.customerName);
   const [companyName, setCompanyName] = useState(lead.companyName || '');
-  const [contactNumber, setContactNumber] = useState(lead.contactNumber);
+  const [contactNumber, setContactNumber] = useState(lead.contactNumber || '');
   const [landlineNumber, setLandlineNumber] = useState(lead.landlineNumber || '');
-  const [location, setLocation] = useState(lead.location);
   const [salesRepresentative, setSalesRepresentative] = useState(lead.salesRepresentative);
   const [paymentType, setPaymentType] = useState(lead.paymentType);
   const [orderType, setOrderType] = useState(lead.orderType);
@@ -723,9 +723,8 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
     if (lead) {
       setCustomerName(lead.customerName);
       setCompanyName(lead.companyName || '');
-      setContactNumber(lead.contactNumber);
+      setContactNumber(lead.contactNumber || '');
       setLandlineNumber(lead.landlineNumber || '');
-      setLocation(lead.location);
       setSalesRepresentative(lead.salesRepresentative);
       setPaymentType(lead.paymentType);
       setOrderType(lead.orderType);
@@ -779,7 +778,8 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
         return;
     }
     if (landline && !/^\d{2}-\d{4}-\d{4}$/.test(landline)) {
-        // No error - this field is optional
+        setError("Landline number must be in 00-0000-0000 format.");
+        return;
     }
 
     const updatedLead: Partial<Lead> = {
@@ -787,7 +787,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       companyName: companyName ? toTitleCase(companyName) : '-',
       contactNumber: mobile || '-',
       landlineNumber: landline || '-',
-      location: toTitleCase(location),
       salesRepresentative,
       paymentType,
       orderType,
@@ -829,10 +828,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
               <Input id="landlineNo" value={landlineNumber === '-' ? '' : landlineNumber} onChange={handleLandlineNoChange} />
             </div>
           </div>
-          <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
-            </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="salesRepresentative">CSR</Label>
