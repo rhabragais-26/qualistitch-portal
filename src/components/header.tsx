@@ -6,9 +6,10 @@ import {
   Database,
   PlusSquare,
   ChevronDown,
+  LineChart,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from './ui/button';
 import {
@@ -34,11 +35,12 @@ type HeaderProps = {
 
 export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [nextUrl, setNextUrl] = useState('');
 
   const handleNavigation = (url: string) => {
-    if (isNewOrderPageDirty && router.pathname !== url) {
+    if (isNewOrderPageDirty && pathname === '/' && pathname !== url) {
       setNextUrl(url);
       setShowConfirmDialog(true);
     } else {
@@ -85,6 +87,10 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                 <DropdownMenuItem onClick={() => handleNavigation('/records')}>
                   <Database className="mr-2" />
                   View Records
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation('/reports')}>
+                  <LineChart className="mr-2" />
+                  Reports
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
