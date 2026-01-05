@@ -31,7 +31,7 @@
   }
 
   .dark {
-    --background: 220 12% 8%; /* Matte Black-ish */
+    --background: 220 12% 5%; /* Darker Matte Black-ish */
     --foreground: 0 0% 98%; /* Almost white */
     --card: 220 12% 12%; /* Matte Black for card */
     --card-foreground: 0 0% 98%; /* Almost white */
@@ -63,21 +63,7 @@
     @apply border-border;
   }
   body {
-    @apply text-foreground;
-  }
-
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-image: url('https://images.unsplash.com/photo-1590212154839-e492298713b1?q=80&w=2070&auto=format&fit=crop');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    z-index: -1;
+    @apply bg-background text-foreground;
   }
 }
 
