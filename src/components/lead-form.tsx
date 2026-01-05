@@ -36,6 +36,17 @@ import {
 } from 'lucide-react';
 import {RadioGroup, RadioGroupItem} from './ui/radio-group';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 // Define the form schema using Zod
 const formSchema = z.object({
@@ -200,9 +211,25 @@ export function LeadForm() {
             </div>
 
             <div className="flex justify-end pt-4 gap-4">
-               <Button type="button" variant="outline" size="lg" onClick={handleReset}>
-                Reset
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="outline" size="lg">
+                    Reset
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action will clear all the fields in the form.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleReset}>Continue</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95">
                 Submit
               </Button>
