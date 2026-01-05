@@ -29,8 +29,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogClose,
+  DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog"
 import { Input } from './ui/input';
@@ -921,7 +921,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
           <DialogDescription>
             Update the details for the selected order.
           </DialogDescription>
-        </Header>
+        </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="edit-product-type">Product Type:</Label>
@@ -1014,3 +1014,4 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     
 
     
+
