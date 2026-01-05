@@ -195,6 +195,14 @@ export function LeadForm() {
     });
   }
 
+  const toTitleCase = (str: string) => {
+    if (!str) return '';
+    return str
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   function onSubmit(values: FormValues) {
     const leadId = uuidv4();
     const leadsRef = collection(firestore, 'leads');
@@ -202,10 +210,10 @@ export function LeadForm() {
 
     const submissionData = {
       id: leadId,
-      customerName: values.customerName,
-      companyName: values.customerName,
+      customerName: toTitleCase(values.customerName),
+      companyName: toTitleCase(values.customerName),
       contactNumber: values.contactNo,
-      location: values.location,
+      location: toTitleCase(values.location),
       paymentType: values.paymentType,
       csr: values.csr,
       orderType: values.orderType,
@@ -220,7 +228,7 @@ export function LeadForm() {
 
     toast({
       title: 'Lead Submitted!',
-      description: 'The new lead for ' + values.customerName + ' has been successfully recorded.',
+      description: 'The new lead for ' + toTitleCase(values.customerName) + ' has been successfully recorded.',
     });
 
     handleReset();

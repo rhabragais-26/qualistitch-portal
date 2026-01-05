@@ -308,6 +308,14 @@ export function RecordsTable() {
     }
   }
 
+  const toTitleCase = (str: string) => {
+    if (!str) return '';
+    return str
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
       <CardHeader>
@@ -625,6 +633,14 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   const [priorityType, setPriorityType] = useState(lead.priorityType);
   const [productSource, setProductSource] = useState(lead.productSource);
 
+  const toTitleCase = (str: string) => {
+    if (!str) return '';
+    return str
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   React.useEffect(() => {
     if (lead) {
       setCustomerName(lead.customerName);
@@ -640,15 +656,15 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
 
   const handleSave = () => {
     const updatedLead: Partial<Lead> & { companyName?: string } = {
-      customerName,
+      customerName: toTitleCase(customerName),
       contactNumber,
-      location,
+      location: toTitleCase(location),
       csr,
       paymentType,
       orderType,
       priorityType,
       productSource,
-      companyName: customerName, // Assuming companyName is same as customerName
+      companyName: toTitleCase(customerName), // Assuming companyName is same as customerName
     };
     onSave(updatedLead);
   };
