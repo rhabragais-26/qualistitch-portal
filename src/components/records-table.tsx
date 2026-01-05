@@ -372,7 +372,7 @@ export function RecordsTable() {
                   <TableHead className="text-card-foreground">Company Name</TableHead>
                   <TableHead className="text-card-foreground">Contact No.</TableHead>
                   <TableHead className="text-card-foreground">Location</TableHead>
-                  <TableHead className="text-card-foreground">Sales Rep.</TableHead>
+                  <TableHead className="text-card-foreground">CSR</TableHead>
                   <TableHead className="text-card-foreground">Priority</TableHead>
                   <TableHead className="text-card-foreground">Payment</TableHead>
                   <TableHead className="text-card-foreground">Order Type</TableHead>
@@ -713,7 +713,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="salesRepresentative">Sales Representative</Label>
+              <Label htmlFor="salesRepresentative">CSR</Label>
               <Select onValueChange={setSalesRepresentative} value={salesRepresentative}>
                 <SelectTrigger id="salesRepresentative"><SelectValue /></SelectTrigger>
                 <SelectContent>{salesRepresentatives.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>

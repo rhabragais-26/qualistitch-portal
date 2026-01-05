@@ -90,8 +90,8 @@ export function ReportsSummary() {
   return (
     <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle>Sales Representative Performance</CardTitle>
-        <CardDescription>Total quantity of orders processed by each Sales Representative.</CardDescription>
+        <CardTitle>CSR Performance</CardTitle>
+        <CardDescription>Total quantity of orders processed by each CSR.</CardDescription>
       </CardHeader>
       <CardContent>
         <div style={{ height: '400px' }}>
