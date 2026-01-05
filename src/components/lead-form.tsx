@@ -215,11 +215,14 @@ export function LeadForm() {
         size: newOrderSize,
         quantity: quantity
       });
+      toast({
+        title: 'Order Added!',
+        description: 'The order has been added to the list.',
+      });
       setNewOrderProductType('');
       setNewOrderColor('');
       setNewOrderSize('');
       setNewOrderQuantity(0);
-      setIsOrderDialogOpen(false);
     }
   };
 
