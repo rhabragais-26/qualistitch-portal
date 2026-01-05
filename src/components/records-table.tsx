@@ -921,7 +921,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
           <DialogDescription>
             Update the details for the selected order.
           </DialogDescription>
-        </DialogHeader>
+        </Header>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="edit-product-type">Product Type:</Label>
