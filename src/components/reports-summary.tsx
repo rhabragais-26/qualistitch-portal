@@ -431,7 +431,10 @@ export function ReportsSummary() {
                       cursor={{ fill: 'hsl(var(--muted))' }}
                       content={<ChartTooltipContent />}
                     />
-                    <Bar dataKey="quantity" name="Quantity" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="quantity" name="Quantity" radius={[4, 4, 0, 0]}>
+                      {monthlySalesData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
                       <LabelList dataKey="quantity" position="top" fill="hsl(var(--foreground))" />
                     </Bar>
                   </BarChart>
