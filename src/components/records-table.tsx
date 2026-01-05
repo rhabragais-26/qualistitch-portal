@@ -120,19 +120,19 @@ export function RecordsTable() {
                                <Table>
                                 <TableHeader>
                                   <TableRow>
-                                    <TableHead>Product Type</TableHead>
-                                    <TableHead>Color</TableHead>
-                                    <TableHead>Size</TableHead>
-                                    <TableHead>Quantity</TableHead>
+                                    <TableHead className="py-2">Product Type</TableHead>
+                                    <TableHead className="py-2">Color</TableHead>
+                                    <TableHead className="py-2">Size</TableHead>
+                                    <TableHead className="py-2">Quantity</TableHead>
                                   </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                   {lead.orders?.map((order: any, index: number) => (
                                     <TableRow key={index}>
-                                      <TableCell>{order.productType}</TableCell>
-                                      <TableCell>{order.color}</TableCell>
-                                      <TableCell>{order.size}</TableCell>
-                                      <TableCell>{order.quantity}</TableCell>
+                                      <TableCell className="py-2">{order.productType}</TableCell>
+                                      <TableCell className="py-2">{order.color}</TableCell>
+                                      <TableCell className="py-2">{order.size}</TableCell>
+                                      <TableCell className="py-2">{order.quantity}</TableCell>
                                     </TableRow>
                                   ))}
                                 </TableBody>
