@@ -168,7 +168,7 @@ export function ReportsSummary() {
       </Card>
       <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle>Quantities by Priority</CardTitle>
+          <CardTitle>QTY by Priority Type</CardTitle>
           <CardDescription>Total quantity of orders for each priority type.</CardDescription>
         </CardHeader>
         <CardContent>
