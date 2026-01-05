@@ -22,6 +22,7 @@ import React, { useState, useMemo } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ScrollArea } from './ui/scroll-area';
 
 type Order = {
   productType: string;
@@ -63,20 +64,20 @@ export function OrderStatusTable() {
 
     return leads.filter(lead =>
       lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-      (lead.contactNumber && lead.contactNumber.toLowerCase().includes(lowercasedSearchTerm)) ||
-      (lead.landlineNumber && lead.landlineNumber.toLowerCase().includes(lowercasedSearchTerm))
+      (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(lowercasedSearchTerm)) ||
+      (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(lowercasedSearchTerm))
     );
   }, [leads, searchTerm]);
 
   const isLoading = isAuthLoading || isLeadsLoading;
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-card-foreground">Order Status</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-black">Order Status</CardTitle>
+              <CardDescription className="text-gray-600">
                 Here are all the ordered items per customer.
               </CardDescription>
             </div>
@@ -85,15 +86,16 @@ export function OrderStatusTable() {
                 placeholder="Search by customer name, mobile no, or landline..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-gray-100 text-black placeholder:text-gray-500"
               />
             </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-hidden">
         {isLoading && (
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
+              <Skeleton key={i} className="h-16 w-full bg-gray-200" />
             ))}
           </div>
         )}
@@ -103,62 +105,64 @@ export function OrderStatusTable() {
           </div>
         )}
         {!isLoading && !error && (
-          <div className="border rounded-md">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-card-foreground">Customer Name</TableHead>
-                  <TableHead className="text-card-foreground">Mobile No.</TableHead>
-                  <TableHead className="text-card-foreground">Landline No.</TableHead>
-                  <TableHead className="text-card-foreground text-center">Ordered Items</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-              {filteredLeads.map((lead) => (
-                <React.Fragment key={lead.id}>
+          <div className="h-full">
+            <ScrollArea className="h-full w-full border rounded-md">
+              <Table>
+                <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                      <TableCell className="font-medium text-card-foreground align-top">{lead.customerName}</TableCell>
-                      <TableCell className="text-card-foreground align-top">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
-                      <TableCell className="text-card-foreground align-top">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
-                      <TableCell className="text-center">
-                        <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2">
-                          View
-                          {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-                        </Button>
-                      </TableCell>
+                    <TableHead className="text-white">Customer Name</TableHead>
+                    <TableHead className="text-white">Mobile No.</TableHead>
+                    <TableHead className="text-white">Landline No.</TableHead>
+                    <TableHead className="text-center text-white">Ordered Items</TableHead>
                   </TableRow>
-                  {openLeadId === lead.id && (
-                    <TableRow className="bg-muted/50">
-                      <TableCell colSpan={4}>
-                        <div className="p-4">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="py-1 text-card-foreground">Product</TableHead>
-                                <TableHead className="py-1 text-card-foreground">Color</TableHead>
-                                <TableHead className="py-1 text-card-foreground">Size</TableHead>
-                                <TableHead className="py-1 text-card-foreground text-right">Quantity</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {lead.orders.map((order, index) => (
-                                <TableRow key={index} className="border-0">
-                                  <TableCell className="py-1 text-xs text-card-foreground">{order.productType}</TableCell>
-                                  <TableCell className="py-1 text-xs text-card-foreground">{order.color}</TableCell>
-                                  <TableCell className="py-1 text-xs text-card-foreground">{order.size}</TableCell>
-                                  <TableCell className="py-1 text-xs text-card-foreground text-right">{order.quantity}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </TableCell>
+                </TableHeader>
+                <TableBody>
+                {filteredLeads.map((lead) => (
+                  <React.Fragment key={lead.id}>
+                    <TableRow>
+                        <TableCell className="font-medium text-xs align-top py-2 text-black">{lead.customerName}</TableCell>
+                        <TableCell className="text-xs align-top py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className="text-xs align-top py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className="text-center align-top py-2">
+                          <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
+                            View
+                            {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                          </Button>
+                        </TableCell>
                     </TableRow>
-                  )}
-                </React.Fragment>
-              ))}
-              </TableBody>
-            </Table>
+                    {openLeadId === lead.id && (
+                      <TableRow className="bg-gray-50">
+                        <TableCell colSpan={4}>
+                          <div className="p-4">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="py-1 text-black">Product</TableHead>
+                                  <TableHead className="py-1 text-black">Color</TableHead>
+                                  <TableHead className="py-1 text-black">Size</TableHead>
+                                  <TableHead className="py-1 text-black text-right">Quantity</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {lead.orders.map((order, index) => (
+                                  <TableRow key={index} className="border-0">
+                                    <TableCell className="py-1 text-xs text-black">{order.productType}</TableCell>
+                                    <TableCell className="py-1 text-xs text-black">{order.color}</TableCell>
+                                    <TableCell className="py-1 text-xs text-black">{order.size}</TableCell>
+                                    <TableCell className="py-1 text-xs text-black text-right">{order.quantity}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
           </div>
         )}
       </CardContent>
