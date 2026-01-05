@@ -93,6 +93,7 @@ type Lead = {
   companyName?: string;
   contactNumber?: string;
   landlineNumber?: string;
+  location: string;
   salesRepresentative: string;
   priorityType: string;
   paymentType: string;
@@ -716,6 +717,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   const [companyName, setCompanyName] = useState(lead.companyName || '');
   const [contactNumber, setContactNumber] = useState(lead.contactNumber || '');
   const [landlineNumber, setLandlineNumber] = useState(lead.landlineNumber || '');
+  const [location, setLocation] = useState(lead.location);
   const [salesRepresentative, setSalesRepresentative] = useState(lead.salesRepresentative);
   const [paymentType, setPaymentType] = useState(lead.paymentType);
   const [orderType, setOrderType] = useState(lead.orderType);
@@ -736,6 +738,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       setCompanyName(lead.companyName || '');
       setContactNumber(lead.contactNumber || '');
       setLandlineNumber(lead.landlineNumber || '');
+      setLocation(lead.location);
       setSalesRepresentative(lead.salesRepresentative);
       setPaymentType(lead.paymentType);
       setOrderType(lead.orderType);
@@ -798,6 +801,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       companyName: companyName ? toTitleCase(companyName) : '-',
       contactNumber: mobile || '-',
       landlineNumber: landline || '-',
+      location: toTitleCase(location),
       salesRepresentative,
       paymentType,
       orderType,
@@ -839,6 +843,10 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
               <Input id="landlineNo" value={landlineNumber === '-' ? '' : landlineNumber} onChange={handleLandlineNoChange} />
             </div>
           </div>
+          <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
+            </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="salesRepresentative">CSR</Label>
@@ -850,7 +858,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
             <div className="space-y-2">
               <Label htmlFor="paymentType">Payment Type</Label>
               <Select onValueChange={setPaymentType} value={paymentType}>
-                <SelectTrigger id="paymentType"><SelectValue /></SelectValue>
+                <SelectTrigger id="paymentType"><SelectValue /></SelectTrigger>
                 <SelectContent>{paymentTypes.map(o => <SelectItem key={o} value={o}>{o === 'COD' ? 'COD (Cash on Delivery)' : o}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -858,7 +866,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
           <div className="space-y-2">
             <Label htmlFor="orderType">Order Type</Label>
             <Select onValueChange={setOrderType} value={orderType}>
-              <SelectTrigger id="orderType"><SelectValue /></SelectValue>
+              <SelectTrigger id="orderType"><SelectValue /></SelectTrigger>
               <SelectContent>{orderTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
             </Select>
           </div>
@@ -1011,4 +1019,5 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
 }
 
     
+
 

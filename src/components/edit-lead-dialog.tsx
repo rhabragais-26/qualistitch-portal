@@ -1,4 +1,3 @@
-// This component is intentionally left blank. It will be created in a future step.
 "use client";
 
 import React, { useState, useEffect } from 'react';
