@@ -352,7 +352,7 @@ export function LeadForm() {
                     <DialogHeader>
                       <DialogTitle>Add Order Details</DialogTitle>
                       <DialogDescription>
-                        Select the product type, color, and size for the new order.
+                        Select product details to add
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
