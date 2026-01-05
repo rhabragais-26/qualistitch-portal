@@ -99,7 +99,7 @@ export function LeadForm() {
   return (
     <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500">
       <CardHeader>
-        <CardTitle className="font-headline text-3xl">New Lead Entry</CardTitle>
+        <CardTitle className="font-headline text-3xl">Create New Lead Entry for Master Tracker</CardTitle>
         <CardDescription>Fill in the details below to create a new lead. All fields are required.</CardDescription>
       </CardHeader>
       <CardContent>
