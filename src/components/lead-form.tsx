@@ -60,8 +60,15 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import { Separator } from './ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
 // Define the form schema using Zod
+const orderSchema = z.object({
+  productType: z.string().min(1, "Product type cannot be empty."),
+  color: z.string().min(1, "Color cannot be empty."),
+  size: z.string().min(1, "Size cannot be empty."),
+});
+
 const formSchema = z.object({
   customerName: z.string().min(2, {message: 'Customer name must be at least 2 characters.'}),
   contactNo: z.string().min(10, {message: 'Please enter a valid contact number.'}),
@@ -71,7 +78,7 @@ const formSchema = z.object({
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   productSource: z.enum(['Client Provided', 'Stock'], {required_error: "You need to select a product source."}),
   csr: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a CSR."}),
-  orders: z.array(z.object({ value: z.string().min(1, "Order cannot be empty.") })).optional()
+  orders: z.array(orderSchema).optional()
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -197,7 +204,11 @@ export function LeadForm() {
 
   const handleAddOrder = () => {
     if (newOrderProductType && newOrderColor && newOrderSize) {
-      append({ value: `${newOrderProductType} - ${newOrderColor} - ${newOrderSize}` });
+      append({
+        productType: newOrderProductType,
+        color: newOrderColor,
+        size: newOrderSize
+      });
       setNewOrderProductType('');
       setNewOrderColor('');
       setNewOrderSize('');
@@ -206,7 +217,7 @@ export function LeadForm() {
   };
 
   return (
-    <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500">
+    <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-black text-white">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -282,20 +293,38 @@ export function LeadForm() {
             <div>
               <FormLabel>Orders</FormLabel>
               <div className="space-y-4 mt-2">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex items-center gap-2 p-2 border rounded-md bg-muted/20">
-                     <span className="flex-1">{form.getValues(`orders.${index}.value`)}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => remove(index)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                <div className="border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Product Type</TableHead>
+                        <TableHead>Color</TableHead>
+                        <TableHead>Size</TableHead>
+                        <TableHead className="text-right">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {fields.map((field, index) => (
+                        <TableRow key={field.id}>
+                          <TableCell>{form.getValues(`orders.${index}.productType`)}</TableCell>
+                          <TableCell>{form.getValues(`orders.${index}.color`)}</TableCell>
+                          <TableCell>{form.getValues(`orders.${index}.size`)}</TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => remove(index)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
                  <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
                   <DialogTrigger asChild>
                     <Button
