@@ -72,20 +72,20 @@ export function RecordsTable() {
               <TableBody>
                 {leads?.map((lead) => (
                   <TableRow key={lead.id}>
-                    <TableCell>
+                    <TableCell className="text-sm">
                       {new Date(lead.submissionDateTime).toLocaleDateString()}
                     </TableCell>
-                    <TableCell>{lead.customerName}</TableCell>
-                    <TableCell>{lead.contactNumber}</TableCell>
-                    <TableCell>{lead.location}</TableCell>
-                    <TableCell>{lead.csr}</TableCell>
+                    <TableCell className="text-sm">{lead.customerName}</TableCell>
+                    <TableCell className="text-sm">{lead.contactNumber}</TableCell>
+                    <TableCell className="text-sm">{lead.location}</TableCell>
+                    <TableCell className="text-sm">{lead.csr}</TableCell>
                     <TableCell>
                       <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                         {lead.priorityType}
                       </Badge>
                     </TableCell>
-                    <TableCell>{lead.paymentType}</TableCell>
-                    <TableCell>{lead.orderType}</TableCell>
+                    <TableCell className="text-sm">{lead.paymentType}</TableCell>
+                    <TableCell className="text-sm">{lead.orderType}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
