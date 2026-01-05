@@ -265,7 +265,7 @@ export function ReportsSummary() {
       <div className="mt-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Daily Sales Performance</CardTitle>
+            <CardTitle>Daily Sold QTY</CardTitle>
             <CardDescription>Total quantity of items sold each day.</CardDescription>
           </CardHeader>
           <CardContent>
