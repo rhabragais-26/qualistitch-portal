@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -99,10 +99,6 @@ export function RecordsTable() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<{ leadId: string; order: Order; index: number } | null>(null);
   
-  // State for deleting an order
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deletingOrder, setDeletingOrder] = useState<{ leadId: string; order: Order; } | null>(null);
-
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(collection(firestore, 'leads'), orderBy('submissionDateTime', 'desc'));
@@ -198,28 +194,20 @@ export function RecordsTable() {
       });
     }
   };
-
-  const handleOpenDeleteDialog = (leadId: string, order: Order) => {
-    setDeletingOrder({ leadId, order });
-    setIsDeleteDialogOpen(true);
-  };
   
-  const handleDeleteOrder = async () => {
-    if (!deletingOrder) return;
+  const handleDeleteOrder = async (leadId: string, orderToDelete: Order) => {
+    if (!leadId || !orderToDelete) return;
   
-    const { leadId, order } = deletingOrder;
     const leadDocRef = doc(firestore, 'leads', leadId);
   
     try {
       await updateDoc(leadDocRef, {
-        orders: arrayRemove(order)
+        orders: arrayRemove(orderToDelete)
       });
       toast({
         title: "Order Deleted!",
         description: "The order has been removed from the lead.",
       });
-      setIsDeleteDialogOpen(false);
-      setDeletingOrder(null);
     } catch (e: any) {
       console.error("Error deleting order: ", e);
       toast({
@@ -229,6 +217,27 @@ export function RecordsTable() {
       });
     }
   };
+
+  const handleDeleteLead = async (leadId: string) => {
+    if(!leadId) return;
+
+    const leadDocRef = doc(firestore, 'leads', leadId);
+
+    try {
+      await deleteDoc(leadDocRef);
+      toast({
+        title: "Lead Deleted!",
+        description: "The lead has been removed from the records.",
+      });
+    } catch (e: any) {
+      console.error("Error deleting lead: ", e);
+      toast({
+        variant: "destructive",
+        title: "Delete Failed",
+        description: e.message || "Could not delete the lead.",
+      });
+    }
+  }
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
@@ -299,6 +308,25 @@ export function RecordsTable() {
                               <PlusCircle className="h-4 w-4 mr-1" />
                               Add Order
                             </Button>
+                             <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the entire lead record.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteLead(lead.id)}>Delete Lead</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                         </TableCell>
                       </TableRow>
                       <CollapsibleContent asChild>
@@ -603,5 +631,3 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
-
-    
