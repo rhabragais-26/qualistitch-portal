@@ -354,7 +354,7 @@ export function RecordsTable() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-card-foreground">Date & Time</TableHead>
+                  <TableHead className="text-card-foreground">Date &amp; Time</TableHead>
                   <TableHead className="text-card-foreground">Customer Name</TableHead>
                   <TableHead className="text-card-foreground">Company Name</TableHead>
                   <TableHead className="text-card-foreground">Contact No.</TableHead>
@@ -382,7 +382,7 @@ export function RecordsTable() {
                       })}
                     </TableCell>
                     <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.customerName}</TableCell>
-                    <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.companyName}</TableCell>
+                    <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.companyName || '-'}</TableCell>
                     <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.contactNumber}</TableCell>
                     <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.location}</TableCell>
                     <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.csr}</TableCell>
@@ -662,7 +662,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   const handleSave = () => {
     const updatedLead: Partial<Lead> = {
       customerName: toTitleCase(customerName),
-      companyName: toTitleCase(companyName),
+      companyName: companyName ? toTitleCase(companyName) : '-',
       contactNumber,
       location: toTitleCase(location),
       csr,
@@ -694,7 +694,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
             </div>
              <div className="space-y-2">
               <Label htmlFor="companyName">Company Name</Label>
-              <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+              <Input id="companyName" value={companyName === '-' ? '' : companyName} onChange={(e) => setCompanyName(e.target.value)} />
             </div>
           </div>
            <div className="grid grid-cols-2 gap-4">
@@ -882,3 +882,5 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
+    

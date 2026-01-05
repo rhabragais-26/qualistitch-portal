@@ -215,7 +215,7 @@ export function LeadForm() {
     const submissionData = {
       id: leadId,
       customerName: toTitleCase(values.customerName),
-      companyName: toTitleCase(values.companyName || ''),
+      companyName: values.companyName ? toTitleCase(values.companyName) : '-',
       contactNumber: values.contactNo,
       location: toTitleCase(values.location),
       paymentType: values.paymentType,
@@ -515,3 +515,5 @@ export function LeadForm() {
     </Card>
   );
 }
+
+    
