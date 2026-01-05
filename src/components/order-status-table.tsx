@@ -63,7 +63,8 @@ export function OrderStatusTable() {
 
     return leads.filter(lead =>
       lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-      lead.contactNumber.toLowerCase().includes(lowercasedSearchTerm)
+      lead.contactNumber.toLowerCase().includes(lowercasedSearchTerm) ||
+      (lead.landlineNumber && lead.landlineNumber.toLowerCase().includes(lowercasedSearchTerm))
     );
   }, [leads, searchTerm]);
 
@@ -81,7 +82,7 @@ export function OrderStatusTable() {
             </div>
              <div className="w-full max-w-sm">
               <Input
-                placeholder="Search by customer name or contact no..."
+                placeholder="Search by customer name, contact no, or landline..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -164,5 +165,3 @@ export function OrderStatusTable() {
     </Card>
   );
 }
-
-    

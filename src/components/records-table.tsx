@@ -139,7 +139,8 @@ export function RecordsTable() {
     return leads.filter(lead =>
       lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
       lead.contactNumber.toLowerCase().includes(lowercasedSearchTerm) ||
-      (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm))
+      (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
+      (lead.landlineNumber && lead.landlineNumber.toLowerCase().includes(lowercasedSearchTerm))
     );
   }, [leads, searchTerm]);
 
@@ -391,7 +392,7 @@ export function RecordsTable() {
             </div>
              <div className="w-full max-w-sm">
               <Input
-                placeholder="Search customer name, company name or contact no."
+                placeholder="Search customer name, company name, contact no. or landline no."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="bg-gray-100 text-black placeholder:text-gray-500"
