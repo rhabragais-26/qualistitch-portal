@@ -1,17 +1,18 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
-import { format, startOfWeek, endOfWeek, isWithinInterval, startOfMonth, endOfMonth, getMonth, getYear, parse, isValid } from 'date-fns';
+import { format, parse, getYear } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from './ui/button';
 import { Printer } from 'lucide-react';
+import { generateReport, GenerateReportOutput } from '@/ai/flows/generate-report-flow';
 
 type Order = {
   quantity: number;
@@ -58,19 +59,17 @@ export function ReportsSummary() {
   const { user } = useUser();
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
+  
+  const [reportData, setReportData] = useState<GenerateReportOutput | null>(null);
+  const [isReportLoading, setIsReportLoading] = useState(true);
+  const [reportError, setReportError] = useState<string | null>(null);
 
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(collection(firestore, 'leads'));
   }, [firestore, user]);
 
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
-
-  const availableYears = useMemo(() => {
-    if (!leads) return [];
-    const years = new Set(leads.map(lead => getYear(new Date(lead.submissionDateTime))));
-    return Array.from(years).sort((a, b) => b - a);
-  }, [leads]);
+  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
 
   const months = useMemo(() => [
       { value: '1', label: 'January' }, { value: '2', label: 'February' },
@@ -81,155 +80,35 @@ export function ReportsSummary() {
       { value: '11', label: 'November' }, { value: '12', label: 'December' },
   ], []);
 
-  const filteredLeads = useMemo(() => {
-    if (!leads) return [];
-    
-    const year = parseInt(selectedYear);
-    const month = parseInt(selectedMonth) - 1; // month is 0-indexed in Date
-
-    if (isNaN(year) || isNaN(month)) return leads;
-
-    return leads.filter(lead => {
-      const submissionDate = new Date(lead.submissionDateTime);
-      return getYear(submissionDate) === year && getMonth(submissionDate) === month;
-    });
+  const processReport = useCallback(async () => {
+    if (!leads) return;
+    setIsReportLoading(true);
+    setReportError(null);
+    try {
+      const result = await generateReport({
+        leads,
+        selectedYear,
+        selectedMonth,
+      });
+      setReportData(result);
+    } catch (e: any) {
+      console.error('Failed to generate report:', e);
+      setReportError(e.message || 'An unknown error occurred.');
+    } finally {
+      setIsReportLoading(false);
+    }
   }, [leads, selectedYear, selectedMonth]);
 
-
-  const salesRepData = useMemo(() => {
-    if (!filteredLeads) {
-      return [];
+  useEffect(() => {
+    if (leads) {
+      processReport();
     }
+  }, [leads, selectedYear, selectedMonth, processReport]);
+
+  const totalPriorityQuantity = useMemo(() => reportData?.priorityData.reduce((sum, item) => sum + item.value, 0) || 0, [reportData?.priorityData]);
   
-    const statsBySalesRep = filteredLeads.reduce((acc, lead) => {
-      const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-      const csr = lead.salesRepresentative;
-      
-      if (!acc[csr]) {
-        acc[csr] = { quantity: 0, customers: new Set<string>() };
-      }
-      
-      acc[csr].quantity += leadQuantity;
-      acc[csr].customers.add(lead.customerName);
-      
-      return acc;
-    }, {} as { [key: string]: { quantity: number; customers: Set<string> } });
-    
-    return Object.entries(statsBySalesRep)
-      .map(([name, { quantity, customers }]) => ({
-        name,
-        quantity,
-        customerCount: customers.size,
-      }))
-      .sort((a, b) => b.quantity - a.quantity);
-  }, [filteredLeads]);
-  
-  const priorityData = useMemo(() => {
-    if (!filteredLeads) {
-      return [];
-    }
-
-    const quantityByPriority = filteredLeads.reduce((acc, lead) => {
-      const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-      const priority = lead.priorityType || 'Regular';
-      if (acc[priority]) {
-        acc[priority] += leadQuantity;
-      } else {
-        acc[priority] = leadQuantity;
-      }
-      return acc;
-    }, {} as { [key: string]: number });
-
-    return Object.entries(quantityByPriority)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, [filteredLeads]);
-
-  const totalPriorityQuantity = useMemo(() => priorityData.reduce((sum, item) => sum + item.value, 0), [priorityData]);
-  
-  const dailySalesData = useMemo(() => {
-    if (!filteredLeads) {
-      return [];
-    }
-
-    const salesByDay = filteredLeads.reduce((acc, lead) => {
-        const date = format(new Date(lead.submissionDateTime), 'MMM-dd-yyyy');
-        const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-
-        if (!acc[date]) {
-          acc[date] = 0;
-        }
-        acc[date] += leadQuantity;
-        
-        return acc;
-      }, {} as { [key: string]: number });
-
-    return Object.entries(salesByDay)
-      .map(([date, quantity]) => ({
-        date,
-        quantity,
-      }))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [filteredLeads]);
-  
-  const monthlySalesData = useMemo(() => {
-    if (!leads) {
-      return [];
-    }
-  
-    const salesByMonth = leads
-      .filter(lead => {
-        if (!selectedYear) return true;
-        const submissionDate = new Date(lead.submissionDateTime);
-        return getYear(submissionDate) === parseInt(selectedYear);
-      })
-      .reduce((acc, lead) => {
-        const submissionDate = new Date(lead.submissionDateTime);
-        const month = format(submissionDate, 'MMM yyyy');
-        const leadQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-    
-        if (!acc[month]) {
-          acc[month] = 0;
-        }
-        acc[month] += leadQuantity;
-        
-        return acc;
-      }, {} as { [key: string]: number });
-  
-    return Object.entries(salesByMonth)
-      .map(([date, quantity]) => ({
-        date,
-        quantity,
-      }))
-      .sort((a, b) => parse(a.date, 'MMM yyyy', new Date()).getTime() - parse(b.date, 'MMM yyyy', new Date()).getTime());
-  }, [leads, selectedYear]);
-  
-  const soldQtyByProductType = useMemo(() => {
-    if (!filteredLeads) {
-      return [];
-    }
-
-    const quantityByProductType = filteredLeads.reduce((acc, lead) => {
-      lead.orders.forEach(order => {
-        const productType = order.productType;
-        const quantity = order.quantity;
-
-        if (!acc[productType]) {
-          acc[productType] = 0;
-        }
-        acc[productType] += quantity;
-      });
-      return acc;
-    }, {} as { [key: string]: number });
-
-    return Object.entries(quantityByProductType)
-      .map(([name, quantity]) => ({
-        name,
-        quantity,
-      }))
-      .sort((a, b) => b.quantity - a.quantity);
-  }, [filteredLeads]);
-
+  const isLoading = isLeadsLoading || isReportLoading;
+  const error = leadsError || reportError;
 
   if (isLoading) {
     return (
@@ -266,8 +145,14 @@ export function ReportsSummary() {
   }
 
   if (error) {
-    return <p className="text-destructive">Error loading data: {error.message}</p>;
+    return <p className="text-destructive">Error loading data: {typeof error === 'string' ? error : (error as Error).message}</p>;
   }
+  
+  if (!reportData) {
+     return <p>No data available to generate reports.</p>;
+  }
+
+  const { salesRepData, priorityData, dailySalesData, monthlySalesData, soldQtyByProductType, availableYears } = reportData;
 
   return (
     <>
