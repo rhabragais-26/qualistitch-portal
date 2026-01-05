@@ -93,7 +93,6 @@ type Lead = {
   companyName?: string;
   contactNumber?: string;
   landlineNumber?: string;
-  location: string;
   salesRepresentative: string;
   priorityType: string;
   paymentType: string;
@@ -408,7 +407,7 @@ export function RecordsTable() {
                   ))}
                 </SelectContent>
               </Select>
-              <div className="w-full max-w-sm">
+              <div className="w-full max-w-lg">
                 <Input
                   placeholder="Search customer, company or contact..."
                   value={searchTerm}
@@ -725,7 +724,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   const [companyName, setCompanyName] = useState(lead.companyName || '');
   const [contactNumber, setContactNumber] = useState(lead.contactNumber || '');
   const [landlineNumber, setLandlineNumber] = useState(lead.landlineNumber || '');
-  const [location, setLocation] = useState(lead.location);
   const [salesRepresentative, setSalesRepresentative] = useState(lead.salesRepresentative);
   const [paymentType, setPaymentType] = useState(lead.paymentType);
   const [orderType, setOrderType] = useState(lead.orderType);
@@ -746,7 +744,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       setCompanyName(lead.companyName || '');
       setContactNumber(lead.contactNumber || '');
       setLandlineNumber(lead.landlineNumber || '');
-      setLocation(lead.location);
       setSalesRepresentative(lead.salesRepresentative);
       setPaymentType(lead.paymentType);
       setOrderType(lead.orderType);
@@ -799,7 +796,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
         setError("Mobile number must be in 0000-000-0000 format.");
         return;
     }
-    if (landline && landline && !/^\d{2}-\d{4}-\d{4}$/.test(landline)) {
+    if (landline && !/^\d{2}-\d{4}-\d{4}$/.test(landline)) {
         setError("Landline number must be in 00-0000-0000 format.");
         return;
     }
@@ -809,7 +806,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       companyName: companyName ? toTitleCase(companyName) : '-',
       contactNumber: mobile || '-',
       landlineNumber: landline || '-',
-      location: toTitleCase(location),
       salesRepresentative,
       paymentType,
       orderType,
@@ -851,10 +847,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
               <Input id="landlineNo" value={landlineNumber === '-' ? '' : landlineNumber} onChange={handleLandlineNoChange} />
             </div>
           </div>
-          <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
-            </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="salesRepresentative">CSR</Label>
