@@ -142,7 +142,11 @@ const productColors = [
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
-export function LeadForm() {
+type LeadFormProps = {
+  onDirtyChange: (isDirty: boolean) => void;
+};
+
+export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const {toast} = useToast();
   const [dateTime, setDateTime] = useState('');
   const [dayOfWeek, setDayOfWeek] = useState('');
@@ -196,6 +200,13 @@ export function LeadForm() {
     control: form.control,
     name: "orders"
   });
+
+  const { isDirty } = form.formState;
+
+  useEffect(() => {
+    onDirtyChange(isDirty);
+  }, [isDirty, onDirtyChange]);
+
 
   const handleReset = () => {
     form.reset({
