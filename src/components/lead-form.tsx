@@ -41,7 +41,7 @@ const formSchema = z.object({
   customerName: z.string().min(2, {message: 'Customer name must be at least 2 characters.'}),
   contactNo: z.string().min(10, {message: 'Please enter a valid contact number.'}),
   location: z.string().min(2, {message: 'Location is required.'}),
-  paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD']),
+  paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   productType: z.string().min(2, {message: 'Product type is required.'}),
@@ -57,12 +57,13 @@ const formFields: {
   icon: React.ElementType;
   type: 'input' | 'select' | 'radio';
   options?: string[];
+  placeholder?: string;
 }[] = [
   {name: 'customerName', label: 'Customer/Company Name', icon: User, type: 'input'},
   {name: 'contactNo', label: 'Contact No.', icon: Phone, type: 'input'},
   {name: 'location', label: 'Location', icon: MapPin, type: 'input'},
-  {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD']},
-  {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services']},
+  {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
+  {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
   {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular']},
   {name: 'productType', label: 'Product Type', icon: Package, type: 'input'},
   {name: 'csr', label: 'CSR', icon: UserCheck, type: 'input'},
@@ -77,7 +78,7 @@ export function LeadForm() {
       customerName: '',
       contactNo: '',
       location: '',
-      paymentType: 'Partially Paid',
+      paymentType: undefined,
       orderType: undefined,
       priorityType: 'Regular',
       productType: '',
@@ -127,7 +128,7 @@ export function LeadForm() {
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder={fieldInfo.name === 'orderType' ? 'Select Order Type' : `Select a ${fieldInfo.label.toLowerCase()}`} />
+                              <SelectValue placeholder={fieldInfo.placeholder || `Select a ${fieldInfo.label.toLowerCase()}`} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
