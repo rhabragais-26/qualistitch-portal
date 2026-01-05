@@ -712,7 +712,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   onClose: () => void;
 }) {
   const [customerName, setCustomerName] = useState(lead.customerName);
-  const [companyName, setCompanyName]_useState(lead.companyName || '');
+  const [companyName, setCompanyName] = useState(lead.companyName || '');
   const [contactNumber, setContactNumber] = useState(lead.contactNumber);
   const [location, setLocation] = useState(lead.location);
   const [salesRepresentative, setSalesRepresentative] = useState(lead.salesRepresentative);
