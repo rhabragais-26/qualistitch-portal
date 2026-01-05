@@ -392,7 +392,7 @@ export function RecordsTable() {
             </div>
              <div className="w-full max-w-sm">
               <Input
-                placeholder="Search customer name, company name, contact no. or landline no."
+                placeholder="Search customer name, company name or contact no."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="bg-gray-100 text-black placeholder:text-gray-500"
@@ -422,7 +422,7 @@ export function RecordsTable() {
                   <TableHead className="text-white">Last Modified</TableHead>
                   <TableHead className="text-white">Customer Name</TableHead>
                   <TableHead className="text-white">Company Name</TableHead>
-                  <TableHead className="text-white">Contact No.</TableHead>
+                  <TableHead className="text-white">Mobile No.</TableHead>
                   <TableHead className="text-white">Landline No.</TableHead>
                   <TableHead className="text-white">Location</TableHead>
                   <TableHead className="text-white">CSR</TableHead>
@@ -774,8 +774,8 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
           </div>
            <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="contactNo">Contact No.</Label>
-              <Input id="contactNo" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} />
+              <Label htmlFor="contactNo">Mobile No.</Label>
+              <Input id="contactNo" value={contactNumber === '-' ? '' : contactNumber} onChange={(e) => setContactNumber(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="landlineNo">Landline No.</Label>
@@ -955,5 +955,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
+    
 
     

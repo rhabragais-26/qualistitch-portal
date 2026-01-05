@@ -80,14 +80,29 @@ const orderSchema = z.object({
 const formSchema = z.object({
   customerName: z.string().min(2, {message: 'Customer name must be at least 2 characters.'}),
   companyName: z.string().optional(),
-  contactNo: z.string().regex(/^\d{4}-\d{3}-\d{4}$/, {message: 'Contact number must be in 0000-000-0000 format.'}),
-  landlineNo: z.string().regex(/^\d{2}-\d{4}-\d{4}$/, {message: 'Landline number must be in 00-0000-0000 format.'}).optional().or(z.literal('')),
+  mobileNo: z.string().optional(),
+  landlineNo: z.string().optional(),
   location: z.string().min(2, {message: 'Location is required.'}),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   salesRepresentative: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a CSR."}),
   orders: z.array(orderSchema).min(1, "Please add at least one order."),
+}).refine(data => data.mobileNo || data.landlineNo, {
+  message: "Either Mobile No. or Landline No. must be provided.",
+  path: ["mobileNo"],
+}).refine(data => {
+    if (data.mobileNo) return /^\d{4}-\d{3}-\d{4}$/.test(data.mobileNo);
+    return true;
+}, {
+    message: "Mobile number must be in 0000-000-0000 format.",
+    path: ["mobileNo"],
+}).refine(data => {
+    if (data.landlineNo) return /^\d{2}-\d{4}-\d{4}$/.test(data.landlineNo);
+    return true;
+}, {
+    message: "Landline number must be in 00-0000-0000 format.",
+    path: ["landlineNo"],
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -103,7 +118,7 @@ const formFields: {
 }[] = [
   {name: 'customerName', label: 'Customer Name', icon: User, type: 'input'},
   {name: 'companyName', label: 'Company Name (Optional)', icon: Building, type: 'input'},
-  {name: 'contactNo', label: 'Contact No.', icon: Phone, type: 'tel'},
+  {name: 'mobileNo', label: 'Mobile No. (Optional)', icon: Phone, type: 'tel'},
   {name: 'landlineNo', label: 'Landline No. (Optional)', icon: PhoneForwarded, type: 'tel'},
   {name: 'location', label: 'Location', icon: MapPin, type: 'input'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
@@ -186,7 +201,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     defaultValues: {
       customerName: '',
       companyName: '',
-      contactNo: '',
+      mobileNo: '',
       landlineNo: '',
       location: '',
       paymentType: undefined,
@@ -232,7 +247,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     form.reset({
       customerName: '',
       companyName: '',
-      contactNo: '',
+      mobileNo: '',
       landlineNo: '',
       location: '',
       paymentType: undefined,
@@ -251,7 +266,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       .join(' ');
   };
 
-  const handleContactNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+  const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
     const rawValue = e.target.value.replace(/\D/g, '');
     if (rawValue.length <= 11) {
       let formattedValue = '';
@@ -295,7 +310,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       id: leadId,
       customerName: toTitleCase(values.customerName),
       companyName: values.companyName ? toTitleCase(values.companyName) : '-',
-      contactNumber: values.contactNo,
+      contactNumber: values.mobileNo || '-',
       landlineNumber: values.landlineNo || '-',
       location: toTitleCase(values.location),
       paymentType: values.paymentType,
@@ -384,8 +399,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                             type={fieldInfo.type}
                             {...field}
                             onChange={(e) => {
-                              if (fieldInfo.name === 'contactNo') {
-                                handleContactNoChange(e, field);
+                              if (fieldInfo.name === 'mobileNo') {
+                                handleMobileNoChange(e, field);
                               } else if (fieldInfo.name === 'landlineNo') {
                                 handleLandlineNoChange(e, field);
                               } else {
@@ -630,3 +645,5 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </Card>
   );
 }
+
+    

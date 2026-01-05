@@ -82,7 +82,7 @@ export function OrderStatusTable() {
             </div>
              <div className="w-full max-w-sm">
               <Input
-                placeholder="Search by customer name, contact no, or landline..."
+                placeholder="Search by customer name, mobile no, or landline..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -108,7 +108,7 @@ export function OrderStatusTable() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-card-foreground">Customer Name</TableHead>
-                  <TableHead className="text-card-foreground">Contact No.</TableHead>
+                  <TableHead className="text-card-foreground">Mobile No.</TableHead>
                   <TableHead className="text-card-foreground">Landline No.</TableHead>
                   <TableHead className="text-card-foreground text-center">Ordered Items</TableHead>
                 </TableRow>
@@ -165,3 +165,5 @@ export function OrderStatusTable() {
     </Card>
   );
 }
+
+    
