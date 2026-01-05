@@ -112,8 +112,12 @@ export function LeadForm() {
   }
 
   function onSubmit(values: FormValues) {
+    const submissionData = {
+      ...values,
+      submissionDateTime: new Date().toLocaleString(),
+    };
     // In a real app, you'd send this data to a server.
-    console.log(values);
+    console.log(submissionData);
 
     toast({
       title: 'Lead Submitted!',
