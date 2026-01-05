@@ -45,7 +45,7 @@ const formSchema = z.object({
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   productSource: z.string().min(2, {message: 'Product source is required.'}),
-  csr: z.string().min(2, {message: 'CSR name is required.'}),
+  csr: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a CSR."}),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -65,7 +65,7 @@ const formFields: {
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
   {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular']},
   {name: 'productSource', label: 'Product Source', icon: Building, type: 'input'},
-  {name: 'csr', label: 'CSR', icon: UserCheck, type: 'input'},
+  {name: 'csr', label: 'CSR', icon: UserCheck, type: 'select', options: ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], placeholder: 'Select CSR'},
 ];
 
 export function LeadForm() {
@@ -80,7 +80,7 @@ export function LeadForm() {
       orderType: undefined,
       priorityType: 'Regular',
       productSource: '',
-      csr: '',
+      csr: undefined,
     },
   });
 
