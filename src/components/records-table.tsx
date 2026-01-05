@@ -263,15 +263,15 @@ export function RecordsTable() {
     }
   };
 
-  const handleUpdateOrderQuantity = async (leadId: string, orderIndex: number, newQuantity: number) => {
-    if (newQuantity < 1) return; // Prevent quantity from going below 1
-
+  const handleUpdateOrderField = async (leadId: string, orderIndex: number, field: 'quantity' | 'color' | 'size', value: string | number) => {
     const lead = leads?.find(l => l.id === leadId);
     if (!lead) return;
 
+    if (field === 'quantity' && typeof value === 'number' && value < 1) return;
+
     const updatedOrders = lead.orders.map((order, index) => {
       if (index === orderIndex) {
-        return { ...order, quantity: newQuantity };
+        return { ...order, [field]: value };
       }
       return order;
     });
@@ -284,15 +284,15 @@ export function RecordsTable() {
         lastModified: new Date().toISOString(),
       });
       toast({
-        title: 'Quantity Updated!',
-        description: 'The order quantity has been updated.',
+        title: `Order ${field.charAt(0).toUpperCase() + field.slice(1)} Updated!`,
+        description: `The order ${field} has been updated.`,
       });
     } catch (e: any) {
-      console.error("Error updating quantity: ", e);
+      console.error(`Error updating order ${field}: `, e);
       toast({
         variant: "destructive",
         title: "Update Failed",
-        description: e.message || "Could not update the quantity.",
+        description: e.message || `Could not update the order ${field}.`,
       });
     }
   };
@@ -491,7 +491,7 @@ export function RecordsTable() {
                                 <TableHead className="py-1 text-card-foreground">Product Type</TableHead>
                                 <TableHead className="py-1 text-card-foreground">Color</TableHead>
                                 <TableHead className="py-1 text-card-foreground">Size</TableHead>
-                                <TableHead className="py-1 text-card-foreground">Quantity</TableHead>
+                                <TableHead className="py-1 text-card-foreground text-center">Quantity</TableHead>
                                 <TableHead className="text-right py-1 text-card-foreground pr-8">Action</TableHead>
                               </TableRow>
                             </TableHeader>
@@ -499,15 +499,33 @@ export function RecordsTable() {
                               {lead.orders?.map((order: any, index: number) => (
                                 <TableRow key={index}>
                                   <TableCell className="py-1 text-xs text-card-foreground">{order.productType}</TableCell>
-                                  <TableCell className="py-1 text-xs text-card-foreground">{order.color}</TableCell>
-                                  <TableCell className="py-1 text-xs text-card-foreground">{order.size}</TableCell>
+                                  <TableCell className="py-1 text-xs text-card-foreground">
+                                    <Select value={order.color} onValueChange={(value) => handleUpdateOrderField(lead.id, index, 'color', value)}>
+                                      <SelectTrigger className="text-xs h-7 w-[130px]">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {productColors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                      </SelectContent>
+                                    </Select>
+                                  </TableCell>
+                                  <TableCell className="py-1 text-xs text-card-foreground">
+                                     <Select value={order.size} onValueChange={(value) => handleUpdateOrderField(lead.id, index, 'size', value)}>
+                                      <SelectTrigger className="text-xs h-7 w-[80px]">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {productSizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                      </SelectContent>
+                                    </Select>
+                                  </TableCell>
                                   <TableCell className="py-1 text-xs text-card-foreground">
                                     <div className="flex items-center gap-2 justify-center">
-                                      <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderQuantity(lead.id, index, order.quantity - 1)} disabled={order.quantity <= 1}>
+                                      <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderField(lead.id, index, 'quantity', order.quantity - 1)} disabled={order.quantity <= 1}>
                                         <Minus className="h-3 w-3" />
                                       </Button>
                                       <span className="w-8 text-center">{order.quantity}</span>
-                                      <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderQuantity(lead.id, index, order.quantity + 1)}>
+                                      <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateOrderField(lead.id, index, 'quantity', order.quantity + 1)}>
                                         <Plus className="h-3 w-3" />
                                       </Button>
                                     </div>
@@ -542,7 +560,7 @@ export function RecordsTable() {
                             <TableFooter>
                                <TableRow>
                                 <TableCell colSpan={4} className="text-right font-bold text-card-foreground">Total Quantity</TableCell>
-                                <TableCell className="font-bold text-card-foreground">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
+                                <TableCell className="font-bold text-card-foreground text-center">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
                                 <TableCell className='text-right'>
                                   <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
                                     <PlusCircle className="h-4 w-4 mr-1" />
@@ -694,7 +712,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   onClose: () => void;
 }) {
   const [customerName, setCustomerName] = useState(lead.customerName);
-  const [companyName, setCompanyName] = useState(lead.companyName || '');
+  const [companyName, setCompanyName]_useState(lead.companyName || '');
   const [contactNumber, setContactNumber] = useState(lead.contactNumber);
   const [location, setLocation] = useState(lead.location);
   const [salesRepresentative, setSalesRepresentative] = useState(lead.salesRepresentative);
