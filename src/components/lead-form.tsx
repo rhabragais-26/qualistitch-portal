@@ -164,7 +164,7 @@ export function LeadForm() {
 
             <div className="flex justify-end pt-4">
               <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95">
-                Submit Lead
+                Submit
               </Button>
             </div>
           </form>
