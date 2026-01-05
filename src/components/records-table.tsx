@@ -95,6 +95,7 @@ type Order = {
 type Lead = {
   id: string;
   customerName: string;
+  companyName?: string;
   contactNumber: string;
   location: string;
   csr: string;
@@ -354,7 +355,8 @@ export function RecordsTable() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-card-foreground">Date & Time</TableHead>
-                  <TableHead className="text-card-foreground">Customer/Company Name</TableHead>
+                  <TableHead className="text-card-foreground">Customer Name</TableHead>
+                  <TableHead className="text-card-foreground">Company Name</TableHead>
                   <TableHead className="text-card-foreground">Contact No.</TableHead>
                   <TableHead className="text-card-foreground">Location</TableHead>
                   <TableHead className="text-card-foreground">CSR</TableHead>
@@ -380,6 +382,7 @@ export function RecordsTable() {
                       })}
                     </TableCell>
                     <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.customerName}</TableCell>
+                    <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.companyName}</TableCell>
                     <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.contactNumber}</TableCell>
                     <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.location}</TableCell>
                     <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.csr}</TableCell>
@@ -423,7 +426,7 @@ export function RecordsTable() {
                   </TableRow>
                   {openLeadId === lead.id && (
                     <TableRow className="bg-muted/50">
-                      <TableCell colSpan={10} className="p-0">
+                      <TableCell colSpan={11} className="p-0">
                          <div className="p-4">
                           <h4 className="font-semibold text-card-foreground mb-2">Ordered Items</h4>
                            <Table>
@@ -625,6 +628,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   onClose: () => void;
 }) {
   const [customerName, setCustomerName] = useState(lead.customerName);
+  const [companyName, setCompanyName] = useState(lead.companyName || '');
   const [contactNumber, setContactNumber] = useState(lead.contactNumber);
   const [location, setLocation] = useState(lead.location);
   const [csr, setCsr] = useState(lead.csr);
@@ -644,6 +648,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   React.useEffect(() => {
     if (lead) {
       setCustomerName(lead.customerName);
+      setCompanyName(lead.companyName || '');
       setContactNumber(lead.contactNumber);
       setLocation(lead.location);
       setCsr(lead.csr);
@@ -655,8 +660,9 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   }, [lead]);
 
   const handleSave = () => {
-    const updatedLead: Partial<Lead> & { companyName?: string } = {
+    const updatedLead: Partial<Lead> = {
       customerName: toTitleCase(customerName),
+      companyName: toTitleCase(companyName),
       contactNumber,
       location: toTitleCase(location),
       csr,
@@ -664,7 +670,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       orderType,
       priorityType,
       productSource,
-      companyName: toTitleCase(customerName), // Assuming companyName is same as customerName
     };
     onSave(updatedLead);
   };
@@ -684,17 +689,23 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="customerName">Customer/Company Name</Label>
+              <Label htmlFor="customerName">Customer Name</Label>
               <Input id="customerName" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
             </div>
+             <div className="space-y-2">
+              <Label htmlFor="companyName">Company Name</Label>
+              <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+            </div>
+          </div>
+           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="contactNo">Contact No.</Label>
               <Input id="contactNo" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} />
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

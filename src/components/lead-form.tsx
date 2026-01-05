@@ -78,6 +78,7 @@ const orderSchema = z.object({
 
 const formSchema = z.object({
   customerName: z.string().min(2, {message: 'Customer name must be at least 2 characters.'}),
+  companyName: z.string().optional(),
   contactNo: z.string().min(10, {message: 'Please enter a valid contact number.'}).regex(/^[0-9]+$/, {message: "Contact number must be in numerical format."}),
   location: z.string().min(2, {message: 'Location is required.'}),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
@@ -99,7 +100,8 @@ const formFields: {
   placeholder?: string;
   className?: string;
 }[] = [
-  {name: 'customerName', label: 'Customer/Company Name', icon: User, type: 'input'},
+  {name: 'customerName', label: 'Customer Name', icon: User, type: 'input'},
+  {name: 'companyName', label: 'Company Name (Optional)', icon: Building, type: 'input'},
   {name: 'contactNo', label: 'Contact No.', icon: Phone, type: 'tel'},
   {name: 'location', label: 'Location', icon: MapPin, type: 'input'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
@@ -165,6 +167,7 @@ export function LeadForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       customerName: '',
+      companyName: '',
       contactNo: '',
       location: '',
       paymentType: undefined,
@@ -184,6 +187,7 @@ export function LeadForm() {
   const handleReset = () => {
     form.reset({
       customerName: '',
+      companyName: '',
       contactNo: '',
       location: '',
       paymentType: undefined,
@@ -211,7 +215,7 @@ export function LeadForm() {
     const submissionData = {
       id: leadId,
       customerName: toTitleCase(values.customerName),
-      companyName: toTitleCase(values.customerName),
+      companyName: toTitleCase(values.companyName || ''),
       contactNumber: values.contactNo,
       location: toTitleCase(values.location),
       paymentType: values.paymentType,
