@@ -382,7 +382,7 @@ export function RecordsTable() {
   };
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
@@ -401,7 +401,7 @@ export function RecordsTable() {
             </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-hidden">
         {isLoading && (
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
@@ -415,7 +415,7 @@ export function RecordsTable() {
           </div>
         )}
         {!isLoading && !error && (
-          <div className="h-[calc(100vh-20rem)]" style={{height: 'calc(100vh - 20.5rem)'}}>
+          <div className="h-full">
             <ScrollArea className="h-full w-full border rounded-md">
               <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
@@ -707,7 +707,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   const [companyName, setCompanyName] = useState(lead.companyName || '');
   const [contactNumber, setContactNumber] = useState(lead.contactNumber || '');
   const [landlineNumber, setLandlineNumber] = useState(lead.landlineNumber || '');
-  const [location, setLocation] = useState(lead.location);
   const [salesRepresentative, setSalesRepresentative] = useState(lead.salesRepresentative);
   const [paymentType, setPaymentType] = useState(lead.paymentType);
   const [orderType, setOrderType] = useState(lead.orderType);
@@ -728,7 +727,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       setCompanyName(lead.companyName || '');
       setContactNumber(lead.contactNumber || '');
       setLandlineNumber(lead.landlineNumber || '');
-      setLocation(lead.location);
       setSalesRepresentative(lead.salesRepresentative);
       setPaymentType(lead.paymentType);
       setOrderType(lead.orderType);
@@ -791,7 +789,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       companyName: companyName ? toTitleCase(companyName) : '-',
       contactNumber: mobile || '-',
       landlineNumber: landline || '-',
-      location: toTitleCase(location),
       salesRepresentative,
       paymentType,
       orderType,
@@ -833,10 +830,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
               <Input id="landlineNo" value={landlineNumber === '-' ? '' : landlineNumber} onChange={handleLandlineNoChange} />
             </div>
           </div>
-          <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
-            </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="salesRepresentative">CSR</Label>
