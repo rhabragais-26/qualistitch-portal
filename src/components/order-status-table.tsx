@@ -133,23 +133,23 @@ export function OrderStatusTable() {
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
                         <TableCell colSpan={4}>
-                          <div className="p-4">
+                          <div className="p-2">
                             <Table>
                               <TableHeader>
                                 <TableRow>
-                                  <TableHead className="py-1 text-black">Product</TableHead>
-                                  <TableHead className="py-1 text-black">Color</TableHead>
-                                  <TableHead className="py-1 text-black">Size</TableHead>
-                                  <TableHead className="py-1 text-black text-right">Quantity</TableHead>
+                                  <TableHead className="py-1 px-2 text-black font-bold">Product</TableHead>
+                                  <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
+                                  <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
+                                  <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
                                 {lead.orders.map((order, index) => (
                                   <TableRow key={index} className="border-0">
-                                    <TableCell className="py-1 text-xs text-black">{order.productType}</TableCell>
-                                    <TableCell className="py-1 text-xs text-black">{order.color}</TableCell>
-                                    <TableCell className="py-1 text-xs text-black">{order.size}</TableCell>
-                                    <TableCell className="py-1 text-xs text-black text-right">{order.quantity}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
                                   </TableRow>
                                 ))}
                               </TableBody>
