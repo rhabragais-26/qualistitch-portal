@@ -63,6 +63,10 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from './ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { useFirestore } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { v4 as uuidv4 } from 'uuid';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -144,6 +148,7 @@ export function LeadForm() {
   const [newOrderColor, setNewOrderColor] = useState('');
   const [newOrderSize, setNewOrderSize] = useState('');
   const [newOrderQuantity, setNewOrderQuantity] = useState<number | string>(0);
+  const firestore = useFirestore();
 
 
   useEffect(() => {
@@ -191,12 +196,27 @@ export function LeadForm() {
   }
 
   function onSubmit(values: FormValues) {
+    const leadId = uuidv4();
+    const leadsRef = collection(firestore, 'leads');
+    const leadDocRef = doc(leadsRef, leadId);
+
     const submissionData = {
-      ...values,
-      submissionDateTime: new Date().toLocaleString(),
+      id: leadId,
+      customerName: values.customerName,
+      companyName: values.customerName,
+      contactNumber: values.contactNo,
+      location: values.location,
+      paymentType: values.paymentType,
+      csr: values.csr,
+      orderType: values.orderType,
+      priorityType: values.priorityType,
+      productType: values.orders.map(o => o.productType).join(', '),
+      productSource: values.productSource,
+      orders: values.orders,
+      submissionDateTime: new Date().toISOString(),
     };
-    // In a real app, you'd send this data to a server.
-    console.log(submissionData);
+
+    setDocumentNonBlocking(leadDocRef, submissionData, { merge: false });
 
     toast({
       title: 'Lead Submitted!',
