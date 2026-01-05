@@ -306,6 +306,8 @@ export function RecordsTable() {
 
   const formatDateTime = (isoString: string) => {
     const date = new Date(isoString);
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const dayOfWeek = days[date.getDay()];
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const month = months[date.getMonth()];
     const day = String(date.getDate()).padStart(2, '0');
@@ -316,7 +318,10 @@ export function RecordsTable() {
     hours = hours % 12;
     hours = hours ? hours : 12; // the hour '0' should be '12'
     const strTime = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
-    return `${month}-${day}-${year} ${strTime}`;
+    return {
+      dateTime: `${month}-${day}-${year} ${strTime}`,
+      dayOfWeek: dayOfWeek,
+    }
   };
 
   const toTitleCase = (str: string) => {
@@ -382,7 +387,8 @@ export function RecordsTable() {
                 <React.Fragment key={lead.id}>
                   <TableRow>
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">
-                      {formatDateTime(lead.submissionDateTime)}
+                       <div>{formatDateTime(lead.submissionDateTime).dateTime}</div>
+                       <div className="text-muted-foreground">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
                     </TableCell>
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.customerName}</TableCell>
                     <TableCell className="text-xs align-middle py-2 text-card-foreground">{lead.companyName || '-'}</TableCell>
@@ -477,7 +483,7 @@ export function RecordsTable() {
                               ))}
                             </TableBody>
                             <TableFooter>
-                              <TableRow>
+                               <TableRow>
                                 <TableCell colSpan={4} className="text-right font-bold text-card-foreground">Total Quantity</TableCell>
                                 <TableCell className="font-bold text-card-foreground">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
                                 <TableCell className='text-right'>

@@ -145,6 +145,7 @@ const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6X
 export function LeadForm() {
   const {toast} = useToast();
   const [dateTime, setDateTime] = useState('');
+  const [dayOfWeek, setDayOfWeek] = useState('');
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [newOrderProductType, setNewOrderProductType] = useState('');
   const [newOrderColor, setNewOrderColor] = useState('');
@@ -156,8 +157,8 @@ export function LeadForm() {
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
-      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      const dayOfWeek = days[now.getDay()];
+      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      setDayOfWeek(days[now.getDay()]);
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const month = months[now.getMonth()];
       const day = String(now.getDate()).padStart(2, '0');
@@ -168,7 +169,7 @@ export function LeadForm() {
       hours = hours % 12;
       hours = hours ? hours : 12; // the hour '0' should be '12'
       const strTime = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
-      setDateTime(`${dayOfWeek}, ${month}-${day}-${year} ${strTime}`);
+      setDateTime(`${month}-${day}-${year} ${strTime}`);
     };
     updateDateTime();
     const intervalId = setInterval(updateDateTime, 1000);
@@ -278,8 +279,9 @@ export function LeadForm() {
             <CardTitle className="font-headline text-xl text-card-foreground">Create New Lead Entry for Master Tracker</CardTitle>
             <CardDescription>Fill in the details below to create a new lead. All fields are required.</CardDescription>
           </div>
-          <div className="text-sm text-muted-foreground font-mono whitespace-nowrap pt-1">
-            {dateTime}
+          <div className="text-sm text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
+            <div>{dateTime}</div>
+            <div>{dayOfWeek}</div>
           </div>
         </div>
       </CardHeader>
