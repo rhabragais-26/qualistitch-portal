@@ -44,7 +44,7 @@ const formSchema = z.object({
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
-  productSource: z.string().min(2, {message: 'Product source is required.'}),
+  productSource: z.enum(['Stock', 'Client Provided'], {required_error: "You need to select a product source."}),
   csr: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a CSR."}),
 });
 
@@ -63,9 +63,9 @@ const formFields: {
   {name: 'location', label: 'Location', icon: MapPin, type: 'input'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
-  {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular']},
-  {name: 'productSource', label: 'Product Source', icon: Building, type: 'input'},
   {name: 'csr', label: 'CSR', icon: UserCheck, type: 'select', options: ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], placeholder: 'Select CSR'},
+  {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular']},
+  {name: 'productSource', label: 'Product Source', icon: Building, type: 'radio', options: ['Stock', 'Client Provided']},
 ];
 
 export function LeadForm() {
@@ -79,7 +79,7 @@ export function LeadForm() {
       paymentType: undefined,
       orderType: undefined,
       priorityType: 'Regular',
-      productSource: '',
+      productSource: 'Stock',
       csr: undefined,
     },
   });
