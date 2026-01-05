@@ -77,7 +77,6 @@ const csrs = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis
 const paymentTypes = ['Partially Paid', 'Fully Paid', 'COD'];
 const orderTypes = ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'];
 const priorityTypes = ['Rush', 'Regular'];
-const productSources = ['Client Provided', 'Stock'];
 
 
 type Order = {
@@ -97,7 +96,6 @@ type Lead = {
   priorityType: string;
   paymentType: string;
   orderType: string;
-  productSource: string;
   orders: Order[];
   submissionDateTime: string;
 }
@@ -644,7 +642,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   const [paymentType, setPaymentType] = useState(lead.paymentType);
   const [orderType, setOrderType] = useState(lead.orderType);
   const [priorityType, setPriorityType] = useState(lead.priorityType);
-  const [productSource, setProductSource] = useState(lead.productSource);
 
   const toTitleCase = (str: string) => {
     if (!str) return '';
@@ -664,7 +661,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       setPaymentType(lead.paymentType);
       setOrderType(lead.orderType);
       setPriorityType(lead.priorityType);
-      setProductSource(lead.productSource);
     }
   }, [lead]);
 
@@ -678,7 +674,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       paymentType,
       orderType,
       priorityType,
-      productSource,
     };
     onSave(updatedLead);
   };
@@ -744,12 +739,6 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
               <Label>Priority Type</Label>
               <RadioGroup onValueChange={(v) => setPriorityType(v as 'Rush' | 'Regular')} value={priorityType} className="flex pt-2">
                 {priorityTypes.map(o => <div key={o} className="flex items-center space-x-2"><RadioGroupItem value={o} id={`priority-${o}`}/><Label htmlFor={`priority-${o}`}>{o}</Label></div>)}
-              </RadioGroup>
-            </div>
-            <div className="space-y-2">
-              <Label>Product Source</Label>
-               <RadioGroup onValueChange={(v) => setProductSource(v as 'Client Provided' | 'Stock')} value={productSource} className="flex pt-2">
-                {productSources.map(o => <div key={o} className="flex items-center space-x-2"><RadioGroupItem value={o} id={`source-${o}`}/><Label htmlFor={`source-${o}`}>{o}</Label></div>)}
               </RadioGroup>
             </div>
           </div>

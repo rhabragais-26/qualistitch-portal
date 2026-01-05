@@ -45,10 +45,6 @@
         "productType": {
           "type": "string",
           "description": "Type of product for the lead."
-        },
-        "productSource": {
-          "type": "string",
-          "description": "Source of the product for the lead."
         }
       },
       "required": [
@@ -61,8 +57,7 @@
         "csr",
         "orderType",
         "priorityType",
-        "productType",
-        "productSource"
+        "productType"
       ]
     }
   },

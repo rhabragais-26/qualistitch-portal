@@ -84,7 +84,6 @@ const formSchema = z.object({
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
-  productSource: z.enum(['Client Provided', 'Stock'], {required_error: "You need to select a product source."}),
   csr: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a CSR."}),
   orders: z.array(orderSchema).min(1, "Please add at least one order."),
 });
@@ -108,7 +107,6 @@ const formFields: {
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
   {name: 'csr', label: 'CSR', icon: UserCheck, type: 'select', options: ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], placeholder: 'Select CSR'},
   {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular'], className: "md:justify-center"},
-  {name: 'productSource', label: 'Product Source', icon: Building, type: 'radio', options: ['Client Provided', 'Stock'], className: "md:justify-center"},
 ];
 
 const productTypes = [
@@ -190,7 +188,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       paymentType: undefined,
       orderType: undefined,
       priorityType: 'Regular',
-      productSource: 'Stock',
       csr: undefined,
       orders: [],
     },
@@ -217,7 +214,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       paymentType: undefined,
       orderType: undefined,
       priorityType: 'Regular',
-      productSource: 'Stock',
       csr: undefined,
       orders: [],
     });
@@ -247,7 +243,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       orderType: values.orderType,
       priorityType: values.priorityType,
       productType: values.orders.map(o => o.productType).join(', '),
-      productSource: values.productSource,
       orders: values.orders,
       submissionDateTime: new Date().toISOString(),
     };
