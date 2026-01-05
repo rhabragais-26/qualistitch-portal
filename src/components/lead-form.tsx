@@ -78,7 +78,7 @@ const orderSchema = z.object({
 
 const formSchema = z.object({
   customerName: z.string().min(2, {message: 'Customer name must be at least 2 characters.'}),
-  contactNo: z.string().min(10, {message: 'Please enter a valid contact number.'}),
+  contactNo: z.string().min(10, {message: 'Please enter a valid contact number.'}).regex(/^[0-9]+$/, {message: "Contact number must be in numerical format."}),
   location: z.string().min(2, {message: 'Location is required.'}),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
@@ -94,13 +94,13 @@ const formFields: {
   name: keyof Omit<FormValues, 'orders'>;
   label: string;
   icon: React.ElementType;
-  type: 'input' | 'select' | 'radio';
+  type: 'input' | 'tel' | 'select' | 'radio';
   options?: string[];
   placeholder?: string;
   className?: string;
 }[] = [
   {name: 'customerName', label: 'Customer/Company Name', icon: User, type: 'input'},
-  {name: 'contactNo', label: 'Contact No.', icon: Phone, type: 'input'},
+  {name: 'contactNo', label: 'Contact No.', icon: Phone, type: 'tel'},
   {name: 'location', label: 'Location', icon: MapPin, type: 'input'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
@@ -274,9 +274,9 @@ export function LeadForm() {
                         <fieldInfo.icon className="h-4 w-4 text-primary" />
                         {fieldInfo.label}
                       </FormLabel>
-                      {fieldInfo.type === 'input' ? (
+                      {fieldInfo.type === 'input' || fieldInfo.type === 'tel' ? (
                         <FormControl>
-                          <Input {...field} />
+                          <Input type={fieldInfo.type} {...field} />
                         </FormControl>
                       ) : fieldInfo.type === 'select' ? (
                          <Select onValueChange={field.onChange} value={field.value || ''}>
