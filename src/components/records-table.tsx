@@ -254,12 +254,14 @@ export function RecordsTable() {
     const lead = leads?.find(l => l.id === leadId);
     if (!lead) return;
   
-    const updatedOrders = lead.orders.filter((_, index) => index !== orderIndex);
-  
+    const orderToDelete = lead.orders[orderIndex];
+    
     const leadDocRef = doc(firestore, 'leads', leadId);
   
     try {
-      await updateDoc(leadDocRef, { orders: updatedOrders });
+      await updateDoc(leadDocRef, { 
+        orders: arrayRemove(orderToDelete)
+      });
       toast({
         title: "Order Deleted!",
         description: "The order has been removed from the lead.",
@@ -321,7 +323,7 @@ export function RecordsTable() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-card-foreground">Date</TableHead>
+                  <TableHead className="text-card-foreground">Date & Time</TableHead>
                   <TableHead className="text-card-foreground">Customer Name</TableHead>
                   <TableHead className="text-card-foreground">Contact No.</TableHead>
                   <TableHead className="text-card-foreground">Location</TableHead>
@@ -334,11 +336,12 @@ export function RecordsTable() {
                 </TableRow>
               </TableHeader>
               {leads?.map((lead) => (
-                <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
-                  <TableBody>
+                <TableBody key={lead.id}>
+                  <Collapsible asChild open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
+                    <>
                       <TableRow>
                           <TableCell className="text-sm align-middle py-2 text-card-foreground">
-                            {new Date(lead.submissionDateTime).toLocaleDateString()}
+                            {new Date(lead.submissionDateTime).toLocaleString()}
                           </TableCell>
                           <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.customerName}</TableCell>
                           <TableCell className="text-sm align-middle py-2 text-card-foreground">{lead.contactNumber}</TableCell>
@@ -451,8 +454,9 @@ export function RecordsTable() {
                              </TableCell>
                           </tr>
                         </CollapsibleContent>
-                    </TableBody>
-                </Collapsible>
+                    </>
+                  </Collapsible>
+                </TableBody>
               ))}
             </Table>
           </div>
