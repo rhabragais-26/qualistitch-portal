@@ -113,7 +113,7 @@ export function ReportsSummary() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+          <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
             <CardHeader>
               <Skeleton className="h-8 w-1/2" />
               <Skeleton className="h-4 w-3/4" />
@@ -122,7 +122,7 @@ export function ReportsSummary() {
               <Skeleton className="h-[300px] w-full" />
             </CardContent>
           </Card>
-          <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+          <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
             <CardHeader>
               <Skeleton className="h-8 w-1/2" />
               <Skeleton className="h-4 w-3/4" />
@@ -131,7 +131,7 @@ export function ReportsSummary() {
               <Skeleton className="h-[300px] w-full" />
             </CardContent>
           </Card>
-           <Card className="lg:col-span-2 w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+           <Card className="lg:col-span-2 w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
             <CardHeader>
               <Skeleton className="h-8 w-1/2" />
               <Skeleton className="h-4 w-3/4" />
@@ -156,11 +156,11 @@ export function ReportsSummary() {
 
   return (
     <>
-      <div className="mb-8 p-4 bg-card/80 backdrop-blur-sm rounded-lg shadow-xl no-print">
+      <div className="mb-8 p-4 bg-white text-black rounded-lg shadow-xl no-print">
         <div className="flex justify-between items-center">
             <div className="flex gap-4 items-center">
                 <div className='flex items-center gap-2'>
-                    <span className="text-sm font-medium text-card-foreground">Year:</span>
+                    <span className="text-sm font-medium text-black">Year:</span>
                     <Select value={selectedYear} onValueChange={setSelectedYear}>
                         <SelectTrigger className="w-[120px]">
                             <SelectValue placeholder="Select Year" />
@@ -173,7 +173,7 @@ export function ReportsSummary() {
                     </Select>
                 </div>
                 <div className='flex items-center gap-2'>
-                    <span className="text-sm font-medium text-card-foreground">Month:</span>
+                    <span className="text-sm font-medium text-black">Month:</span>
                     <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Select Month" />
@@ -189,7 +189,7 @@ export function ReportsSummary() {
         </div>
       </div>
       <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
           <CardHeader>
             <CardTitle>CSR Performance</CardTitle>
             <CardDescription>Total quantity of orders and number of customers by each CSR.</CardDescription>
@@ -243,7 +243,7 @@ export function ReportsSummary() {
             </div>
           </CardContent>
         </Card>
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm flex flex-col">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black flex flex-col">
           <CardHeader>
             <CardTitle>QTY by Priority Type</CardTitle>
             <CardDescription>Total quantity of orders for each priority type.</CardDescription>
@@ -328,7 +328,7 @@ export function ReportsSummary() {
         </Card>
       </div>
       <div className="mt-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
           <CardHeader>
             <CardTitle>Daily Sold QTY</CardTitle>
             <CardDescription>Total quantity of items sold each day for the selected month.</CardDescription>
@@ -361,7 +361,7 @@ export function ReportsSummary() {
         </Card>
       </div>
       <div className="mt-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
           <CardHeader>
             <CardTitle>Monthly Sold QTY</CardTitle>
             <CardDescription>Total quantity of items sold each month for the selected year.</CardDescription>
@@ -397,7 +397,7 @@ export function ReportsSummary() {
         </Card>
       </div>
        <div className="mt-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
           <CardHeader>
             <CardTitle>Sold QTY by Product Type</CardTitle>
             <CardDescription>Total quantity of items sold for each product type for the selected period.</CardDescription>

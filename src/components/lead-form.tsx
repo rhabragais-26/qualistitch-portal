@@ -365,12 +365,12 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm">
+    <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="font-headline text-xl text-card-foreground">Create New Lead Entry for Master Tracker</CardTitle>
-            <CardDescription>Fill in the details below to create a new lead. All fields are required.</CardDescription>
+            <CardTitle className="font-headline text-xl text-black">Create New Lead Entry for Master Tracker</CardTitle>
+            <CardDescription className="text-gray-600">Fill in the details below to create a new lead. All fields are required.</CardDescription>
           </div>
           <div className="text-sm text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
             <div>{dateTime}</div>
@@ -389,7 +389,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   name={fieldInfo.name}
                   render={({field}) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-card-foreground">
+                      <FormLabel className="flex items-center gap-2 text-black">
                         <fieldInfo.icon className="h-4 w-4 text-primary" />
                         {fieldInfo.label}
                       </FormLabel>
@@ -437,7 +437,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                 <FormControl>
                                   <RadioGroupItem value={option} />
                                 </FormControl>
-                                <FormLabel className="font-normal text-card-foreground">{option}</FormLabel>
+                                <FormLabel className="font-normal text-black">{option}</FormLabel>
                               </FormItem>
                             ))}
                           </RadioGroup>
@@ -453,26 +453,26 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
             <Separator />
             
             <div>
-              <FormLabel className="text-card-foreground">Orders</FormLabel>
+              <FormLabel className="text-black">Orders</FormLabel>
               <div className="space-y-4 mt-2">
                 <div className="border rounded-md">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="py-2 text-card-foreground">Product Type</TableHead>
-                        <TableHead className="py-2 text-card-foreground">Color</TableHead>
-                        <TableHead className="py-2 text-card-foreground">Size</TableHead>
-                        <TableHead className="py-2 text-card-foreground text-center">Quantity</TableHead>
-                        <TableHead className="text-right py-2 text-card-foreground">Action</TableHead>
+                        <TableHead className="py-2 text-black">Product Type</TableHead>
+                        <TableHead className="py-2 text-black">Color</TableHead>
+                        <TableHead className="py-2 text-black">Size</TableHead>
+                        <TableHead className="py-2 text-black text-center">Quantity</TableHead>
+                        <TableHead className="text-right py-2 text-black">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {fields.map((field, index) => (
                         <TableRow key={field.id}>
-                          <TableCell className="py-2 text-card-foreground">{field.productType}</TableCell>
-                          <TableCell className="py-2 text-card-foreground">{field.color}</TableCell>
-                          <TableCell className="py-2 text-card-foreground">{field.size}</TableCell>
-                          <TableCell className="py-2 text-card-foreground">
+                          <TableCell className="py-2 text-black">{field.productType}</TableCell>
+                          <TableCell className="py-2 text-black">{field.color}</TableCell>
+                          <TableCell className="py-2 text-black">{field.size}</TableCell>
+                          <TableCell className="py-2 text-black">
                             <div className="flex items-center justify-center gap-2">
                               <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity - 1)} disabled={field.quantity <= 1}>
                                 <Minus className="h-3 w-3" />
