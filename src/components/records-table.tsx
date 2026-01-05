@@ -785,8 +785,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
           </div>
           <div className='grid grid-cols-2 gap-4'>
             <div className="flex items-center gap-2">
-              <Label htmlFor="edit-color" className='text-sm'>Color:</Label>
-              <Select onValueChange={setColor} value={color}>
+              <Label htmlFor="edit-color" className='text-sm'>Color:</Label>              <Select onValueChange={setColor} value={color}>
                 <SelectTrigger id="edit-color">
                   <SelectValue placeholder="Select a Color" />
                 </SelectTrigger>
