@@ -78,7 +78,7 @@ export default function JobOrderPage() {
     if (fetchedLead) {
       const initializedOrders = fetchedLead.orders.map(order => ({
         ...order,
-        design: order.design || { left: true, right: false, backLogo: false, backText: true }
+        design: order.design || { left: false, right: false, backLogo: false, backText: false }
       }));
       setLead({ ...fetchedLead, orders: initializedOrders });
 
