@@ -7,6 +7,7 @@ import {
   ChevronDown,
   LineChart,
   ListOrdered,
+  ClipboardList,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -95,6 +96,10 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                   <DropdownMenuItem onClick={() => handleNavigation('/records')}>
                     <Database className="mr-2" />
                     View Records
+                  </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => handleNavigation('/job-order')}>
+                    <ClipboardList className="mr-2" />
+                    Job Order
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/reports')}>
                     <LineChart className="mr-2" />
