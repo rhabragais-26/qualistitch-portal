@@ -30,6 +30,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+
 
 type NamedOrder = {
   name: string;
@@ -67,6 +69,8 @@ type Lead = {
   layouts?: Layout[];
 }
 
+type CheckboxField = keyof Pick<Lead, 'isUnderProgramming' | 'isInitialApproval' | 'isLogoTesting' | 'isRevision' | 'isFinalApproval' | 'isFinalProgram'>;
+
 export function DigitizingTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
@@ -76,6 +80,7 @@ export function DigitizingTable() {
   const [openLeadId, setOpenLeadId] = React.useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = React.useState('All');
   const [overdueFilter, setOverdueFilter] = React.useState('All');
+  const [uncheckConfirmation, setUncheckConfirmation] = React.useState<{ leadId: string; field: CheckboxField; } | null>(null);
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -84,19 +89,32 @@ export function DigitizingTable() {
 
   const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
 
-  const handleStatusChange = async (leadId: string, field: keyof Lead, value: boolean) => {
+  const handleCheckboxChange = (leadId: string, field: CheckboxField, checked: boolean) => {
+    if (!checked) {
+      setUncheckConfirmation({ leadId, field });
+    } else {
+      updateStatus(leadId, field, true);
+    }
+  };
+
+  const confirmUncheck = () => {
+    if (uncheckConfirmation) {
+      updateStatus(uncheckConfirmation.leadId, uncheckConfirmation.field, false);
+      setUncheckConfirmation(null);
+    }
+  };
+
+  const updateStatus = async (leadId: string, field: CheckboxField, value: boolean) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     
-    // Create an object with the field to update
     const updateData: { [key: string]: any } = { 
         [field]: value,
         lastModified: new Date().toISOString(),
     };
 
-    // If we are unchecking a box, uncheck all subsequent boxes
     if (!value) {
-        const sequence: (keyof Lead)[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
+        const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
         const currentIndex = sequence.indexOf(field);
         if (currentIndex > -1) {
             for (let i = currentIndex + 1; i < sequence.length; i++) {
@@ -107,18 +125,20 @@ export function DigitizingTable() {
             }
         }
     }
-     // If Final Approval is checked, ensure Revision is unchecked.
+    
     if (field === 'isFinalApproval' && value) {
         updateData['isRevision'] = false;
     }
 
-
     try {
       await updateDoc(leadDocRef, updateData);
-      toast({
-        title: 'Status Updated',
-        description: `The status for the lead has been updated.`,
-      });
+      if (value) { // Only toast on positive action
+          toast({
+            title: 'Status Updated',
+            description: 'The digitizing process has moved to the next step.',
+            duration: 2000
+          });
+      }
     } catch (e: any) {
       console.error('Error updating status:', e);
       toast({
@@ -157,7 +177,6 @@ export function DigitizingTable() {
   const filteredLeads = React.useMemo(() => {
     if (!leads) return [];
     
-    // Only show leads that have a joNumber
     const leadsWithJo = leads.filter(lead => lead.joNumber);
 
     return leadsWithJo.filter(lead => {
@@ -169,9 +188,9 @@ export function DigitizingTable() {
         (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
         : true;
       
+      const joString = formatJoNumber(lead.joNumber);
       const matchesJo = joNumberSearch ? 
-        formatJoNumber(lead.joNumber).includes(joNumberSearch) ||
-        (lead.joNumber?.toString().padStart(5, '0').endsWith(joNumberSearch))
+        (joString.toLowerCase().includes(joNumberSearch.toLowerCase()))
         : true;
       
       const matchesPriority = priorityFilter === 'All' || lead.priorityType === priorityFilter;
@@ -189,6 +208,20 @@ export function DigitizingTable() {
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
+       <AlertDialog open={!!uncheckConfirmation} onOpenChange={(open) => !open && setUncheckConfirmation(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Unchecking this box will also uncheck all subsequent steps in the process. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setUncheckConfirmation(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmUncheck}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
@@ -266,12 +299,12 @@ export function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle whitespace-nowrap">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle">Overdue Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-28">Initial Program</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-28">Initial Approval</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-28">Test</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-28">Revision</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-28">Final Approval</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-28">Final Program</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Initial Program</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Initial Approval</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Test</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Revision</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Final Approval</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Final Program</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Details</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -302,41 +335,41 @@ export function DigitizingTable() {
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
                             checked={lead.isUnderProgramming || false}
-                            onCheckedChange={(checked) => handleStatusChange(lead.id, 'isUnderProgramming', !!checked)}
+                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isUnderProgramming', !!checked)}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
                             checked={lead.isInitialApproval || false}
-                            onCheckedChange={(checked) => handleStatusChange(lead.id, 'isInitialApproval', !!checked)}
+                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isInitialApproval', !!checked)}
                             disabled={!lead.isUnderProgramming}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
                             checked={lead.isLogoTesting || false}
-                            onCheckedChange={(checked) => handleStatusChange(lead.id, 'isLogoTesting', !!checked)}
+                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isLogoTesting', !!checked)}
                              disabled={!lead.isInitialApproval}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
                             checked={lead.isRevision || false}
-                            onCheckedChange={(checked) => handleStatusChange(lead.id, 'isRevision', !!checked)}
+                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isRevision', !!checked)}
                             disabled={!lead.isLogoTesting || lead.isFinalApproval}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
                             checked={lead.isFinalApproval || false}
-                            onCheckedChange={(checked) => handleStatusChange(lead.id, 'isFinalApproval', !!checked)}
+                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isFinalApproval', !!checked)}
                             disabled={!lead.isLogoTesting}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
                             checked={lead.isFinalProgram || false}
-                            onCheckedChange={(checked) => handleStatusChange(lead.id, 'isFinalProgram', !!checked)}
+                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isFinalProgram', !!checked)}
                             disabled={!lead.isFinalApproval}
                           />
                         </TableCell>
@@ -431,9 +464,3 @@ export function DigitizingTable() {
     </Card>
   );
 }
-
-    
-
-    
-
-    
