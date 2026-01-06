@@ -52,6 +52,8 @@ type Layout = {
   namedOrders?: NamedOrder[];
   logoImage?: string;
   backDesignImage?: string;
+  testLogoImage?: string;
+  testBackDesignImage?: string;
 };
 
 type Lead = {
@@ -113,10 +115,9 @@ export function DigitizingTable() {
         if (field === 'isUnderProgramming') {
           setLogoImage(lead?.layouts?.[0]?.logoImage || '');
           setBackDesignImage(lead?.layouts?.[0]?.backDesignImage || '');
-        } else {
-          // For 'isLogoTesting', start with empty fields
-          setLogoImage('');
-          setBackDesignImage('');
+        } else if (field === 'isLogoTesting') {
+          setLogoImage(lead?.layouts?.[0]?.testLogoImage || '');
+          setBackDesignImage(lead?.layouts?.[0]?.testBackDesignImage || '');
         }
 
         setIsUploadDialogOpen(true);
@@ -127,17 +128,30 @@ export function DigitizingTable() {
   };
 
   const handleUploadDialogSave = async () => {
-    if (!uploadLeadId || !uploadField) return;
+    if (!uploadLeadId || !uploadField || !firestore) return;
   
     const lead = leads?.find(l => l.id === uploadLeadId);
     if (!lead) return;
   
     const currentLayouts = lead.layouts && lead.layouts.length > 0 ? [...lead.layouts] : [{}];
-    const updatedFirstLayout = {
-      ...currentLayouts[0],
-      logoImage: logoImage,
-      backDesignImage: backDesignImage,
-    };
+    let updatedFirstLayout;
+
+    if (uploadField === 'isUnderProgramming') {
+        updatedFirstLayout = {
+            ...currentLayouts[0],
+            logoImage: logoImage,
+            backDesignImage: backDesignImage,
+        };
+    } else if (uploadField === 'isLogoTesting') {
+        updatedFirstLayout = {
+            ...currentLayouts[0],
+            testLogoImage: logoImage,
+            testBackDesignImage: backDesignImage,
+        };
+    } else {
+        return; // Should not happen
+    }
+    
     const newLayouts = [updatedFirstLayout, ...currentLayouts.slice(1)];
   
     try {
