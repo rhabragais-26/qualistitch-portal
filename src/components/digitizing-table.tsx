@@ -88,6 +88,7 @@ export function DigitizingTable() {
 
   const [isUploadDialogOpen, setIsUploadDialogOpen] = React.useState(false);
   const [uploadLeadId, setUploadLeadId] = React.useState<string | null>(null);
+  const [uploadField, setUploadField] = React.useState<CheckboxField | null>(null);
   const [logoImage, setLogoImage] = React.useState<string>('');
   const [backDesignImage, setBackDesignImage] = React.useState<string>('');
   const logoImageUploadRef = React.useRef<HTMLInputElement>(null);
@@ -104,9 +105,10 @@ export function DigitizingTable() {
     if (!checked) {
       setUncheckConfirmation({ leadId, field });
     } else {
-        if (field === 'isUnderProgramming') {
+        if (field === 'isUnderProgramming' || field === 'isLogoTesting') {
             const lead = leads?.find(l => l.id === leadId);
             setUploadLeadId(leadId);
+            setUploadField(field);
             setLogoImage(lead?.layouts?.[0]?.logoImage || '');
             setBackDesignImage(lead?.layouts?.[0]?.backDesignImage || '');
             setIsUploadDialogOpen(true);
@@ -117,7 +119,7 @@ export function DigitizingTable() {
   };
 
   const handleUploadDialogSave = async () => {
-    if (!uploadLeadId) return;
+    if (!uploadLeadId || !uploadField) return;
   
     const lead = leads?.find(l => l.id === uploadLeadId);
     if (!lead) return;
@@ -135,15 +137,16 @@ export function DigitizingTable() {
       await updateDoc(leadDocRef, {
         layouts: newLayouts
       });
-      // Now update the status
-      await updateStatus(uploadLeadId, 'isUnderProgramming', true, false); // Don't show toast here
+
+      await updateStatus(uploadLeadId, uploadField, true, false);
   
       toast({
         title: 'Images and Status Updated',
-        description: 'The images have been saved and the status updated to Initial Program.',
+        description: 'The images have been saved and the status updated.',
       });
       setIsUploadDialogOpen(false);
       setUploadLeadId(null);
+      setUploadField(null);
       setLogoImage('');
       setBackDesignImage('');
     } catch (e: any) {
