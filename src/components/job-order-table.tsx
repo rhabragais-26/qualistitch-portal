@@ -57,6 +57,7 @@ export function JobOrderTable() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [csrFilter, setCsrFilter] = useState('All');
+  const [hoveredLeadId, setHoveredLeadId] = useState<string | null>(null);
   const router = useRouter();
   
   const leadsQuery = useMemoFirebase(() => {
@@ -186,8 +187,10 @@ export function JobOrderTable() {
                               className="h-8 px-3 text-white font-bold"
                               onClick={() => handleProcessJobOrder(lead)}
                                style={isJoSaved ? { backgroundColor: 'hsl(var(--accent))' } : {}}
+                               onMouseEnter={() => setHoveredLeadId(lead.id)}
+                               onMouseLeave={() => setHoveredLeadId(null)}
                             >
-                              {isJoSaved ? 'J.O. Saved' : 'Process J.O.'}
+                              {isJoSaved ? (hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved') : 'Process J.O.'}
                             </Button>
                         </TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">
