@@ -130,7 +130,7 @@ export default function JobOrderPage() {
         dstLogoRight: fetchedLead.dstLogoRight || '',
         dstBackLogo: fetchedLead.dstBackLogo || '',
         dstBackText: fetchedLead.dstBackText || '',
-        namedOrders: fetchedLead.namedOrders || [],
+        namedOrders: fetchedLead.namedOrders && fetchedLead.namedOrders.length > 0 ? fetchedLead.namedOrders : [{ name: '', color: '', size: '', quantity: 1, backText: '' }],
       });
 
       if (fetchedLead.deliveryDate) {
@@ -280,10 +280,10 @@ export default function JobOrderPage() {
     }
   };
 
-  const handleNamedOrderChange = (index: number, field: keyof NamedOrder, value: string) => {
+  const handleNamedOrderChange = (index: number, field: keyof NamedOrder, value: string | number) => {
     if (lead?.namedOrders) {
       const newNamedOrders = [...lead.namedOrders];
-      newNamedOrders[index] = { ...newNamedOrders[index], [field]: value };
+      (newNamedOrders[index] as any)[field] = value;
       setLead({ ...lead, namedOrders: newNamedOrders });
     }
   };
@@ -324,7 +324,7 @@ export default function JobOrderPage() {
       dstLogoRight: lead.dstLogoRight || '',
       dstBackLogo: lead.dstBackLogo || '',
       dstBackText: lead.dstBackText || '',
-      namedOrders: lead.namedOrders || [],
+      namedOrders: lead.namedOrders?.filter(n => n.name.trim() !== '') || [],
     };
 
     try {
@@ -347,10 +347,11 @@ export default function JobOrderPage() {
   if (isLeadLoading || areAllLeadsLoading || !lead) {
     return (
       <div className="p-10 bg-white">
-        <div className="h-10 w-full mb-4">
-          <Skeleton className="h-10 w-1/4" />
-        </div>
-        <Skeleton className="h-6 w-1/2 mb-8" />
+        <div className="flex justify-center items-center gap-4 py-4">
+            <Skeleton className="h-9 w-28" />
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-9 w-24" />
+      </div>
         <div className="space-y-4">
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-40 w-full" />
@@ -398,43 +399,47 @@ export default function JobOrderPage() {
         </AlertDialogContent>
       </AlertDialog>
       <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md z-50">
-        <div className="flex justify-end gap-2 container mx-auto max-w-4xl">
-            <Button onClick={handleClose} variant="outline">
-            <X className="mr-2 h-4 w-4" />
-            Close
-            </Button>
-            <Button onClick={handleSaveChanges} className="text-white font-bold">
-            <Save className="mr-2 h-4 w-4" />
-            Save Changes
-            </Button>
-            <Button onClick={handlePrint} className="text-white font-bold" disabled={!lead?.joNumber}>
-            <Printer className="mr-2 h-4 w-4" />
-            Print J.O.
-            </Button>
+        <div className="container mx-auto max-w-5xl flex justify-between items-center">
+            <div className="flex-1 flex justify-start">
+                 {/* This empty div will take up space on the left */}
+            </div>
+            <div className="flex-1 flex justify-center items-center gap-4">
+                 <Button
+                    variant="outline"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                >
+                    <ChevronLeft className="mr-2 h-4 w-4" />
+                    Previous
+                </Button>
+                <span className="text-sm font-medium">{`Page ${currentPage} of 2`}</span>
+                <Button
+                    variant="outline"
+                    onClick={() => setCurrentPage(2)}
+                    disabled={currentPage === 2}
+                >
+                    Next
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+            </div>
+             <div className="flex-1 flex justify-end gap-2">
+                <Button onClick={handleClose} variant="outline">
+                <X className="mr-2 h-4 w-4" />
+                Close
+                </Button>
+                <Button onClick={handleSaveChanges} className="text-white font-bold">
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+                </Button>
+                <Button onClick={handlePrint} className="text-white font-bold" disabled={!lead?.joNumber}>
+                <Printer className="mr-2 h-4 w-4" />
+                Print J.O.
+                </Button>
+            </div>
         </div>
       </header>
        
-      <div className="flex justify-center items-center gap-4 pt-24 no-print">
-            <Button
-                variant="outline"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-            >
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                Previous
-            </Button>
-            <span className="text-sm font-medium">{`Page ${currentPage} of 2`}</span>
-            <Button
-                variant="outline"
-                onClick={() => setCurrentPage(2)}
-                disabled={currentPage === 2}
-            >
-                Next
-                <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-      </div>
-
-      <div className="p-10 mx-auto max-w-4xl printable-area">
+      <div className="pt-20 p-10 mx-auto max-w-4xl printable-area">
         {/* Page 1 */}
         <div className={cn(currentPage !== 1 && 'hidden print:block')}>
             <div className="text-left mb-4">
@@ -714,7 +719,7 @@ export default function JobOrderPage() {
               </tbody>
             </table>
 
-            <h2 className="text-xl font-bold text-center mb-4">NAMES:</h2>
+            <h2 className="text-xl font-bold text-center mb-4">Names</h2>
             <Table>
                 <TableHeader>
                     <TableRow className="bg-gray-200">
@@ -740,22 +745,11 @@ export default function JobOrderPage() {
                                 <Input value={namedOrder.size} onChange={(e) => handleNamedOrderChange(index, 'size', e.target.value)} className="h-full w-full border-0 text-xs text-black" />
                             </TableCell>
                             <TableCell className="border border-black p-0">
-                                <Input type="number" value={namedOrder.quantity} onChange={(e) => handleNamedOrderChange(index, 'quantity', e.target.value)} className="h-full w-full border-0 text-xs text-black" />
+                                <Input type="number" value={namedOrder.quantity} onChange={(e) => handleNamedOrderChange(index, 'quantity', parseInt(e.target.value) || 1)} className="h-full w-full border-0 text-xs text-black text-center" />
                             </TableCell>
                              <TableCell className="border border-black p-0">
                                 <Input value={namedOrder.backText} onChange={(e) => handleNamedOrderChange(index, 'backText', e.target.value)} className="h-full w-full border-0 text-xs text-black" />
                             </TableCell>
-                        </TableRow>
-                    ))}
-                    {/* Add empty rows for display */}
-                    {Array.from({ length: Math.max(0, 15 - (lead.namedOrders?.length || 0)) }).map((_, index) => (
-                        <TableRow key={`empty-${index}`}>
-                            <TableCell className="border border-black p-0.5 h-8">{ (lead.namedOrders?.length || 0) + index + 1 }</TableCell>
-                            <TableCell className="border border-black p-0.5"></TableCell>
-                            <TableCell className="border border-black p-0.5"></TableCell>
-                            <TableCell className="border border-black p-0.5"></TableCell>
-                            <TableCell className="border border-black p-0.5"></TableCell>
-                             <TableCell className="border border-black p-0.5"></TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
