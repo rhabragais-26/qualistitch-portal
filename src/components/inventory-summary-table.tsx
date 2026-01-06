@@ -23,6 +23,7 @@ import React from 'react';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
+import { Badge } from './ui/badge';
 
 type Order = {
   productType: string;
@@ -195,6 +196,7 @@ export function InventorySummaryTable() {
                       <TableHead className="text-white font-bold align-middle text-center">Stock</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Sold</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Remaining</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                     <TableBody>
@@ -206,6 +208,13 @@ export function InventorySummaryTable() {
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.stock}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.sold}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.remaining}</TableCell>
+                            <TableCell className="text-center align-middle py-2">
+                              {item.remaining <= 5 ? (
+                                <Badge variant="destructive">Low Stock</Badge>
+                              ) : (
+                                <Badge variant="secondary">In Stock</Badge>
+                              )}
+                            </TableCell>
                         </TableRow>
                     ))}
                     </TableBody>
