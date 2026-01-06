@@ -57,22 +57,15 @@ const productTypes = [
   'Client Owned',
 ];
 
-const productColors = [
-  'Black',
-  'Brown',
-
-  'Dark Khaki',
-  'Light Khaki',
-  'Olive Green',
-  'Navy Blue',
-  'Light Gray',
-  'Dark Gray',
-  'Khaki',
-  'Black/Khaki',
-  'Black/Navy Blue',
+const jacketColors = [
+  'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
+  'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
   'Army Green',
-  'Polo Color',
-]
+];
+
+const poloShirtColors = [
+    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow'
+];
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
@@ -164,6 +157,15 @@ export function RecordsTable() {
     setSelectedLeadId(leadId);
     setIsOrderDialogOpen(true);
   };
+  
+  const isPolo = newOrderProductType.includes('Polo Shirt');
+  const availableColors = isPolo ? poloShirtColors : jacketColors;
+  
+  useEffect(() => {
+    if (!availableColors.includes(newOrderColor)) {
+        setNewOrderColor('');
+    }
+  }, [newOrderProductType, availableColors, newOrderColor]);
 
   const resetAddOrderForm = () => {
     setNewOrderProductType('');
@@ -602,12 +604,12 @@ export function RecordsTable() {
             <div className='grid grid-cols-2 gap-4'>
               <div className="flex items-center gap-2">
                 <Label htmlFor="color" className='text-sm'>Color:</Label>
-                <Select onValueChange={setNewOrderColor} value={newOrderColor}>
+                <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={newOrderProductType === 'Patches'}>
                   <SelectTrigger id="color">
                     <SelectValue placeholder="Select a Color" />
                   </SelectTrigger>
                   <SelectContent>
-                    {productColors.map((color) => (
+                    {availableColors.map((color) => (
                       <SelectItem key={color} value={color}>
                         {color}
                       </SelectItem>
@@ -617,7 +619,7 @@ export function RecordsTable() {
               </div>
               <div className="flex items-center gap-2">
                 <Label htmlFor="size" className='text-sm'>Size:</Label>
-                <Select onValueChange={setNewOrderSize} value={newOrderSize}>
+                <Select onValueChange={setNewOrderSize} value={newOrderSize} disabled={newOrderProductType === 'Patches'}>
                   <SelectTrigger id="size" className="w-[100px]">
                     <SelectValue placeholder="Size" />
                   </SelectTrigger>
@@ -902,12 +904,21 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
   const [size, setSize] = useState(order.size);
   const [quantity, setQuantity] = useState<number | string>(order.quantity);
 
+  const isPolo = productType.includes('Polo Shirt');
+  const availableColors = isPolo ? poloShirtColors : jacketColors;
+
   React.useEffect(() => {
     setProductType(order.productType);
     setColor(order.color);
     setSize(order.size);
     setQuantity(order.quantity);
   }, [order]);
+  
+  useEffect(() => {
+    if (!availableColors.includes(color)) {
+        setColor('');
+    }
+  }, [productType, availableColors, color]);
 
   const handleSave = () => {
     const numQuantity = typeof quantity === 'string' ? parseInt(quantity, 10) : quantity;
@@ -946,12 +957,12 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
           </div>
           <div className='grid grid-cols-2 gap-4'>
             <div className="flex items-center gap-2">
-              <Label htmlFor="edit-color" className='text-sm'>Color:</Label>              <Select onValueChange={setColor} value={color}>
+              <Label htmlFor="edit-color" className='text-sm'>Color:</Label>              <Select onValueChange={setColor} value={color} disabled={productType === 'Patches'}>
                 <SelectTrigger id="edit-color">
                   <SelectValue placeholder="Select a Color" />
                 </SelectTrigger>
                 <SelectContent>
-                  {productColors.map((c) => (
+                  {availableColors.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
                     </SelectItem>
@@ -961,7 +972,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
             </div>
             <div className="flex items-center gap-2">
               <Label htmlFor="edit-size" className='text-sm'>Size:</Label>
-              <Select onValueChange={setSize} value={size}>
+              <Select onValueChange={setSize} value={size} disabled={productType === 'Patches'}>
                 <SelectTrigger id="edit-size" className="w-[100px]">
                   <SelectValue placeholder="Size" />
                 </SelectTrigger>
@@ -1030,3 +1041,4 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     
 
     
+

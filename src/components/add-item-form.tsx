@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -41,10 +42,14 @@ const productTypes = [
   'Polo Shirt (Cotton Blend)',
 ];
 
-const productColors = [
+const jacketColors = [
   'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
   'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
-  'Army Green', 'Polo Color',
+  'Army Green',
+];
+
+const poloShirtColors = [
+    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow'
 ];
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
@@ -78,7 +83,19 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
     },
   });
   
-  const { control, handleSubmit, reset, formState: { isValid } } = form;
+  const { control, handleSubmit, reset, watch, setValue, formState: { isValid } } = form;
+  
+  const productTypeValue = watch('productType');
+  const isPolo = productTypeValue.includes('Polo Shirt');
+  const availableColors = isPolo ? poloShirtColors : jacketColors;
+  const currentColor = watch('color');
+
+  useEffect(() => {
+    if (!availableColors.includes(currentColor)) {
+        setValue('color', '');
+    }
+  }, [productTypeValue, availableColors, currentColor, setValue]);
+
 
   const { fields, update } = useFieldArray({
     control,
@@ -166,7 +183,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
                             <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {productColors.map((color) => (
+                            {availableColors.map((color) => (
                             <SelectItem key={color} value={color}>{color}</SelectItem>
                             ))}
                         </SelectContent>

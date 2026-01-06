@@ -152,21 +152,16 @@ const productTypes = [
   'Client Owned',
 ];
 
-const productColors = [
-  'Black',
-  'Brown',
-  'Dark Khaki',
-  'Light Khaki',
-  'Olive Green',
-  'Navy Blue',
-  'Light Gray',
-  'Dark Gray',
-  'Khaki',
-  'Black/Khaki',
-  'Black/Navy Blue',
+const jacketColors = [
+  'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
+  'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
   'Army Green',
-  'Polo Color',
-]
+];
+
+const poloShirtColors = [
+    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow'
+];
+
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
@@ -295,17 +290,19 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     onDirtyChange(isDirty);
   }, [isDirty, onDirtyChange]);
 
+  const isPolo = newOrderProductType.includes('Polo Shirt');
   const isPatches = newOrderProductType === 'Patches';
+  const availableColors = isPolo ? poloShirtColors : jacketColors;
+
 
   useEffect(() => {
     if (isPatches) {
       setNewOrderColor('N/A');
       setNewOrderSize('N/A');
-    } else {
+    } else if (!availableColors.includes(newOrderColor)) {
       setNewOrderColor('');
-      setNewOrderSize('');
     }
-  }, [isPatches]);
+  }, [newOrderProductType, isPatches, availableColors, newOrderColor]);
 
   const handleReset = () => {
     form.reset({
@@ -637,7 +634,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                               <SelectValue placeholder="Select a Color" />
                             </SelectTrigger>
                             <SelectContent>
-                              {productColors.map((color) => (
+                              {availableColors.map((color) => (
                                 <SelectItem key={color} value={color}>
                                   {color}
                                 </SelectItem>

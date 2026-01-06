@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { StagedItem } from '@/app/inventory/add-items/page';
@@ -6,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Edit, Save, Trash2, Plus, Minus } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -32,11 +33,17 @@ const productTypes = [
   'Corporate Jacket', 'Reversible v1', 'Reversible v2', 'Polo Shirt (Coolpass)',
   'Polo Shirt (Cotton Blend)',
 ];
-const productColors = [
+
+const jacketColors = [
   'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
   'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
-  'Army Green', 'Polo Color',
+  'Army Green',
 ];
+
+const poloShirtColors = [
+    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow'
+];
+
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
 function EditItemDialog({
@@ -52,6 +59,15 @@ function EditItemDialog({
   const [color, setColor] = useState(item.color);
   const [size, setSize] = useState(item.size);
   const [stock, setStock] = useState(item.stock);
+  
+  const isPolo = productType.includes('Polo Shirt');
+  const availableColors = isPolo ? poloShirtColors : jacketColors;
+
+  useEffect(() => {
+    if (!availableColors.includes(color)) {
+        setColor('');
+    }
+  }, [productType, availableColors, color]);
 
   const handleSave = () => {
     onSave({ ...item, productType, color, size, stock });
@@ -81,7 +97,7 @@ function EditItemDialog({
                 <Select value={color} onValueChange={setColor}>
                     <SelectTrigger id="edit-color"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                        {productColors.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                        {availableColors.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
                     </SelectContent>
                 </Select>
             </div>

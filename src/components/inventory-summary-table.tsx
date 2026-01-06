@@ -60,11 +60,18 @@ const productTypes = [
   'Polo Shirt (Cotton Blend)',
 ];
 
-const productColors = [
+const jacketColors = [
   'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
   'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
-  'Army Green', 'Polo Color',
+  'Army Green',
 ];
+
+const poloShirtColors = [
+    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow'
+];
+
+const allColors = [...new Set([...jacketColors, ...poloShirtColors])];
+
 
 const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
@@ -178,7 +185,7 @@ export function InventorySummaryTable() {
                     </SelectTrigger>
                     <SelectContent>
                     <SelectItem value="All">All Colors</SelectItem>
-                    {productColors.map(color => (
+                    {allColors.sort().map(color => (
                         <SelectItem key={color} value={color}>{color}</SelectItem>
                     ))}
                     </SelectContent>
