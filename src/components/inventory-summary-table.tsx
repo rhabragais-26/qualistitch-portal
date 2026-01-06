@@ -2,7 +2,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, writeBatch, getDocs, where, doc } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -20,13 +20,9 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
 import React from 'react';
-import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Trash2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 type Order = {
   productType: string;
@@ -63,16 +59,6 @@ const productTypes = [
   'Polo Shirt (Cotton Blend)',
 ];
 
-const jacketColors = [
-  'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
-  'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
-  'Army Green',
-];
-
-const poloShirtColors = [
-    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow', 'Slate Blue', 'Yellow', 'Orange', 'Dark Green', 'Green', 'Light Green', 'Pink', 'Fuchsia', 'Sky Blue', 'Oatmeal', 'Cream', 'Purple', 'Gold', 'Brown'
-];
-
 const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
 const statusOptions = ['All Statuses', 'In Stock', 'Low Stock', 'Need to Reorder'];
@@ -83,7 +69,6 @@ export function InventorySummaryTable() {
   const [productTypeFilter, setProductTypeFilter] = React.useState('All');
   const [colorFilter, setColorFilter] = React.useState('All');
   const [statusFilter, setStatusFilter] = React.useState('All Statuses');
-  const { toast } = useToast();
   
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -97,6 +82,11 @@ export function InventorySummaryTable() {
 
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
+
+  const availableColors = React.useMemo(() => {
+    if (!inventoryItems) return [];
+    return [...new Set(inventoryItems.map(item => item.color))].sort();
+  }, [inventoryItems]);
 
   const filteredItems = React.useMemo(() => {
     if (!inventoryItems || !leads) return [];
@@ -186,7 +176,7 @@ export function InventorySummaryTable() {
                     </SelectTrigger>
                     <SelectContent>
                     <SelectItem value="All">All Colors</SelectItem>
-                    {poloShirtColors.sort().map(color => (
+                    {availableColors.map(color => (
                         <SelectItem key={color} value={color}>{color}</SelectItem>
                     ))}
                     </SelectContent>
