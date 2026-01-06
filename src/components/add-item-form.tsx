@@ -4,7 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -39,8 +39,6 @@ const productTypes = [
   'Reversible v2',
   'Polo Shirt (Coolpass)',
   'Polo Shirt (Cotton Blend)',
-  'Patches',
-  'Client Owned',
 ];
 
 const productColors = [
@@ -73,19 +71,6 @@ export function AddItemForm() {
       stock: 0,
     },
   });
-
-  const productType = form.watch('productType');
-    const isPatches = productType === 'Patches';
-
-    useState(() => {
-        if (isPatches) {
-            form.setValue('color', 'N/A');
-            form.setValue('size', 'N/A');
-        } else {
-            if (form.getValues('color') === 'N/A') form.setValue('color', '');
-            if (form.getValues('size') === 'N/A') form.setValue('size', '');
-        }
-    });
 
   const handleReset = () => {
     form.reset({
@@ -170,7 +155,7 @@ export function AddItemForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-black"><Palette className="h-4 w-4 text-primary" />Color</FormLabel>
-                     <Select onValueChange={field.onChange} value={field.value} disabled={isPatches}>
+                     <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                             <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
                         </FormControl>
@@ -191,7 +176,7 @@ export function AddItemForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-black"><Ruler className="h-4 w-4 text-primary" />Size</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={isPatches}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                             <SelectTrigger><SelectValue placeholder="Select a Size" /></SelectTrigger>
                         </FormControl>
