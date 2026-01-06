@@ -130,7 +130,7 @@ export function JobOrderTable() {
             </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden">
+      <CardContent className="flex-1 overflow-y-auto">
         {isLoading && (
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
@@ -144,24 +144,26 @@ export function JobOrderTable() {
           </div>
         )}
         {!isLoading && !error && (
-          <div className="h-full relative border rounded-md">
-            <ScrollArea className="h-full w-full">
+          <div className="border rounded-md relative h-full">
+            <Table>
+              <TableHeader className="bg-neutral-800 sticky top-0 z-10">
+                <TableRow>
+                  <TableHead className="text-white font-bold">Customer Name</TableHead>
+                  <TableHead className="text-white font-bold">Company Name</TableHead>
+                  <TableHead className="text-white font-bold">Mobile No.</TableHead>
+                  <TableHead className="text-white font-bold">Landline No.</TableHead>
+                  <TableHead className="text-white font-bold">Courier</TableHead>
+                  <TableHead className="text-white font-bold">CSR</TableHead>
+                  <TableHead className="text-white font-bold">Priority</TableHead>
+                  <TableHead className="text-white font-bold">J.O. No.</TableHead>
+                  <TableHead className="text-center text-white font-bold">Action</TableHead>
+                  <TableHead className="text-white font-bold">Date Created</TableHead>
+                  <TableHead className="text-white font-bold">Last Updated</TableHead>
+                </TableRow>
+              </TableHeader>
+            </Table>
+            <ScrollArea className="h-[calc(100%-53px)]">
               <Table>
-                <TableHeader className="bg-neutral-800 sticky top-0 z-10">
-                  <TableRow>
-                    <TableHead className="text-white font-bold">Customer Name</TableHead>
-                    <TableHead className="text-white font-bold">Company Name</TableHead>
-                    <TableHead className="text-white font-bold">Mobile No.</TableHead>
-                    <TableHead className="text-white font-bold">Landline No.</TableHead>
-                    <TableHead className="text-white font-bold">Courier</TableHead>
-                    <TableHead className="text-white font-bold">CSR</TableHead>
-                    <TableHead className="text-white font-bold">Priority</TableHead>
-                    <TableHead className="text-white font-bold">J.O. No.</TableHead>
-                    <TableHead className="text-center text-white font-bold">Action</TableHead>
-                    <TableHead className="text-white font-bold">Date Created</TableHead>
-                    <TableHead className="text-white font-bold">Last Updated</TableHead>
-                  </TableRow>
-                </TableHeader>
                 <TableBody>
                 {filteredLeads.map((lead) => {
                   const isJoSaved = !!lead.joNumber;

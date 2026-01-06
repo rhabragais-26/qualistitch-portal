@@ -402,7 +402,7 @@ export function RecordsTable() {
             </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden">
+      <CardContent className="flex-1 overflow-y-auto">
         {isLoading && (
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
@@ -416,9 +416,8 @@ export function RecordsTable() {
           </div>
         )}
         {!isLoading && !error && (
-          <div className="h-full">
-            <ScrollArea className="h-full w-full border rounded-md">
-              <Table>
+          <div className="border rounded-md relative h-full">
+            <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="text-white">Date &amp; Time</TableHead>
@@ -436,6 +435,9 @@ export function RecordsTable() {
                     <TableHead className="text-center text-white">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
+            </Table>
+            <ScrollArea className="h-[calc(100%-53px)]">
+              <Table>
                 <TableBody>
                 {filteredLeads.map((lead) => (
                   <React.Fragment key={lead.id}>
