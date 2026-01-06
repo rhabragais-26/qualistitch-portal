@@ -2,7 +2,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -27,6 +27,8 @@ import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
+import { Checkbox } from './ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
 
 type Lead = {
   id: string;
@@ -38,11 +40,14 @@ type Lead = {
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
   joNumber?: number;
+  isUnderProgramming?: boolean;
+  isLogoTesting?: boolean;
 }
 
 export function DigitizingTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [joNumberSearch, setJoNumberSearch] = React.useState('');
   const [openLeadId, setOpenLeadId] = React.useState<string | null>(null);
@@ -55,6 +60,28 @@ export function DigitizingTable() {
   }, [firestore, user]);
 
   const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
+
+  const handleStatusChange = async (leadId: string, field: 'isUnderProgramming' | 'isLogoTesting', value: boolean) => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', leadId);
+    try {
+      await updateDoc(leadDocRef, { 
+        [field]: value,
+        lastModified: new Date().toISOString(),
+      });
+      toast({
+        title: 'Status Updated',
+        description: `The status for the lead has been updated.`,
+      });
+    } catch (e: any) {
+      console.error('Error updating status:', e);
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: e.message || 'Could not update the status.',
+      });
+    }
+  };
 
   const toggleLeadDetails = (leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
@@ -193,6 +220,8 @@ export function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle">Overdue Status</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Under Programming</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Logo Testing</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -231,10 +260,22 @@ export function DigitizingTable() {
                         )}>
                           {deadlineInfo.text}
                         </TableCell>
+                        <TableCell className="text-center align-middle py-2">
+                          <Checkbox
+                            checked={lead.isUnderProgramming || false}
+                            onCheckedChange={(checked) => handleStatusChange(lead.id, 'isUnderProgramming', !!checked)}
+                          />
+                        </TableCell>
+                        <TableCell className="text-center align-middle py-2">
+                          <Checkbox
+                            checked={lead.isLogoTesting || false}
+                            onCheckedChange={(checked) => handleStatusChange(lead.id, 'isLogoTesting', !!checked)}
+                          />
+                        </TableCell>
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={5} className="p-0">
+                        <TableCell colSpan={7} className="p-0">
                           <div className="p-4 bg-gray-100">
                              <div className="grid grid-cols-3 gap-4 text-xs">
                                 <div>
@@ -264,3 +305,5 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
+    

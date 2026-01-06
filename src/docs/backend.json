@@ -68,6 +68,14 @@
           "type": "number",
           "description": "The job order number for the lead."
         },
+        "isUnderProgramming": {
+          "type": "boolean",
+          "description": "Indicates if the job order is currently under programming."
+        },
+        "isLogoTesting": {
+            "type": "boolean",
+            "description": "Indicates if the logo for the job order is currently being tested."
+        },
         "orders": {
           "type": "array",
           "items": {
