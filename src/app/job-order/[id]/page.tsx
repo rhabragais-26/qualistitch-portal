@@ -98,6 +98,8 @@ export default function JobOrderPage() {
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showDeleteLayoutConfirmDialog, setShowDeleteLayoutConfirmDialog] = useState(false);
+
 
   // Helper to compare lead states to check for unsaved changes
   const isDirty = useMemo(() => {
@@ -349,6 +351,12 @@ export default function JobOrderPage() {
   
   const deleteLayoutPage = () => {
     if (lead?.layouts && lead.layouts.length > 1) {
+        setShowDeleteLayoutConfirmDialog(true);
+    }
+  };
+
+  const handleConfirmDeleteLayout = () => {
+    if (lead?.layouts && lead.layouts.length > 1) {
       const layoutIndexToRemove = currentPage - 2;
       if (layoutIndexToRemove >= 0 && layoutIndexToRemove < lead.layouts.length) {
         const newLayouts = [...lead.layouts];
@@ -358,13 +366,15 @@ export default function JobOrderPage() {
         // Adjust current page if necessary
         if (currentPage > 1 + newLayouts.length) {
           setCurrentPage(1 + newLayouts.length);
-        } else {
-          // If we are deleting a page before the current last one, we might need to stay or move back
-          setCurrentPage(Math.max(1, currentPage - 1));
+        } else if (currentPage > 1) {
+            // If we are deleting a page before the current last one, we might need to stay or move back
+            setCurrentPage(Math.max(1, currentPage - 1));
         }
       }
     }
+    setShowDeleteLayoutConfirmDialog(false);
   };
+
 
   const handleSaveChanges = async () => {
     if (!lead || !leadRef || !allLeads) return;
@@ -467,6 +477,22 @@ export default function JobOrderPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={showDeleteLayoutConfirmDialog} onOpenChange={setShowDeleteLayoutConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this layout page.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDeleteLayout} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md z-50">
         <div className="container mx-auto max-w-5xl flex justify-between items-center">
             <div className="flex-1 flex justify-start gap-2">
