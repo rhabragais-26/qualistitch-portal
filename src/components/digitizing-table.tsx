@@ -343,7 +343,7 @@ export function DigitizingTable() {
                 tabIndex={0}
                 className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 onPaste={(e) => handleImagePaste(e, 'logo')}
-                onClick={() => logoImageUploadRef.current?.click()}
+                onDoubleClick={() => logoImageUploadRef.current?.click()}
               >
                 {logoImage ? (
                   <>
@@ -360,7 +360,7 @@ export function DigitizingTable() {
                 ) : (
                   <div className="text-gray-500">
                     <Upload className="mx-auto h-12 w-12" />
-                    <p>Click to upload or paste image</p>
+                    <p>Double-click to upload or paste image</p>
                   </div>
                 )}
                 <input
@@ -378,7 +378,7 @@ export function DigitizingTable() {
                 tabIndex={0}
                 className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 onPaste={(e) => handleImagePaste(e, 'backDesign')}
-                onClick={() => backDesignImageUploadRef.current?.click()}
+                onDoubleClick={() => backDesignImageUploadRef.current?.click()}
               >
                 {backDesignImage ? (
                   <>
@@ -395,7 +395,7 @@ export function DigitizingTable() {
                 ) : (
                   <div className="text-gray-500">
                     <Upload className="mx-auto h-12 w-12" />
-                    <p>Click to upload or paste image</p>
+                    <p>Double-click to upload or paste image</p>
                   </div>
                 )}
                 <input
