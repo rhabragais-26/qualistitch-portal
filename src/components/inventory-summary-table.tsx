@@ -2,7 +2,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, writeBatch, getDocs, where } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -24,6 +24,9 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 type Order = {
   productType: string;
@@ -83,6 +86,7 @@ export function InventorySummaryTable() {
   const [productTypeFilter, setProductTypeFilter] = React.useState('All');
   const [colorFilter, setColorFilter] = React.useState('All');
   const [statusFilter, setStatusFilter] = React.useState('All Statuses');
+  const { toast } = useToast();
   
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -96,6 +100,42 @@ export function InventorySummaryTable() {
 
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
+
+  const handleCleanup = async () => {
+    if (!firestore) return;
+    try {
+      const inventoryRef = collection(firestore, 'inventory');
+      const q = query(inventoryRef, where('color', '==', 'Polo Color'));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        toast({
+          title: 'No Items to Clean Up',
+          description: 'There are no inventory items with the color "Polo Color".',
+        });
+        return;
+      }
+
+      const batch = writeBatch(firestore);
+      querySnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+
+      toast({
+        title: 'Cleanup Successful!',
+        description: `Successfully deleted ${querySnapshot.size} item(s) with the color "Polo Color".`,
+      });
+    } catch (e: any) {
+      console.error('Error cleaning up inventory:', e);
+      toast({
+        variant: 'destructive',
+        title: 'Cleanup Failed',
+        description: e.message || 'Could not clean up the inventory items.',
+      });
+    }
+  };
 
   const filteredItems = React.useMemo(() => {
     if (!inventoryItems || !leads) return [];
@@ -200,6 +240,10 @@ export function InventorySummaryTable() {
                     ))}
                     </SelectContent>
                 </Select>
+                <Button variant="destructive" onClick={handleCleanup}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Clean Up
+                </Button>
             </div>
         </div>
       </CardHeader>
