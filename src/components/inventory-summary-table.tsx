@@ -85,8 +85,20 @@ export function InventorySummaryTable() {
 
   const availableColors = React.useMemo(() => {
     if (!inventoryItems) return [];
-    return [...new Set(inventoryItems.map(item => item.color))].sort();
-  }, [inventoryItems]);
+    
+    let itemsToConsider = inventoryItems;
+    if (productTypeFilter !== 'All') {
+      itemsToConsider = inventoryItems.filter(item => item.productType === productTypeFilter);
+    }
+    
+    return [...new Set(itemsToConsider.map(item => item.color))].sort();
+  }, [inventoryItems, productTypeFilter]);
+
+  React.useEffect(() => {
+    if (colorFilter !== 'All' && !availableColors.includes(colorFilter)) {
+      setColorFilter('All');
+    }
+  }, [availableColors, colorFilter]);
 
   const filteredItems = React.useMemo(() => {
     if (!inventoryItems || !leads) return [];
