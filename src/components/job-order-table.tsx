@@ -144,8 +144,8 @@ export function JobOrderTable() {
           </div>
         )}
         {!isLoading && !error && (
-          <div className="h-full">
-            <ScrollArea className="h-full w-full border rounded-md">
+          <div className="h-full relative border rounded-md">
+            <ScrollArea className="h-full w-full">
               <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
