@@ -167,15 +167,20 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
                 )}
               />
 
-              <FormField
+               <FormField
                 control={form.control}
                 name="stock"
                 render={({ field }) => (
                   <FormItem className="md:col-span-2">
-                    <FormLabel className="flex items-center gap-2 text-black"><Hash className="h-4 w-4 text-primary" />Stock Quantity</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
+                    <div className="flex items-center gap-4">
+                      <FormLabel className="flex items-center gap-2 text-black whitespace-nowrap">
+                        <Hash className="h-4 w-4 text-primary" />
+                        Stock Quantity
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} className="w-24" />
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
