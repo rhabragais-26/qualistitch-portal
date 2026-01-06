@@ -506,7 +506,7 @@ export function DigitizingTable() {
                   </div>
                   <Button variant="outline" size="sm" onClick={addNameDstFile} className="mt-2">
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Name File
+                    Add DST files for names
                   </Button>
               </div>
           </div>
