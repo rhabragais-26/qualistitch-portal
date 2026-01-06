@@ -130,22 +130,22 @@ export function JobOrderTable() {
             </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto">
+      <CardContent className="flex-1 overflow-hidden">
         {isLoading && (
-          <div className="space-y-2">
+          <div className="space-y-2 p-4">
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-16 w-full bg-gray-200" />
             ))}
           </div>
         )}
         {error && (
-          <div className="text-red-500">
+          <div className="text-red-500 p-4">
             Error loading records: {error.message}
           </div>
         )}
         {!isLoading && !error && (
-          <div className="border rounded-md relative h-full">
-            <Table>
+          <ScrollArea className="h-full">
+            <Table className="w-full">
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
                   <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
@@ -161,55 +161,51 @@ export function JobOrderTable() {
                   <TableHead className="text-white font-bold align-middle">Last Updated</TableHead>
                 </TableRow>
               </TableHeader>
+              <TableBody>
+              {filteredLeads.map((lead) => {
+                const isJoSaved = !!lead.joNumber;
+                const creationDate = formatDateTime(lead.submissionDateTime);
+                const modifiedDate = formatDateTime(lead.lastModified);
+                return (
+                  <TableRow key={lead.id}>
+                      <TableCell className="font-medium text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
+                      <TableCell className="align-middle py-2">
+                         <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                          {lead.priorityType}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
+                      <TableCell className="text-center align-middle py-2">
+                         <Button 
+                            size="sm" 
+                            className="h-8 px-3 text-white font-bold"
+                            onClick={() => handleProcessJobOrder(lead)}
+                             style={isJoSaved ? { backgroundColor: 'hsl(var(--accent))' } : {}}
+                             onMouseEnter={() => setHoveredLeadId(lead.id)}
+                             onMouseLeave={() => setHoveredLeadId(null)}
+                          >
+                            {isJoSaved ? (hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved') : 'Process J.O.'}
+                          </Button>
+                      </TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">
+                        <div>{creationDate.dateTime}</div>
+                        <div className="text-gray-500">{creationDate.dayOfWeek}</div>
+                      </TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">
+                        <div>{modifiedDate.dateTime}</div>
+                        <div className="text-gray-500">{modifiedDate.dayOfWeek}</div>
+                      </TableCell>
+                  </TableRow>
+                );
+              })}
+              </TableBody>
             </Table>
-            <ScrollArea className="h-[calc(100%-53px)]">
-              <Table>
-                <TableBody>
-                {filteredLeads.map((lead) => {
-                  const isJoSaved = !!lead.joNumber;
-                  const creationDate = formatDateTime(lead.submissionDateTime);
-                  const modifiedDate = formatDateTime(lead.lastModified);
-                  return (
-                    <TableRow key={lead.id}>
-                        <TableCell className="font-medium text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
-                        <TableCell className="align-middle py-2">
-                           <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                            {lead.priorityType}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                           <Button 
-                              size="sm" 
-                              className="h-8 px-3 text-white font-bold"
-                              onClick={() => handleProcessJobOrder(lead)}
-                               style={isJoSaved ? { backgroundColor: 'hsl(var(--accent))' } : {}}
-                               onMouseEnter={() => setHoveredLeadId(lead.id)}
-                               onMouseLeave={() => setHoveredLeadId(null)}
-                            >
-                              {isJoSaved ? (hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved') : 'Process J.O.'}
-                            </Button>
-                        </TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">
-                          <div>{creationDate.dateTime}</div>
-                          <div className="text-gray-500">{creationDate.dayOfWeek}</div>
-                        </TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">
-                          <div>{modifiedDate.dateTime}</div>
-                          <div className="text-gray-500">{modifiedDate.dayOfWeek}</div>
-                        </TableCell>
-                    </TableRow>
-                  );
-                })}
-                </TableBody>
-              </Table>
-            </ScrollArea>
-          </div>
+          </ScrollArea>
         )}
       </CardContent>
     </Card>
