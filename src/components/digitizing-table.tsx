@@ -43,6 +43,7 @@ type Lead = {
   isUnderProgramming?: boolean;
   isInitialApproval?: boolean;
   isLogoTesting?: boolean;
+  isRevision?: boolean;
 }
 
 export function DigitizingTable() {
@@ -62,7 +63,7 @@ export function DigitizingTable() {
 
   const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
 
-  const handleStatusChange = async (leadId: string, field: 'isUnderProgramming' | 'isInitialApproval' | 'isLogoTesting', value: boolean) => {
+  const handleStatusChange = async (leadId: string, field: 'isUnderProgramming' | 'isInitialApproval' | 'isLogoTesting' | 'isRevision', value: boolean) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
@@ -224,6 +225,7 @@ export function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle text-center">Initial Program</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Initial Approval</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Test</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Revision</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -280,10 +282,16 @@ export function DigitizingTable() {
                             onCheckedChange={(checked) => handleStatusChange(lead.id, 'isLogoTesting', !!checked)}
                           />
                         </TableCell>
+                        <TableCell className="text-center align-middle py-2">
+                          <Checkbox
+                            checked={lead.isRevision || false}
+                            onCheckedChange={(checked) => handleStatusChange(lead.id, 'isRevision', !!checked)}
+                          />
+                        </TableCell>
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={8} className="p-0">
+                        <TableCell colSpan={9} className="p-0">
                           <div className="p-4 bg-gray-100">
                              <div className="grid grid-cols-3 gap-4 text-xs">
                                 <div>
