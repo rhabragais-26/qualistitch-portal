@@ -148,17 +148,17 @@ export function JobOrderTable() {
             <Table>
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
-                  <TableHead className="text-white font-bold">Customer Name</TableHead>
-                  <TableHead className="text-white font-bold">Company Name</TableHead>
-                  <TableHead className="text-white font-bold">Mobile No.</TableHead>
-                  <TableHead className="text-white font-bold">Landline No.</TableHead>
-                  <TableHead className="text-white font-bold">Courier</TableHead>
-                  <TableHead className="text-white font-bold">CSR</TableHead>
-                  <TableHead className="text-white font-bold">Priority</TableHead>
-                  <TableHead className="text-white font-bold">J.O. No.</TableHead>
-                  <TableHead className="text-center text-white font-bold">Action</TableHead>
-                  <TableHead className="text-white font-bold">Date Created</TableHead>
-                  <TableHead className="text-white font-bold">Last Updated</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Company Name</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Courier</TableHead>
+                  <TableHead className="text-white font-bold align-middle">CSR</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Priority</TableHead>
+                  <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
+                  <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Date Created</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Last Updated</TableHead>
                 </TableRow>
               </TableHeader>
             </Table>
@@ -171,19 +171,19 @@ export function JobOrderTable() {
                   const modifiedDate = formatDateTime(lead.lastModified);
                   return (
                     <TableRow key={lead.id}>
-                        <TableCell className="font-medium text-xs align-top py-2 text-black">{lead.customerName}</TableCell>
-                        <TableCell className="text-xs align-top py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
-                        <TableCell className="text-xs align-top py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
-                        <TableCell className="text-xs align-top py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
-                        <TableCell className="text-xs align-top py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
-                        <TableCell className="text-xs align-top py-2 text-black">{lead.salesRepresentative}</TableCell>
-                        <TableCell className="align-top py-2">
+                        <TableCell className="font-medium text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
+                        <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
+                        <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className="text-xs align-middle py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
+                        <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
+                        <TableCell className="align-middle py-2">
                            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                             {lead.priorityType}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-medium text-xs align-top py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
-                        <TableCell className="text-center align-top py-2">
+                        <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
+                        <TableCell className="text-center align-middle py-2">
                            <Button 
                               size="sm" 
                               className="h-8 px-3 text-white font-bold"
@@ -195,11 +195,11 @@ export function JobOrderTable() {
                               {isJoSaved ? (hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved') : 'Process J.O.'}
                             </Button>
                         </TableCell>
-                        <TableCell className="text-xs align-top py-2 text-black">
+                        <TableCell className="text-xs align-middle py-2 text-black">
                           <div>{creationDate.dateTime}</div>
                           <div className="text-gray-500">{creationDate.dayOfWeek}</div>
                         </TableCell>
-                        <TableCell className="text-xs align-top py-2 text-black">
+                        <TableCell className="text-xs align-middle py-2 text-black">
                           <div>{modifiedDate.dateTime}</div>
                           <div className="text-gray-500">{modifiedDate.dayOfWeek}</div>
                         </TableCell>
