@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 
 type DesignDetails = {
@@ -74,6 +75,14 @@ export default function JobOrderPage() {
   const [joNumber, setJoNumber] = useState<string>('');
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  // Helper to compare lead states to check for unsaved changes
+  const isDirty = useMemo(() => {
+    if (!fetchedLead || !lead) return false;
+    // Simple JSON stringify comparison. For more complex objects, a deep-equal library would be better.
+    return JSON.stringify(fetchedLead) !== JSON.stringify({ ...fetchedLead, ...lead, deliveryDate: deliveryDate ? deliveryDate.toISOString().split('T')[0] : fetchedLead.deliveryDate, courier: lead.courier || fetchedLead.courier, joNumber: lead.joNumber || fetchedLead.joNumber });
+  }, [fetchedLead, lead, deliveryDate]);
 
   useEffect(() => {
     if (fetchedLead) {
@@ -113,6 +122,20 @@ export default function JobOrderPage() {
   };
   
   const handleClose = () => {
+    if (isDirty) {
+      setShowConfirmDialog(true);
+    } else {
+      router.push('/job-order');
+    }
+  };
+  
+  const handleConfirmSave = async () => {
+    await handleSaveChanges();
+    setShowConfirmDialog(false);
+  };
+  
+  const handleConfirmDiscard = () => {
+    setShowConfirmDialog(false);
     router.push('/job-order');
   };
 
@@ -151,22 +174,27 @@ export default function JobOrderPage() {
 
     let newJoNumber: number | undefined = lead.joNumber;
     
-    // Assign a new JO number only if one doesn't already exist for this lead
     if (!newJoNumber) {
         const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
         const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
         newJoNumber = maxJoNumber + 1;
     }
     
+    const dataToUpdate = {
+      joNumber: newJoNumber,
+      courier: lead.courier || 'Pick-up',
+      location: lead.location,
+      deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
+      orders: lead.orders.map(o => ({
+        ...o, 
+        remarks: o.remarks || '', 
+        design: o.design || { left: false, right: false, backLogo: false, backText: false }
+      })),
+      lastModified: new Date().toISOString(),
+    };
+
     try {
-      await updateDoc(leadRef, {
-        joNumber: newJoNumber,
-        courier: lead.courier || 'Pick-up',
-        location: lead.location,
-        deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
-        orders: lead.orders.map(o => ({...o, remarks: o.remarks || '', design: o.design || { left: false, right: false, backLogo: false, backText: false }})),
-        lastModified: new Date().toISOString(),
-      });
+      await updateDoc(leadRef, dataToUpdate);
       toast({
         title: 'Job Order Saved!',
         description: 'Your changes have been saved successfully.',
@@ -218,6 +246,21 @@ export default function JobOrderPage() {
 
   return (
     <div className="bg-white text-black min-h-screen">
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>You have unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              Do you want to save your changes before closing?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button variant="outline" onClick={handleConfirmDiscard}>Discard</Button>
+            <AlertDialogAction onClick={handleConfirmSave}>Save & Close</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="fixed top-4 right-4 no-print flex gap-2">
         <Button onClick={handleClose} variant="outline">
           <X className="mr-2 h-4 w-4" />
@@ -227,14 +270,14 @@ export default function JobOrderPage() {
           <Save className="mr-2 h-4 w-4" />
           Save Changes
         </Button>
-        <Button onClick={handlePrint} className="text-white font-bold">
+        <Button onClick={handlePrint} className="text-white font-bold" disabled={!lead?.joNumber}>
           <Printer className="mr-2 h-4 w-4" />
           Print J.O.
         </Button>
       </div>
       <div className="p-10 mx-auto max-w-4xl printable-area">
         <div className="text-left mb-4">
-            <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{joNumber}</span></p>
+            <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{lead.joNumber ? joNumber : 'Not Saved'}</span></p>
         </div>
         <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
@@ -282,7 +325,7 @@ export default function JobOrderPage() {
                 <div className="flex items-center gap-2">
                     <strong className='flex-shrink-0'>Courier:</strong>
                     <div className='w-full no-print'>
-                      <Select value={lead.courier} onValueChange={handleCourierChange}>
+                      <Select value={lead.courier || 'Pick-up'} onValueChange={handleCourierChange}>
                           <SelectTrigger className="h-8 text-xs">
                               <SelectValue />
                           </SelectTrigger>
@@ -366,8 +409,8 @@ export default function JobOrderPage() {
           </tbody>
         </table>
 
-        <div className="text-xs mb-6">
-            <p className="text-xs mb-2"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
+        <div className="text-xs mb-2 pt-2">
+            <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
         </div>
 
         <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
@@ -384,7 +427,7 @@ export default function JobOrderPage() {
                 <p className="text-center">(Name & Signature, Date)</p>
             </div>
 
-            <div className="col-span-2 mt-2">
+            <div className="col-span-2 mt-0">
                 <p className="font-bold italic">Approved by:</p>
             </div>
 
