@@ -228,6 +228,25 @@
                 "description": "Timestamps for final names DST file uploads.",
                 "items": { "type": ["string", "null"], "format": "date-time" }
               },
+              "sequenceLogo": {
+                "type": "array",
+                "description": "Data URLs for the sequence logo files.",
+                "items": { "type": ["string", "null"] }
+              },
+              "sequenceLogoUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for sequence logo file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
+              },
+              "sequenceBackDesign": {
+                "type": ["string", "null"],
+                "description": "Data URL for the sequence back design file."
+              },
+              "sequenceBackDesignUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for sequence back design file upload."
+              },
               "dstLogoLeft": { "type": "string" },
               "dstLogoRight": { "type": "string" },
               "dstBackLogo": { "type": "string" },

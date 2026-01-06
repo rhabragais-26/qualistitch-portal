@@ -34,6 +34,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
+import { Separator } from './ui/separator';
 
 
 type NamedOrder = {
@@ -73,6 +74,10 @@ type Layout = {
   finalBackDesignDstUploadTime?: string | null;
   finalNamesDst?: (string | null)[];
   finalNamesDstUploadTimes?: (string | null)[];
+  sequenceLogo?: (string | null)[];
+  sequenceLogoUploadTimes?: (string | null)[];
+  sequenceBackDesign?: string | null;
+  sequenceBackDesignUploadTime?: string | null;
 };
 
 type Lead = {
@@ -118,17 +123,21 @@ export function DigitizingTable() {
   const logoRightImageUploadRef = React.useRef<HTMLInputElement>(null);
   const backDesignImageUploadRef = React.useRef<HTMLInputElement>(null);
 
-  const [finalLogoEmb, setFinalLogoEmb] = React.useState<(string | null)[]>([]);
+  const [finalLogoEmb, setFinalLogoEmb] = React.useState<(string | null)[]>([null]);
   const [finalBackDesignEmb, setFinalBackDesignEmb] = React.useState<string>('');
-  const [finalLogoDst, setFinalLogoDst] = React.useState<(string | null)[]>([]);
+  const [finalLogoDst, setFinalLogoDst] = React.useState<(string | null)[]>([null]);
   const [finalBackDesignDst, setFinalBackDesignDst] = React.useState<string>('');
   const [finalNamesDst, setFinalNamesDst] = React.useState<(string | null)[]>([]);
+  const [sequenceLogo, setSequenceLogo] = React.useState<(string | null)[]>([null]);
+  const [sequenceBackDesign, setSequenceBackDesign] = React.useState<string>('');
 
   const finalLogoEmbUploadRefs = React.useRef<(HTMLInputElement | null)[]>([]);
   const finalBackDesignEmbUploadRef = React.useRef<HTMLInputElement>(null);
   const finalLogoDstUploadRefs = React.useRef<(HTMLInputElement | null)[]>([]);
   const finalBackDesignDstUploadRef = React.useRef<HTMLInputElement>(null);
   const finalNamesDstUploadRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  const sequenceLogoUploadRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  const sequenceBackDesignUploadRef = React.useRef<HTMLInputElement>(null);
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -161,6 +170,8 @@ export function DigitizingTable() {
         setFinalLogoDst(lead?.layouts?.[0]?.finalLogoDst?.length ? lead?.layouts?.[0]?.finalLogoDst : [null]);
         setFinalBackDesignDst(lead?.layouts?.[0]?.finalBackDesignDst || '');
         setFinalNamesDst(lead?.layouts?.[0]?.finalNamesDst || []);
+        setSequenceLogo(lead?.layouts?.[0]?.sequenceLogo?.length ? lead.layouts[0].sequenceLogo : [null]);
+        setSequenceBackDesign(lead?.layouts?.[0]?.sequenceBackDesign || '');
         setIsUploadDialogOpen(true);
       }
       else {
@@ -223,6 +234,12 @@ export function DigitizingTable() {
         if (file && file !== existingFile) return now;
         return null;
       });
+      
+       const newSequenceLogoUploadTimes = sequenceLogo.map((file, index) => {
+        const existingFile = existingLayout.sequenceLogo?.[index];
+        const existingTime = existingLayout.sequenceLogoUploadTimes?.[index];
+        return file && file === existingFile ? existingTime : (file ? now : null);
+      });
 
       updatedFirstLayout = {
           ...existingLayout,
@@ -236,6 +253,10 @@ export function DigitizingTable() {
           finalBackDesignDstUploadTime: finalBackDesignDst ? (existingLayout.finalBackDesignDst === finalBackDesignDst ? existingLayout.finalBackDesignDstUploadTime : now) : null,
           finalNamesDst: finalNamesDst,
           finalNamesDstUploadTimes: newNamesDstUploadTimes,
+          sequenceLogo: sequenceLogo,
+          sequenceLogoUploadTimes: newSequenceLogoUploadTimes,
+          sequenceBackDesign: sequenceBackDesign || null,
+          sequenceBackDesignUploadTime: sequenceBackDesign ? (existingLayout.sequenceBackDesign === sequenceBackDesign ? existingLayout.sequenceBackDesignUploadTime : now) : null,
       };
     }
      else {
@@ -260,6 +281,8 @@ export function DigitizingTable() {
       setFinalLogoDst([]);
       setFinalBackDesignDst('');
       setFinalNamesDst([]);
+      setSequenceLogo([]);
+      setSequenceBackDesign('');
       setIsUploadDialogOpen(false);
       setUploadLeadId(null);
       setUploadField(null);
@@ -564,11 +587,43 @@ export function DigitizingTable() {
                       Add DST files for names
                     </Button>
                 </div>
+                 <Separator />
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center mb-2">
+                        <Label>Sequence for Logo</Label>
+                        <Button variant="outline" size="sm" onClick={() => addFile(sequenceLogo, setSequenceLogo)} className="h-7" disabled={sequenceLogo.length >= 3}>
+                          <PlusCircle className="mr-2 h-4 w-4" /> Add
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        {sequenceLogo.map((file, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => sequenceLogoUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                              {file ? (<p className="text-xs truncate px-2">{file.split(',')[0].slice(5, 30)}...</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload file</p></div>)}
+                              <input type="file" ref={el => sequenceLogoUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, sequenceLogo, setSequenceLogo, index)} className="hidden" />
+                            </div>
+                            {index > 0 && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(sequenceLogo, setSequenceLogo, index)}> <Trash2 className="h-4 w-4" /> </Button>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Sequence for Back Design</Label>
+                      <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => sequenceBackDesignUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                        {sequenceBackDesign ? (<> <p className="text-xs truncate px-4">{sequenceBackDesign.split(',')[0].slice(5, 35)}...</p> <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => handleRemoveImage(e, setSequenceBackDesign)}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-6 w-6" /> <p className="text-xs mt-1">Upload file</p> </div>)}
+                        <input type="file" ref={sequenceBackDesignUploadRef} onChange={(e) => handleFileUpload(e, setSequenceBackDesign)} className="hidden" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
             </div>
           </ScrollArea>
           <DialogFooter className="pt-4">
             <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-            <Button type="button" onClick={handleUploadDialogSave} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white" disabled={finalLogoEmb.every(f => !f) && !finalBackDesignEmb && finalLogoDst.every(f => !f) && !finalBackDesignDst && finalNamesDst.every(f => !f) }>Save and Continue</Button>
+            <Button type="button" onClick={handleUploadDialogSave} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white" disabled={finalLogoEmb.every(f => !f) && !finalBackDesignEmb && finalLogoDst.every(f => !f) && !finalBackDesignDst && finalNamesDst.every(f => !f) && sequenceLogo.every(f => !f) && !sequenceBackDesign}>Save and Continue</Button>
           </DialogFooter>
         </>
       );
@@ -603,6 +658,8 @@ export function DigitizingTable() {
             setFinalLogoDst([]);
             setFinalBackDesignDst('');
             setFinalNamesDst([]);
+            setSequenceLogo([]);
+            setSequenceBackDesign('');
             if (uploadLeadId && uploadField && isUploadDialogOpen) { // Check isUploadDialogOpen to prevent race condition
               const lead = leads?.find(l => l.id === uploadLeadId);
               if (lead) {
@@ -826,6 +883,8 @@ export function DigitizingTable() {
                                                 {lead.layouts?.[0]?.finalNamesDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalNamesDstUploadTimes![index]!).dateTime}</p>}
                                             </div>
                                           ))}
+                                          {lead.layouts?.[0]?.sequenceLogo?.map((file, index) => file && (<div key={index} className="relative w-fit"><p className="font-semibold text-gray-500 mb-2">Sequence Logo {index + 1}</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>Sequence File</p>{lead.layouts?.[0]?.sequenceLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceLogoUploadTimes![index]!).dateTime}</p>}</div>))}
+                                          {lead.layouts?.[0]?.sequenceBackDesign && <div className="relative w-fit"><p className="font-semibold text-gray-500 mb-2">Sequence Back</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>Sequence File</p>{lead.layouts[0].sequenceBackDesignUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceBackDesignUploadTime).dateTime}</p>}</div>}
                                         </CardContent>
                                     </Card>
                                   )}
@@ -843,6 +902,3 @@ export function DigitizingTable() {
     </Card>
   );
 }
-
-
-    
