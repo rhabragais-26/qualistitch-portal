@@ -234,7 +234,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
             </div>
 
 
-            <div className="flex justify-end pt-4 gap-4">
+            <div className="flex justify-end gap-4">
               <Button type="button" variant="outline" size="lg" onClick={handleReset}>
                 Reset
               </Button>
