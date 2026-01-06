@@ -118,7 +118,36 @@ export default function JobOrderPage() {
   }, [lead, allLeads]);
 
   const handlePrint = () => {
-    window.print();
+    const printableArea = document.querySelector('.printable-area');
+    if (printableArea) {
+      const printWindow = window.open('', '', 'height=800,width=800');
+      if (printWindow) {
+        printWindow.document.write('<html><head><title>Print Job Order</title>');
+        // Find all style sheets and link them in the new window
+        Array.from(document.styleSheets).forEach(styleSheet => {
+          if (styleSheet.href) {
+            printWindow.document.write(`<link rel="stylesheet" href="${styleSheet.href}">`);
+          } else {
+            // For inline styles
+            const styleElement = styleSheet.ownerNode;
+            if (styleElement) {
+              printWindow.document.write(`<style>${styleElement.innerHTML}</style>`);
+            }
+          }
+        });
+
+        printWindow.document.write('</head><body>');
+        printWindow.document.write(printableArea.innerHTML);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        
+        // Timeout to allow styles to load before printing
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 500);
+      }
+    }
   };
   
   const handleClose = () => {
@@ -477,13 +506,17 @@ export default function JobOrderPage() {
           body {
             background-color: #fff !important;
           }
-          .no-print, header {
+          .no-print, header, .no-print * {
             display: none !important;
           }
           .printable-area {
             margin-top: 0 !important;
             padding: 0 !important;
             max-width: 100% !important;
+            color: black !important;
+          }
+          .printable-area * {
+            color: black !important;
           }
           .print-only {
             display: block !important;
@@ -509,6 +542,8 @@ export default function JobOrderPage() {
     
 
     
+    
+
     
 
     
