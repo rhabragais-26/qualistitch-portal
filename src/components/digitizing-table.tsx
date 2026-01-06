@@ -50,14 +50,14 @@ type Layout = {
   dstBackLogo?: string;
   dstBackText?: string;
   namedOrders?: NamedOrder[];
-  logoImage?: string;
-  logoImageUploadTime?: string;
-  backDesignImage?: string;
-  backDesignImageUploadTime?: string;
-  testLogoImage?: string;
-  testLogoImageUploadTime?: string;
-  testBackDesignImage?: string;
-  testBackDesignImageUploadTime?: string;
+  logoImage?: string | null;
+  logoImageUploadTime?: string | null;
+  backDesignImage?: string | null;
+  backDesignImageUploadTime?: string | null;
+  testLogoImage?: string | null;
+  testLogoImageUploadTime?: string | null;
+  testBackDesignImage?: string | null;
+  testBackDesignImageUploadTime?: string | null;
 };
 
 type Lead = {
@@ -144,18 +144,18 @@ export function DigitizingTable() {
     if (uploadField === 'isUnderProgramming') {
         updatedFirstLayout = {
             ...currentLayouts[0],
-            logoImage: logoImage,
-            logoImageUploadTime: logoImage ? (currentLayouts[0]?.logoImageUploadTime || now) : undefined,
-            backDesignImage: backDesignImage,
-            backDesignImageUploadTime: backDesignImage ? (currentLayouts[0]?.backDesignImageUploadTime || now) : undefined,
+            logoImage: logoImage || null,
+            logoImageUploadTime: logoImage ? (currentLayouts[0]?.logoImageUploadTime || now) : null,
+            backDesignImage: backDesignImage || null,
+            backDesignImageUploadTime: backDesignImage ? (currentLayouts[0]?.backDesignImageUploadTime || now) : null,
         };
     } else if (uploadField === 'isLogoTesting') {
         updatedFirstLayout = {
             ...currentLayouts[0],
-            testLogoImage: logoImage,
-            testLogoImageUploadTime: logoImage ? (currentLayouts[0]?.testLogoImageUploadTime || now) : undefined,
-            testBackDesignImage: backDesignImage,
-            testBackDesignImageUploadTime: backDesignImage ? (currentLayouts[0]?.testBackDesignImageUploadTime || now) : undefined,
+            testLogoImage: logoImage || null,
+            testLogoImageUploadTime: logoImage ? (currentLayouts[0]?.testLogoImageUploadTime || now) : null,
+            testBackDesignImage: backDesignImage || null,
+            testBackDesignImageUploadTime: backDesignImage ? (currentLayouts[0]?.testBackDesignImageUploadTime || now) : null,
         };
     } else {
         return; // Should not happen
