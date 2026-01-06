@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -48,6 +49,8 @@ const productColors = [
   'Army Green', 'Polo Color',
 ];
 
+const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
+
 export function InventorySummaryTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
@@ -64,11 +67,23 @@ export function InventorySummaryTable() {
   const filteredItems = React.useMemo(() => {
     if (!inventoryItems) return [];
     
-    return inventoryItems.filter(item => {
+    const filtered = inventoryItems.filter(item => {
       const matchesProductType = productTypeFilter === 'All' || item.productType === productTypeFilter;
       const matchesColor = colorFilter === 'All' || item.color === colorFilter;
       return matchesProductType && matchesColor;
     });
+
+    return filtered.sort((a, b) => {
+        const sizeAIndex = sizeOrder.indexOf(a.size);
+        const sizeBIndex = sizeOrder.indexOf(b.size);
+
+        if (sizeAIndex === -1 && sizeBIndex === -1) return a.size.localeCompare(b.size);
+        if (sizeAIndex === -1) return 1;
+        if (sizeBIndex === -1) return -1;
+        
+        return sizeAIndex - sizeBIndex;
+    });
+
   }, [inventoryItems, productTypeFilter, colorFilter]);
 
   const isLoading = isAuthLoading || isInventoryLoading;
