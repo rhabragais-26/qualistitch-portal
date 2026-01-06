@@ -142,23 +142,25 @@ export function DigitizingTable() {
     const now = new Date().toISOString();
 
     if (uploadField === 'isUnderProgramming') {
+        const existingLayout = currentLayouts[0] || {};
         updatedFirstLayout = {
-            ...currentLayouts[0],
+            ...existingLayout,
             logoImage: logoImage || null,
-            logoImageUploadTime: logoImage ? (currentLayouts[0]?.logoImage ? currentLayouts[0].logoImageUploadTime : now) : null,
+            logoImageUploadTime: logoImage ? (existingLayout.logoImage === logoImage ? existingLayout.logoImageUploadTime : now) : null,
             backDesignImage: backDesignImage || null,
-            backDesignImageUploadTime: backDesignImage ? (currentLayouts[0]?.backDesignImage ? currentLayouts[0].backDesignImageUploadTime : now) : null,
+            backDesignImageUploadTime: backDesignImage ? (existingLayout.backDesignImage === backDesignImage ? existingLayout.backDesignImageUploadTime : now) : null,
         };
     } else if (uploadField === 'isLogoTesting') {
+        const existingLayout = currentLayouts[0] || {};
         updatedFirstLayout = {
-            ...currentLayouts[0],
+            ...existingLayout,
             testLogoImage: logoImage || null,
-            testLogoImageUploadTime: logoImage ? (currentLayouts[0]?.testLogoImage ? currentLayouts[0].testLogoImageUploadTime : now) : null,
+            testLogoImageUploadTime: logoImage ? (existingLayout.testLogoImage === logoImage ? existingLayout.testLogoImageUploadTime : now) : null,
             testBackDesignImage: backDesignImage || null,
-            testBackDesignImageUploadTime: backDesignImage ? (currentLayouts[0]?.testBackDesignImage ? currentLayouts[0].testBackDesignImageUploadTime : now) : null,
+            testBackDesignImageUploadTime: backDesignImage ? (existingLayout.testBackDesignImage === backDesignImage ? existingLayout.testBackDesignImageUploadTime : now) : null,
         };
     } else {
-        return; // Should not happen
+        return;
     }
     
     const newLayouts = [updatedFirstLayout, ...currentLayouts.slice(1)];
@@ -682,3 +684,5 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
+    
