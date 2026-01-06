@@ -525,6 +525,7 @@ export default function JobOrderPage() {
                     variant="outline"
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
+                    style={{ marginLeft: '0.5in' }}
                 >
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Previous
@@ -942,5 +943,3 @@ export default function JobOrderPage() {
     </div>
   );
 }
-
-    
