@@ -68,14 +68,14 @@ const productColors = [
 
 const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
-const statusOptions = ['All', 'In Stock', 'Low Stock', 'Need to Reorder'];
+const statusOptions = ['All Statuses', 'In Stock', 'Low Stock', 'Need to Reorder'];
 
 export function InventorySummaryTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [productTypeFilter, setProductTypeFilter] = React.useState('All');
   const [colorFilter, setColorFilter] = React.useState('All');
-  const [statusFilter, setStatusFilter] = React.useState('All');
+  const [statusFilter, setStatusFilter] = React.useState('All Statuses');
   
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -116,7 +116,7 @@ export function InventorySummaryTable() {
       const matchesColor = colorFilter === 'All' || item.color === colorFilter;
       
       let matchesStatus = true;
-      if (statusFilter !== 'All') {
+      if (statusFilter !== 'All Statuses') {
         if (statusFilter === 'Need to Reorder') {
           matchesStatus = item.remaining <= 5;
         } else if (statusFilter === 'Low Stock') {
