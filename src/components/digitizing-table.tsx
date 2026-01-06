@@ -23,7 +23,6 @@ import React from 'react';
 import { Input } from './ui/input';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { ScrollArea } from './ui/scroll-area';
 
 const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
@@ -54,7 +53,10 @@ export function DigitizingTable() {
   const filteredLeads = React.useMemo(() => {
     if (!leads) return [];
     
-    return leads.filter(lead => {
+    // Only show leads that have a joNumber
+    const leadsWithJo = leads.filter(lead => lead.joNumber);
+
+    return leadsWithJo.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
@@ -110,7 +112,7 @@ export function DigitizingTable() {
             </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden">
+      <CardContent className="flex-1 overflow-auto">
         {isLoading && (
           <div className="space-y-2 p-4">
             {[...Array(5)].map((_, i) => (
@@ -124,39 +126,33 @@ export function DigitizingTable() {
           </div>
         )}
         {!isLoading && !error && (
-           <div className="border rounded-md h-full flex flex-col">
-            <div className="flex-shrink-0">
-                <Table>
-                  <TableHeader className="bg-neutral-800 z-10">
-                    <TableRow>
-                      <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
-                      <TableHead className="text-white font-bold align-middle">Company Name</TableHead>
-                      <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
-                      <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
-                      <TableHead className="text-white font-bold align-middle">CSR</TableHead>
-                      <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
+           <div className="border rounded-md h-full">
+            <Table>
+                <TableHeader className="bg-neutral-800 sticky top-0 z-10">
+                <TableRow>
+                    <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Company Name</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
+                    <TableHead className="text-white font-bold align-middle">CSR</TableHead>
+                    <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
+                </TableRow>
+                </TableHeader>
+                <TableBody>
+                {filteredLeads.map((lead) => {
+                    return (
+                    <TableRow key={lead.id}>
+                        <TableCell className="font-medium text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
+                        <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
+                        <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
+                        <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                     </TableRow>
-                  </TableHeader>
-                </Table>
-            </div>
-            <ScrollArea className="flex-grow">
-                <Table>
-                    <TableBody>
-                    {filteredLeads.map((lead) => {
-                      return (
-                        <TableRow key={lead.id}>
-                            <TableCell className="font-medium text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
-                            <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                    </TableBody>
-                </Table>
-            </ScrollArea>
+                    );
+                })}
+                </TableBody>
+            </Table>
           </div>
         )}
       </CardContent>
