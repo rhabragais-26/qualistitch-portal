@@ -525,7 +525,7 @@ export default function JobOrderPage() {
                     variant="outline"
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    style={{ marginRight: 'calc(0.5in + 20px)' }}
+                    style={{ marginLeft: '1rem', marginRight: 'calc(0.5in + 20px)' }}
                 >
                     Next
                     <ChevronRight className="ml-2 h-4 w-4" />
@@ -838,7 +838,7 @@ export default function JobOrderPage() {
                 </table>
 
                 <h2 className="text-xl font-bold text-center mb-4">Names</h2>
-                <Table>
+                <Table className="text-xs">
                     <TableHeader>
                         <TableRow className="bg-white hover:bg-white">
                             <TableHead className="border border-black font-medium text-black">No.</TableHead>
