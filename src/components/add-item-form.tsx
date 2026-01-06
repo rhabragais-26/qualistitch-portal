@@ -189,7 +189,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
                         name={`sizeQuantities.${index}.stock`}
                         render={({ field: stockField }) => (
                             <FormItem className="flex items-center justify-between">
-                                <FormLabel className="text-sm font-medium text-black w-12">{field.size}</FormLabel>
+                                <FormLabel className="text-sm font-bold text-black w-12">{field.size}</FormLabel>
                                 <div className="flex items-center gap-2">
                                     <Button
                                         type="button"
