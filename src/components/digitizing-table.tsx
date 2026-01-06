@@ -612,46 +612,49 @@ export function DigitizingTable() {
                       <TableRow className="bg-gray-50">
                         <TableCell colSpan={12} className="p-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <Card className="bg-white">
-                                    <CardHeader>
-                                        <CardTitle className="text-base">Initial Program Images</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="grid grid-cols-2 gap-4 text-xs">
-                                        {(lead.layouts?.[0]?.logoImage) ? (
-                                            <div>
-                                                <p className="font-semibold text-gray-500 mb-2">Logo</p>
-                                                <Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" width={200} height={150} className="rounded-md border" />
-                                            </div>
-                                        ) : <p className="text-gray-500 col-span-1">No logo image.</p>}
-                                        
-                                        {(lead.layouts?.[0]?.backDesignImage) ? (
-                                            <div>
-                                                <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                                <Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" width={200} height={150} className="rounded-md border" />
-                                            </div>
-                                        ): <p className="text-gray-500 col-span-1">No back design image.</p>}
-                                    </CardContent>
-                                </Card>
-                                 <Card className="bg-white">
-                                    <CardHeader>
-                                        <CardTitle className="text-base">Test Images</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="grid grid-cols-2 gap-4 text-xs">
-                                        {(lead.layouts?.[0]?.testLogoImage) ? (
-                                            <div>
-                                                <p className="font-semibold text-gray-500 mb-2">Logo</p>
-                                                <Image src={lead.layouts[0].testLogoImage} alt="Test Logo" width={200} height={150} className="rounded-md border" />
-                                            </div>
-                                        ): <p className="text-gray-500 col-span-1">No test logo image.</p>}
+                                {(lead.layouts?.[0]?.logoImage || lead.layouts?.[0]?.backDesignImage) && (
+                                    <Card className="bg-white">
+                                        <CardHeader>
+                                            <CardTitle className="text-base">Initial Program Images</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="grid grid-cols-2 gap-4 text-xs">
+                                            {lead.layouts?.[0]?.logoImage && (
+                                                <div>
+                                                    <p className="font-semibold text-gray-500 mb-2">Logo</p>
+                                                    <Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" width={200} height={150} className="rounded-md border" />
+                                                </div>
+                                            )}
+                                            {lead.layouts?.[0]?.backDesignImage && (
+                                                <div>
+                                                    <p className="font-semibold text-gray-500 mb-2">Back Design</p>
+                                                    <Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" width={200} height={150} className="rounded-md border" />
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                )}
+                                 {(lead.layouts?.[0]?.testLogoImage || lead.layouts?.[0]?.testBackDesignImage) && (
+                                    <Card className="bg-white">
+                                        <CardHeader>
+                                            <CardTitle className="text-base">Test Images</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="grid grid-cols-2 gap-4 text-xs">
+                                            {lead.layouts?.[0]?.testLogoImage && (
+                                                <div>
+                                                    <p className="font-semibold text-gray-500 mb-2">Logo</p>
+                                                    <Image src={lead.layouts[0].testLogoImage} alt="Test Logo" width={200} height={150} className="rounded-md border" />
+                                                </div>
+                                            )}
 
-                                        {(lead.layouts?.[0]?.testBackDesignImage) ? (
-                                            <div>
-                                                <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                                <Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" width={200} height={150} className="rounded-md border" />
-                                            </div>
-                                        ): <p className="text-gray-500 col-span-1">No test back design image.</p>}
-                                    </CardContent>
-                                </Card>
+                                            {lead.layouts?.[0]?.testBackDesignImage && (
+                                                <div>
+                                                    <p className="font-semibold text-gray-500 mb-2">Back Design</p>
+                                                    <Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" width={200} height={150} className="rounded-md border" />
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                 )}
                             </div>
                         </TableCell>
                       </TableRow>
