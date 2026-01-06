@@ -43,6 +43,7 @@ export function DigitizingTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [joNumberSearch, setJoNumberSearch] = React.useState('');
   const [csrFilter, setCsrFilter] = React.useState('All');
   const [openLeadId, setOpenLeadId] = React.useState<string | null>(null);
   
@@ -55,6 +56,12 @@ export function DigitizingTable() {
 
   const toggleLeadDetails = (leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
+  };
+  
+  const formatJoNumber = (joNumber: number | undefined) => {
+    if (!joNumber) return '';
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   };
 
   const filteredLeads = React.useMemo(() => {
@@ -73,18 +80,18 @@ export function DigitizingTable() {
         : true;
       
       const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
+      
+      const matchesJo = joNumberSearch ? 
+        formatJoNumber(lead.joNumber).includes(joNumberSearch) ||
+        (lead.joNumber?.toString().padStart(5, '0').endsWith(joNumberSearch))
+        : true;
 
-      return matchesSearch && matchesCsr;
+
+      return matchesSearch && matchesCsr && matchesJo;
     });
-  }, [leads, searchTerm, csrFilter]);
+  }, [leads, searchTerm, csrFilter, joNumberSearch]);
 
   const isLoading = isAuthLoading || isLeadsLoading;
-
-  const formatJoNumber = (joNumber: number | undefined) => {
-    if (!joNumber) return '';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-  };
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
@@ -108,9 +115,17 @@ export function DigitizingTable() {
                   ))}
                 </SelectContent>
               </Select>
-              <div className="w-full max-w-sm">
+              <div className="w-full max-w-xs">
+                 <Input
+                  placeholder="Search by J.O. No..."
+                  value={joNumberSearch}
+                  onChange={(e) => setJoNumberSearch(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+              </div>
+              <div className="w-full max-w-xs">
                 <Input
-                  placeholder="Search by customer, company, or contact..."
+                  placeholder="Search customer, company, or contact..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="bg-gray-100 text-black placeholder:text-gray-500"
