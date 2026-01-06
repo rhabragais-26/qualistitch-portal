@@ -346,24 +346,24 @@ export default function JobOrderPage() {
 
   if (isLeadLoading || areAllLeadsLoading || !lead) {
     return (
-      <div class="p-10 bg-white">
-        <Skeleton class="h-10 w-1/4 mb-4" />
-        <Skeleton class="h-6 w-1/2 mb-8" />
-        <div class="space-y-4">
-          <Skeleton class="h-12 w-full" />
-          <Skeleton class="h-40 w-full" />
-          <Skeleton class="h-20 w-full" />
+      <div className="p-10 bg-white">
+        <Skeleton className="h-10 w-1/4 mb-4" />
+        <Skeleton className="h-6 w-1/2 mb-8" />
+        <div className="space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-20 w-full" />
         </div>
       </div>
     );
   }
 
   if (error) {
-    return <div class="text-red-500 p-10">Error loading lead: {error.message}</div>;
+    return <div className="text-red-500 p-10">Error loading lead: {error.message}</div>;
   }
 
   if (!fetchedLead) {
-    return <div class="p-10">Lead not found.</div>;
+    return <div className="p-10">Lead not found.</div>;
   }
 
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
