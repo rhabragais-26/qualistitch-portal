@@ -241,14 +241,14 @@ export function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle">CSR</TableHead>
                     <TableHead className="text-white font-bold align-middle">Priority</TableHead>
-                    <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
+                    <TableHead className="text-white font-bold align-middle whitespace-nowrap">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle">Overdue Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-36">Initial Program</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-36">Initial Approval</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-36">Test</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-36">Revision</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-36">Final Approval</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-36">Final Program</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-24">Initial Program</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-24">Initial Approval</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-24">Test</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-24">Revision</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-24">Final Approval</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-24">Final Program</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Details</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -267,7 +267,7 @@ export function DigitizingTable() {
                           {lead.priorityType}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
+                      <TableCell className="font-medium text-xs align-middle py-2 text-black whitespace-nowrap">{formatJoNumber(lead.joNumber)}</TableCell>
                        <TableCell className={cn(
                           "text-center text-xs align-middle py-2 font-medium",
                           deadlineInfo.isOverdue && "text-red-600",
@@ -404,3 +404,5 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
+    
