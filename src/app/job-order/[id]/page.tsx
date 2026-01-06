@@ -500,12 +500,18 @@ export default function JobOrderPage() {
                    <PlusCircle className="mr-2 h-4 w-4" />
                    Add Layout
                  </Button>
-                 <Button onClick={deleteLayoutPage} variant="destructive" size="sm" disabled={!lead.layouts || lead.layouts.length <= 1 || currentPage === 1}>
+                 <Button 
+                    onClick={deleteLayoutPage} 
+                    variant="destructive" 
+                    size="sm" 
+                    disabled={!lead.layouts || lead.layouts.length <= 1 || currentPage === 1}
+                    style={{ marginRight: '0.5in' }}
+                 >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete Layout
                 </Button>
             </div>
-            <div className="flex-1 flex justify-center items-center gap-4">
+            <div className="flex-1 flex justify-center items-center gap-4 min-w-[300px]">
                  <Button
                     variant="outline"
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -514,7 +520,7 @@ export default function JobOrderPage() {
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Previous
                 </Button>
-                <span className="text-sm font-medium">{`Page ${currentPage} of ${totalPages}`}</span>
+                <span className="text-sm font-medium text-center">{`Page ${currentPage} of ${totalPages}`}</span>
                 <Button
                     variant="outline"
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
@@ -919,5 +925,3 @@ export default function JobOrderPage() {
     </div>
   );
 }
-
-    
