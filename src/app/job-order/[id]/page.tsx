@@ -179,7 +179,13 @@ export default function JobOrderPage() {
    const handlePrint = () => {
     const printableArea = document.querySelector('.printable-area');
     if (printableArea) {
-      const printWindow = window.open('', '', 'height=800,width=1200');
+      const width = 1200;
+      const height = 800;
+      const left = (window.screen.width / 2) - (width / 2);
+      const top = (window.screen.height / 2) - (height / 2);
+      
+      const printWindow = window.open('', '', `height=${height},width=${width},left=${left},top=${top}`);
+
       if (printWindow) {
         printWindow.document.write('<html><head><title>Print Job Order</title>');
         
@@ -877,19 +883,19 @@ export default function JobOrderPage() {
                 <Table className="text-xs">
                     <TableHeader>
                         <TableRow className="bg-white hover:bg-white">
-                            <TableHead className="border border-black font-medium text-black">No.</TableHead>
-                            <TableHead className="border border-black font-medium text-black">Names</TableHead>
-                            <TableHead className="border border-black font-medium text-black">Color</TableHead>
-                            <TableHead className="border border-black font-medium text-black">Sizes</TableHead>
-                            <TableHead className="border border-black font-medium text-black">Qty</TableHead>
-                            <TableHead className="border border-black font-medium text-black">BACK TEXT</TableHead>
-                            <TableHead className="border border-black font-medium text-black no-print">Action</TableHead>
+                            <TableHead className="border border-black font-medium text-black text-xs">No.</TableHead>
+                            <TableHead className="border border-black font-medium text-black text-xs">Names</TableHead>
+                            <TableHead className="border border-black font-medium text-black text-xs">Color</TableHead>
+                            <TableHead className="border border-black font-medium text-black text-xs">Sizes</TableHead>
+                            <TableHead className="border border-black font-medium text-black text-xs">Qty</TableHead>
+                            <TableHead className="border border-black font-medium text-black text-xs">BACK TEXT</TableHead>
+                            <TableHead className="border border-black font-medium text-black no-print text-xs">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {layout.namedOrders?.map((namedOrder, nameIndex) => (
                             <TableRow key={nameIndex} className="bg-white hover:bg-white">
-                                <TableCell className="border border-black p-0.5 text-center">{nameIndex + 1}</TableCell>
+                                <TableCell className="border border-black p-0.5 text-center text-xs">{nameIndex + 1}</TableCell>
                                 <TableCell className="border border-black p-0">
                                     <Input value={namedOrder.name} onChange={(e) => handleNamedOrderChange(layoutIndex, nameIndex, 'name', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
                                 </TableCell>
