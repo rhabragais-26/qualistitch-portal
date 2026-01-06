@@ -1,10 +1,10 @@
 'use client';
 
 import type { StagedItem } from '@/app/inventory/add-items/page';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Save, Trash2 } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { useState } from 'react';
 import {
@@ -24,6 +24,7 @@ type StagedItemsListProps = {
   items: StagedItem[];
   onUpdateItem: (item: StagedItem) => void;
   onRemoveItem: (id: string) => void;
+  onSaveAll: () => void;
 };
 
 const productTypes = [
@@ -111,17 +112,17 @@ function EditItemDialog({
 }
 
 
-export function StagedItemsList({ items, onUpdateItem, onRemoveItem }: StagedItemsListProps) {
+export function StagedItemsList({ items, onUpdateItem, onRemoveItem, onSaveAll }: StagedItemsListProps) {
     const [editingItem, setEditingItem] = useState<StagedItem | null>(null);
   
     return (
-      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
+      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
         <CardHeader>
           <CardTitle>Staged Items</CardTitle>
           <CardDescription>These items will be added to the inventory when you save.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[600px] border rounded-md">
+        <CardContent className="flex-1">
+          <ScrollArea className="h-[550px] border rounded-md">
             <Table>
               <TableHeader className="sticky top-0 bg-neutral-800 z-10">
                 <TableRow>
@@ -161,6 +162,12 @@ export function StagedItemsList({ items, onUpdateItem, onRemoveItem }: StagedIte
             </Table>
           </ScrollArea>
         </CardContent>
+        <CardFooter className="flex justify-end">
+            <Button onClick={onSaveAll} disabled={items.length === 0} className="font-bold text-white">
+                <Save className="mr-2 h-4 w-4" />
+                Save All Items
+            </Button>
+        </CardFooter>
          {editingItem && (
             <EditItemDialog
                 item={editingItem}
