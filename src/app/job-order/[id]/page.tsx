@@ -5,7 +5,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase
 import { collection, doc, query, updateDoc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Printer, Save } from 'lucide-react';
+import { CalendarIcon, Printer, Save } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useState } from 'react';
@@ -14,6 +14,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+
 
 type DesignDetails = {
   left?: boolean;
@@ -44,6 +48,7 @@ type Lead = {
   orderType: string;
   orders: Order[];
   submissionDateTime: string;
+  deliveryDate?: string;
   courier: string;
   joNumber?: number;
 };
@@ -66,6 +71,7 @@ export default function JobOrderPage() {
   const { data: fetchedLead, isLoading: isLeadLoading, error } = useDoc<Lead>(leadRef);
   const [lead, setLead] = useState<Lead | null>(null);
   const [joNumber, setJoNumber] = useState<string>('');
+  const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
 
   useEffect(() => {
     if (fetchedLead) {
@@ -74,6 +80,13 @@ export default function JobOrderPage() {
         design: order.design || { left: true, right: false, backLogo: false, backText: true }
       }));
       setLead({ ...fetchedLead, orders: initializedOrders });
+
+      if (fetchedLead.deliveryDate) {
+        setDeliveryDate(new Date(fetchedLead.deliveryDate));
+      } else {
+        const calculatedDeliveryDate = addDays(new Date(fetchedLead.submissionDateTime), fetchedLead.priorityType === 'Rush' ? 7 : 22);
+        setDeliveryDate(calculatedDeliveryDate);
+      }
     }
   }, [fetchedLead]);
 
@@ -135,6 +148,7 @@ export default function JobOrderPage() {
       await updateDoc(leadRef, {
         courier: lead.courier,
         location: lead.location,
+        deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
         orders: lead.orders,
         lastModified: new Date().toISOString(),
       });
@@ -174,7 +188,6 @@ export default function JobOrderPage() {
     return <div className="p-10">Lead not found.</div>;
   }
 
-  const deliveryDate = addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
   
   const getContactDisplay = () => {
@@ -211,7 +224,34 @@ export default function JobOrderPage() {
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                 <p><strong>Recipient's Name:</strong> {lead.customerName}</p>
-                <p><strong>Delivery Date:</strong> {format(deliveryDate, 'MMM, dd, yyyy')}</p>
+                 <div className="flex items-center gap-2">
+                    <strong className='flex-shrink-0'>Delivery Date:</strong>
+                    <div className='w-full no-print'>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-[240px] justify-start text-left font-normal h-8 text-xs",
+                                    !deliveryDate && "text-muted-foreground"
+                                )}
+                                >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                mode="single"
+                                selected={deliveryDate}
+                                onSelect={setDeliveryDate}
+                                initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                    <span className="print-only">{deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
+                </div>
             </div>
              <div className="space-y-2">
                 <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
@@ -385,6 +425,8 @@ export default function JobOrderPage() {
     </div>
   );
 }
+    
+
     
 
     
