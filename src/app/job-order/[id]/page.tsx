@@ -525,7 +525,7 @@ export default function JobOrderPage() {
                     variant="outline"
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    style={{ marginRight: '0.5in' }}
+                    style={{ marginRight: 'calc(0.5in + 20px)' }}
                 >
                     Next
                     <ChevronRight className="ml-2 h-4 w-4" />
