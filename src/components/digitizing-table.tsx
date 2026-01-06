@@ -172,13 +172,13 @@ export function DigitizingTable() {
       });
 
       await updateStatus(uploadLeadId, uploadField, true, false);
-  
+      
+      setLogoImage('');
+      setBackDesignImage('');
       setIsUploadDialogOpen(false);
       setUploadLeadId(null);
       setUploadField(null);
-      setLogoImage('');
-      setBackDesignImage('');
-    } catch (e: any) {
+    } catch (e: any) => {
       console.error('Error saving images or status:', e);
       toast({
         variant: 'destructive',
@@ -360,7 +360,7 @@ export function DigitizingTable() {
         if (!isOpen) {
             setLogoImage('');
             setBackDesignImage('');
-            if (uploadLeadId && uploadField && !isUploadDialogOpen) {
+            if (uploadLeadId && uploadField && isUploadDialogOpen) { // Check isUploadDialogOpen to prevent race condition
               const lead = leads?.find(l => l.id === uploadLeadId);
               if (lead) {
                 const currentStatus = lead[uploadField];
@@ -374,7 +374,7 @@ export function DigitizingTable() {
        }}>
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Upload Program Files</DialogTitle>
+            <DialogTitle>{uploadField === 'isLogoTesting' ? 'Upload Actual Tested Image' : 'Upload Program Files'}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-6 py-4">
             <div className="space-y-2">
@@ -384,6 +384,7 @@ export function DigitizingTable() {
                 className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
                 onPaste={(e) => handleImagePaste(e, 'logo')}
                 onDoubleClick={() => logoImageUploadRef.current?.click()}
+                onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
               >
                 {logoImage ? (
                   <>
@@ -400,7 +401,7 @@ export function DigitizingTable() {
                 ) : (
                   <div className="text-gray-500">
                     <Upload className="mx-auto h-12 w-12" />
-                    <p onDoubleClick={(e) => e.preventDefault()} style={{ userSelect: 'none' }}>Double-click to upload or paste image</p>
+                    <p>Double-click to upload or paste image</p>
                   </div>
                 )}
                 <input
@@ -419,6 +420,7 @@ export function DigitizingTable() {
                 className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
                 onPaste={(e) => handleImagePaste(e, 'backDesign')}
                 onDoubleClick={() => backDesignImageUploadRef.current?.click()}
+                 onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
               >
                 {backDesignImage ? (
                   <>
@@ -435,7 +437,7 @@ export function DigitizingTable() {
                 ) : (
                   <div className="text-gray-500">
                     <Upload className="mx-auto h-12 w-12" />
-                    <p onDoubleClick={(e) => e.preventDefault()} style={{ userSelect: 'none' }}>Double-click to upload or paste image</p>
+                    <p>Double-click to upload or paste image</p>
                   </div>
                 )}
                 <input
@@ -646,14 +648,14 @@ export function DigitizingTable() {
                                             {lead.layouts?.[0]?.logoImage && (
                                                 <div className="relative w-fit">
                                                     <p className="font-semibold text-gray-500 mb-2">Logo</p>
-                                                    <Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" width={200} height={150} className="rounded-md border object-contain h-auto" style={{maxWidth: "200px"}} />
+                                                    <Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" width={200} height={150} className="rounded-md border object-contain h-auto max-w-full" />
                                                     {lead.layouts[0].logoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
                                             {lead.layouts?.[0]?.backDesignImage && (
                                                 <div className="relative w-fit">
                                                     <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                                    <Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" width={200} height={150} className="rounded-md border object-contain h-auto" style={{maxWidth: "200px"}} />
+                                                    <Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" width={200} height={150} className="rounded-md border object-contain h-auto max-w-full" />
                                                      {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
@@ -669,7 +671,7 @@ export function DigitizingTable() {
                                             {lead.layouts?.[0]?.testLogoImage && (
                                                 <div className="relative w-fit">
                                                     <p className="font-semibold text-gray-500 mb-2">Logo</p>
-                                                    <Image src={lead.layouts[0].testLogoImage} alt="Test Logo" width={200} height={150} className="rounded-md border object-contain h-auto" style={{maxWidth: "200px"}} />
+                                                    <Image src={lead.layouts[0].testLogoImage} alt="Test Logo" width={200} height={150} className="rounded-md border object-contain h-auto max-w-full" />
                                                     {lead.layouts[0].testLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
@@ -677,7 +679,7 @@ export function DigitizingTable() {
                                             {lead.layouts?.[0]?.testBackDesignImage && (
                                                 <div className="relative w-fit">
                                                     <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                                    <Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" width={200} height={150} className="rounded-md border object-contain h-auto" style={{maxWidth: "200px"}} />
+                                                    <Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" width={200} height={150} className="rounded-md border object-contain h-auto max-w-full" />
                                                      {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
