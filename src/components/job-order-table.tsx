@@ -101,10 +101,13 @@ export function JobOrderTable() {
     if (!lead.joNumber || !lead.submissionDateTime || !lead.lastModified) {
       return false;
     }
-    const creationTime = new Date(lead.submissionDateTime);
-    const modifiedTime = new Date(lead.lastModified);
-    // If modified time is more than a minute after creation, it's likely an edit.
-    return differenceInSeconds(modifiedTime, creationTime) > 60;
+    const submissionTime = new Date(lead.submissionDateTime).getTime();
+    const modifiedTime = new Date(lead.lastModified).getTime();
+
+    // The logic is based on the idea that `lastModified` will be different from `submissionDateTime`
+    // only on subsequent updates after the initial save which creates the JO.
+    // We add a small tolerance (e.g., 2 seconds) to account for any minor delay between setting the dates on creation.
+    return Math.abs(modifiedTime - submissionTime) > 2000;
   };
 
 
