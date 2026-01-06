@@ -115,6 +115,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
       size: '',
       stock: 0,
     });
+    setCurrentStock(null);
   };
 
   function onSubmit(values: FormValues) {
@@ -136,13 +137,13 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-6">
               <FormField
                 control={form.control}
                 name="productType"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
+                  <FormItem>
                     <FormLabel className="flex items-center gap-2 text-black"><Boxes className="h-4 w-4 text-primary" />Product Type</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -159,62 +160,67 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-black"><Palette className="h-4 w-4 text-primary" />Color</FormLabel>
-                     <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {productColors.map((color) => (
-                            <SelectItem key={color} value={color}>{color}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                 <FormField
+                    control={form.control}
+                    name="color"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel className="flex items-center gap-2 text-black"><Palette className="h-4 w-4 text-primary" />Color</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                                <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {productColors.map((color) => (
+                                <SelectItem key={color} value={color}>{color}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
 
-              <FormField
-                control={form.control}
-                name="size"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-black"><Ruler className="h-4 w-4 text-primary" />Size</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Select a Size" /></SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {productSizes.map((size) => (
-                            <SelectItem key={size} value={size}>{size}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              {currentStock !== null && (
-                <div className="md:col-span-2 flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <Warehouse className="h-5 w-5 text-blue-600" />
-                  <p className="text-sm text-blue-800">
-                    Current stock for this item: <span className="font-bold">{currentStock}</span>
-                  </p>
+                <FormField
+                    control={form.control}
+                    name="size"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel className="flex items-center gap-2 text-black"><Ruler className="h-4 w-4 text-primary" />Size</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                                <SelectTrigger><SelectValue placeholder="Select a Size" /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {productSizes.map((size) => (
+                                <SelectItem key={size} value={size}>{size}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+              </div>
+            </div>
+
+            {currentStock !== null && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                        <Warehouse className="h-5 w-5 text-blue-600" />
+                        <p className="text-sm text-blue-800">
+                            Current stock for this item: <span className="font-bold">{currentStock}</span>
+                        </p>
+                    </div>
                 </div>
-              )}
-
-               <FormField
+            )}
+            
+            <FormField
                 control={form.control}
                 name="stock"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
+                  <FormItem>
                     <div className="flex items-center gap-4">
                       <FormLabel className="flex items-center gap-2 text-black whitespace-nowrap">
                         <Hash className="h-4 w-4 text-primary" />
@@ -251,7 +257,6 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
                   </FormItem>
                 )}
               />
-            </div>
 
             <div className="flex justify-end pt-4 gap-4">
               <Button type="button" variant="outline" size="lg" onClick={handleReset}>
