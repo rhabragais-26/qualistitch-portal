@@ -24,6 +24,8 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from './ui/badge';
+import { addDays, differenceInDays } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 type Lead = {
   id: string;
@@ -59,6 +61,21 @@ export function DigitizingTable() {
     if (!joNumber) return '';
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+  };
+
+  const calculateDigitizingDeadline = (lead: Lead) => {
+    const submissionDate = new Date(lead.submissionDateTime);
+    const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
+    const deadlineDate = addDays(submissionDate, deadlineDays);
+    const remainingDays = differenceInDays(deadlineDate, new Date());
+    
+    if (remainingDays < 0) {
+      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false };
+    } else if (remainingDays <= 2) {
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true };
+    } else {
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false };
+    }
   };
 
   const filteredLeads = React.useMemo(() => {
@@ -140,10 +157,13 @@ export function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle">CSR</TableHead>
                     <TableHead className="text-white font-bold align-middle">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Overdue Status</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {filteredLeads.map((lead) => (
+                {filteredLeads.map((lead) => {
+                  const deadlineInfo = calculateDigitizingDeadline(lead);
+                  return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
                       <TableCell className="font-medium text-xs align-middle py-2 text-black">
@@ -168,10 +188,18 @@ export function DigitizingTable() {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
+                       <TableCell className={cn(
+                          "text-center text-xs align-middle py-2 font-medium",
+                          deadlineInfo.isOverdue && "text-red-600",
+                          deadlineInfo.isUrgent && "text-amber-600",
+                          !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
+                        )}>
+                          {deadlineInfo.text}
+                        </TableCell>
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={4} className="p-0">
+                        <TableCell colSpan={5} className="p-0">
                           <div className="p-4 bg-gray-100">
                              <div className="grid grid-cols-3 gap-4 text-xs">
                                 <div>
@@ -192,7 +220,7 @@ export function DigitizingTable() {
                       </TableRow>
                     )}
                   </React.Fragment>
-                ))}
+                )})}
               </TableBody>
             </Table>
           </div>
