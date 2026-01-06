@@ -22,8 +22,6 @@ import React, { useState, useMemo } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { ScrollArea } from './ui/scroll-area';
-import { useToast } from '@/hooks/use-toast';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { useRouter } from 'next/navigation';
 
 type Order = {
@@ -42,13 +40,13 @@ type Lead = {
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
   orders: Order[];
+  joNumber?: number;
 }
 
 export function JobOrderTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
-  const { toast } = useToast();
   const router = useRouter();
   
   const leadsQuery = useMemoFirebase(() => {
@@ -124,35 +122,28 @@ export function JobOrderTable() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {filteredLeads.map((lead) => (
-                  <TableRow key={lead.id}>
-                      <TableCell className="font-medium text-xs align-top py-2 text-black">{lead.customerName}</TableCell>
-                      <TableCell className="text-xs align-top py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
-                      <TableCell className="text-xs align-top py-2 text-black">{lead.salesRepresentative}</TableCell>
-                      <TableCell className="text-xs align-top py-2 text-black">{lead.priorityType}</TableCell>
-                      <TableCell className="text-center align-top py-2">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm" className="h-8 px-3 text-white font-bold">Process J.O.</Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Process Job Order?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will process the job order for {lead.customerName}. Are you sure?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleProcessJobOrder(lead)}>
-                                Process J.O.
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </TableCell>
-                  </TableRow>
-                ))}
+                {filteredLeads.map((lead) => {
+                  const isJoSaved = !!lead.joNumber;
+                  return (
+                    <TableRow key={lead.id}>
+                        <TableCell className="font-medium text-xs align-top py-2 text-black">{lead.customerName}</TableCell>
+                        <TableCell className="text-xs align-top py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className="text-xs align-top py-2 text-black">{lead.salesRepresentative}</TableCell>
+                        <TableCell className="text-xs align-top py-2 text-black">{lead.priorityType}</TableCell>
+                        <TableCell className="text-center align-top py-2">
+                           <Button 
+                              size="sm" 
+                              className="h-8 px-3 text-white font-bold"
+                              onClick={() => handleProcessJobOrder(lead)}
+                              disabled={isJoSaved}
+                              style={isJoSaved ? { backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' } : {}}
+                            >
+                              {isJoSaved ? 'J.O. Saved' : 'Process J.O.'}
+                            </Button>
+                        </TableCell>
+                    </TableRow>
+                  );
+                })}
                 </TableBody>
               </Table>
             </ScrollArea>
