@@ -7,8 +7,6 @@ import { useState } from 'react';
 import { useFirestore } from '@/firebase';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Save } from 'lucide-react';
 
 export type StagedItem = {
   id: string; // A temporary client-side ID
