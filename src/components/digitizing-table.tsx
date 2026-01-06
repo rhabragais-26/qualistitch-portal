@@ -156,9 +156,9 @@ export function DigitizingTable() {
         setBackDesignImage(lead?.layouts?.[0]?.testBackDesignImage || '');
         setIsUploadDialogOpen(true);
       } else if (field === 'isFinalProgram') {
-        setFinalLogoEmb(lead?.layouts?.[0]?.finalLogoEmb || [null]);
+        setFinalLogoEmb(lead?.layouts?.[0]?.finalLogoEmb?.length ? lead?.layouts?.[0]?.finalLogoEmb : [null]);
         setFinalBackDesignEmb(lead?.layouts?.[0]?.finalBackDesignEmb || '');
-        setFinalLogoDst(lead?.layouts?.[0]?.finalLogoDst || [null]);
+        setFinalLogoDst(lead?.layouts?.[0]?.finalLogoDst?.length ? lead?.layouts?.[0]?.finalLogoDst : [null]);
         setFinalBackDesignDst(lead?.layouts?.[0]?.finalBackDesignDst || '');
         setFinalNamesDst(lead?.layouts?.[0]?.finalNamesDst || []);
         setIsUploadDialogOpen(true);
@@ -494,7 +494,7 @@ export function DigitizingTable() {
                   <div className="space-y-2">
                       <div className="flex justify-between items-center mb-2">
                           <Label>Logo (EMB)</Label>
-                           <Button variant="outline" size="sm" onClick={() => addFile(finalLogoEmb, setFinalLogoEmb)} className="h-7" disabled={finalLogoEmb.length >= 2}>
+                           <Button variant="outline" size="sm" onClick={() => addFile(finalLogoEmb, setFinalLogoEmb)} className="h-7" disabled={finalLogoEmb.length >= 3}>
                               <PlusCircle className="mr-2 h-4 w-4" /> Add
                           </Button>
                       </div>
@@ -520,7 +520,7 @@ export function DigitizingTable() {
                   <div className="space-y-2">
                       <div className="flex justify-between items-center mb-2">
                           <Label>Logo (DST)</Label>
-                          <Button variant="outline" size="sm" onClick={() => addFile(finalLogoDst, setFinalLogoDst)} className="h-7" disabled={finalLogoDst.length >= 2}>
+                          <Button variant="outline" size="sm" onClick={() => addFile(finalLogoDst, setFinalLogoDst)} className="h-7" disabled={finalLogoDst.length >= 3}>
                               <PlusCircle className="mr-2 h-4 w-4" /> Add
                           </Button>
                       </div>
