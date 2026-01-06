@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -479,7 +480,7 @@ export function RecordsTable() {
                       </TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black">{lead.paymentType}</TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black">{lead.orderType}</TableCell>
-                      <TableCell className="text-xs align-middle py-2 text-black">{lead.courier}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
                       <TableCell className="text-center align-middle py-2">
                         <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                           View
@@ -812,7 +813,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       paymentType,
       orderType,
       priorityType,
-      courier,
+      courier: courier || '-',
     };
     onSave(updatedLead);
   };
@@ -856,9 +857,9 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
           </div>
           <div className="grid grid-cols-2 gap-4">
              <div className="space-y-2">
-              <Label htmlFor="courier">Courier</Label>
-              <Select onValueChange={setCourier} value={courier}>
-                <SelectTrigger id="courier"><SelectValue /></SelectTrigger>
+              <Label htmlFor="courier">Courier (Optional)</Label>
+              <Select onValueChange={setCourier} value={courier === '-' ? '' : courier}>
+                <SelectTrigger id="courier"><SelectValue placeholder="Select Courier" /></SelectTrigger>
                 <SelectContent>{courierTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -1041,6 +1042,8 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
 
 
 
+
+    
 
     
 

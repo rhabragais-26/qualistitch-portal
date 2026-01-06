@@ -1,3 +1,4 @@
+
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -84,7 +85,7 @@ const formSchema = z.object({
   mobileNo: z.string().optional(),
   landlineNo: z.string().optional(),
   location: z.string().min(2, {message: 'Location is required.'}),
-  courier: z.string().min(1, { message: 'Courier is required.' }),
+  courier: z.string().optional(),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
@@ -131,7 +132,7 @@ const formFields: {
   {name: 'mobileNo', label: 'Mobile No. (Optional)', icon: Phone, type: 'tel'},
   {name: 'landlineNo', label: 'Landline No. (Optional)', icon: PhoneForwarded, type: 'tel'},
   {name: 'location', label: 'Location', icon: MapPin, type: 'input'},
-  {name: 'courier', label: 'Courier', icon: Truck, type: 'select', options: ['Lalamove', 'J&T', 'In-house'], placeholder: 'Select Courier'},
+  {name: 'courier', label: 'Courier (Optional)', icon: Truck, type: 'select', options: ['Lalamove', 'J&T', 'In-house'], placeholder: 'Select Courier'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
   {name: 'salesRepresentative', label: 'CSR', icon: UserCheck, type: 'select', options: ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], placeholder: 'Select CSR'},
@@ -377,7 +378,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       contactNumber: values.mobileNo || '-',
       landlineNumber: values.landlineNo || '-',
       location: toTitleCase(values.location),
-      courier: values.courier,
+      courier: values.courier || '-',
       paymentType: values.paymentType,
       salesRepresentative: values.salesRepresentative,
       orderType: values.orderType,
@@ -740,3 +741,5 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </Card>
   );
 }
+
+    
