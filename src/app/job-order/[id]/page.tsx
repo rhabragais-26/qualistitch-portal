@@ -120,32 +120,34 @@ export default function JobOrderPage() {
   const handlePrint = () => {
     const printableArea = document.querySelector('.printable-area');
     if (printableArea) {
-      const printWindow = window.open('', '', 'fullscreen=yes');
+      const printWindow = window.open('', '', 'height=800,width=1200');
       if (printWindow) {
         printWindow.document.write('<html><head><title>Print Job Order</title>');
-        // Find all style sheets and link them in the new window
-        Array.from(document.styleSheets).forEach(styleSheet => {
-          if (styleSheet.href) {
-            printWindow.document.write(`<link rel="stylesheet" href="${styleSheet.href}">`);
-          } else {
-            // For inline styles
-            const styleElement = styleSheet.ownerNode;
-            if (styleElement) {
-              printWindow.document.write(`<style>${styleElement.innerHTML}</style>`);
+        
+        const styleSheets = Array.from(document.styleSheets);
+        styleSheets.forEach(styleSheet => {
+          try {
+            if (styleSheet.href) {
+              printWindow.document.write(`<link rel="stylesheet" href="${styleSheet.href}">`);
+            } else if (styleSheet.cssRules) {
+              const style = printWindow.document.createElement('style');
+              style.textContent = Array.from(styleSheet.cssRules).map(rule => rule.cssText).join('\n');
+              printWindow.document.head.appendChild(style);
             }
+          } catch (e) {
+            console.warn('Could not read stylesheet for printing:', e);
           }
         });
 
-        printWindow.document.write('</head><body>');
+        printWindow.document.write('</head><body style="color: black !important;">');
         printWindow.document.write(printableArea.innerHTML);
         printWindow.document.write('</body></html>');
         printWindow.document.close();
         
-        // Timeout to allow styles to load before printing
         setTimeout(() => {
           printWindow.print();
           printWindow.close();
-        }, 500);
+        }, 500); 
       }
     }
   };
@@ -229,7 +231,7 @@ export default function JobOrderPage() {
         description: 'Your changes have been saved successfully.',
       });
       router.push('/job-order');
-    } catch (e: any) {
+    } catch (e: any) => {
       console.error('Error saving job order:', e);
       toast({
         variant: 'destructive',
@@ -290,7 +292,7 @@ export default function JobOrderPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md">
+      <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md z-50">
         <div className="flex justify-end gap-2 container mx-auto max-w-4xl">
             <Button onClick={handleClose} variant="outline">
             <X className="mr-2 h-4 w-4" />
@@ -425,7 +427,7 @@ export default function JobOrderPage() {
                   <Textarea
                     value={order.remarks}
                     onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
-                    className="text-xs no-print p-1 min-h-[1.5rem] h-auto"
+                    className="text-xs no-print p-1 h-[30px]"
                     placeholder="Add remarks..."
                   />
                    <p className="print-only text-xs">{order.remarks}</p>
@@ -505,12 +507,17 @@ export default function JobOrderPage() {
         @media print {
           body {
             background-color: #fff !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
           }
-          .no-print, header, .no-print * {
+          .no-print, header, .no-print *, .no-print-placeholder {
+            display: none !important;
+          }
+           textarea.no-print {
             display: none !important;
           }
           .printable-area {
-            margin-top: 0 !important;
+            margin: 0 !important;
             padding: 0 !important;
             max-width: 100% !important;
             color: black !important;
@@ -520,6 +527,9 @@ export default function JobOrderPage() {
           }
           .print-only {
             display: block !important;
+          }
+          .bg-gray-200 {
+            background-color: #e5e7eb !important;
           }
           @page {
             size: auto;
@@ -542,6 +552,8 @@ export default function JobOrderPage() {
     
 
     
+    
+
     
 
     
