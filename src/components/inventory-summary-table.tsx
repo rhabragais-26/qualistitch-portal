@@ -24,12 +24,28 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ScrollArea } from './ui/scroll-area';
 
+type Order = {
+  productType: string;
+  color: string;
+  size: string;
+  quantity: number;
+};
+
+type Lead = {
+  orders: Order[];
+};
+
 type InventoryItem = {
   id: string;
   productType: string;
   color: string;
   size: string;
   stock: number;
+};
+
+type EnrichedInventoryItem = InventoryItem & {
+  sold: number;
+  remaining: number;
 };
 
 const productTypes = [
@@ -62,38 +78,61 @@ export function InventorySummaryTable() {
     return query(collection(firestore, 'inventory'), orderBy('productType', 'asc'));
   }, [firestore, user]);
 
-  const { data: inventoryItems, isLoading: isInventoryLoading, error } = useCollection<InventoryItem>(inventoryQuery);
+  const leadsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'leads'));
+  }, [firestore, user]);
+
+  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery);
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
 
   const filteredItems = React.useMemo(() => {
-    if (!inventoryItems) return [];
+    if (!inventoryItems || !leads) return [];
     
-    const filtered = inventoryItems.filter(item => {
+    const soldQuantities = new Map<string, number>();
+    leads.forEach(lead => {
+        lead.orders.forEach(order => {
+            const key = `${order.productType}-${order.color}-${order.size}`;
+            soldQuantities.set(key, (soldQuantities.get(key) || 0) + order.quantity);
+        });
+    });
+
+    const enrichedItems: EnrichedInventoryItem[] = inventoryItems.map(item => {
+        const key = `${item.productType}-${item.color}-${item.size}`;
+        const sold = soldQuantities.get(key) || 0;
+        return {
+            ...item,
+            sold,
+            remaining: item.stock - sold,
+        };
+    });
+    
+    const filtered = enrichedItems.filter(item => {
       const matchesProductType = productTypeFilter === 'All' || item.productType === productTypeFilter;
       const matchesColor = colorFilter === 'All' || item.color === colorFilter;
       return matchesProductType && matchesColor;
     });
 
     return filtered.sort((a, b) => {
-        // First, sort by productType alphabetically
         const productTypeComparison = a.productType.localeCompare(b.productType);
         if (productTypeComparison !== 0) {
             return productTypeComparison;
         }
 
-        // If productType is the same, sort by size hierarchy
         const sizeAIndex = sizeOrder.indexOf(a.size);
         const sizeBIndex = sizeOrder.indexOf(b.size);
 
-        if (sizeAIndex === -1 && sizeBIndex === -1) return a.size.localeCompare(b.size); // fallback for unknown sizes
+        if (sizeAIndex === -1 && sizeBIndex === -1) return a.size.localeCompare(b.size);
         if (sizeAIndex === -1) return 1;
         if (sizeBIndex === -1) return -1;
         
         return sizeAIndex - sizeBIndex;
     });
 
-  }, [inventoryItems, productTypeFilter, colorFilter]);
+  }, [inventoryItems, leads, productTypeFilter, colorFilter]);
 
-  const isLoading = isAuthLoading || isInventoryLoading;
+  const isLoading = isAuthLoading || isInventoryLoading || areLeadsLoading;
+  const error = inventoryError || leadsError;
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
@@ -154,6 +193,8 @@ export function InventorySummaryTable() {
                       <TableHead className="text-white font-bold align-middle">Color</TableHead>
                       <TableHead className="text-white font-bold align-middle">Size</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Stock</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Sold</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Remaining</TableHead>
                     </TableRow>
                   </TableHeader>
                     <TableBody>
@@ -163,6 +204,8 @@ export function InventorySummaryTable() {
                             <TableCell className="text-xs align-middle py-2 text-black">{item.color}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{item.size}</TableCell>
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.stock}</TableCell>
+                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.sold}</TableCell>
+                            <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.remaining}</TableCell>
                         </TableRow>
                     ))}
                     </TableBody>
