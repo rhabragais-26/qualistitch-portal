@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { StagedItem } from '@/app/inventory/add-items/page';
@@ -122,7 +121,7 @@ export function StagedItemsList({ items, onUpdateItem, onRemoveItem }: StagedIte
           <CardDescription>These items will be added to the inventory when you save.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[450px] border rounded-md">
+          <ScrollArea className="h-[600px] border rounded-md">
             <Table>
               <TableHeader className="sticky top-0 bg-neutral-800 z-10">
                 <TableRow>

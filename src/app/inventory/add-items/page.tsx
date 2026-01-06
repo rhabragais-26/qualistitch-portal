@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Header } from '@/components/header';
@@ -96,17 +95,17 @@ export default function AddItemsPage() {
             <AddItemForm onAddItem={handleAddItem} />
           </div>
           <div className="flex flex-col gap-4">
-             <div className="flex justify-end">
-               <Button onClick={handleSaveAll} disabled={stagedItems.length === 0} className="font-bold text-white">
-                 <Save className="mr-2 h-4 w-4" />
-                 Save All Items
-               </Button>
-            </div>
             <StagedItemsList
               items={stagedItems}
               onUpdateItem={handleUpdateItem}
               onRemoveItem={handleRemoveItem}
             />
+            <div className="flex justify-end">
+               <Button onClick={handleSaveAll} disabled={stagedItems.length === 0} className="font-bold text-white">
+                 <Save className="mr-2 h-4 w-4" />
+                 Save All Items
+               </Button>
+            </div>
           </div>
         </div>
       </main>
