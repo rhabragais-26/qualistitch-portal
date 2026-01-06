@@ -360,6 +360,9 @@ export function DigitizingTable() {
         if (!isOpen) {
             setLogoImage('');
             setBackDesignImage('');
+            if (uploadLeadId && uploadField) {
+              updateStatus(uploadLeadId, uploadField, false, false);
+            }
         }
         setIsUploadDialogOpen(isOpen);
        }}>
@@ -445,7 +448,12 @@ export function DigitizingTable() {
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="button" onClick={handleUploadDialogSave} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white">
+            <Button
+              type="button"
+              onClick={handleUploadDialogSave}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white"
+              disabled={!logoImage && !backDesignImage}
+            >
               Save and Continue
             </Button>
           </DialogFooter>
