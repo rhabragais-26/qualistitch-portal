@@ -311,7 +311,8 @@ export default function JobOrderPage() {
     }
   };
 
-  const handleRemoveImage = (layoutIndex: number) => {
+  const handleRemoveImage = (e: React.MouseEvent, layoutIndex: number) => {
+    e.stopPropagation();
     if (lead?.layouts) {
       const newLayouts = [...lead.layouts];
       newLayouts[layoutIndex].layoutImage = '';
@@ -789,7 +790,7 @@ export default function JobOrderPage() {
                         variant="destructive"
                         size="icon"
                         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleRemoveImage(layoutIndex)}
+                        onClick={(e) => handleRemoveImage(e, layoutIndex)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
