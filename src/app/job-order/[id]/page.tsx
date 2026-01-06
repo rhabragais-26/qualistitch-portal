@@ -80,8 +80,21 @@ export default function JobOrderPage() {
   // Helper to compare lead states to check for unsaved changes
   const isDirty = useMemo(() => {
     if (!fetchedLead || !lead) return false;
-    // Simple JSON stringify comparison. For more complex objects, a deep-equal library would be better.
-    return JSON.stringify(fetchedLead) !== JSON.stringify({ ...fetchedLead, ...lead, deliveryDate: deliveryDate ? deliveryDate.toISOString().split('T')[0] : fetchedLead.deliveryDate, courier: lead.courier || fetchedLead.courier, joNumber: lead.joNumber || fetchedLead.joNumber });
+    
+    const originalDeliveryDate = fetchedLead.deliveryDate ? new Date(fetchedLead.deliveryDate).toISOString().split('T')[0] : null;
+    const currentDeliveryDate = deliveryDate ? deliveryDate.toISOString().split('T')[0] : null;
+
+    if (currentDeliveryDate !== originalDeliveryDate) return true;
+
+    // Create copies to compare without modifying state
+    const fetchedLeadForCompare = { ...fetchedLead };
+    const leadForCompare = { ...lead };
+
+    // Remove date objects for string comparison
+    delete (fetchedLeadForCompare as any).deliveryDate;
+    delete (leadForCompare as any).deliveryDate;
+
+    return JSON.stringify(fetchedLeadForCompare) !== JSON.stringify({ ...fetchedLeadForCompare, ...leadForCompare });
   }, [fetchedLead, lead, deliveryDate]);
 
   useEffect(() => {
@@ -108,7 +121,7 @@ export default function JobOrderPage() {
       if (lead.joNumber) {
         setJoNumber(`QSBP-${currentYear}-${lead.joNumber.toString().padStart(5, '0')}`);
       } else {
-        // Find max JO number only from leads of the current year
+        // This part is for display only before saving. The actual number is set on save.
         const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
         const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
         const newJoNum = maxJoNumber + 1;
@@ -117,7 +130,7 @@ export default function JobOrderPage() {
     }
   }, [lead, allLeads]);
 
-  const handlePrint = () => {
+   const handlePrint = () => {
     const printableArea = document.querySelector('.printable-area');
     if (printableArea) {
       const printWindow = window.open('', '', 'height=800,width=1200');
@@ -163,6 +176,9 @@ export default function JobOrderPage() {
   const handleConfirmSave = async () => {
     await handleSaveChanges();
     setShowConfirmDialog(false);
+    if (!error) { // Only close if save was successful
+        router.push('/job-order');
+    }
   };
   
   const handleConfirmDiscard = () => {
@@ -205,6 +221,7 @@ export default function JobOrderPage() {
 
     let newJoNumber: number | undefined = lead.joNumber;
     
+    // Only generate a new JO number if it's a new job order (doesn't have one yet)
     if (!newJoNumber) {
         const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
         const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
@@ -215,7 +232,7 @@ export default function JobOrderPage() {
       joNumber: newJoNumber,
       courier: lead.courier || 'Pick-up',
       location: lead.location,
-      deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
+      deliveryDate: deliveryDate ? deliveryDate.toISOString().split('T')[0] : null,
       orders: lead.orders.map(o => ({
         ...o, 
         remarks: o.remarks || '', 
@@ -230,7 +247,7 @@ export default function JobOrderPage() {
         title: 'Job Order Saved!',
         description: 'Your changes have been saved successfully.',
       });
-      router.push('/job-order');
+      // No navigation here, stays on the page after save.
     } catch (e: any) {
       console.error('Error saving job order:', e);
       toast({
@@ -288,7 +305,7 @@ export default function JobOrderPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <Button variant="outline" onClick={handleConfirmDiscard}>Discard</Button>
-            <AlertDialogAction onClick={handleConfirmSave}>Save & Close</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmSave} className="text-white font-bold">Save & Close</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -545,24 +562,3 @@ export default function JobOrderPage() {
     </div>
   );
 }
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
