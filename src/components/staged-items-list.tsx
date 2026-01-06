@@ -129,7 +129,7 @@ export function StagedItemsList({ items, onUpdateItem, onRemoveItem, onSaveAll }
     const [editingItem, setEditingItem] = useState<StagedItem | null>(null);
   
     return (
-      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
+      <Card className="w-full max-w-2xl shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
         <CardHeader>
           <CardTitle>Staged Items</CardTitle>
           <CardDescription>These items will be added to the inventory when you save.</CardDescription>

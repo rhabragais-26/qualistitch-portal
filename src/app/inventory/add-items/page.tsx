@@ -86,12 +86,12 @@ export default function AddItemsPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full items-start">
-          <div className="lg:col-span-1">
+      <main className="flex-1 w-full p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full items-start">
+          <div className="lg:col-span-1 flex justify-end">
             <AddItemForm onAddItem={handleAddItem} />
           </div>
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 flex justify-start">
             <StagedItemsList
               items={stagedItems}
               onUpdateItem={handleUpdateItem}
