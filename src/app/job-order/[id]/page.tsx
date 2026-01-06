@@ -520,7 +520,7 @@ export default function JobOrderPage() {
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Previous
                 </Button>
-                <span className="text-sm font-medium text-center w-20">{`Page ${currentPage} of ${totalPages}`}</span>
+                <span className="text-sm font-medium text-center whitespace-nowrap">{`Page ${currentPage} of ${totalPages}`}</span>
                 <Button
                     variant="outline"
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
