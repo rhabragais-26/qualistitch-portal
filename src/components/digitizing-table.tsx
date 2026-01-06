@@ -139,7 +139,7 @@ export function DigitizingTable() {
                 </Select>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Overdue Status:</span>
+                <span className="text-sm font-medium">Filter Overdue Status:</span>
                 <Select value={overdueFilter} onValueChange={setOverdueFilter}>
                   <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
                     <SelectValue placeholder="Filter by Status" />
