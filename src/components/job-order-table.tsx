@@ -23,6 +23,9 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { ScrollArea } from './ui/scroll-area';
 import { useRouter } from 'next/navigation';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+
+const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
 type Order = {
   productType: string;
@@ -49,6 +52,7 @@ export function JobOrderTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
+  const [csrFilter, setCsrFilter] = useState('All');
   const router = useRouter();
   
   const leadsQuery = useMemoFirebase(() => {
@@ -64,18 +68,28 @@ export function JobOrderTable() {
 
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
-    if (!searchTerm) return leads;
     
-    const lowercasedSearchTerm = searchTerm.toLowerCase();
+    return leads.filter(lead => {
+      const lowercasedSearchTerm = searchTerm.toLowerCase();
+      const matchesSearch = searchTerm ?
+        (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
+        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(lowercasedSearchTerm)) ||
+        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(lowercasedSearchTerm)))
+        : true;
+      
+      const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
 
-    return leads.filter(lead =>
-      lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-      (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(lowercasedSearchTerm)) ||
-      (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(lowercasedSearchTerm))
-    );
-  }, [leads, searchTerm]);
+      return matchesSearch && matchesCsr;
+    });
+  }, [leads, searchTerm, csrFilter]);
 
   const isLoading = isAuthLoading || isLeadsLoading;
+
+  const formatJoNumber = (joNumber: number | undefined) => {
+    if (!joNumber) return '';
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+  };
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
@@ -87,13 +101,26 @@ export function JobOrderTable() {
                 Search for a lead and process their job order.
               </CardDescription>
             </div>
-             <div className="w-full max-w-sm">
-              <Input
-                placeholder="Search by customer name, mobile no, or landline..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-gray-100 text-black placeholder:text-gray-500"
-              />
+             <div className="flex items-center gap-4">
+               <Select value={csrFilter} onValueChange={setCsrFilter}>
+                <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectValue placeholder="Filter by CSR" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All CSRs</SelectItem>
+                  {salesRepresentatives.map(csr => (
+                    <SelectItem key={csr} value={csr}>{csr}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="w-full max-w-sm">
+                <Input
+                  placeholder="Search by customer name, mobile no, or landline..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+              </div>
             </div>
         </div>
       </CardHeader>
@@ -116,6 +143,7 @@ export function JobOrderTable() {
               <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
+                    <TableHead className="text-white font-bold">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold">Customer Name</TableHead>
                     <TableHead className="text-white font-bold">Company Name</TableHead>
                     <TableHead className="text-white font-bold">Mobile No.</TableHead>
@@ -131,6 +159,7 @@ export function JobOrderTable() {
                   const isJoSaved = !!lead.joNumber;
                   return (
                     <TableRow key={lead.id}>
+                        <TableCell className="font-medium text-xs align-top py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className="font-medium text-xs align-top py-2 text-black">{lead.customerName}</TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
