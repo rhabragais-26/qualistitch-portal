@@ -125,11 +125,11 @@ export function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: 
     const mobile = contactNumber.trim();
     const landline = landlineNumber.trim();
     
-    if (mobile && !/^\d{4}-\d{3}-\d{4}$/.test(mobile)) {
+    if (mobile && mobile !== '-' && !/^\d{4}-\d{3}-\d{4}$/.test(mobile)) {
         setError("Mobile number must be in 0000-000-0000 format.");
         return;
     }
-    if (landline && !/^\d{2}-\d{4}-\d{4}$/.test(landline)) {
+    if (landline && landline !== '-' && !/^\d{2}-\d{4}-\d{4}$/.test(landline)) {
         setError("Landline number must be in 00-0000-0000 format.");
         return;
     }

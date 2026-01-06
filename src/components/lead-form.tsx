@@ -88,9 +88,6 @@ const formSchema = z.object({
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   salesRepresentative: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a CSR."}),
   orders: z.array(orderSchema).min(1, "Please add at least one order."),
-}).refine(data => data.mobileNo || data.landlineNo, {
-  message: "Either Mobile No. or Landline No. must be provided.",
-  path: ["mobileNo"],
 }).refine(data => {
     if (data.mobileNo) return /^\d{4}-\d{3}-\d{4}$/.test(data.mobileNo);
     return true;
