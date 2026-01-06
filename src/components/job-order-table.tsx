@@ -77,6 +77,7 @@ export function JobOrderTable() {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
+        (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
         (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(lowercasedSearchTerm)) ||
         (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(lowercasedSearchTerm)))
         : true;
@@ -119,7 +120,7 @@ export function JobOrderTable() {
               </Select>
               <div className="w-full max-w-sm">
                 <Input
-                  placeholder="Search by customer name, mobile no, or landline..."
+                  placeholder="Search by customer, company, or contact..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="bg-gray-100 text-black placeholder:text-gray-500"
