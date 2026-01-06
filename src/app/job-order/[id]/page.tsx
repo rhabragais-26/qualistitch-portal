@@ -290,49 +290,49 @@ export default function JobOrderPage() {
         </div>
 
         <h2 className="text-xl font-bold text-center mb-4">ORDER DETAILS</h2>
-        <table className="w-full border-collapse border border-black text-sm mb-4">
+        <table className="w-full border-collapse border border-black text-xs mb-4">
           <thead>
             <tr className="bg-gray-200">
-              <th className="border border-black p-2" colSpan={3}>Item Description</th>
-              <th className="border border-black p-2" rowSpan={2}>Qty</th>
-              <th className="border border-black p-2" colSpan={2}>Front Design</th>
-              <th className="border border-black p-2" colSpan={2}>Back Design</th>
-              <th className="border border-black p-2" rowSpan={2}>Remarks</th>
+              <th className="border border-black p-1" colSpan={3}>Item Description</th>
+              <th className="border border-black p-1" rowSpan={2}>Qty</th>
+              <th className="border border-black p-1" colSpan={2}>Front Design</th>
+              <th className="border border-black p-1" colSpan={2}>Back Design</th>
+              <th className="border border-black p-1" rowSpan={2}>Remarks</th>
             </tr>
             <tr className="bg-gray-200">
-              <th className="border border-black p-2 font-medium">Type of Product</th>
-              <th className="border border-black p-2 font-medium">Color</th>
-              <th className="border border-black p-2 font-medium">Size</th>
-              <th className="border border-black p-2 font-medium">Left</th>
-              <th className="border border-black p-2 font-medium">Right</th>
-              <th className="border border-black p-2 font-medium">Back Logo</th>
-              <th className="border border-black p-2 font-medium">Back Text</th>
+              <th className="border border-black p-1 font-medium">Type of Product</th>
+              <th className="border border-black p-1 font-medium">Color</th>
+              <th className="border border-black p-1 font-medium">Size</th>
+              <th className="border border-black p-1 font-medium w-12">Left</th>
+              <th className="border border-black p-1 font-medium w-12">Right</th>
+              <th className="border border-black p-1 font-medium w-12">Logo</th>
+              <th className="border border-black p-1 font-medium w-12">Text</th>
             </tr>
           </thead>
           <tbody>
             {lead.orders.map((order, index) => (
               <tr key={index}>
-                <td className="border border-black p-2">{order.productType}</td>
-                <td className="border border-black p-2">{order.color}</td>
-                <td className="border border-black p-2 text-center">{order.size}</td>
-                <td className="border border-black p-2 text-center">{order.quantity}</td>
-                <td className="border border-black p-2 text-center">
+                <td className="border border-black p-1">{order.productType}</td>
+                <td className="border border-black p-1">{order.color}</td>
+                <td className="border border-black p-1 text-center">{order.size}</td>
+                <td className="border border-black p-1 text-center">{order.quantity}</td>
+                <td className="border border-black p-1 text-center">
                     <Checkbox className="mx-auto" checked={order.design?.left} onCheckedChange={(checked) => handleDesignChange(index, 'left', !!checked)} />
                 </td>
-                <td className="border border-black p-2 text-center">
+                <td className="border border-black p-1 text-center">
                    <Checkbox className="mx-auto" checked={order.design?.right} onCheckedChange={(checked) => handleDesignChange(index, 'right', !!checked)} />
                 </td>
-                <td className="border border-black p-2 text-center">
+                <td className="border border-black p-1 text-center">
                   <Checkbox className="mx-auto" checked={order.design?.backLogo} onCheckedChange={(checked) => handleDesignChange(index, 'backLogo', !!checked)} />
                 </td>
-                <td className="border border-black p-2 text-center">
+                <td className="border border-black p-1 text-center">
                   <Checkbox className="mx-auto" checked={order.design?.backText} onCheckedChange={(checked) => handleDesignChange(index, 'backText', !!checked)} />
                 </td>
-                <td className="border border-black p-2">
+                <td className="border border-black p-1">
                   <Textarea
                     value={order.remarks || ''}
                     onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
-                    className="min-h-[40px] text-xs no-print"
+                    className="h-10 text-xs no-print"
                     placeholder="Add remarks..."
                   />
                    <p className="print-only text-xs">{order.remarks}</p>
