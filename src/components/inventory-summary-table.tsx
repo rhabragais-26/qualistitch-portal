@@ -101,6 +101,69 @@ export function InventorySummaryTable() {
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
 
+  const handlePoloSeed = async () => {
+    if (!firestore) return;
+
+    const poloProductTypes = ['Polo Shirt (Coolpass)', 'Polo Shirt (Cotton Blend)'];
+    const inventoryRef = collection(firestore, 'inventory');
+    
+    try {
+        const batch = writeBatch(firestore);
+
+        // 1. Clean up existing polo shirts
+        const qCoolpass = query(inventoryRef, where('productType', '==', 'Polo Shirt (Coolpass)'));
+        const qCotton = query(inventoryRef, where('productType', '==', 'Polo Shirt (Cotton Blend)'));
+
+        const [coolpassSnapshot, cottonSnapshot] = await Promise.all([getDocs(qCoolpass), getDocs(qCotton)]);
+        
+        let deletedCount = 0;
+        coolpassSnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+            deletedCount++;
+        });
+        cottonSnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+            deletedCount++;
+        });
+
+        // 2. Seed new quantities
+        let seededCount = 0;
+        poloProductTypes.forEach(productType => {
+            poloShirtColors.forEach(color => {
+                sizeOrder.forEach(size => {
+                    const stock = Math.floor(Math.random() * (25 - 10 + 1)) + 10; // Random between 10 and 25
+                    const itemId = `${productType}-${color}-${size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
+                    const itemDocRef = collection(firestore, 'inventory').doc(itemId);
+                    const newItem = {
+                        id: itemId,
+                        productType,
+                        color,
+                        size,
+                        stock,
+                    };
+                    batch.set(itemDocRef, newItem);
+                    seededCount++;
+                });
+            });
+        });
+
+        await batch.commit();
+
+        toast({
+            title: 'Polo Shirt Stock Reset!',
+            description: `Deleted ${deletedCount} old records and seeded ${seededCount} new polo shirt records.`,
+        });
+
+    } catch (e: any) {
+        console.error('Error resetting polo shirt stock:', e);
+        toast({
+            variant: 'destructive',
+            title: 'Operation Failed',
+            description: e.message || 'Could not reset the polo shirt stock.',
+        });
+    }
+  };
+
   const handleCleanup = async () => {
     if (!firestore) return;
     try {
@@ -240,6 +303,7 @@ export function InventorySummaryTable() {
                     ))}
                     </SelectContent>
                 </Select>
+                <Button onClick={handlePoloSeed} variant="outline">Reset Polo Shirt Stock</Button>
                 <Button variant="destructive" onClick={handleCleanup}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     Clean Up
