@@ -19,10 +19,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import React, { useState, useMemo } from 'react';
+import React, from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { ScrollArea } from './ui/scroll-area';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
@@ -56,9 +55,9 @@ type Lead = {
 export function JobOrderTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [csrFilter, setCsrFilter] = useState('All');
-  const [hoveredLeadId, setHoveredLeadId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [csrFilter, setCsrFilter] = React.useState('All');
+  const [hoveredLeadId, setHoveredLeadId] = React.useState<string | null>(null);
   const router = useRouter();
   
   const leadsQuery = useMemoFirebase(() => {
@@ -72,7 +71,7 @@ export function JobOrderTable() {
     router.push(`/job-order/${lead.id}`);
   };
 
-  const filteredLeads = useMemo(() => {
+  const filteredLeads = React.useMemo(() => {
     if (!leads) return [];
     
     return leads.filter(lead => {
@@ -145,9 +144,9 @@ export function JobOrderTable() {
           </div>
         )}
         {!isLoading && !error && (
-           <div className="border rounded-md relative h-full flex flex-col">
+           <div className="border rounded-md relative h-full overflow-y-auto">
             <Table>
-              <TableHeader className="bg-neutral-800">
+              <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
                   <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
                   <TableHead className="text-white font-bold align-middle">Company Name</TableHead>
@@ -162,9 +161,6 @@ export function JobOrderTable() {
                   <TableHead className="text-white font-bold align-middle">Last Updated</TableHead>
                 </TableRow>
               </TableHeader>
-            </Table>
-            <ScrollArea className="flex-1">
-              <Table>
                 <TableBody>
                 {filteredLeads.map((lead) => {
                   const isJoSaved = !!lead.joNumber;
@@ -210,8 +206,7 @@ export function JobOrderTable() {
                   );
                 })}
                 </TableBody>
-              </Table>
-            </ScrollArea>
+            </Table>
           </div>
         )}
       </CardContent>
