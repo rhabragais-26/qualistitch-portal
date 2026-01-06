@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc, query, updateDoc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Printer, CheckSquare, Save } from 'lucide-react';
+import { Printer, Save } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useState } from 'react';
@@ -44,6 +44,7 @@ type Lead = {
   orders: Order[];
   submissionDateTime: string;
   courier: string;
+  joNumber?: number;
 };
 
 const courierOptions = ['J&T', 'Lalamove', 'LBC', 'Pick-up'];
@@ -53,17 +54,20 @@ export default function JobOrderPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: allLeads, isLoading: areAllLeadsLoading } = useCollection<Lead>(leadsQuery);
+
   const leadRef = useMemoFirebase(
     () => (firestore && id ? doc(firestore, 'leads', id as string) : null),
     [firestore, id]
   );
 
-  const { data: fetchedLead, isLoading, error } = useDoc<Lead>(leadRef);
+  const { data: fetchedLead, isLoading: isLeadLoading, error } = useDoc<Lead>(leadRef);
   const [lead, setLead] = useState<Lead | null>(null);
+  const [joNumber, setJoNumber] = useState<string>('');
 
   useEffect(() => {
     if (fetchedLead) {
-      // Initialize orders with default design values if they don't exist
       const initializedOrders = fetchedLead.orders.map(order => ({
         ...order,
         design: order.design || { left: true, right: false, backLogo: false, backText: true }
@@ -71,6 +75,24 @@ export default function JobOrderPage() {
       setLead({ ...fetchedLead, orders: initializedOrders });
     }
   }, [fetchedLead]);
+
+  useEffect(() => {
+    if (lead && allLeads) {
+      const currentYear = new Date().getFullYear().toString().slice(-2);
+      if (lead.joNumber) {
+        setJoNumber(`QSBP-${currentYear}-${lead.joNumber.toString().padStart(5, '0')}`);
+      } else {
+        const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
+        const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
+        const newJoNum = maxJoNumber + 1;
+        setJoNumber(`QSBP-${currentYear}-${newJoNum.toString().padStart(5, '0')}`);
+        
+        if (leadRef) {
+          updateDoc(leadRef, { joNumber: newJoNum });
+        }
+      }
+    }
+  }, [lead, allLeads, leadRef]);
 
   const handlePrint = () => {
     window.print();
@@ -122,7 +144,7 @@ export default function JobOrderPage() {
     }
   };
 
-  if (isLoading || !lead) {
+  if (isLeadLoading || areAllLeadsLoading || !lead) {
     return (
       <div className="p-10 bg-white">
         <Skeleton className="h-10 w-1/4 mb-4" />
@@ -146,8 +168,6 @@ export default function JobOrderPage() {
 
   const deliveryDate = addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-  const currentYear = new Date().getFullYear().toString().slice(-2);
-  const joNumber = `QSBP-${currentYear}-`;
   
   const getContactDisplay = () => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
@@ -173,7 +193,7 @@ export default function JobOrderPage() {
       </div>
       <div className="p-10 mx-auto max-w-4xl printable-area">
         <div className="text-left mb-4">
-            <p className="font-bold inline-block">JO No. {joNumber}______</p>
+            <p className="font-bold inline-block border-b border-black">JO No. {joNumber}</p>
         </div>
         <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
@@ -351,6 +371,4 @@ export default function JobOrderPage() {
     </div>
   );
 }
-    
-
     

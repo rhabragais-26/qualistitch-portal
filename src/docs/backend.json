@@ -55,6 +55,10 @@
             "type": "string",
             "description": "The courier for the order."
         },
+        "joNumber": {
+          "type": "number",
+          "description": "The job order number for the lead."
+        },
         "orders": {
           "type": "array",
           "items": {
