@@ -58,6 +58,7 @@ type Layout = {
 type Lead = {
   id: string;
   customerName: string;
+  recipientName?: string;
   companyName?: string;
   contactNumber: string;
   landlineNumber?: string;
@@ -145,6 +146,7 @@ export default function JobOrderPage() {
 
       setLead({
         ...fetchedLead,
+        recipientName: fetchedLead.recipientName || fetchedLead.customerName,
         orders: initializedOrders,
         courier: fetchedLead.courier || 'Pick-up',
         layouts: initializedLayouts,
@@ -233,6 +235,12 @@ export default function JobOrderPage() {
   const handleCourierChange = (value: string) => {
     if (lead) {
       setLead({ ...lead, courier: value });
+    }
+  };
+  
+  const handleRecipientNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (lead) {
+      setLead({ ...lead, recipientName: e.target.value });
     }
   };
 
@@ -391,6 +399,7 @@ export default function JobOrderPage() {
     const dataToUpdate: Partial<Lead> = {
       joNumber: newJoNumber,
       courier: lead.courier || 'Pick-up',
+      recipientName: lead.recipientName,
       location: lead.location,
       deliveryDate: deliveryDate ? deliveryDate.toISOString().split('T')[0] : null,
       orders: lead.orders.map(o => ({
@@ -511,7 +520,7 @@ export default function JobOrderPage() {
                     Delete Layout
                 </Button>
             </div>
-            <div className="flex-1 flex justify-center items-center gap-4 min-w-[300px]">
+            <div className="flex-1 flex justify-center items-center gap-2 min-w-[300px]">
                  <Button
                     variant="outline"
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -520,11 +529,12 @@ export default function JobOrderPage() {
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Previous
                 </Button>
-                <span className="text-sm font-medium text-center whitespace-nowrap">{`Page ${currentPage} of ${totalPages}`}</span>
+                <span className="text-sm font-medium text-center whitespace-nowrap w-24">{`Page ${currentPage} of ${totalPages}`}</span>
                 <Button
                     variant="outline"
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
+                    style={{ marginRight: '0.5in' }}
                 >
                     Next
                     <ChevronRight className="ml-2 h-4 w-4" />
@@ -560,7 +570,15 @@ export default function JobOrderPage() {
                     <p><strong>Client Name:</strong> {lead.customerName}</p>
                     <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                     <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
-                    <p><strong>Recipient's Name:</strong> {lead.customerName}</p>
+                     <div className="flex items-center gap-2">
+                        <p><strong>Recipient's Name:</strong></p>
+                        <Input
+                            value={lead.recipientName}
+                            onChange={handleRecipientNameChange}
+                            className="h-8 text-xs flex-1 no-print"
+                        />
+                        <span className="print-only">{lead.recipientName}</span>
+                    </div>
                     <div className="flex items-center gap-2">
                         <strong className='flex-shrink-0'>Delivery Date:</strong>
                         <div className='w-full no-print'>
@@ -924,3 +942,5 @@ export default function JobOrderPage() {
     </div>
   );
 }
+
+    
