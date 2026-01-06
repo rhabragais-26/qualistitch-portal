@@ -124,6 +124,10 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                     <ClipboardList className="mr-2" />
                     Programming Queue
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/reports')}>
+                    <LineChart className="mr-2" />
+                    Reports
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
