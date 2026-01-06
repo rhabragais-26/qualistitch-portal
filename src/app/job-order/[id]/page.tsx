@@ -231,7 +231,7 @@ export default function JobOrderPage() {
         description: 'Your changes have been saved successfully.',
       });
       router.push('/job-order');
-    } catch (e: any) => {
+    } catch (e: any) {
       console.error('Error saving job order:', e);
       toast({
         variant: 'destructive',
@@ -424,12 +424,14 @@ export default function JobOrderPage() {
                   <Checkbox className="mx-auto" checked={order.design?.backText || false} onCheckedChange={(checked) => handleDesignChange(index, 'backText', !!checked)} />
                 </td>
                 <td className="border border-black p-0.5">
-                  <Textarea
-                    value={order.remarks}
-                    onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
-                    className="text-xs no-print p-1 h-[30px]"
-                    placeholder="Add remarks..."
-                  />
+                  <div className="no-print-placeholder">
+                    <Textarea
+                      value={order.remarks}
+                      onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
+                      className="text-xs no-print p-1 h-[30px]"
+                      placeholder="Add remarks..."
+                    />
+                  </div>
                    <p className="print-only text-xs">{order.remarks}</p>
                 </td>
               </tr>
@@ -563,3 +565,4 @@ export default function JobOrderPage() {
     
 
     
+
