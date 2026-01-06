@@ -773,8 +773,8 @@ export default function JobOrderPage() {
                     </div>
                 )}
                 
-                <table className="w-full border-collapse border border-black text-sm mb-6">
-                  <tbody>
+                <table className="w-full border-collapse border border-black text-sm mb-6 bg-white">
+                  <tbody className='bg-white'>
                     <tr>
                       <td className="border border-black p-2 w-1/2">
                         <p className="font-bold">DST LOGO LEFT:</p>
@@ -833,7 +833,7 @@ export default function JobOrderPage() {
                 <h2 className="text-xl font-bold text-center mb-4">Names</h2>
                 <Table>
                     <TableHeader>
-                        <TableRow className="bg-gray-200 hover:bg-gray-200">
+                        <TableRow className="bg-white hover:bg-white">
                             <TableHead className="border border-black font-medium text-black">No.</TableHead>
                             <TableHead className="border border-black font-medium text-black">Names</TableHead>
                             <TableHead className="border border-black font-medium text-black">Color</TableHead>
