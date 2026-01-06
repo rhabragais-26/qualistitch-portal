@@ -243,12 +243,12 @@ export function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle whitespace-nowrap">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle">Overdue Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-24">Initial Program</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-24">Initial Approval</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-24">Test</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-24">Revision</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-24">Final Approval</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-24">Final Program</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-28">Initial Program</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-28">Initial Approval</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-28">Test</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-28">Revision</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-28">Final Approval</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-28">Final Program</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Details</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -286,31 +286,35 @@ export function DigitizingTable() {
                           <Checkbox
                             checked={lead.isInitialApproval || false}
                             onCheckedChange={(checked) => handleStatusChange(lead.id, 'isInitialApproval', !!checked)}
+                            disabled={!lead.isUnderProgramming}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
                             checked={lead.isLogoTesting || false}
                             onCheckedChange={(checked) => handleStatusChange(lead.id, 'isLogoTesting', !!checked)}
+                             disabled={!lead.isInitialApproval}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
                             checked={lead.isRevision || false}
                             onCheckedChange={(checked) => handleStatusChange(lead.id, 'isRevision', !!checked)}
-                            disabled={lead.isFinalApproval || false}
+                            disabled={!lead.isLogoTesting || lead.isFinalApproval}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
                             checked={lead.isFinalApproval || false}
                             onCheckedChange={(checked) => handleStatusChange(lead.id, 'isFinalApproval', !!checked)}
+                            disabled={!lead.isLogoTesting}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
                             checked={lead.isFinalProgram || false}
                             onCheckedChange={(checked) => handleStatusChange(lead.id, 'isFinalProgram', !!checked)}
+                            disabled={!lead.isFinalApproval}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
@@ -404,5 +408,7 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
+    
 
     
