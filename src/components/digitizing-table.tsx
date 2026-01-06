@@ -220,8 +220,8 @@ export function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle">Overdue Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Under Programming</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Logo Testing</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Program</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Test</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -305,5 +305,3 @@ export function DigitizingTable() {
     </Card>
   );
 }
-
-    
