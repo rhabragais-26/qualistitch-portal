@@ -341,7 +341,7 @@ export function DigitizingTable() {
               <Label>Logo</Label>
               <div
                 tabIndex={0}
-                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
                 onPaste={(e) => handleImagePaste(e, 'logo')}
                 onDoubleClick={() => logoImageUploadRef.current?.click()}
               >
@@ -376,7 +376,7 @@ export function DigitizingTable() {
               <Label>Back Design</Label>
               <div
                 tabIndex={0}
-                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
                 onPaste={(e) => handleImagePaste(e, 'backDesign')}
                 onDoubleClick={() => backDesignImageUploadRef.current?.click()}
               >
