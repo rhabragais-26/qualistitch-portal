@@ -73,9 +73,6 @@ const poloShirtColors = [
     'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow', 'Slate Blue', 'Yellow', 'Orange', 'Dark Green', 'Green', 'Light Green', 'Pink', 'Fuchsia', 'Sky Blue', 'Oatmeal', 'Cream', 'Purple', 'Gold', 'Brown'
 ];
 
-const allColors = [...new Set([...jacketColors, ...poloShirtColors])];
-
-
 const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
 const statusOptions = ['All Statuses', 'In Stock', 'Low Stock', 'Need to Reorder'];
@@ -100,105 +97,6 @@ export function InventorySummaryTable() {
 
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
-
-  const handlePoloSeed = async () => {
-    if (!firestore) return;
-
-    const poloProductTypes = ['Polo Shirt (Coolpass)', 'Polo Shirt (Cotton Blend)'];
-    const inventoryRef = collection(firestore, 'inventory');
-    
-    try {
-        const batch = writeBatch(firestore);
-
-        // 1. Clean up existing polo shirts
-        const qCoolpass = query(inventoryRef, where('productType', '==', 'Polo Shirt (Coolpass)'));
-        const qCotton = query(inventoryRef, where('productType', '==', 'Polo Shirt (Cotton Blend)'));
-
-        const [coolpassSnapshot, cottonSnapshot] = await Promise.all([getDocs(qCoolpass), getDocs(qCotton)]);
-        
-        let deletedCount = 0;
-        coolpassSnapshot.forEach(doc => {
-            batch.delete(doc.ref);
-            deletedCount++;
-        });
-        cottonSnapshot.forEach(doc => {
-            batch.delete(doc.ref);
-            deletedCount++;
-        });
-
-        // 2. Seed new quantities
-        let seededCount = 0;
-        poloProductTypes.forEach(productType => {
-            poloShirtColors.forEach(color => {
-                sizeOrder.forEach(size => {
-                    const stock = Math.floor(Math.random() * (25 - 10 + 1)) + 10; // Random between 10 and 25
-                    const itemId = `${productType}-${color}-${size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
-                    const itemDocRef = doc(firestore, 'inventory', itemId);
-                    const newItem = {
-                        id: itemId,
-                        productType,
-                        color,
-                        size,
-                        stock,
-                    };
-                    batch.set(itemDocRef, newItem);
-                    seededCount++;
-                });
-            });
-        });
-
-        await batch.commit();
-
-        toast({
-            title: 'Polo Shirt Stock Reset!',
-            description: `Deleted ${deletedCount} old records and seeded ${seededCount} new polo shirt records.`,
-        });
-
-    } catch (e: any) {
-        console.error('Error resetting polo shirt stock:', e);
-        toast({
-            variant: 'destructive',
-            title: 'Operation Failed',
-            description: e.message || 'Could not reset the polo shirt stock.',
-        });
-    }
-  };
-
-  const handleCleanup = async () => {
-    if (!firestore) return;
-    try {
-      const inventoryRef = collection(firestore, 'inventory');
-      const q = query(inventoryRef, where('color', '==', 'Polo Color'));
-      const querySnapshot = await getDocs(q);
-      
-      if (querySnapshot.empty) {
-        toast({
-          title: 'No Items to Clean Up',
-          description: 'There are no inventory items with the color "Polo Color".',
-        });
-        return;
-      }
-
-      const batch = writeBatch(firestore);
-      querySnapshot.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-
-      await batch.commit();
-
-      toast({
-        title: 'Cleanup Successful!',
-        description: `Successfully deleted ${querySnapshot.size} item(s) with the color "Polo Color".`,
-      });
-    } catch (e: any) {
-      console.error('Error cleaning up inventory:', e);
-      toast({
-        variant: 'destructive',
-        title: 'Cleanup Failed',
-        description: e.message || 'Could not clean up the inventory items.',
-      });
-    }
-  };
 
   const filteredItems = React.useMemo(() => {
     if (!inventoryItems || !leads) return [];
@@ -288,7 +186,7 @@ export function InventorySummaryTable() {
                     </SelectTrigger>
                     <SelectContent>
                     <SelectItem value="All">All Colors</SelectItem>
-                    {allColors.sort().map(color => (
+                    {poloShirtColors.sort().map(color => (
                         <SelectItem key={color} value={color}>{color}</SelectItem>
                     ))}
                     </SelectContent>
@@ -303,11 +201,6 @@ export function InventorySummaryTable() {
                     ))}
                     </SelectContent>
                 </Select>
-                <Button onClick={handlePoloSeed} variant="outline">Reset Polo Shirt Stock</Button>
-                <Button variant="destructive" onClick={handleCleanup}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Clean Up
-                </Button>
             </div>
         </div>
       </CardHeader>
