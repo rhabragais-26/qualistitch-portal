@@ -5,7 +5,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase
 import { collection, doc, query, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Printer, Save, Upload, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarIcon, Printer, Save, Upload, X, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useMemo, useState, ChangeEvent, useRef } from 'react';
@@ -130,7 +130,7 @@ export default function JobOrderPage() {
         dstLogoRight: fetchedLead.dstLogoRight || '',
         dstBackLogo: fetchedLead.dstBackLogo || '',
         dstBackText: fetchedLead.dstBackText || '',
-        namedOrders: fetchedLead.namedOrders && fetchedLead.namedOrders.length > 0 ? fetchedLead.namedOrders : [{ name: '', color: '', size: '', quantity: 1, backText: '' }],
+        namedOrders: fetchedLead.namedOrders && fetchedLead.namedOrders.length > 0 ? fetchedLead.namedOrders : [{ name: '', color: '', size: '', quantity: 0, backText: '' }],
       });
 
       if (fetchedLead.deliveryDate) {
@@ -290,7 +290,15 @@ export default function JobOrderPage() {
 
   const addNamedOrderRow = () => {
     if (lead) {
-      const newNamedOrders = [...(lead.namedOrders || []), { name: '', color: '', size: '', quantity: 1, backText: '' }];
+      const newNamedOrders = [...(lead.namedOrders || []), { name: '', color: '', size: '', quantity: 0, backText: '' }];
+      setLead({ ...lead, namedOrders: newNamedOrders });
+    }
+  };
+
+  const removeNamedOrderRow = (index: number) => {
+    if (lead?.namedOrders) {
+      const newNamedOrders = [...lead.namedOrders];
+      newNamedOrders.splice(index, 1);
       setLead({ ...lead, namedOrders: newNamedOrders });
     }
   };
@@ -324,7 +332,7 @@ export default function JobOrderPage() {
       dstLogoRight: lead.dstLogoRight || '',
       dstBackLogo: lead.dstBackLogo || '',
       dstBackText: lead.dstBackText || '',
-      namedOrders: lead.namedOrders?.filter(n => n.name.trim() !== '') || [],
+      namedOrders: lead.namedOrders?.filter(n => n.name.trim() !== '' || n.color.trim() !== '' || n.size.trim() !== '' || n.backText.trim() !== '' || n.quantity > 0) || [],
     };
 
     try {
@@ -729,6 +737,7 @@ export default function JobOrderPage() {
                         <TableHead className="border border-black font-medium text-black">Sizes</TableHead>
                         <TableHead className="border border-black font-medium text-black">Qty</TableHead>
                         <TableHead className="border border-black font-medium text-black">BACK TEXT</TableHead>
+                        <TableHead className="border border-black font-medium text-black no-print">Action</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -745,10 +754,15 @@ export default function JobOrderPage() {
                                 <Input value={namedOrder.size} onChange={(e) => handleNamedOrderChange(index, 'size', e.target.value)} className="h-full w-full border-0 text-xs text-black" />
                             </TableCell>
                             <TableCell className="border border-black p-0">
-                                <Input type="number" value={namedOrder.quantity} onChange={(e) => handleNamedOrderChange(index, 'quantity', parseInt(e.target.value) || 1)} className="h-full w-full border-0 text-xs text-black text-center" />
+                                <Input type="number" value={namedOrder.quantity} onChange={(e) => handleNamedOrderChange(index, 'quantity', parseInt(e.target.value) || 0)} className="h-full w-full border-0 text-xs text-black text-center" />
                             </TableCell>
                              <TableCell className="border border-black p-0">
                                 <Input value={namedOrder.backText} onChange={(e) => handleNamedOrderChange(index, 'backText', e.target.value)} className="h-full w-full border-0 text-xs text-black" />
+                            </TableCell>
+                            <TableCell className="border border-black p-0 text-center no-print">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeNamedOrderRow(index)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
                             </TableCell>
                         </TableRow>
                     ))}
