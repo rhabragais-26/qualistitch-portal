@@ -27,7 +27,6 @@ import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
 import { formatDateTime } from '@/lib/utils';
-import { differenceInSeconds } from 'date-fns';
 
 const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
@@ -97,20 +96,6 @@ export function JobOrderTable() {
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   };
 
-  const needsReprint = (lead: Lead): boolean => {
-    if (!lead.joNumber || !lead.submissionDateTime || !lead.lastModified) {
-      return false;
-    }
-    const submissionTime = new Date(lead.submissionDateTime).getTime();
-    const modifiedTime = new Date(lead.lastModified).getTime();
-
-    // The logic is based on the idea that `lastModified` will be different from `submissionDateTime`
-    // only on subsequent updates after the initial save which creates the JO.
-    // We add a small tolerance (e.g., 2 seconds) to account for any minor delay between setting the dates on creation.
-    return Math.abs(modifiedTime - submissionTime) > 2000;
-  };
-
-
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
       <CardHeader>
@@ -172,7 +157,6 @@ export function JobOrderTable() {
                     <TableHead className="text-white font-bold">Priority</TableHead>
                     <TableHead className="text-white font-bold">J.O. No.</TableHead>
                     <TableHead className="text-center text-white font-bold">Action</TableHead>
-                    <TableHead className="text-center text-white font-bold">Reprint Status</TableHead>
                     <TableHead className="text-white font-bold">Date Created</TableHead>
                     <TableHead className="text-white font-bold">Last Updated</TableHead>
                   </TableRow>
@@ -182,7 +166,6 @@ export function JobOrderTable() {
                   const isJoSaved = !!lead.joNumber;
                   const creationDate = formatDateTime(lead.submissionDateTime);
                   const modifiedDate = formatDateTime(lead.lastModified);
-                  const reprintNeeded = needsReprint(lead);
                   return (
                     <TableRow key={lead.id}>
                         <TableCell className="font-medium text-xs align-top py-2 text-black">{lead.customerName}</TableCell>
@@ -207,11 +190,6 @@ export function JobOrderTable() {
                               {isJoSaved ? 'J.O. Saved' : 'Process J.O.'}
                             </Button>
                         </TableCell>
-                        <TableCell className="text-center align-top py-2">
-                          {reprintNeeded && (
-                            <Badge variant="destructive">Reprint Required</Badge>
-                          )}
-                        </TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">
                           <div>{creationDate.dateTime}</div>
                           <div className="text-gray-500">{creationDate.dayOfWeek}</div>
@@ -232,4 +210,3 @@ export function JobOrderTable() {
     </Card>
   );
 }
-
