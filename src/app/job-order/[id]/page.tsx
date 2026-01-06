@@ -78,9 +78,10 @@ export default function JobOrderPage() {
     if (fetchedLead) {
       const initializedOrders = fetchedLead.orders.map(order => ({
         ...order,
+        remarks: order.remarks || '',
         design: order.design || { left: false, right: false, backLogo: false, backText: false }
       }));
-      setLead({ ...fetchedLead, orders: initializedOrders });
+      setLead({ ...fetchedLead, orders: initializedOrders, courier: fetchedLead.courier || 'Pick-up' });
 
       if (fetchedLead.deliveryDate) {
         setDeliveryDate(new Date(fetchedLead.deliveryDate));
@@ -147,10 +148,10 @@ export default function JobOrderPage() {
     if (!lead || !leadRef) return;
     try {
       await updateDoc(leadRef, {
-        courier: lead.courier,
+        courier: lead.courier || 'Pick-up',
         location: lead.location,
         deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
-        orders: lead.orders,
+        orders: lead.orders.map(o => ({...o, remarks: o.remarks || ''})),
         lastModified: new Date().toISOString(),
       });
       toast({
@@ -330,7 +331,7 @@ export default function JobOrderPage() {
                 </td>
                 <td className="border border-black p-0.5">
                   <Textarea
-                    value={order.remarks || ''}
+                    value={order.remarks}
                     onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
                     className="text-xs no-print p-1 min-h-[1.5rem] h-auto"
                     placeholder="Add remarks..."
@@ -428,6 +429,8 @@ export default function JobOrderPage() {
     </div>
   );
 }
+    
+
     
 
     
