@@ -340,9 +340,10 @@ export function DigitizingTable() {
             <div className="space-y-2">
               <Label>Logo</Label>
               <div
-                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center"
+                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer"
                 onPaste={(e) => handleImagePaste(e, 'logo')}
                 onClick={() => logoImageUploadRef.current?.click()}
+                tabIndex={0}
               >
                 {logoImage ? (
                   <>
@@ -357,7 +358,7 @@ export function DigitizingTable() {
                     </Button>
                   </>
                 ) : (
-                  <div className="text-gray-500 cursor-pointer">
+                  <div className="text-gray-500">
                     <Upload className="mx-auto h-12 w-12" />
                     <p>Click to upload or paste image</p>
                   </div>
@@ -374,9 +375,10 @@ export function DigitizingTable() {
             <div className="space-y-2">
               <Label>Back Design</Label>
               <div
-                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center"
+                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer"
                 onPaste={(e) => handleImagePaste(e, 'backDesign')}
                 onClick={() => backDesignImageUploadRef.current?.click()}
+                tabIndex={0}
               >
                 {backDesignImage ? (
                   <>
@@ -391,7 +393,7 @@ export function DigitizingTable() {
                     </Button>
                   </>
                 ) : (
-                  <div className="text-gray-500 cursor-pointer">
+                  <div className="text-gray-500">
                     <Upload className="mx-auto h-12 w-12" />
                     <p>Click to upload or paste image</p>
                   </div>
