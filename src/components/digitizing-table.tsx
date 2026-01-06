@@ -119,16 +119,19 @@ export function DigitizingTable() {
               </CardDescription>
             </div>
              <div className="flex items-center gap-4">
-               <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Filter by Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All Priorities</SelectItem>
-                  <SelectItem value="Rush">Rush</SelectItem>
-                  <SelectItem value="Regular">Regular</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Filter by Priority Type:</span>
+                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Filter by Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Priorities</SelectItem>
+                    <SelectItem value="Rush">Rush</SelectItem>
+                    <SelectItem value="Regular">Regular</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="w-full max-w-xs">
                  <Input
                   placeholder="Search by J.O. No..."
