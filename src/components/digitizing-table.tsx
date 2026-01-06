@@ -47,6 +47,7 @@ export function DigitizingTable() {
   const [joNumberSearch, setJoNumberSearch] = React.useState('');
   const [openLeadId, setOpenLeadId] = React.useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = React.useState('All');
+  const [overdueFilter, setOverdueFilter] = React.useState('All');
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -102,9 +103,14 @@ export function DigitizingTable() {
       
       const matchesPriority = priorityFilter === 'All' || lead.priorityType === priorityFilter;
 
-      return matchesSearch && matchesJo && matchesPriority;
+      const deadlineInfo = calculateDigitizingDeadline(lead);
+      const matchesOverdue = overdueFilter === 'All' ||
+        (overdueFilter === 'Overdue' && deadlineInfo.isOverdue) ||
+        (overdueFilter === 'Nearly Overdue' && !deadlineInfo.isOverdue && deadlineInfo.isUrgent);
+
+      return matchesSearch && matchesJo && matchesPriority && matchesOverdue;
     });
-  }, [leads, searchTerm, joNumberSearch, priorityFilter]);
+  }, [leads, searchTerm, joNumberSearch, priorityFilter, overdueFilter]);
 
   const isLoading = isAuthLoading || isLeadsLoading;
 
@@ -129,6 +135,19 @@ export function DigitizingTable() {
                     <SelectItem value="All">All Priorities</SelectItem>
                     <SelectItem value="Rush">Rush</SelectItem>
                     <SelectItem value="Regular">Regular</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Overdue Status:</span>
+                <Select value={overdueFilter} onValueChange={setOverdueFilter}>
+                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Filter by Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Statuses</SelectItem>
+                    <SelectItem value="Overdue">Overdue</SelectItem>
+                    <SelectItem value="Nearly Overdue">Nearly Overdue</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
