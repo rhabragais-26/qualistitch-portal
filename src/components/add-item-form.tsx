@@ -26,9 +26,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Boxes, Palette, Ruler, Hash } from 'lucide-react';
-import { useFirestore } from '@/firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
-import { v4 as uuidv4 } from 'uuid';
+import type { StagedItem } from '@/app/inventory/add-items/page';
+
 
 const productTypes = [
   'Executive Jacket 1',
@@ -58,9 +57,12 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function AddItemForm() {
+type AddItemFormProps = {
+    onAddItem: (item: Omit<StagedItem, 'id'>) => void;
+}
+
+export function AddItemForm({ onAddItem }: AddItemFormProps) {
   const { toast } = useToast();
-  const firestore = useFirestore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -81,43 +83,17 @@ export function AddItemForm() {
     });
   };
 
-  async function onSubmit(values: FormValues) {
-    if (!firestore) return;
-    
-    // An inventory item is uniquely identified by its properties, not a random ID.
-    // This prevents creating duplicate entries for the same item.
-    const itemId = `${values.productType}-${values.color}-${values.size}`.toLowerCase().replace(/\s+/g, '-');
-    const inventoryRef = collection(firestore, 'inventory');
-    const itemDocRef = doc(inventoryRef, itemId);
-
-    const submissionData = {
-      id: itemId,
-      productType: values.productType,
-      color: values.color,
-      size: values.size,
-      stock: values.stock,
-    };
-
-    try {
-      // Using setDoc with merge:true will create or update the stock.
-      await setDoc(itemDocRef, submissionData, { merge: true });
-      toast({
-        title: 'Inventory Item Added/Updated!',
-        description: `Item ${values.productType} (${values.color}, ${values.size}) has been saved.`,
-      });
-      handleReset();
-    } catch (e: any) {
-      console.error('Error saving inventory item: ', e);
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: e.message || 'Could not save the inventory item.',
-      });
-    }
+  function onSubmit(values: FormValues) {
+    onAddItem(values);
+    toast({
+        title: 'Item Staged!',
+        description: `Added ${values.productType} (${values.color}, ${values.size}) to the list.`,
+    });
+    handleReset();
   }
 
   return (
-    <Card className="w-full max-w-2xl shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
         <CardTitle className="font-headline text-xl text-black">Add New Item to Inventory</CardTitle>
         <CardDescription className="text-gray-600">
@@ -211,7 +187,7 @@ export function AddItemForm() {
                 Reset
               </Button>
               <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
-                Add Item
+                Add to List
               </Button>
             </div>
           </form>
