@@ -73,6 +73,8 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
       stock: 0,
     },
   });
+  
+  const { formState: { isValid } } = form;
 
   const handleReset = () => {
     form.reset({
@@ -214,7 +216,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
               <Button type="button" variant="outline" size="lg" onClick={handleReset}>
                 Reset
               </Button>
-              <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
+              <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold" disabled={!isValid}>
                 Add to List
               </Button>
             </div>
