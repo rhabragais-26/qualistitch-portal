@@ -84,14 +84,37 @@ export function DigitizingTable() {
 
   const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
 
-  const handleStatusChange = async (leadId: string, field: 'isUnderProgramming' | 'isInitialApproval' | 'isLogoTesting' | 'isRevision' | 'isFinalApproval' | 'isFinalProgram', value: boolean) => {
+  const handleStatusChange = async (leadId: string, field: keyof Lead, value: boolean) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
-    try {
-      await updateDoc(leadDocRef, { 
+    
+    // Create an object with the field to update
+    const updateData: { [key: string]: any } = { 
         [field]: value,
         lastModified: new Date().toISOString(),
-      });
+    };
+
+    // If we are unchecking a box, uncheck all subsequent boxes
+    if (!value) {
+        const sequence: (keyof Lead)[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
+        const currentIndex = sequence.indexOf(field);
+        if (currentIndex > -1) {
+            for (let i = currentIndex + 1; i < sequence.length; i++) {
+                const nextField = sequence[i];
+                if (nextField) {
+                  updateData[nextField] = false;
+                }
+            }
+        }
+    }
+     // If Final Approval is checked, ensure Revision is unchecked.
+    if (field === 'isFinalApproval' && value) {
+        updateData['isRevision'] = false;
+    }
+
+
+    try {
+      await updateDoc(leadDocRef, updateData);
       toast({
         title: 'Status Updated',
         description: `The status for the lead has been updated.`,
@@ -408,6 +431,8 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
+    
 
     
 
