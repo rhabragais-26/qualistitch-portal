@@ -1,10 +1,9 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +28,7 @@ import { Boxes, Palette, Ruler, Hash, Plus, Minus, Warehouse } from 'lucide-reac
 import type { StagedItem } from '@/app/inventory/add-items/page';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
+import { Separator } from './ui/separator';
 
 const productTypes = [
   'Executive Jacket 1',
@@ -49,22 +49,18 @@ const productColors = [
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
+const sizeQuantitySchema = z.object({
+  size: z.string(),
+  stock: z.number().min(0),
+});
+
 const formSchema = z.object({
   productType: z.string().min(1, 'Product type is required.'),
   color: z.string().min(1, 'Color is required.'),
-  size: z.string().min(1, 'Size is required.'),
-  stock: z.coerce.number().min(0, 'Stock cannot be negative.'),
+  sizeQuantities: z.array(sizeQuantitySchema),
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-type InventoryItem = {
-  id: string;
-  productType: string;
-  color: string;
-  size: string;
-  stock: number;
-};
 
 type AddItemFormProps = {
     onAddItem: (item: Omit<StagedItem, 'id'>) => void;
@@ -72,59 +68,58 @@ type AddItemFormProps = {
 
 export function AddItemForm({ onAddItem }: AddItemFormProps) {
   const { toast } = useToast();
-  const firestore = useFirestore();
-  const [currentStock, setCurrentStock] = useState<number | null>(null);
-
-  const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
-  const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       productType: '',
       color: '',
-      size: '',
-      stock: 0,
+      sizeQuantities: productSizes.map(size => ({ size, stock: 0 })),
     },
   });
   
-  const { formState: { isValid } } = form;
-  const watchedProductType = form.watch('productType');
-  const watchedColor = form.watch('color');
-  const watchedSize = form.watch('size');
-  
-  useEffect(() => {
-    if (watchedProductType && watchedColor && watchedSize && inventoryItems) {
-      const item = inventoryItems.find(
-        (i) =>
-          i.productType === watchedProductType &&
-          i.color === watchedColor &&
-          i.size === watchedSize
-      );
-      setCurrentStock(item ? item.stock : 0);
-    } else {
-      setCurrentStock(null);
-    }
-  }, [watchedProductType, watchedColor, watchedSize, inventoryItems]);
+  const { control, handleSubmit, reset, formState: { isValid } } = form;
 
+  const { fields, update } = useFieldArray({
+    control,
+    name: "sizeQuantities"
+  });
 
   const handleReset = () => {
-    form.reset({
+    reset({
       productType: '',
       color: '',
-      size: '',
-      stock: 0,
+      sizeQuantities: productSizes.map(size => ({ size, stock: 0 })),
     });
-    setCurrentStock(null);
   };
 
   function onSubmit(values: FormValues) {
-    onAddItem(values);
-    toast({
-        title: 'Item Staged!',
-        description: `Added ${values.productType} (${values.color}, ${values.size}) to the list.`,
+    let itemsAddedCount = 0;
+    values.sizeQuantities.forEach(item => {
+      if (item.stock > 0) {
+        onAddItem({
+          productType: values.productType,
+          color: values.color,
+          size: item.size,
+          stock: item.stock
+        });
+        itemsAddedCount++;
+      }
     });
-    handleReset();
+
+    if (itemsAddedCount > 0) {
+        toast({
+            title: 'Items Staged!',
+            description: `Added ${itemsAddedCount} item(s) with product type ${values.productType} to the list.`,
+        });
+        handleReset();
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'No Items to Add',
+            description: `Please enter a quantity for at least one size.`,
+        });
+    }
   }
 
   return (
@@ -132,15 +127,15 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
       <CardHeader>
         <CardTitle className="font-headline text-xl text-black">Add New Item to Inventory</CardTitle>
         <CardDescription className="text-gray-600">
-          Fill in the details below to add a new item and its stock quantity.
+          Fill in the details below to add new items and their stock quantities.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-6">
               <FormField
-                control={form.control}
+                control={control}
                 name="productType"
                 render={({ field }) => (
                   <FormItem>
@@ -160,103 +155,84 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
-                 <FormField
-                    control={form.control}
-                    name="color"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-black"><Palette className="h-4 w-4 text-primary" />Color</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                                <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {productColors.map((color) => (
-                                <SelectItem key={color} value={color}>{color}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+              <FormField
+                control={control}
+                name="color"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-black"><Palette className="h-4 w-4 text-primary" />Color</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                            <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {productColors.map((color) => (
+                            <SelectItem key={color} value={color}>{color}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+                )}
+              />
+            </div>
 
-                <FormField
-                    control={form.control}
-                    name="size"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-black"><Ruler className="h-4 w-4 text-primary" />Size</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                                <SelectTrigger><SelectValue placeholder="Select a Size" /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {productSizes.map((size) => (
-                                <SelectItem key={size} value={size}>{size}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+            <Separator />
+
+            <div className="space-y-4">
+              <FormLabel className="flex items-center gap-2 text-black"><Ruler className="h-4 w-4 text-primary" />Size Quantities</FormLabel>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                {fields.map((field, index) => (
+                    <FormField
+                        key={field.id}
+                        control={control}
+                        name={`sizeQuantities.${index}.stock`}
+                        render={({ field: stockField }) => (
+                            <FormItem className="flex items-center justify-between">
+                                <FormLabel className="text-sm font-medium text-black w-12">{field.size}</FormLabel>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => update(index, { ...field, stock: Math.max(0, (stockField.value || 0) - 1)})}
+                                    >
+                                        <Minus className="h-4 w-4" />
+                                    </Button>
+                                    <FormControl>
+                                        <Input
+                                            type="number"
+                                            {...stockField}
+                                            className="w-20 text-center"
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                stockField.onChange(value === '' ? 0 : parseInt(value, 10));
+                                            }}
+                                            onBlur={(e) => {
+                                                if (e.target.value === '') {
+                                                    stockField.onChange(0);
+                                                }
+                                            }}
+                                        />
+                                    </FormControl>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => update(index, { ...field, stock: (stockField.value || 0) + 1})}
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </FormItem>
+                        )}
+                    />
+                ))}
               </div>
             </div>
 
-            {currentStock !== null && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center gap-2">
-                        <Warehouse className="h-5 w-5 text-blue-600" />
-                        <p className="text-sm text-blue-800">
-                            Current stock for this item: <span className="font-bold">{currentStock}</span>
-                        </p>
-                    </div>
-                </div>
-            )}
-            
-            <FormField
-                control={form.control}
-                name="stock"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center gap-4">
-                      <FormLabel className="flex items-center gap-2 text-black whitespace-nowrap">
-                        <Hash className="h-4 w-4 text-primary" />
-                        Add Stock
-                      </FormLabel>
-                      <div className="flex items-center gap-2">
-                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => field.onChange(Math.max(0, (field.value || 0) - 1))} >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            className="w-24 text-center"
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                if (value === '' || /^[0-9\b]+$/.test(value)) {
-                                  field.onChange(value === '' ? 0 : parseInt(value, 10));
-                                }
-                            }}
-                            onBlur={(e) => {
-                                if (e.target.value === '') {
-                                    field.onChange(0);
-                                }
-                            }}
-                          />
-                        </FormControl>
-                         <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => field.onChange((field.value || 0) + 1)}>
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
             <div className="flex justify-end pt-4 gap-4">
               <Button type="button" variant="outline" size="lg" onClick={handleReset}>
