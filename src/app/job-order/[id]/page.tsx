@@ -3,7 +3,7 @@
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, updateDoc } from 'firebase/firestore';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon, Printer, Save } from 'lucide-react';
 import { format, addDays } from 'date-fns';
@@ -59,6 +59,7 @@ export default function JobOrderPage() {
   const { id } = useParams();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const router = useRouter();
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: allLeads, isLoading: areAllLeadsLoading } = useCollection<Lead>(leadsQuery);
@@ -151,13 +152,14 @@ export default function JobOrderPage() {
         courier: lead.courier || 'Pick-up',
         location: lead.location,
         deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
-        orders: lead.orders.map(o => ({...o, remarks: o.remarks || ''})),
+        orders: lead.orders.map(o => ({...o, remarks: o.remarks || '', design: o.design || { left: false, right: false, backLogo: false, backText: false }})),
         lastModified: new Date().toISOString(),
       });
       toast({
         title: 'Job Order Saved!',
         description: 'Your changes have been saved successfully.',
       });
+      router.push('/job-order');
     } catch (e: any) {
       console.error('Error saving job order:', e);
       toast({
