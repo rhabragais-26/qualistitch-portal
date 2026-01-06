@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -109,10 +110,23 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            <Button variant="ghost" onClick={() => handleNavigation('/digitizing')} className="text-neutral-100 hover:bg-neutral-700 hover:text-neutral-100">
-                <ScanLine className="mr-2" />
-                Digitizing
-            </Button>
+            {isClient && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                   <Button variant="ghost" className="text-neutral-100 hover:bg-neutral-700 hover:text-neutral-100">
+                      <ScanLine className="mr-2" />
+                      Digitizing
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleNavigation('/digitizing/programming-queue')}>
+                    <ClipboardList className="mr-2" />
+                    Programming Queue
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className="text-neutral-100 hover:bg-neutral-700 hover:text-neutral-100">
               <ListOrdered className="mr-2" />
               Order Status

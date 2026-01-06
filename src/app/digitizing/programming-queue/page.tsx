@@ -2,7 +2,7 @@
 import { Header } from '@/components/header';
 import { DigitizingTable } from '@/components/digitizing-table';
 
-export default function DigitizingPage() {
+export default function ProgrammingQueuePage() {
   return (
     <div className="flex flex-col h-screen">
       <Header />

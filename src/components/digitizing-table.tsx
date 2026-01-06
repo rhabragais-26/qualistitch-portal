@@ -692,7 +692,7 @@ export function DigitizingTable() {
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-black">Digitizing Queue</CardTitle>
+              <CardTitle className="text-black">Programming Queue</CardTitle>
               <CardDescription className="text-gray-600">
                 Leads with saved Job Orders ready for digitizing.
               </CardDescription>
