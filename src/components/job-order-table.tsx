@@ -27,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from './ui/badge';
 import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from './ui/scroll-area';
 
 const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
@@ -144,69 +145,75 @@ export function JobOrderTable() {
           </div>
         )}
         {!isLoading && !error && (
-           <div className="border rounded-md relative h-full overflow-y-auto">
-            <Table>
-              <TableHeader className="bg-neutral-800 sticky top-0 z-10">
-                <TableRow>
-                  <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
-                  <TableHead className="text-white font-bold align-middle">Company Name</TableHead>
-                  <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
-                  <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
-                  <TableHead className="text-white font-bold align-middle">Courier</TableHead>
-                  <TableHead className="text-white font-bold align-middle">CSR</TableHead>
-                  <TableHead className="text-white font-bold align-middle">Priority</TableHead>
-                  <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
-                  <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
-                  <TableHead className="text-white font-bold align-middle">Date Created</TableHead>
-                  <TableHead className="text-white font-bold align-middle">Last Updated</TableHead>
-                </TableRow>
-              </TableHeader>
-                <TableBody>
-                {filteredLeads.map((lead) => {
-                  const isJoSaved = !!lead.joNumber;
-                  const creationDate = formatDateTime(lead.submissionDateTime);
-                  const modifiedDate = formatDateTime(lead.lastModified);
-                  return (
-                    <TableRow key={lead.id}>
-                        <TableCell className="font-medium text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
-                        <TableCell className="align-middle py-2">
-                           <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                            {lead.priorityType}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                           <Button 
-                              size="sm" 
-                              className={cn(
-                                'h-8 px-3 text-white font-bold',
-                                isJoSaved ? 'bg-green-600 hover:bg-green-500' : 'bg-primary hover:bg-primary/90'
-                              )}
-                              onClick={() => handleProcessJobOrder(lead)}
-                               onMouseEnter={() => setHoveredLeadId(lead.id)}
-                               onMouseLeave={() => setHoveredLeadId(null)}
-                            >
-                              {isJoSaved ? (hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved') : 'Process J.O.'}
-                            </Button>
-                        </TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">
-                          <div>{creationDate.dateTime}</div>
-                          <div className="text-gray-500">{creationDate.dayOfWeek}</div>
-                        </TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">
-                          <div>{modifiedDate.dateTime}</div>
-                          <div className="text-gray-500">{modifiedDate.dayOfWeek}</div>
-                        </TableCell>
+           <div className="border rounded-md relative h-full flex flex-col">
+            <div className="flex-shrink-0">
+                <Table>
+                  <TableHeader className="bg-neutral-800 z-10">
+                    <TableRow>
+                      <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
+                      <TableHead className="text-white font-bold align-middle">Company Name</TableHead>
+                      <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
+                      <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
+                      <TableHead className="text-white font-bold align-middle">Courier</TableHead>
+                      <TableHead className="text-white font-bold align-middle">CSR</TableHead>
+                      <TableHead className="text-white font-bold align-middle">Priority</TableHead>
+                      <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
+                      <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
+                      <TableHead className="text-white font-bold align-middle">Date Created</TableHead>
+                      <TableHead className="text-white font-bold align-middle">Last Updated</TableHead>
                     </TableRow>
-                  );
-                })}
-                </TableBody>
-            </Table>
+                  </TableHeader>
+                </Table>
+            </div>
+            <ScrollArea className="flex-grow">
+                <Table>
+                    <TableBody>
+                    {filteredLeads.map((lead) => {
+                      const isJoSaved = !!lead.joNumber;
+                      const creationDate = formatDateTime(lead.submissionDateTime);
+                      const modifiedDate = formatDateTime(lead.lastModified);
+                      return (
+                        <TableRow key={lead.id}>
+                            <TableCell className="font-medium text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
+                            <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
+                            <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
+                            <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
+                            <TableCell className="text-xs align-middle py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
+                            <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
+                            <TableCell className="align-middle py-2">
+                               <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                                {lead.priorityType}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
+                            <TableCell className="text-center align-middle py-2">
+                               <Button 
+                                  size="sm" 
+                                  className={cn(
+                                    'h-8 px-3 text-white font-bold',
+                                    isJoSaved ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-primary hover:bg-primary/90'
+                                  )}
+                                  onClick={() => handleProcessJobOrder(lead)}
+                                   onMouseEnter={() => setHoveredLeadId(lead.id)}
+                                   onMouseLeave={() => setHoveredLeadId(null)}
+                                >
+                                  {isJoSaved ? (hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved') : 'Process J.O.'}
+                                </Button>
+                            </TableCell>
+                            <TableCell className="text-xs align-middle py-2 text-black">
+                              <div>{creationDate.dateTime}</div>
+                              <div className="text-gray-500">{creationDate.dayOfWeek}</div>
+                            </TableCell>
+                            <TableCell className="text-xs align-middle py-2 text-black">
+                              <div>{modifiedDate.dateTime}</div>
+                              <div className="text-gray-500">{modifiedDate.dayOfWeek}</div>
+                            </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    </TableBody>
+                </Table>
+            </ScrollArea>
           </div>
         )}
       </CardContent>
