@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -24,6 +25,7 @@ import { Button } from './ui/button';
 import { ScrollArea } from './ui/scroll-area';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Badge } from './ui/badge';
 
 const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
@@ -165,16 +167,20 @@ export function JobOrderTable() {
                         <TableCell className="text-xs align-top py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">{lead.salesRepresentative}</TableCell>
-                        <TableCell className="text-xs align-top py-2 text-black">{lead.priorityType}</TableCell>
+                        <TableCell className="align-top py-2">
+                           <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                            {lead.priorityType}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="font-medium text-xs align-top py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className="text-center align-top py-2">
                            <Button 
                               size="sm" 
                               className="h-8 px-3 text-white font-bold"
                               onClick={() => handleProcessJobOrder(lead)}
-                              style={isJoSaved ? { backgroundColor: 'hsl(var(--accent))' } : {}}
+                               style={isJoSaved ? { backgroundColor: 'hsl(var(--accent))' } : {}}
                             >
-                              {isJoSaved ? 'Edit J.O.' : 'Process J.O.'}
+                              {isJoSaved ? 'J.O. Saved' : 'Process J.O.'}
                             </Button>
                         </TableCell>
                     </TableRow>
