@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Boxes, Palette, Ruler, Hash } from 'lucide-react';
+import { Boxes, Palette, Ruler, Hash, Plus, Minus } from 'lucide-react';
 import type { StagedItem } from '@/app/inventory/add-items/page';
 
 
@@ -177,9 +177,32 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
                         <Hash className="h-4 w-4 text-primary" />
                         Stock Quantity
                       </FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} className="w-24" />
-                      </FormControl>
+                      <div className="flex items-center gap-2">
+                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => field.onChange(Math.max(0, field.value - 1))} disabled={field.value <= 0}>
+                            <Minus className="h-4 w-4" />
+                        </Button>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            className="w-20 text-center"
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === '' || /^[0-9\b]+$/.test(value)) {
+                                  field.onChange(value === '' ? 0 : parseInt(value, 10));
+                                }
+                            }}
+                            onBlur={(e) => {
+                                if (e.target.value === '') {
+                                    field.onChange(0);
+                                }
+                            }}
+                          />
+                        </FormControl>
+                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => field.onChange(field.value + 1)}>
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     <FormMessage />
                   </FormItem>
