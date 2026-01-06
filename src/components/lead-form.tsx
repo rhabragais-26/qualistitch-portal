@@ -159,7 +159,7 @@ const jacketColors = [
 ];
 
 const poloShirtColors = [
-    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow', 'Slate Blue'
+    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow', 'Slate Blue', 'Yellow', 'Orange', 'Dark Green', 'Green', 'Light Green', 'Pink', 'Fuchsia', 'Sky Blue', 'Oatmeal', 'Cream', 'Purple', 'Gold', 'Brown'
 ];
 
 
@@ -738,7 +738,3 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </Card>
   );
 }
-
-    
-
-    
