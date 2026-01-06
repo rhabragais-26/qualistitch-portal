@@ -210,9 +210,9 @@ export function InventorySummaryTable() {
                             <TableCell className="text-center font-medium text-xs align-middle py-2 text-black">{item.remaining}</TableCell>
                             <TableCell className="text-center align-middle py-2">
                               {item.remaining <= 5 ? (
-                                <Badge variant="destructive">Low Stock</Badge>
+                                <Badge variant="destructive">Need to Reorder</Badge>
                               ) : item.remaining <= 10 ? (
-                                <Badge variant="warning">Reorder</Badge>
+                                <Badge variant="warning">Low Stock</Badge>
                               ) : (
                                 <Badge variant="secondary">In Stock</Badge>
                               )}
