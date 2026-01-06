@@ -220,7 +220,7 @@ export function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: 
         </div>
         <DialogFooter>
           <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
-          <Button type="button" onClick={validateAndSave}>Save Changes</Button>
+          <Button type="button" onClick={validateAndSave} className="text-white font-bold">Save Changes</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
