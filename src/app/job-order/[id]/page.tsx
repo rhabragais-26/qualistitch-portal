@@ -347,7 +347,9 @@ export default function JobOrderPage() {
   if (isLeadLoading || areAllLeadsLoading || !lead) {
     return (
       <div className="p-10 bg-white">
-        <Skeleton className="h-10 w-1/4 mb-4" />
+        <div className="h-10 w-full mb-4">
+          <Skeleton className="h-10 w-1/4" />
+        </div>
         <Skeleton className="h-6 w-1/2 mb-8" />
         <div className="space-y-4">
           <Skeleton className="h-12 w-full" />
@@ -411,7 +413,28 @@ export default function JobOrderPage() {
             </Button>
         </div>
       </header>
-      <div className="p-10 mx-auto max-w-4xl printable-area mt-16">
+       
+      <div className="flex justify-center items-center gap-4 pt-20 pb-4 no-print">
+            <Button
+                variant="outline"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+            >
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Previous
+            </Button>
+            <span className="text-sm font-medium">{`Page ${currentPage} of 2`}</span>
+            <Button
+                variant="outline"
+                onClick={() => setCurrentPage(2)}
+                disabled={currentPage === 2}
+            >
+                Next
+                <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+      </div>
+
+      <div className="p-10 mx-auto max-w-4xl printable-area">
         {/* Page 1 */}
         <div className={cn(currentPage !== 1 && 'hidden print:block')}>
             <div className="text-left mb-4">
@@ -740,26 +763,6 @@ export default function JobOrderPage() {
             <div className="no-print mt-4">
                 <Button onClick={addNamedOrderRow} variant="outline">Add Name</Button>
             </div>
-        </div>
-
-        <div className="flex justify-center items-center gap-4 my-4 no-print">
-            <Button
-                variant="outline"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-            >
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                Previous
-            </Button>
-            <span className="text-sm font-medium">{`Page ${currentPage} of 2`}</span>
-            <Button
-                variant="outline"
-                onClick={() => setCurrentPage(2)}
-                disabled={currentPage === 2}
-            >
-                Next
-                <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
         </div>
 
       </div>
