@@ -360,8 +360,14 @@ export function DigitizingTable() {
         if (!isOpen) {
             setLogoImage('');
             setBackDesignImage('');
-            if (uploadLeadId && uploadField) {
-              updateStatus(uploadLeadId, uploadField, false, false);
+            if (uploadLeadId && uploadField && !isUploadDialogOpen) {
+              const lead = leads?.find(l => l.id === uploadLeadId);
+              if (lead) {
+                const currentStatus = lead[uploadField];
+                if (currentStatus) {
+                  updateStatus(uploadLeadId, uploadField, false, false);
+                }
+              }
             }
         }
         setIsUploadDialogOpen(isOpen);
@@ -638,16 +644,16 @@ export function DigitizingTable() {
                                         </CardHeader>
                                         <CardContent className="grid grid-cols-2 gap-4 text-xs">
                                             {lead.layouts?.[0]?.logoImage && (
-                                                <div>
+                                                <div className="relative w-fit">
                                                     <p className="font-semibold text-gray-500 mb-2">Logo</p>
-                                                    <Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" width={200} height={150} className="rounded-md border" />
+                                                    <Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" width={200} height={150} className="rounded-md border object-contain" />
                                                     {lead.layouts[0].logoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
                                             {lead.layouts?.[0]?.backDesignImage && (
-                                                <div>
+                                                <div className="relative w-fit">
                                                     <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                                    <Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" width={200} height={150} className="rounded-md border" />
+                                                    <Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" width={200} height={150} className="rounded-md border object-contain" />
                                                      {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
@@ -661,17 +667,17 @@ export function DigitizingTable() {
                                         </CardHeader>
                                         <CardContent className="grid grid-cols-2 gap-4 text-xs">
                                             {lead.layouts?.[0]?.testLogoImage && (
-                                                <div>
+                                                <div className="relative w-fit">
                                                     <p className="font-semibold text-gray-500 mb-2">Logo</p>
-                                                    <Image src={lead.layouts[0].testLogoImage} alt="Test Logo" width={200} height={150} className="rounded-md border" />
+                                                    <Image src={lead.layouts[0].testLogoImage} alt="Test Logo" width={200} height={150} className="rounded-md border object-contain" />
                                                     {lead.layouts[0].testLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
 
                                             {lead.layouts?.[0]?.testBackDesignImage && (
-                                                <div>
+                                                <div className="relative w-fit">
                                                     <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                                    <Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" width={200} height={150} className="rounded-md border" />
+                                                    <Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" width={200} height={150} className="rounded-md border object-contain" />
                                                      {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
@@ -692,5 +698,3 @@ export function DigitizingTable() {
     </Card>
   );
 }
-
-    
