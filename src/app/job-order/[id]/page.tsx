@@ -353,20 +353,20 @@ export default function JobOrderPage() {
 
         <div className="grid grid-cols-2 gap-x-16 gap-y-10 text-xs">
             <div className="space-y-1">
-                <p>Prepared by:</p>
+                <p className="font-bold italic">Prepared by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">{lead.salesRepresentative.toUpperCase()}</p>
                 <p className="text-center font-bold">Customer Service Representative</p>
                 <p className="text-center">(Name & Signature, Date)</p>
             </div>
              <div className="space-y-1">
-                <p>Noted by:</p>
+                <p className="font-bold italic">Noted by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">MYREZA BANAWON</p>
                 <p className="text-center font-bold">Sales Head</p>
                 <p className="text-center">(Name & Signature, Date)</p>
             </div>
 
             <div>
-                <p>Approved by:</p>
+                <p className="font-bold italic">Approved by:</p>
             </div>
             <div></div>
 
