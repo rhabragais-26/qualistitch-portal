@@ -34,6 +34,7 @@ type Lead = {
   customerName: string;
   companyName?: string;
   contactNumber: string;
+  landlineNumber?: string;
   location: string;
   salesRepresentative: string;
   priorityType: 'Rush' | 'Regular';
@@ -144,6 +145,16 @@ export default function JobOrderPage() {
 
   const deliveryDate = addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+  
+  const getContactDisplay = () => {
+    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
+    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+
+    if (mobile && landline) {
+      return `${mobile} / ${landline}`;
+    }
+    return mobile || landline || 'N/A';
+  };
 
   return (
     <div className="bg-white text-black min-h-screen">
@@ -159,7 +170,7 @@ export default function JobOrderPage() {
       </div>
       <div className="p-10 mx-auto max-w-4xl printable-area">
         <div className="text-right mb-4">
-            <p className="font-bold inline-block border-b-2 border-black pb-1">JO No. ________________</p>
+            <p className="font-bold inline-block">JO No.</p>
         </div>
         <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
@@ -169,7 +180,7 @@ export default function JobOrderPage() {
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                 <p><strong>Recipient's Name:</strong> {lead.customerName}</p>
-                <p><strong>Delivery Date:</strong> {format(deliveryDate, 'MMM, d')}</p>
+                <p><strong>Delivery Date:</strong> {format(deliveryDate, 'MMM, dd, yyyy')}</p>
             </div>
              <div className="space-y-2">
                 <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
@@ -190,7 +201,7 @@ export default function JobOrderPage() {
                     </div>
                     <span className="print-only">{lead.courier}</span>
                 </div>
-                <p><strong>Contact No:</strong> {lead.contactNumber}</p>
+                <p><strong>Contact No:</strong> {getContactDisplay()}</p>
             </div>
              <div className="col-span-2 mt-2">
                 <p><strong>Delivery Address:</strong> {lead.location}</p>
@@ -337,3 +348,5 @@ export default function JobOrderPage() {
     </div>
   );
 }
+
+    

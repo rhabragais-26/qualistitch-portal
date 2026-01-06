@@ -92,7 +92,7 @@ type Lead = {
   id: string;
   customerName: string;
   companyName?: string;
-  contactNumber?: string;
+  contactNumber: string;
   landlineNumber?: string;
   location: string;
   salesRepresentative: string;
@@ -1041,5 +1041,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
 
 
 
+
+    
 
     
