@@ -19,10 +19,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, Upload } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -31,6 +31,8 @@ import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
+import { Label } from './ui/label';
 
 
 type NamedOrder = {
@@ -48,6 +50,8 @@ type Layout = {
   dstBackLogo?: string;
   dstBackText?: string;
   namedOrders?: NamedOrder[];
+  logoImage?: string;
+  backDesignImage?: string;
 };
 
 type Lead = {
@@ -81,6 +85,13 @@ export function DigitizingTable() {
   const [priorityFilter, setPriorityFilter] = React.useState('All');
   const [overdueFilter, setOverdueFilter] = React.useState('All');
   const [uncheckConfirmation, setUncheckConfirmation] = React.useState<{ leadId: string; field: CheckboxField; } | null>(null);
+
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = React.useState(false);
+  const [uploadLeadId, setUploadLeadId] = React.useState<string | null>(null);
+  const [logoImage, setLogoImage] = React.useState<string>('');
+  const [backDesignImage, setBackDesignImage] = React.useState<string>('');
+  const logoImageUploadRef = React.useRef<HTMLInputElement>(null);
+  const backDesignImageUploadRef = React.useRef<HTMLInputElement>(null);
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -93,7 +104,55 @@ export function DigitizingTable() {
     if (!checked) {
       setUncheckConfirmation({ leadId, field });
     } else {
-      updateStatus(leadId, field, true);
+        if (field === 'isUnderProgramming') {
+            const lead = leads?.find(l => l.id === leadId);
+            setUploadLeadId(leadId);
+            setLogoImage(lead?.layouts?.[0]?.logoImage || '');
+            setBackDesignImage(lead?.layouts?.[0]?.backDesignImage || '');
+            setIsUploadDialogOpen(true);
+        } else {
+          updateStatus(leadId, field, true);
+        }
+    }
+  };
+
+  const handleUploadDialogSave = async () => {
+    if (!uploadLeadId) return;
+  
+    const lead = leads?.find(l => l.id === uploadLeadId);
+    if (!lead) return;
+  
+    const currentLayouts = lead.layouts && lead.layouts.length > 0 ? [...lead.layouts] : [{}];
+    const updatedFirstLayout = {
+      ...currentLayouts[0],
+      logoImage: logoImage,
+      backDesignImage: backDesignImage,
+    };
+    const newLayouts = [updatedFirstLayout, ...currentLayouts.slice(1)];
+  
+    try {
+      const leadDocRef = doc(firestore, 'leads', uploadLeadId);
+      await updateDoc(leadDocRef, {
+        layouts: newLayouts
+      });
+      // Now update the status
+      await updateStatus(uploadLeadId, 'isUnderProgramming', true, false); // Don't show toast here
+  
+      toast({
+        title: 'Images and Status Updated',
+        description: 'The images have been saved and the status updated to Initial Program.',
+      });
+      setIsUploadDialogOpen(false);
+      setUploadLeadId(null);
+      setLogoImage('');
+      setBackDesignImage('');
+    } catch (e: any) {
+      console.error('Error saving images or status:', e);
+      toast({
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: e.message || 'Could not save the images and update status.',
+      });
     }
   };
 
@@ -104,7 +163,7 @@ export function DigitizingTable() {
     }
   };
 
-  const updateStatus = async (leadId: string, field: CheckboxField, value: boolean) => {
+  const updateStatus = async (leadId: string, field: CheckboxField, value: boolean, showToast: boolean = true) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     
@@ -132,7 +191,7 @@ export function DigitizingTable() {
 
     try {
       await updateDoc(leadDocRef, updateData);
-      if (value) { // Only toast on positive action
+      if (value && showToast) {
           toast({
             title: 'Status Updated',
             description: 'The digitizing process has moved to the next step.',
@@ -148,6 +207,55 @@ export function DigitizingTable() {
       });
     }
   };
+
+  const handleImagePaste = (event: React.ClipboardEvent<HTMLDivElement>, imageType: 'logo' | 'backDesign') => {
+    const items = event.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const blob = items[i].getAsFile();
+        if (blob) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (e.target?.result) {
+              if (imageType === 'logo') {
+                setLogoImage(e.target.result as string);
+              } else {
+                setBackDesignImage(e.target.result as string);
+              }
+            }
+          };
+          reader.readAsDataURL(blob);
+        }
+      }
+    }
+  };
+
+  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>, imageType: 'logo' | 'backDesign') => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+           if (imageType === 'logo') {
+            setLogoImage(e.target.result as string);
+          } else {
+            setBackDesignImage(e.target.result as string);
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = (e: React.MouseEvent, imageType: 'logo' | 'backDesign') => {
+    e.stopPropagation();
+    if (imageType === 'logo') {
+      setLogoImage('');
+    } else {
+      setBackDesignImage('');
+    }
+  };
+
 
   const toggleLeadDetails = (leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
@@ -218,10 +326,99 @@ export function DigitizingTable() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setUncheckConfirmation(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmUncheck}>Continue</AlertDialogAction>
+            <AlertDialogAction onClick={confirmUncheck} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white">Continue</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+       <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Upload Initial Program Files</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-6 py-4">
+            <div className="space-y-2">
+              <Label>Logo</Label>
+              <div
+                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center"
+                onPaste={(e) => handleImagePaste(e, 'logo')}
+                onClick={() => logoImageUploadRef.current?.click()}
+              >
+                {logoImage ? (
+                  <>
+                    <Image src={logoImage} alt="Logo" layout="fill" objectFit="contain" className="rounded-md" />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      onClick={(e) => handleRemoveImage(e, 'logo')}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <div className="text-gray-500 cursor-pointer">
+                    <Upload className="mx-auto h-12 w-12" />
+                    <p>Click to upload or paste image</p>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={logoImageUploadRef}
+                  onChange={(e) => handleImageUpload(e, 'logo')}
+                  className="hidden"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Back Design</Label>
+              <div
+                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center"
+                onPaste={(e) => handleImagePaste(e, 'backDesign')}
+                onClick={() => backDesignImageUploadRef.current?.click()}
+              >
+                {backDesignImage ? (
+                  <>
+                    <Image src={backDesignImage} alt="Back Design" layout="fill" objectFit="contain" className="rounded-md" />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      onClick={(e) => handleRemoveImage(e, 'backDesign')}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <div className="text-gray-500 cursor-pointer">
+                    <Upload className="mx-auto h-12 w-12" />
+                    <p>Click to upload or paste image</p>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={backDesignImageUploadRef}
+                  onChange={(e) => handleImageUpload(e, 'backDesign')}
+                  className="hidden"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button type="button" onClick={handleUploadDialogSave} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white">
+              Save and Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>

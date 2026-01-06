@@ -125,6 +125,14 @@
                 "type": "string",
                 "description": "Data URL of the uploaded layout image."
               },
+              "logoImage": {
+                "type": "string",
+                "description": "Data URL of the uploaded logo image."
+              },
+              "backDesignImage": {
+                "type": "string",
+                "description": "Data URL of the uploaded back design image."
+              },
               "dstLogoLeft": { "type": "string" },
               "dstLogoRight": { "type": "string" },
               "dstBackLogo": { "type": "string" },
