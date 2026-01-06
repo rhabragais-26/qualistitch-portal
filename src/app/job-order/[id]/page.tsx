@@ -525,17 +525,12 @@ export default function JobOrderPage() {
                     variant="outline"
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
-                    style={{ marginLeft: '1rem', marginRight: 'calc(0.5in + 20px)' }}
                 >
                     Next
                     <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
             </div>
              <div className="flex-1 flex justify-end gap-2">
-                <Button onClick={handleClose} variant="outline">
-                <X className="mr-2 h-4 w-4" />
-                Close
-                </Button>
                 <Button onClick={handleSaveChanges} className="text-white font-bold">
                 <Save className="mr-2 h-4 w-4" />
                 Save Changes
@@ -543,6 +538,10 @@ export default function JobOrderPage() {
                 <Button onClick={handlePrint} className="text-white font-bold" disabled={!lead?.joNumber}>
                 <Printer className="mr-2 h-4 w-4" />
                 Print J.O.
+                </Button>
+                <Button onClick={handleClose} variant="outline">
+                <X className="mr-2 h-4 w-4" />
+                Close
                 </Button>
             </div>
         </div>
