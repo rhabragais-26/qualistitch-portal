@@ -5,7 +5,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase
 import { collection, doc, query, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Printer, Save, Upload, X } from 'lucide-react';
+import { CalendarIcon, Printer, Save, Upload, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useMemo, useState, ChangeEvent, useRef } from 'react';
@@ -78,6 +78,7 @@ export default function JobOrderPage() {
   const { toast } = useToast();
   const router = useRouter();
   const imageUploadRef = useRef<HTMLInputElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: allLeads, isLoading: areAllLeadsLoading } = useCollection<Lead>(leadsQuery);
@@ -345,24 +346,24 @@ export default function JobOrderPage() {
 
   if (isLeadLoading || areAllLeadsLoading || !lead) {
     return (
-      <div className="p-10 bg-white">
-        <Skeleton className="h-10 w-1/4 mb-4" />
-        <Skeleton className="h-6 w-1/2 mb-8" />
-        <div className="space-y-4">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-20 w-full" />
+      <div class="p-10 bg-white">
+        <Skeleton class="h-10 w-1/4 mb-4" />
+        <Skeleton class="h-6 w-1/2 mb-8" />
+        <div class="space-y-4">
+          <Skeleton class="h-12 w-full" />
+          <Skeleton class="h-40 w-full" />
+          <Skeleton class="h-20 w-full" />
         </div>
       </div>
     );
   }
 
   if (error) {
-    return <div className="text-red-500 p-10">Error loading lead: {error.message}</div>;
+    return <div class="text-red-500 p-10">Error loading lead: {error.message}</div>;
   }
 
   if (!fetchedLead) {
-    return <div className="p-10">Lead not found.</div>;
+    return <div class="p-10">Lead not found.</div>;
   }
 
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
@@ -412,7 +413,7 @@ export default function JobOrderPage() {
       </header>
       <div className="p-10 mx-auto max-w-4xl printable-area mt-16">
         {/* Page 1 */}
-        <div>
+        <div className={cn(currentPage !== 1 && 'hidden print:block')}>
             <div className="text-left mb-4">
                 <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{lead.joNumber ? joNumber : 'Not Saved'}</span></p>
             </div>
@@ -610,7 +611,7 @@ export default function JobOrderPage() {
         </div>
 
         {/* Page 2 */}
-        <div className="page-break">
+        <div className={cn("page-break", currentPage !== 2 && 'hidden print:block')}>
             <h1 className="text-2xl font-bold text-center my-6 border-b-4 border-black pb-2">LAYOUT</h1>
             
             <div 
@@ -741,6 +742,26 @@ export default function JobOrderPage() {
             </div>
         </div>
 
+        <div className="flex justify-center items-center gap-4 my-4 no-print">
+            <Button
+                variant="outline"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+            >
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Previous
+            </Button>
+            <span className="text-sm font-medium">{`Page ${currentPage} of 2`}</span>
+            <Button
+                variant="outline"
+                onClick={() => setCurrentPage(2)}
+                disabled={currentPage === 2}
+            >
+                Next
+                <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+        </div>
+
       </div>
       <style jsx global>{`
         @media print {
@@ -785,5 +806,3 @@ export default function JobOrderPage() {
     </div>
   );
 }
-
-    
