@@ -34,6 +34,7 @@ type Order = {
 type Lead = {
   id: string;
   customerName: string;
+  companyName?: string;
   contactNumber: string;
   landlineNumber?: string;
   salesRepresentative: string;
@@ -41,6 +42,7 @@ type Lead = {
   submissionDateTime: string;
   orders: Order[];
   joNumber?: number;
+  courier?: string;
 }
 
 export function JobOrderTable() {
@@ -115,7 +117,10 @@ export function JobOrderTable() {
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="text-white font-bold">Customer Name</TableHead>
-                    <TableHead className="text-white font-bold">Contact Number</TableHead>
+                    <TableHead className="text-white font-bold">Company Name</TableHead>
+                    <TableHead className="text-white font-bold">Mobile No.</TableHead>
+                    <TableHead className="text-white font-bold">Landline No.</TableHead>
+                    <TableHead className="text-white font-bold">Courier</TableHead>
                     <TableHead className="text-white font-bold">CSR</TableHead>
                     <TableHead className="text-white font-bold">Priority</TableHead>
                     <TableHead className="text-center text-white font-bold">Action</TableHead>
@@ -127,7 +132,10 @@ export function JobOrderTable() {
                   return (
                     <TableRow key={lead.id}>
                         <TableCell className="font-medium text-xs align-top py-2 text-black">{lead.customerName}</TableCell>
+                        <TableCell className="text-xs align-top py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className="text-xs align-top py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className="text-xs align-top py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">{lead.salesRepresentative}</TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">{lead.priorityType}</TableCell>
                         <TableCell className="text-center align-top py-2">
@@ -135,7 +143,7 @@ export function JobOrderTable() {
                               size="sm" 
                               className="h-8 px-3 text-white font-bold"
                               onClick={() => handleProcessJobOrder(lead)}
-                              style={isJoSaved ? { backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' } : {}}
+                              style={isJoSaved ? { backgroundColor: 'hsl(var(--accent))' } : {}}
                             >
                               {isJoSaved ? 'Edit J.O.' : 'Process J.O.'}
                             </Button>
