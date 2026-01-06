@@ -143,7 +143,6 @@ export function JobOrderTable() {
               <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white font-bold">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold">Customer Name</TableHead>
                     <TableHead className="text-white font-bold">Company Name</TableHead>
                     <TableHead className="text-white font-bold">Mobile No.</TableHead>
@@ -151,6 +150,7 @@ export function JobOrderTable() {
                     <TableHead className="text-white font-bold">Courier</TableHead>
                     <TableHead className="text-white font-bold">CSR</TableHead>
                     <TableHead className="text-white font-bold">Priority</TableHead>
+                    <TableHead className="text-white font-bold">J.O. No.</TableHead>
                     <TableHead className="text-center text-white font-bold">Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -159,7 +159,6 @@ export function JobOrderTable() {
                   const isJoSaved = !!lead.joNumber;
                   return (
                     <TableRow key={lead.id}>
-                        <TableCell className="font-medium text-xs align-top py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className="font-medium text-xs align-top py-2 text-black">{lead.customerName}</TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
@@ -167,6 +166,7 @@ export function JobOrderTable() {
                         <TableCell className="text-xs align-top py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">{lead.salesRepresentative}</TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">{lead.priorityType}</TableCell>
+                        <TableCell className="font-medium text-xs align-top py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className="text-center align-top py-2">
                            <Button 
                               size="sm" 
