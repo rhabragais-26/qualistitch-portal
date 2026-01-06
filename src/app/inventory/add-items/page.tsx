@@ -120,7 +120,7 @@ export default function AddItemsPage() {
     });
 
     try {
-      const batch = writeBatch(firestore);
+      let batch = writeBatch(firestore);
       let count = 0;
 
       for (const productType of productTypes) {
@@ -141,6 +141,7 @@ export default function AddItemsPage() {
             // Commit and start a new batch if we're near the limit.
             if (count % 499 === 0) {
               await batch.commit();
+              batch = writeBatch(firestore);
             }
           }
         }
@@ -185,7 +186,7 @@ export default function AddItemsPage() {
               items={stagedItems}
               onUpdateItem={handleUpdateItem}
               onRemoveItem={handleRemoveItem}
-              onSaveAll={onSaveAll}
+              onSaveAll={handleSaveAll}
             />
           </div>
         </div>
