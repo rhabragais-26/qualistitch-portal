@@ -204,7 +204,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
                                         <Input
                                             type="number"
                                             {...stockField}
-                                            className="w-16 text-center"
+                                            className="w-12 text-center"
                                             onChange={(e) => {
                                                 const value = e.target.value;
                                                 stockField.onChange(value === '' ? 0 : parseInt(value, 10));
