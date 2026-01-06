@@ -243,12 +243,12 @@ export function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle">Overdue Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Initial Program</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Initial Approval</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Test</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Revision</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Final Approval</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Final Program</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-36">Initial Program</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-36">Initial Approval</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-36">Test</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-36">Revision</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-36">Final Approval</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-36">Final Program</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Details</TableHead>
                 </TableRow>
                 </TableHeader>
