@@ -135,10 +135,9 @@ export function JobOrderTable() {
                               size="sm" 
                               className="h-8 px-3 text-white font-bold"
                               onClick={() => handleProcessJobOrder(lead)}
-                              disabled={isJoSaved}
                               style={isJoSaved ? { backgroundColor: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' } : {}}
                             >
-                              {isJoSaved ? 'J.O. Saved' : 'Process J.O.'}
+                              {isJoSaved ? 'Edit J.O.' : 'Process J.O.'}
                             </Button>
                         </TableCell>
                     </TableRow>
