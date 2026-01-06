@@ -5,7 +5,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase
 import { collection, doc, query, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Printer, Save } from 'lucide-react';
+import { CalendarIcon, Printer, Save, X } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useState } from 'react';
@@ -99,20 +99,21 @@ export default function JobOrderPage() {
       if (lead.joNumber) {
         setJoNumber(`QSBP-${currentYear}-${lead.joNumber.toString().padStart(5, '0')}`);
       } else {
+        // Find max JO number only from leads of the current year
         const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
         const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
         const newJoNum = maxJoNumber + 1;
         setJoNumber(`QSBP-${currentYear}-${newJoNum.toString().padStart(5, '0')}`);
-        
-        if (leadRef) {
-          updateDoc(leadRef, { joNumber: newJoNum });
-        }
       }
     }
-  }, [lead, allLeads, leadRef]);
+  }, [lead, allLeads]);
 
   const handlePrint = () => {
     window.print();
+  };
+  
+  const handleClose = () => {
+    router.push('/job-order');
   };
 
   const handleCourierChange = (value: string) => {
@@ -146,9 +147,20 @@ export default function JobOrderPage() {
   };
 
   const handleSaveChanges = async () => {
-    if (!lead || !leadRef) return;
+    if (!lead || !leadRef || !allLeads) return;
+
+    let newJoNumber: number | undefined = lead.joNumber;
+    
+    // Assign a new JO number only if one doesn't already exist for this lead
+    if (!newJoNumber) {
+        const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
+        const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
+        newJoNumber = maxJoNumber + 1;
+    }
+    
     try {
       await updateDoc(leadRef, {
+        joNumber: newJoNumber,
         courier: lead.courier || 'Pick-up',
         location: lead.location,
         deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
@@ -207,6 +219,10 @@ export default function JobOrderPage() {
   return (
     <div className="bg-white text-black min-h-screen">
       <div className="fixed top-4 right-4 no-print flex gap-2">
+        <Button onClick={handleClose} variant="outline">
+          <X className="mr-2 h-4 w-4" />
+          Close
+        </Button>
         <Button onClick={handleSaveChanges} className="text-white font-bold">
           <Save className="mr-2 h-4 w-4" />
           Save Changes
@@ -296,20 +312,20 @@ export default function JobOrderPage() {
         <table className="w-full border-collapse border border-black text-xs mb-2">
           <thead>
             <tr className="bg-gray-200">
-              <th className="border border-black p-1" colSpan={3}>Item Description</th>
-              <th className="border border-black p-1" rowSpan={2}>Qty</th>
-              <th className="border border-black p-1" colSpan={2}>Front Design</th>
-              <th className="border border-black p-1" colSpan={2}>Back Design</th>
-              <th className="border border-black p-1" rowSpan={2}>Remarks</th>
+              <th className="border border-black p-0.5" colSpan={3}>Item Description</th>
+              <th className="border border-black p-0.5" rowSpan={2}>Qty</th>
+              <th className="border border-black p-0.5" colSpan={2}>Front Design</th>
+              <th className="border border-black p-0.5" colSpan={2}>Back Design</th>
+              <th className="border border-black p-0.5" rowSpan={2}>Remarks</th>
             </tr>
             <tr className="bg-gray-200">
-              <th className="border border-black p-1 font-medium">Type of Product</th>
-              <th className="border border-black p-1 font-medium">Color</th>
-              <th className="border border-black p-1 font-medium">Size</th>
-              <th className="border border-black p-1 font-medium w-12">Left</th>
-              <th className="border border-black p-1 font-medium w-12">Right</th>
-              <th className="border border-black p-1 font-medium w-12">Logo</th>
-              <th className="border border-black p-1 font-medium w-12">Text</th>
+              <th className="border border-black p-0.5 font-medium">Type of Product</th>
+              <th className="border border-black p-0.5 font-medium">Color</th>
+              <th className="border border-black p-0.5 font-medium">Size</th>
+              <th className="border border-black p-0.5 font-medium w-12">Left</th>
+              <th className="border border-black p-0.5 font-medium w-12">Right</th>
+              <th className="border border-black p-0.5 font-medium w-12">Logo</th>
+              <th className="border border-black p-0.5 font-medium w-12">Text</th>
             </tr>
           </thead>
           <tbody>
@@ -343,18 +359,18 @@ export default function JobOrderPage() {
               </tr>
             ))}
              <tr>
-                <td colSpan={3} className="text-right font-bold p-1">TOTAL</td>
-                <td className="text-center font-bold p-1">{totalQuantity} PCS</td>
+                <td colSpan={3} className="text-right font-bold p-0.5">TOTAL</td>
+                <td className="text-center font-bold p-0.5">{totalQuantity} PCS</td>
                 <td colSpan={5}></td>
             </tr>
           </tbody>
         </table>
 
-        <div className="text-xs mb-4">
+        <div className="text-xs mb-6">
             <p className="text-xs mb-2"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-16 gap-y-10 text-xs mt-2">
+        <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
             <div className="space-y-1">
                 <p className="font-bold italic">Prepared by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">{lead.salesRepresentative.toUpperCase()}</p>
@@ -368,7 +384,7 @@ export default function JobOrderPage() {
                 <p className="text-center">(Name & Signature, Date)</p>
             </div>
 
-            <div className="col-span-2">
+            <div className="col-span-2 mt-2">
                 <p className="font-bold italic">Approved by:</p>
             </div>
 
@@ -439,4 +455,5 @@ export default function JobOrderPage() {
 
     
 
+    
     
