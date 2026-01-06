@@ -40,17 +40,19 @@ const productTypes = [
   'Reversible v2',
   'Polo Shirt (Coolpass)',
   'Polo Shirt (Cotton Blend)',
-  'Patches',
-  'Client Owned',
 ];
 
-const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
+const productColors = [
+  'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
+  'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
+  'Army Green', 'Polo Color',
+];
 
 export function InventorySummaryTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [productTypeFilter, setProductTypeFilter] = React.useState('All');
-  const [sizeFilter, setSizeFilter] = React.useState('All');
+  const [colorFilter, setColorFilter] = React.useState('All');
   
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -64,10 +66,10 @@ export function InventorySummaryTable() {
     
     return inventoryItems.filter(item => {
       const matchesProductType = productTypeFilter === 'All' || item.productType === productTypeFilter;
-      const matchesSize = sizeFilter === 'All' || item.size === sizeFilter;
-      return matchesProductType && matchesSize;
+      const matchesColor = colorFilter === 'All' || item.color === colorFilter;
+      return matchesProductType && matchesColor;
     });
-  }, [inventoryItems, productTypeFilter, sizeFilter]);
+  }, [inventoryItems, productTypeFilter, colorFilter]);
 
   const isLoading = isAuthLoading || isInventoryLoading;
 
@@ -93,14 +95,14 @@ export function InventorySummaryTable() {
                     ))}
                     </SelectContent>
                 </Select>
-                <Select value={sizeFilter} onValueChange={setSizeFilter}>
-                    <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Filter by Size" />
+                <Select value={colorFilter} onValueChange={setColorFilter}>
+                    <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Filter by Color" />
                     </SelectTrigger>
                     <SelectContent>
-                    <SelectItem value="All">All Sizes</SelectItem>
-                    {productSizes.map(size => (
-                        <SelectItem key={size} value={size}>{size}</SelectItem>
+                    <SelectItem value="All">All Colors</SelectItem>
+                    {productColors.map(color => (
+                        <SelectItem key={color} value={color}>{color}</SelectItem>
                     ))}
                     </SelectContent>
                 </Select>
