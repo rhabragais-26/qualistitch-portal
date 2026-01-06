@@ -145,17 +145,17 @@ export function DigitizingTable() {
         updatedFirstLayout = {
             ...currentLayouts[0],
             logoImage: logoImage || null,
-            logoImageUploadTime: logoImage ? (currentLayouts[0]?.logoImageUploadTime || now) : null,
+            logoImageUploadTime: logoImage ? (currentLayouts[0]?.logoImage ? currentLayouts[0].logoImageUploadTime : now) : null,
             backDesignImage: backDesignImage || null,
-            backDesignImageUploadTime: backDesignImage ? (currentLayouts[0]?.backDesignImageUploadTime || now) : null,
+            backDesignImageUploadTime: backDesignImage ? (currentLayouts[0]?.backDesignImage ? currentLayouts[0].backDesignImageUploadTime : now) : null,
         };
     } else if (uploadField === 'isLogoTesting') {
         updatedFirstLayout = {
             ...currentLayouts[0],
             testLogoImage: logoImage || null,
-            testLogoImageUploadTime: logoImage ? (currentLayouts[0]?.testLogoImageUploadTime || now) : null,
+            testLogoImageUploadTime: logoImage ? (currentLayouts[0]?.testLogoImage ? currentLayouts[0].testLogoImageUploadTime : now) : null,
             testBackDesignImage: backDesignImage || null,
-            testBackDesignImageUploadTime: backDesignImage ? (currentLayouts[0]?.testBackDesignImageUploadTime || now) : null,
+            testBackDesignImageUploadTime: backDesignImage ? (currentLayouts[0]?.testBackDesignImage ? currentLayouts[0].testBackDesignImageUploadTime : now) : null,
         };
     } else {
         return; // Should not happen
