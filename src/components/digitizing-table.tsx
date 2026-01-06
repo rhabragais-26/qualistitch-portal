@@ -331,7 +331,13 @@ export function DigitizingTable() {
         </AlertDialogContent>
       </AlertDialog>
 
-       <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+       <Dialog open={isUploadDialogOpen} onOpenChange={(isOpen) => {
+        if (!isOpen) {
+            setLogoImage('');
+            setBackDesignImage('');
+        }
+        setIsUploadDialogOpen(isOpen);
+       }}>
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>Upload Program Files</DialogTitle>
@@ -360,7 +366,7 @@ export function DigitizingTable() {
                 ) : (
                   <div className="text-gray-500">
                     <Upload className="mx-auto h-12 w-12" />
-                    <p>Double-click to upload or paste image</p>
+                    <p onDoubleClick={(e) => e.preventDefault()} style={{ userSelect: 'none' }}>Double-click to upload or paste image</p>
                   </div>
                 )}
                 <input
@@ -395,7 +401,7 @@ export function DigitizingTable() {
                 ) : (
                   <div className="text-gray-500">
                     <Upload className="mx-auto h-12 w-12" />
-                    <p>Double-click to upload or paste image</p>
+                    <p onDoubleClick={(e) => e.preventDefault()} style={{ userSelect: 'none' }}>Double-click to upload or paste image</p>
                   </div>
                 )}
                 <input
@@ -498,12 +504,12 @@ export function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle whitespace-nowrap">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle">Overdue Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Initial Program</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Initial Approval</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Test</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Revision</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Final Approval</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Final Program</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Initial Program</span></TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Initial Approval</span></TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Test</span></TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Revision</span></TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Final Approval</span></TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Final Program</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Details</TableHead>
                 </TableRow>
                 </TableHeader>
