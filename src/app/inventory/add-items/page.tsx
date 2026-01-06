@@ -74,7 +74,7 @@ export default function AddItemsPage() {
 
     const savePromises = stagedItems.map(item => {
       const { id: tempId, ...itemData } = item;
-      const itemId = `${itemData.productType}-${itemData.color}-${itemData.size}`.toLowerCase().replace(/\s+/g, '-');
+      const itemId = `${itemData.productType}-${itemData.color}-${itemData.size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
       const itemDocRef = doc(inventoryRef, itemId);
 
       const submissionData = {
@@ -127,7 +127,7 @@ export default function AddItemsPage() {
         for (const color of productColors) {
           for (const size of productSizes) {
             const stock = 10;
-            const itemId = `${productType}-${color}-${size}`.toLowerCase().replace(/\s+/g, '-');
+            const itemId = `${productType}-${color}-${size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
             const itemDocRef = doc(firestore, 'inventory', itemId);
             batch.set(itemDocRef, {
               id: itemId,
