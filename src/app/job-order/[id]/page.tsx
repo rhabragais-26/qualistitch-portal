@@ -565,11 +565,11 @@ export default function JobOrderPage() {
                     <Checkbox className="mx-auto" checked={order.design?.backText || false} onCheckedChange={(checked) => handleDesignChange(index, 'backText', !!checked)} />
                     </td>
                     <td className="border border-black p-0.5">
-                    <div className="no-print-placeholder">
+                    <div className="no-print">
                         <Textarea
                         value={order.remarks}
                         onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
-                        className="text-xs no-print p-1 h-[30px]"
+                        className="text-xs p-1 h-[30px]"
                         placeholder="Add remarks..."
                         />
                     </div>
@@ -683,44 +683,52 @@ export default function JobOrderPage() {
                 <tr>
                   <td className="border border-black p-2 w-1/2">
                     <p className="font-bold">DST LOGO LEFT:</p>
-                    <Textarea 
-                      value={lead.dstLogoLeft} 
-                      onChange={(e) => handleTextDetailChange('dstLogoLeft', e.target.value)} 
-                      className="text-xs no-print mt-1 p-1 min-h-[50px]"
-                      placeholder="Details for left logo..."
-                    />
+                    <div className="no-print">
+                      <Textarea 
+                        value={lead.dstLogoLeft} 
+                        onChange={(e) => handleTextDetailChange('dstLogoLeft', e.target.value)} 
+                        className="text-xs mt-1 p-1 min-h-[50px]"
+                        placeholder="Details for left logo..."
+                      />
+                    </div>
                     <p className="print-only text-xs whitespace-pre-wrap">{lead.dstLogoLeft}</p>
                   </td>
                   <td className="border border-black p-2 w-1/2">
                     <p className="font-bold">DST BACK LOGO:</p>
-                    <Textarea 
-                      value={lead.dstBackLogo} 
-                      onChange={(e) => handleTextDetailChange('dstBackLogo', e.target.value)} 
-                      className="text-xs no-print mt-1 p-1 min-h-[50px]"
-                      placeholder="Details for back logo..."
-                    />
+                    <div className="no-print">
+                      <Textarea 
+                        value={lead.dstBackLogo} 
+                        onChange={(e) => handleTextDetailChange('dstBackLogo', e.target.value)} 
+                        className="text-xs mt-1 p-1 min-h-[50px]"
+                        placeholder="Details for back logo..."
+                      />
+                    </div>
                      <p className="print-only text-xs whitespace-pre-wrap">{lead.dstBackLogo}</p>
                   </td>
                 </tr>
                  <tr>
                   <td className="border border-black p-2 w-1/2">
                     <p className="font-bold">DST LOGO RIGHT:</p>
-                    <Textarea 
-                      value={lead.dstLogoRight} 
-                      onChange={(e) => handleTextDetailChange('dstLogoRight', e.target.value)} 
-                      className="text-xs no-print mt-1 p-1 min-h-[50px]"
-                      placeholder="Details for right logo..."
-                    />
+                    <div className="no-print">
+                      <Textarea 
+                        value={lead.dstLogoRight} 
+                        onChange={(e) => handleTextDetailChange('dstLogoRight', e.target.value)} 
+                        className="text-xs mt-1 p-1 min-h-[50px]"
+                        placeholder="Details for right logo..."
+                      />
+                    </div>
                      <p className="print-only text-xs whitespace-pre-wrap">{lead.dstLogoRight}</p>
                   </td>
                   <td className="border border-black p-2 w-1/2">
                     <p className="font-bold">DST BACK TEXT:</p>
-                    <Textarea 
-                      value={lead.dstBackText} 
-                      onChange={(e) => handleTextDetailChange('dstBackText', e.target.value)} 
-                      className="text-xs no-print mt-1 p-1 min-h-[50px]"
-                      placeholder="Details for back text..."
-                    />
+                    <div className="no-print">
+                      <Textarea 
+                        value={lead.dstBackText} 
+                        onChange={(e) => handleTextDetailChange('dstBackText', e.target.value)} 
+                        className="text-xs mt-1 p-1 min-h-[50px]"
+                        placeholder="Details for back text..."
+                      />
+                    </div>
                     <p className="print-only text-xs whitespace-pre-wrap">{lead.dstBackText}</p>
                   </td>
                 </tr>
