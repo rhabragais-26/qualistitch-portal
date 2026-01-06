@@ -332,7 +332,7 @@ export default function JobOrderPage() {
                   <Textarea
                     value={order.remarks || ''}
                     onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
-                    className="text-xs no-print p-1 min-h-[2rem] h-auto"
+                    className="text-xs no-print p-1 min-h-[1.5rem] h-auto"
                     placeholder="Add remarks..."
                   />
                    <p className="print-only text-xs">{order.remarks}</p>
@@ -340,18 +340,18 @@ export default function JobOrderPage() {
               </tr>
             ))}
              <tr>
-                <td colSpan={3} className="text-right font-bold p-2">TOTAL</td>
-                <td className="text-center font-bold p-2">{totalQuantity} PCS</td>
+                <td colSpan={3} className="text-right font-bold p-1">TOTAL</td>
+                <td className="text-center font-bold p-1">{totalQuantity} PCS</td>
                 <td colSpan={5}></td>
             </tr>
           </tbody>
         </table>
 
-        <div className="text-xs mb-6">
+        <div className="text-xs mb-4">
             <p className="text-xs mb-2"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-16 gap-y-10 text-xs">
+        <div className="grid grid-cols-2 gap-x-16 gap-y-10 text-xs mt-2">
             <div className="space-y-1">
                 <p className="font-bold italic">Prepared by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">{lead.salesRepresentative.toUpperCase()}</p>
@@ -365,10 +365,9 @@ export default function JobOrderPage() {
                 <p className="text-center">(Name & Signature, Date)</p>
             </div>
 
-            <div>
+            <div className="col-span-2">
                 <p className="font-bold italic">Approved by:</p>
             </div>
-            <div></div>
 
 
             <div className="space-y-1">
