@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, writeBatch, getDocs, where } from 'firebase/firestore';
+import { collection, query, orderBy, writeBatch, getDocs, where, doc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -133,7 +132,7 @@ export function InventorySummaryTable() {
                 sizeOrder.forEach(size => {
                     const stock = Math.floor(Math.random() * (25 - 10 + 1)) + 10; // Random between 10 and 25
                     const itemId = `${productType}-${color}-${size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
-                    const itemDocRef = collection(firestore, 'inventory').doc(itemId);
+                    const itemDocRef = doc(firestore, 'inventory', itemId);
                     const newItem = {
                         id: itemId,
                         productType,
