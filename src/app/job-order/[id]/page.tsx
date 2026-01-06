@@ -312,27 +312,27 @@ export default function JobOrderPage() {
           <tbody>
             {lead.orders.map((order, index) => (
               <tr key={index}>
-                <td className="border border-black p-1">{order.productType}</td>
-                <td className="border border-black p-1">{order.color}</td>
-                <td className="border border-black p-1 text-center">{order.size}</td>
-                <td className="border border-black p-1 text-center">{order.quantity}</td>
-                <td className="border border-black p-1 text-center">
-                    <Checkbox className="mx-auto" checked={order.design?.left} onCheckedChange={(checked) => handleDesignChange(index, 'left', !!checked)} />
+                <td className="border border-black p-0.5">{order.productType}</td>
+                <td className="border border-black p-0.5">{order.color}</td>
+                <td className="border border-black p-0.5 text-center">{order.size}</td>
+                <td className="border border-black p-0.5 text-center">{order.quantity}</td>
+                <td className="border border-black p-0.5 text-center">
+                    <Checkbox className="mx-auto" checked={order.design?.left || false} onCheckedChange={(checked) => handleDesignChange(index, 'left', !!checked)} />
                 </td>
-                <td className="border border-black p-1 text-center">
-                   <Checkbox className="mx-auto" checked={order.design?.right} onCheckedChange={(checked) => handleDesignChange(index, 'right', !!checked)} />
+                <td className="border border-black p-0.5 text-center">
+                   <Checkbox className="mx-auto" checked={order.design?.right || false} onCheckedChange={(checked) => handleDesignChange(index, 'right', !!checked)} />
                 </td>
-                <td className="border border-black p-1 text-center">
-                  <Checkbox className="mx-auto" checked={order.design?.backLogo} onCheckedChange={(checked) => handleDesignChange(index, 'backLogo', !!checked)} />
+                <td className="border border-black p-0.5 text-center">
+                  <Checkbox className="mx-auto" checked={order.design?.backLogo || false} onCheckedChange={(checked) => handleDesignChange(index, 'backLogo', !!checked)} />
                 </td>
-                <td className="border border-black p-1 text-center">
-                  <Checkbox className="mx-auto" checked={order.design?.backText} onCheckedChange={(checked) => handleDesignChange(index, 'backText', !!checked)} />
+                <td className="border border-black p-0.5 text-center">
+                  <Checkbox className="mx-auto" checked={order.design?.backText || false} onCheckedChange={(checked) => handleDesignChange(index, 'backText', !!checked)} />
                 </td>
-                <td className="border border-black p-1">
+                <td className="border border-black p-0.5">
                   <Textarea
                     value={order.remarks || ''}
                     onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
-                    className="text-xs no-print p-1 min-h-0 h-auto"
+                    className="text-xs no-print p-1 min-h-[2rem] h-auto"
                     placeholder="Add remarks..."
                   />
                    <p className="print-only text-xs">{order.remarks}</p>
@@ -347,8 +347,8 @@ export default function JobOrderPage() {
           </tbody>
         </table>
 
-        <div className="text-xs mb-4">
-            <p><strong>Note:</strong> Specific details for logo and back text on the next page</p>
+        <div className="text-xs mb-6">
+            <p className="text-xs mb-2"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
         </div>
 
         <div className="grid grid-cols-2 gap-x-16 gap-y-10 text-xs">
