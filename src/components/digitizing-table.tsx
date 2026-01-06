@@ -29,6 +29,24 @@ import { cn } from '@/lib/utils';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
+
+type NamedOrder = {
+  name: string;
+  color: string;
+  size: string;
+  quantity: number;
+  backText: string;
+};
+
+type Layout = {
+  layoutImage?: string;
+  dstLogoLeft?: string;
+  dstLogoRight?: string;
+  dstBackLogo?: string;
+  dstBackText?: string;
+  namedOrders?: NamedOrder[];
+};
 
 type Lead = {
   id: string;
@@ -46,6 +64,7 @@ type Lead = {
   isRevision?: boolean;
   isFinalApproval?: boolean;
   isFinalProgram?: boolean;
+  layouts?: Layout[];
 }
 
 export function DigitizingTable() {
@@ -230,6 +249,7 @@ export function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle text-center">Revision</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Final Approval</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Final Program</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Details</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -239,19 +259,7 @@ export function DigitizingTable() {
                   <React.Fragment key={lead.id}>
                     <TableRow>
                       <TableCell className="font-medium text-xs align-middle py-2 text-black">
-                         <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleLeadDetails(lead.id)}
-                          className="h-8 px-2 text-black hover:bg-gray-200 -ml-2"
-                        >
-                          {lead.customerName}
-                          {openLeadId === lead.id ? (
-                            <ChevronUp className="h-4 w-4 ml-1" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4 ml-1" />
-                          )}
-                        </Button>
+                        {lead.customerName}
                       </TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
                       <TableCell className="align-middle py-2">
@@ -305,25 +313,83 @@ export function DigitizingTable() {
                             onCheckedChange={(checked) => handleStatusChange(lead.id, 'isFinalProgram', !!checked)}
                           />
                         </TableCell>
+                        <TableCell className="text-center align-middle py-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleLeadDetails(lead.id)}
+                            className="h-8 px-2 text-black hover:bg-gray-200"
+                          >
+                            View
+                            {openLeadId === lead.id ? (
+                              <ChevronUp className="h-4 w-4 ml-1" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 ml-1" />
+                            )}
+                          </Button>
+                      </TableCell>
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={11} className="p-0">
-                          <div className="p-4 bg-gray-100">
-                             <div className="grid grid-cols-3 gap-4 text-xs">
-                                <div>
-                                    <p className="font-semibold text-gray-500">Company Name</p>
-                                    <p className="text-black">{lead.companyName === '-' ? 'N/A' : lead.companyName}</p>
-                                </div>
-                                <div>
-                                    <p className="font-semibold text-gray-500">Mobile No.</p>
-                                    <p className="text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <p className="font-semibold text-gray-500">Landline No.</p>
-                                    <p className="text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : 'N/A'}</p>
-                                </div>
-                            </div>
+                        <TableCell colSpan={12} className="p-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {(lead.layouts || []).map((layout, index) => (
+                              <Card key={index} className="bg-white">
+                                <CardHeader>
+                                  <CardTitle className="text-base">Layout {index + 1}</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4 text-xs">
+                                  {layout.layoutImage && (
+                                    <div>
+                                      <p className="font-semibold text-gray-500 mb-2">Layout Image</p>
+                                      <Image src={layout.layoutImage} alt={`Layout ${index + 1}`} width={200} height={150} className="rounded-md border" />
+                                    </div>
+                                  )}
+                                  
+                                  <div className="grid grid-cols-2 gap-4">
+                                     <div>
+                                      <p className="font-semibold text-gray-500">DST Logo Left</p>
+                                      <p className="text-black whitespace-pre-wrap">{layout.dstLogoLeft || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold text-gray-500">DST Logo Right</p>
+                                      <p className="text-black whitespace-pre-wrap">{layout.dstLogoRight || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold text-gray-500">DST Back Logo</p>
+                                      <p className="text-black whitespace-pre-wrap">{layout.dstBackLogo || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold text-gray-500">DST Back Text</p>
+                                      <p className="text-black whitespace-pre-wrap">{layout.dstBackText || 'N/A'}</p>
+                                    </div>
+                                  </div>
+
+                                  {layout.namedOrders && layout.namedOrders.length > 0 && (
+                                    <div>
+                                      <p className="font-semibold text-gray-500 mt-4 mb-2">Named Orders</p>
+                                      <Table>
+                                        <TableHeader>
+                                          <TableRow>
+                                            <TableHead className="p-1 text-xs">Name</TableHead>
+                                            <TableHead className="p-1 text-xs">Back Text</TableHead>
+                                          </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                          {layout.namedOrders.map((namedOrder, i) => (
+                                            <TableRow key={i}>
+                                              <TableCell className="p-1 text-xs">{namedOrder.name}</TableCell>
+                                              <TableCell className="p-1 text-xs">{namedOrder.backText}</TableCell>
+                                            </TableRow>
+                                          ))}
+                                        </TableBody>
+                                      </Table>
+                                    </div>
+                                  )}
+
+                                </CardContent>
+                              </Card>
+                            ))}
                           </div>
                         </TableCell>
                       </TableRow>
