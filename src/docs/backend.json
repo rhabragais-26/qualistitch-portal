@@ -126,14 +126,23 @@
                 "type": ["string", "null"],
                 "description": "Data URL of the uploaded layout image."
               },
-              "logoImage": {
+              "logoLeftImage": {
                 "type": ["string", "null"],
-                "description": "Data URL of the uploaded logo image for Initial Program."
+                "description": "Data URL of the uploaded left logo image for Initial Program."
               },
-              "logoImageUploadTime": {
+              "logoLeftImageUploadTime": {
                 "type": ["string", "null"],
                 "format": "date-time",
-                "description": "Timestamp for Initial Program logo upload."
+                "description": "Timestamp for Initial Program left logo upload."
+              },
+              "logoRightImage": {
+                "type": ["string", "null"],
+                "description": "Data URL of the uploaded right logo image for Initial Program."
+              },
+              "logoRightImageUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for Initial Program right logo upload."
               },
               "backDesignImage": {
                 "type": ["string", "null"],
@@ -144,14 +153,23 @@
                 "format": "date-time",
                 "description": "Timestamp for Initial Program back design upload."
               },
-              "testLogoImage": {
+              "testLogoLeftImage": {
                 "type": ["string", "null"],
-                "description": "Data URL of the uploaded logo image for Test."
+                "description": "Data URL of the uploaded left logo image for Test."
               },
-              "testLogoImageUploadTime": {
+              "testLogoLeftImageUploadTime": {
                 "type": ["string", "null"],
                 "format": "date-time",
-                "description": "Timestamp for Test logo upload."
+                "description": "Timestamp for Test left logo upload."
+              },
+              "testLogoRightImage": {
+                "type": ["string", "null"],
+                "description": "Data URL of the uploaded right logo image for Test."
+              },
+              "testLogoRightImageUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for Test right logo upload."
               },
               "testBackDesignImage": {
                 "type": ["string", "null"],

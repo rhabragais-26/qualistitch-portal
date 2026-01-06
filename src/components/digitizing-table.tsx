@@ -52,12 +52,16 @@ type Layout = {
   dstBackLogo?: string;
   dstBackText?: string;
   namedOrders?: NamedOrder[];
-  logoImage?: string | null;
-  logoImageUploadTime?: string | null;
+  logoLeftImage?: string | null;
+  logoLeftImageUploadTime?: string | null;
+  logoRightImage?: string | null;
+  logoRightImageUploadTime?: string | null;
   backDesignImage?: string | null;
   backDesignImageUploadTime?: string | null;
-  testLogoImage?: string | null;
-  testLogoImageUploadTime?: string | null;
+  testLogoLeftImage?: string | null;
+  testLogoLeftImageUploadTime?: string | null;
+  testLogoRightImage?: string | null;
+  testLogoRightImageUploadTime?: string | null;
   testBackDesignImage?: string | null;
   testBackDesignImageUploadTime?: string | null;
   finalLogoEmb?: string | null;
@@ -87,7 +91,7 @@ type Lead = {
   isLogoTesting?: boolean;
   isRevision?: boolean;
   isFinalApproval?: boolean;
-  isFinalProgram?: boolean;
+isFinalProgram?: boolean;
   layouts?: Layout[];
 }
 
@@ -108,9 +112,11 @@ export function DigitizingTable() {
   const [uploadLeadId, setUploadLeadId] = React.useState<string | null>(null);
   const [uploadField, setUploadField] = React.useState<CheckboxField | null>(null);
   
-  const [logoImage, setLogoImage] = React.useState<string>('');
+  const [logoLeftImage, setLogoLeftImage] = React.useState<string>('');
+  const [logoRightImage, setLogoRightImage] = React.useState<string>('');
   const [backDesignImage, setBackDesignImage] = React.useState<string>('');
-  const logoImageUploadRef = React.useRef<HTMLInputElement>(null);
+  const logoLeftImageUploadRef = React.useRef<HTMLInputElement>(null);
+  const logoRightImageUploadRef = React.useRef<HTMLInputElement>(null);
   const backDesignImageUploadRef = React.useRef<HTMLInputElement>(null);
 
   const [finalLogoEmb, setFinalLogoEmb] = React.useState<string>('');
@@ -141,11 +147,13 @@ export function DigitizingTable() {
       setUploadField(field);
 
       if (field === 'isUnderProgramming') {
-        setLogoImage(lead?.layouts?.[0]?.logoImage || '');
+        setLogoLeftImage(lead?.layouts?.[0]?.logoLeftImage || '');
+        setLogoRightImage(lead?.layouts?.[0]?.logoRightImage || '');
         setBackDesignImage(lead?.layouts?.[0]?.backDesignImage || '');
         setIsUploadDialogOpen(true);
       } else if (field === 'isLogoTesting') {
-        setLogoImage(lead?.layouts?.[0]?.testLogoImage || '');
+        setLogoLeftImage(lead?.layouts?.[0]?.testLogoLeftImage || '');
+        setLogoRightImage(lead?.layouts?.[0]?.testLogoRightImage || '');
         setBackDesignImage(lead?.layouts?.[0]?.testBackDesignImage || '');
         setIsUploadDialogOpen(true);
       } else if (field === 'isFinalProgram') {
@@ -176,8 +184,10 @@ export function DigitizingTable() {
         const existingLayout = currentLayouts[0] || {};
         updatedFirstLayout = {
             ...existingLayout,
-            logoImage: logoImage || null,
-            logoImageUploadTime: logoImage ? (existingLayout.logoImage === logoImage ? existingLayout.logoImageUploadTime : now) : null,
+            logoLeftImage: logoLeftImage || null,
+            logoLeftImageUploadTime: logoLeftImage ? (existingLayout.logoLeftImage === logoLeftImage ? existingLayout.logoLeftImageUploadTime : now) : null,
+            logoRightImage: logoRightImage || null,
+            logoRightImageUploadTime: logoRightImage ? (existingLayout.logoRightImage === logoRightImage ? existingLayout.logoRightImageUploadTime : now) : null,
             backDesignImage: backDesignImage || null,
             backDesignImageUploadTime: backDesignImage ? (existingLayout.backDesignImage === backDesignImage ? existingLayout.backDesignImageUploadTime : now) : null,
         };
@@ -185,8 +195,10 @@ export function DigitizingTable() {
         const existingLayout = currentLayouts[0] || {};
         updatedFirstLayout = {
             ...existingLayout,
-            testLogoImage: logoImage || null,
-            testLogoImageUploadTime: logoImage ? (existingLayout.testLogoImage === logoImage ? existingLayout.testLogoImageUploadTime : now) : null,
+            testLogoLeftImage: logoLeftImage || null,
+            testLogoLeftImageUploadTime: logoLeftImage ? (existingLayout.testLogoLeftImage === logoLeftImage ? existingLayout.testLogoLeftImageUploadTime : now) : null,
+            testLogoRightImage: logoRightImage || null,
+            testLogoRightImageUploadTime: logoRightImage ? (existingLayout.testLogoRightImage === logoRightImage ? existingLayout.testLogoRightImageUploadTime : now) : null,
             testBackDesignImage: backDesignImage || null,
             testBackDesignImageUploadTime: backDesignImage ? (existingLayout.testBackDesignImage === backDesignImage ? existingLayout.testBackDesignImageUploadTime : now) : null,
         };
@@ -233,7 +245,8 @@ export function DigitizingTable() {
 
       await updateStatus(uploadLeadId, uploadField, true, false);
       
-      setLogoImage('');
+      setLogoLeftImage('');
+      setLogoRightImage('');
       setBackDesignImage('');
       setFinalLogoEmb('');
       setFinalBackDesignEmb('');
@@ -300,7 +313,7 @@ export function DigitizingTable() {
     }
   };
 
-  const handleImagePaste = (event: React.ClipboardEvent<HTMLDivElement>, imageType: 'logo' | 'backDesign') => {
+  const handleImagePaste = (event: React.ClipboardEvent<HTMLDivElement>, imageSetter: React.Dispatch<React.SetStateAction<string>>) => {
     const items = event.clipboardData.items;
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf('image') !== -1) {
@@ -309,11 +322,7 @@ export function DigitizingTable() {
           const reader = new FileReader();
           reader.onload = (e) => {
             if (e.target?.result) {
-              if (imageType === 'logo') {
-                setLogoImage(e.target.result as string);
-              } else {
-                setBackDesignImage(e.target.result as string);
-              }
+              imageSetter(e.target.result as string);
             }
           };
           reader.readAsDataURL(blob);
@@ -431,17 +440,24 @@ export function DigitizingTable() {
           <DialogHeader>
             <DialogTitle>{uploadField === 'isLogoTesting' ? 'Upload Actual Tested Image' : 'Upload Program Files'}</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-6 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4">
             <div className="space-y-2">
-              <Label>Logo</Label>
-              <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, 'logo')} onDoubleClick={() => logoImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                {logoImage ? (<> <Image src={logoImage} alt="Logo" layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setLogoImage)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                <input type="file" accept="image/*" ref={logoImageUploadRef} onChange={(e) => handleFileUpload(e, setLogoImage)} className="hidden" />
+              <Label>Logo Left</Label>
+              <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setLogoLeftImage)} onDoubleClick={() => logoLeftImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                {logoLeftImage ? (<> <Image src={logoLeftImage} alt="Logo Left" layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setLogoLeftImage)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
+                <input type="file" accept="image/*" ref={logoLeftImageUploadRef} onChange={(e) => handleFileUpload(e, setLogoLeftImage)} className="hidden" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Logo Right</Label>
+              <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setLogoRightImage)} onDoubleClick={() => logoRightImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                {logoRightImage ? (<> <Image src={logoRightImage} alt="Logo Right" layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setLogoRightImage)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
+                <input type="file" accept="image/*" ref={logoRightImageUploadRef} onChange={(e) => handleFileUpload(e, setLogoRightImage)} className="hidden" />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Back Design</Label>
-              <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, 'backDesign')} onDoubleClick={() => backDesignImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+              <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setBackDesignImage)} onDoubleClick={() => backDesignImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                 {backDesignImage ? (<> <Image src={backDesignImage} alt="Back Design" layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setBackDesignImage)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                 <input type="file" accept="image/*" ref={backDesignImageUploadRef} onChange={(e) => handleFileUpload(e, setBackDesignImage)} className="hidden" />
               </div>
@@ -449,7 +465,7 @@ export function DigitizingTable() {
           </div>
           <DialogFooter>
             <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-            <Button type="button" onClick={handleUploadDialogSave} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white" disabled={!logoImage && !backDesignImage}>Save and Continue</Button>
+            <Button type="button" onClick={handleUploadDialogSave} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white" disabled={!logoLeftImage && !logoRightImage && !backDesignImage}>Save and Continue</Button>
           </DialogFooter>
         </>
       );
@@ -543,7 +559,8 @@ export function DigitizingTable() {
 
        <Dialog open={isUploadDialogOpen} onOpenChange={(isOpen) => {
         if (!isOpen) {
-            setLogoImage('');
+            setLogoLeftImage('');
+            setLogoRightImage('');
             setBackDesignImage('');
             setFinalLogoEmb('');
             setFinalBackDesignEmb('');
@@ -738,20 +755,22 @@ export function DigitizingTable() {
                       <TableRow className="bg-gray-50">
                         <TableCell colSpan={12} className="p-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {(lead.layouts?.[0]?.logoImage || lead.layouts?.[0]?.backDesignImage) && (
+                                {(lead.layouts?.[0]?.logoLeftImage || lead.layouts?.[0]?.logoRightImage || lead.layouts?.[0]?.backDesignImage) && (
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Initial Program Images</CardTitle></CardHeader>
-                                        <CardContent className="grid grid-cols-2 gap-4 text-xs">
-                                            {lead.layouts?.[0]?.logoImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].logoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoImageUploadTime).dateTime}</p>}</div>)}
+                                        <CardContent className="flex flex-wrap gap-4 text-xs">
+                                            {lead.layouts?.[0]?.logoLeftImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo Left</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].logoLeftImage} alt="Initial Program Logo Left" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].logoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoLeftImageUploadTime).dateTime}</p>}</div>)}
+                                            {lead.layouts?.[0]?.logoRightImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo Right</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].logoRightImage} alt="Initial Program Logo Right" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].logoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoRightImageUploadTime).dateTime}</p>}</div>)}
                                             {lead.layouts?.[0]?.backDesignImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Back Design</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}</div>)}
                                         </CardContent>
                                     </Card>
                                 )}
-                                 {(lead.layouts?.[0]?.testLogoImage || lead.layouts?.[0]?.testBackDesignImage) && (
+                                 {(lead.layouts?.[0]?.testLogoLeftImage || lead.layouts?.[0]?.testLogoRightImage || lead.layouts?.[0]?.testBackDesignImage) && (
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Test Images</CardTitle></CardHeader>
-                                        <CardContent className="grid grid-cols-2 gap-4 text-xs">
-                                            {lead.layouts?.[0]?.testLogoImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].testLogoImage} alt="Test Logo" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].testLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoImageUploadTime).dateTime}</p>}</div>)}
+                                        <CardContent className="flex flex-wrap gap-4 text-xs">
+                                            {lead.layouts?.[0]?.testLogoLeftImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo Left</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].testLogoLeftImage} alt="Test Logo Left" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].testLogoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoLeftImageUploadTime).dateTime}</p>}</div>)}
+                                            {lead.layouts?.[0]?.testLogoRightImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo Right</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].testLogoRightImage} alt="Test Logo Right" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].testLogoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoRightImageUploadTime).dateTime}</p>}</div>)}
                                             {lead.layouts?.[0]?.testBackDesignImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Back Design</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}</div>)}
                                         </CardContent>
                                     </Card>
