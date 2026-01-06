@@ -178,14 +178,11 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
                         Stock Quantity
                       </FormLabel>
                       <div className="flex items-center gap-2">
-                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => field.onChange(Math.max(0, field.value - 1))} disabled={field.value <= 0}>
-                            <Minus className="h-4 w-4" />
-                        </Button>
                         <FormControl>
                           <Input
                             type="number"
                             {...field}
-                            className="w-20 text-center"
+                            className="w-24 text-center"
                             onChange={(e) => {
                                 const value = e.target.value;
                                 if (value === '' || /^[0-9\b]+$/.test(value)) {
@@ -199,9 +196,6 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
                             }}
                           />
                         </FormControl>
-                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => field.onChange(field.value + 1)}>
-                            <Plus className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                     <FormMessage />
