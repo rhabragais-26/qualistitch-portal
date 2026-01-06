@@ -59,6 +59,16 @@ const productTypes = [
   'Polo Shirt (Cotton Blend)',
 ];
 
+const jacketColors = [
+  'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
+  'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
+  'Army Green',
+];
+
+const poloShirtColors = [
+    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Slate Blue', 'Emerald Green', 'Golden Yellow', 'Yellow', 'Orange', 'Dark Green', 'Green', 'Light Green', 'Pink', 'Fuchsia', 'Sky Blue', 'Oatmeal', 'Cream', 'Purple', 'Gold', 'Brown'
+];
+
 const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
 const statusOptions = ['All Statuses', 'In Stock', 'Low Stock', 'Need to Reorder'];
@@ -84,14 +94,12 @@ export function InventorySummaryTable() {
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
 
   const availableColors = React.useMemo(() => {
-    if (!inventoryItems) return [];
-    
-    let itemsToConsider = inventoryItems;
-    if (productTypeFilter !== 'All') {
-      itemsToConsider = inventoryItems.filter(item => item.productType === productTypeFilter);
+    if (productTypeFilter === 'All') {
+      if (!inventoryItems) return [];
+      return [...new Set(inventoryItems.map(item => item.color))].sort();
     }
-    
-    return [...new Set(itemsToConsider.map(item => item.color))].sort();
+    const isPolo = productTypeFilter.includes('Polo Shirt');
+    return isPolo ? poloShirtColors : jacketColors;
   }, [inventoryItems, productTypeFilter]);
 
   React.useEffect(() => {
