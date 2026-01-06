@@ -146,6 +146,8 @@ export default function JobOrderPage() {
 
   const deliveryDate = addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+  const currentYear = new Date().getFullYear().toString().slice(-2);
+  const joNumber = `QSBP-${currentYear}-`;
   
   const getContactDisplay = () => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
@@ -170,8 +172,8 @@ export default function JobOrderPage() {
         </Button>
       </div>
       <div className="p-10 mx-auto max-w-4xl printable-area">
-        <div className="text-right mb-4">
-            <p className="font-bold inline-block">JO No.</p>
+        <div className="text-left mb-4">
+            <p className="font-bold inline-block">JO No. {joNumber}______</p>
         </div>
         <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
@@ -275,13 +277,13 @@ export default function JobOrderPage() {
             <div className="space-y-1">
                 <p>Prepared by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">{lead.salesRepresentative.toUpperCase()}</p>
-                <p className="text-center font-semibold">Customer Service Representative</p>
+                <p className="text-center font-bold">Customer Service Representative</p>
                 <p className="text-center">(Name & Signature, Date)</p>
             </div>
              <div className="space-y-1">
                 <p>Noted by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">MYREZA BANAWON</p>
-                <p className="text-center font-semibold">Sales Head</p>
+                <p className="text-center font-bold">Sales Head</p>
                 <p className="text-center">(Name & Signature, Date)</p>
             </div>
 
@@ -293,38 +295,38 @@ export default function JobOrderPage() {
 
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
-                <p className="text-center">(Name & Signature, Date)</p>
                 <p className="text-center font-semibold">Programming</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
-                <p className="text-center">(Name & Signature, Date)</p>
                 <p className="text-center font-semibold">Inventory</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
-                <p className="text-center">(Name & Signature, Date)</p>
                 <p className="text-center font-semibold">Production Line Leader</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
-                <p className="text-center">(Name & Signature, Date)</p>
                 <p className="text-center font-semibold">Production Supervisor</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
              <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
-                <p className="text-center">(Name & Signature, Date)</p>
                 <p className="text-center font-semibold">Quality Control</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
-                <p className="text-center">(Name & Signature, Date)</p>
                 <p className="text-center font-semibold">Logistics</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
              <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
                 <p className="pt-8 border-b border-black"></p>
-                <p className="text-center">(Name & Signature, Date)</p>
                 <p className="text-center font-semibold">Operations Supervisor</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
         </div>
 
