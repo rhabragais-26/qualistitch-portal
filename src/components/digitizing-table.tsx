@@ -21,8 +21,9 @@ import {
 import { Skeleton } from './ui/skeleton';
 import React from 'react';
 import { Input } from './ui/input';
-import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Button } from './ui/button';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
@@ -42,6 +43,7 @@ export function DigitizingTable() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [csrFilter, setCsrFilter] = React.useState('All');
+  const [openLeadId, setOpenLeadId] = React.useState<string | null>(null);
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -49,6 +51,10 @@ export function DigitizingTable() {
   }, [firestore, user]);
 
   const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
+
+  const toggleLeadDetails = (leadId: string) => {
+    setOpenLeadId(openLeadId === leadId ? null : leadId);
+  };
 
   const filteredLeads = React.useMemo(() => {
     if (!leads) return [];
@@ -130,28 +136,58 @@ export function DigitizingTable() {
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
-                    <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Company Name</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle">CSR</TableHead>
                     <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {filteredLeads.map((lead) => {
-                    return (
-                    <TableRow key={lead.id}>
-                        <TableCell className="font-medium text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
-                        <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
+                {filteredLeads.map((lead) => (
+                  <React.Fragment key={lead.id}>
+                    <TableRow>
+                      <TableCell className="font-medium text-xs align-middle py-2 text-black">
+                         <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleLeadDetails(lead.id)}
+                          className="h-8 px-2 text-black hover:bg-gray-200 -ml-2"
+                        >
+                          {lead.customerName}
+                          {openLeadId === lead.id ? (
+                            <ChevronUp className="h-4 w-4 ml-1" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 ml-1" />
+                          )}
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
+                      <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                     </TableRow>
-                    );
-                })}
-                </TableBody>
+                    {openLeadId === lead.id && (
+                      <TableRow className="bg-gray-50">
+                        <TableCell colSpan={3} className="p-0">
+                          <div className="p-4 bg-gray-100">
+                             <div className="grid grid-cols-3 gap-4 text-xs">
+                                <div>
+                                    <p className="font-semibold text-gray-500">Company Name</p>
+                                    <p className="text-black">{lead.companyName === '-' ? 'N/A' : lead.companyName}</p>
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-gray-500">Mobile No.</p>
+                                    <p className="text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-gray-500">Landline No.</p>
+                                    <p className="text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : 'N/A'}</p>
+                                </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                ))}
+              </TableBody>
             </Table>
           </div>
         )}
