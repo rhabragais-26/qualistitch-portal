@@ -261,21 +261,23 @@ export default function JobOrderPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <div className="fixed top-4 right-4 no-print flex gap-2">
-        <Button onClick={handleClose} variant="outline">
-          <X className="mr-2 h-4 w-4" />
-          Close
-        </Button>
-        <Button onClick={handleSaveChanges} className="text-white font-bold">
-          <Save className="mr-2 h-4 w-4" />
-          Save Changes
-        </Button>
-        <Button onClick={handlePrint} className="text-white font-bold" disabled={!lead?.joNumber}>
-          <Printer className="mr-2 h-4 w-4" />
-          Print J.O.
-        </Button>
-      </div>
-      <div className="p-10 mx-auto max-w-4xl printable-area">
+      <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md">
+        <div className="flex justify-end gap-2 container mx-auto max-w-4xl">
+            <Button onClick={handleClose} variant="outline">
+            <X className="mr-2 h-4 w-4" />
+            Close
+            </Button>
+            <Button onClick={handleSaveChanges} className="text-white font-bold">
+            <Save className="mr-2 h-4 w-4" />
+            Save Changes
+            </Button>
+            <Button onClick={handlePrint} className="text-white font-bold" disabled={!lead?.joNumber}>
+            <Printer className="mr-2 h-4 w-4" />
+            Print J.O.
+            </Button>
+        </div>
+      </header>
+      <div className="p-10 mx-auto max-w-4xl printable-area mt-16">
         <div className="text-left mb-4">
             <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{lead.joNumber ? joNumber : 'Not Saved'}</span></p>
         </div>
@@ -472,8 +474,16 @@ export default function JobOrderPage() {
       </div>
       <style jsx global>{`
         @media print {
-          .no-print {
+          body {
+            background-color: #fff !important;
+          }
+          .no-print, header {
             display: none !important;
+          }
+          .printable-area {
+            margin-top: 0 !important;
+            padding: 0 !important;
+            max-width: 100% !important;
           }
           .print-only {
             display: block !important;
@@ -499,6 +509,8 @@ export default function JobOrderPage() {
     
 
     
+    
+
     
 
     
