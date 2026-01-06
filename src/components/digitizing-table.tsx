@@ -58,6 +58,14 @@ type Layout = {
   testLogoImageUploadTime?: string | null;
   testBackDesignImage?: string | null;
   testBackDesignImageUploadTime?: string | null;
+  finalLogoEmb?: string | null;
+  finalLogoEmbUploadTime?: string | null;
+  finalBackDesignEmb?: string | null;
+  finalBackDesignEmbUploadTime?: string | null;
+  finalLogoDst?: string | null;
+  finalLogoDstUploadTime?: string | null;
+  finalBackDesignDst?: string | null;
+  finalBackDesignDstUploadTime?: string | null;
 };
 
 type Lead = {
@@ -95,10 +103,20 @@ export function DigitizingTable() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = React.useState(false);
   const [uploadLeadId, setUploadLeadId] = React.useState<string | null>(null);
   const [uploadField, setUploadField] = React.useState<CheckboxField | null>(null);
+  
   const [logoImage, setLogoImage] = React.useState<string>('');
   const [backDesignImage, setBackDesignImage] = React.useState<string>('');
   const logoImageUploadRef = React.useRef<HTMLInputElement>(null);
   const backDesignImageUploadRef = React.useRef<HTMLInputElement>(null);
+
+  const [finalLogoEmb, setFinalLogoEmb] = React.useState<string>('');
+  const [finalBackDesignEmb, setFinalBackDesignEmb] = React.useState<string>('');
+  const [finalLogoDst, setFinalLogoDst] = React.useState<string>('');
+  const [finalBackDesignDst, setFinalBackDesignDst] = React.useState<string>('');
+  const finalLogoEmbUploadRef = React.useRef<HTMLInputElement>(null);
+  const finalBackDesignEmbUploadRef = React.useRef<HTMLInputElement>(null);
+  const finalLogoDstUploadRef = React.useRef<HTMLInputElement>(null);
+  const finalBackDesignDstUploadRef = React.useRef<HTMLInputElement>(null);
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -111,21 +129,26 @@ export function DigitizingTable() {
     if (!checked) {
       setUncheckConfirmation({ leadId, field });
     } else {
-      if (field === 'isUnderProgramming' || field === 'isLogoTesting') {
-        const lead = leads?.find((l) => l.id === leadId);
-        setUploadLeadId(leadId);
-        setUploadField(field);
+      const lead = leads?.find((l) => l.id === leadId);
+      setUploadLeadId(leadId);
+      setUploadField(field);
 
-        if (field === 'isUnderProgramming') {
-          setLogoImage(lead?.layouts?.[0]?.logoImage || '');
-          setBackDesignImage(lead?.layouts?.[0]?.backDesignImage || '');
-        } else if (field === 'isLogoTesting') {
-          setLogoImage(lead?.layouts?.[0]?.testLogoImage || '');
-          setBackDesignImage(lead?.layouts?.[0]?.testBackDesignImage || '');
-        }
-
+      if (field === 'isUnderProgramming') {
+        setLogoImage(lead?.layouts?.[0]?.logoImage || '');
+        setBackDesignImage(lead?.layouts?.[0]?.backDesignImage || '');
         setIsUploadDialogOpen(true);
-      } else {
+      } else if (field === 'isLogoTesting') {
+        setLogoImage(lead?.layouts?.[0]?.testLogoImage || '');
+        setBackDesignImage(lead?.layouts?.[0]?.testBackDesignImage || '');
+        setIsUploadDialogOpen(true);
+      } else if (field === 'isFinalProgram') {
+        setFinalLogoEmb(lead?.layouts?.[0]?.finalLogoEmb || '');
+        setFinalBackDesignEmb(lead?.layouts?.[0]?.finalBackDesignEmb || '');
+        setFinalLogoDst(lead?.layouts?.[0]?.finalLogoDst || '');
+        setFinalBackDesignDst(lead?.layouts?.[0]?.finalBackDesignDst || '');
+        setIsUploadDialogOpen(true);
+      }
+      else {
         updateStatus(leadId, field, true);
       }
     }
@@ -159,7 +182,21 @@ export function DigitizingTable() {
             testBackDesignImage: backDesignImage || null,
             testBackDesignImageUploadTime: backDesignImage ? (existingLayout.testBackDesignImage === backDesignImage ? existingLayout.testBackDesignImageUploadTime : now) : null,
         };
-    } else {
+    } else if (uploadField === 'isFinalProgram') {
+      const existingLayout = currentLayouts[0] || {};
+      updatedFirstLayout = {
+          ...existingLayout,
+          finalLogoEmb: finalLogoEmb || null,
+          finalLogoEmbUploadTime: finalLogoEmb ? (existingLayout.finalLogoEmb === finalLogoEmb ? existingLayout.finalLogoEmbUploadTime : now) : null,
+          finalBackDesignEmb: finalBackDesignEmb || null,
+          finalBackDesignEmbUploadTime: finalBackDesignEmb ? (existingLayout.finalBackDesignEmb === finalBackDesignEmb ? existingLayout.finalBackDesignEmbUploadTime : now) : null,
+          finalLogoDst: finalLogoDst || null,
+          finalLogoDstUploadTime: finalLogoDst ? (existingLayout.finalLogoDst === finalLogoDst ? existingLayout.finalLogoDstUploadTime : now) : null,
+          finalBackDesignDst: finalBackDesignDst || null,
+          finalBackDesignDstUploadTime: finalBackDesignDst ? (existingLayout.finalBackDesignDst === finalBackDesignDst ? existingLayout.finalBackDesignDstUploadTime : now) : null,
+      };
+    }
+     else {
         return;
     }
     
@@ -175,6 +212,10 @@ export function DigitizingTable() {
       
       setLogoImage('');
       setBackDesignImage('');
+      setFinalLogoEmb('');
+      setFinalBackDesignEmb('');
+      setFinalLogoDst('');
+      setFinalBackDesignDst('');
       setIsUploadDialogOpen(false);
       setUploadLeadId(null);
       setUploadField(null);
@@ -223,13 +264,15 @@ export function DigitizingTable() {
 
     try {
       await updateDoc(leadDocRef, updateData);
-    } catch (e: any) {
+    } catch (e) {
       console.error('Error updating status:', e);
-      toast({
-        variant: 'destructive',
-        title: 'Update Failed',
-        description: e.message || 'Could not update the status.',
-      });
+      if (e instanceof Error) {
+        toast({
+          variant: 'destructive',
+          title: 'Update Failed',
+          description: e.message || 'Could not update the status.',
+        });
+      }
     }
   };
 
@@ -255,30 +298,22 @@ export function DigitizingTable() {
     }
   };
 
-  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>, imageType: 'logo' | 'backDesign') => {
+  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>, fileSetter: React.Dispatch<React.SetStateAction<string>>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result) {
-           if (imageType === 'logo') {
-            setLogoImage(e.target.result as string);
-          } else {
-            setBackDesignImage(e.target.result as string);
-          }
+           fileSetter(e.target.result as string);
         }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleRemoveImage = (e: React.MouseEvent, imageType: 'logo' | 'backDesign') => {
+  const handleRemoveImage = (e: React.MouseEvent, imageSetter: React.Dispatch<React.SetStateAction<string>>) => {
     e.stopPropagation();
-    if (imageType === 'logo') {
-      setLogoImage('');
-    } else {
-      setBackDesignImage('');
-    }
+    imageSetter('');
   };
 
 
@@ -339,6 +374,84 @@ export function DigitizingTable() {
 
   const isLoading = isAuthLoading || isLeadsLoading;
 
+  const renderUploadDialogContent = () => {
+    if (uploadField === 'isUnderProgramming' || uploadField === 'isLogoTesting') {
+      return (
+        <>
+          <DialogHeader>
+            <DialogTitle>{uploadField === 'isLogoTesting' ? 'Upload Actual Tested Image' : 'Upload Program Files'}</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-6 py-4">
+            <div className="space-y-2">
+              <Label>Logo</Label>
+              <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, 'logo')} onDoubleClick={() => logoImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                {logoImage ? (<> <Image src={logoImage} alt="Logo" layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setLogoImage)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
+                <input type="file" accept="image/*" ref={logoImageUploadRef} onChange={(e) => handleFileUpload(e, setLogoImage)} className="hidden" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Back Design</Label>
+              <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, 'backDesign')} onDoubleClick={() => backDesignImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                {backDesignImage ? (<> <Image src={backDesignImage} alt="Back Design" layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setBackDesignImage)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
+                <input type="file" accept="image/*" ref={backDesignImageUploadRef} onChange={(e) => handleFileUpload(e, setBackDesignImage)} className="hidden" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+            <Button type="button" onClick={handleUploadDialogSave} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white" disabled={!logoImage && !backDesignImage}>Save and Continue</Button>
+          </DialogFooter>
+        </>
+      );
+    }
+    if (uploadField === 'isFinalProgram') {
+      return (
+         <>
+          <DialogHeader>
+            <DialogTitle>Upload Final Program Files</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-6 py-4">
+            {/* EMB Files */}
+            <div className="space-y-2">
+              <Label>Logo (EMB)</Label>
+              <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-40 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoEmbUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                {finalLogoEmb ? (<> <p className="text-sm truncate">{finalLogoEmb.split(',')[0].slice(5, 30)}...</p> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setFinalLogoEmb)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-8 w-8" /> <p className="text-xs">Upload EMB file</p> </div>)}
+                <input type="file" accept=".emb" ref={finalLogoEmbUploadRef} onChange={(e) => handleFileUpload(e, setFinalLogoEmb)} className="hidden" />
+              </div>
+            </div>
+             <div className="space-y-2">
+              <Label>Back Design (EMB)</Label>
+              <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-40 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignEmbUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                {finalBackDesignEmb ? (<> <p className="text-sm truncate">{finalBackDesignEmb.split(',')[0].slice(5, 30)}...</p> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setFinalBackDesignEmb)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-8 w-8" /> <p className="text-xs">Upload EMB file</p> </div>)}
+                <input type="file" accept=".emb" ref={finalBackDesignEmbUploadRef} onChange={(e) => handleFileUpload(e, setFinalBackDesignEmb)} className="hidden" />
+              </div>
+            </div>
+            {/* DST Files */}
+            <div className="space-y-2">
+              <Label>Logo (DST)</Label>
+              <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-40 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoDstUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                {finalLogoDst ? (<> <p className="text-sm truncate">{finalLogoDst.split(',')[0].slice(5, 30)}...</p> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setFinalLogoDst)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-8 w-8" /> <p className="text-xs">Upload DST file</p> </div>)}
+                <input type="file" accept=".dst" ref={finalLogoDstUploadRef} onChange={(e) => handleFileUpload(e, setFinalLogoDst)} className="hidden" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Back Design (DST)</Label>
+              <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-40 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignDstUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                {finalBackDesignDst ? (<> <p className="text-sm truncate">{finalBackDesignDst.split(',')[0].slice(5, 30)}...</p> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setFinalBackDesignDst)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-8 w-8" /> <p className="text-xs">Upload DST file</p> </div>)}
+                <input type="file" accept=".dst" ref={finalBackDesignDstUploadRef} onChange={(e) => handleFileUpload(e, setFinalBackDesignDst)} className="hidden" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+            <Button type="button" onClick={handleUploadDialogSave} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white" disabled={!finalLogoEmb && !finalBackDesignEmb && !finalLogoDst && !finalBackDesignDst}>Save and Continue</Button>
+          </DialogFooter>
+        </>
+      );
+    }
+    return null;
+  }
+
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
        <AlertDialog open={!!uncheckConfirmation} onOpenChange={(open) => !open && setUncheckConfirmation(null)}>
@@ -360,6 +473,10 @@ export function DigitizingTable() {
         if (!isOpen) {
             setLogoImage('');
             setBackDesignImage('');
+            setFinalLogoEmb('');
+            setFinalBackDesignEmb('');
+            setFinalLogoDst('');
+            setFinalBackDesignDst('');
             if (uploadLeadId && uploadField && isUploadDialogOpen) { // Check isUploadDialogOpen to prevent race condition
               const lead = leads?.find(l => l.id === uploadLeadId);
               if (lead) {
@@ -373,98 +490,7 @@ export function DigitizingTable() {
         setIsUploadDialogOpen(isOpen);
        }}>
         <DialogContent className="sm:max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>{uploadField === 'isLogoTesting' ? 'Upload Actual Tested Image' : 'Upload Program Files'}</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-6 py-4">
-            <div className="space-y-2">
-              <Label>Logo</Label>
-              <div
-                tabIndex={0}
-                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
-                onPaste={(e) => handleImagePaste(e, 'logo')}
-                onDoubleClick={() => logoImageUploadRef.current?.click()}
-                onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
-              >
-                {logoImage ? (
-                  <>
-                    <Image src={logoImage} alt="Logo" layout="fill" objectFit="contain" className="rounded-md" />
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                      onClick={(e) => handleRemoveImage(e, 'logo')}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <div className="text-gray-500">
-                    <Upload className="mx-auto h-12 w-12" />
-                    <p>Double-click to upload or paste image</p>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={logoImageUploadRef}
-                  onChange={(e) => handleImageUpload(e, 'logo')}
-                  className="hidden"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Back Design</Label>
-              <div
-                tabIndex={0}
-                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
-                onPaste={(e) => handleImagePaste(e, 'backDesign')}
-                onDoubleClick={() => backDesignImageUploadRef.current?.click()}
-                 onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
-              >
-                {backDesignImage ? (
-                  <>
-                    <Image src={backDesignImage} alt="Back Design" layout="fill" objectFit="contain" className="rounded-md" />
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                      onClick={(e) => handleRemoveImage(e, 'backDesign')}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <div className="text-gray-500">
-                    <Upload className="mx-auto h-12 w-12" />
-                    <p>Double-click to upload or paste image</p>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={backDesignImageUploadRef}
-                  onChange={(e) => handleImageUpload(e, 'backDesign')}
-                  className="hidden"
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </DialogClose>
-            <Button
-              type="button"
-              onClick={handleUploadDialogSave}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white"
-              disabled={!logoImage && !backDesignImage}
-            >
-              Save and Continue
-            </Button>
-          </DialogFooter>
+          {renderUploadDialogContent()}
         </DialogContent>
       </Dialog>
 
@@ -638,54 +664,36 @@ export function DigitizingTable() {
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
                         <TableCell colSpan={12} className="p-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {(lead.layouts?.[0]?.logoImage || lead.layouts?.[0]?.backDesignImage) && (
                                     <Card className="bg-white">
-                                        <CardHeader>
-                                            <CardTitle className="text-base">Initial Program Images</CardTitle>
-                                        </CardHeader>
+                                        <CardHeader><CardTitle className="text-base">Initial Program Images</CardTitle></CardHeader>
                                         <CardContent className="grid grid-cols-2 gap-4 text-xs">
-                                            {lead.layouts?.[0]?.logoImage && (
-                                                <div className="relative w-fit">
-                                                    <p className="font-semibold text-gray-500 mb-2">Logo</p>
-                                                    <Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" width={200} height={150} className="rounded-md border object-contain h-auto max-w-full" />
-                                                    {lead.layouts[0].logoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoImageUploadTime).dateTime}</p>}
-                                                </div>
-                                            )}
-                                            {lead.layouts?.[0]?.backDesignImage && (
-                                                <div className="relative w-fit">
-                                                    <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                                    <Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" width={200} height={150} className="rounded-md border object-contain h-auto max-w-full" />
-                                                     {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}
-                                                </div>
-                                            )}
+                                            {lead.layouts?.[0]?.logoImage && (<div className="relative w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo</p> <Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" width={200} height={150} className="rounded-md border object-contain h-auto max-w-full" /> {lead.layouts[0].logoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoImageUploadTime).dateTime}</p>}</div>)}
+                                            {lead.layouts?.[0]?.backDesignImage && (<div className="relative w-fit"> <p className="font-semibold text-gray-500 mb-2">Back Design</p> <Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" width={200} height={150} className="rounded-md border object-contain h-auto max-w-full" /> {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}</div>)}
                                         </CardContent>
                                     </Card>
                                 )}
                                  {(lead.layouts?.[0]?.testLogoImage || lead.layouts?.[0]?.testBackDesignImage) && (
                                     <Card className="bg-white">
-                                        <CardHeader>
-                                            <CardTitle className="text-base">Test Images</CardTitle>
-                                        </CardHeader>
+                                        <CardHeader><CardTitle className="text-base">Test Images</CardTitle></CardHeader>
                                         <CardContent className="grid grid-cols-2 gap-4 text-xs">
-                                            {lead.layouts?.[0]?.testLogoImage && (
-                                                <div className="relative w-fit">
-                                                    <p className="font-semibold text-gray-500 mb-2">Logo</p>
-                                                    <Image src={lead.layouts[0].testLogoImage} alt="Test Logo" width={200} height={150} className="rounded-md border object-contain h-auto max-w-full" />
-                                                    {lead.layouts[0].testLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoImageUploadTime).dateTime}</p>}
-                                                </div>
-                                            )}
-
-                                            {lead.layouts?.[0]?.testBackDesignImage && (
-                                                <div className="relative w-fit">
-                                                    <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                                    <Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" width={200} height={150} className="rounded-md border object-contain h-auto max-w-full" />
-                                                     {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}
-                                                </div>
-                                            )}
+                                            {lead.layouts?.[0]?.testLogoImage && (<div className="relative w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo</p> <Image src={lead.layouts[0].testLogoImage} alt="Test Logo" width={200} height={150} className="rounded-md border object-contain h-auto max-w-full" /> {lead.layouts[0].testLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoImageUploadTime).dateTime}</p>}</div>)}
+                                            {lead.layouts?.[0]?.testBackDesignImage && (<div className="relative w-fit"> <p className="font-semibold text-gray-500 mb-2">Back Design</p> <Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" width={200} height={150} className="rounded-md border object-contain h-auto max-w-full" /> {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}</div>)}
                                         </CardContent>
                                     </Card>
                                  )}
+                                 {(lead.layouts?.[0]?.finalLogoEmb || lead.layouts?.[0]?.finalBackDesignEmb || lead.layouts?.[0]?.finalLogoDst || lead.layouts?.[0]?.finalBackDesignDst) && (
+                                    <Card className="bg-white">
+                                        <CardHeader><CardTitle className="text-base">Final Program Files</CardTitle></CardHeader>
+                                        <CardContent className="grid grid-cols-2 gap-4 text-xs">
+                                          {lead.layouts?.[0]?.finalLogoEmb && <div className="relative w-fit"><p className="font-semibold text-gray-500 mb-2">Logo (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>EMB File</p>{lead.layouts[0].finalLogoEmbUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoEmbUploadTime).dateTime}</p>}</div>}
+                                          {lead.layouts?.[0]?.finalBackDesignEmb && <div className="relative w-fit"><p className="font-semibold text-gray-500 mb-2">Back (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>EMB File</p>{lead.layouts[0].finalBackDesignEmbUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignEmbUploadTime).dateTime}</p>}</div>}
+                                          {lead.layouts?.[0]?.finalLogoDst && <div className="relative w-fit"><p className="font-semibold text-gray-500 mb-2">Logo (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>{lead.layouts[0].finalLogoDstUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoDstUploadTime).dateTime}</p>}</div>}
+                                          {lead.layouts?.[0]?.finalBackDesignDst && <div className="relative w-fit"><p className="font-semibold text-gray-500 mb-2">Back (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>{lead.layouts[0].finalBackDesignDstUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignDstUploadTime).dateTime}</p>}</div>}
+                                        </CardContent>
+                                    </Card>
+                                  )}
                             </div>
                         </TableCell>
                       </TableRow>
@@ -700,3 +708,5 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
+    
