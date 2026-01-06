@@ -1,18 +1,32 @@
 'use client';
 
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Printer, CheckSquare } from 'lucide-react';
+import { Printer, CheckSquare, Save } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useEffect, useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+
+type DesignDetails = {
+  left?: boolean;
+  right?: boolean;
+  backLogo?: boolean;
+  backText?: boolean;
+};
 
 type Order = {
   productType: string;
   color: string;
   size: string;
   quantity: number;
+  remarks?: string;
+  design?: DesignDetails;
 };
 
 type Lead = {
@@ -30,22 +44,83 @@ type Lead = {
   courier: string;
 };
 
+const courierOptions = ['J&T', 'Lalamove', 'LBC', 'Pick-up'];
+
 export default function JobOrderPage() {
   const { id } = useParams();
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   const leadRef = useMemoFirebase(
     () => (firestore && id ? doc(firestore, 'leads', id as string) : null),
     [firestore, id]
   );
 
-  const { data: lead, isLoading, error } = useDoc<Lead>(leadRef);
+  const { data: fetchedLead, isLoading, error } = useDoc<Lead>(leadRef);
+  const [lead, setLead] = useState<Lead | null>(null);
+
+  useEffect(() => {
+    if (fetchedLead) {
+      // Initialize orders with default design values if they don't exist
+      const initializedOrders = fetchedLead.orders.map(order => ({
+        ...order,
+        design: order.design || { left: true, right: false, backLogo: false, backText: true }
+      }));
+      setLead({ ...fetchedLead, orders: initializedOrders });
+    }
+  }, [fetchedLead]);
 
   const handlePrint = () => {
     window.print();
   };
 
-  if (isLoading) {
+  const handleCourierChange = (value: string) => {
+    if (lead) {
+      setLead({ ...lead, courier: value });
+    }
+  };
+
+  const handleOrderChange = (index: number, field: keyof Order, value: any) => {
+    if (lead) {
+      const newOrders = [...lead.orders];
+      (newOrders[index] as any)[field] = value;
+      setLead({ ...lead, orders: newOrders });
+    }
+  };
+
+  const handleDesignChange = (index: number, field: keyof DesignDetails, value: boolean) => {
+     if (lead) {
+      const newOrders = [...lead.orders];
+      const currentOrder = newOrders[index];
+      const newDesign = { ...(currentOrder.design || {}), [field]: value };
+      (newOrders[index] as any).design = newDesign;
+      setLead({ ...lead, orders: newOrders });
+    }
+  };
+
+  const handleSaveChanges = async () => {
+    if (!lead || !leadRef) return;
+    try {
+      await updateDoc(leadRef, {
+        courier: lead.courier,
+        orders: lead.orders,
+        lastModified: new Date().toISOString(),
+      });
+      toast({
+        title: 'Job Order Saved!',
+        description: 'Your changes have been saved successfully.',
+      });
+    } catch (e: any) {
+      console.error('Error saving job order:', e);
+      toast({
+        variant: 'destructive',
+        title: 'Uh oh! Something went wrong.',
+        description: e.message || 'Could not save the job order.',
+      });
+    }
+  };
+
+  if (isLoading || !lead) {
     return (
       <div className="p-10 bg-white">
         <Skeleton className="h-10 w-1/4 mb-4" />
@@ -63,7 +138,7 @@ export default function JobOrderPage() {
     return <div className="text-red-500 p-10">Error loading lead: {error.message}</div>;
   }
 
-  if (!lead) {
+  if (!fetchedLead) {
     return <div className="p-10">Lead not found.</div>;
   }
 
@@ -72,7 +147,11 @@ export default function JobOrderPage() {
 
   return (
     <div className="bg-white text-black min-h-screen">
-      <div className="fixed top-4 right-4 no-print">
+      <div className="fixed top-4 right-4 no-print flex gap-2">
+        <Button onClick={handleSaveChanges} className="text-white font-bold">
+          <Save className="mr-2 h-4 w-4" />
+          Save Changes
+        </Button>
         <Button onClick={handlePrint} className="text-white font-bold">
           <Printer className="mr-2 h-4 w-4" />
           Print J.O.
@@ -95,7 +174,22 @@ export default function JobOrderPage() {
              <div className="space-y-2">
                 <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
-                <p><strong>Courier:</strong> {lead.courier}</p>
+                <div className="flex items-center gap-2">
+                    <strong className='flex-shrink-0'>Courier:</strong>
+                    <div className='w-full no-print'>
+                      <Select value={lead.courier} onValueChange={handleCourierChange}>
+                          <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                              {courierOptions.map(opt => (
+                                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                    </div>
+                    <span className="print-only">{lead.courier}</span>
+                </div>
                 <p><strong>Contact No:</strong> {lead.contactNumber}</p>
             </div>
              <div className="col-span-2 mt-2">
@@ -130,11 +224,27 @@ export default function JobOrderPage() {
                 <td className="border border-black p-2">{order.color}</td>
                 <td className="border border-black p-2 text-center">{order.size}</td>
                 <td className="border border-black p-2 text-center">{order.quantity}</td>
-                <td className="border border-black p-2 text-center"><CheckSquare className="mx-auto" size={16} /></td>
-                <td className="border border-black p-2 text-center">N/A</td>
-                <td className="border border-black p-2 text-center">N/A</td>
-                <td className="border border-black p-2 text-center"><CheckSquare className="mx-auto" size={16} /></td>
-                <td className="border border-black p-2"></td>
+                <td className="border border-black p-2 text-center">
+                    <Checkbox className="mx-auto" checked={order.design?.left} onCheckedChange={(checked) => handleDesignChange(index, 'left', !!checked)} />
+                </td>
+                <td className="border border-black p-2 text-center">
+                   <Checkbox className="mx-auto" checked={order.design?.right} onCheckedChange={(checked) => handleDesignChange(index, 'right', !!checked)} />
+                </td>
+                <td className="border border-black p-2 text-center">
+                  <Checkbox className="mx-auto" checked={order.design?.backLogo} onCheckedChange={(checked) => handleDesignChange(index, 'backLogo', !!checked)} />
+                </td>
+                <td className="border border-black p-2 text-center">
+                  <Checkbox className="mx-auto" checked={order.design?.backText} onCheckedChange={(checked) => handleDesignChange(index, 'backText', !!checked)} />
+                </td>
+                <td className="border border-black p-2">
+                  <Textarea
+                    value={order.remarks || ''}
+                    onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
+                    className="min-h-[40px] text-xs no-print"
+                    placeholder="Add remarks..."
+                  />
+                   <p className="print-only text-xs">{order.remarks}</p>
+                </td>
               </tr>
             ))}
              <tr>
@@ -207,6 +317,23 @@ export default function JobOrderPage() {
         </div>
 
       </div>
+      <style jsx global>{`
+        @media print {
+          .no-print {
+            display: none !important;
+          }
+          .print-only {
+            display: block !important;
+          }
+          @page {
+            size: auto;
+            margin: 0.5in;
+          }
+        }
+        .print-only {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }
