@@ -146,23 +146,25 @@ export function JobOrderTable() {
         )}
         {!isLoading && !error && (
            <div className="border rounded-md relative h-full flex flex-col">
+            <Table>
+              <TableHeader className="bg-neutral-800">
+                <TableRow>
+                  <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Company Name</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Courier</TableHead>
+                  <TableHead className="text-white font-bold align-middle">CSR</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Priority</TableHead>
+                  <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
+                  <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Date Created</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Last Updated</TableHead>
+                </TableRow>
+              </TableHeader>
+            </Table>
             <ScrollArea className="flex-1">
               <Table>
-                <TableHeader className="bg-neutral-800 sticky top-0 z-10">
-                  <TableRow>
-                    <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Company Name</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Courier</TableHead>
-                    <TableHead className="text-white font-bold align-middle">CSR</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Priority</TableHead>
-                    <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Date Created</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Last Updated</TableHead>
-                  </TableRow>
-                </TableHeader>
                 <TableBody>
                 {filteredLeads.map((lead) => {
                   const isJoSaved = !!lead.joNumber;
@@ -187,7 +189,7 @@ export function JobOrderTable() {
                               size="sm" 
                               className={cn(
                                 'h-8 px-3 text-white font-bold',
-                                isJoSaved ? 'bg-green-600 hover:bg-green-700' : 'bg-primary hover:bg-primary/90'
+                                isJoSaved ? 'bg-green-600 hover:bg-green-500' : 'bg-primary hover:bg-primary/90'
                               )}
                               onClick={() => handleProcessJobOrder(lead)}
                                onMouseEnter={() => setHoveredLeadId(lead.id)}
