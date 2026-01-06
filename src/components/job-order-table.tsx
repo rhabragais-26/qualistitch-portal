@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import React, from 'react';
+import React from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
@@ -27,7 +27,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from './ui/badge';
 import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from './ui/scroll-area';
 
 const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
@@ -131,7 +130,7 @@ export function JobOrderTable() {
             </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden">
+      <CardContent className="flex-1 overflow-auto">
         {isLoading && (
           <div className="space-y-2 p-4">
             {[...Array(5)].map((_, i) => (
@@ -145,10 +144,9 @@ export function JobOrderTable() {
           </div>
         )}
         {!isLoading && !error && (
-           <div className="border rounded-md relative h-full flex flex-col">
-            <div className="flex-shrink-0">
+           <div className="border rounded-md h-full">
                 <Table>
-                  <TableHeader className="bg-neutral-800 z-10">
+                  <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                     <TableRow>
                       <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
                       <TableHead className="text-white font-bold align-middle">Company Name</TableHead>
@@ -163,10 +161,6 @@ export function JobOrderTable() {
                       <TableHead className="text-white font-bold align-middle">Last Updated</TableHead>
                     </TableRow>
                   </TableHeader>
-                </Table>
-            </div>
-            <ScrollArea className="flex-grow">
-                <Table>
                     <TableBody>
                     {filteredLeads.map((lead) => {
                       const isJoSaved = !!lead.joNumber;
@@ -213,7 +207,6 @@ export function JobOrderTable() {
                     })}
                     </TableBody>
                 </Table>
-            </ScrollArea>
           </div>
         )}
       </CardContent>
