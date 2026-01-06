@@ -23,6 +23,7 @@ import React from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Badge } from './ui/badge';
 
 type Lead = {
   id: string;
@@ -31,6 +32,7 @@ type Lead = {
   contactNumber: string;
   landlineNumber?: string;
   salesRepresentative: string;
+  priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
   joNumber?: number;
 }
@@ -136,6 +138,7 @@ export function DigitizingTable() {
                 <TableRow>
                     <TableHead className="text-white font-bold align-middle">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle">CSR</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -159,11 +162,16 @@ export function DigitizingTable() {
                         </Button>
                       </TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
+                      <TableCell className="align-middle py-2">
+                        <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                          {lead.priorityType}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={3} className="p-0">
+                        <TableCell colSpan={4} className="p-0">
                           <div className="p-4 bg-gray-100">
                              <div className="grid grid-cols-3 gap-4 text-xs">
                                 <div>
