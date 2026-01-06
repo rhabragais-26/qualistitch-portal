@@ -72,6 +72,10 @@
           "type": "boolean",
           "description": "Indicates if the job order is currently under programming."
         },
+        "isInitialApproval": {
+          "type": "boolean",
+          "description": "Indicates if the job order has received initial approval."
+        },
         "isLogoTesting": {
             "type": "boolean",
             "description": "Indicates if the logo for the job order is currently being tested."

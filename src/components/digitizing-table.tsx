@@ -41,6 +41,7 @@ type Lead = {
   submissionDateTime: string;
   joNumber?: number;
   isUnderProgramming?: boolean;
+  isInitialApproval?: boolean;
   isLogoTesting?: boolean;
 }
 
@@ -61,7 +62,7 @@ export function DigitizingTable() {
 
   const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
 
-  const handleStatusChange = async (leadId: string, field: 'isUnderProgramming' | 'isLogoTesting', value: boolean) => {
+  const handleStatusChange = async (leadId: string, field: 'isUnderProgramming' | 'isInitialApproval' | 'isLogoTesting', value: boolean) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
@@ -221,6 +222,7 @@ export function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle">Overdue Status</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Program</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Initial Approval</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Test</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -268,6 +270,12 @@ export function DigitizingTable() {
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
+                            checked={lead.isInitialApproval || false}
+                            onCheckedChange={(checked) => handleStatusChange(lead.id, 'isInitialApproval', !!checked)}
+                          />
+                        </TableCell>
+                        <TableCell className="text-center align-middle py-2">
+                          <Checkbox
                             checked={lead.isLogoTesting || false}
                             onCheckedChange={(checked) => handleStatusChange(lead.id, 'isLogoTesting', !!checked)}
                           />
@@ -275,7 +283,7 @@ export function DigitizingTable() {
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={7} className="p-0">
+                        <TableCell colSpan={8} className="p-0">
                           <div className="p-4 bg-gray-100">
                              <div className="grid grid-cols-3 gap-4 text-xs">
                                 <div>
@@ -305,3 +313,5 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
+    
