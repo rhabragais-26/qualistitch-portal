@@ -750,22 +750,22 @@ export default function JobOrderPage() {
                 </TableHeader>
                 <TableBody>
                     {lead.namedOrders?.map((namedOrder, index) => (
-                        <TableRow key={index}>
+                        <TableRow key={index} className="bg-white">
                             <TableCell className="border border-black p-0.5 text-center">{index + 1}</TableCell>
                             <TableCell className="border border-black p-0">
-                                <Input value={namedOrder.name} onChange={(e) => handleNamedOrderChange(index, 'name', e.target.value)} className="h-full w-full border-0 text-xs text-black" />
+                                <Input value={namedOrder.name} onChange={(e) => handleNamedOrderChange(index, 'name', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
                             </TableCell>
                             <TableCell className="border border-black p-0">
-                                <Input value={namedOrder.color} onChange={(e) => handleNamedOrderChange(index, 'color', e.target.value)} className="h-full w-full border-0 text-xs text-black" />
+                                <Input value={namedOrder.color} onChange={(e) => handleNamedOrderChange(index, 'color', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
                             </TableCell>
                             <TableCell className="border border-black p-0">
-                                <Input value={namedOrder.size} onChange={(e) => handleNamedOrderChange(index, 'size', e.target.value)} className="h-full w-full border-0 text-xs text-black" />
+                                <Input value={namedOrder.size} onChange={(e) => handleNamedOrderChange(index, 'size', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
                             </TableCell>
                             <TableCell className="border border-black p-0">
-                                <Input type="number" value={namedOrder.quantity} onChange={(e) => handleNamedOrderChange(index, 'quantity', parseInt(e.target.value) || 0)} className="h-full w-full border-0 text-xs text-black text-center" />
+                                <Input type="number" value={namedOrder.quantity} onChange={(e) => handleNamedOrderChange(index, 'quantity', parseInt(e.target.value) || 0)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black text-center" />
                             </TableCell>
                              <TableCell className="border border-black p-0">
-                                <Input value={namedOrder.backText} onChange={(e) => handleNamedOrderChange(index, 'backText', e.target.value)} className="h-full w-full border-0 text-xs text-black" />
+                                <Input value={namedOrder.backText} onChange={(e) => handleNamedOrderChange(index, 'backText', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
                             </TableCell>
                             <TableCell className="border border-black p-0 text-center no-print">
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeNamedOrderRow(index)}>
