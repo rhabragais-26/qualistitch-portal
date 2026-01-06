@@ -332,7 +332,7 @@ export default function JobOrderPage() {
                   <Textarea
                     value={order.remarks || ''}
                     onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
-                    className="h-10 text-xs no-print"
+                    className="text-xs no-print min-h-[auto] p-1"
                     placeholder="Add remarks..."
                   />
                    <p className="print-only text-xs">{order.remarks}</p>
