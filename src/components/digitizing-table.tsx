@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -612,7 +613,7 @@ export function DigitizingTable() {
                       <div className="space-y-2">
                         {sequenceLogo.map((file, index) => (
                           <div key={index} className="flex items-center gap-2">
-                            <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, (idx, val) => { const newFiles = [...sequenceLogo]; newFiles[idx] = val; setSequenceLogo(newFiles); }, index)} onDoubleClick={() => sequenceLogoUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                            <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-32 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, (idx, val) => { const newFiles = [...sequenceLogo]; newFiles[idx] = val; setSequenceLogo(newFiles); }, index)} onDoubleClick={() => sequenceLogoUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                                   {file ? (<> <Image src={file} alt={`Sequence Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); const newFiles = [...sequenceLogo]; newFiles[index] = null; setSequenceLogo(newFiles); }}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
                                   <input type="file" ref={el => sequenceLogoUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, sequenceLogo, setSequenceLogo, index)} className="hidden" />
                             </div>
@@ -623,7 +624,7 @@ export function DigitizingTable() {
                     </div>
                     <div className="space-y-2">
                       <Label>Sequence for Back Design</Label>
-                      <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setSequenceBackDesign)} onDoubleClick={() => sequenceBackDesignUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                      <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-32 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setSequenceBackDesign)} onDoubleClick={() => sequenceBackDesignUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                         {sequenceBackDesign ? (<> <Image src={sequenceBackDesign} alt="Sequence Back Design" layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => handleRemoveImage(e, setSequenceBackDesign)}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-6 w-6" /> <p className="text-xs mt-1">Upload/Paste file</p> </div>)}
                         <input type="file" ref={sequenceBackDesignUploadRef} onChange={(e) => handleFileUpload(e, setSequenceBackDesign)} className="hidden" />
                       </div>
@@ -913,4 +914,5 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
 
