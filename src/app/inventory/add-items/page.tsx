@@ -5,9 +5,8 @@ import { AddItemForm } from '@/components/add-item-form';
 import { StagedItemsList } from '@/components/staged-items-list';
 import { useState } from 'react';
 import { useFirestore } from '@/firebase';
-import { collection, doc, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
 
 export type StagedItem = {
   id: string; // A temporary client-side ID
@@ -17,30 +16,10 @@ export type StagedItem = {
   stock: number;
 };
 
-const productTypes = [
-  'Executive Jacket 1',
-  'Executive Jacket v2 (with lines)',
-  'Turtle Neck Jacket',
-  'Corporate Jacket',
-  'Reversible v1',
-  'Reversible v2',
-  'Polo Shirt (Coolpass)',
-  'Polo Shirt (Cotton Blend)',
-];
-
-const productColors = [
-  'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
-  'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
-  'Army Green', 'Polo Color',
-];
-
-const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
-
 export default function AddItemsPage() {
   const [stagedItems, setStagedItems] = useState<StagedItem[]>([]);
   const firestore = useFirestore();
   const { toast } = useToast();
-  const [isSeeding, setIsSeeding] = useState(false);
 
   const handleAddItem = (item: Omit<StagedItem, 'id'>) => {
     setStagedItems((prevItems) => [
@@ -104,79 +83,10 @@ export default function AddItemsPage() {
     }
   };
 
-  const handleSeedData = async () => {
-    if (!firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Firestore not available',
-        description: 'Please try again later.',
-      });
-      return;
-    }
-    setIsSeeding(true);
-    toast({
-      title: 'Seeding database...',
-      description: 'This may take a moment. Please do not navigate away.',
-    });
-
-    try {
-      let batch = writeBatch(firestore);
-      let count = 0;
-
-      for (const productType of productTypes) {
-        for (const color of productColors) {
-          for (const size of productSizes) {
-            const stock = Math.floor(Math.random() * (17 - 5 + 1)) + 5;
-            const itemId = `${productType}-${color}-${size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
-            const itemDocRef = doc(firestore, 'inventory', itemId);
-            batch.set(itemDocRef, {
-              id: itemId,
-              productType,
-              color,
-              size,
-              stock,
-            }, { merge: true });
-            count++;
-            // Firestore batches can handle up to 500 operations.
-            // Commit and start a new batch if we're near the limit.
-            if (count % 499 === 0) {
-              await batch.commit();
-              batch = writeBatch(firestore);
-            }
-          }
-        }
-      }
-      // Commit any remaining operations in the last batch.
-      if (count % 499 !== 0) {
-        await batch.commit();
-      }
-      
-      toast({
-        title: 'Database Seeded!',
-        description: `Successfully added/updated ${count} inventory items with random stock.`,
-      });
-    } catch (e: any) {
-      console.error('Error seeding database: ', e);
-      toast({
-        variant: 'destructive',
-        title: 'Seeding Failed',
-        description: e.message || 'Could not seed the database.',
-      });
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
-
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
-        <div className="flex justify-end mb-4">
-            <Button onClick={handleSeedData} disabled={isSeeding}>
-              {isSeeding ? 'Seeding...' : 'Seed Data'}
-            </Button>
-        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full items-start">
           <div className="lg:col-span-1">
             <AddItemForm onAddItem={handleAddItem} />
