@@ -21,12 +21,8 @@ import {
 import { Skeleton } from './ui/skeleton';
 import React from 'react';
 import { Input } from './ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { ScrollArea } from './ui/scroll-area';
-
-const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
 type Lead = {
   id: string;
@@ -44,7 +40,6 @@ export function DigitizingTable() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [joNumberSearch, setJoNumberSearch] = React.useState('');
-  const [csrFilter, setCsrFilter] = React.useState('All');
   const [openLeadId, setOpenLeadId] = React.useState<string | null>(null);
   
   const leadsQuery = useMemoFirebase(() => {
@@ -79,17 +74,15 @@ export function DigitizingTable() {
         (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
         : true;
       
-      const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
-      
       const matchesJo = joNumberSearch ? 
         formatJoNumber(lead.joNumber).includes(joNumberSearch) ||
         (lead.joNumber?.toString().padStart(5, '0').endsWith(joNumberSearch))
         : true;
 
 
-      return matchesSearch && matchesCsr && matchesJo;
+      return matchesSearch && matchesJo;
     });
-  }, [leads, searchTerm, csrFilter, joNumberSearch]);
+  }, [leads, searchTerm, joNumberSearch]);
 
   const isLoading = isAuthLoading || isLeadsLoading;
 
@@ -104,17 +97,6 @@ export function DigitizingTable() {
               </CardDescription>
             </div>
              <div className="flex items-center gap-4">
-               <Select value={csrFilter} onValueChange={setCsrFilter}>
-                <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Filter by CSR" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All CSRs</SelectItem>
-                  {salesRepresentatives.map(csr => (
-                    <SelectItem key={csr} value={csr}>{csr}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <div className="w-full max-w-xs">
                  <Input
                   placeholder="Search by J.O. No..."
