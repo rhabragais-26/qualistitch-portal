@@ -26,6 +26,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
+import { formatDateTime } from '@/lib/utils';
 
 const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
@@ -45,6 +46,7 @@ type Lead = {
   salesRepresentative: string;
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
+  lastModified: string;
   orders: Order[];
   joNumber?: number;
   courier?: string;
@@ -154,11 +156,15 @@ export function JobOrderTable() {
                     <TableHead className="text-white font-bold">Priority</TableHead>
                     <TableHead className="text-white font-bold">J.O. No.</TableHead>
                     <TableHead className="text-center text-white font-bold">Action</TableHead>
+                    <TableHead className="text-white font-bold">Date Created</TableHead>
+                    <TableHead className="text-white font-bold">Last Updated</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                 {filteredLeads.map((lead) => {
                   const isJoSaved = !!lead.joNumber;
+                  const creationDate = formatDateTime(lead.submissionDateTime);
+                  const modifiedDate = formatDateTime(lead.lastModified);
                   return (
                     <TableRow key={lead.id}>
                         <TableCell className="font-medium text-xs align-top py-2 text-black">{lead.customerName}</TableCell>
@@ -182,6 +188,14 @@ export function JobOrderTable() {
                             >
                               {isJoSaved ? 'J.O. Saved' : 'Process J.O.'}
                             </Button>
+                        </TableCell>
+                        <TableCell className="text-xs align-top py-2 text-black">
+                          <div>{creationDate.dateTime}</div>
+                          <div className="text-gray-500">{creationDate.dayOfWeek}</div>
+                        </TableCell>
+                        <TableCell className="text-xs align-top py-2 text-black">
+                          <div>{modifiedDate.dateTime}</div>
+                          <div className="text-gray-500">{modifiedDate.dayOfWeek}</div>
                         </TableCell>
                     </TableRow>
                   );
