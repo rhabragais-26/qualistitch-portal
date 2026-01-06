@@ -290,7 +290,7 @@ export default function JobOrderPage() {
         </div>
 
         <h2 className="text-xl font-bold text-center mb-4">ORDER DETAILS</h2>
-        <table className="w-full border-collapse border border-black text-xs mb-4">
+        <table className="w-full border-collapse border border-black text-xs mb-2">
           <thead>
             <tr className="bg-gray-200">
               <th className="border border-black p-1" colSpan={3}>Item Description</th>
@@ -332,7 +332,7 @@ export default function JobOrderPage() {
                   <Textarea
                     value={order.remarks || ''}
                     onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
-                    className="text-xs no-print p-1 min-h-0"
+                    className="text-xs no-print p-1 min-h-0 h-auto"
                     placeholder="Add remarks..."
                   />
                    <p className="print-only text-xs">{order.remarks}</p>
@@ -347,7 +347,7 @@ export default function JobOrderPage() {
           </tbody>
         </table>
 
-        <div className="text-sm mb-2">
+        <div className="text-sm mb-1">
             <p><strong>Note:</strong> Specific details for logo and back text on the next page</p>
         </div>
 
