@@ -311,6 +311,14 @@ export default function JobOrderPage() {
     }
   };
 
+  const handleRemoveImage = (layoutIndex: number) => {
+    if (lead?.layouts) {
+      const newLayouts = [...lead.layouts];
+      newLayouts[layoutIndex].layoutImage = '';
+      setLead({ ...lead, layouts: newLayouts });
+    }
+  };
+
   const handleNamedOrderChange = (layoutIndex: number, nameIndex: number, field: keyof NamedOrder, value: string | number) => {
     if (lead?.layouts) {
       const newLayouts = [...lead.layouts];
@@ -770,14 +778,24 @@ export default function JobOrderPage() {
                 <h1 className="text-2xl font-bold text-center my-6 border-b-4 border-black pb-2">LAYOUT {lead.layouts && lead.layouts.length > 1 ? `(${layoutIndex + 1})` : ''}</h1>
                 
                 <div 
-                  className="border-2 border-dashed border-gray-400 rounded-lg p-4 text-center mb-6 no-print"
+                  className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center mb-6 no-print"
                   onPaste={(e) => handleImagePaste(e, layoutIndex)}
-                  onClick={() => imageUploadRef.current?.click()}
+                  onClick={() => !layout.layoutImage && imageUploadRef.current?.click()}
                 >
                   {layout.layoutImage ? (
-                    <Image src={layout.layoutImage} alt="Layout" width={800} height={600} className="mx-auto max-h-[500px] w-auto" />
+                    <>
+                      <Image src={layout.layoutImage} alt="Layout" width={800} height={600} className="mx-auto max-h-[500px] w-auto" />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleRemoveImage(layoutIndex)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
                   ) : (
-                    <div className="text-gray-500">
+                    <div className="text-gray-500 cursor-pointer">
                       <Upload className="mx-auto h-12 w-12" />
                       <p>Click to upload or paste image</p>
                     </div>
