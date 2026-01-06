@@ -178,7 +178,7 @@ export function DigitizingTable() {
       setIsUploadDialogOpen(false);
       setUploadLeadId(null);
       setUploadField(null);
-    } catch (e: any) => {
+    } catch (e: any) {
       console.error('Error saving images or status:', e);
       toast({
         variant: 'destructive',
