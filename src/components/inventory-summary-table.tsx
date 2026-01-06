@@ -68,11 +68,14 @@ const productColors = [
 
 const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
+const statusOptions = ['All', 'In Stock', 'Low Stock', 'Need to Reorder'];
+
 export function InventorySummaryTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [productTypeFilter, setProductTypeFilter] = React.useState('All');
   const [colorFilter, setColorFilter] = React.useState('All');
+  const [statusFilter, setStatusFilter] = React.useState('All');
   
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -111,7 +114,19 @@ export function InventorySummaryTable() {
     const filtered = enrichedItems.filter(item => {
       const matchesProductType = productTypeFilter === 'All' || item.productType === productTypeFilter;
       const matchesColor = colorFilter === 'All' || item.color === colorFilter;
-      return matchesProductType && matchesColor;
+      
+      let matchesStatus = true;
+      if (statusFilter !== 'All') {
+        if (statusFilter === 'Need to Reorder') {
+          matchesStatus = item.remaining <= 5;
+        } else if (statusFilter === 'Low Stock') {
+          matchesStatus = item.remaining > 5 && item.remaining <= 10;
+        } else if (statusFilter === 'In Stock') {
+          matchesStatus = item.remaining > 10;
+        }
+      }
+      
+      return matchesProductType && matchesColor && matchesStatus;
     });
 
     return filtered.sort((a, b) => {
@@ -130,7 +145,7 @@ export function InventorySummaryTable() {
         return sizeAIndex - sizeBIndex;
     });
 
-  }, [inventoryItems, leads, productTypeFilter, colorFilter]);
+  }, [inventoryItems, leads, productTypeFilter, colorFilter, statusFilter]);
 
   const isLoading = isAuthLoading || isInventoryLoading || areLeadsLoading;
   const error = inventoryError || leadsError;
@@ -165,6 +180,16 @@ export function InventorySummaryTable() {
                     <SelectItem value="All">All Colors</SelectItem>
                     {productColors.map(color => (
                         <SelectItem key={color} value={color}>{color}</SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Filter by Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    {statusOptions.map(status => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
                     ))}
                     </SelectContent>
                 </Select>
