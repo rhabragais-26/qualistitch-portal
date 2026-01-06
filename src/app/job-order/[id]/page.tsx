@@ -5,7 +5,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase
 import { collection, doc, query, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Printer, Save, Upload, X, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { CalendarIcon, Printer, Save, Upload, X, ChevronLeft, ChevronRight, Trash2, PlusCircle } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useMemo, useState, ChangeEvent, useRef } from 'react';
@@ -46,6 +46,15 @@ type NamedOrder = {
   backText: string;
 };
 
+type Layout = {
+  layoutImage?: string;
+  dstLogoLeft?: string;
+  dstLogoRight?: string;
+  dstBackLogo?: string;
+  dstBackText?: string;
+  namedOrders?: NamedOrder[];
+};
+
 type Lead = {
   id: string;
   customerName: string;
@@ -62,12 +71,7 @@ type Lead = {
   deliveryDate?: string;
   courier: string;
   joNumber?: number;
-  layoutImage?: string;
-  dstLogoLeft?: string;
-  dstLogoRight?: string;
-  dstBackLogo?: string;
-  dstBackText?: string;
-  namedOrders?: NamedOrder[];
+  layouts?: Layout[];
 };
 
 const courierOptions = ['J&T', 'Lalamove', 'LBC', 'Pick-up'];
@@ -122,15 +126,26 @@ export default function JobOrderPage() {
         remarks: order.remarks || '',
         design: order.design || { left: false, right: false, backLogo: false, backText: false }
       }));
+      
+      const initializedLayouts = (fetchedLead.layouts && fetchedLead.layouts.length > 0) 
+        ? fetchedLead.layouts.map(layout => ({
+            ...layout,
+            namedOrders: (layout.namedOrders && layout.namedOrders.length > 0) ? layout.namedOrders : [{ name: '', color: '', size: '', quantity: 0, backText: '' }]
+          }))
+        : [{ 
+            layoutImage: '', 
+            dstLogoLeft: '', 
+            dstLogoRight: '', 
+            dstBackLogo: '', 
+            dstBackText: '', 
+            namedOrders: [{ name: '', color: '', size: '', quantity: 0, backText: '' }] 
+          }];
+
       setLead({
         ...fetchedLead,
         orders: initializedOrders,
         courier: fetchedLead.courier || 'Pick-up',
-        dstLogoLeft: fetchedLead.dstLogoLeft || '',
-        dstLogoRight: fetchedLead.dstLogoRight || '',
-        dstBackLogo: fetchedLead.dstBackLogo || '',
-        dstBackText: fetchedLead.dstBackText || '',
-        namedOrders: fetchedLead.namedOrders && fetchedLead.namedOrders.length > 0 ? fetchedLead.namedOrders : [{ name: '', color: '', size: '', quantity: 0, backText: '' }],
+        layouts: initializedLayouts,
       });
 
       if (fetchedLead.deliveryDate) {
@@ -243,13 +258,15 @@ export default function JobOrderPage() {
     }
   };
 
-  const handleTextDetailChange = (field: keyof Lead, value: string) => {
-    if (lead) {
-      setLead({ ...lead, [field]: value });
+  const handleTextDetailChange = (layoutIndex: number, field: keyof Layout, value: string) => {
+    if (lead?.layouts) {
+      const newLayouts = [...lead.layouts];
+      (newLayouts[layoutIndex] as any)[field] = value;
+      setLead({ ...lead, layouts: newLayouts });
     }
   };
 
-  const handleImagePaste = (event: React.ClipboardEvent<HTMLDivElement>) => {
+  const handleImagePaste = (event: React.ClipboardEvent<HTMLDivElement>, layoutIndex: number) => {
     const items = event.clipboardData.items;
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf('image') !== -1) {
@@ -257,8 +274,10 @@ export default function JobOrderPage() {
         if (blob) {
           const reader = new FileReader();
           reader.onload = (e) => {
-            if (lead && e.target?.result) {
-              setLead({ ...lead, layoutImage: e.target.result as string });
+            if (lead?.layouts && e.target?.result) {
+              const newLayouts = [...lead.layouts];
+              newLayouts[layoutIndex].layoutImage = e.target.result as string;
+              setLead({ ...lead, layouts: newLayouts });
             }
           };
           reader.readAsDataURL(blob);
@@ -267,42 +286,66 @@ export default function JobOrderPage() {
     }
   };
 
-  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>, layoutIndex: number) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        if (lead && e.target?.result) {
-          setLead({ ...lead, layoutImage: e.target.result as string });
+        if (lead?.layouts && e.target?.result) {
+          const newLayouts = [...lead.layouts];
+          newLayouts[layoutIndex].layoutImage = e.target.result as string;
+          setLead({ ...lead, layouts: newLayouts });
         }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleNamedOrderChange = (index: number, field: keyof NamedOrder, value: string | number) => {
-    if (lead?.namedOrders) {
-      const newNamedOrders = [...lead.namedOrders];
-      (newNamedOrders[index] as any)[field] = value;
-      setLead({ ...lead, namedOrders: newNamedOrders });
+  const handleNamedOrderChange = (layoutIndex: number, nameIndex: number, field: keyof NamedOrder, value: string | number) => {
+    if (lead?.layouts) {
+      const newLayouts = [...lead.layouts];
+      const namedOrders = newLayouts[layoutIndex].namedOrders || [];
+      (namedOrders[nameIndex] as any)[field] = value;
+      newLayouts[layoutIndex].namedOrders = namedOrders;
+      setLead({ ...lead, layouts: newLayouts });
     }
   };
 
-  const addNamedOrderRow = () => {
+  const addNamedOrderRow = (layoutIndex: number) => {
+    if (lead?.layouts) {
+      const newLayouts = [...lead.layouts];
+      const layout = newLayouts[layoutIndex];
+      const newNamedOrders = [...(layout.namedOrders || []), { name: '', color: '', size: '', quantity: 0, backText: '' }];
+      layout.namedOrders = newNamedOrders;
+      setLead({ ...lead, layouts: newLayouts });
+    }
+  };
+
+  const removeNamedOrderRow = (layoutIndex: number, nameIndex: number) => {
+    if (lead?.layouts) {
+      const newLayouts = [...lead.layouts];
+      const namedOrders = newLayouts[layoutIndex].namedOrders || [];
+      namedOrders.splice(nameIndex, 1);
+      newLayouts[layoutIndex].namedOrders = namedOrders;
+      setLead({ ...lead, layouts: newLayouts });
+    }
+  };
+
+  const addLayoutPage = () => {
     if (lead) {
-      const newNamedOrders = [...(lead.namedOrders || []), { name: '', color: '', size: '', quantity: 0, backText: '' }];
-      setLead({ ...lead, namedOrders: newNamedOrders });
+      const newLayout: Layout = {
+        layoutImage: '',
+        dstLogoLeft: '',
+        dstLogoRight: '',
+        dstBackLogo: '',
+        dstBackText: '',
+        namedOrders: [{ name: '', color: '', size: '', quantity: 0, backText: '' }]
+      };
+      const newLayouts = [...(lead.layouts || []), newLayout];
+      setLead({ ...lead, layouts: newLayouts });
+      setCurrentPage(1 + newLayouts.length -1);
     }
   };
-
-  const removeNamedOrderRow = (index: number) => {
-    if (lead?.namedOrders) {
-      const newNamedOrders = [...lead.namedOrders];
-      newNamedOrders.splice(index, 1);
-      setLead({ ...lead, namedOrders: newNamedOrders });
-    }
-  };
-
 
   const handleSaveChanges = async () => {
     if (!lead || !leadRef || !allLeads) return;
@@ -327,12 +370,10 @@ export default function JobOrderPage() {
         design: o.design || { left: false, right: false, backLogo: false, backText: false }
       })),
       lastModified: new Date().toISOString(),
-      layoutImage: lead.layoutImage || '',
-      dstLogoLeft: lead.dstLogoLeft || '',
-      dstLogoRight: lead.dstLogoRight || '',
-      dstBackLogo: lead.dstBackLogo || '',
-      dstBackText: lead.dstBackText || '',
-      namedOrders: lead.namedOrders?.filter(n => n.name.trim() !== '' || n.color.trim() !== '' || n.size.trim() !== '' || n.backText.trim() !== '' || n.quantity > 0) || [],
+      layouts: lead.layouts?.map(layout => ({
+        ...layout,
+        namedOrders: layout.namedOrders?.filter(n => n.name.trim() !== '' || n.color.trim() !== '' || n.size.trim() !== '' || n.backText.trim() !== '' || n.quantity > 0) || [],
+      })) || [],
     };
 
     try {
@@ -378,7 +419,8 @@ export default function JobOrderPage() {
   }
 
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-  
+  const totalPages = 1 + (lead.layouts?.length || 0);
+
   const getContactDisplay = () => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
@@ -409,22 +451,25 @@ export default function JobOrderPage() {
       <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md z-50">
         <div className="container mx-auto max-w-5xl flex justify-between items-center">
             <div className="flex-1 flex justify-start">
-                 {/* This empty div will take up space on the left */}
+                 <Button onClick={addLayoutPage} variant="outline" size="sm">
+                   <PlusCircle className="mr-2 h-4 w-4" />
+                   Add Layout
+                 </Button>
             </div>
             <div className="flex-1 flex justify-center items-center gap-4">
                  <Button
                     variant="outline"
-                    onClick={() => setCurrentPage(1)}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                 >
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Previous
                 </Button>
-                <span className="text-sm font-medium">{`Page ${currentPage} of 2`}</span>
+                <span className="text-sm font-medium">{`Page ${currentPage} of ${totalPages}`}</span>
                 <Button
                     variant="outline"
-                    onClick={() => setCurrentPage(2)}
-                    disabled={currentPage === 2}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
                 >
                     Next
                     <ChevronRight className="ml-2 h-4 w-4" />
@@ -646,140 +691,142 @@ export default function JobOrderPage() {
             </div>
         </div>
 
-        {/* Page 2 */}
-        <div className={cn("page-break", currentPage !== 2 && 'hidden print:block')}>
-            <h1 className="text-2xl font-bold text-center my-6 border-b-4 border-black pb-2">LAYOUT</h1>
-            
-            <div 
-              className="border-2 border-dashed border-gray-400 rounded-lg p-4 text-center mb-6 no-print"
-              onPaste={handleImagePaste}
-              onClick={() => imageUploadRef.current?.click()}
-            >
-              {lead.layoutImage ? (
-                <Image src={lead.layoutImage} alt="Layout" width={800} height={600} className="mx-auto max-h-[500px] w-auto" />
-              ) : (
-                <div className="text-gray-500">
-                  <Upload className="mx-auto h-12 w-12" />
-                  <p>Click to upload or paste image</p>
+        {/* Layout Pages */}
+        {lead.layouts?.map((layout, layoutIndex) => (
+            <div key={layoutIndex} className={cn("page-break", currentPage !== 2 + layoutIndex && 'hidden print:block')}>
+                <h1 className="text-2xl font-bold text-center my-6 border-b-4 border-black pb-2">LAYOUT {lead.layouts && lead.layouts.length > 1 ? `(${layoutIndex + 1})` : ''}</h1>
+                
+                <div 
+                  className="border-2 border-dashed border-gray-400 rounded-lg p-4 text-center mb-6 no-print"
+                  onPaste={(e) => handleImagePaste(e, layoutIndex)}
+                  onClick={() => imageUploadRef.current?.click()}
+                >
+                  {layout.layoutImage ? (
+                    <Image src={layout.layoutImage} alt="Layout" width={800} height={600} className="mx-auto max-h-[500px] w-auto" />
+                  ) : (
+                    <div className="text-gray-500">
+                      <Upload className="mx-auto h-12 w-12" />
+                      <p>Click to upload or paste image</p>
+                    </div>
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    ref={imageUploadRef} 
+                    onChange={(e) => handleImageUpload(e, layoutIndex)}
+                    className="hidden" 
+                  />
                 </div>
-              )}
-              <input 
-                type="file" 
-                accept="image/*" 
-                ref={imageUploadRef} 
-                onChange={handleImageUpload} 
-                className="hidden" 
-              />
-            </div>
 
-             {lead.layoutImage && (
-                <div className="print-only text-center mb-6">
-                    <Image src={lead.layoutImage} alt="Layout" width={800} height={600} className="mx-auto max-h-[500px] w-auto" />
-                </div>
-             )}
-            
-            <table className="w-full border-collapse border border-black text-sm mb-6">
-              <tbody>
-                <tr>
-                  <td className="border border-black p-2 w-1/2">
-                    <p className="font-bold">DST LOGO LEFT:</p>
-                    <div className="no-print">
-                      <Textarea 
-                        value={lead.dstLogoLeft} 
-                        onChange={(e) => handleTextDetailChange('dstLogoLeft', e.target.value)} 
-                        className="text-xs mt-1 p-1 min-h-[50px]"
-                        placeholder="Details for left logo..."
-                      />
+                {layout.layoutImage && (
+                    <div className="print-only text-center mb-6">
+                        <Image src={layout.layoutImage} alt="Layout" width={800} height={600} className="mx-auto max-h-[500px] w-auto" />
                     </div>
-                    <p className="print-only text-xs whitespace-pre-wrap">{lead.dstLogoLeft}</p>
-                  </td>
-                  <td className="border border-black p-2 w-1/2">
-                    <p className="font-bold">DST BACK LOGO:</p>
-                    <div className="no-print">
-                      <Textarea 
-                        value={lead.dstBackLogo} 
-                        onChange={(e) => handleTextDetailChange('dstBackLogo', e.target.value)} 
-                        className="text-xs mt-1 p-1 min-h-[50px]"
-                        placeholder="Details for back logo..."
-                      />
-                    </div>
-                     <p className="print-only text-xs whitespace-pre-wrap">{lead.dstBackLogo}</p>
-                  </td>
-                </tr>
-                 <tr>
-                  <td className="border border-black p-2 w-1/2">
-                    <p className="font-bold">DST LOGO RIGHT:</p>
-                    <div className="no-print">
-                      <Textarea 
-                        value={lead.dstLogoRight} 
-                        onChange={(e) => handleTextDetailChange('dstLogoRight', e.target.value)} 
-                        className="text-xs mt-1 p-1 min-h-[50px]"
-                        placeholder="Details for right logo..."
-                      />
-                    </div>
-                     <p className="print-only text-xs whitespace-pre-wrap">{lead.dstLogoRight}</p>
-                  </td>
-                  <td className="border border-black p-2 w-1/2">
-                    <p className="font-bold">DST BACK TEXT:</p>
-                    <div className="no-print">
-                      <Textarea 
-                        value={lead.dstBackText} 
-                        onChange={(e) => handleTextDetailChange('dstBackText', e.target.value)} 
-                        className="text-xs mt-1 p-1 min-h-[50px]"
-                        placeholder="Details for back text..."
-                      />
-                    </div>
-                    <p className="print-only text-xs whitespace-pre-wrap">{lead.dstBackText}</p>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                )}
+                
+                <table className="w-full border-collapse border border-black text-sm mb-6">
+                  <tbody>
+                    <tr>
+                      <td className="border border-black p-2 w-1/2">
+                        <p className="font-bold">DST LOGO LEFT:</p>
+                        <div className="no-print">
+                          <Textarea 
+                            value={layout.dstLogoLeft} 
+                            onChange={(e) => handleTextDetailChange(layoutIndex, 'dstLogoLeft', e.target.value)} 
+                            className="text-xs mt-1 p-1 min-h-[50px]"
+                            placeholder="Details for left logo..."
+                          />
+                        </div>
+                        <p className="print-only text-xs whitespace-pre-wrap">{layout.dstLogoLeft}</p>
+                      </td>
+                      <td className="border border-black p-2 w-1/2">
+                        <p className="font-bold">DST BACK LOGO:</p>
+                        <div className="no-print">
+                          <Textarea 
+                            value={layout.dstBackLogo} 
+                            onChange={(e) => handleTextDetailChange(layoutIndex, 'dstBackLogo', e.target.value)} 
+                            className="text-xs mt-1 p-1 min-h-[50px]"
+                            placeholder="Details for back logo..."
+                          />
+                        </div>
+                        <p className="print-only text-xs whitespace-pre-wrap">{layout.dstBackLogo}</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="border border-black p-2 w-1/2">
+                        <p className="font-bold">DST LOGO RIGHT:</p>
+                        <div className="no-print">
+                          <Textarea 
+                            value={layout.dstLogoRight} 
+                            onChange={(e) => handleTextDetailChange(layoutIndex, 'dstLogoRight', e.target.value)} 
+                            className="text-xs mt-1 p-1 min-h-[50px]"
+                            placeholder="Details for right logo..."
+                          />
+                        </div>
+                        <p className="print-only text-xs whitespace-pre-wrap">{layout.dstLogoRight}</p>
+                      </td>
+                      <td className="border border-black p-2 w-1/2">
+                        <p className="font-bold">DST BACK TEXT:</p>
+                        <div className="no-print">
+                          <Textarea 
+                            value={layout.dstBackText} 
+                            onChange={(e) => handleTextDetailChange(layoutIndex, 'dstBackText', e.target.value)} 
+                            className="text-xs mt-1 p-1 min-h-[50px]"
+                            placeholder="Details for back text..."
+                          />
+                        </div>
+                        <p className="print-only text-xs whitespace-pre-wrap">{layout.dstBackText}</p>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
 
-            <h2 className="text-xl font-bold text-center mb-4">Names</h2>
-            <Table>
-                <TableHeader>
-                    <TableRow className="bg-gray-200 hover:bg-gray-200">
-                        <TableHead className="border border-black font-medium text-black">No.</TableHead>
-                        <TableHead className="border border-black font-medium text-black">Names</TableHead>
-                        <TableHead className="border border-black font-medium text-black">Color</TableHead>
-                        <TableHead className="border border-black font-medium text-black">Sizes</TableHead>
-                        <TableHead className="border border-black font-medium text-black">Qty</TableHead>
-                        <TableHead className="border border-black font-medium text-black">BACK TEXT</TableHead>
-                        <TableHead className="border border-black font-medium text-black no-print">Action</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {lead.namedOrders?.map((namedOrder, index) => (
-                        <TableRow key={index} className="bg-white hover:bg-white">
-                            <TableCell className="border border-black p-0.5 text-center">{index + 1}</TableCell>
-                            <TableCell className="border border-black p-0">
-                                <Input value={namedOrder.name} onChange={(e) => handleNamedOrderChange(index, 'name', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
-                            </TableCell>
-                            <TableCell className="border border-black p-0">
-                                <Input value={namedOrder.color} onChange={(e) => handleNamedOrderChange(index, 'color', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
-                            </TableCell>
-                            <TableCell className="border border-black p-0">
-                                <Input value={namedOrder.size} onChange={(e) => handleNamedOrderChange(index, 'size', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
-                            </TableCell>
-                            <TableCell className="border border-black p-0">
-                                <Input type="number" value={namedOrder.quantity} onChange={(e) => handleNamedOrderChange(index, 'quantity', parseInt(e.target.value) || 0)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black text-center" />
-                            </TableCell>
-                             <TableCell className="border border-black p-0">
-                                <Input value={namedOrder.backText} onChange={(e) => handleNamedOrderChange(index, 'backText', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
-                            </TableCell>
-                            <TableCell className="border border-black p-0 text-center no-print">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeNamedOrderRow(index)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </TableCell>
+                <h2 className="text-xl font-bold text-center mb-4">Names</h2>
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-gray-200 hover:bg-gray-200">
+                            <TableHead className="border border-black font-medium text-black">No.</TableHead>
+                            <TableHead className="border border-black font-medium text-black">Names</TableHead>
+                            <TableHead className="border border-black font-medium text-black">Color</TableHead>
+                            <TableHead className="border border-black font-medium text-black">Sizes</TableHead>
+                            <TableHead className="border border-black font-medium text-black">Qty</TableHead>
+                            <TableHead className="border border-black font-medium text-black">BACK TEXT</TableHead>
+                            <TableHead className="border border-black font-medium text-black no-print">Action</TableHead>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-            <div className="no-print mt-4">
-                <Button onClick={addNamedOrderRow} variant="outline">Add Name</Button>
+                    </TableHeader>
+                    <TableBody>
+                        {layout.namedOrders?.map((namedOrder, nameIndex) => (
+                            <TableRow key={nameIndex} className="bg-white hover:bg-white">
+                                <TableCell className="border border-black p-0.5 text-center">{nameIndex + 1}</TableCell>
+                                <TableCell className="border border-black p-0">
+                                    <Input value={namedOrder.name} onChange={(e) => handleNamedOrderChange(layoutIndex, nameIndex, 'name', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
+                                </TableCell>
+                                <TableCell className="border border-black p-0">
+                                    <Input value={namedOrder.color} onChange={(e) => handleNamedOrderChange(layoutIndex, nameIndex, 'color', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
+                                </TableCell>
+                                <TableCell className="border border-black p-0">
+                                    <Input value={namedOrder.size} onChange={(e) => handleNamedOrderChange(layoutIndex, nameIndex, 'size', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
+                                </TableCell>
+                                <TableCell className="border border-black p-0">
+                                    <Input type="number" value={namedOrder.quantity} onChange={(e) => handleNamedOrderChange(layoutIndex, nameIndex, 'quantity', parseInt(e.target.value) || 0)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black text-center" />
+                                </TableCell>
+                                <TableCell className="border border-black p-0">
+                                    <Input value={namedOrder.backText} onChange={(e) => handleNamedOrderChange(layoutIndex, nameIndex, 'backText', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
+                                </TableCell>
+                                <TableCell className="border border-black p-0 text-center no-print">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeNamedOrderRow(layoutIndex, nameIndex)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+                <div className="no-print mt-4">
+                    <Button onClick={() => addNamedOrderRow(layoutIndex)} variant="outline">Add Name</Button>
+                </div>
             </div>
-        </div>
+        ))}
 
       </div>
       <style jsx global>{`
@@ -822,3 +869,5 @@ export default function JobOrderPage() {
     </div>
   );
 }
+
+    
