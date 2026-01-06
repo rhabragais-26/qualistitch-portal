@@ -8,6 +8,7 @@ import {
   LineChart,
   ListOrdered,
   ClipboardList,
+  ScanLine,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -108,6 +109,10 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
+            <Button variant="ghost" onClick={() => handleNavigation('/digitizing')} className="text-neutral-100 hover:bg-neutral-700 hover:text-neutral-100">
+                <ScanLine className="mr-2" />
+                Digitizing
+            </Button>
             <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className="text-neutral-100 hover:bg-neutral-700 hover:text-neutral-100">
               <ListOrdered className="mr-2" />
               Order Status
