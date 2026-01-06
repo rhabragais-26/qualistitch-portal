@@ -120,7 +120,7 @@ export default function JobOrderPage() {
   const handlePrint = () => {
     const printableArea = document.querySelector('.printable-area');
     if (printableArea) {
-      const printWindow = window.open('', '', 'height=800,width=800');
+      const printWindow = window.open('', '', 'fullscreen=yes');
       if (printWindow) {
         printWindow.document.write('<html><head><title>Print Job Order</title>');
         // Find all style sheets and link them in the new window
@@ -542,6 +542,8 @@ export default function JobOrderPage() {
     
 
     
+    
+
     
 
     
