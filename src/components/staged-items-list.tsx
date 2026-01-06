@@ -4,7 +4,7 @@ import type { StagedItem } from '@/app/inventory/add-items/page';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Edit, Save, Trash2 } from 'lucide-react';
+import { Edit, Save, Trash2, Plus, Minus } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { useState } from 'react';
 import {
@@ -96,8 +96,21 @@ function EditItemDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-stock">Stock</Label>
-            <Input id="edit-stock" type="number" value={stock} onChange={(e) => setStock(parseInt(e.target.value, 10) || 0)} />
+              <Label>Stock</Label>
+              <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setStock(Math.max(0, stock - 1))}>
+                      <Minus className="h-4 w-4" />
+                  </Button>
+                  <Input 
+                      type="number" 
+                      value={stock} 
+                      onChange={(e) => setStock(parseInt(e.target.value, 10) || 0)} 
+                      className="w-24 text-center"
+                  />
+                  <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setStock(stock + 1)}>
+                      <Plus className="h-4 w-4" />
+                  </Button>
+              </div>
           </div>
         </div>
         <DialogFooter>
