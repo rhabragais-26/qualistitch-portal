@@ -4,7 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,9 +25,10 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Boxes, Palette, Ruler, Hash, Plus, Minus } from 'lucide-react';
+import { Boxes, Palette, Ruler, Hash, Plus, Minus, Warehouse } from 'lucide-react';
 import type { StagedItem } from '@/app/inventory/add-items/page';
-
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
 
 const productTypes = [
   'Executive Jacket 1',
@@ -57,12 +58,25 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+type InventoryItem = {
+  id: string;
+  productType: string;
+  color: string;
+  size: string;
+  stock: number;
+};
+
 type AddItemFormProps = {
     onAddItem: (item: Omit<StagedItem, 'id'>) => void;
 }
 
 export function AddItemForm({ onAddItem }: AddItemFormProps) {
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const [currentStock, setCurrentStock] = useState<number | null>(null);
+
+  const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
+  const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -75,6 +89,24 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
   });
   
   const { formState: { isValid } } = form;
+  const watchedProductType = form.watch('productType');
+  const watchedColor = form.watch('color');
+  const watchedSize = form.watch('size');
+  
+  useEffect(() => {
+    if (watchedProductType && watchedColor && watchedSize && inventoryItems) {
+      const item = inventoryItems.find(
+        (i) =>
+          i.productType === watchedProductType &&
+          i.color === watchedColor &&
+          i.size === watchedSize
+      );
+      setCurrentStock(item ? item.stock : 0);
+    } else {
+      setCurrentStock(null);
+    }
+  }, [watchedProductType, watchedColor, watchedSize, inventoryItems]);
+
 
   const handleReset = () => {
     form.reset({
@@ -95,7 +127,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
   }
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+    <Card className="w-full max-w-md shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
         <CardTitle className="font-headline text-xl text-black">Add New Item to Inventory</CardTitle>
         <CardDescription className="text-gray-600">
@@ -168,6 +200,15 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
                   </FormItem>
                 )}
               />
+              
+              {currentStock !== null && (
+                <div className="md:col-span-2 flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Warehouse className="h-5 w-5 text-blue-600" />
+                  <p className="text-sm text-blue-800">
+                    Current stock for this item: <span className="font-bold">{currentStock}</span>
+                  </p>
+                </div>
+              )}
 
                <FormField
                 control={form.control}
@@ -177,7 +218,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
                     <div className="flex items-center gap-4">
                       <FormLabel className="flex items-center gap-2 text-black whitespace-nowrap">
                         <Hash className="h-4 w-4 text-primary" />
-                        Stock Quantity
+                        Add Stock
                       </FormLabel>
                       <div className="flex items-center gap-2">
                         <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => field.onChange(Math.max(0, (field.value || 0) - 1))} >
