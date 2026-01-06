@@ -432,11 +432,11 @@ export function DigitizingTable() {
     const remainingDays = differenceInDays(deadlineDate, new Date());
     
     if (remainingDays < 0) {
-      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false };
+      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
     } else if (remainingDays <= 2) {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true };
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
     } else {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false };
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
     }
   };
 
@@ -445,7 +445,7 @@ export function DigitizingTable() {
     
     const leadsWithJo = leads.filter(lead => lead.joNumber);
 
-    return leadsWithJo.filter(lead => {
+    const filtered = leadsWithJo.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
@@ -468,6 +468,13 @@ export function DigitizingTable() {
 
       return matchesSearch && matchesJo && matchesPriority && matchesOverdue;
     });
+
+    return filtered.sort((a, b) => {
+        const aDeadline = calculateDigitizingDeadline(a);
+        const bDeadline = calculateDigitizingDeadline(b);
+        return aDeadline.remainingDays - bDeadline.remainingDays;
+    });
+
   }, [leads, searchTerm, joNumberSearch, priorityFilter, overdueFilter]);
 
   const isLoading = isAuthLoading || isLeadsLoading;
@@ -906,3 +913,4 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
