@@ -71,7 +71,7 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
       <header className="sticky top-0 z-50 w-full border-b bg-neutral-800 text-neutral-100">
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex items-center">
-            <Link href="/" className="mr-6 flex items-center">
+            <Link href="/" className="mr-6 flex items-center ml-4">
               <span className={cn("font-bold shining-metal font-headline flex items-baseline")}>
                 <span className="text-3xl">Q</span>
                 <span className="text-2xl">UALISTITCH Inc.</span>
