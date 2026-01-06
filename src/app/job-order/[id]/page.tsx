@@ -550,9 +550,8 @@ export default function JobOrderPage() {
                 <Printer className="mr-2 h-4 w-4" />
                 Print J.O.
                 </Button>
-                <Button onClick={handleClose} variant="outline">
-                <X className="mr-2 h-4 w-4" />
-                Close
+                <Button onClick={handleClose} variant="destructive" size="icon">
+                    <X className="h-4 w-4" />
                 </Button>
             </div>
         </div>
