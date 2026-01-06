@@ -74,10 +74,17 @@ export function InventorySummaryTable() {
     });
 
     return filtered.sort((a, b) => {
+        // First, sort by productType alphabetically
+        const productTypeComparison = a.productType.localeCompare(b.productType);
+        if (productTypeComparison !== 0) {
+            return productTypeComparison;
+        }
+
+        // If productType is the same, sort by size hierarchy
         const sizeAIndex = sizeOrder.indexOf(a.size);
         const sizeBIndex = sizeOrder.indexOf(b.size);
 
-        if (sizeAIndex === -1 && sizeBIndex === -1) return a.size.localeCompare(b.size);
+        if (sizeAIndex === -1 && sizeBIndex === -1) return a.size.localeCompare(b.size); // fallback for unknown sizes
         if (sizeAIndex === -1) return 1;
         if (sizeBIndex === -1) return -1;
         
