@@ -276,7 +276,7 @@ export function ReportsSummary() {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      innerRadius="40%"
+                      innerRadius="60%"
                       outerRadius="80%"
                       labelLine={false}
                       label={({
@@ -384,7 +384,7 @@ export function ReportsSummary() {
       <div className="mt-8">
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
           <CardHeader>
-            <CardTitle>Daily Sales Data</CardTitle>
+            <CardTitle>Daily Sold QTY</CardTitle>
             <CardDescription>Total quantity of items sold each day for the selected period.</CardDescription>
           </CardHeader>
           <CardContent>
