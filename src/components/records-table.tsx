@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, PlusCircle, Plus, Minus, Edit, Trash2, Truck } from 'lucide-react';
 import {
@@ -64,7 +64,7 @@ const jacketColors = [
 ];
 
 const poloShirtColors = [
-    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow'
+    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow', 'Slate Blue'
 ];
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
@@ -1042,3 +1042,6 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
 
     
 
+
+
+    

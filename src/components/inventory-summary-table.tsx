@@ -67,7 +67,7 @@ const jacketColors = [
 ];
 
 const poloShirtColors = [
-    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow'
+    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow', 'Slate Blue'
 ];
 
 const allColors = [...new Set([...jacketColors, ...poloShirtColors])];
@@ -260,3 +260,5 @@ export function InventorySummaryTable() {
     </Card>
   );
 }
+
+    
