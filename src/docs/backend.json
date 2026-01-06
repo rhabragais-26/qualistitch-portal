@@ -181,13 +181,14 @@
                 "description": "Timestamp for Test back design upload."
               },
               "finalLogoEmb": {
-                "type": ["string", "null"],
-                "description": "Data URL for the final logo EMB file."
+                "type": "array",
+                "description": "Data URLs for the final logo EMB files.",
+                "items": { "type": ["string", "null"] }
               },
-              "finalLogoEmbUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for final logo EMB file upload."
+              "finalLogoEmbUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for final logo EMB file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
               },
               "finalBackDesignEmb": {
                 "type": ["string", "null"],
@@ -199,13 +200,14 @@
                 "description": "Timestamp for final back design EMB file upload."
               },
               "finalLogoDst": {
-                "type": ["string", "null"],
-                "description": "Data URL for the final logo DST file."
+                 "type": "array",
+                "description": "Data URLs for the final logo DST files.",
+                "items": { "type": ["string", "null"] }
               },
-              "finalLogoDstUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for final logo DST file upload."
+              "finalLogoDstUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for final logo DST file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
               },
               "finalBackDesignDst": {
                 "type": ["string", "null"],
