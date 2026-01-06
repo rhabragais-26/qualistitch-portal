@@ -145,8 +145,9 @@ export function JobOrderTable() {
           </div>
         )}
         {!isLoading && !error && (
-           <div className="border rounded-md relative h-full">
-            <Table>
+           <div className="border rounded-md relative h-full flex flex-col">
+            <ScrollArea className="flex-1">
+              <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
@@ -162,9 +163,6 @@ export function JobOrderTable() {
                     <TableHead className="text-white font-bold align-middle">Last Updated</TableHead>
                   </TableRow>
                 </TableHeader>
-            </Table>
-            <ScrollArea className="h-[calc(100%-53px)]">
-              <Table>
                 <TableBody>
                 {filteredLeads.map((lead) => {
                   const isJoSaved = !!lead.joNumber;
@@ -189,7 +187,7 @@ export function JobOrderTable() {
                               size="sm" 
                               className={cn(
                                 'h-8 px-3 text-white font-bold',
-                                isJoSaved && 'bg-accent hover:bg-accent/80'
+                                isJoSaved ? 'bg-green-600 hover:bg-green-700' : 'bg-primary hover:bg-primary/90'
                               )}
                               onClick={() => handleProcessJobOrder(lead)}
                                onMouseEnter={() => setHoveredLeadId(lead.id)}
@@ -218,5 +216,3 @@ export function JobOrderTable() {
     </Card>
   );
 }
-
-    
