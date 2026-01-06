@@ -25,7 +25,7 @@ import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, Trash2, Upload } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, formatDateTime } from '@/lib/utils';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
@@ -51,9 +51,13 @@ type Layout = {
   dstBackText?: string;
   namedOrders?: NamedOrder[];
   logoImage?: string;
+  logoImageUploadTime?: string;
   backDesignImage?: string;
+  backDesignImageUploadTime?: string;
   testLogoImage?: string;
+  testLogoImageUploadTime?: string;
   testBackDesignImage?: string;
+  testBackDesignImageUploadTime?: string;
 };
 
 type Lead = {
@@ -135,18 +139,23 @@ export function DigitizingTable() {
   
     const currentLayouts = lead.layouts && lead.layouts.length > 0 ? [...lead.layouts] : [{}];
     let updatedFirstLayout;
+    const now = new Date().toISOString();
 
     if (uploadField === 'isUnderProgramming') {
         updatedFirstLayout = {
             ...currentLayouts[0],
             logoImage: logoImage,
+            logoImageUploadTime: logoImage ? (currentLayouts[0]?.logoImageUploadTime || now) : undefined,
             backDesignImage: backDesignImage,
+            backDesignImageUploadTime: backDesignImage ? (currentLayouts[0]?.backDesignImageUploadTime || now) : undefined,
         };
     } else if (uploadField === 'isLogoTesting') {
         updatedFirstLayout = {
             ...currentLayouts[0],
             testLogoImage: logoImage,
+            testLogoImageUploadTime: logoImage ? (currentLayouts[0]?.testLogoImageUploadTime || now) : undefined,
             testBackDesignImage: backDesignImage,
+            testBackDesignImageUploadTime: backDesignImage ? (currentLayouts[0]?.testBackDesignImageUploadTime || now) : undefined,
         };
     } else {
         return; // Should not happen
@@ -339,7 +348,7 @@ export function DigitizingTable() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setUncheckConfirmation(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmUncheck} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white">Continue</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -622,12 +631,14 @@ export function DigitizingTable() {
                                                 <div>
                                                     <p className="font-semibold text-gray-500 mb-2">Logo</p>
                                                     <Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" width={200} height={150} className="rounded-md border" />
+                                                    {lead.layouts[0].logoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
                                             {lead.layouts?.[0]?.backDesignImage && (
                                                 <div>
                                                     <p className="font-semibold text-gray-500 mb-2">Back Design</p>
                                                     <Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" width={200} height={150} className="rounded-md border" />
+                                                     {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
                                         </CardContent>
@@ -643,6 +654,7 @@ export function DigitizingTable() {
                                                 <div>
                                                     <p className="font-semibold text-gray-500 mb-2">Logo</p>
                                                     <Image src={lead.layouts[0].testLogoImage} alt="Test Logo" width={200} height={150} className="rounded-md border" />
+                                                    {lead.layouts[0].testLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
 
@@ -650,6 +662,7 @@ export function DigitizingTable() {
                                                 <div>
                                                     <p className="font-semibold text-gray-500 mb-2">Back Design</p>
                                                     <Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" width={200} height={150} className="rounded-md border" />
+                                                     {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
                                         </CardContent>
