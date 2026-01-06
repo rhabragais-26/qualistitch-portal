@@ -105,16 +105,24 @@ export function DigitizingTable() {
     if (!checked) {
       setUncheckConfirmation({ leadId, field });
     } else {
-        if (field === 'isUnderProgramming' || field === 'isLogoTesting') {
-            const lead = leads?.find(l => l.id === leadId);
-            setUploadLeadId(leadId);
-            setUploadField(field);
-            setLogoImage(lead?.layouts?.[0]?.logoImage || '');
-            setBackDesignImage(lead?.layouts?.[0]?.backDesignImage || '');
-            setIsUploadDialogOpen(true);
+      if (field === 'isUnderProgramming' || field === 'isLogoTesting') {
+        const lead = leads?.find((l) => l.id === leadId);
+        setUploadLeadId(leadId);
+        setUploadField(field);
+
+        if (field === 'isUnderProgramming') {
+          setLogoImage(lead?.layouts?.[0]?.logoImage || '');
+          setBackDesignImage(lead?.layouts?.[0]?.backDesignImage || '');
         } else {
-          updateStatus(leadId, field, true);
+          // For 'isLogoTesting', start with empty fields
+          setLogoImage('');
+          setBackDesignImage('');
         }
+
+        setIsUploadDialogOpen(true);
+      } else {
+        updateStatus(leadId, field, true);
+      }
     }
   };
 
@@ -140,10 +148,6 @@ export function DigitizingTable() {
 
       await updateStatus(uploadLeadId, uploadField, true, false);
   
-      toast({
-        title: 'Images and Status Updated',
-        description: 'The images have been saved and the status updated.',
-      });
       setIsUploadDialogOpen(false);
       setUploadLeadId(null);
       setUploadField(null);
@@ -194,13 +198,6 @@ export function DigitizingTable() {
 
     try {
       await updateDoc(leadDocRef, updateData);
-      if (value && showToast) {
-          toast({
-            title: 'Status Updated',
-            description: 'The digitizing process has moved to the next step.',
-            duration: 2000
-          });
-      }
     } catch (e: any) {
       console.error('Error updating status:', e);
       toast({
@@ -337,7 +334,7 @@ export function DigitizingTable() {
        <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Upload Initial Program Files</DialogTitle>
+            <DialogTitle>Upload Program Files</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-6 py-4">
             <div className="space-y-2">
