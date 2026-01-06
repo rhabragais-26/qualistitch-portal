@@ -646,14 +646,14 @@ export function DigitizingTable() {
                                             {lead.layouts?.[0]?.logoImage && (
                                                 <div className="relative w-fit">
                                                     <p className="font-semibold text-gray-500 mb-2">Logo</p>
-                                                    <Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" width={200} height={150} className="rounded-md border object-contain" />
+                                                    <Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" width={200} height={150} className="rounded-md border object-contain h-auto" style={{maxWidth: "200px"}} />
                                                     {lead.layouts[0].logoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
                                             {lead.layouts?.[0]?.backDesignImage && (
                                                 <div className="relative w-fit">
                                                     <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                                    <Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" width={200} height={150} className="rounded-md border object-contain" />
+                                                    <Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" width={200} height={150} className="rounded-md border object-contain h-auto" style={{maxWidth: "200px"}} />
                                                      {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
@@ -669,7 +669,7 @@ export function DigitizingTable() {
                                             {lead.layouts?.[0]?.testLogoImage && (
                                                 <div className="relative w-fit">
                                                     <p className="font-semibold text-gray-500 mb-2">Logo</p>
-                                                    <Image src={lead.layouts[0].testLogoImage} alt="Test Logo" width={200} height={150} className="rounded-md border object-contain" />
+                                                    <Image src={lead.layouts[0].testLogoImage} alt="Test Logo" width={200} height={150} className="rounded-md border object-contain h-auto" style={{maxWidth: "200px"}} />
                                                     {lead.layouts[0].testLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
@@ -677,7 +677,7 @@ export function DigitizingTable() {
                                             {lead.layouts?.[0]?.testBackDesignImage && (
                                                 <div className="relative w-fit">
                                                     <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                                    <Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" width={200} height={150} className="rounded-md border object-contain" />
+                                                    <Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" width={200} height={150} className="rounded-md border object-contain h-auto" style={{maxWidth: "200px"}} />
                                                      {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}
                                                 </div>
                                             )}
