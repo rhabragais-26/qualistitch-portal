@@ -738,7 +738,7 @@ export default function JobOrderPage() {
             <h2 className="text-xl font-bold text-center mb-4">Names</h2>
             <Table>
                 <TableHeader>
-                    <TableRow className="bg-gray-200">
+                    <TableRow className="bg-gray-200 hover:bg-gray-200">
                         <TableHead className="border border-black font-medium text-black">No.</TableHead>
                         <TableHead className="border border-black font-medium text-black">Names</TableHead>
                         <TableHead className="border border-black font-medium text-black">Color</TableHead>
@@ -750,7 +750,7 @@ export default function JobOrderPage() {
                 </TableHeader>
                 <TableBody>
                     {lead.namedOrders?.map((namedOrder, index) => (
-                        <TableRow key={index} className="bg-white">
+                        <TableRow key={index} className="bg-white hover:bg-white">
                             <TableCell className="border border-black p-0.5 text-center">{index + 1}</TableCell>
                             <TableCell className="border border-black p-0">
                                 <Input value={namedOrder.name} onChange={(e) => handleNamedOrderChange(index, 'name', e.target.value)} className="h-full w-full border-0 rounded-none focus-visible:ring-0 text-xs text-black" />
