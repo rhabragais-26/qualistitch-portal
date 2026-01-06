@@ -611,65 +611,48 @@ export function DigitizingTable() {
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
                         <TableCell colSpan={12} className="p-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {(lead.layouts || []).map((layout, index) => (
-                              <Card key={index} className="bg-white">
-                                <CardHeader>
-                                  <CardTitle className="text-base">Layout {index + 1}</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4 text-xs">
-                                  {layout.layoutImage && (
-                                    <div>
-                                      <p className="font-semibold text-gray-500 mb-2">Layout Image</p>
-                                      <Image src={layout.layoutImage} alt={`Layout ${index + 1}`} width={200} height={150} className="rounded-md border" />
-                                    </div>
-                                  )}
-                                  
-                                  <div className="grid grid-cols-2 gap-4">
-                                     <div>
-                                      <p className="font-semibold text-gray-500">DST Logo Left</p>
-                                      <p className="text-black whitespace-pre-wrap">{layout.dstLogoLeft || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                      <p className="font-semibold text-gray-500">DST Logo Right</p>
-                                      <p className="text-black whitespace-pre-wrap">{layout.dstLogoRight || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                      <p className="font-semibold text-gray-500">DST Back Logo</p>
-                                      <p className="text-black whitespace-pre-wrap">{layout.dstBackLogo || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                      <p className="font-semibold text-gray-500">DST Back Text</p>
-                                      <p className="text-black whitespace-pre-wrap">{layout.dstBackText || 'N/A'}</p>
-                                    </div>
-                                  </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <Card className="bg-white">
+                                    <CardHeader>
+                                        <CardTitle className="text-base">Initial Program Images</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="grid grid-cols-2 gap-4 text-xs">
+                                        {(lead.layouts?.[0]?.logoImage) ? (
+                                            <div>
+                                                <p className="font-semibold text-gray-500 mb-2">Logo</p>
+                                                <Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" width={200} height={150} className="rounded-md border" />
+                                            </div>
+                                        ) : <p className="text-gray-500 col-span-1">No logo image.</p>}
+                                        
+                                        {(lead.layouts?.[0]?.backDesignImage) ? (
+                                            <div>
+                                                <p className="font-semibold text-gray-500 mb-2">Back Design</p>
+                                                <Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" width={200} height={150} className="rounded-md border" />
+                                            </div>
+                                        ): <p className="text-gray-500 col-span-1">No back design image.</p>}
+                                    </CardContent>
+                                </Card>
+                                 <Card className="bg-white">
+                                    <CardHeader>
+                                        <CardTitle className="text-base">Test Images</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="grid grid-cols-2 gap-4 text-xs">
+                                        {(lead.layouts?.[0]?.testLogoImage) ? (
+                                            <div>
+                                                <p className="font-semibold text-gray-500 mb-2">Logo</p>
+                                                <Image src={lead.layouts[0].testLogoImage} alt="Test Logo" width={200} height={150} className="rounded-md border" />
+                                            </div>
+                                        ): <p className="text-gray-500 col-span-1">No test logo image.</p>}
 
-                                  {layout.namedOrders && layout.namedOrders.length > 0 && (
-                                    <div>
-                                      <p className="font-semibold text-gray-500 mt-4 mb-2">Named Orders</p>
-                                      <Table>
-                                        <TableHeader>
-                                          <TableRow>
-                                            <TableHead className="p-1 text-xs">Name</TableHead>
-                                            <TableHead className="p-1 text-xs">Back Text</TableHead>
-                                          </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                          {layout.namedOrders.map((namedOrder, i) => (
-                                            <TableRow key={i}>
-                                              <TableCell className="p-1 text-xs">{namedOrder.name}</TableCell>
-                                              <TableCell className="p-1 text-xs">{namedOrder.backText}</TableCell>
-                                            </TableRow>
-                                          ))}
-                                        </TableBody>
-                                      </Table>
-                                    </div>
-                                  )}
-
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
+                                        {(lead.layouts?.[0]?.testBackDesignImage) ? (
+                                            <div>
+                                                <p className="font-semibold text-gray-500 mb-2">Back Design</p>
+                                                <Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" width={200} height={150} className="rounded-md border" />
+                                            </div>
+                                        ): <p className="text-gray-500 col-span-1">No test back design image.</p>}
+                                    </CardContent>
+                                </Card>
+                            </div>
                         </TableCell>
                       </TableRow>
                     )}
