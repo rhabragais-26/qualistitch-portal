@@ -23,6 +23,8 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
+import { differenceInDays, addDays } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 type Order = {
   productType: string;
@@ -37,6 +39,8 @@ type Lead = {
   contactNumber: string;
   landlineNumber?: string;
   orders: Order[];
+  priorityType: 'Rush' | 'Regular';
+  submissionDateTime: string;
 }
 
 export function OrderStatusTable() {
@@ -54,6 +58,21 @@ export function OrderStatusTable() {
 
   const toggleLeadDetails = (leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
+  };
+
+  const calculateDeadline = (lead: Lead) => {
+    const submissionDate = new Date(lead.submissionDateTime);
+    const deadlineDays = lead.priorityType === 'Rush' ? 7 : 22;
+    const deadlineDate = addDays(submissionDate, deadlineDays);
+    const remainingDays = differenceInDays(deadlineDate, new Date());
+    
+    if (remainingDays < 0) {
+      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false };
+    } else if (remainingDays <= 3) {
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true };
+    } else {
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false };
+    }
   };
 
   const filteredLeads = useMemo(() => {
@@ -110,19 +129,28 @@ export function OrderStatusTable() {
               <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white">Customer Name</TableHead>
-                    <TableHead className="text-white">Mobile No.</TableHead>
-                    <TableHead className="text-white">Landline No.</TableHead>
-                    <TableHead className="text-center text-white">Ordered Items</TableHead>
+                    <TableHead className="text-white font-bold">Customer Name</TableHead>
+                    <TableHead className="text-white font-bold">Mobile No.</TableHead>
+                    <TableHead className="text-white font-bold">Landline No.</TableHead>
+                    <TableHead className="text-center text-white font-bold">Days Remaining</TableHead>
+                    <TableHead className="text-center text-white font-bold">Ordered Items</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {filteredLeads.map((lead) => (
+                {filteredLeads.map((lead) => {
+                  const deadlineInfo = calculateDeadline(lead);
+                  return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
                         <TableCell className="font-medium text-xs align-top py-2 text-black">{lead.customerName}</TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
                         <TableCell className="text-xs align-top py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className={cn(
+                          "text-center text-xs align-top py-2 font-medium",
+                          deadlineInfo.isOverdue && "text-red-600",
+                          deadlineInfo.isUrgent && "text-amber-600",
+                          !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
+                        )}>{deadlineInfo.text}</TableCell>
                         <TableCell className="text-center align-top py-2">
                           <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                             View
@@ -132,7 +160,7 @@ export function OrderStatusTable() {
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={4}>
+                        <TableCell colSpan={5}>
                           <div className="p-2">
                             <Table>
                               <TableHeader>
@@ -159,7 +187,7 @@ export function OrderStatusTable() {
                       </TableRow>
                     )}
                   </React.Fragment>
-                ))}
+                )})}
                 </TableBody>
               </Table>
             </ScrollArea>
