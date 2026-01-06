@@ -136,7 +136,7 @@ export function JobOrderTable() {
                       <TableCell className="text-center align-top py-2">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button size="sm" className="h-8 px-3 text-white font-bold">Process</Button>
+                            <Button size="sm" className="h-8 px-3 text-white font-bold">Process J.O.</Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
@@ -148,7 +148,7 @@ export function JobOrderTable() {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction onClick={() => handleProcessJobOrder(lead)}>
-                                Process
+                                Process J.O.
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
