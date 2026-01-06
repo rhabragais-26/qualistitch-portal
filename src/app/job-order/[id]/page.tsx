@@ -72,6 +72,7 @@ export default function JobOrderPage() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [joNumber, setJoNumber] = useState<string>('');
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   useEffect(() => {
     if (fetchedLead) {
@@ -227,7 +228,7 @@ export default function JobOrderPage() {
                  <div className="flex items-center gap-2">
                     <strong className='flex-shrink-0'>Delivery Date:</strong>
                     <div className='w-full no-print'>
-                        <Popover>
+                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                             <PopoverTrigger asChild>
                                 <Button
                                 variant={"outline"}
@@ -244,7 +245,10 @@ export default function JobOrderPage() {
                                 <Calendar
                                 mode="single"
                                 selected={deliveryDate}
-                                onSelect={setDeliveryDate}
+                                onSelect={(date) => {
+                                    setDeliveryDate(date);
+                                    setIsCalendarOpen(false);
+                                }}
                                 initialFocus
                                 />
                             </PopoverContent>
