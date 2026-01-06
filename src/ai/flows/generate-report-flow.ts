@@ -117,8 +117,8 @@ const generateReportFlow = ai.defineFlow(
     const filteredLeads = (() => {
       if (selectedWeek) {
         const [startStr, endStr] = selectedWeek.split('-');
-        const weekStart = parse(startStr, 'MM.dd', new Date(year, 0, 1));
-        const weekEnd = parse(endStr, 'MM.dd', new Date(year, 0, 1));
+        const weekStart = parse(`${startStr}.${year}`, 'MM.dd.yyyy', new Date());
+        const weekEnd = parse(`${endStr}.${year}`, 'MM.dd.yyyy', new Date());
         
         if(isValid(weekStart) && isValid(weekEnd)) {
              return typedLeads.filter(lead => {
@@ -128,14 +128,14 @@ const generateReportFlow = ai.defineFlow(
         }
       }
       
+      const start = startOfMonth(new Date(year, month));
+      const end = endOfMonth(new Date(year, month));
+
       return isNaN(year) || isNaN(month)
         ? typedLeads
         : typedLeads.filter((lead) => {
             const submissionDate = new Date(lead.submissionDateTime);
-            return (
-              getYear(submissionDate) === year &&
-              (selectedWeek ? true : getMonth(submissionDate) === month)
-            );
+            return isWithinInterval(submissionDate, { start, end });
           });
     })();
 
