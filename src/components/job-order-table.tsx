@@ -24,6 +24,7 @@ import { Button } from './ui/button';
 import { ScrollArea } from './ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+import { useRouter } from 'next/navigation';
 
 type Order = {
   productType: string;
@@ -48,6 +49,7 @@ export function JobOrderTable() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+  const router = useRouter();
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -57,12 +59,7 @@ export function JobOrderTable() {
   const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
 
   const handleProcessJobOrder = (lead: Lead) => {
-    // In a real application, this would trigger a more complex process.
-    // For now, we'll just show a success toast.
-    toast({
-      title: 'Job Order Processed',
-      description: `A job order for ${lead.customerName} has been processed.`,
-    });
+    router.push(`/job-order/${lead.id}`);
   };
 
   const filteredLeads = useMemo(() => {

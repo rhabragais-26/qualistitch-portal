@@ -50,6 +50,10 @@
           "type": "string",
           "format": "date-time",
           "description": "The date and time when the lead was last modified."
+        },
+        "courier": {
+            "type": "string",
+            "description": "The courier for the order."
         }
       },
       "required": [
@@ -63,7 +67,8 @@
         "orderType",
         "priorityType",
         "productType",
-        "lastModified"
+        "lastModified",
+        "courier"
       ]
     }
   },

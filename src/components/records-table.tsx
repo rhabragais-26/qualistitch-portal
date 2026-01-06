@@ -22,7 +22,7 @@ import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
 import React, { useState, useMemo } from 'react';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, PlusCircle, Plus, Minus, Edit, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, PlusCircle, Plus, Minus, Edit, Trash2, Truck } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -78,6 +78,7 @@ const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', '
 const paymentTypes = ['Partially Paid', 'Fully Paid', 'COD'];
 const orderTypes = ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'];
 const priorityTypes = ['Rush', 'Regular'];
+const courierTypes = ['Lalamove', 'J&T', 'In-house'];
 
 
 type Order = {
@@ -98,6 +99,7 @@ type Lead = {
   priorityType: string;
   paymentType: string;
   orderType: string;
+  courier: string;
   orders: Order[];
   submissionDateTime: string;
   lastModified: string;
@@ -448,6 +450,7 @@ export function RecordsTable() {
                     <TableHead className="text-white">Priority</TableHead>
                     <TableHead className="text-white">Payment</TableHead>
                     <TableHead className="text-white">Order Type</TableHead>
+                    <TableHead className="text-white">Courier</TableHead>
                     <TableHead className="text-center text-white">Items</TableHead>
                     <TableHead className="text-center text-white">Actions</TableHead>
                   </TableRow>
@@ -476,6 +479,7 @@ export function RecordsTable() {
                       </TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black">{lead.paymentType}</TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black">{lead.orderType}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black">{lead.courier}</TableCell>
                       <TableCell className="text-center align-middle py-2">
                         <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                           View
@@ -509,7 +513,7 @@ export function RecordsTable() {
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={12} className="p-0">
+                        <TableCell colSpan={13} className="p-0">
                            <div className="p-4">
                             <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
                              <Table>
@@ -722,6 +726,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   const [paymentType, setPaymentType] = useState(lead.paymentType);
   const [orderType, setOrderType] = useState(lead.orderType);
   const [priorityType, setPriorityType] = useState(lead.priorityType);
+  const [courier, setCourier] = useState(lead.courier);
   const [error, setError] = useState<string | null>(null);
 
   const toTitleCase = (str: string) => {
@@ -743,6 +748,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       setPaymentType(lead.paymentType);
       setOrderType(lead.orderType);
       setPriorityType(lead.priorityType);
+      setCourier(lead.courier);
     }
   }, [lead]);
   
@@ -806,6 +812,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
       paymentType,
       orderType,
       priorityType,
+      courier,
     };
     onSave(updatedLead);
   };
@@ -846,8 +853,15 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
           <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
               <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
-            </div>
+          </div>
           <div className="grid grid-cols-2 gap-4">
+             <div className="space-y-2">
+              <Label htmlFor="courier">Courier</Label>
+              <Select onValueChange={setCourier} value={courier}>
+                <SelectTrigger id="courier"><SelectValue /></SelectTrigger>
+                <SelectContent>{courierTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="salesRepresentative">CSR</Label>
               <Select onValueChange={setSalesRepresentative} value={salesRepresentative}>
@@ -855,6 +869,8 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
                 <SelectContent>{salesRepresentatives.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="paymentType">Payment Type</Label>
               <Select onValueChange={setPaymentType} value={paymentType}>
@@ -862,13 +878,13 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
                 <SelectContent>{paymentTypes.map(o => <SelectItem key={o} value={o}>{o === 'COD' ? 'COD (Cash on Delivery)' : o}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="orderType">Order Type</Label>
-            <Select onValueChange={setOrderType} value={orderType}>
-              <SelectTrigger id="orderType"><SelectValue /></SelectTrigger>
-              <SelectContent>{orderTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-            </Select>
+             <div className="space-y-2">
+              <Label htmlFor="orderType">Order Type</Label>
+              <Select onValueChange={setOrderType} value={orderType}>
+                <SelectTrigger id="orderType"><SelectValue /></SelectTrigger>
+                <SelectContent>{orderTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -965,7 +981,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
               <Select onValueChange={setSize} value={size}>
                 <SelectTrigger id="edit-size" className="w-[100px]">
                   <SelectValue placeholder="Size" />
-                </SelectTrigger>
+                </Trigger>
                 <SelectContent>
                   {productSizes.map((s) => (
                     <SelectItem key={s} value={s}>
@@ -1019,6 +1035,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
 }
 
     
+
 
 
 

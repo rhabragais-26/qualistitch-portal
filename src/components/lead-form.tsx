@@ -38,6 +38,7 @@ import {
   Plus,
   Minus,
   PhoneForwarded,
+  Truck,
 } from 'lucide-react';
 import {RadioGroup, RadioGroupItem} from './ui/radio-group';
 import { cn } from '@/lib/utils';
@@ -83,19 +84,20 @@ const formSchema = z.object({
   mobileNo: z.string().optional(),
   landlineNo: z.string().optional(),
   location: z.string().min(2, {message: 'Location is required.'}),
+  courier: z.string().min(1, { message: 'Courier is required.' }),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   salesRepresentative: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a CSR."}),
   orders: z.array(orderSchema).min(1, "Please add at least one order."),
 }).refine(data => {
-    if (data.mobileNo) return /^\d{4}-\d{3}-\d{4}$/.test(data.mobileNo);
+    if (data.mobileNo) return /^\d{4}-\d{3}-\d{4}$/.test(data.mobileNo) || data.mobileNo === '';
     return true;
 }, {
     message: "Mobile number must be in 0000-000-0000 format.",
     path: ["mobileNo"],
 }).refine(data => {
-    if (data.landlineNo) return /^\d{2}-\d{4}-\d{4}$/.test(data.landlineNo);
+    if (data.landlineNo) return /^\d{2}-\d{4}-\d{4}$/.test(data.landlineNo) || data.landlineNo === '';
     return true;
 }, {
     message: "Landline number must be in 00-0000-0000 format.",
@@ -129,6 +131,7 @@ const formFields: {
   {name: 'mobileNo', label: 'Mobile No. (Optional)', icon: Phone, type: 'tel'},
   {name: 'landlineNo', label: 'Landline No. (Optional)', icon: PhoneForwarded, type: 'tel'},
   {name: 'location', label: 'Location', icon: MapPin, type: 'input'},
+  {name: 'courier', label: 'Courier', icon: Truck, type: 'select', options: ['Lalamove', 'J&T', 'In-house'], placeholder: 'Select Courier'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
   {name: 'salesRepresentative', label: 'CSR', icon: UserCheck, type: 'select', options: ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], placeholder: 'Select CSR'},
@@ -196,6 +199,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       mobileNo: '',
       landlineNo: '',
       location: '',
+      courier: undefined,
       paymentType: undefined,
       orderType: undefined,
       priorityType: 'Regular',
@@ -309,6 +313,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       mobileNo: '',
       landlineNo: '',
       location: '',
+      courier: undefined,
       paymentType: undefined,
       orderType: undefined,
       priorityType: 'Regular',
@@ -372,6 +377,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       contactNumber: values.mobileNo || '-',
       landlineNumber: values.landlineNo || '-',
       location: toTitleCase(values.location),
+      courier: values.courier,
       paymentType: values.paymentType,
       salesRepresentative: values.salesRepresentative,
       orderType: values.orderType,
