@@ -463,30 +463,30 @@ export function DigitizingTable() {
                 {/* EMB Files */}
                 <div className="space-y-2">
                   <Label>Logo (EMB)</Label>
-                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-28 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoEmbUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {finalLogoEmb ? (<> <p className="text-sm truncate px-4">{finalLogoEmb.split(',')[0].slice(5, 35)}...</p> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => handleRemoveImage(e, setFinalLogoEmb)}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-8 w-8" /> <p className="text-xs mt-1">Upload .emb file</p> </div>)}
+                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-20 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoEmbUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                    {finalLogoEmb ? (<> <p className="text-xs truncate px-4">{finalLogoEmb.split(',')[0].slice(5, 35)}...</p> <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => handleRemoveImage(e, setFinalLogoEmb)}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-6 w-6" /> <p className="text-xs mt-1">Upload .emb file</p> </div>)}
                     <input type="file" accept=".emb" ref={finalLogoEmbUploadRef} onChange={(e) => handleFileUpload(e, setFinalLogoEmb)} className="hidden" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Back Design (EMB)</Label>
-                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-28 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignEmbUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {finalBackDesignEmb ? (<> <p className="text-sm truncate px-4">{finalBackDesignEmb.split(',')[0].slice(5, 35)}...</p> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => handleRemoveImage(e, setFinalBackDesignEmb)}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-8 w-8" /> <p className="text-xs mt-1">Upload .emb file</p> </div>)}
+                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-20 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignEmbUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                    {finalBackDesignEmb ? (<> <p className="text-xs truncate px-4">{finalBackDesignEmb.split(',')[0].slice(5, 35)}...</p> <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => handleRemoveImage(e, setFinalBackDesignEmb)}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-6 w-6" /> <p className="text-xs mt-1">Upload .emb file</p> </div>)}
                     <input type="file" accept=".emb" ref={finalBackDesignEmbUploadRef} onChange={(e) => handleFileUpload(e, setFinalBackDesignEmb)} className="hidden" />
                   </div>
                 </div>
                 {/* DST Files */}
                 <div className="space-y-2">
                   <Label>Logo (DST)</Label>
-                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-28 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoDstUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {finalLogoDst ? (<> <p className="text-sm truncate px-4">{finalLogoDst.split(',')[0].slice(5, 35)}...</p> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => handleRemoveImage(e, setFinalLogoDst)}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-8 w-8" /> <p className="text-xs mt-1">Upload .dst file</p> </div>)}
+                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-20 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoDstUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                    {finalLogoDst ? (<> <p className="text-xs truncate px-4">{finalLogoDst.split(',')[0].slice(5, 35)}...</p> <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => handleRemoveImage(e, setFinalLogoDst)}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-6 w-6" /> <p className="text-xs mt-1">Upload .dst file</p> </div>)}
                     <input type="file" accept=".dst" ref={finalLogoDstUploadRef} onChange={(e) => handleFileUpload(e, setFinalLogoDst)} className="hidden" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Back Design (DST)</Label>
-                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-28 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignDstUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {finalBackDesignDst ? (<> <p className="text-sm truncate px-4">{finalBackDesignDst.split(',')[0].slice(5, 35)}...</p> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => handleRemoveImage(e, setFinalBackDesignDst)}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-8 w-8" /> <p className="text-xs mt-1">Upload .dst file</p> </div>)}
+                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-20 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignDstUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                    {finalBackDesignDst ? (<> <p className="text-xs truncate px-4">{finalBackDesignDst.split(',')[0].slice(5, 35)}...</p> <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => handleRemoveImage(e, setFinalBackDesignDst)}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-6 w-6" /> <p className="text-xs mt-1">Upload .dst file</p> </div>)}
                     <input type="file" accept=".dst" ref={finalBackDesignDstUploadRef} onChange={(e) => handleFileUpload(e, setFinalBackDesignDst)} className="hidden" />
                   </div>
                 </div>
@@ -784,3 +784,5 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
+    
