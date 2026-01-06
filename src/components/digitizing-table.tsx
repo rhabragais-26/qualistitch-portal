@@ -288,15 +288,15 @@ export function DigitizingTable() {
 
     try {
       await updateDoc(leadDocRef, updateData);
-    } catch (e: any) {
-      console.error('Error updating status:', e);
-      if (e instanceof Error) {
-        toast({
-          variant: 'destructive',
-          title: 'Update Failed',
-          description: e.message || 'Could not update the status.',
-        });
-      }
+    } catch (e) {
+        console.error('Error updating status:', e);
+        if (e instanceof Error) {
+            toast({
+                variant: 'destructive',
+                title: 'Update Failed',
+                description: e.message || 'Could not update the status.',
+            });
+        }
     }
   };
 
@@ -495,15 +495,15 @@ export function DigitizingTable() {
               </div>
               <div className="space-y-2">
                   <Label>Names (DST)</Label>
-                  <ScrollArea className="h-64 w-full rounded-md border p-4">
-                    <div className="space-y-3">
+                  <ScrollArea className="h-40 w-full rounded-md border p-4">
+                    <div className="grid grid-cols-2 gap-4">
                       {finalNamesDst.map((file, index) => (
                         <div key={index} className="flex items-center gap-2">
-                          <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-12 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalNamesDstUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                            {file ? (<p className="text-sm truncate px-2">{file.split(',')[0].slice(5, 40)}...</p>) : (<div className="text-gray-500 flex items-center gap-2"> <Upload className="h-5 w-5" /> <p className="text-xs">Upload .dst file</p> </div>)}
+                          <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-1 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalNamesDstUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                            {file ? (<p className="text-xs truncate px-2">{file.split(',')[0].slice(5, 30)}...</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
                             <input type="file" accept=".dst" ref={el => finalNamesDstUploadRefs.current[index] = el} onChange={(e) => handleNameDstUpload(e, index)} className="hidden" />
                           </div>
-                          <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removeNameDstFile(index)}> <Trash2 className="h-4 w-4" /> </Button>
+                          <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeNameDstFile(index)}> <Trash2 className="h-4 w-4" /> </Button>
                         </div>
                       ))}
                     </div>
@@ -742,8 +742,8 @@ export function DigitizingTable() {
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Initial Program Images</CardTitle></CardHeader>
                                         <CardContent className="grid grid-cols-2 gap-4 text-xs">
-                                            {lead.layouts?.[0]?.logoImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo</p> <Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" width={200} height={150} className="rounded-md border object-contain" /> {lead.layouts[0].logoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoImageUploadTime).dateTime}</p>}</div>)}
-                                            {lead.layouts?.[0]?.backDesignImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Back Design</p> <Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" width={200} height={150} className="rounded-md border object-contain" /> {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}</div>)}
+                                            {lead.layouts?.[0]?.logoImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].logoImage} alt="Initial Program Logo" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].logoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoImageUploadTime).dateTime}</p>}</div>)}
+                                            {lead.layouts?.[0]?.backDesignImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Back Design</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}</div>)}
                                         </CardContent>
                                     </Card>
                                 )}
@@ -751,8 +751,8 @@ export function DigitizingTable() {
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Test Images</CardTitle></CardHeader>
                                         <CardContent className="grid grid-cols-2 gap-4 text-xs">
-                                            {lead.layouts?.[0]?.testLogoImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo</p> <Image src={lead.layouts[0].testLogoImage} alt="Test Logo" width={200} height={150} className="rounded-md border object-contain" /> {lead.layouts[0].testLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoImageUploadTime).dateTime}</p>}</div>)}
-                                            {lead.layouts?.[0]?.testBackDesignImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Back Design</p> <Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" width={200} height={150} className="rounded-md border object-contain" /> {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}</div>)}
+                                            {lead.layouts?.[0]?.testLogoImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].testLogoImage} alt="Test Logo" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].testLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoImageUploadTime).dateTime}</p>}</div>)}
+                                            {lead.layouts?.[0]?.testBackDesignImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Back Design</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}</div>)}
                                         </CardContent>
                                     </Card>
                                  )}
