@@ -126,7 +126,7 @@ export default function AddItemsPage() {
       for (const productType of productTypes) {
         for (const color of productColors) {
           for (const size of productSizes) {
-            const stock = 10;
+            const stock = Math.floor(Math.random() * (17 - 5 + 1)) + 5;
             const itemId = `${productType}-${color}-${size}`.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-');
             const itemDocRef = doc(firestore, 'inventory', itemId);
             batch.set(itemDocRef, {
@@ -153,7 +153,7 @@ export default function AddItemsPage() {
       
       toast({
         title: 'Database Seeded!',
-        description: `Successfully added/updated ${count} inventory items with a stock of 10.`,
+        description: `Successfully added/updated ${count} inventory items with random stock.`,
       });
     } catch (e: any) {
       console.error('Error seeding database: ', e);
