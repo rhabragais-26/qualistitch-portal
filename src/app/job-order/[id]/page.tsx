@@ -414,7 +414,7 @@ export default function JobOrderPage() {
         </div>
       </header>
        
-      <div className="flex justify-center items-center gap-4 pt-20 pb-4 no-print">
+      <div className="flex justify-center items-center gap-4 pt-24 no-print">
             <Button
                 variant="outline"
                 onClick={() => setCurrentPage(1)}
