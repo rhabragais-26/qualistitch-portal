@@ -84,6 +84,14 @@
           "type": "boolean",
           "description": "Indicates if the job order requires revision."
         },
+        "isFinalApproval": {
+          "type": "boolean",
+          "description": "Indicates if the job order has received final approval."
+        },
+        "isFinalProgram": {
+          "type": "boolean",
+          "description": "Indicates if the job order has its final program."
+        },
         "orders": {
           "type": "array",
           "items": {
