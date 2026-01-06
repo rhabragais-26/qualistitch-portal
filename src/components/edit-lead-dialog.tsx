@@ -173,11 +173,11 @@ export function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: 
           </div>
            <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="contactNo">Mobile No.</Label>
+              <Label htmlFor="contactNo">Mobile No. (Optional)</Label>
               <Input id="contactNo" value={contactNumber === '-' ? '' : contactNumber} onChange={handleMobileNoChange} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="landlineNo">Landline No.</Label>
+              <Label htmlFor="landlineNo">Landline No. (Optional)</Label>
               <Input id="landlineNo" value={landlineNumber === '-' ? '' : landlineNumber} onChange={handleLandlineNoChange} />
             </div>
           </div>
