@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Lead": {
@@ -13,6 +14,10 @@
         "customerName": {
           "type": "string",
           "description": "Name of the customer."
+        },
+        "recipientName": {
+          "type": "string",
+          "description": "Name of the recipient for the order."
         },
         "companyName": {
           "type": "string",
@@ -51,9 +56,217 @@
           "format": "date-time",
           "description": "The date and time when the lead was last modified."
         },
+        "deliveryDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The delivery date for the order."
+        },
         "courier": {
             "type": "string",
             "description": "The courier for the order."
+        },
+        "joNumber": {
+          "type": "number",
+          "description": "The job order number for the lead."
+        },
+        "isUnderProgramming": {
+          "type": "boolean",
+          "description": "Indicates if the job order is currently under programming."
+        },
+        "isInitialApproval": {
+          "type": "boolean",
+          "description": "Indicates if the job order has received initial approval."
+        },
+        "isLogoTesting": {
+            "type": "boolean",
+            "description": "Indicates if the logo for the job order is currently being tested."
+        },
+        "isRevision": {
+          "type": "boolean",
+          "description": "Indicates if the job order requires revision."
+        },
+        "isFinalApproval": {
+          "type": "boolean",
+          "description": "Indicates if the job order has received final approval."
+        },
+        "isFinalProgram": {
+          "type": "boolean",
+          "description": "Indicates if the job order has its final program."
+        },
+        "orders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "productType": { "type": "string" },
+              "color": { "type": "string" },
+              "size": { "type": "string" },
+              "quantity": { "type": "number" },
+              "remarks": { "type": "string" },
+              "design": {
+                "type": "object",
+                "properties": {
+                  "left": { "type": "boolean" },
+                  "right": { "type": "boolean" },
+                  "backLogo": { "type": "boolean" },
+                  "backText": { "type": "boolean" }
+                }
+              }
+            },
+            "required": ["productType", "color", "size", "quantity"]
+          }
+        },
+        "layouts": {
+          "type": "array",
+          "description": "An array of layout objects for the job order.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "layoutImage": {
+                "type": ["string", "null"],
+                "description": "Data URL of the uploaded layout image."
+              },
+              "logoLeftImage": {
+                "type": ["string", "null"],
+                "description": "Data URL of the uploaded left logo image for Initial Program."
+              },
+              "logoLeftImageUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for Initial Program left logo upload."
+              },
+              "logoRightImage": {
+                "type": ["string", "null"],
+                "description": "Data URL of the uploaded right logo image for Initial Program."
+              },
+              "logoRightImageUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for Initial Program right logo upload."
+              },
+              "backDesignImage": {
+                "type": ["string", "null"],
+                "description": "Data URL of the uploaded back design image for Initial Program."
+              },
+              "backDesignImageUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for Initial Program back design upload."
+              },
+              "testLogoLeftImage": {
+                "type": ["string", "null"],
+                "description": "Data URL of the uploaded left logo image for Test."
+              },
+              "testLogoLeftImageUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for Test left logo upload."
+              },
+              "testLogoRightImage": {
+                "type": ["string", "null"],
+                "description": "Data URL of the uploaded right logo image for Test."
+              },
+              "testLogoRightImageUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for Test right logo upload."
+              },
+              "testBackDesignImage": {
+                "type": ["string", "null"],
+                "description": "Data URL of the uploaded back design image for Test."
+              },
+              "testBackDesignImageUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for Test back design upload."
+              },
+              "finalLogoEmb": {
+                "type": "array",
+                "description": "Data URLs for the final logo EMB files.",
+                "items": { "type": ["string", "null"] }
+              },
+              "finalLogoEmbUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for final logo EMB file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
+              },
+              "finalBackDesignEmb": {
+                "type": ["string", "null"],
+                "description": "Data URL for the final back design EMB file."
+              },
+              "finalBackDesignEmbUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for final back design EMB file upload."
+              },
+              "finalLogoDst": {
+                 "type": "array",
+                "description": "Data URLs for the final logo DST files.",
+                "items": { "type": ["string", "null"] }
+              },
+              "finalLogoDstUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for final logo DST file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
+              },
+              "finalBackDesignDst": {
+                "type": ["string", "null"],
+                "description": "Data URL for the final back design DST file."
+              },
+              "finalBackDesignDstUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for final back design DST file upload."
+              },
+               "finalNamesDst": {
+                "type": "array",
+                "description": "Data URLs for the final names DST files.",
+                "items": { "type": ["string", "null"] }
+              },
+              "finalNamesDstUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for final names DST file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
+              },
+              "sequenceLogo": {
+                "type": "array",
+                "description": "Data URLs for the sequence logo files.",
+                "items": { "type": ["string", "null"] }
+              },
+              "sequenceLogoUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for sequence logo file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
+              },
+              "sequenceBackDesign": {
+                "type": ["string", "null"],
+                "description": "Data URL for the sequence back design file."
+              },
+              "sequenceBackDesignUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for sequence back design file upload."
+              },
+              "dstLogoLeft": { "type": "string" },
+              "dstLogoRight": { "type": "string" },
+              "dstBackLogo": { "type": "string" },
+              "dstBackText": { "type": "string" },
+              "namedOrders": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" },
+                    "color": { "type": "string" },
+                    "size": { "type": "string" },
+                    "quantity": { "type": "number" },
+                    "backText": { "type": "string" }
+                  },
+                  "required": ["name", "color", "size", "quantity", "backText"]
+                }
+              }
+            }
+          }
         }
       },
       "required": [
@@ -70,6 +283,35 @@
         "lastModified",
         "courier"
       ]
+    },
+    "InventoryItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "InventoryItem",
+      "type": "object",
+      "description": "Represents an item in the inventory.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the InventoryItem."
+        },
+        "productType": {
+          "type": "string",
+          "description": "Type of the product."
+        },
+        "color": {
+          "type": "string",
+          "description": "Color of the product."
+        },
+        "size": {
+          "type": "string",
+          "description": "Size of the product."
+        },
+        "stock": {
+          "type": "number",
+          "description": "Available stock quantity."
+        }
+      },
+      "required": ["id", "productType", "color", "size", "stock"]
     }
   },
   "auth": {
@@ -95,8 +337,24 @@
             }
           ]
         }
+      },
+       {
+        "path": "/inventory/{itemId}",
+        "definition": {
+          "entityName": "InventoryItem",
+          "schema": {
+            "$ref": "#/backend/entities/InventoryItem"
+          },
+          "description": "Stores inventory items. Each document represents a unique combination of product type, color, and size.",
+          "params": [
+            {
+              "name": "itemId",
+              "description": "Unique identifier for the inventory item."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The data structure is designed to store lead information collected via the LeadTracker application. To ensure security and efficient data retrieval, leads are stored under a collection called `leads`. This design promotes a flat structure, avoiding nested collections and complex queries, especially considering the app's focus is on data input rather than deeply relational data. Each lead document contains all relevant lead data. This simplifies data access and minimizes the need for complex joins or subqueries, aligning with the app's focus on simplicity and ease of use.\n\n**Authorization Independence:** Since there are no explicit user roles, collaborative features, or ownership details mentioned in the requirements, the system assumes open access to leads. If access control becomes a requirement in the future, a `members` map or a separate `/roles` collection would be used in combination with denormalization to achieve authorization independence.\n\n**QAPs (Rules are not Filters):** The structure supports secure `list` operations because all lead data is stored within a single, top-level collection. Security rules can be applied at the collection level, ensuring that only authorized users can access lead data, without needing to filter data based on document content. If more sophisticated access controls are required (e.g., restricting access based on CSR assignment), denormalization of CSR assignment directly into the lead documents combined with security rules based on the `request.auth.uid` will ensure that filtering within the rules is not required."
+    "reasoning": "The data structure is designed to store lead information collected via the LeadTracker application. To ensure security and efficient data retrieval, leads are stored under a collection called `leads`. This design promotes a flat structure, avoiding nested collections and complex queries, especially considering the app's focus is on data input rather than deeply relational data. Each lead document contains all relevant lead data. This simplifies data access and minimizes the need for complex joins or subqueries, aligning with the app's focus on simplicity and ease of use.\\n\\n**Authorization Independence:** Since there are no explicit user roles, collaborative features, or ownership details mentioned in the requirements, the system assumes open access to leads. If access control becomes a requirement in the future, a `members` map or a separate `/roles` collection would be used in combination with denormalization to achieve authorization independence.\\n\\n**QAPs (Rules are not Filters):** The structure supports secure `list` operations because all lead data is stored within a single, top-level collection. Security rules can be applied at the collection level, ensuring that only authorized users can access lead data, without needing to filter data based on document content. If more sophisticated access controls are required (e.g., restricting access based on CSR assignment), denormalization of CSR assignment directly into the lead documents combined with security rules based on the `request.auth.uid` will ensure that filtering within the rules is not required."
   }
 }

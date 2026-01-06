@@ -79,11 +79,18 @@ service cloud.firestore {
      * @principle     Enforces a simple "logged-in only" security model where all authenticated users have full permissions, as per the application's initial "open access" design.
      */
     match /leads/{leadId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create: if isSignedIn() && hasConsistentId(leadId);
-      allow update: if isSignedIn() && docExists() && isIdImmutable();
-      allow delete: if isSignedIn() && docExists();
+      allow update, delete: if isSignedIn();
+    }
+    
+    // ------------------------------------------------------------------------
+    // Collection Rules: /inventory
+    // ------------------------------------------------------------------------
+    match /inventory/{itemId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && hasConsistentId(itemId);
+      allow update, delete: if isSignedIn();
     }
   }
 }
