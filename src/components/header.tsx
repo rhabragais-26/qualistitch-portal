@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -10,6 +9,7 @@ import {
   ListOrdered,
   ClipboardList,
   ScanLine,
+  Boxes,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -125,6 +125,31 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                     Programming Queue
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/digitizing/reports')}>
+                    <LineChart className="mr-2" />
+                    Reports
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            {isClient && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                   <Button variant="ghost" className="text-neutral-100 hover:bg-neutral-700 hover:text-neutral-100">
+                      <Boxes className="mr-2" />
+                      Inventory
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleNavigation('/inventory/add-items')}>
+                    <PlusSquare className="mr-2" />
+                    Add Items
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/inventory/summary')}>
+                    <Database className="mr-2" />
+                    Summary
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/inventory/reports')}>
                     <LineChart className="mr-2" />
                     Reports
                   </DropdownMenuItem>
