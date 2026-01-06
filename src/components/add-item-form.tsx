@@ -123,7 +123,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-md shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+    <Card className="w-full max-w-lg shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
         <CardTitle className="font-headline text-xl text-black">Add New Item to Inventory</CardTitle>
         <CardDescription className="text-gray-600">
@@ -181,7 +181,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
 
             <div className="space-y-4">
               <FormLabel className="flex items-center gap-2 text-black"><Ruler className="h-4 w-4 text-primary" />Size Quantities</FormLabel>
-              <div className="grid grid-cols-1 gap-y-4">
+              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                 {fields.map((field, index) => (
                     <FormField
                         key={field.id}
