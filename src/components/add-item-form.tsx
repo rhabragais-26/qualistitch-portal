@@ -181,7 +181,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
 
             <div className="space-y-4">
               <FormLabel className="flex items-center gap-2 text-black"><Ruler className="h-4 w-4 text-primary" />Size Quantities</FormLabel>
-              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <div className="grid grid-cols-1 gap-y-4">
                 {fields.map((field, index) => (
                     <FormField
                         key={field.id}
@@ -204,7 +204,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
                                         <Input
                                             type="number"
                                             {...stockField}
-                                            className="w-20 text-center"
+                                            className="w-16 text-center"
                                             onChange={(e) => {
                                                 const value = e.target.value;
                                                 stockField.onChange(value === '' ? 0 : parseInt(value, 10));
