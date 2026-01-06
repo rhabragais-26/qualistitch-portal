@@ -781,10 +781,7 @@ export default function JobOrderPage() {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
-          .no-print, header, .no-print *, .no-print-placeholder {
-            display: none !important;
-          }
-           textarea.no-print, input.no-print {
+          .no-print, header, .no-print * {
             display: none !important;
           }
           .printable-area {
