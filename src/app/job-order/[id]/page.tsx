@@ -215,7 +215,7 @@ export default function JobOrderPage() {
       </div>
       <div className="p-10 mx-auto max-w-4xl printable-area">
         <div className="text-left mb-4">
-            <p className="font-bold">J.O. No: <span className="inline-block border-b border-black">{joNumber}</span></p>
+            <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{joNumber}</span></p>
         </div>
         <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
