@@ -343,7 +343,26 @@ export default function JobOrderPage() {
       };
       const newLayouts = [...(lead.layouts || []), newLayout];
       setLead({ ...lead, layouts: newLayouts });
-      setCurrentPage(1 + newLayouts.length -1);
+      setCurrentPage(1 + newLayouts.length);
+    }
+  };
+  
+  const deleteLayoutPage = () => {
+    if (lead?.layouts && lead.layouts.length > 1) {
+      const layoutIndexToRemove = currentPage - 2;
+      if (layoutIndexToRemove >= 0 && layoutIndexToRemove < lead.layouts.length) {
+        const newLayouts = [...lead.layouts];
+        newLayouts.splice(layoutIndexToRemove, 1);
+        setLead({ ...lead, layouts: newLayouts });
+        
+        // Adjust current page if necessary
+        if (currentPage > 1 + newLayouts.length) {
+          setCurrentPage(1 + newLayouts.length);
+        } else {
+          // If we are deleting a page before the current last one, we might need to stay or move back
+          setCurrentPage(Math.max(1, currentPage - 1));
+        }
+      }
     }
   };
 
@@ -450,11 +469,15 @@ export default function JobOrderPage() {
       </AlertDialog>
       <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md z-50">
         <div className="container mx-auto max-w-5xl flex justify-between items-center">
-            <div className="flex-1 flex justify-start">
+            <div className="flex-1 flex justify-start gap-2">
                  <Button onClick={addLayoutPage} variant="outline" size="sm">
                    <PlusCircle className="mr-2 h-4 w-4" />
                    Add Layout
                  </Button>
+                 <Button onClick={deleteLayoutPage} variant="destructive" size="sm" disabled={!lead.layouts || lead.layouts.length <= 1 || currentPage === 1}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Layout
+                </Button>
             </div>
             <div className="flex-1 flex justify-center items-center gap-4">
                  <Button
@@ -869,5 +892,3 @@ export default function JobOrderPage() {
     </div>
   );
 }
-
-    
