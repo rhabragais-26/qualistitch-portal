@@ -347,7 +347,7 @@ export default function JobOrderPage() {
           </tbody>
         </table>
 
-        <div className="text-sm mb-8">
+        <div className="text-sm mb-4">
             <p><strong>Note:</strong> Specific details for logo and back text on the next page</p>
         </div>
 
