@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -274,14 +275,14 @@ export default function JobOrderPage() {
             <div className="space-y-1">
                 <p>Prepared by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">{lead.salesRepresentative.toUpperCase()}</p>
+                <p className="text-center font-semibold">Customer Service Representative</p>
                 <p className="text-center">(Name & Signature, Date)</p>
-                <p className="text-center">Customer Service Representative</p>
             </div>
              <div className="space-y-1">
                 <p>Noted by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">MYREZA BANAWON</p>
+                <p className="text-center font-semibold">Sales Head</p>
                 <p className="text-center">(Name & Signature, Date)</p>
-                 <p className="text-center">Sales Head</p>
             </div>
 
             <div>
@@ -348,5 +349,6 @@ export default function JobOrderPage() {
     </div>
   );
 }
+    
 
     
