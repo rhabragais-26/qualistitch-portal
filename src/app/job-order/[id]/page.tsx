@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 
 type DesignDetails = {
   left?: boolean;
@@ -104,6 +105,12 @@ export default function JobOrderPage() {
     }
   };
 
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (lead) {
+      setLead({ ...lead, location: e.target.value });
+    }
+  };
+
   const handleOrderChange = (index: number, field: keyof Order, value: any) => {
     if (lead) {
       const newOrders = [...lead.orders];
@@ -127,6 +134,7 @@ export default function JobOrderPage() {
     try {
       await updateDoc(leadRef, {
         courier: lead.courier,
+        location: lead.location,
         orders: lead.orders,
         lastModified: new Date().toISOString(),
       });
@@ -226,8 +234,14 @@ export default function JobOrderPage() {
                 </div>
                 <p><strong>Contact No:</strong> {getContactDisplay()}</p>
             </div>
-             <div className="col-span-2 mt-2">
-                <p><strong>Delivery Address:</strong> {lead.location}</p>
+             <div className="col-span-2 mt-2 flex items-center gap-2">
+                <p><strong>Delivery Address:</strong></p>
+                 <Input
+                    value={lead.location}
+                    onChange={handleLocationChange}
+                    className="h-8 text-xs flex-1 no-print"
+                  />
+                  <span className="print-only">{lead.location}</span>
             </div>
         </div>
 
@@ -371,6 +385,8 @@ export default function JobOrderPage() {
     </div>
   );
 }
+    
+
     
 
     
