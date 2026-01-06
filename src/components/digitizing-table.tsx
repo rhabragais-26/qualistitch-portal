@@ -26,6 +26,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 
 type Lead = {
   id: string;
@@ -45,6 +46,7 @@ export function DigitizingTable() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [joNumberSearch, setJoNumberSearch] = React.useState('');
   const [openLeadId, setOpenLeadId] = React.useState<string | null>(null);
+  const [priorityFilter, setPriorityFilter] = React.useState('All');
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -97,11 +99,12 @@ export function DigitizingTable() {
         formatJoNumber(lead.joNumber).includes(joNumberSearch) ||
         (lead.joNumber?.toString().padStart(5, '0').endsWith(joNumberSearch))
         : true;
+      
+      const matchesPriority = priorityFilter === 'All' || lead.priorityType === priorityFilter;
 
-
-      return matchesSearch && matchesJo;
+      return matchesSearch && matchesJo && matchesPriority;
     });
-  }, [leads, searchTerm, joNumberSearch]);
+  }, [leads, searchTerm, joNumberSearch, priorityFilter]);
 
   const isLoading = isAuthLoading || isLeadsLoading;
 
@@ -132,6 +135,16 @@ export function DigitizingTable() {
                   className="bg-gray-100 text-black placeholder:text-gray-500"
                 />
               </div>
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectValue placeholder="Filter by Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Priorities</SelectItem>
+                  <SelectItem value="Rush">Rush</SelectItem>
+                  <SelectItem value="Regular">Regular</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
         </div>
       </CardHeader>
