@@ -981,7 +981,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
               <Select onValueChange={setSize} value={size}>
                 <SelectTrigger id="edit-size" className="w-[100px]">
                   <SelectValue placeholder="Size" />
-                </Trigger>
+                </SelectTrigger>
                 <SelectContent>
                   {productSizes.map((s) => (
                     <SelectItem key={s} value={s}>
@@ -1040,3 +1040,6 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
 
 
 
+
+
+    
