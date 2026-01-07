@@ -204,7 +204,7 @@ export function ProdPreparationTable() {
                     onCheckedChange={(checked) => handleCheckboxChange(index, !!checked)}
                   />
                    <Label htmlFor={`item-${index}`} className="text-sm font-normal flex-1 cursor-pointer">
-                    <span className="font-bold text-teal-700">{order.quantity}x</span> {order.productType} ( Color: <span className="font-bold text-teal-700">{order.color}</span> | Size: <span className="font-bold text-teal-700">{order.size}</span> )
+                    <span className="font-bold text-teal-700">{order.quantity}x</span> ( Color: <span className="font-bold text-teal-700">{order.color}</span> | Size: <span className="font-bold text-teal-700">{order.size}</span> )
                   </Label>
                 </div>
               ))}
@@ -260,7 +260,7 @@ export function ProdPreparationTable() {
             </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1">
         {isLoading && (
           <div className="space-y-2 p-4">
             {[...Array(10)].map((_, i) => (
@@ -278,27 +278,25 @@ export function ProdPreparationTable() {
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead rowSpan={2} className="text-white font-bold align-middle w-[20%]">Customer</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold align-middle">J.O. No.</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold align-middle">Programming Status</TableHead>
-                    <TableHead colSpan={4} className="text-white font-bold align-middle text-center">Ordered Items</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold align-middle text-center">Preparation Status</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold align-middle text-center">Production Endorsement</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle w-[20%] py-2">Customer</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle py-2">J.O. No.</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle py-2">Programming Status</TableHead>
+                    <TableHead colSpan={4} className="text-white font-bold align-middle text-center py-2">Ordered Items</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle text-center py-2">Preparation Status</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle text-center py-2">Production Endorsement</TableHead>
                   </TableRow>
                    <TableRow>
-                        <TableHead className="text-white font-bold text-xs">Product Type</TableHead>
-                        <TableHead className="text-white font-bold text-xs">Color</TableHead>
-                        <TableHead className="text-white font-bold text-xs">Size</TableHead>
-                        <TableHead className="text-white font-bold text-xs text-right">Qty</TableHead>
+                        <TableHead className="text-white font-bold text-xs py-1">Product Type</TableHead>
+                        <TableHead className="text-white font-bold text-xs py-1">Color</TableHead>
+                        <TableHead className="text-white font-bold text-xs py-1">Size</TableHead>
+                        <TableHead className="text-white font-bold text-xs text-right py-1">Qty</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                {jobOrders?.map((lead) => {
-                  const programmingStatus = getProgrammingStatus(lead);
-                  return (
+                {jobOrders?.map((lead) => (
                   <React.Fragment key={lead.id}>
                     {lead.orders.map((order, orderIndex) => (
-                         <TableRow key={`${lead.id}-${orderIndex}`}>
+                         <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex === lead.orders.length - 1 ? 'border-b-2 border-gray-400' : ''}>
                             {orderIndex === 0 && (
                                 <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black">
                                     <Collapsible>
@@ -320,7 +318,7 @@ export function ProdPreparationTable() {
                             )}
                              {orderIndex === 0 && (
                                 <TableCell rowSpan={lead.orders.length} className="align-top py-3">
-                                <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
+                                <Badge variant={getProgrammingStatus(lead).variant as any}>{getProgrammingStatus(lead).text}</Badge>
                                 </TableCell>
                             )}
                            <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
@@ -364,7 +362,7 @@ export function ProdPreparationTable() {
                          </TableRow>
                     ))}
                   </React.Fragment>
-                )})}
+                ))}
                 </TableBody>
             </Table>
           </div>
