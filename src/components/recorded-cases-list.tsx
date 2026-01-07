@@ -61,7 +61,7 @@ export function RecordedCasesList() {
                     <div className="md:col-span-2">
                        <p className="text-xs text-gray-500">Case & Remarks/Reason</p>
                        <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
-                       <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks}</p>
+                       <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks.charAt(0).toUpperCase() + caseItem.remarks.slice(1)}</p>
                     </div>
                     <div className="md:col-span-1 flex justify-center items-center">
                       {caseItem.image && (
