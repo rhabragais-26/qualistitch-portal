@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -296,7 +297,7 @@ export function OperationalCasesForm() {
                   <FormControl>
                     <Textarea
                       placeholder="Explain the reason for this case in detail..."
-                      className="resize-y min-h-[100px]"
+                      className="resize-y min-h-[150px]"
                       {...field}
                     />
                   </FormControl>
@@ -314,7 +315,7 @@ export function OperationalCasesForm() {
                         <FormControl>
                             <div 
                                 tabIndex={0}
-                                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
+                                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
                                 onPaste={handleImagePaste}
                                 onDoubleClick={() => imageUploadRef.current?.click()}
                                 onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
@@ -365,5 +366,3 @@ export function OperationalCasesForm() {
     </Card>
   );
 }
-
-    
