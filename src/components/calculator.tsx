@@ -92,7 +92,6 @@ export function Calculator({ onClose }: { onClose: () => void }) {
         throw new Error("Invalid calculation");
       }
       setResult(calculatedResult.toString());
-      setInput(calculatedResult.toString());
     } catch (error) {
       setResult('Error');
       setInput('');
