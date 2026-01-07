@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Check, ChevronDown, Send } from 'lucide-react';
 import { Badge } from './ui/badge';
@@ -28,6 +28,9 @@ import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { Checkbox } from './ui/checkbox';
+import { Label } from './ui/label';
 
 type Order = {
   productType: string;
@@ -72,6 +75,10 @@ export function ProdPreparationTable() {
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const { toast } = useToast();
+
+  const [confirmingLead, setConfirmingLead = useState<Lead | null>(null);
+  const [checkedItems, setCheckedItems = useState<Record<number, boolean>>({});
+
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -106,6 +113,27 @@ export function ProdPreparationTable() {
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   };
+
+  const handleOpenPreparedDialog = (lead: Lead) => {
+    setConfirmingLead(lead);
+    setCheckedItems({});
+  };
+
+  const handleConfirmPrepared = async () => {
+    if (!confirmingLead) return;
+    await handleUpdateStatus(confirmingLead.id, 'isPreparedForProduction');
+    setConfirmingLead(null);
+  };
+  
+  const handleCheckboxChange = (index: number, checked: boolean) => {
+    setCheckedItems(prev => ({ ...prev, [index]: checked }));
+  };
+
+  const areAllItemsChecked = useMemo(() => {
+    if (!confirmingLead) return false;
+    return confirmingLead.orders.length === Object.keys(checkedItems).filter(key => checkedItems[parseInt(key)]).length;
+  }, [confirmingLead, checkedItems]);
+
 
   const handleUpdateStatus = async (leadId: string, field: 'isPreparedForProduction' | 'isSentToProduction') => {
     if (!firestore) return;
@@ -158,6 +186,39 @@ export function ProdPreparationTable() {
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
+       {confirmingLead && (
+        <AlertDialog open={!!confirmingLead} onOpenChange={() => setConfirmingLead(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are the prepared items correct?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Please check all items to confirm they have been prepared correctly.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="max-h-60 overflow-y-auto my-4 space-y-2 pr-2">
+              {confirmingLead.orders.map((order, index) => (
+                <div key={index} className="flex items-center space-x-2 p-2 rounded-md border">
+                  <Checkbox
+                    id={`item-${index}`}
+                    checked={checkedItems[index] || false}
+                    onCheckedChange={(checked) => handleCheckboxChange(index, !!checked)}
+                  />
+                  <Label htmlFor={`item-${index}`} className="text-sm font-normal flex-1 cursor-pointer">
+                    {order.quantity}x {order.productType} ({order.color}, {order.size})
+                  </Label>
+                </div>
+              ))}
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>No</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmPrepared} disabled={!areAllItemsChecked}>
+                Yes
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
@@ -271,7 +332,7 @@ export function ProdPreparationTable() {
                             ) : (
                                 <Button
                                     size="sm"
-                                    onClick={() => handleUpdateStatus(lead.id, 'isPreparedForProduction')}
+                                    onClick={() => handleOpenPreparedDialog(lead)}
                                 >
                                     Prepared
                                 </Button>
