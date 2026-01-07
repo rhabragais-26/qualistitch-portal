@@ -107,8 +107,9 @@ export function RecordsTable() {
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [newOrderProductType, setNewOrderProductType] = useState('');
   const [newOrderColor, setNewOrderColor] = useState('');
-  const [newOrderSize, setNewOrderSize] = useState('');
-  const [newOrderQuantity, setNewOrderQuantity] = useState<number | string>(0);
+  const [sizeQuantities, setSizeQuantities] = useState(
+    productSizes.map(size => ({ size, quantity: 0 }))
+  );
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -181,19 +182,29 @@ export function RecordsTable() {
   };
   
   const isPolo = newOrderProductType.includes('Polo Shirt');
+  const isPatches = newOrderProductType === 'Patches';
   const availableColors = isPolo ? poloShirtColors : jacketColors;
   
   useEffect(() => {
-    if (!availableColors.includes(newOrderColor)) {
+     if (isPatches) {
+      setNewOrderColor('N/A');
+    } else if (!availableColors.includes(newOrderColor)) {
         setNewOrderColor('');
     }
-  }, [newOrderProductType, availableColors, newOrderColor]);
+  }, [newOrderProductType, isPatches, availableColors, newOrderColor]);
+
+  useEffect(() => {
+    if (isPatches) {
+     setSizeQuantities([{ size: 'N/A', quantity: 0 }]);
+   } else {
+     setSizeQuantities(productSizes.map(size => ({ size, quantity: 0 })));
+   }
+ }, [isPatches]);
 
   const resetAddOrderForm = () => {
     setNewOrderProductType('');
     setNewOrderColor('');
-    setNewOrderSize('');
-    setNewOrderQuantity(0);
+    setSizeQuantities(productSizes.map(size => ({ size, quantity: 0 })));
     setSelectedLeadId(null);
     setIsOrderDialogOpen(false);
   }
@@ -201,36 +212,79 @@ export function RecordsTable() {
   const handleAddOrder = async () => {
     if (!selectedLeadId || !firestore) return;
 
-    const quantity = typeof newOrderQuantity === 'string' ? parseInt(newOrderQuantity, 10) : newOrderQuantity;
-    if (newOrderProductType && newOrderColor && newOrderSize && quantity > 0) {
-      const newOrder = {
-        productType: newOrderProductType,
-        color: newOrderColor,
-        size: newOrderSize,
-        quantity: quantity
-      };
+    const isProductPatches = newOrderProductType === 'Patches';
+    const color = isProductPatches ? 'N/A' : newOrderColor;
+    let ordersAddedCount = 0;
+    const newOrders: Order[] = [];
 
-      const leadDocRef = doc(firestore, 'leads', selectedLeadId);
-      
-      try {
-        await updateDoc(leadDocRef, {
-          orders: arrayUnion(newOrder),
-          lastModified: new Date().toISOString(),
+    if (newOrderProductType && color) {
+        sizeQuantities.forEach(item => {
+            if (item.quantity > 0) {
+                newOrders.push({
+                    productType: newOrderProductType,
+                    color: color,
+                    size: isProductPatches ? 'N/A' : item.size,
+                    quantity: item.quantity,
+                });
+                ordersAddedCount++;
+            }
         });
-        toast({
-          title: 'Order Added!',
-          description: 'The new order has been added to the lead.',
-        });
-        resetAddOrderForm();
-      } catch (e: any) {
-        console.error("Error adding order: ", e);
-        toast({
-          variant: "destructive",
-          title: "Uh oh! Something went wrong.",
-          description: e.message || "Could not add the new order.",
-        });
-      }
     }
+
+    if (ordersAddedCount > 0) {
+        const leadDocRef = doc(firestore, 'leads', selectedLeadId);
+        try {
+            const updatePromises = newOrders.map(order => 
+                updateDoc(leadDocRef, {
+                    orders: arrayUnion(order)
+                })
+            );
+            await Promise.all(updatePromises);
+            
+            await updateDoc(leadDocRef, {
+                lastModified: new Date().toISOString(),
+            });
+
+            toast({
+                title: `${ordersAddedCount} Order(s) Added!`,
+                description: 'The new orders have been added to the lead.',
+            });
+            resetAddOrderForm();
+        } catch (e: any) {
+            console.error("Error adding orders: ", e);
+            toast({
+                variant: "destructive",
+                title: "Uh oh! Something went wrong.",
+                description: e.message || "Could not add the new orders.",
+            });
+        }
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'No Orders to Add',
+            description: 'Please enter a quantity for at least one size.',
+        });
+    }
+  };
+
+  const handleSizeQuantityChange = (index: number, change: number) => {
+    setSizeQuantities(current =>
+      current.map((item, i) =>
+        i === index
+          ? { ...item, quantity: Math.max(0, item.quantity + change) }
+          : item
+      )
+    );
+  };
+  
+  const handleSizeQuantityInputChange = (index: number, value: string) => {
+    setSizeQuantities(current =>
+      current.map((item, i) =>
+        i === index
+          ? { ...item, quantity: value === '' ? 0 : parseInt(value, 10) || 0 }
+          : item
+      )
+    );
   };
   
   const handleOpenEditLeadDialog = (lead: Lead) => {
@@ -616,96 +670,60 @@ export function RecordsTable() {
           }
           setIsOrderDialogOpen(isOpen);
         }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Add New Order</DialogTitle>
-            <DialogDescription>
-              Select product details to add to the existing lead.
-            </DialogDescription>
+            <DialogTitle>Add Order Details</DialogTitle>
+            <DialogDescription>Select product details to add</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="product-type">Product Type:</Label>
+              <Label>Product Type:</Label>
               <Select onValueChange={setNewOrderProductType} value={newOrderProductType}>
-                <SelectTrigger id="product-type">
-                  <SelectValue placeholder="Select a Product Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {productTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                <SelectTrigger><SelectValue placeholder="Select a Product Type" /></SelectTrigger>
+                <SelectContent>{productTypes.map((type) => (<SelectItem key={type} value={type}>{type}</SelectItem>))}</SelectContent>
               </Select>
             </div>
-            <div className='grid grid-cols-2 gap-4'>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="color" className='text-sm'>Color:</Label>
-                <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={newOrderProductType === 'Patches'}>
-                  <SelectTrigger id="color">
-                    <SelectValue placeholder="Select a Color" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableColors.map((color) => (
-                      <SelectItem key={color} value={color}>
-                        {color}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="size" className='text-sm'>Size:</Label>
-                <Select onValueChange={setNewOrderSize} value={newOrderSize} disabled={newOrderProductType === 'Patches'}>
-                  <SelectTrigger id="size" className="w-[100px]">
-                    <SelectValue placeholder="Size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {productSizes.map((size) => (
-                      <SelectItem key={size} value={size}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className='flex items-center gap-2'>
+              <Label>Color:</Label>
+              <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={isPatches}>
+                <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
+                <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
+              </Select>
             </div>
-              <div className="flex items-center gap-2 justify-center">
-              <Label htmlFor="quantity">Quantity:</Label>
-              <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => Math.max(0, (typeof q === 'string' ? parseInt(q, 10) || 0 : q) - 1))} disabled={newOrderQuantity === 0}>
-                <Minus className="h-4 w-4" />
-              </Button>
-              <Input
-                id="quantity"
-                type="text"
-                value={newOrderQuantity}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || /^[0-9\b]+$/.test(value)) {
-                    setNewOrderQuantity(value === '' ? '' : parseInt(value, 10));
-                  }
-                }}
-                onBlur={(e) => {
-                  if (e.target.value === '') {
-                    setNewOrderQuantity(0);
-                  }
-                }}
-                className="w-16 text-center"
-              />
-              <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => (typeof q === 'string' ? parseInt(q, 10) || 0 : q) + 1)}>
-                <Plus className="h-4 w-4" />
-              </Button>
+             <div className="space-y-4">
+              {!isPatches && <Label>Size Quantities</Label>}
+               <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                  {sizeQuantities.map((item, index) => (
+                      <div key={item.size} className="flex items-center justify-start gap-4">
+                          {!isPatches && <Label className="text-sm font-bold w-12">{item.size}</Label>}
+                          <div className={cn("flex items-center gap-2", isPatches && "w-full justify-center")}>
+                              <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, -1)}>
+                                  <Minus className="h-4 w-4" />
+                              </Button>
+                              <Input
+                                  type="text"
+                                  value={item.quantity}
+                                  onChange={(e) => handleSizeQuantityInputChange(index, e.target.value)}
+                                  onBlur={(e) => { if (e.target.value === '') handleSizeQuantityInputChange(index, '0')}}
+                                  className="w-14 text-center"
+                              />
+                              <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, 1)}>
+                                  <Plus className="h-4 w-4" />
+                              </Button>
+                          </div>
+                      </div>
+                  ))}
+               </div>
             </div>
           </div>
           <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Close
-              </Button>
-            </DialogClose>
-            <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType || !newOrderColor || !newOrderSize || newOrderQuantity === 0}>
-              Add Order
+            <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
+             <Button 
+              type="button" 
+              onClick={handleAddOrder} 
+              disabled={!newOrderProductType || (!isPatches && !newOrderColor) || sizeQuantities.every(sq => sq.quantity === 0)}
+            >
+              Add
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1065,6 +1083,8 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
+    
 
     
 
