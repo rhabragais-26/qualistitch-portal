@@ -255,7 +255,7 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                 <PopoverTrigger asChild>
                                   <Badge variant="destructive" className="cursor-pointer">{lead.operationalCase.caseType}</Badge>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto max-w-2xl p-4 bg-muted shadow-xl">
+                                <PopoverContent className="w-auto max-w-2xl p-4 bg-muted shadow-xl border">
                                   <div className="flex gap-4">
                                     <div className="flex-1 space-y-2">
                                       <div className="space-y-1">
