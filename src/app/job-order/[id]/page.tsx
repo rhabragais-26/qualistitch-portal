@@ -435,7 +435,7 @@ export default function JobOrderPage() {
         title: 'Job Order Saved!',
         description: 'Your changes have been saved successfully.',
       });
-      // No navigation here, stays on the page after save.
+      router.push('/job-order');
     } catch (e: any) {
       console.error('Error saving job order:', e);
       toast({
