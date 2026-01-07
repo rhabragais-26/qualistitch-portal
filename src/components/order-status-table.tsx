@@ -280,7 +280,7 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                       </div>
                                     </div>
                                     {lead.operationalCase.image && (
-                                      <div className="flex-shrink-0 w-24 h-24">
+                                      <div className="flex-shrink-0 w-48 h-48">
                                         <div
                                           className="relative w-full h-full cursor-pointer"
                                           onClick={() => setImageInView(lead.operationalCase!.image!)}
