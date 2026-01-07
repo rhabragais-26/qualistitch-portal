@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -220,41 +221,49 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
         return;
     }
     
-    if (isEditing && editingCase) {
-        // Update existing case
-        const caseDocRef = doc(firestore, 'operationalCases', editingCase.id);
-        await updateDoc(caseDocRef, { ...values, lastModified: new Date().toISOString() });
-        toast({
-          title: 'Case Updated!',
-          description: `The case for J.O. ${values.joNumber} has been updated.`,
-        });
-        onSaveComplete();
+    try {
+        if (isEditing && editingCase) {
+            // Update existing case
+            const caseDocRef = doc(firestore, 'operationalCases', editingCase.id);
+            await updateDoc(caseDocRef, { ...values, lastModified: new Date().toISOString() });
+            toast({
+              title: 'Case Updated!',
+              description: `The case for J.O. ${values.joNumber} has been updated.`,
+            });
+            onSaveComplete();
+        } else {
+            // Create new case
+            const caseId = uuidv4();
+            const operationalCasesRef = collection(firestore, 'operationalCases');
+            const caseDocRef = doc(operationalCasesRef, caseId);
+            
+            const submissionData = {
+                id: caseId,
+                ...values,
+                customerName: foundLead?.customerName,
+                companyName: foundLead?.companyName,
+                contactNumber: foundLead?.contactNumber || '',
+                landlineNumber: foundLead?.landlineNumber || '',
+                submissionDateTime: new Date().toISOString(),
+            };
 
-    } else {
-        // Create new case
-        const caseId = uuidv4();
-        const operationalCasesRef = collection(firestore, 'operationalCases');
-        const caseDocRef = doc(operationalCasesRef, caseId);
-        
-        const submissionData = {
-            id: caseId,
-            ...values,
-            customerName: foundLead?.customerName,
-            companyName: foundLead?.companyName,
-            contactNumber: foundLead?.contactNumber || '',
-            landlineNumber: foundLead?.landlineNumber || '',
-            submissionDateTime: new Date().toISOString(),
-        };
+            setDocumentNonBlocking(caseDocRef, submissionData, { merge: false });
+            
+            toast({
+              title: 'Case Recorded!',
+              description: `The ${values.caseType} case for J.O. ${values.joNumber} has been successfully recorded.`,
+            });
+        }
+        handleFormReset();
 
-        setDocumentNonBlocking(caseDocRef, submissionData, { merge: false });
-        
+    } catch (e: any) {
+        console.error("Error saving operational case: ", e);
         toast({
-          title: 'Case Recorded!',
-          description: `The ${values.caseType} case for J.O. ${values.joNumber} has been successfully recorded.`,
+            variant: "destructive",
+            title: "Save Failed",
+            description: e.message || "Could not save the operational case.",
         });
     }
-    
-    handleFormReset();
   }
   
   const getContactDisplay = () => {
@@ -390,29 +399,32 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
                 </div>
             )}
             
-            <FormField
-                control={control}
-                name="quantity"
-                render={({ field }) => (
-                    <FormItem className="flex items-center gap-4">
-                        <FormLabel className="flex items-center gap-2 text-black mb-0 pt-2 shrink-0">
-                            <Inbox className="h-4 w-4 text-primary" />
-                            Quantity
-                        </FormLabel>
-                        <FormControl>
-                            <Input
-                                type="number"
-                                placeholder="Enter quantity"
-                                {...field}
-                                onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}
-                                onBlur={e => { if (parseInt(e.target.value, 10) < 1) field.onChange(1); }}
-                                className="w-24"
-                            />
-                        </FormControl>
-                        <FormMessage className="mt-0" />
-                    </FormItem>
-                )}
-            />
+            <div className="grid grid-cols-1">
+                <FormField
+                    control={control}
+                    name="quantity"
+                    render={({ field }) => (
+                        <FormItem className="flex items-center gap-2">
+                            <FormLabel className="flex items-center gap-2 text-black mb-0 pt-2 shrink-0">
+                                <Inbox className="h-4 w-4 text-primary" />
+                                Quantity
+                            </FormLabel>
+                            <FormControl>
+                                <Input
+                                    type="number"
+                                    placeholder="0"
+                                    {...field}
+                                    onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}
+                                    onBlur={e => { if (parseInt(e.target.value, 10) < 1) field.onChange(1); }}
+                                    className="w-24"
+                                />
+                            </FormControl>
+                            <FormMessage className="mt-0" />
+                        </FormItem>
+                    )}
+                />
+            </div>
+
 
             <FormField
               control={control}
