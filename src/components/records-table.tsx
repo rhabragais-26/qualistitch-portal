@@ -529,7 +529,7 @@ export function RecordsTable() {
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={13} className="p-0">
+                        <TableCell colSpan={13} className="p-2">
                            <div className="p-2">
                             <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
                              <Table>
@@ -981,7 +981,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
           </div>
           <div className="flex items-center gap-2 justify-center">
             <Label htmlFor="edit-quantity">Quantity:</Label>
-            <Button type="button" variant="outline" size="icon" onClick={() => setQuantity(q => Math.max(0, (typeof q === 'string' ? parseInt(q, 10) || 0 : q) - 1))} disabled={quantity === 0}>
+            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setQuantity(q => Math.max(1, (typeof q === 'string' ? parseInt(q, 10) || 0 : q) - 1))}>
               <Minus className="h-4 w-4" />
             </Button>
             <Input
@@ -996,12 +996,12 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
               }}
               onBlur={(e) => {
                 if (e.target.value === '') {
-                  setQuantity(0);
+                  setQuantity(1);
                 }
               }}
               className="w-16 text-center"
             />
-            <Button type="button" variant="outline" size="icon" onClick={() => setQuantity(q => (typeof q === 'string' ? parseInt(q, 10) || 0 : q) + 1)}>
+            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setQuantity(q => (typeof q === 'string' ? parseInt(q, 10) || 0 : q) + 1)}>
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -1012,7 +1012,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
               Close
             </Button>
           </DialogClose>
-          <Button type="button" onClick={handleSave} disabled={!productType || !color || !size || quantity === 0} className="text-white font-bold">
+          <Button type="button" onClick={handleSave} disabled={!productType || !color || !size || quantity === 0 || Number(quantity) < 1} className="text-white font-bold">
             Save Changes
           </Button>
         </DialogFooter>

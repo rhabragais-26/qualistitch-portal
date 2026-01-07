@@ -793,7 +793,13 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                 <TableCell className="py-2 text-black text-xs">{field.size}</TableCell>
                                 <TableCell className="py-1 text-black text-xs">
                                   <div className="flex items-center justify-center gap-1">
+                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => update(index, { ...field, quantity: Math.max(1, field.quantity - 1) })}>
+                                        <Minus className="h-3 w-3" />
+                                    </Button>
                                     <span className="w-8 text-center">{field.quantity}</span>
+                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => update(index, { ...field, quantity: field.quantity + 1 })}>
+                                        <Plus className="h-3 w-3" />
+                                    </Button>
                                   </div>
                                 </TableCell>
                                 <TableCell className={cn("py-2 text-center font-medium text-xs", typeof remaining === 'number' && remaining < 0 ? 'text-red-500' : 'text-black')}>
