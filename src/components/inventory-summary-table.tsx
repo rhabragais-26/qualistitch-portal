@@ -95,12 +95,11 @@ export function InventorySummaryTable() {
 
   const availableColors = React.useMemo(() => {
     if (productTypeFilter === 'All') {
-      if (!inventoryItems) return [];
-      return [...new Set(inventoryItems.map(item => item.color))].sort();
+      return [...new Set([...jacketColors, ...poloShirtColors])].sort();
     }
     const isPolo = productTypeFilter.includes('Polo Shirt');
     return isPolo ? poloShirtColors : jacketColors;
-  }, [inventoryItems, productTypeFilter]);
+  }, [productTypeFilter]);
 
   React.useEffect(() => {
     if (colorFilter !== 'All' && !availableColors.includes(colorFilter)) {
