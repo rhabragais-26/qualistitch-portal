@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -20,10 +19,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import React, { ChangeEvent, useMemo } from 'react';
+import React, { ChangeEvent, useMemo, useState } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
 import { cn, formatDateTime } from '@/lib/utils';
@@ -36,6 +35,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 
 
 type NamedOrder = {
@@ -150,6 +150,8 @@ export function DigitizingTable() {
   const sequenceBackDesignUploadRef = React.useRef<HTMLInputElement>(null);
 
   const [archiveConfirmLead, setArchiveConfirmLead] = React.useState<Lead | null>(null);
+  const [imageInView, setImageInView] = useState<string | null>(null);
+  const [popoverStates, setPopoverStates] = useState<Record<string, boolean>>({});
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -777,6 +779,26 @@ export function DigitizingTable() {
           {renderUploadDialogContent()}
         </DialogContent>
       </Dialog>
+      
+      {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close image view</span>
+            </Button>
+          </div>
+        </div>
+      )}
 
       <CardHeader>
         <div className="flex justify-between items-center">
@@ -1006,14 +1028,30 @@ export function DigitizingTable() {
                                 {lead.layouts && lead.layouts.length > 0 && (
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Layout Designs</CardTitle></CardHeader>
-                                        <CardContent className="space-y-4 text-xs">
+                                        <CardContent className="flex flex-col gap-4 text-xs">
                                             {lead.layouts.map((layout, index) => (
                                                 layout.layoutImage && (
                                                     <div key={index} className="w-fit">
                                                         {lead.layouts.length > 1 && <p className="font-semibold text-gray-500 mb-2">Layout {index + 1}</p>}
-                                                        <div className="relative w-[200px] h-[150px]">
-                                                            <Image src={layout.layoutImage} alt={`Layout ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border" />
-                                                        </div>
+                                                        <Popover open={popoverStates[`${lead.id}-${index}`] || false} onOpenChange={(isOpen) => setPopoverStates(prev => ({ ...prev, [`${lead.id}-${index}`]: isOpen }))}>
+                                                          <PopoverTrigger
+                                                              asChild
+                                                              onMouseEnter={() => setPopoverStates(prev => ({ ...prev, [`${lead.id}-${index}`]: true }))}
+                                                              onMouseLeave={() => setPopoverStates(prev => ({ ...prev, [`${lead.id}-${index}`]: false }))}
+                                                          >
+                                                            <div
+                                                                className="relative w-[200px] h-[150px] cursor-pointer"
+                                                                onClick={() => setImageInView(layout.layoutImage!)}
+                                                            >
+                                                                <Image src={layout.layoutImage} alt={`Layout ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border" />
+                                                            </div>
+                                                          </PopoverTrigger>
+                                                          <PopoverContent className="w-80">
+                                                              <div className="relative h-64 w-full rounded-md overflow-hidden">
+                                                                  <Image src={layout.layoutImage} alt="Layout Preview" layout="fill" objectFit="contain" />
+                                                              </div>
+                                                          </PopoverContent>
+                                                        </Popover>
                                                     </div>
                                                 )
                                             ))}
