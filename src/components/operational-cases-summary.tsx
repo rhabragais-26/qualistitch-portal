@@ -8,6 +8,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
+import { Separator } from './ui/separator';
 
 type OperationalCase = {
   id: string;
@@ -29,7 +30,7 @@ const COLORS = {
 };
 
 const CasePieChart = ({ data, title }: { data: { name: string; quantity: number; fill: string }[], title: string }) => (
-    <div className="w-full h-[350px]">
+    <div className="w-full h-[300px]">
         <h3 className="text-center font-semibold text-lg mb-2">{title}</h3>
         <ChartContainer config={chartConfig} className="w-full h-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -41,7 +42,7 @@ const CasePieChart = ({ data, title }: { data: { name: string; quantity: number;
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        outerRadius={100}
+                        outerRadius={80}
                         label={({ name, quantity }) => `${name}: ${quantity}`}
                     >
                         {data.map((entry) => (
@@ -101,24 +102,25 @@ export function OperationalCasesSummary() {
   const isLoading = isAuthLoading || areCasesLoading;
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
         <CardTitle className="text-black">Operational Cases Summary</CardTitle>
         <CardDescription className="text-gray-600">
           Total quantity of items per case type for open and resolved cases.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col items-center justify-start gap-8 overflow-y-auto">
+      <CardContent className="flex flex-col items-center justify-start gap-8">
         {isLoading ? (
           <div className="w-full space-y-8">
-            <Skeleton className="h-[350px] w-full bg-gray-200" />
-            <Skeleton className="h-[350px] w-full bg-gray-200" />
+            <Skeleton className="h-[300px] w-full bg-gray-200" />
+            <Skeleton className="h-[300px] w-full bg-gray-200" />
           </div>
         ) : error ? (
           <div className="text-red-500 p-4">Error loading data: {error.message}</div>
         ) : (
           <>
             <CasePieChart data={openCasesData} title="Open Cases" />
+            <Separator className="my-4" />
             <CasePieChart data={resolvedCasesData} title="Resolved Cases" />
           </>
         )}
