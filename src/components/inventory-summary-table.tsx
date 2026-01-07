@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -219,19 +218,17 @@ export function InventorySummaryTable() {
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto">
-        {isLoading && (
+        {isLoading ? (
           <div className="space-y-2 p-4">
             {[...Array(10)].map((_, i) => (
               <Skeleton key={i} className="h-12 w-full bg-gray-200" />
             ))}
           </div>
-        )}
-        {error && (
+        ) : error ? (
           <div className="text-red-500 p-4">
             Error loading inventory: {error.message}
           </div>
-        )}
-        {!isLoading && !error && (
+        ) : (
            <div className="border rounded-md h-full">
             <ScrollArea className="h-full">
                 <Table>
@@ -275,3 +272,4 @@ export function InventorySummaryTable() {
     </Card>
   );
 }
+    

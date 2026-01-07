@@ -380,20 +380,18 @@ export default function JobOrderPage() {
 
   const handleConfirmDeleteLayout = () => {
     if (lead?.layouts && lead.layouts.length > 1) {
-      const layoutIndexToRemove = currentPage - 2;
-      if (layoutIndexToRemove >= 0 && layoutIndexToRemove < lead.layouts.length) {
-        const newLayouts = [...lead.layouts];
-        newLayouts.splice(layoutIndexToRemove, 1);
-        setLead({ ...lead, layouts: newLayouts });
-        
-        // Adjust current page if necessary
-        if (currentPage > 1 + newLayouts.length) {
-          setCurrentPage(1 + newLayouts.length);
-        } else if (currentPage > 1) {
-            // If we are deleting a page before the current last one, we might need to stay or move back
-            setCurrentPage(Math.max(1, currentPage - 1));
+        const layoutIndexToRemove = currentPage - 2; // currentPage is 1-based, layouts are 0-based from page 2
+        if (layoutIndexToRemove >= 0 && layoutIndexToRemove < lead.layouts.length) {
+            const newLayouts = [...lead.layouts];
+            newLayouts.splice(layoutIndexToRemove, 1);
+            setLead({ ...lead, layouts: newLayouts });
+
+            // Adjust current page if necessary
+            if (currentPage > 1) {
+                // If we were on a page that now doesn't exist, move to the new last page
+                setCurrentPage(prev => Math.min(prev, newLayouts.length + 1));
+            }
         }
-      }
     }
     setShowDeleteLayoutConfirmDialog(false);
   };
@@ -969,3 +967,5 @@ export default function JobOrderPage() {
     </div>
   );
 }
+
+    
