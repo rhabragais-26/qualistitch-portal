@@ -504,7 +504,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-6xl mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+    <Card className="w-full max-w-7xl mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -521,8 +521,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="flex gap-4">
               {/* Left Column */}
-              <div className="w-3/5 space-y-2">
-                <div className="grid grid-cols-2 gap-x-2 gap-y-2">
+              <div className="w-3/5 space-y-1">
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                     <FormField control={form.control} name="customerName" render={({field}) => (
                       <FormItem className="relative">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
@@ -541,7 +541,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormMessage />
                       </FormItem>
                     )}/>
-                    <FormField control={form.control} name="mobileNo" render={({field}) => (
+                     <FormField control={form.control} name="mobileNo" render={({field}) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><Phone className="h-4 w-4 text-primary" />Mobile No. (Optional)</FormLabel>
                         <FormControl><Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} className="h-9 text-xs" style={{width: '2in'}} /></FormControl>
@@ -575,8 +575,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     )}/>
                 </div>
                 
-                <div className='pt-2'>
-                  <div className="space-y-2">
+                <div className='pt-1 space-y-1'>
+                  <div className="space-y-1">
                       <FormField control={form.control} name="houseStreet" render={({field}) => (
                         <FormItem className="relative">
                           <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
@@ -654,7 +654,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-1">
                   <FormField control={form.control} name="salesRepresentative" render={({field}) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2 text-black text-xs"><UserCheck className="h-4 w-4 text-primary" />CSR</FormLabel>
@@ -671,7 +671,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               <Separator orientation="vertical" />
               
               {/* Right Column */}
-              <div className="w-2/5 space-y-2">
+              <div className="w-2/5 space-y-1">
                  <FormField control={form.control} name="orderType" render={({field}) => (
                     <FormItem className="flex items-center gap-4">
                       <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
@@ -699,7 +699,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     </FormItem>
                   )}/>
                  <FormField control={form.control} name="courier" render={({field}) => (
-                    <FormItem className="flex items-center gap-4">
+                    <FormItem className="flex items-center gap-4 pt-2 pb-2">
                       <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl><SelectTrigger className={cn("h-9 text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
@@ -709,7 +709,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     </FormItem>
                   )}/>
                  <FormField control={form.control} name="paymentType" render={({field}) => (
-                    <FormItem className="flex items-center gap-4">
+                    <FormItem className="flex items-center gap-4 pt-2 pb-2">
                       <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><CreditCard className="h-4 w-4 text-primary" />Payment Type</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl><SelectTrigger className={cn("h-9 text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
