@@ -501,6 +501,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     }
   };
 
+  const concatenatedAddress = [houseStreetValue, barangayValue, cityValue, provinceValue].filter(Boolean).join(', ');
+
   return (
     <Card className="w-full mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black max-w-6xl">
       <CardHeader>
@@ -574,9 +576,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                 </div>
                 
                 <div className='pt-1 space-y-2'>
-                    <div className="space-y-1 mt-1">
-                      <FormLabel className="flex items-center gap-2 text-black text-xs"><MapPin className="h-4 w-4 text-primary" />Location</FormLabel>
-                    </div>
                       <FormField control={form.control} name="houseStreet" render={({field}) => (
                         <FormItem className="relative">
                           <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
@@ -651,6 +650,12 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           <FormMessage />
                         </FormItem>
                       )}/>
+                      <FormItem>
+                          <FormLabel className="flex items-center gap-2 text-black text-xs">Address</FormLabel>
+                          <FormControl>
+                            <Input readOnly value={concatenatedAddress} className="h-9 text-xs bg-muted" />
+                          </FormControl>
+                      </FormItem>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-2">
