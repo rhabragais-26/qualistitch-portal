@@ -116,7 +116,7 @@ export function OperationalCasesForm() {
     const fullJoNumber = formatJoNumber(lead.joNumber!);
     setJoInput(fullJoNumber);
     setValue('joNumber', fullJoNumber, { shouldValidate: true });
-    setShowSuggestions(false);
+    setShowSuggestions(false); // This should hide it immediately
     setJoSuggestions([]);
   };
 
@@ -319,15 +319,15 @@ export function OperationalCasesForm() {
                            <span className="font-medium text-gray-600">Company:</span>
                            <span className="text-black">{foundLead.companyName && foundLead.companyName !== '-' ? foundLead.companyName : 'N/A'}</span>
                         </div>
-                         <div className='col-span-2 flex items-center gap-2'>
-                           <Phone className="h-4 w-4 text-gray-500" />
-                           <span className="font-medium text-gray-600">Contact:</span>
-                           <span className="text-black">{getContactDisplay() || 'N/A'}</span>
-                        </div>
                         <div className='col-span-2 flex items-center gap-2'>
                            <CalendarDays className="h-4 w-4 text-gray-500" />
                            <span className="font-medium text-gray-600">Expected Delivery:</span>
                            <span className="text-black">{getExpectedDeliveryDate()}</span>
+                        </div>
+                         <div className='col-span-2 flex items-center gap-2'>
+                           <Phone className="h-4 w-4 text-gray-500" />
+                           <span className="font-medium text-gray-600">Contact:</span>
+                           <span className="text-black">{getContactDisplay() || 'N/A'}</span>
                         </div>
                     </div>
                 </div>
