@@ -96,7 +96,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b bg-neutral-800 text-neutral-100">
+      <header className="sticky top-0 z-50 w-full border-b bg-neutral-800 text-neutral-100 no-print">
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex items-center">
             <Link href="/" className="mr-6 flex items-center ml-4">
@@ -239,7 +239,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
         </div>
       </header>
       
-      <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 overflow-hidden">
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 pt-4 overflow-hidden">
         {children}
       </main>
 
