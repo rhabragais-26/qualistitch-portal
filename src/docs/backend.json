@@ -333,7 +333,8 @@
         "companyName": { "type": "string" },
         "contactNumber": { "type": "string" },
         "landlineNumber": { "type": "string" },
-        "isArchived": { "type": "boolean", "description": "Indicates if the case is resolved and archived." }
+        "isArchived": { "type": "boolean", "description": "Indicates if the case is resolved and archived." },
+        "isDeleted": { "type": "boolean", "description": "Indicates if the case is soft-deleted." }
       },
       "required": ["id", "joNumber", "caseType", "remarks", "submissionDateTime"]
     }

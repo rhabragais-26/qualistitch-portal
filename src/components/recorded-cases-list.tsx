@@ -25,6 +25,7 @@ type OperationalCase = {
   contactNumber?: string;
   landlineNumber?: string;
   isArchived?: boolean;
+  isDeleted?: boolean;
 };
 
 export function RecordedCasesList() {
@@ -75,10 +76,10 @@ export function RecordedCasesList() {
     if (!caseToDelete || !firestore) return;
     try {
       const caseDocRef = doc(firestore, 'operationalCases', caseToDelete.id);
-      await deleteDoc(caseDocRef);
+      await updateDoc(caseDocRef, { isDeleted: true });
       toast({
         title: "Case Deleted",
-        description: `Case for J.O. ${caseToDelete.joNumber} has been permanently deleted.`,
+        description: `Case for J.O. ${caseToDelete.joNumber} has been moved to the deleted list.`,
       });
       setCaseToDelete(null);
     } catch (e: any) {
@@ -96,16 +97,20 @@ export function RecordedCasesList() {
     try {
       const caseDocRef = doc(firestore, 'operationalCases', caseItem.id);
       
-      const newRemarks = `${caseItem.remarks}\n(${reopeningRemarks})`;
+      let newRemarks = caseItem.remarks;
+      if (reopeningRemarks.trim()) {
+        newRemarks = `${caseItem.remarks}\n(${reopeningRemarks})`;
+      }
       
       await updateDoc(caseDocRef, { 
         isArchived: false,
+        isDeleted: false,
         remarks: newRemarks,
       });
 
       toast({
         title: "Case Reopened",
-        description: "The case has been moved back to the active list with your comments.",
+        description: "The case has been moved back to the active list.",
       });
     } catch (e: any) {
       console.error("Error reopening case: ", e);
@@ -118,8 +123,10 @@ export function RecordedCasesList() {
   };
 
 
-  const activeCases = cases?.filter(c => !c.isArchived);
-  const archivedCases = cases?.filter(c => c.isArchived);
+  const activeCases = cases?.filter(c => !c.isArchived && !c.isDeleted);
+  const archivedCases = cases?.filter(c => c.isArchived && !c.isDeleted);
+  const deletedCases = cases?.filter(c => c.isDeleted);
+
 
   return (
     <>
@@ -228,7 +235,7 @@ export function RecordedCasesList() {
                   <AlertDialogHeader>
                       <AlertDialogTitle>Delete this case?</AlertDialogTitle>
                       <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the case for J.O. {caseToDelete.joNumber}.
+                          This action cannot be undone. This will move the case for J.O. {caseToDelete.joNumber} to the deleted list.
                       </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -253,11 +260,12 @@ export function RecordedCasesList() {
           </div>
         </div>
       )}
-       {archivedCases && (
+       {cases && (
         <ResolvedCasesDialog
           isOpen={isResolvedCasesOpen}
           onClose={() => setIsResolvedCasesOpen(false)}
-          archivedCases={archivedCases}
+          archivedCases={archivedCases || []}
+          deletedCases={deletedCases || []}
           onReopenCase={handleReopenCase}
         />
       )}

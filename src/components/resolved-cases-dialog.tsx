@@ -11,6 +11,7 @@ import Image from 'next/image';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 type OperationalCase = {
   id: string;
@@ -23,86 +24,108 @@ type OperationalCase = {
   contactNumber?: string;
   landlineNumber?: string;
   isArchived?: boolean;
+  isDeleted?: boolean;
 };
 
 type ResolvedCasesDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   archivedCases: OperationalCase[];
+  deletedCases: OperationalCase[];
   onReopenCase: (caseItem: OperationalCase, reopeningRemarks: string) => void;
 };
 
-export function ResolvedCasesDialog({ isOpen, onClose, archivedCases, onReopenCase }: ResolvedCasesDialogProps) {
+export function ResolvedCasesDialog({ isOpen, onClose, archivedCases, deletedCases, onReopenCase }: ResolvedCasesDialogProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [caseToReopen, setCaseToReopen] = useState<OperationalCase | null>(null);
   const [reopeningRemarks, setReopeningRemarks] = useState('');
 
-  const filteredCases = archivedCases.filter(c =>
-    c.joNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.customerName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filterCases = (cases: OperationalCase[]) => {
+    return cases.filter(c =>
+      c.joNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }
 
   const handleReopenConfirm = () => {
-    if (caseToReopen && reopeningRemarks.trim()) {
+    if (caseToReopen) {
       onReopenCase(caseToReopen, reopeningRemarks);
       setCaseToReopen(null);
       setReopeningRemarks('');
     }
   };
 
+  const renderCaseList = (cases: OperationalCase[], listType: 'resolved' | 'deleted') => (
+     <ScrollArea className="h-full pr-6">
+      <div className="space-y-4">
+        {cases.length > 0 ? (
+          cases.map((caseItem) => (
+            <Card key={caseItem.id} className="bg-gray-50">
+              <CardContent className="p-4 grid grid-cols-12 gap-4 items-center">
+                <div className="col-span-3">
+                  <p className="text-xs text-gray-500">{listType === 'resolved' ? 'Date Resolved' : 'Date Deleted'}</p>
+                  <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
+                  <p className="text-sm font-semibold mt-2">{caseItem.joNumber}</p>
+                  <p className="text-xs text-gray-600">{caseItem.customerName}</p>
+                </div>
+                <div className="col-span-5 self-start pt-2">
+                    <p className="text-xs text-gray-500">Case & Remarks</p>
+                    <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
+                    <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks}</p>
+                </div>
+                <div className="col-span-2 flex justify-center">
+                  {caseItem.image && (
+                    <div className="relative h-24 w-24 rounded-md border overflow-hidden">
+                      <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
+                    </div>
+                  )}
+                </div>
+                <div className="col-span-2 flex justify-center">
+                  <Button variant="outline" onClick={() => setCaseToReopen(caseItem)}>Reopen Case</Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="flex items-center justify-center h-48">
+            <p className="text-muted-foreground">No {listType} cases found.</p>
+          </div>
+        )}
+      </div>
+    </ScrollArea>
+  );
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Resolved Cases</DialogTitle>
+            <DialogTitle>Previous Cases</DialogTitle>
           </DialogHeader>
-          <div className="flex-shrink-0 py-4">
-            <Input
-              placeholder="Search by J.O. number or customer name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="flex-grow overflow-hidden">
-            <ScrollArea className="h-full pr-6">
-              <div className="space-y-4">
-                {filteredCases.length > 0 ? (
-                  filteredCases.map((caseItem) => (
-                    <Card key={caseItem.id} className="bg-gray-50">
-                      <CardContent className="p-4 grid grid-cols-12 gap-4 items-center">
-                        <div className="col-span-3">
-                          <p className="text-xs text-gray-500">Date Resolved</p>
-                          <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
-                          <p className="text-sm font-semibold mt-2">{caseItem.joNumber}</p>
-                          <p className="text-xs text-gray-600">{caseItem.customerName}</p>
-                        </div>
-                        <div className="col-span-5 self-start pt-2">
-                           <p className="text-xs text-gray-500">Case & Remarks</p>
-                           <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
-                           <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks}</p>
-                        </div>
-                        <div className="col-span-2 flex justify-center">
-                          {caseItem.image && (
-                            <div className="relative h-24 w-24 rounded-md border overflow-hidden">
-                              <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-span-2 flex justify-center">
-                          <Button variant="outline" onClick={() => setCaseToReopen(caseItem)}>Reopen Case</Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="flex items-center justify-center h-48">
-                    <p className="text-muted-foreground">No resolved cases found.</p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          </div>
+          <Tabs defaultValue="resolved" className="flex flex-col flex-grow mt-4">
+            <div className="flex-shrink-0 flex justify-between items-center pb-4">
+                <TabsList>
+                    <TabsTrigger value="resolved">Resolved</TabsTrigger>
+                    <TabsTrigger value="deleted">Deleted</TabsTrigger>
+                </TabsList>
+                <div className="w-1/2">
+                    <Input
+                        placeholder="Search by J.O. number or customer name..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+            </div>
+            <div className="flex-grow overflow-hidden">
+                <TabsContent value="resolved" className="h-full mt-0">
+                    {renderCaseList(filterCases(archivedCases), 'resolved')}
+                </TabsContent>
+                <TabsContent value="deleted" className="h-full mt-0">
+                    {renderCaseList(filterCases(deletedCases), 'deleted')}
+                </TabsContent>
+            </div>
+          </Tabs>
+
           <DialogFooter className="flex-shrink-0 pt-4">
             <DialogClose asChild>
               <Button type="button" variant="secondary">Close</Button>
@@ -122,11 +145,11 @@ export function ResolvedCasesDialog({ isOpen, onClose, archivedCases, onReopenCa
             <AlertDialogHeader>
               <AlertDialogTitle>Reopen Case for J.O. {caseToReopen.joNumber}?</AlertDialogTitle>
               <AlertDialogDescription>
-                Please provide a reason or comment for reopening this case. This will be added to the remarks.
+                You can add optional remarks for reopening this case.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="py-4">
-              <Label htmlFor="reopening-remarks">Reopening Remarks</Label>
+              <Label htmlFor="reopening-remarks">Reopening Remarks (Optional)</Label>
               <Textarea
                 id="reopening-remarks"
                 value={reopeningRemarks}
@@ -140,7 +163,7 @@ export function ResolvedCasesDialog({ isOpen, onClose, archivedCases, onReopenCa
                 setCaseToReopen(null);
                 setReopeningRemarks('');
               }}>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleReopenConfirm} disabled={!reopeningRemarks.trim()}>Reopen</AlertDialogAction>
+              <AlertDialogAction onClick={handleReopenConfirm}>Reopen</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
