@@ -10,6 +10,7 @@ import {
   ClipboardList,
   ScanLine,
   Boxes,
+  TriangleAlert,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -152,6 +153,10 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                   <DropdownMenuItem onClick={() => handleNavigation('/inventory/reports')}>
                     <LineChart className="mr-2" />
                     Reports
+                  </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => handleNavigation('/inventory/operational-cases')}>
+                    <TriangleAlert className="mr-2" />
+                    Operational Cases
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
