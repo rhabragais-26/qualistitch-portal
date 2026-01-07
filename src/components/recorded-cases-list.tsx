@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -12,7 +11,7 @@ import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, ArchiveRestore } from 'lucide-react';
+import { Trash2, ArchiveRestore, Edit } from 'lucide-react';
 import { ResolvedCasesDialog } from './resolved-cases-dialog';
 
 type OperationalCase = {
@@ -30,7 +29,11 @@ type OperationalCase = {
   isDeleted?: boolean;
 };
 
-export function RecordedCasesList() {
+type RecordedCasesListProps = {
+  onEdit: (caseItem: OperationalCase) => void;
+};
+
+export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [caseToResolve, setCaseToResolve] = useState<OperationalCase | null>(null);
@@ -194,6 +197,14 @@ export function RecordedCasesList() {
                             className="shadow-md transition-transform active:scale-95 text-white font-bold w-full"
                           >
                             Resolved
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => onEdit(caseItem)}
+                            className="shadow-md transition-transform active:scale-95 font-bold w-full"
+                        >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
                         </Button>
                         <Button
                           variant="outline"

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,7 +29,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays, Inbox } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, query } from 'firebase/firestore';
+import { collection, doc, query, setDoc, updateDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Skeleton } from './ui/skeleton';
 import { addDays, format } from 'date-fns';
@@ -46,6 +45,21 @@ type Lead = {
   priorityType: 'Rush' | 'Regular';
 };
 
+type OperationalCase = {
+  id: string;
+  joNumber: string;
+  caseType: string;
+  remarks: string;
+  image?: string;
+  submissionDateTime: string;
+  customerName: string;
+  contactNumber?: string;
+  landlineNumber?: string;
+  quantity?: number;
+  isArchived?: boolean;
+  isDeleted?: boolean;
+};
+
 const formSchema = z.object({
   joNumber: z.string().min(1, { message: 'J.O. Number is required.' }),
   caseType: z.enum(['Return to Sender (RTS)', 'Quality Errors', 'Replacement'], {
@@ -58,7 +72,13 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function OperationalCasesForm() {
+type OperationalCasesFormProps = {
+  editingCase: OperationalCase | null;
+  onCancelEdit: () => void;
+  onSaveComplete: () => void;
+}
+
+export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete }: OperationalCasesFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const imageUploadRef = useRef<HTMLInputElement>(null);
@@ -87,13 +107,31 @@ export function OperationalCasesForm() {
   const { control, handleSubmit, reset, setValue, watch, trigger } = form;
   const imageValue = watch('image');
 
+  const isEditing = !!editingCase;
+
+  useEffect(() => {
+    if (editingCase && leads) {
+      const leadForCase = leads.find(l => l.joNumber && formatJoNumber(l.joNumber) === editingCase.joNumber);
+      setFoundLead(leadForCase || null);
+      setJoInput(editingCase.joNumber);
+      setValue('joNumber', editingCase.joNumber);
+      setValue('caseType', editingCase.caseType as any);
+      setValue('quantity', editingCase.quantity || 1);
+      setValue('remarks', editingCase.remarks);
+      setValue('image', editingCase.image || '');
+    } else {
+      handleFormReset();
+    }
+  }, [editingCase, leads, setValue]);
+
+
   const formatJoNumber = (joNumber: number) => {
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   };
 
   useEffect(() => {
-    if (!leads || !joInput || !showSuggestions) {
+    if (!leads || !joInput || !showSuggestions || isEditing) {
       setJoSuggestions([]);
       return;
     }
@@ -111,7 +149,7 @@ export function OperationalCasesForm() {
         setJoSuggestions([]);
     }
 
-  }, [joInput, leads, showSuggestions]);
+  }, [joInput, leads, showSuggestions, isEditing]);
   
   const handleSuggestionClick = (lead: Lead) => {
     setFoundLead(lead);
@@ -169,9 +207,10 @@ export function OperationalCasesForm() {
     if(imageUploadRef.current) {
         imageUploadRef.current.value = '';
     }
+    onCancelEdit();
   };
 
-  function onSubmit(values: FormValues) {
+  async function onSubmit(values: FormValues) {
     if (!firestore) {
         toast({
             variant: 'destructive',
@@ -180,26 +219,40 @@ export function OperationalCasesForm() {
         });
         return;
     }
-    const caseId = uuidv4();
-    const operationalCasesRef = collection(firestore, 'operationalCases');
-    const caseDocRef = doc(operationalCasesRef, caseId);
     
-    const submissionData = {
-        id: caseId,
-        ...values,
-        customerName: foundLead?.customerName,
-        companyName: foundLead?.companyName,
-        contactNumber: foundLead?.contactNumber || '',
-        landlineNumber: foundLead?.landlineNumber || '',
-        submissionDateTime: new Date().toISOString(),
-    };
+    if (isEditing && editingCase) {
+        // Update existing case
+        const caseDocRef = doc(firestore, 'operationalCases', editingCase.id);
+        await updateDoc(caseDocRef, { ...values, lastModified: new Date().toISOString() });
+        toast({
+          title: 'Case Updated!',
+          description: `The case for J.O. ${values.joNumber} has been updated.`,
+        });
+        onSaveComplete();
 
-    setDocumentNonBlocking(caseDocRef, submissionData, { merge: false });
-    
-    toast({
-      title: 'Case Recorded!',
-      description: `The ${values.caseType} case for J.O. ${values.joNumber} has been successfully recorded.`,
-    });
+    } else {
+        // Create new case
+        const caseId = uuidv4();
+        const operationalCasesRef = collection(firestore, 'operationalCases');
+        const caseDocRef = doc(operationalCasesRef, caseId);
+        
+        const submissionData = {
+            id: caseId,
+            ...values,
+            customerName: foundLead?.customerName,
+            companyName: foundLead?.companyName,
+            contactNumber: foundLead?.contactNumber || '',
+            landlineNumber: foundLead?.landlineNumber || '',
+            submissionDateTime: new Date().toISOString(),
+        };
+
+        setDocumentNonBlocking(caseDocRef, submissionData, { merge: false });
+        
+        toast({
+          title: 'Case Recorded!',
+          description: `The ${values.caseType} case for J.O. ${values.joNumber} has been successfully recorded.`,
+        });
+    }
     
     handleFormReset();
   }
@@ -224,9 +277,9 @@ export function OperationalCasesForm() {
   return (
     <Card className="w-full max-w-2xl shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
-        <CardTitle className="font-headline text-xl text-black">Record Operational Case</CardTitle>
+        <CardTitle className="font-headline text-xl text-black">{isEditing ? 'Edit Operational Case' : 'Record Operational Case'}</CardTitle>
         <CardDescription className="text-gray-600">
-          Document issues like RTS, quality errors, or replacements.
+           {isEditing ? 'Update the details for the selected case.' : 'Document issues like RTS, quality errors, or replacements.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -254,6 +307,7 @@ export function OperationalCasesForm() {
                                     setShowSuggestions(true);
                                 }}
                                 autoComplete='off'
+                                disabled={isEditing}
                             />
                         </FormControl>
                         {showSuggestions && joSuggestions.length > 0 && (
@@ -336,28 +390,29 @@ export function OperationalCasesForm() {
                 </div>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                    control={control}
-                    name="quantity"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className="flex items-center gap-2 text-black"><Inbox className="h-4 w-4 text-primary" />Quantity</FormLabel>
-                            <FormControl>
-                                <Input
-                                    type="number"
-                                    placeholder="Enter quantity"
-                                    {...field}
-                                    onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}
-                                    onBlur={e => { if (parseInt(e.target.value, 10) < 1) field.onChange(1); }}
-                                    className="w-full"
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
+            <FormField
+                control={control}
+                name="quantity"
+                render={({ field }) => (
+                    <FormItem className="flex items-center gap-4">
+                        <FormLabel className="flex items-center gap-2 text-black mb-0 pt-2 shrink-0">
+                            <Inbox className="h-4 w-4 text-primary" />
+                            Quantity
+                        </FormLabel>
+                        <FormControl>
+                            <Input
+                                type="number"
+                                placeholder="Enter quantity"
+                                {...field}
+                                onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}
+                                onBlur={e => { if (parseInt(e.target.value, 10) < 1) field.onChange(1); }}
+                                className="w-24"
+                            />
+                        </FormControl>
+                        <FormMessage className="mt-0" />
+                    </FormItem>
+                )}
+            />
 
             <FormField
               control={control}
@@ -426,10 +481,10 @@ export function OperationalCasesForm() {
 
             <div className="flex justify-end gap-4">
               <Button type="button" variant="outline" size="lg" onClick={handleFormReset}>
-                Reset
+                {isEditing ? 'Cancel' : 'Reset'}
               </Button>
               <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
-                Save Case
+                {isEditing ? 'Save Changes' : 'Save Case'}
               </Button>
             </div>
           </form>
