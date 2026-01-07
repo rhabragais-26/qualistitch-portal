@@ -45,7 +45,6 @@ export function OperationalCasesForm() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const imageUploadRef = useRef<HTMLInputElement>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -56,7 +55,8 @@ export function OperationalCasesForm() {
     },
   });
   
-  const { control, handleSubmit, reset, setValue } = form;
+  const { control, handleSubmit, reset, setValue, watch } = form;
+  const imageValue = watch('image');
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -65,16 +65,32 @@ export function OperationalCasesForm() {
       reader.onload = (e) => {
         const result = e.target?.result as string;
         setValue('image', result, { shouldValidate: true });
-        setImagePreview(result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImagePaste = (event: React.ClipboardEvent<HTMLDivElement>) => {
+    const items = event.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+            const blob = items[i].getAsFile();
+            if (blob) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (e.target?.result) {
+                        setValue('image', e.target.result as string, { shouldValidate: true });
+                    }
+                };
+                reader.readAsDataURL(blob);
+            }
+        }
     }
   };
 
   const handleRemoveImage = (e: React.MouseEvent) => {
     e.stopPropagation();
     setValue('image', '', { shouldValidate: true });
-    setImagePreview(null);
     if(imageUploadRef.current) {
         imageUploadRef.current.value = '';
     }
@@ -107,7 +123,6 @@ export function OperationalCasesForm() {
     });
     
     reset();
-    setImagePreview(null);
     if(imageUploadRef.current) {
         imageUploadRef.current.value = '';
     }
@@ -174,36 +189,39 @@ export function OperationalCasesForm() {
                     <FormItem>
                         <FormLabel className="text-black">Upload Image (Optional)</FormLabel>
                         <FormControl>
-                             <div 
-                                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center cursor-pointer"
-                                onClick={() => imageUploadRef.current?.click()}
-                              >
-                                {imagePreview ? (
-                                  <>
-                                    <Image src={imagePreview} alt="Image preview" width={200} height={200} className="mx-auto max-h-[200px] w-auto rounded-md" />
+                            <div 
+                                tabIndex={0}
+                                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-64 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
+                                onPaste={handleImagePaste}
+                                onDoubleClick={() => imageUploadRef.current?.click()}
+                                onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
+                            >
+                                {imageValue ? (
+                                <>
+                                    <Image src={imageValue} alt="Image preview" layout="fill" objectFit="contain" className="rounded-md" />
                                     <Button
-                                      variant="destructive"
-                                      size="icon"
-                                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                      onClick={handleRemoveImage}
+                                    variant="destructive"
+                                    size="icon"
+                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={handleRemoveImage}
                                     >
-                                      <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-4 w-4" />
                                     </Button>
-                                  </>
+                                </>
                                 ) : (
-                                  <div className="text-gray-500">
+                                <div className="text-gray-500">
                                     <Upload className="mx-auto h-12 w-12" />
-                                    <p>Click to upload an image</p>
-                                  </div>
+                                    <p>Double-click to upload or paste image</p>
+                                </div>
                                 )}
                                 <input 
-                                  type="file" 
-                                  accept="image/*" 
-                                  ref={imageUploadRef} 
-                                  onChange={handleImageUpload}
-                                  className="hidden" 
+                                type="file" 
+                                accept="image/*" 
+                                ref={imageUploadRef} 
+                                onChange={handleImageUpload}
+                                className="hidden" 
                                 />
-                              </div>
+                            </div>
                         </FormControl>
                          <FormMessage />
                     </FormItem>
@@ -214,7 +232,6 @@ export function OperationalCasesForm() {
             <div className="flex justify-end gap-4">
               <Button type="button" variant="outline" size="lg" onClick={() => {
                 reset();
-                setImagePreview(null);
                 if(imageUploadRef.current) imageUploadRef.current.value = '';
               }}>
                 Reset

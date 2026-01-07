@@ -785,9 +785,11 @@ export default function JobOrderPage() {
                 <h1 className="text-2xl font-bold text-center my-6 border-b-4 border-black pb-2">LAYOUT {lead.layouts && lead.layouts.length > 1 ? `(${layoutIndex + 1})` : ''}</h1>
                 
                 <div 
-                  className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center mb-6 no-print"
+                  tabIndex={0}
+                  className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center mb-6 no-print focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
                   onPaste={(e) => handleImagePaste(e, layoutIndex)}
-                  onClick={() => !layout.layoutImage && imageUploadRef.current?.click()}
+                  onDoubleClick={() => imageUploadRef.current?.click()}
+                  onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
                 >
                   {layout.layoutImage ? (
                     <>
@@ -804,7 +806,7 @@ export default function JobOrderPage() {
                   ) : (
                     <div className="text-gray-500 cursor-pointer">
                       <Upload className="mx-auto h-12 w-12" />
-                      <p>Click to upload or paste image</p>
+                      <p>Double-click to upload or paste image</p>
                     </div>
                   )}
                   <input 
