@@ -483,11 +483,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       item.color === order.color &&
       item.size === order.size
     );
-    const currentOrderQuantity = order.quantity;
     const stock = itemInInventory ? itemInInventory.stock : 0;
     
-    // Sum quantities of the same item already in the order list (excluding the current one being calculated)
-    const alreadyOrderedQty = fields.reduce((sum, existingOrder, index) => {
+    // Sum quantities of the same item already in the order list
+    const alreadyOrderedQty = fields.reduce((sum, existingOrder) => {
         if (existingOrder.productType === order.productType &&
             existingOrder.color === order.color &&
             existingOrder.size === order.size) {
@@ -496,9 +495,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
         return sum;
     }, 0);
 
-    // This logic seems a bit complex for just displaying remaining stock.
-    // Let's simplify: remaining stock is stock - what's being ordered.
-    return stock - currentOrderQuantity;
+    return stock - alreadyOrderedQty;
   };
   
   const handleAddOrder = () => {
@@ -547,8 +544,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               {formFields.map((fieldInfo) => (
                 <FormField
                   key={fieldInfo.name}
@@ -556,7 +553,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   name={fieldInfo.name}
                   render={({field}) => (
                     <FormItem className={cn("relative", fieldInfo.className)}>
-                      <FormLabel className="flex items-center gap-2 text-black">
+                      <FormLabel className="flex items-center gap-2 text-black text-xs">
                         <fieldInfo.icon className="h-4 w-4 text-primary" />
                         {fieldInfo.label}
                       </FormLabel>
@@ -575,12 +572,13 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                 field.onChange(e);
                               }
                             }}
+                            className="h-9 text-xs"
                           />
                         </FormControl>
                       ) : fieldInfo.type === 'select' ? (
                          <Select onValueChange={field.onChange} value={field.value || ''}>
                           <FormControl>
-                            <SelectTrigger className={cn(!field.value && 'text-muted-foreground')}>
+                            <SelectTrigger className={cn("h-9 text-xs", !field.value && 'text-muted-foreground')}>
                               <SelectValue placeholder={fieldInfo.placeholder || `Select a ${fieldInfo.label.toLowerCase()}`} />
                             </SelectTrigger>
                           </FormControl>
@@ -605,7 +603,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                 <FormControl>
                                   <RadioGroupItem value={option} />
                                 </FormControl>
-                                <FormLabel className="font-normal text-black">{option}</FormLabel>
+                                <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
                               </FormItem>
                             ))}
                           </RadioGroup>
@@ -685,10 +683,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         const remaining = getRemainingStock(field);
                         return (
                           <TableRow key={field.id}>
-                            <TableCell className="py-2 text-black">{field.productType}</TableCell>
-                            <TableCell className="py-2 text-black">{field.color}</TableCell>
-                            <TableCell className="py-2 text-black">{field.size}</TableCell>
-                            <TableCell className="py-2 text-black">
+                            <TableCell className="py-2 text-black text-xs">{field.productType}</TableCell>
+                            <TableCell className="py-2 text-black text-xs">{field.color}</TableCell>
+                            <TableCell className="py-2 text-black text-xs">{field.size}</TableCell>
+                            <TableCell className="py-2 text-black text-xs">
                               <div className="flex items-center justify-center gap-2">
                                 <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity - 1)} disabled={field.quantity <= 1}>
                                   <Minus className="h-3 w-3" />
@@ -699,7 +697,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                 </Button>
                               </div>
                             </TableCell>
-                            <TableCell className={cn("py-2 text-center font-medium", typeof remaining === 'number' && remaining < 0 ? 'text-red-500' : 'text-black')}>
+                            <TableCell className={cn("py-2 text-center font-medium text-xs", typeof remaining === 'number' && remaining < 0 ? 'text-red-500' : 'text-black')}>
                               {typeof remaining === 'number' ? remaining : 'N/A'}
                             </TableCell>
                             <TableCell className="text-right py-2">
@@ -847,7 +845,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
             <div className="flex justify-end pt-4 gap-4">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button type="button" variant="outline" size="lg">
+                  <Button type="button" variant="outline">
                     Reset
                   </Button>
                 </AlertDialogTrigger>
