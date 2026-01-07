@@ -20,10 +20,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useMemo } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
 import { cn, formatDateTime } from '@/lib/utils';
@@ -96,11 +96,20 @@ type Lead = {
   isLogoTesting?: boolean;
   isRevision?: boolean;
   isFinalApproval?: boolean;
-isFinalProgram?: boolean;
+  isFinalProgram?: boolean;
+  isDigitizingArchived?: boolean;
   layouts?: Layout[];
 }
 
 type CheckboxField = keyof Pick<Lead, 'isUnderProgramming' | 'isInitialApproval' | 'isLogoTesting' | 'isRevision' | 'isFinalApproval' | 'isFinalProgram'>;
+
+type FileUploadChecklistItem = {
+  label: string;
+  uploaded: boolean;
+  fileInfo?: string;
+  timestamp?: string | null;
+};
+
 
 export function DigitizingTable() {
   const firestore = useFirestore();
@@ -139,6 +148,8 @@ export function DigitizingTable() {
   const finalNamesDstUploadRefs = React.useRef<(HTMLInputElement | null)[]>([]);
   const sequenceLogoUploadRefs = React.useRef<(HTMLInputElement | null)[]>([]);
   const sequenceBackDesignUploadRef = React.useRef<HTMLInputElement>(null);
+
+  const [archiveConfirmLead, setArchiveConfirmLead] = React.useState<Lead | null>(null);
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -415,6 +426,26 @@ export function DigitizingTable() {
     imageSetter('');
   };
 
+  const handleConfirmArchive = async () => {
+    if (!archiveConfirmLead || !firestore) return;
+    try {
+        const leadDocRef = doc(firestore, 'leads', archiveConfirmLead.id);
+        await updateDoc(leadDocRef, { isDigitizingArchived: true });
+        toast({
+            title: "Project Archived",
+            description: "The project has been removed from the queue.",
+        });
+        setArchiveConfirmLead(null);
+    } catch (e: any) {
+        console.error('Error archiving lead:', e);
+        toast({
+            variant: 'destructive',
+            title: 'Archive Failed',
+            description: e.message || 'Could not archive the project.',
+        });
+    }
+  };
+
 
   const toggleLeadDetails = (leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
@@ -448,7 +479,7 @@ export function DigitizingTable() {
   const filteredLeads = React.useMemo(() => {
     if (!leads) return [];
     
-    const leadsWithJo = leads.filter(lead => lead.joNumber);
+    const leadsWithJo = leads.filter(lead => lead.joNumber && !lead.isDigitizingArchived);
 
     const filtered = leadsWithJo.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -483,6 +514,28 @@ export function DigitizingTable() {
   }, [leads, searchTerm, joNumberSearch, priorityFilter, overdueFilter]);
 
   const isLoading = isAuthLoading || isLeadsLoading;
+
+  const fileChecklistItems: FileUploadChecklistItem[] = useMemo(() => {
+    if (!archiveConfirmLead) return [];
+    const layout = archiveConfirmLead.layouts?.[0];
+    if (!layout) return [];
+
+    return [
+      { label: "Initial Program: Logo Left", uploaded: !!layout.logoLeftImage, fileInfo: 'Image', timestamp: layout.logoLeftImageUploadTime },
+      { label: "Initial Program: Logo Right", uploaded: !!layout.logoRightImage, fileInfo: 'Image', timestamp: layout.logoRightImageUploadTime },
+      { label: "Initial Program: Back Design", uploaded: !!layout.backDesignImage, fileInfo: 'Image', timestamp: layout.backDesignImageUploadTime },
+      { label: "Test: Logo Left", uploaded: !!layout.testLogoLeftImage, fileInfo: 'Image', timestamp: layout.testLogoLeftImageUploadTime },
+      { label: "Test: Logo Right", uploaded: !!layout.testLogoRightImage, fileInfo: 'Image', timestamp: layout.testLogoRightImageUploadTime },
+      { label: "Test: Back Design", uploaded: !!layout.testBackDesignImage, fileInfo: 'Image', timestamp: layout.testBackDesignImageUploadTime },
+      ...(layout.finalLogoEmb || []).map((file, i) => ({ label: `Final Program: Logo ${i + 1} (EMB)`, uploaded: !!file, fileInfo: '.emb', timestamp: layout.finalLogoEmbUploadTimes?.[i] })),
+      { label: "Final Program: Back Design (EMB)", uploaded: !!layout.finalBackDesignEmb, fileInfo: '.emb', timestamp: layout.finalBackDesignEmbUploadTime },
+      ...(layout.finalLogoDst || []).map((file, i) => ({ label: `Final Program: Logo ${i + 1} (DST)`, uploaded: !!file, fileInfo: '.dst', timestamp: layout.finalLogoDstUploadTimes?.[i] })),
+      { label: "Final Program: Back Design (DST)", uploaded: !!layout.finalBackDesignDst, fileInfo: '.dst', timestamp: layout.finalBackDesignDstUploadTime },
+      ...(layout.finalNamesDst || []).map((file, i) => ({ label: `Final Program: Name ${i + 1} (DST)`, uploaded: !!file, fileInfo: '.dst', timestamp: layout.finalNamesDstUploadTimes?.[i] })),
+      ...(layout.sequenceLogo || []).map((file, i) => ({ label: `Sequence: Logo ${i + 1}`, uploaded: !!file, fileInfo: 'Image', timestamp: layout.sequenceLogoUploadTimes?.[i] })),
+      { label: "Sequence: Back Design", uploaded: !!layout.sequenceBackDesign, fileInfo: 'Image', timestamp: layout.sequenceBackDesignUploadTime },
+    ].filter(item => item.uploaded);
+  }, [archiveConfirmLead]);
 
   const renderUploadDialogContent = () => {
     if (uploadField === 'isUnderProgramming' || uploadField === 'isLogoTesting') {
@@ -664,6 +717,38 @@ export function DigitizingTable() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={!!archiveConfirmLead} onOpenChange={(open) => !open && setArchiveConfirmLead(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive Project?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please review the uploaded files before archiving. This action will remove the project from the active queue.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="max-h-60 overflow-y-auto my-4 pr-2">
+            <ul className="space-y-2">
+              {fileChecklistItems.map((item, index) => (
+                <li key={index} className="flex items-center text-sm">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2" />
+                  <span className="font-medium flex-1">{item.label}</span>
+                  <span className="text-xs text-muted-foreground">{item.timestamp ? formatDateTime(item.timestamp).dateTime : ''}</span>
+                </li>
+              ))}
+              {fileChecklistItems.length === 0 && (
+                 <li className="flex items-center text-sm text-muted-foreground">
+                    <Circle className="h-4 w-4 mr-2" />
+                    No files have been uploaded for this project.
+                 </li>
+              )}
+            </ul>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setArchiveConfirmLead(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmArchive}>Archive Project</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
        <Dialog open={isUploadDialogOpen} onOpenChange={(isOpen) => {
         if (!isOpen) {
             setLogoLeftImage('');
@@ -777,6 +862,7 @@ export function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Final Approval</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Final Program</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Details</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Done</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -858,11 +944,21 @@ export function DigitizingTable() {
                               <ChevronDown className="h-4 w-4 ml-1" />
                             )}
                           </Button>
-                      </TableCell>
+                        </TableCell>
+                        <TableCell className="text-center align-middle py-2">
+                            <Button
+                                size="sm"
+                                className="h-8 px-3 text-white font-bold bg-green-600 hover:bg-green-700"
+                                disabled={!lead.isFinalProgram}
+                                onClick={() => setArchiveConfirmLead(lead)}
+                            >
+                                Done
+                            </Button>
+                        </TableCell>
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={12} className="p-4">
+                        <TableCell colSpan={13} className="p-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {(lead.layouts?.[0]?.logoLeftImage || lead.layouts?.[0]?.logoRightImage || lead.layouts?.[0]?.backDesignImage) && (
                                     <Card className="bg-white">
@@ -918,8 +1014,3 @@ export function DigitizingTable() {
     </Card>
   );
 }
-
-
-
-
-    

@@ -93,6 +93,10 @@
           "type": "boolean",
           "description": "Indicates if the job order has its final program."
         },
+        "isDigitizingArchived": {
+          "type": "boolean",
+          "description": "Indicates if the lead is archived and should be hidden from the digitizing queue."
+        },
         "orders": {
           "type": "array",
           "items": {
@@ -283,6 +287,35 @@
         "lastModified",
         "courier"
       ]
+    },
+    "InventoryItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "InventoryItem",
+      "type": "object",
+      "description": "Represents an item in the inventory.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the InventoryItem."
+        },
+        "productType": {
+          "type": "string",
+          "description": "Type of the product."
+        },
+        "color": {
+          "type": "string",
+          "description": "Color of the product."
+        },
+        "size": {
+          "type": "string",
+          "description": "Size of the product."
+        },
+        "stock": {
+          "type": "number",
+          "description": "Available stock quantity."
+        }
+      },
+      "required": ["id", "productType", "color", "size", "stock"]
     }
   },
   "auth": {
@@ -305,6 +338,22 @@
             {
               "name": "leadId",
               "description": "Unique identifier for the lead document."
+            }
+          ]
+        }
+      },
+       {
+        "path": "/inventory/{itemId}",
+        "definition": {
+          "entityName": "InventoryItem",
+          "schema": {
+            "$ref": "#/backend/entities/InventoryItem"
+          },
+          "description": "Stores inventory items. Each document represents a unique combination of product type, color, and size.",
+          "params": [
+            {
+              "name": "itemId",
+              "description": "Unique identifier for the inventory item."
             }
           ]
         }
