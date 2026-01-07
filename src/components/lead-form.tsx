@@ -729,6 +729,16 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormMessage />
                         </FormItem>
                     )}/>
+                    <FormField control={form.control} name="courier" render={({field}) => (
+                      <FormItem>
+                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ''}>
+                          <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
+                          <SelectContent>{['Lalamove', 'J&T', 'In-house', 'Pick-up'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                    )}/>
                     <FormField
                     control={form.control}
                     name="priorityType"
@@ -742,7 +752,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                             <RadioGroup
                             onValueChange={field.onChange}
                             value={field.value}
-                            className="flex items-center space-x-4 pt-2 pl-4"
+                            className="flex items-center space-x-4 pt-2 pl-8"
                             disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
                             >
                             {['Rush', 'Regular'].map((option) => (
@@ -756,16 +766,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         </FormItem>
                     )}
                     />
-                    <FormField control={form.control} name="courier" render={({field}) => (
-                      <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value || ''}>
-                          <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
-                          <SelectContent>{['Lalamove', 'J&T', 'In-house', 'Pick-up'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
-                          </Select>
-                          <FormMessage />
-                      </FormItem>
-                    )}/>
                 </div>
 
                 <div className="pt-2">
@@ -913,5 +913,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </>
   );
 }
+
+    
 
     

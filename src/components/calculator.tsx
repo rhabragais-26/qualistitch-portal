@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -127,7 +128,7 @@ export function Calculator({ onClose }: { onClose: () => void }) {
     { label: '7', action: () => handleButtonClick('7') },
     { label: '8', action: () => handleButtonClick('8') },
     { label: '9', action: () => handleButtonClick('9') },
-    { label: '*', action: () => handleButtonClick('*') },
+    { label: 'x', action: () => handleButtonClick('*') },
     { label: '4', action: () => handleButtonClick('4') },
     { label: '5', action: () => handleButtonClick('5') },
     { label: '6', action: () => handleButtonClick('6') },
@@ -142,8 +143,8 @@ export function Calculator({ onClose }: { onClose: () => void }) {
   ];
 
   const getButtonClass = (label: string) => {
-    if (['/', '*', '-', '+', '='].includes(label)) {
-      return "bg-orange-500 hover:bg-orange-600";
+    if (['/', 'x', '-', '+', '='].includes(label)) {
+      return "bg-orange-500 hover:bg-orange-600 font-bold";
     }
     if (label === 'C' || label === 'DEL') {
         return "bg-gray-600 hover:bg-gray-700";
@@ -211,3 +212,5 @@ export function Calculator({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
+
+    
