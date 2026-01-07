@@ -224,5 +224,3 @@ export function OrderStatusTable() {
     </Card>
   );
 }
-
-    
