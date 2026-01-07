@@ -549,7 +549,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       </FormItem>
                     )}/>
                     <FormField control={form.control} name="companyName" render={({field}) => (
-                      <FormItem className="relative">
+                      <FormItem className="relative pt-1">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><Building className="h-4 w-4 text-primary" />Company Name (Optional)</FormLabel>
                         <FormControl><Input {...field} autoComplete="off" className="h-9 text-xs" /></FormControl>
                         {companySuggestions.length > 0 && (
@@ -567,7 +567,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       </FormItem>
                     )}/>
                     <FormField control={form.control} name="landlineNo" render={({field}) => (
-                      <FormItem>
+                      <FormItem className="pt-1">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><PhoneForwarded className="h-4 w-4 text-primary" />Landline No. (Optional)</FormLabel>
                         <FormControl><Input type="tel" {...field} onChange={(e) => handleLandlineNoChange(e, field)} className="h-9 text-xs" /></FormControl>
                         <FormMessage />
