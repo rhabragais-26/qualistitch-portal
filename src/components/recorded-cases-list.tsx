@@ -11,7 +11,7 @@ import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, ArchiveRestore, Edit } from 'lucide-react';
+import { Trash2, ArchiveRestore, Edit, Check } from 'lucide-react';
 import { ResolvedCasesDialog } from './resolved-cases-dialog';
 
 type OperationalCase = {
@@ -193,20 +193,24 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
                       </div>
                       <div className="md:col-span-2 flex flex-col items-center justify-center gap-2">
                         <Button
-                            onClick={() => setCaseToResolve(caseItem)}
-                            className="shadow-md transition-transform active:scale-95 text-white font-bold w-full"
-                          >
-                            Resolved
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => onEdit(caseItem)}
-                            className="shadow-md transition-transform active:scale-95 font-bold w-full"
+                          size="sm"
+                          onClick={() => setCaseToResolve(caseItem)}
+                          className="shadow-md transition-transform active:scale-95 text-white font-bold w-full"
                         >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
+                          <Check className="mr-2 h-4 w-4" />
+                          Resolved
                         </Button>
                         <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onEdit(caseItem)}
+                          className="shadow-md transition-transform active:scale-95 font-bold w-full"
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => setCaseToDelete(caseItem)}
                           className="shadow-md transition-transform active:scale-95 font-bold w-full text-red-500 border-red-500 hover:bg-red-50 hover:text-red-600"
