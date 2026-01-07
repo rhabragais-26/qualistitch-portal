@@ -12,7 +12,7 @@ export function initializeFirebase() {
   const auth = getAuth(app);
   // Firestore now initialized with experimental settings for better connectivity.
   const firestore = initializeFirestore(app, {
-    experimentalForceLongPolling: true,
+    experimentalAutoDetectLongPolling: true,
   });
 
 
