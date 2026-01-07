@@ -702,6 +702,25 @@ export function DigitizingTable() {
     return null;
   }
 
+  const ImagePreview = ({ src, alt, popoverKey }: { src: string; alt: string; popoverKey: string }) => (
+    <Popover open={popoverStates[popoverKey]} onOpenChange={(isOpen) => setPopoverStates(prev => ({...prev, [popoverKey]: isOpen}))}>
+      <PopoverTrigger
+        asChild
+        onMouseEnter={() => setPopoverStates(prev => ({...prev, [popoverKey]: true}))}
+        onMouseLeave={() => setPopoverStates(prev => ({...prev, [popoverKey]: false}))}
+      >
+        <div className="relative w-[200px] h-[150px] cursor-pointer" onClick={() => setImageInView(src)}>
+          <Image src={src} alt={alt} layout="fill" objectFit="contain" className="rounded-md border" />
+        </div>
+      </PopoverTrigger>
+      <PopoverContent className="w-80">
+        <div className="relative h-64 w-full rounded-md overflow-hidden">
+          <Image src={src} alt={`${alt} Preview`} layout="fill" objectFit="contain" />
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
        <AlertDialog open={!!uncheckConfirmation} onOpenChange={(open) => !open && setUncheckConfirmation(null)}>
@@ -989,9 +1008,27 @@ export function DigitizingTable() {
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Initial Program Images</CardTitle></CardHeader>
                                         <CardContent className="flex flex-wrap gap-4 text-xs">
-                                            {lead.layouts?.[0]?.logoLeftImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo Left</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].logoLeftImage} alt="Initial Program Logo Left" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].logoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoLeftImageUploadTime).dateTime}</p>}</div>)}
-                                            {lead.layouts?.[0]?.logoRightImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo Right</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].logoRightImage} alt="Initial Program Logo Right" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].logoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoRightImageUploadTime).dateTime}</p>}</div>)}
-                                            {lead.layouts?.[0]?.backDesignImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Back Design</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}</div>)}
+                                            {lead.layouts?.[0]?.logoLeftImage && (
+                                              <div className="w-fit"> 
+                                                <p className="font-semibold text-gray-500 mb-2">Logo Left</p> 
+                                                <ImagePreview src={lead.layouts[0].logoLeftImage} alt="Initial Program Logo Left" popoverKey={`${lead.id}-init-left`} />
+                                                {lead.layouts[0].logoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoLeftImageUploadTime).dateTime}</p>}
+                                              </div>
+                                            )}
+                                            {lead.layouts?.[0]?.logoRightImage && (
+                                              <div className="w-fit">
+                                                <p className="font-semibold text-gray-500 mb-2">Logo Right</p>
+                                                <ImagePreview src={lead.layouts[0].logoRightImage} alt="Initial Program Logo Right" popoverKey={`${lead.id}-init-right`} />
+                                                {lead.layouts[0].logoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoRightImageUploadTime).dateTime}</p>}
+                                              </div>
+                                            )}
+                                            {lead.layouts?.[0]?.backDesignImage && (
+                                              <div className="w-fit">
+                                                <p className="font-semibold text-gray-500 mb-2">Back Design</p>
+                                                <ImagePreview src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" popoverKey={`${lead.id}-init-back`} />
+                                                {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}
+                                              </div>
+                                            )}
                                         </CardContent>
                                     </Card>
                                 )}
@@ -999,9 +1036,27 @@ export function DigitizingTable() {
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Test Images</CardTitle></CardHeader>
                                         <CardContent className="flex flex-wrap gap-4 text-xs">
-                                            {lead.layouts?.[0]?.testLogoLeftImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo Left</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].testLogoLeftImage} alt="Test Logo Left" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].testLogoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoLeftImageUploadTime).dateTime}</p>}</div>)}
-                                            {lead.layouts?.[0]?.testLogoRightImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Logo Right</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].testLogoRightImage} alt="Test Logo Right" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].testLogoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoRightImageUploadTime).dateTime}</p>}</div>)}
-                                            {lead.layouts?.[0]?.testBackDesignImage && (<div className="w-fit"> <p className="font-semibold text-gray-500 mb-2">Back Design</p> <div className="relative w-[200px] h-[150px]"><Image src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" layout="fill" objectFit="contain" className="rounded-md border" /></div> {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}</div>)}
+                                          {lead.layouts?.[0]?.testLogoLeftImage && (
+                                            <div className="w-fit">
+                                              <p className="font-semibold text-gray-500 mb-2">Logo Left</p>
+                                              <ImagePreview src={lead.layouts[0].testLogoLeftImage} alt="Test Logo Left" popoverKey={`${lead.id}-test-left`} />
+                                              {lead.layouts[0].testLogoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoLeftImageUploadTime).dateTime}</p>}
+                                            </div>
+                                          )}
+                                          {lead.layouts?.[0]?.testLogoRightImage && (
+                                            <div className="w-fit">
+                                              <p className="font-semibold text-gray-500 mb-2">Logo Right</p>
+                                              <ImagePreview src={lead.layouts[0].testLogoRightImage} alt="Test Logo Right" popoverKey={`${lead.id}-test-right`} />
+                                              {lead.layouts[0].testLogoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoRightImageUploadTime).dateTime}</p>}
+                                            </div>
+                                          )}
+                                          {lead.layouts?.[0]?.testBackDesignImage && (
+                                            <div className="w-fit">
+                                              <p className="font-semibold text-gray-500 mb-2">Back Design</p>
+                                              <ImagePreview src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" popoverKey={`${lead.id}-test-back`} />
+                                              {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}
+                                            </div>
+                                          )}
                                         </CardContent>
                                     </Card>
                                  )}
@@ -1020,38 +1075,32 @@ export function DigitizingTable() {
                                                 {lead.layouts?.[0]?.finalNamesDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalNamesDstUploadTimes![index]!).dateTime}</p>}
                                             </div>
                                           ))}
-                                          {lead.layouts?.[0]?.sequenceLogo?.map((file, index) => file && (<div key={index} className="relative w-fit"><p className="font-semibold text-gray-500 mb-2">Sequence Logo {index + 1}</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>Sequence File</p>{lead.layouts?.[0]?.sequenceLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceLogoUploadTimes![index]!).dateTime}</p>}</div>))}
-                                          {lead.layouts?.[0]?.sequenceBackDesign && <div className="relative w-fit"><p className="font-semibold text-gray-500 mb-2">Sequence Back</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>Sequence File</p>{lead.layouts[0].sequenceBackDesignUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceBackDesignUploadTime).dateTime}</p>}</div>}
+                                          {lead.layouts?.[0]?.sequenceLogo?.map((file, index) => file && (
+                                              <div key={index} className="w-fit">
+                                                  <p className="font-semibold text-gray-500 mb-2">Sequence Logo {index + 1}</p>
+                                                  <ImagePreview src={file} alt={`Sequence Logo ${index + 1}`} popoverKey={`${lead.id}-seq-logo-${index}`} />
+                                                  {lead.layouts?.[0]?.sequenceLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceLogoUploadTimes![index]!).dateTime}</p>}
+                                              </div>
+                                          ))}
+                                          {lead.layouts?.[0]?.sequenceBackDesign && (
+                                              <div className="w-fit">
+                                                  <p className="font-semibold text-gray-500 mb-2">Sequence Back</p>
+                                                  <ImagePreview src={lead.layouts[0].sequenceBackDesign} alt="Sequence Back Design" popoverKey={`${lead.id}-seq-back`} />
+                                                  {lead.layouts[0].sequenceBackDesignUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceBackDesignUploadTime).dateTime}</p>}
+                                              </div>
+                                          )}
                                         </CardContent>
                                     </Card>
                                   )}
                                 {lead.layouts && lead.layouts.length > 0 && (
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Layout Designs</CardTitle></CardHeader>
-                                        <CardContent className="flex flex-col gap-4 text-xs">
+                                        <CardContent className="flex flex-wrap gap-4 text-xs">
                                             {lead.layouts.map((layout, index) => (
                                                 layout.layoutImage && (
                                                     <div key={index} className="w-fit">
                                                         {lead.layouts.length > 1 && <p className="font-semibold text-gray-500 mb-2">Layout {index + 1}</p>}
-                                                        <Popover open={popoverStates[`${lead.id}-${index}`] || false} onOpenChange={(isOpen) => setPopoverStates(prev => ({ ...prev, [`${lead.id}-${index}`]: isOpen }))}>
-                                                          <PopoverTrigger
-                                                              asChild
-                                                              onMouseEnter={() => setPopoverStates(prev => ({ ...prev, [`${lead.id}-${index}`]: true }))}
-                                                              onMouseLeave={() => setPopoverStates(prev => ({ ...prev, [`${lead.id}-${index}`]: false }))}
-                                                          >
-                                                            <div
-                                                                className="relative w-[200px] h-[150px] cursor-pointer"
-                                                                onClick={() => setImageInView(layout.layoutImage!)}
-                                                            >
-                                                                <Image src={layout.layoutImage} alt={`Layout ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border" />
-                                                            </div>
-                                                          </PopoverTrigger>
-                                                          <PopoverContent className="w-80">
-                                                              <div className="relative h-64 w-full rounded-md overflow-hidden">
-                                                                  <Image src={layout.layoutImage} alt="Layout Preview" layout="fill" objectFit="contain" />
-                                                              </div>
-                                                          </PopoverContent>
-                                                        </Popover>
+                                                        <ImagePreview src={layout.layoutImage} alt={`Layout ${index + 1}`} popoverKey={`${lead.id}-layout-${index}`} />
                                                     </div>
                                                 )
                                             ))}
@@ -1072,3 +1121,5 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
+    
