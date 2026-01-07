@@ -349,7 +349,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
           <DialogHeader>
             <DialogTitle>Account Settings</DialogTitle>
             <DialogDescription>
-              Update your profile information.
+              Update your profile information and password.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-6 py-4">
@@ -359,14 +359,29 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
                     <AvatarFallback className="text-3xl">R</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-2">
-                    <Label htmlFor="profile-picture">Profile Picture</Label>
-                    <div className="relative">
-                        <Input id="profile-picture" type="file" className="w-full" />
-                        <Button size="sm" variant="ghost" className="absolute right-1 top-1/2 -translate-y-1/2 h-7">
+                     <Label htmlFor="profile-picture">Profile Picture</Label>
+                    <div className="flex items-center gap-2">
+                        <Button asChild variant="outline" size="sm">
+                            <label htmlFor="profile-picture-upload" className="cursor-pointer">
+                                Choose File
+                            </label>
+                        </Button>
+                        <Input id="profile-picture-upload" type="file" className="hidden" />
+                        <Button size="sm" variant="ghost">
                             <Upload className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
+            </div>
+             <div className="grid grid-cols-2 gap-4">
+               <div className="grid gap-2">
+                <Label htmlFor="first-name">First Name</Label>
+                <Input id="first-name" placeholder="Juan" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="last-name">Last Name</Label>
+                <Input id="last-name" placeholder="Dela Cruz" />
+              </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="nickname">Nickname</Label>
@@ -413,3 +428,5 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
     </>
   );
 }
+
+    
