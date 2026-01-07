@@ -214,7 +214,7 @@ export function OperationalCasesForm() {
     const submissionDate = new Date(foundLead.submissionDateTime);
     const deadlineDays = foundLead.priorityType === 'Rush' ? 7 : 22;
     const deliveryDate = addDays(submissionDate, deadlineDays);
-    return format(deliveryDate, 'MMMM dd, yyyy');
+    return format(deliveryDate, 'MMM dd, yyyy');
   };
 
 
