@@ -28,6 +28,34 @@ const COLORS = {
     'Replacement': 'hsl(var(--chart-3))',
 };
 
+const CasePieChart = ({ data, title }: { data: { name: string; quantity: number; fill: string }[], title: string }) => (
+    <div className="w-full h-[350px]">
+        <h3 className="text-center font-semibold text-lg mb-2">{title}</h3>
+        <ChartContainer config={chartConfig} className="w-full h-full">
+            <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                    <Tooltip content={<ChartTooltipContent nameKey="quantity" />} />
+                    <Pie
+                        data={data}
+                        dataKey="quantity"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        label={({ name, quantity }) => `${name}: ${quantity}`}
+                    >
+                        {data.map((entry) => (
+                            <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                        ))}
+                    </Pie>
+                    <Legend verticalAlign="bottom" height={36}/>
+                </PieChart>
+            </ResponsiveContainer>
+        </ChartContainer>
+    </div>
+);
+
+
 export function OperationalCasesSummary() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
@@ -39,25 +67,35 @@ export function OperationalCasesSummary() {
 
   const { data: cases, isLoading: areCasesLoading, error } = useCollection<OperationalCase>(casesQuery);
 
-  const reportData = useMemo(() => {
-    if (!cases) return [];
+  const { openCasesData, resolvedCasesData } = useMemo(() => {
+    if (!cases) return { openCasesData: [], resolvedCasesData: [] };
 
-    const quantityByCaseType = cases.reduce((acc, caseItem) => {
-        if (caseItem.caseType && caseItem.quantity) {
-            if (!acc[caseItem.caseType]) {
-                acc[caseItem.caseType] = 0;
+    const processCases = (caseList: OperationalCase[]) => {
+        const quantityByCaseType = caseList.reduce((acc, caseItem) => {
+            if (caseItem.caseType && caseItem.quantity) {
+                if (!acc[caseItem.caseType]) {
+                    acc[caseItem.caseType] = 0;
+                }
+                acc[caseItem.caseType] += caseItem.quantity;
             }
-            acc[caseItem.caseType] += caseItem.quantity;
-        }
-        return acc;
-    }, {} as { [key: string]: number });
+            return acc;
+        }, {} as { [key: string]: number });
 
+        return Object.entries(quantityByCaseType).map(([name, quantity]) => ({
+            name,
+            quantity,
+            fill: COLORS[name as keyof typeof COLORS] || 'hsl(var(--chart-4))',
+        }));
+    };
 
-    return Object.entries(quantityByCaseType).map(([name, quantity]) => ({
-        name,
-        quantity,
-        fill: COLORS[name as keyof typeof COLORS] || 'hsl(var(--chart-4))',
-    }));
+    const openCases = cases.filter(c => !c.isArchived);
+    const resolvedCases = cases.filter(c => c.isArchived);
+
+    return {
+        openCasesData: processCases(openCases),
+        resolvedCasesData: processCases(resolvedCases)
+    };
+
   }, [cases]);
 
   const isLoading = isAuthLoading || areCasesLoading;
@@ -67,38 +105,22 @@ export function OperationalCasesSummary() {
       <CardHeader>
         <CardTitle className="text-black">Operational Cases Summary</CardTitle>
         <CardDescription className="text-gray-600">
-          Total quantity of items per case type.
+          Total quantity of items per case type for open and resolved cases.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 flex items-center justify-center">
+      <CardContent className="flex-1 flex flex-col md:flex-row items-center justify-center gap-8">
         {isLoading ? (
-          <Skeleton className="h-[300px] w-full bg-gray-200" />
+          <>
+            <Skeleton className="h-[350px] w-full md:w-1/2 bg-gray-200" />
+            <Skeleton className="h-[350px] w-full md:w-1/2 bg-gray-200" />
+          </>
         ) : error ? (
           <div className="text-red-500 p-4">Error loading data: {error.message}</div>
         ) : (
-          <div className="w-full h-[350px]">
-            <ChartContainer config={chartConfig} className="w-full h-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Tooltip content={<ChartTooltipContent nameKey="quantity" />} />
-                  <Pie
-                    data={reportData}
-                    dataKey="quantity"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={120}
-                    label={({ name, quantity }) => `${name}: ${quantity}`}
-                  >
-                    {reportData.map((entry) => (
-                      <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Legend verticalAlign="bottom" height={36}/>
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </div>
+          <>
+            <CasePieChart data={openCasesData} title="Open Cases" />
+            <CasePieChart data={resolvedCasesData} title="Resolved Cases" />
+          </>
         )}
       </CardContent>
     </Card>
