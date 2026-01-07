@@ -72,6 +72,7 @@ import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/firestore-writes';
 import { v4 as uuidv4 } from 'uuid';
 import locations from '@/lib/ph-locations.json';
+import { ScrollArea } from './ui/scroll-area';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -172,8 +173,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [newOrderProductType, setNewOrderProductType] = useState('');
   const [newOrderColor, setNewOrderColor] = useState('');
-  const [newOrderSize, setNewOrderSize] = useState('');
-  const [newOrderQuantity, setNewOrderQuantity] = useState<number | string>(1);
+  const [sizeQuantities, setSizeQuantities] = useState(
+    productSizes.map(size => ({ size, quantity: 0 }))
+  );
   const firestore = useFirestore();
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Lead[]>([]);
@@ -359,11 +361,18 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   useEffect(() => {
     if (isPatches) {
       setNewOrderColor('N/A');
-      setNewOrderSize('N/A');
     } else if (!availableColors.includes(newOrderColor)) {
       setNewOrderColor('');
     }
   }, [newOrderProductType, isPatches, availableColors, newOrderColor]);
+  
+  useEffect(() => {
+     if (isPatches) {
+      setSizeQuantities(productSizes.map(size => ({ size: 'N/A', quantity: 0 })));
+    } else {
+      setSizeQuantities(productSizes.map(size => ({ size, quantity: 0 })));
+    }
+  }, [isPatches]);
 
   const handleReset = () => {
     reset({
@@ -443,6 +452,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       barangay: toTitleCase(values.barangay),
       city: toTitleCase(values.city),
       province: toTitleCase(values.province),
+      location: [values.houseStreet, values.barangay, values.city, values.province].filter(Boolean).map(toTitleCase).join(', '),
       courier: values.courier || '-',
       paymentType: values.paymentType,
       salesRepresentative: values.salesRepresentative,
@@ -464,18 +474,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     handleReset();
   }
   
-  const currentRemainingStock = useMemo(() => {
-    if (!inventoryItems || !newOrderProductType || !newOrderColor || !newOrderSize) {
-      return null;
-    }
-    const itemInInventory = inventoryItems.find(item =>
-      item.productType === newOrderProductType &&
-      item.color === newOrderColor &&
-      item.size === newOrderSize
-    );
-    return itemInInventory ? itemInInventory.stock : 0;
-  }, [inventoryItems, newOrderProductType, newOrderColor, newOrderSize]);
-
   const getRemainingStock = (order: z.infer<typeof orderSchema>) => {
     if (!inventoryItems) return 'N/A';
     const itemInInventory = inventoryItems.find(item =>
@@ -485,7 +483,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     );
     const stock = itemInInventory ? itemInInventory.stock : 0;
     
-    // Sum quantities of the same item already in the order list
     const alreadyOrderedQty = fields.reduce((sum, existingOrder) => {
         if (existingOrder.productType === order.productType &&
             existingOrder.color === order.color &&
@@ -499,33 +496,57 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
   
   const handleAddOrder = () => {
-    const quantity = typeof newOrderQuantity === 'string' ? parseInt(newOrderQuantity, 10) : newOrderQuantity;
     const isProductPatches = newOrderProductType === 'Patches';
     const color = isProductPatches ? 'N/A' : newOrderColor;
-    const size = isProductPatches ? 'N/A' : newOrderSize;
+    let ordersAddedCount = 0;
 
-    if (newOrderProductType && color && size && quantity > 0) {
-      append({
-        productType: newOrderProductType,
-        color: color,
-        size: size,
-        quantity: quantity
+    if (newOrderProductType && color) {
+      sizeQuantities.forEach(item => {
+        if (item.quantity > 0) {
+          append({
+            productType: newOrderProductType,
+            color: color,
+            size: isProductPatches ? 'N/A' : item.size,
+            quantity: item.quantity
+          });
+          ordersAddedCount++;
+        }
       });
-      toast({
-        title: 'Order Added!',
-        description: 'The order has been added to the list.',
-      });
-      // Do not clear product type and color
-      setNewOrderSize('');
-      setNewOrderQuantity(1);
+    }
+
+    if (ordersAddedCount > 0) {
+        toast({
+            title: `${ordersAddedCount} Order(s) Added!`,
+            description: `The orders have been added to the list.`,
+        });
+        setSizeQuantities(productSizes.map(size => ({ size, quantity: 0 })));
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'No Orders to Add',
+            description: 'Please enter a quantity for at least one size.',
+        });
     }
   };
 
-  const handleUpdateQuantity = (index: number, newQuantity: number) => {
-    if (newQuantity >= 1) {
-      const currentOrder = fields[index];
-      update(index, { ...currentOrder, quantity: newQuantity });
-    }
+  const handleSizeQuantityChange = (index: number, change: number) => {
+    setSizeQuantities(current =>
+      current.map((item, i) =>
+        i === index
+          ? { ...item, quantity: Math.max(0, item.quantity + change) }
+          : item
+      )
+    );
+  };
+  
+  const handleSizeQuantityInputChange = (index: number, value: string) => {
+    setSizeQuantities(current =>
+      current.map((item, i) =>
+        i === index
+          ? { ...item, quantity: value === '' ? 0 : parseInt(value, 10) || 0 }
+          : item
+      )
+    );
   };
 
   const concatenatedAddress = [houseStreetValue, barangayValue, cityValue, provinceValue].filter(Boolean).join(', ');
@@ -611,6 +632,24 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         </FormItem>
                       )}/>
                       <div className="grid grid-cols-2 gap-x-2">
+                           <FormField control={form.control} name="barangay" render={({field}) => (
+                            <FormItem className="relative">
+                              <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
+                              <FormControl><Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 200)} autoComplete="off" /></FormControl>
+                              {barangayValue && barangaySuggestions.length > 0 && (
+                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                                  <CardContent className="p-2 max-h-40 overflow-y-auto">
+                                    {barangaySuggestions.map((barangay, index) => (
+                                      <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleBarangaySuggestionClick(barangay)}>
+                                        {barangay}
+                                      </div>
+                                    ))}
+                                  </CardContent>
+                                </Card>
+                              )}
+                              <FormMessage />
+                            </FormItem>
+                          )}/>
                           <FormField control={form.control} name="city" render={({field}) => (
                             <FormItem className="relative">
                               <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
@@ -628,24 +667,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                   </Card>
                               )}
                               {cityValue && citySuggestions.length === 0 && !citiesAndMunicipalities.some(c => c.name.toLowerCase() === cityValue.toLowerCase()) && <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"><CardContent className='p-2'><p className='text-muted-foreground'>No results found</p></CardContent></Card>}
-                              <FormMessage />
-                            </FormItem>
-                          )}/>
-                          <FormField control={form.control} name="barangay" render={({field}) => (
-                            <FormItem className="relative">
-                              <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
-                              <FormControl><Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 200)} autoComplete="off" /></FormControl>
-                              {barangayValue && barangaySuggestions.length > 0 && (
-                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                                  <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                    {barangaySuggestions.map((barangay, index) => (
-                                      <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleBarangaySuggestionClick(barangay)}>
-                                        {barangay}
-                                      </div>
-                                    ))}
-                                  </CardContent>
-                                </Card>
-                              )}
                               <FormMessage />
                             </FormItem>
                           )}/>
@@ -683,7 +704,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               
               {/* Right Column */}
               <div className="w-1/2 flex flex-col gap-y-3">
-                 <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-2">
+                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-2">
                     <FormField control={form.control} name="orderType" render={({field}) => (
                         <FormItem>
                         <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
@@ -704,7 +725,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormMessage />
                         </FormItem>
                     )}/>
-                    <FormField control={form.control} name="courier" render={({field}) => (
+                     <FormField control={form.control} name="courier" render={({field}) => (
                       <FormItem>
                           <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value || ''}>
@@ -714,22 +735,33 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           <FormMessage />
                       </FormItem>
                     )}/>
-                    <FormField control={form.control} name="priorityType" render={({field}) => (
-                      <FormItem className="flex items-center space-x-4">
-                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0 pt-2"><AlertTriangle className="h-4 w-4 text-primary" />Priority Type</FormLabel>
+                     <FormField
+                      control={form.control}
+                      name="priorityType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">
+                            <AlertTriangle className="h-4 w-4 text-primary" />
+                            Priority Type
+                          </FormLabel>
                           <FormControl>
-                          <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-1 h-10 items-center" disabled={(orderType === 'MTO' || orderType === 'Stock (Jacket Only)')}>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              className="flex items-center space-x-2 pt-2"
+                              disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
+                            >
                               {['Rush', 'Regular'].map((option) => (
-                              <FormItem key={option} className="flex items-center space-x-2 space-y-0">
+                                <FormItem key={option} className="flex items-center space-x-2 space-y-0">
                                   <FormControl><RadioGroupItem value={option} /></FormControl>
                                   <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
-                              </FormItem>
+                                </FormItem>
                               ))}
-                          </RadioGroup>
+                            </RadioGroup>
                           </FormControl>
-                          <FormMessage />
-                      </FormItem>
-                    )}/>
+                        </FormItem>
+                      )}
+                    />
                 </div>
 
                 <div className="pt-2">
@@ -757,13 +789,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                 <TableCell className="py-2 text-black text-xs">{field.size}</TableCell>
                                 <TableCell className="py-1 text-black text-xs">
                                   <div className="flex items-center justify-center gap-1">
-                                    <Button type="button" variant="outline" size="icon" className="h-5 w-5" onClick={() => handleUpdateQuantity(index, field.quantity - 1)} disabled={field.quantity <= 1}>
-                                      <Minus className="h-2.5 w-2.5" />
-                                    </Button>
                                     <span className="w-8 text-center">{field.quantity}</span>
-                                    <Button type="button" variant="outline" size="icon" className="h-5 w-5" onClick={() => handleUpdateQuantity(index, field.quantity + 1)}>
-                                      <Plus className="h-2.5 w-2.5" />
-                                    </Button>
                                   </div>
                                 </TableCell>
                                 <TableCell className={cn("py-2 text-center font-medium text-xs", typeof remaining === 'number' && remaining < 0 ? 'text-red-500' : 'text-black')}>
@@ -787,7 +813,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           Add Order
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-md">
+                      <DialogContent className="sm:max-w-lg">
                         <DialogHeader>
                           <DialogTitle>Add Order Details</DialogTitle>
                           <DialogDescription>Select product details to add</DialogDescription>
@@ -808,44 +834,52 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                 <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
                               </Select>
                             </div>
-                            <div className="space-y-2">
-                              <FormLabel>Size:</FormLabel>
-                              <Select onValueChange={setNewOrderSize} value={newOrderSize} disabled={isPatches}>
-                                <SelectTrigger><SelectValue placeholder="Size" /></SelectTrigger>
-                                <SelectContent>{productSizes.map((size) => (<SelectItem key={size} value={size}>{size}</SelectItem>))}</SelectContent>
-                              </Select>
+                             <div className="space-y-2">
+                                {isPatches && (
+                                   <div className='flex flex-col gap-2'>
+                                     <FormLabel>Size:</FormLabel>
+                                     <Input value="N/A" disabled />
+                                   </div>
+                                )}
                             </div>
                           </div>
-                          <div className="space-y-2">
-                            {currentRemainingStock !== null && !isPatches && (
-                              <div className="flex items-center gap-2 text-sm">
-                                <PackageCheck className="h-4 w-4 text-green-600" />
-                                <span>Available Stock:</span>
-                                <span className="font-bold">{currentRemainingStock}</span>
-                              </div>
-                            )}
-                            <div className="flex items-center gap-2 justify-center">
-                              <FormLabel>Quantity:</FormLabel>
-                              <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => Math.max(1, (typeof q === 'string' ? parseInt(q, 10) || 1 : q) - 1))} disabled={newOrderQuantity === 1}>
-                                <Minus className="h-4 w-4" />
-                              </Button>
-                              <Input type="text" value={newOrderQuantity}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  if (value === '' || /^[1-9][0-9]*$/.test(value)) {setNewOrderQuantity(value === '' ? '' : parseInt(value, 10));}
-                                }}
-                                onBlur={(e) => {if (e.target.value === '' || parseInt(e.target.value, 10) < 1) {setNewOrderQuantity(1);}}}
-                                className="w-16 text-center"
-                              />
-                              <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => (typeof q === 'string' ? parseInt(q, 10) || 0 : q) + 1)}>
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
+                           <div className="space-y-4">
+                            {!isPatches && <FormLabel>Size Quantities</FormLabel>}
+                             <ScrollArea className={cn("h-auto", !isPatches && "h-[200px] border rounded-md p-4")}>
+                                <div className={cn("grid gap-x-8 gap-y-4", !isPatches && "grid-cols-2")}>
+                                {sizeQuantities.map((item, index) => (
+                                    <div key={item.size} className="flex items-center justify-between">
+                                        {!isPatches && <FormLabel className="text-sm font-bold w-12">{item.size}</FormLabel>}
+                                        <div className={cn("flex items-center gap-2", isPatches && "w-full justify-center")}>
+                                            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, -1)}>
+                                                <Minus className="h-4 w-4" />
+                                            </Button>
+                                            <Input
+                                                type="text"
+                                                value={item.quantity}
+                                                onChange={(e) => handleSizeQuantityInputChange(index, e.target.value)}
+                                                onBlur={(e) => { if (e.target.value === '') handleSizeQuantityInputChange(index, '0')}}
+                                                className="w-16 text-center"
+                                            />
+                                            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, 1)}>
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                                </div>
+                            </ScrollArea>
                           </div>
                         </div>
                         <DialogFooter>
                           <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
-                          <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType || (!isPatches && (!newOrderColor || !newOrderSize)) || newOrderQuantity === 0}>Add</Button>
+                           <Button 
+                            type="button" 
+                            onClick={handleAddOrder} 
+                            disabled={!newOrderProductType || (!isPatches && !newOrderColor) || sizeQuantities.every(sq => sq.quantity === 0)}
+                          >
+                            Add
+                          </Button>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
