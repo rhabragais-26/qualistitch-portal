@@ -54,6 +54,7 @@ export function ResolvedCasesDialog({ isOpen, onClose, archivedCases, deletedCas
       onReopenCase(caseToReopen, reopeningRemarks);
       setCaseToReopen(null);
       setReopeningRemarks('');
+      onClose(); // Close the main dialog after confirmation
     }
   };
 
