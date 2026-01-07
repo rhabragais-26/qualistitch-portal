@@ -41,6 +41,7 @@ import {
   PhoneForwarded,
   Truck,
   PackageCheck,
+  Home,
 } from 'lucide-react';
 import {RadioGroup, RadioGroupItem} from './ui/radio-group';
 import { cn } from '@/lib/utils';
@@ -85,7 +86,10 @@ const formSchema = z.object({
   companyName: z.string().optional(),
   mobileNo: z.string().optional(),
   landlineNo: z.string().optional(),
-  location: z.string().min(2, {message: 'Location is required.'}),
+  houseStreet: z.string().min(2, {message: 'House/Street is required.'}),
+  barangay: z.string().min(2, {message: 'Barangay is required.'}),
+  city: z.string().min(2, {message: 'City is required.'}),
+  province: z.string().min(2, {message: 'Province is required.'}),
   courier: z.string().optional(),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
@@ -120,10 +124,13 @@ type InventoryItem = {
 type Lead = {
   id: string;
   customerName: string;
-  companyName: string;
-  contactNumber: string;
-  landlineNumber: string;
-  location: string;
+  companyName?: string;
+  contactNumber?: string;
+  landlineNumber?: string;
+  houseStreet?: string;
+  barangay?: string;
+  city?: string;
+  province?: string;
 };
 
 
@@ -141,7 +148,10 @@ const formFields: {
   {name: 'companyName', label: 'Company Name (Optional)', icon: Building, type: 'input', autoComplete: 'off'},
   {name: 'mobileNo', label: 'Mobile No. (Optional)', icon: Phone, type: 'tel'},
   {name: 'landlineNo', label: 'Landline No. (Optional)', icon: PhoneForwarded, type: 'tel'},
-  {name: 'location', label: 'Location', icon: MapPin, type: 'input'},
+  {name: 'houseStreet', label: 'House No., Street & Others', icon: Home, type: 'input', className: 'md:col-span-2'},
+  {name: 'barangay', label: 'Barangay', icon: MapPin, type: 'input'},
+  {name: 'city', label: 'City', icon: MapPin, type: 'input'},
+  {name: 'province', label: 'Province', icon: MapPin, type: 'input'},
   {name: 'courier', label: 'Courier (Optional)', icon: Truck, type: 'select', options: ['Lalamove', 'J&T', 'In-house'], placeholder: 'Select Courier'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
@@ -193,6 +203,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Lead[]>([]);
   const [companySuggestions, setCompanySuggestions] = useState<Lead[]>([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<{ field: keyof Lead, suggestions: string[] }>({ field: 'houseStreet', suggestions: [] });
+
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads } = useCollection<Lead>(leadsQuery);
@@ -207,7 +219,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       companyName: '',
       mobileNo: '',
       landlineNo: '',
-      location: '',
+      houseStreet: '',
+      barangay: '',
+      city: '',
+      province: '',
       courier: undefined,
       paymentType: undefined,
       orderType: undefined,
@@ -216,19 +231,34 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       orders: [],
     },
   });
+  
+  const { control, handleSubmit, reset, watch, setValue, formState: { isDirty } } = form;
 
   const handleSuggestionClick = (lead: Lead) => {
-    form.setValue('customerName', toTitleCase(lead.customerName));
-    form.setValue('companyName', lead.companyName ? toTitleCase(lead.companyName) : '');
-    form.setValue('mobileNo', lead.contactNumber || '');
-    form.setValue('landlineNo', lead.landlineNumber || '');
-    form.setValue('location', lead.location ? toTitleCase(lead.location) : '');
+    setValue('customerName', toTitleCase(lead.customerName));
+    setValue('companyName', lead.companyName ? toTitleCase(lead.companyName) : '');
+    setValue('mobileNo', lead.contactNumber || '');
+    setValue('landlineNo', lead.landlineNumber || '');
+    setValue('houseStreet', lead.houseStreet ? toTitleCase(lead.houseStreet) : '');
+    setValue('barangay', lead.barangay ? toTitleCase(lead.barangay) : '');
+    setValue('city', lead.city ? toTitleCase(lead.city) : '');
+    setValue('province', lead.province ? toTitleCase(lead.province) : '');
     setCustomerSuggestions([]);
     setCompanySuggestions([]);
+    setAddressSuggestions({ field: 'houseStreet', suggestions: [] });
+  };
+  
+  const handleAddressSuggestionClick = (field: keyof Lead, value: string) => {
+    setValue(field as any, value, { shouldValidate: true });
+    setAddressSuggestions({ field: 'houseStreet', suggestions: [] });
   };
 
-  const customerNameValue = form.watch('customerName');
-  const companyNameValue = form.watch('companyName');
+  const customerNameValue = watch('customerName');
+  const companyNameValue = watch('companyName');
+  const houseStreetValue = watch('houseStreet');
+  const barangayValue = watch('barangay');
+  const cityValue = watch('city');
+  const provinceValue = watch('province');
 
   useEffect(() => {
     if (customerNameValue && leads) {
@@ -256,6 +286,26 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       setCompanySuggestions([]);
     }
   }, [companyNameValue, leads]);
+  
+  const useAddressSuggestions = (fieldName: keyof Lead, value: string) => {
+    useEffect(() => {
+      if (value && leads) {
+        const uniqueSuggestions = Array.from(new Set(
+            leads
+            .map(lead => lead[fieldName] as string)
+            .filter(fieldValue => fieldValue && fieldValue.toLowerCase().includes(value.toLowerCase()))
+        ));
+        setAddressSuggestions({ field: fieldName, suggestions: uniqueSuggestions });
+      } else {
+        setAddressSuggestions({ field: fieldName, suggestions: [] });
+      }
+    }, [value, leads, fieldName]);
+  };
+  
+  useAddressSuggestions('houseStreet', houseStreetValue);
+  useAddressSuggestions('barangay', barangayValue);
+  useAddressSuggestions('city', cityValue);
+  useAddressSuggestions('province', provinceValue);
 
 
   useEffect(() => {
@@ -289,15 +339,13 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     name: "orders"
   });
 
-  const { isDirty } = form.formState;
-
-  const orderType = form.watch('orderType');
+  const orderType = watch('orderType');
 
   useEffect(() => {
     if (orderType === 'MTO' || orderType === 'Stock (Jacket Only)') {
-      form.setValue('priorityType', 'Rush');
+      setValue('priorityType', 'Rush');
     }
-  }, [orderType, form.setValue]);
+  }, [orderType, setValue]);
 
   useEffect(() => {
     onDirtyChange(isDirty);
@@ -318,12 +366,15 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   }, [newOrderProductType, isPatches, availableColors, newOrderColor]);
 
   const handleReset = () => {
-    form.reset({
+    reset({
       customerName: '',
       companyName: '',
       mobileNo: '',
       landlineNo: '',
-      location: '',
+      houseStreet: '',
+      barangay: '',
+      city: '',
+      province: '',
       courier: undefined,
       paymentType: undefined,
       orderType: undefined,
@@ -388,7 +439,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       companyName: values.companyName ? toTitleCase(values.companyName) : '-',
       contactNumber: values.mobileNo || '-',
       landlineNumber: values.landlineNo || '-',
-      location: toTitleCase(values.location),
+      houseStreet: toTitleCase(values.houseStreet),
+      barangay: toTitleCase(values.barangay),
+      city: toTitleCase(values.city),
+      province: toTitleCase(values.province),
       courier: values.courier || '-',
       paymentType: values.paymentType,
       salesRepresentative: values.salesRepresentative,
@@ -501,7 +555,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   control={form.control}
                   name={fieldInfo.name}
                   render={({field}) => (
-                    <FormItem className="relative">
+                    <FormItem className={cn("relative", fieldInfo.className)}>
                       <FormLabel className="flex items-center gap-2 text-black">
                         <fieldInfo.icon className="h-4 w-4 text-primary" />
                         {fieldInfo.label}
@@ -582,6 +636,21 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                 onClick={() => handleSuggestionClick(lead)}
                               >
                                 {lead.companyName ? toTitleCase(lead.companyName) : ''}
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+                      )}
+                      {['houseStreet', 'barangay', 'city', 'province'].includes(fieldInfo.name) && addressSuggestions.field === fieldInfo.name && addressSuggestions.suggestions.length > 0 && (
+                        <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                          <CardContent className="p-2 max-h-40 overflow-y-auto">
+                            {addressSuggestions.suggestions.map((suggestion, index) => (
+                              <div
+                                key={index}
+                                className="p-2 cursor-pointer hover:bg-gray-100"
+                                onClick={() => handleAddressSuggestionClick(fieldInfo.name as keyof Lead, suggestion)}
+                              >
+                                {suggestion}
                               </div>
                             ))}
                           </CardContent>
@@ -805,3 +874,5 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </Card>
   );
 }
+
+    
