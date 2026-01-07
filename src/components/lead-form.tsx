@@ -92,10 +92,10 @@ const formSchema = z.object({
   barangay: z.string().min(1, {message: 'Barangay is required.'}),
   city: z.string().min(1, {message: 'City/Municipality is required.'}),
   province: z.string().min(1, {message: 'Province is required.'}),
+  priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   courier: z.string().optional(),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
-  priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   salesRepresentative: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a CSR."}),
   orders: z.array(orderSchema).min(1, "Please add at least one order."),
 }).refine(data => {
@@ -742,7 +742,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                             <RadioGroup
                             onValueChange={field.onChange}
                             value={field.value}
-                            className="flex items-center space-x-4 pt-2"
+                            className="flex items-center space-x-4 pt-2 pl-4"
                             disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
                             >
                             {['Rush', 'Regular'].map((option) => (
