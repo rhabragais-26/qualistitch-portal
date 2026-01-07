@@ -167,16 +167,19 @@ export function ProdPreparationTable() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-4">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[200px] bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Filter by Status" />
-                </SelectTrigger>
-                <SelectContent>
-                    {programmingStatusOptions.map(status => (
-                        <SelectItem key={status} value={status}>{status}</SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Filter Program Status:</span>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[200px] bg-gray-100 text-black placeholder:text-gray-500">
+                      <SelectValue placeholder="Filter by Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {programmingStatusOptions.map(status => (
+                          <SelectItem key={status} value={status}>{status}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="w-full max-w-xs">
                 <Input
                   placeholder="Search customer, company, contact..."
