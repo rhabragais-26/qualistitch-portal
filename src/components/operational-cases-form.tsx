@@ -27,12 +27,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash } from 'lucide-react';
+import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Skeleton } from './ui/skeleton';
+import { addDays, format } from 'date-fns';
 
 type Lead = {
   id: string;
@@ -41,6 +42,8 @@ type Lead = {
   companyName?: string;
   contactNumber: string;
   landlineNumber?: string;
+  submissionDateTime: string;
+  priorityType: 'Rush' | 'Regular';
 };
 
 const formSchema = z.object({
@@ -61,7 +64,7 @@ export function OperationalCasesForm() {
   const [joInput, setJoInput] = useState('');
   const [foundLead, setFoundLead] = useState<Lead | null>(null);
   const [joSuggestions, setJoSuggestions] = useState<Lead[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(true);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const leadsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'leads')) : null),
@@ -207,6 +210,14 @@ export function OperationalCasesForm() {
     if (mobile && landline) return `${mobile} / ${landline}`;
     return mobile || landline || '';
   };
+  
+  const getExpectedDeliveryDate = () => {
+    if (!foundLead) return '';
+    const submissionDate = new Date(foundLead.submissionDateTime);
+    const deadlineDays = foundLead.priorityType === 'Rush' ? 7 : 22;
+    const deliveryDate = addDays(submissionDate, deadlineDays);
+    return format(deliveryDate, 'MMMM dd, yyyy');
+  };
 
 
   return (
@@ -233,9 +244,9 @@ export function OperationalCasesForm() {
                             <Input
                                 placeholder="Search J.O. number..."
                                 value={joInput}
+                                onFocus={() => setShowSuggestions(true)}
                                 onChange={(e) => {
                                     setJoInput(e.target.value);
-                                    if(!showSuggestions) setShowSuggestions(true);
                                     if(foundLead) setFoundLead(null);
                                     setValue('joNumber', '');
                                 }}
@@ -312,6 +323,11 @@ export function OperationalCasesForm() {
                            <Phone className="h-4 w-4 text-gray-500" />
                            <span className="font-medium text-gray-600">Contact:</span>
                            <span className="text-black">{getContactDisplay() || 'N/A'}</span>
+                        </div>
+                        <div className='col-span-2 flex items-center gap-2'>
+                           <CalendarDays className="h-4 w-4 text-gray-500" />
+                           <span className="font-medium text-gray-600">Expected Delivery:</span>
+                           <span className="text-black">{getExpectedDeliveryDate()}</span>
                         </div>
                     </div>
                 </div>
