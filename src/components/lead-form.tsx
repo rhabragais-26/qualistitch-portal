@@ -1,4 +1,3 @@
-
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -529,7 +528,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   <FormField control={form.control} name="customerName" render={({field}) => (
                     <FormItem className="relative">
                       <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
-                      <FormControl><Input {...field} autoComplete="off" className="h-9 text-xs" /></FormControl>
+                      <FormControl><Input {...field} autoComplete="off" className="h-9 text-xs w-[2in]" /></FormControl>
                       {customerSuggestions.length > 0 && (
                         <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                           <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -548,7 +547,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   <FormField control={form.control} name="companyName" render={({field}) => (
                     <FormItem className="relative">
                       <FormLabel className="flex items-center gap-2 text-black text-xs"><Building className="h-4 w-4 text-primary" />Company Name (Optional)</FormLabel>
-                      <FormControl><Input {...field} autoComplete="off" className="h-9 text-xs" /></FormControl>
+                      <FormControl><Input {...field} autoComplete="off" className="h-9 text-xs w-[2in]" /></FormControl>
                       {companySuggestions.length > 0 && (
                         <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                            <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -567,7 +566,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   <FormField control={form.control} name="mobileNo" render={({field}) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2 text-black text-xs"><Phone className="h-4 w-4 text-primary" />Mobile No. (Optional)</FormLabel>
-                      <FormControl><Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} className="h-9 text-xs" /></FormControl>
+                      <FormControl><Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} className="h-9 text-xs w-[2in]" /></FormControl>
                        <FormMessage />
                     </FormItem>
                   )}/>
@@ -575,7 +574,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   <FormField control={form.control} name="landlineNo" render={({field}) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2 text-black text-xs"><PhoneForwarded className="h-4 w-4 text-primary" />Landline No. (Optional)</FormLabel>
-                      <FormControl><Input type="tel" {...field} onChange={(e) => handleLandlineNoChange(e, field)} className="h-9 text-xs" /></FormControl>
+                      <FormControl><Input type="tel" {...field} onChange={(e) => handleLandlineNoChange(e, field)} className="h-9 text-xs w-[2in]" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}/>
@@ -587,7 +586,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormField control={form.control} name="houseStreet" render={({field}) => (
                       <FormItem className="relative md:col-span-2">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
-                        <FormControl><Input {...field} className="h-9 text-xs" /></FormControl>
+                        <FormControl><Input {...field} className="h-9 text-xs w-[4in]" /></FormControl>
                         {addressSuggestions.field === 'houseStreet' && addressSuggestions.suggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                             <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -605,7 +604,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormField control={form.control} name="barangay" render={({field}) => (
                       <FormItem className="relative">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><MapPin className="h-4 w-4 text-primary" />Barangay</FormLabel>
-                        <FormControl><Input {...field} className="h-9 text-xs" /></FormControl>
+                        <FormControl><Input {...field} className="h-9 text-xs w-[2in]" /></FormControl>
                          {addressSuggestions.field === 'barangay' && addressSuggestions.suggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                             <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -623,7 +622,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormField control={form.control} name="city" render={({field}) => (
                       <FormItem className="relative">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><MapPin className="h-4 w-4 text-primary" />City</FormLabel>
-                        <FormControl><Input {...field} className="h-9 text-xs" /></FormControl>
+                        <FormControl><Input {...field} className="h-9 text-xs w-[2in]" /></FormControl>
                         {addressSuggestions.field === 'city' && addressSuggestions.suggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                             <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -641,7 +640,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormField control={form.control} name="province" render={({field}) => (
                       <FormItem className="relative">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><MapPin className="h-4 w-4 text-primary" />Province</FormLabel>
-                        <FormControl><Input {...field} className="h-9 text-xs" /></FormControl>
+                        <FormControl><Input {...field} className="h-9 text-xs w-[2in]" /></FormControl>
                         {addressSuggestions.field === 'province' && addressSuggestions.suggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                             <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -664,7 +663,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormItem>
                       <FormLabel className="flex items-center gap-2 text-black text-xs"><UserCheck className="h-4 w-4 text-primary" />CSR</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl><SelectTrigger className={cn("h-9 text-xs", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select CSR" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className={cn("h-9 text-xs w-[2in]", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select CSR" /></SelectTrigger></FormControl>
                         <SelectContent>{['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                       </Select>
                       <FormMessage />
