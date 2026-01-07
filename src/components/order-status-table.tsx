@@ -275,8 +275,8 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                       {lead.operationalCase.image && (
                                         <div className="grid grid-cols-3 items-start gap-4">
                                             <span>Image:</span>
-                                             <div className="col-span-2 relative h-32 w-full cursor-pointer" onClick={() => setImageInView(lead.operationalCase!.image!)}>
-                                                <Image src={lead.operationalCase.image} alt="Case Image" layout="fill" objectFit="contain" className="rounded-md border"/>
+                                             <div className="col-span-2 relative max-h-48 w-full cursor-pointer" onClick={() => setImageInView(lead.operationalCase!.image!)}>
+                                                <Image src={lead.operationalCase.image} alt="Case Image" layout="responsive" width={100} height={100} objectFit="contain" className="rounded-md border"/>
                                              </div>
                                         </div>
                                       )}
