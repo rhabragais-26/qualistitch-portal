@@ -31,7 +31,6 @@ import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDay
 import { v4 as uuidv4 } from 'uuid';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, setDoc, updateDoc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Skeleton } from './ui/skeleton';
 import { addDays, format } from 'date-fns';
 
@@ -92,7 +91,14 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
     () => (firestore ? query(collection(firestore, 'leads')) : null),
     [firestore]
   );
-  const { data: leads, isLoading: areLeadsLoading } = useCollection<Lead>(leadsQuery);
+  const { data: allLeads, isLoading: areLeadsLoading } = useCollection<Lead>(leadsQuery);
+  const [leads, setLeads] = useState<Lead[] | null>(null);
+
+  useEffect(() => {
+    if (allLeads) {
+      setLeads(allLeads);
+    }
+  }, [allLeads]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -232,7 +238,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
             // Update existing case
             const caseDocRef = doc(firestore, 'operationalCases', editingCase.id);
             await updateDoc(caseDocRef, { ...values, lastModified: new Date().toISOString() });
-            handleFormReset(); // Clears the form immediately
+            handleFormReset();
             onSaveComplete();
         } else {
             // Create new case
@@ -250,7 +256,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
                 submissionDateTime: new Date().toISOString(),
             };
 
-            setDocumentNonBlocking(caseDocRef, submissionData, { merge: false });
+            await setDoc(caseDocRef, submissionData);
             
             toast({
               title: 'Case Recorded!',
@@ -296,8 +302,8 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <FormField
                     control={control}
                     name="joNumber"
@@ -376,7 +382,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
             )}
 
             {foundLead && (
-                 <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
+                 <div className="space-y-3 p-4 border rounded-lg bg-gray-50">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
                         <div className='flex items-center gap-2'>
                            <User className="h-4 w-4 text-gray-500" />
@@ -403,26 +409,26 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
             )}
             
             <div className="grid grid-cols-1">
-                <FormField
+                 <FormField
                     control={control}
                     name="quantity"
                     render={({ field }) => (
-                        <FormItem className="flex items-center gap-4">
-                            <FormLabel className="flex items-center gap-2 text-black mb-0 pt-2 shrink-0">
+                        <FormItem className="flex items-center space-x-2">
+                            <FormLabel className="flex items-center gap-2 text-black mb-0 shrink-0">
                                 <Inbox className="h-4 w-4 text-primary" />
                                 Quantity
                             </FormLabel>
                             <FormControl>
                                 <Input
                                     type="number"
-                                    placeholder="0"
+                                    placeholder="1"
                                     {...field}
-                                    onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}
-                                    onBlur={e => { if (parseInt(e.target.value, 10) < 1) field.onChange(1); }}
-                                    className="w-24"
+                                    onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)}
+                                    onBlur={e => { if (!e.target.value || parseInt(e.target.value, 10) < 1) field.onChange(1); }}
+                                    className="w-20"
                                 />
                             </FormControl>
-                            <FormMessage className="mt-0" />
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -438,7 +444,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
                   <FormControl>
                     <Textarea
                       placeholder="Explain the reason for this case in detail..."
-                      className="resize-y min-h-[150px]"
+                      className="resize-y min-h-[120px]"
                       {...field}
                     />
                   </FormControl>
@@ -494,7 +500,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
                 )}
             />
 
-            <div className="flex justify-end gap-4">
+            <div className="flex justify-end gap-4 pt-4">
               <Button type="button" variant="outline" size="lg" onClick={handleFormReset}>
                 {isEditing ? 'Cancel' : 'Reset'}
               </Button>

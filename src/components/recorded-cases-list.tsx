@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -41,6 +42,7 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
   const [caseToDelete, setCaseToDelete] = useState<OperationalCase | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
   const [isResolvedCasesOpen, setIsResolvedCasesOpen] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const { toast } = useToast();
 
   const casesQuery = useMemoFirebase(() => {
@@ -184,8 +186,12 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
                       </div>
                       <div className="md:col-span-2 flex justify-center items-center">
                         {caseItem.image && (
-                          <Popover>
-                            <PopoverTrigger asChild>
+                          <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                            <PopoverTrigger
+                              asChild
+                              onMouseEnter={() => setIsPopoverOpen(true)}
+                              onMouseLeave={() => setIsPopoverOpen(false)}
+                            >
                               <div
                                 className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
                                 onClick={() => setImageInView(caseItem.image!)}
