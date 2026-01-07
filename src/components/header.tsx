@@ -345,14 +345,14 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
       </AlertDialog>
 
       <Dialog open={isAccountSettingsOpen} onOpenChange={setIsAccountSettingsOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Account Settings</DialogTitle>
             <DialogDescription>
               Update your profile information and password.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-6 py-4">
+          <div className="grid gap-4 py-4">
             <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20">
                     <AvatarImage src="" alt="User profile" />
@@ -428,5 +428,3 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
     </>
   );
 }
-
-    
