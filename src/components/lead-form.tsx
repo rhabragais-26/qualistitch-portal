@@ -611,24 +611,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         </FormItem>
                       )}/>
                      <div className="grid grid-cols-2 gap-x-2">
-                          <FormField control={form.control} name="barangay" render={({field}) => (
-                            <FormItem className="relative">
-                              <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
-                              <FormControl><Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 200)} autoComplete="off" /></FormControl>
-                              {barangayValue && barangaySuggestions.length > 0 && (
-                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                                  <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                    {barangaySuggestions.map((barangay, index) => (
-                                      <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleBarangaySuggestionClick(barangay)}>
-                                        {barangay}
-                                      </div>
-                                    ))}
-                                  </CardContent>
-                                </Card>
-                              )}
-                              <FormMessage />
-                            </FormItem>
-                          )}/>
                           <FormField control={form.control} name="city" render={({field}) => (
                             <FormItem className="relative">
                               <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
@@ -646,6 +628,24 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                   </Card>
                               )}
                               {cityValue && citySuggestions.length === 0 && !citiesAndMunicipalities.some(c => c.name.toLowerCase() === cityValue.toLowerCase()) && <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"><CardContent className='p-2'><p className='text-muted-foreground'>No results found</p></CardContent></Card>}
+                              <FormMessage />
+                            </FormItem>
+                          )}/>
+                          <FormField control={form.control} name="barangay" render={({field}) => (
+                            <FormItem className="relative">
+                              <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
+                              <FormControl><Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 200)} autoComplete="off" /></FormControl>
+                              {barangayValue && barangaySuggestions.length > 0 && (
+                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                                  <CardContent className="p-2 max-h-40 overflow-y-auto">
+                                    {barangaySuggestions.map((barangay, index) => (
+                                      <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleBarangaySuggestionClick(barangay)}>
+                                        {barangay}
+                                      </div>
+                                    ))}
+                                  </CardContent>
+                                </Card>
+                              )}
                               <FormMessage />
                             </FormItem>
                           )}/>
@@ -683,7 +683,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               
               {/* Right Column */}
               <div className="w-1/2 flex flex-col gap-y-3">
-                 <div className="grid grid-cols-2 gap-2">
+                 <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                     <FormField control={form.control} name="orderType" render={({field}) => (
                         <FormItem>
                         <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
@@ -704,8 +704,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormMessage />
                         </FormItem>
                     )}/>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
                     <FormField control={form.control} name="courier" render={({field}) => (
                         <FormItem>
                             <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
@@ -720,7 +718,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormItem>
                             <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><AlertTriangle className="h-4 w-4 text-primary" />Priority Type</FormLabel>
                             <FormControl>
-                            <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4 h-10 items-center pl-4" disabled={(orderType === 'MTO' || orderType === 'Stock (Jacket Only)')}>
+                            <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4 h-10 items-center" disabled={(orderType === 'MTO' || orderType === 'Stock (Jacket Only)')}>
                                 {['Rush', 'Regular'].map((option) => (
                                 <FormItem key={option} className="flex items-center space-x-2 space-y-0">
                                     <FormControl><RadioGroupItem value={option} /></FormControl>
