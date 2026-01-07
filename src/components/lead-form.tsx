@@ -1,3 +1,4 @@
+
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -610,7 +611,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         </FormItem>
                       )}/>
                      <div className="grid grid-cols-2 gap-x-2">
-                          <FormField control={form.control} name="barangay" render={({field}) => (
+                           <FormField control={form.control} name="barangay" render={({field}) => (
                             <FormItem className="relative">
                               <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
                               <FormControl><Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 200)} autoComplete="off" /></FormControl>
@@ -682,57 +683,55 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               
               {/* Right Column */}
               <div className="w-1/2 flex flex-col gap-y-3">
-                 <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="orderType" render={({field}) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
+                 <div className="grid grid-cols-2 gap-x-2 gap-y-3 pt-2">
+                  <FormField control={form.control} name="orderType" render={({field}) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
+                        <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}/>
+                  <FormField control={form.control} name="paymentType" render={({field}) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><CreditCard className="h-4 w-4 text-primary" />Payment Type</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
+                        <SelectContent>{['Partially Paid', 'Fully Paid', 'COD'].map((option) => (<SelectItem key={option} value={option}>{option === 'COD' ? 'COD (Cash on Delivery)' : option}</SelectItem>))}</SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}/>
+                   <FormField control={form.control} name="courier" render={({field}) => (
+                    <FormItem>
+                        <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || ''}>
-                          <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
-                          <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                        <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
+                        <SelectContent>{['Lalamove', 'J&T', 'In-house', 'Pick-up'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                         </Select>
                         <FormMessage />
-                      </FormItem>
+                    </FormItem>
                     )}/>
-                    <FormField control={form.control} name="paymentType" render={({field}) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><CreditCard className="h-4 w-4 text-primary" />Payment Type</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
-                          <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
-                          <SelectContent>{['Partially Paid', 'Fully Paid', 'COD'].map((option) => (<SelectItem key={option} value={option}>{option === 'COD' ? 'COD (Cash on Delivery)' : option}</SelectItem>))}</SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}/>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                     <FormField control={form.control} name="courier" render={({field}) => (
-                      <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value || ''}>
-                          <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
-                          <SelectContent>{['Lalamove', 'J&T', 'In-house', 'Pick-up'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
-                          </Select>
-                          <FormMessage />
-                      </FormItem>
-                      )}/>
-                    <FormField control={form.control} name="priorityType" render={({field}) => (
-                      <FormItem>
-                        <div className="flex flex-col space-y-2">
-                        <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><AlertTriangle className="h-4 w-4 text-primary" />Priority Type</FormLabel>
-                          <FormControl>
-                            <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4 h-10 items-center" disabled={(orderType === 'MTO' || orderType === 'Stock (Jacket Only)')}>
-                              {['Rush', 'Regular'].map((option) => (
-                                <FormItem key={option} className="flex items-center space-x-2 space-y-0">
-                                  <FormControl><RadioGroupItem value={option} /></FormControl>
-                                  <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
-                                </FormItem>
-                              ))}
-                            </RadioGroup>
-                          </FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}/>
+                  <FormField control={form.control} name="priorityType" render={({field}) => (
+                    <FormItem>
+                      <div className="flex flex-col space-y-1">
+                      <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><AlertTriangle className="h-4 w-4 text-primary" />Priority Type</FormLabel>
+                        <FormControl>
+                          <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4 h-10 items-center ml-2" disabled={(orderType === 'MTO' || orderType === 'Stock (Jacket Only)')}>
+                            {['Rush', 'Regular'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2 space-y-0">
+                                <FormControl><RadioGroupItem value={option} /></FormControl>
+                                <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}/>
                 </div>
 
                 <div className="pt-2">
