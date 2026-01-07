@@ -281,7 +281,7 @@ export function ProdPreparationTable() {
                     <TableHead className="text-white font-bold align-middle w-[20%]">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle">Programming Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle w-[30%]">Ordered Items</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Ordered Items</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Preparation Status</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Production Endorsement</TableHead>
                   </TableRow>
@@ -310,15 +310,23 @@ export function ProdPreparationTable() {
                         <TableCell className="align-top py-3">
                            <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
                         </TableCell>
-                        <TableCell className="align-top py-1">
-                            <Table className="bg-transparent">
+                        <TableCell className="align-middle py-1">
+                            <Table className="bg-transparent -my-2">
+                                 <TableHeader>
+                                  <TableRow className="border-0 hover:bg-transparent">
+                                    <TableHead className="py-1 px-2 text-black font-bold text-xs w-1/3">Product Type</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-xs w-1/3">Color</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-xs w-1/6">Size</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-right text-xs w-1/6">Qty</TableHead>
+                                  </TableRow>
+                                </TableHeader>
                                 <TableBody>
                                 {lead.orders.map((order, index) => (
                                     <TableRow key={index} className="border-0 hover:bg-gray-50">
-                                    <TableCell className="py-1 px-2 text-xs text-black w-1/3">{order.productType}</TableCell>
-                                    <TableCell className="py-1 px-2 text-xs text-black w-1/3">{order.color}</TableCell>
-                                    <TableCell className="py-1 px-2 text-xs text-black w-1/6">{order.size}</TableCell>
-                                    <TableCell className="py-1 px-2 text-xs text-black text-right w-1/6">{order.quantity}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
                                     </TableRow>
                                 ))}
                                 </TableBody>
@@ -365,5 +373,3 @@ export function ProdPreparationTable() {
     </Card>
   );
 }
-
-    
