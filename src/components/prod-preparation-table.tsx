@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -278,91 +277,91 @@ export function ProdPreparationTable() {
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white font-bold align-middle w-[20%]">Customer</TableHead>
-                    <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Programming Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Ordered Items</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Preparation Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Production Endorsement</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle w-[20%]">Customer</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle">J.O. No.</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle">Programming Status</TableHead>
+                    <TableHead colSpan={4} className="text-white font-bold align-middle text-center">Ordered Items</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle text-center">Preparation Status</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle text-center">Production Endorsement</TableHead>
                   </TableRow>
+                   <TableRow>
+                        <TableHead className="text-white font-bold text-xs">Product Type</TableHead>
+                        <TableHead className="text-white font-bold text-xs">Color</TableHead>
+                        <TableHead className="text-white font-bold text-xs">Size</TableHead>
+                        <TableHead className="text-white font-bold text-xs text-right">Qty</TableHead>
+                    </TableRow>
                 </TableHeader>
                 <TableBody>
-                {jobOrders?.map((lead) => {
+                {jobOrders?.map((lead, leadIndex) => {
                   const programmingStatus = getProgrammingStatus(lead);
                   return (
                   <React.Fragment key={lead.id}>
-                    <TableRow>
-                        <TableCell className="font-medium text-xs align-top py-3 text-black">
-                            <Collapsible>
-                                <CollapsibleTrigger asChild>
-                                    <div className="flex items-center cursor-pointer">
-                                        <span>{lead.customerName}</span>
-                                        <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                    </div>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
-                                    {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
-                                    {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
-                                </CollapsibleContent>
-                            </Collapsible>
-                        </TableCell>
-                        <TableCell className="text-xs align-top py-3 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
-                        <TableCell className="align-top py-3">
-                           <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
-                        </TableCell>
-                        <TableCell className="align-middle py-1">
-                            <Table className="bg-transparent -my-2">
-                                 <TableHeader>
-                                  <TableRow className="border-0 hover:bg-transparent">
-                                    <TableHead className="py-1 px-2 text-black font-bold text-xs w-1/3">Product Type</TableHead>
-                                    <TableHead className="py-1 px-2 text-black font-bold text-xs w-1/3">Color</TableHead>
-                                    <TableHead className="py-1 px-2 text-black font-bold text-xs w-1/6">Size</TableHead>
-                                    <TableHead className="py-1 px-2 text-black font-bold text-right text-xs w-1/6">Qty</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                {lead.orders.map((order, index) => (
-                                    <TableRow key={index} className="border-0 hover:bg-gray-50">
-                                    <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
-                                    <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
-                                    <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
-                                    <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
-                                    </TableRow>
-                                ))}
-                                </TableBody>
-                            </Table>
-                        </TableCell>
-                         <TableCell className="text-center align-middle py-2">
-                           {lead.isPreparedForProduction ? (
-                                <div className="flex items-center justify-center text-green-600 font-semibold">
-                                    <Check className="mr-2 h-4 w-4" /> Prepared
-                                </div>
-                            ) : (
-                                <Button
-                                    size="sm"
-                                    onClick={() => handleOpenPreparedDialog(lead)}
-                                >
-                                    Prepared
-                                </Button>
+                    {lead.orders.map((order, orderIndex) => (
+                         <TableRow key={`${lead.id}-${orderIndex}`}>
+                            {orderIndex === 0 && (
+                                <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black">
+                                    <Collapsible>
+                                        <CollapsibleTrigger asChild>
+                                            <div className="flex items-center cursor-pointer">
+                                                <span>{lead.customerName}</span>
+                                                <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                            </div>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
+                                            {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
+                                            {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
+                                        </CollapsibleContent>
+                                    </Collapsible>
+                                </TableCell>
                             )}
-                        </TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                            {lead.isSentToProduction ? (
-                                <div className="flex items-center justify-center font-semibold text-gray-500">
-                                    Sent
-                                </div>
-                            ) : (
-                                <Button
-                                    size="sm"
-                                    onClick={() => handleUpdateStatus(lead.id, 'isSentToProduction')}
-                                    disabled={!lead.isFinalProgram}
-                                    className={cn(!lead.isFinalProgram && "bg-gray-400")}
-                                >
-                                    <Send className="mr-2 h-4 w-4" /> Send to Prod
-                                </Button>
+                            {orderIndex === 0 && (
+                                <TableCell rowSpan={lead.orders.length} className="text-xs align-top py-3 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                             )}
-                        </TableCell>
-                    </TableRow>
+                             {orderIndex === 0 && (
+                                <TableCell rowSpan={lead.orders.length} className="align-top py-3">
+                                <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
+                                </TableCell>
+                            )}
+                           <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
+                            <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
+                            <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
+                            <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
+                            {orderIndex === 0 && (
+                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
+                                {lead.isPreparedForProduction ? (
+                                        <div className="flex items-center justify-center text-green-600 font-semibold">
+                                            <Check className="mr-2 h-4 w-4" /> Prepared
+                                        </div>
+                                    ) : (
+                                        <Button
+                                            size="sm"
+                                            onClick={() => handleOpenPreparedDialog(lead)}
+                                        >
+                                            Prepared
+                                        </Button>
+                                    )}
+                                </TableCell>
+                            )}
+                             {orderIndex === 0 && (
+                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
+                                    {lead.isSentToProduction ? (
+                                        <div className="flex items-center justify-center font-semibold text-gray-500">
+                                            Sent
+                                        </div>
+                                    ) : (
+                                        <Button
+                                            size="sm"
+                                            onClick={() => handleUpdateStatus(lead.id, 'isSentToProduction')}
+                                            disabled={!lead.isFinalProgram}
+                                            className={cn(!lead.isFinalProgram && "bg-gray-400")}
+                                        >
+                                            <Send className="mr-2 h-4 w-4" /> Send to Prod
+                                        </Button>
+                                    )}
+                                </TableCell>
+                            )}
+                         </TableRow>
+                    ))}
                   </React.Fragment>
                 )})}
                 </TableBody>
