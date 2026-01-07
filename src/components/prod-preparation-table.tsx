@@ -2,7 +2,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -21,10 +21,12 @@ import {
 import { Skeleton } from './ui/skeleton';
 import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, ChevronDown, Send } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Input } from './ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 type Order = {
   productType: string;
@@ -47,6 +49,8 @@ type Lead = {
   isRevision?: boolean;
   isFinalApproval?: boolean;
   isFinalProgram?: boolean;
+  isPreparedForProduction?: boolean;
+  isSentToProduction?: boolean;
 }
 
 export function ProdPreparationTable() {
@@ -54,6 +58,7 @@ export function ProdPreparationTable() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
+  const { toast } = useToast();
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -88,6 +93,26 @@ export function ProdPreparationTable() {
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   };
+
+  const handleUpdateStatus = async (leadId: string, field: 'isPreparedForProduction' | 'isSentToProduction') => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', leadId);
+    try {
+        await updateDoc(leadDocRef, { [field]: true });
+        toast({
+            title: "Status Updated",
+            description: "The production status has been updated successfully.",
+        });
+    } catch (e: any) {
+        console.error(`Error updating ${field}:`, e);
+        toast({
+            variant: 'destructive',
+            title: "Update Failed",
+            description: e.message || "Could not update the status.",
+        });
+    }
+  };
+
 
   const jobOrders = React.useMemo(() => {
     if (!leads) return [];
@@ -167,10 +192,12 @@ export function ProdPreparationTable() {
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white font-bold align-middle w-1/4">Customer</TableHead>
+                    <TableHead className="text-white font-bold align-middle w-[20%]">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle">Programming Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Ordered Items</TableHead>
+                    <TableHead className="text-white font-bold align-middle w-[30%]">Ordered Items</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Preparation Status</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Production Endorsement</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -211,6 +238,36 @@ export function ProdPreparationTable() {
                                 </TableBody>
                             </Table>
                         </TableCell>
+                         <TableCell className="text-center align-middle py-2">
+                           {lead.isPreparedForProduction ? (
+                                <div className="flex items-center justify-center text-green-600 font-semibold">
+                                    <Check className="mr-2 h-4 w-4" /> Prepared
+                                </div>
+                            ) : (
+                                <Button
+                                    size="sm"
+                                    onClick={() => handleUpdateStatus(lead.id, 'isPreparedForProduction')}
+                                >
+                                    Prepared
+                                </Button>
+                            )}
+                        </TableCell>
+                        <TableCell className="text-center align-middle py-2">
+                            {lead.isSentToProduction ? (
+                                <div className="flex items-center justify-center font-semibold text-gray-500">
+                                    Sent
+                                </div>
+                            ) : (
+                                <Button
+                                    size="sm"
+                                    onClick={() => handleUpdateStatus(lead.id, 'isSentToProduction')}
+                                    disabled={!lead.isFinalProgram}
+                                    className={cn(!lead.isFinalProgram && "bg-gray-400")}
+                                >
+                                    <Send className="mr-2 h-4 w-4" /> Send to Prod
+                                </Button>
+                            )}
+                        </TableCell>
                     </TableRow>
                   </React.Fragment>
                 )})}
@@ -222,5 +279,4 @@ export function ProdPreparationTable() {
     </Card>
   );
 }
-
     
