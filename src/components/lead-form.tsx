@@ -1,4 +1,3 @@
-
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -563,7 +562,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
             <CardTitle className="font-headline text-xl text-black">Create New Lead Entry</CardTitle>
             <CardDescription className="text-gray-600">Fill in the details below to create a new lead.</CardDescription>
           </div>
-          <div className="text-sm text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
+          <div className="text-base text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
             <div>{dateString} - {dayOfWeek} | <span className="blinking-time">{timeString}</span></div>
           </div>
         </div>
@@ -913,7 +912,3 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </>
   );
 }
-
-    
-
-    
