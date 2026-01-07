@@ -505,7 +505,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-7xl shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -676,10 +676,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               {/* Right Column */}
               <div className="lg:col-span-2 space-y-6">
                  <FormField control={form.control} name="orderType" render={({field}) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-black text-xs"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
+                    <FormItem className="flex items-center gap-4">
+                      <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl><SelectTrigger className={cn("h-9 text-xs", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className={cn("h-9 text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
                         <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                       </Select>
                        <FormMessage />
@@ -702,20 +702,20 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     </FormItem>
                   )}/>
                  <FormField control={form.control} name="courier" render={({field}) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-black text-xs"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
+                    <FormItem className="flex items-center gap-4">
+                      <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl><SelectTrigger className={cn("h-9 text-xs", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className={cn("h-9 text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
                         <SelectContent>{['Lalamove', 'J&T', 'In-house'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                       </Select>
                        <FormMessage />
                     </FormItem>
                   )}/>
                  <FormField control={form.control} name="paymentType" render={({field}) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-black text-xs"><CreditCard className="h-4 w-4 text-primary" />Payment Type</FormLabel>
+                    <FormItem className="flex items-center gap-4">
+                      <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><CreditCard className="h-4 w-4 text-primary" />Payment Type</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl><SelectTrigger className={cn("h-9 text-xs", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className={cn("h-9 text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
                         <SelectContent>{['Partially Paid', 'Fully Paid', 'COD'].map((option) => (<SelectItem key={option} value={option}>{option === 'COD' ? 'COD (Cash on Delivery)' : option}</SelectItem>))}</SelectContent>
                       </Select>
                        <FormMessage />
@@ -871,3 +871,5 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </Card>
   );
 }
+
+    
