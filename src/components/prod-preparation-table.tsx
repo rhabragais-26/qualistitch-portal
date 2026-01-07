@@ -204,7 +204,7 @@ export function ProdPreparationTable() {
                     onCheckedChange={(checked) => handleCheckboxChange(index, !!checked)}
                   />
                    <Label htmlFor={`item-${index}`} className="text-sm font-normal flex-1 cursor-pointer">
-                    <span className="font-bold text-teal-700">{order.quantity}x</span> ( Color: <span className="font-bold text-teal-700">{order.color}</span> | Size: <span className="font-bold text-teal-700">{order.size}</span> )
+                     <span className="font-bold text-teal-700">{order.quantity}x</span> ( Color: <span className="font-bold text-teal-700">{order.color}</span> | Size: <span className="font-bold text-teal-700">{order.size}</span> )
                   </Label>
                 </div>
               ))}
@@ -296,7 +296,7 @@ export function ProdPreparationTable() {
                 {jobOrders?.map((lead) => (
                   <React.Fragment key={lead.id}>
                     {lead.orders.map((order, orderIndex) => (
-                         <TableRow key={`${lead.id}-${orderIndex}`} className={cn(orderIndex === lead.orders.length - 1 ? "border-b-2 border-gray-400" : "border-b-0")}>
+                         <TableRow key={`${lead.id}-${orderIndex}`} className={cn(orderIndex === lead.orders.length - 1 && "border-b-2 border-gray-400")}>
                             {orderIndex === 0 && (
                                 <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black">
                                     <Collapsible>
@@ -335,6 +335,7 @@ export function ProdPreparationTable() {
                                         <Button
                                             size="sm"
                                             onClick={() => handleOpenPreparedDialog(lead)}
+                                            className="px-2"
                                         >
                                             Prepared
                                         </Button>
@@ -352,7 +353,7 @@ export function ProdPreparationTable() {
                                             size="sm"
                                             onClick={() => handleUpdateStatus(lead.id, 'isSentToProduction')}
                                             disabled={!lead.isFinalProgram}
-                                            className={cn(!lead.isFinalProgram && "bg-gray-400")}
+                                            className={cn("px-2", !lead.isFinalProgram && "bg-gray-400")}
                                         >
                                             <Send className="mr-2 h-4 w-4" /> Send to Prod
                                         </Button>
