@@ -93,11 +93,35 @@ export function Calculator({ onClose }: { onClose: () => void }) {
   };
 
   const buttons = [
-    '7', '8', '9', '/',
-    '4', '5', '6', '*',
-    '1', '2', '3', '-',
-    '0', '.', '=', '+',
+    { label: 'C', action: handleClear, className: "bg-red-500 hover:bg-red-600 col-span-2" },
+    { label: 'DEL', action: handleBackspace },
+    { label: '/', action: () => handleButtonClick('/') },
+    { label: '7', action: () => handleButtonClick('7') },
+    { label: '8', action: () => handleButtonClick('8') },
+    { label: '9', action: () => handleButtonClick('9') },
+    { label: '*', action: () => handleButtonClick('*') },
+    { label: '4', action: () => handleButtonClick('4') },
+    { label: '5', action: () => handleButtonClick('5') },
+    { label: '6', action: () => handleButtonClick('6') },
+    { label: '-', action: () => handleButtonClick('-') },
+    { label: '1', action: () => handleButtonClick('1') },
+    { label: '2', action: () => handleButtonClick('2') },
+    { label: '3', action: () => handleButtonClick('3') },
+    { label: '+', action: () => handleButtonClick('+') },
+    { label: '0', action: () => handleButtonClick('0'), className: "col-span-2" },
+    { label: '.', action: () => handleButtonClick('.') },
+    { label: '=', action: handleCalculate },
   ];
+
+  const getButtonClass = (label: string) => {
+    if (['/', '*', '-', '+', '='].includes(label)) {
+      return "bg-orange-500 hover:bg-orange-600";
+    }
+    if (label === 'C' || label === 'DEL') {
+      return "bg-gray-600 hover:bg-gray-700";
+    }
+    return "bg-gray-700 hover:bg-gray-600";
+  }
 
   return (
     <div
@@ -125,20 +149,17 @@ export function Calculator({ onClose }: { onClose: () => void }) {
             <div className="text-white text-4xl font-bold h-12">{result !== null ? result : ''}</div>
           </div>
           <div className="grid grid-cols-4 gap-2">
-            <Button onClick={handleClear} className="col-span-2 bg-red-500 hover:bg-red-600 text-white text-lg">C</Button>
-            <Button onClick={handleBackspace} className="bg-gray-600 hover:bg-gray-700 text-white text-lg">DEL</Button>
-            
             {buttons.map((btn) => (
               <Button
-                key={btn}
-                onClick={() => (btn === '=' ? handleCalculate() : handleButtonClick(btn))}
+                key={btn.label}
+                onClick={btn.action}
                 className={cn(
                     "text-xl h-14",
-                    "bg-gray-700 hover:bg-gray-600",
-                    ['/', '*', '-', '+', '='].includes(btn) && "bg-orange-500 hover:bg-orange-600",
+                    getButtonClass(btn.label),
+                    btn.className
                 )}
               >
-                {btn}
+                {btn.label}
               </Button>
             ))}
           </div>
