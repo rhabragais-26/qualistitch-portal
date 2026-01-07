@@ -92,5 +92,14 @@ service cloud.firestore {
       allow create: if isSignedIn() && hasConsistentId(itemId);
       allow update, delete: if isSignedIn();
     }
+
+    // ------------------------------------------------------------------------
+    // Collection Rules: /operationalCases
+    // ------------------------------------------------------------------------
+    match /operationalCases/{caseId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && hasConsistentId(caseId);
+      allow update, delete: if isSignedIn();
+    }
   }
 }

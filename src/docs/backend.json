@@ -316,6 +316,25 @@
         }
       },
       "required": ["id", "productType", "color", "size", "stock"]
+    },
+    "OperationalCase": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OperationalCase",
+      "type": "object",
+      "description": "Represents an operational case like RTS, quality error, or replacement.",
+      "properties": {
+        "id": { "type": "string" },
+        "joNumber": { "type": "string" },
+        "caseType": { "type": "string", "enum": ["Return to Sender (RTS)", "Quality Errors", "Replacement"] },
+        "remarks": { "type": "string" },
+        "image": { "type": "string", "description": "Data URL of the uploaded image." },
+        "submissionDateTime": { "type": "string", "format": "date-time" },
+        "customerName": { "type": "string" },
+        "companyName": { "type": "string" },
+        "contactNumber": { "type": "string" },
+        "landlineNumber": { "type": "string" }
+      },
+      "required": ["id", "joNumber", "caseType", "remarks", "submissionDateTime"]
     }
   },
   "auth": {
@@ -354,6 +373,22 @@
             {
               "name": "itemId",
               "description": "Unique identifier for the inventory item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/operationalCases/{caseId}",
+        "definition": {
+          "entityName": "OperationalCase",
+          "schema": {
+            "$ref": "#/backend/entities/OperationalCase"
+          },
+          "description": "Stores operational cases.",
+          "params": [
+            {
+              "name": "caseId",
+              "description": "Unique identifier for the operational case."
             }
           ]
         }

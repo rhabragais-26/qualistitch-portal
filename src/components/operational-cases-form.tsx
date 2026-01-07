@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -64,7 +63,7 @@ export function OperationalCasesForm() {
   const [joInput, setJoInput] = useState('');
   const [foundLead, setFoundLead] = useState<Lead | null>(null);
   const [joSuggestions, setJoSuggestions] = useState<Lead[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
 
   const leadsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'leads')) : null),
@@ -254,7 +253,7 @@ export function OperationalCasesForm() {
                                 autoComplete='off'
                             />
                         </FormControl>
-                        {joSuggestions.length > 0 && showSuggestions && (
+                        {showSuggestions && joSuggestions.length > 0 && (
                             <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-60 overflow-y-auto">
                                 {joSuggestions.map((lead) => (
@@ -361,7 +360,7 @@ export function OperationalCasesForm() {
                         <FormControl>
                             <div 
                                 tabIndex={0}
-                                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-32 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
+                                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
                                 onPaste={handleImagePaste}
                                 onDoubleClick={() => imageUploadRef.current?.click()}
                                 onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
