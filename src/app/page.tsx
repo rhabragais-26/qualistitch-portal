@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header isNewOrderPageDirty={isFormDirty} />
-      <main className="flex-1 w-full flex justify-center p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
         <LeadForm onDirtyChange={setIsFormDirty} />
       </main>
     </div>
