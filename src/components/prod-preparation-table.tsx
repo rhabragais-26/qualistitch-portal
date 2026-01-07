@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -121,7 +122,7 @@ export function ProdPreparationTable() {
                     <TableHead className="text-white font-bold align-middle w-1/4">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle">Programming Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Ordered Items</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Ordered Items</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -148,37 +149,19 @@ export function ProdPreparationTable() {
                         <TableCell className="align-top py-3">
                            <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
                         </TableCell>
-                        <TableCell className="text-center align-top py-3">
-                          <Collapsible>
-                            <CollapsibleTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 px-2 text-black hover:bg-gray-200">
-                                View
-                                <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
-                              </Button>
-                            </CollapsibleTrigger>
-                             <CollapsibleContent>
-                                <Table className="mt-2 bg-gray-50">
-                                  <TableHeader>
-                                    <TableRow>
-                                      <TableHead className="py-1 px-2 text-black font-bold">Product</TableHead>
-                                      <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
-                                      <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
-                                      <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
+                        <TableCell className="align-top py-1">
+                            <Table className="bg-transparent">
+                                <TableBody>
+                                {lead.orders.map((order, index) => (
+                                    <TableRow key={index} className="border-0 hover:bg-gray-50">
+                                    <TableCell className="py-1 px-2 text-xs text-black w-1/3">{order.productType}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black w-1/3">{order.color}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black w-1/6">{order.size}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black text-right w-1/6">{order.quantity}</TableCell>
                                     </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                    {lead.orders.map((order, index) => (
-                                      <TableRow key={index} className="border-0">
-                                        <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
-                                </Table>
-                             </CollapsibleContent>
-                          </Collapsible>
+                                ))}
+                                </TableBody>
+                            </Table>
                         </TableCell>
                     </TableRow>
                   </React.Fragment>
