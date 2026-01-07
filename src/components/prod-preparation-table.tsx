@@ -204,7 +204,7 @@ export function ProdPreparationTable() {
                     onCheckedChange={(checked) => handleCheckboxChange(index, !!checked)}
                   />
                   <Label htmlFor={`item-${index}`} className="text-sm font-normal flex-1 cursor-pointer">
-                    {order.quantity}x {order.productType} (Color: {order.color} | Size: {order.size})
+                    <span className="font-bold">{order.quantity}x</span> {order.productType} (<span className="font-bold">Color:</span> {order.color} | <span className="font-bold">Size:</span> {order.size})
                   </Label>
                 </div>
               ))}
