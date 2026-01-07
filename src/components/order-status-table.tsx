@@ -26,6 +26,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { differenceInDays, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
 type Order = {
   productType: string;
@@ -37,6 +38,7 @@ type Order = {
 type Lead = {
   id: string;
   customerName: string;
+  companyName?: string;
   contactNumber: string;
   landlineNumber?: string;
   orders: Order[];
@@ -58,6 +60,7 @@ export function OrderStatusTable() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
+  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -68,6 +71,10 @@ export function OrderStatusTable() {
 
   const toggleLeadDetails = (leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
+  };
+
+  const toggleCustomerDetails = (leadId: string) => {
+    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
   };
 
   const calculateDeadline = (lead: Lead) => {
@@ -102,6 +109,16 @@ export function OrderStatusTable() {
     return { text: 'Pending', variant: 'secondary' };
   };
 
+  const getContactDisplay = (lead: Lead) => {
+    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
+    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+
+    if (mobile && landline) {
+      return `${mobile} / ${landline}`;
+    }
+    return mobile || landline || null;
+  };
+
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
     if (!searchTerm) return leads;
@@ -110,6 +127,7 @@ export function OrderStatusTable() {
 
     return leads.filter(lead =>
       lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
+      (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
       (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(lowercasedSearchTerm)) ||
       (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(lowercasedSearchTerm))
     );
@@ -129,7 +147,7 @@ export function OrderStatusTable() {
             </div>
              <div className="w-full max-w-sm">
               <Input
-                placeholder="Search by customer name, mobile no, or landline..."
+                placeholder="Search customer, company, or contact..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="bg-gray-100 text-black placeholder:text-gray-500"
@@ -156,9 +174,7 @@ export function OrderStatusTable() {
               <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Customer</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Days Remaining/Overdue</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Programming Status</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Item Preparation</TableHead>
@@ -173,9 +189,20 @@ export function OrderStatusTable() {
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
-                        <TableCell className="font-medium text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className="font-medium text-xs align-top py-2 text-black w-[250px]">
+                           <Collapsible open={openCustomerDetails === lead.id} onOpenChange={() => toggleCustomerDetails(lead.id)}>
+                                <CollapsibleTrigger asChild>
+                                    <div className="flex items-center cursor-pointer">
+                                        <span>{lead.customerName}</span>
+                                        <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                    </div>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="pt-2 text-gray-500 space-y-1 text-xs">
+                                    {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
+                                    {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
+                                </CollapsibleContent>
+                            </Collapsible>
+                        </TableCell>
                         <TableCell className={cn(
                           "text-center text-xs align-middle py-2 font-medium",
                           deadlineInfo.isOverdue && "text-red-600",
