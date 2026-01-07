@@ -518,12 +518,12 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-x-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-x-4">
 
               {/* Left Column */}
-              <div className="lg:col-span-3 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+              <div className="lg:col-span-3 space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                   
                   <FormField control={form.control} name="customerName" render={({field}) => (
                     <FormItem className="relative">
@@ -580,9 +580,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   )}/>
                 </div>
 
-                <div className="border rounded-md p-2 relative mt-3" style={{width: 'fit-content'}}>
+                <div className="border rounded-md p-2 relative mt-2" style={{width: 'fit-content'}}>
                   <p className="absolute -top-3 left-4 bg-white px-2 text-xs font-medium text-gray-600">Location</p>
-                  <div className="space-y-2 pt-1">
+                  <div className="space-y-1 pt-1">
                     <FormField control={form.control} name="houseStreet" render={({field}) => (
                       <FormItem className="relative">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
@@ -601,7 +601,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormMessage />
                       </FormItem>
                     )}/>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2">
                       <FormField control={form.control} name="barangay" render={({field}) => (
                         <FormItem className="relative">
                           <FormLabel className="flex items-center gap-2 text-black text-xs"><MapPin className="h-4 w-4 text-primary" />Barangay</FormLabel>
@@ -660,7 +660,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                   <FormField control={form.control} name="salesRepresentative" render={({field}) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2 text-black text-xs"><UserCheck className="h-4 w-4 text-primary" />CSR</FormLabel>
@@ -675,7 +675,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               </div>
 
               {/* Right Column */}
-              <div className="lg:col-span-2 space-y-3">
+              <div className="lg:col-span-2 space-y-2">
                  <FormField control={form.control} name="orderType" render={({field}) => (
                     <FormItem className="flex items-center gap-4">
                       <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
@@ -723,9 +723,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     </FormItem>
                   )}/>
 
-                <div>
+                <div className="pt-2">
                   <FormLabel className="text-black">Orders</FormLabel>
-                  <div className="space-y-4 mt-2">
+                  <div className="space-y-2 mt-2">
                     <div className="border rounded-md">
                       <Table>
                         <TableHeader>
