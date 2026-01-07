@@ -704,7 +704,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               
               {/* Right Column */}
               <div className="w-1/2 flex flex-col gap-y-3">
-                 <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="orderType" render={({field}) => (
                         <FormItem>
                         <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
@@ -725,7 +725,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormMessage />
                         </FormItem>
                     )}/>
-                     <FormField control={form.control} name="courier" render={({field}) => (
+                    <FormField control={form.control} name="courier" render={({field}) => (
                       <FormItem>
                           <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value || ''}>
@@ -736,33 +736,31 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       </FormItem>
                     )}/>
                     <FormField
-                      control={form.control}
-                      name="priorityType"
-                      render={({ field }) => (
+                    control={form.control}
+                    name="priorityType"
+                    render={({ field }) => (
                         <FormItem>
-                          <div className="flex items-center">
-                            <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">
-                              <AlertTriangle className="h-4 w-4 text-primary" />
-                              Priority Type
-                            </FormLabel>
-                            <FormControl>
-                              <RadioGroup
-                                onValueChange={field.onChange}
-                                value={field.value}
-                                className="flex items-center space-x-2 pl-4"
-                                disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
-                              >
-                                {['Rush', 'Regular'].map((option) => (
-                                  <FormItem key={option} className="flex items-center space-x-2 space-y-0">
-                                    <FormControl><RadioGroupItem value={option} /></FormControl>
-                                    <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
-                                  </FormItem>
-                                ))}
-                              </RadioGroup>
-                            </FormControl>
-                          </div>
+                        <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">
+                            <AlertTriangle className="h-4 w-4 text-primary" />
+                            Priority Type
+                        </FormLabel>
+                        <FormControl>
+                            <RadioGroup
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            className="flex items-center space-x-4 pt-2"
+                            disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
+                            >
+                            {['Rush', 'Regular'].map((option) => (
+                                <FormItem key={option} className="flex items-center space-x-2 space-y-0">
+                                <FormControl><RadioGroupItem value={option} /></FormControl>
+                                <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
+                                </FormItem>
+                            ))}
+                            </RadioGroup>
+                        </FormControl>
                         </FormItem>
-                      )}
+                    )}
                     />
                 </div>
 
