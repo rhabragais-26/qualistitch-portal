@@ -177,7 +177,7 @@ export function RecordsTable() {
   }
 
   const handleAddOrder = async () => {
-    if (!selectedLeadId) return;
+    if (!selectedLeadId || !firestore) return;
 
     const quantity = typeof newOrderQuantity === 'string' ? parseInt(newOrderQuantity, 10) : newOrderQuantity;
     if (newOrderProductType && newOrderColor && newOrderSize && quantity > 0) {
@@ -217,7 +217,7 @@ export function RecordsTable() {
   }
 
   const handleEditLead = async (updatedLead: Partial<Lead>) => {
-    if (!editingLead) return;
+    if (!editingLead || !firestore) return;
 
     const leadDocRef = doc(firestore, 'leads', editingLead.id);
 
@@ -248,7 +248,7 @@ export function RecordsTable() {
   };
   
   const handleEditOrder = async (updatedOrder: Order) => {
-    if (!editingOrder) return;
+    if (!editingOrder || !firestore) return;
   
     const { leadId, index } = editingOrder;
     const lead = leads?.find(l => l.id === leadId);
@@ -281,7 +281,7 @@ export function RecordsTable() {
   };
 
   const handleUpdateOrderQuantity = async (leadId: string, orderIndex: number, newQuantity: number) => {
-    if (newQuantity < 1) return;
+    if (newQuantity < 1 || !firestore) return;
 
     const lead = leads?.find(l => l.id === leadId);
     if (!lead) return;
@@ -316,6 +316,7 @@ export function RecordsTable() {
 
   
   const handleDeleteOrder = async (leadId: string, orderIndex: number) => {
+    if (!firestore) return;
     const lead = leads?.find(l => l.id === leadId);
     if (!lead) return;
   
@@ -343,7 +344,7 @@ export function RecordsTable() {
   };
 
   const handleDeleteLead = async (leadId: string) => {
-    if(!leadId) return;
+    if(!leadId || !firestore) return;
 
     const leadDocRef = doc(firestore, 'leads', leadId);
 
@@ -429,10 +430,10 @@ export function RecordsTable() {
                     <TableHead className="text-white align-middle">Mobile No.</TableHead>
                     <TableHead className="text-white align-middle">Landline No.</TableHead>
                     <TableHead className="text-white align-middle">CSR</TableHead>
-                    <TableHead className="text-white align-middle">Priority</TableHead>
-                    <TableHead className="text-white align-middle">Payment</TableHead>
-                    <TableHead className="text-white align-middle">Order Type</TableHead>
-                    <TableHead className="text-white align-middle">Courier</TableHead>
+                    <TableHead className="text-center text-white align-middle">Priority</TableHead>
+                    <TableHead className="text-center text-white align-middle">Payment</TableHead>
+                    <TableHead className="text-center text-white align-middle">Order Type</TableHead>
+                    <TableHead className="text-center text-white align-middle">Courier</TableHead>
                     <TableHead className="text-center text-white align-middle">Items</TableHead>
                     <TableHead className="text-center text-white align-middle">Actions</TableHead>
                   </TableRow>
@@ -457,14 +458,14 @@ export function RecordsTable() {
                       <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
-                      <TableCell className="align-middle py-2">
+                      <TableCell className="align-middle py-2 text-center">
                         <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                           {lead.priorityType}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs align-middle py-2 text-black">{lead.paymentType}</TableCell>
-                      <TableCell className="text-xs align-middle py-2 text-black">{lead.orderType}</TableCell>
-                      <TableCell className="text-xs align-middle py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.paymentType}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.orderType}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.courier === '-' ? '' : lead.courier}</TableCell>
                       <TableCell className="text-center align-middle py-2">
                         <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                           View
@@ -1029,3 +1030,4 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
 }
 
     
+
