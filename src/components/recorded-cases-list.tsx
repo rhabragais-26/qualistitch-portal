@@ -102,7 +102,7 @@ export function RecordedCasesList() {
                        <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
                        <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks.charAt(0).toUpperCase() + caseItem.remarks.slice(1)}</p>
                     </div>
-                     <div className="md:col-span-3 flex justify-center items-center pt-2">
+                     <div className="md:col-span-3 flex justify-center pt-2">
                       {caseItem.image && (
                          <div 
                            className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
@@ -112,7 +112,7 @@ export function RecordedCasesList() {
                          </div>
                       )}
                     </div>
-                    <div className="md:col-span-2 flex justify-center items-center">
+                    <div className="md:col-span-2 flex justify-center pt-2">
                        <Button 
                           onClick={() => setCaseToResolve(caseItem)} 
                           className="shadow-md transition-transform active:scale-95 text-white font-bold"
@@ -151,7 +151,7 @@ export function RecordedCasesList() {
             className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center animate-in fade-in"
             onClick={() => setImageInView(null)}
           >
-            <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <div className="relative h-[90vh] w-[90vw]">
               <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
             </div>
           </div>
