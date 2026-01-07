@@ -19,6 +19,7 @@ import {
   Upload,
   Eye,
   EyeOff,
+  Truck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -204,6 +205,20 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
                     <ClipboardList className="mr-2" />
                     Production Queue
                   </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            {isClient && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                   <Button variant="ghost" className="text-neutral-100 hover:bg-accent hover:text-white">
+                      <Truck className="mr-2" />
+                      Logistics
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                 <DropdownMenuContent align="end">
+                  {/* Logistics menu items can be added here */}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
