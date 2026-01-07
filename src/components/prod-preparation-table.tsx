@@ -24,6 +24,7 @@ import { Button } from './ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { Input } from './ui/input';
 
 type Order = {
   productType: string;
@@ -51,7 +52,8 @@ type Lead = {
 export function ProdPreparationTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
-  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [joNumberSearch, setJoNumberSearch] = useState('');
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -88,18 +90,64 @@ export function ProdPreparationTable() {
   };
 
   const jobOrders = React.useMemo(() => {
-    return leads?.filter(lead => lead.joNumber);
-  }, [leads]);
+    if (!leads) return [];
+    
+    const leadsWithJo = leads.filter(lead => lead.joNumber);
+    
+    if (!searchTerm && !joNumberSearch) {
+      return leadsWithJo;
+    }
+
+    return leadsWithJo.filter(lead => {
+      const lowercasedSearchTerm = searchTerm.toLowerCase();
+      const matchesSearch = searchTerm ?
+        (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
+        (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
+        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
+        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
+        : true;
+      
+      const joString = lead.joNumber?.toString().padStart(5, '0') || '';
+      const formattedJoString = formatJoNumber(lead.joNumber);
+      const matchesJo = joNumberSearch ? 
+        (joString.includes(joNumberSearch) || formattedJoString.toLowerCase().includes(joNumberSearch.toLowerCase()))
+        : true;
+      
+      return matchesSearch && matchesJo;
+    });
+  }, [leads, searchTerm, joNumberSearch]);
 
   const isLoading = isAuthLoading || isLeadsLoading;
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
       <CardHeader>
-        <CardTitle className="text-black">Production Preparation</CardTitle>
-        <CardDescription className="text-gray-600">
-          Job orders ready for production preparation.
-        </CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="text-black">Production Preparation</CardTitle>
+            <CardDescription className="text-gray-600">
+              Job orders ready for production preparation.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-4">
+              <div className="w-full max-w-xs">
+                <Input
+                  placeholder="Search customer, company, contact..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+              </div>
+              <div className="w-full max-w-xs">
+                 <Input
+                  placeholder="Search by J.O. No..."
+                  value={joNumberSearch}
+                  onChange={(e) => setJoNumberSearch(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+              </div>
+            </div>
+        </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto">
         {isLoading && (
