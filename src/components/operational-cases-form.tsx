@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -186,8 +187,8 @@ export function OperationalCasesForm() {
         ...values,
         customerName: foundLead?.customerName,
         companyName: foundLead?.companyName,
-        contactNumber: foundLead?.contactNumber,
-        landlineNumber: foundLead?.landlineNumber,
+        contactNumber: foundLead?.contactNumber || '',
+        landlineNumber: foundLead?.landlineNumber || '',
         submissionDateTime: new Date().toISOString(),
     };
 
