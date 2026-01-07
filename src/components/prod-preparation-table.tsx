@@ -204,7 +204,7 @@ export function ProdPreparationTable() {
                     onCheckedChange={(checked) => handleCheckboxChange(index, !!checked)}
                   />
                   <Label htmlFor={`item-${index}`} className="text-sm font-normal flex-1 cursor-pointer">
-                    <span className="font-bold text-teal-700">{order.quantity}x</span> {order.productType} (Color: <span className="font-bold text-teal-700">{order.color}</span> | Size: <span className="font-bold text-teal-700">{order.size}</span>)
+                    <span className="font-bold text-teal-700">{order.quantity}x</span> {order.productType} ( Color: <span className="font-bold text-teal-700">{order.color}</span> | Size: <span className="font-bold text-teal-700">{order.size}</span> )
                   </Label>
                 </div>
               ))}
@@ -365,3 +365,5 @@ export function ProdPreparationTable() {
     </Card>
   );
 }
+
+    
