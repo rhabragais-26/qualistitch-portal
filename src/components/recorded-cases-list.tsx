@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from './ui/skeleton';
@@ -11,6 +11,7 @@ import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Trash2 } from 'lucide-react';
 
 type OperationalCase = {
   id: string;
@@ -29,6 +30,7 @@ export function RecordedCasesList() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [caseToResolve, setCaseToResolve] = useState<OperationalCase | null>(null);
+  const [caseToDelete, setCaseToDelete] = useState<OperationalCase | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -67,6 +69,27 @@ export function RecordedCasesList() {
     }
   };
 
+  const handleDeleteCase = async () => {
+    if (!caseToDelete || !firestore) return;
+    try {
+      const caseDocRef = doc(firestore, 'operationalCases', caseToDelete.id);
+      await deleteDoc(caseDocRef);
+      toast({
+        title: "Case Deleted",
+        description: `Case for J.O. ${caseToDelete.joNumber} has been permanently deleted.`,
+      });
+      setCaseToDelete(null);
+    } catch (e: any) {
+      console.error("Error deleting case: ", e);
+      toast({
+        variant: "destructive",
+        title: "Deletion Failed",
+        description: e.message || "Could not delete the case.",
+      });
+    }
+  };
+
+
   const activeCases = cases?.filter(c => !c.isArchived);
 
   return (
@@ -89,7 +112,7 @@ export function RecordedCasesList() {
             <div className="space-y-4">
               {activeCases.map((caseItem) => (
                 <Card key={caseItem.id} className="bg-gray-50">
-                  <CardContent className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                  <CardContent className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
                     <div className="md:col-span-3">
                       <p className="text-xs text-gray-500">Date Recorded</p>
                       <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
@@ -102,7 +125,7 @@ export function RecordedCasesList() {
                        <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
                        <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks.charAt(0).toUpperCase() + caseItem.remarks.slice(1)}</p>
                     </div>
-                     <div className="md:col-span-3 flex justify-center">
+                     <div className="md:col-span-3 flex justify-center items-start pt-2">
                       {caseItem.image && (
                          <div 
                            className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
@@ -112,12 +135,20 @@ export function RecordedCasesList() {
                          </div>
                       )}
                     </div>
-                    <div className="md:col-span-2 flex justify-center">
+                    <div className="md:col-span-2 flex flex-col items-center justify-start gap-2 pt-2">
                        <Button 
                           onClick={() => setCaseToResolve(caseItem)} 
-                          className="shadow-md transition-transform active:scale-95 text-white font-bold"
+                          className="shadow-md transition-transform active:scale-95 text-white font-bold w-full"
                         >
                           Resolved
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => setCaseToDelete(caseItem)}
+                        className="shadow-md transition-transform active:scale-95 text-white font-bold w-full"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
                       </Button>
                     </div>
                   </CardContent>
@@ -142,6 +173,27 @@ export function RecordedCasesList() {
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleResolveCase}>Confirm</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        )}
+         {caseToDelete && (
+            <AlertDialog open={!!caseToDelete} onOpenChange={(isOpen) => !isOpen && setCaseToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this case?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the case for J.O. {caseToDelete.joNumber}.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteCase}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
