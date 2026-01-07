@@ -651,9 +651,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         </FormItem>
                       )}/>
                       <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-black text-xs">Address</FormLabel>
+                          <FormLabel className="flex items-center gap-2 text-black text-xs">Complete Address</FormLabel>
                           <FormControl>
-                            <Input readOnly value={concatenatedAddress} className="h-9 text-xs bg-muted" />
+                            <Input readOnly value={concatenatedAddress} className="h-18 text-xs bg-muted" />
                           </FormControl>
                       </FormItem>
                 </div>
