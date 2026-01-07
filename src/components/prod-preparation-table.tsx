@@ -260,7 +260,7 @@ export function ProdPreparationTable() {
             </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1">
+      <CardContent>
         {isLoading && (
           <div className="space-y-2 p-4">
             {[...Array(10)].map((_, i) => (
@@ -278,12 +278,12 @@ export function ProdPreparationTable() {
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead rowSpan={2} className="text-white font-bold align-middle w-[20%] py-2">Customer</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold align-middle py-2">J.O. No.</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold align-middle py-2">Programming Status</TableHead>
-                    <TableHead colSpan={4} className="text-white font-bold align-middle text-center py-2">Ordered Items</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold align-middle text-center py-2">Preparation Status</TableHead>
-                    <TableHead rowSpan={2} className="text-white font-bold align-middle text-center py-2">Production Endorsement</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle py-1 text-xs">Customer</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle py-1 text-xs">J.O. No.</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle py-1 text-xs">Programming Status</TableHead>
+                    <TableHead colSpan={4} className="text-white font-bold align-middle text-center py-1 text-xs">Ordered Items</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle text-center py-1 text-xs">Preparation Status</TableHead>
+                    <TableHead rowSpan={2} className="text-white font-bold align-middle text-center py-1 text-xs">Production Endorsement</TableHead>
                   </TableRow>
                    <TableRow>
                         <TableHead className="text-white font-bold text-xs py-1">Product Type</TableHead>
@@ -296,7 +296,7 @@ export function ProdPreparationTable() {
                 {jobOrders?.map((lead) => (
                   <React.Fragment key={lead.id}>
                     {lead.orders.map((order, orderIndex) => (
-                         <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex === lead.orders.length - 1 ? 'border-b-2 border-gray-400' : ''}>
+                         <TableRow key={`${lead.id}-${orderIndex}`} className={cn(orderIndex === lead.orders.length - 1 ? "border-b-2 border-gray-400" : "border-b-0")}>
                             {orderIndex === 0 && (
                                 <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black">
                                     <Collapsible>
