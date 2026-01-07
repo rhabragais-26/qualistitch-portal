@@ -116,8 +116,7 @@ export function OperationalCasesForm() {
     const fullJoNumber = formatJoNumber(lead.joNumber!);
     setJoInput(fullJoNumber);
     setValue('joNumber', fullJoNumber, { shouldValidate: true });
-    setShowSuggestions(false); // This should hide it immediately
-    setJoSuggestions([]);
+    setShowSuggestions(false);
   };
 
 
@@ -245,10 +244,12 @@ export function OperationalCasesForm() {
                                 placeholder="Search J.O. number..."
                                 value={joInput}
                                 onFocus={() => setShowSuggestions(true)}
+                                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                                 onChange={(e) => {
                                     setJoInput(e.target.value);
                                     if(foundLead) setFoundLead(null);
                                     setValue('joNumber', '');
+                                    setShowSuggestions(true);
                                 }}
                                 autoComplete='off'
                             />
@@ -308,7 +309,7 @@ export function OperationalCasesForm() {
 
             {foundLead && (
                  <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
                         <div className='flex items-center gap-2'>
                            <User className="h-4 w-4 text-gray-500" />
                            <span className="font-medium text-gray-600">Customer:</span>
@@ -319,15 +320,15 @@ export function OperationalCasesForm() {
                            <span className="font-medium text-gray-600">Company:</span>
                            <span className="text-black">{foundLead.companyName && foundLead.companyName !== '-' ? foundLead.companyName : 'N/A'}</span>
                         </div>
-                        <div className='col-span-2 flex items-center gap-2'>
-                           <CalendarDays className="h-4 w-4 text-gray-500" />
-                           <span className="font-medium text-gray-600">Expected Delivery:</span>
-                           <span className="text-black">{getExpectedDeliveryDate()}</span>
-                        </div>
-                         <div className='col-span-2 flex items-center gap-2'>
+                         <div className='flex items-center gap-2'>
                            <Phone className="h-4 w-4 text-gray-500" />
                            <span className="font-medium text-gray-600">Contact:</span>
                            <span className="text-black">{getContactDisplay() || 'N/A'}</span>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                           <CalendarDays className="h-4 w-4 text-gray-500" />
+                           <span className="font-medium text-gray-600">Expected Delivery:</span>
+                           <span className="text-black">{getExpectedDeliveryDate()}</span>
                         </div>
                     </div>
                 </div>
@@ -360,7 +361,7 @@ export function OperationalCasesForm() {
                         <FormControl>
                             <div 
                                 tabIndex={0}
-                                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
+                                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-32 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
                                 onPaste={handleImagePaste}
                                 onDoubleClick={() => imageUploadRef.current?.click()}
                                 onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
@@ -379,8 +380,8 @@ export function OperationalCasesForm() {
                                 </>
                                 ) : (
                                 <div className="text-gray-500">
-                                    <Upload className="mx-auto h-12 w-12" />
-                                    <p>Double-click to upload or paste image</p>
+                                    <Upload className="mx-auto h-8 w-8" />
+                                    <p className="text-xs mt-2">Double-click to upload or paste image</p>
                                 </div>
                                 )}
                                 <input 
