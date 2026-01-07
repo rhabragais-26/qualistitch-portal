@@ -285,13 +285,14 @@
                 "items": { "type": ["string", "null"], "format": "date-time" }
               },
               "finalBackDesignEmb": {
-                "type": ["string", "null"],
-                "description": "Data URL for the final back design EMB file."
+                "type": "array",
+                "description": "Data URLs for the final back design EMB files.",
+                "items": { "type": ["string", "null"] }
               },
-              "finalBackDesignEmbUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for final back design EMB file upload."
+              "finalBackDesignEmbUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for final back design EMB file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
               },
               "finalLogoDst": {
                  "type": "array",
@@ -304,13 +305,14 @@
                 "items": { "type": ["string", "null"], "format": "date-time" }
               },
               "finalBackDesignDst": {
-                "type": ["string", "null"],
-                "description": "Data URL for the final back design DST file."
+                "type": "array",
+                "description": "Data URLs for the final back design DST files.",
+                "items": { "type": ["string", "null"] }
               },
-              "finalBackDesignDstUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for final back design DST file upload."
+              "finalBackDesignDstUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for final back design DST file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
               },
                "finalNamesDst": {
                 "type": "array",
@@ -333,13 +335,14 @@
                 "items": { "type": ["string", "null"], "format": "date-time" }
               },
               "sequenceBackDesign": {
-                "type": ["string", "null"],
-                "description": "Data URL for the sequence back design file."
+                "type": "array",
+                "description": "Data URLs for the sequence back design files.",
+                "items": { "type": ["string", "null"] }
               },
-              "sequenceBackDesignUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for sequence back design file upload."
+              "sequenceBackDesignUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for sequence back design file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
               },
               "dstLogoLeft": { "type": "string" },
               "dstLogoRight": { "type": "string" },
