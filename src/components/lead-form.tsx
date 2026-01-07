@@ -560,8 +560,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="font-headline text-xl text-black">Create New Lead Entry for Master Tracker</CardTitle>
-            <CardDescription className="text-gray-600">Fill in the details below to create a new lead. All fields are required.</CardDescription>
+            <CardTitle className="font-headline text-xl text-black">Create New Lead Entry</CardTitle>
+            <CardDescription className="text-gray-600">Fill in the details below to create a new lead.</CardDescription>
           </div>
           <div className="text-sm text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
             <div>{dateString} - {dayOfWeek} | <span className="blinking-time">{timeString}</span></div>
