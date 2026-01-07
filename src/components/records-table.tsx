@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -378,6 +379,16 @@ export function RecordsTable() {
       .join(' ');
   };
 
+  const getContactDisplay = (lead: Lead) => {
+    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
+    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+
+    if (mobile && landline) {
+      return `${mobile} / ${landline}`;
+    }
+    return mobile || landline || null;
+  };
+
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
       <CardHeader>
@@ -464,8 +475,7 @@ export function RecordsTable() {
                                 {openCustomerDetails === lead.id && (
                                   <div className="mt-1 space-y-0.5 text-gray-500">
                                     {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
-                                    {lead.contactNumber && lead.contactNumber !== '-' && <div>{lead.contactNumber}</div>}
-                                    {lead.landlineNumber && lead.landlineNumber !== '-' && <div>{lead.landlineNumber}</div>}
+                                    {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                   </div>
                                 )}
                             </div>
@@ -1042,7 +1052,3 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
-
-    
-
-    
