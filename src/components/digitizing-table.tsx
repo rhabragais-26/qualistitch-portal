@@ -1003,6 +1003,23 @@ export function DigitizingTable() {
                                         </CardContent>
                                     </Card>
                                   )}
+                                {lead.layouts && lead.layouts.length > 0 && (
+                                    <Card className="bg-white">
+                                        <CardHeader><CardTitle className="text-base">Layout Designs</CardTitle></CardHeader>
+                                        <CardContent className="space-y-4 text-xs">
+                                            {lead.layouts.map((layout, index) => (
+                                                layout.layoutImage && (
+                                                    <div key={index} className="w-fit">
+                                                        {lead.layouts.length > 1 && <p className="font-semibold text-gray-500 mb-2">Layout {index + 1}</p>}
+                                                        <div className="relative w-[200px] h-[150px]">
+                                                            <Image src={layout.layoutImage} alt={`Layout ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border" />
+                                                        </div>
+                                                    </div>
+                                                )
+                                            ))}
+                                        </CardContent>
+                                    </Card>
+                                )}
                             </div>
                         </TableCell>
                       </TableRow>
@@ -1017,4 +1034,3 @@ export function DigitizingTable() {
     </Card>
   );
 }
-
