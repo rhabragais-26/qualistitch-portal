@@ -14,8 +14,9 @@ export function initializeFirebase() {
 
   if (process.env.NODE_ENV === 'development' && !isInitialized) {
     // Point to the emulators running on localhost.
-    connectFirestoreEmulator(firestore, 'localhost', 8080);
-    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+    // Use 127.0.0.1 instead of localhost to avoid potential DNS resolution issues in some environments.
+    connectFirestoreEmulator(firestore, '127.0.0.1', 8080);
+    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
   }
 
   return { firebaseApp: app, auth, firestore };
