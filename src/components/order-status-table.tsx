@@ -115,7 +115,7 @@ export function OrderStatusTable() {
   const getProgrammingStatus = (lead: Lead) => {
     if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
     if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const };
-    if (lead.isRevision) return { text: "Under Revision", variant: "destructive" as const };
+    if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const };
     if (lead.isLogoTesting) return { text: "Done Testing", variant: "warning" as const };
     if (lead.isInitialApproval) return { text: "Initial Program Approved", variant: "default" as const };
     if (lead.isUnderProgramming) return { text: "Done Initial Program", variant: "default" as const };
@@ -273,13 +273,13 @@ export function OrderStatusTable() {
                           </Button>
                         </TableCell>
                         <TableCell className="text-center text-xs align-middle py-2 font-medium">
-                            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                            <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
                                 {lead.priorityType}
                             </Badge>
                         </TableCell>
                         <TableCell className={cn(
                           "text-center text-xs align-middle py-2 font-medium",
-                          deadlineInfo.isOverdue && "text-red-600",
+                          deadlineInfo.isOverdue && "text-red-500",
                           deadlineInfo.isUrgent && "text-amber-600",
                           !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
                         )}>{deadlineInfo.text}</TableCell>
@@ -381,3 +381,5 @@ export function OrderStatusTable() {
     </Card>
   );
 }
+
+    
