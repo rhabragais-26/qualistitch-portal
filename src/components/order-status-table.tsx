@@ -255,7 +255,7 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                 <PopoverTrigger asChild>
                                   <Badge variant="destructive" className="cursor-pointer">{lead.operationalCase.caseType}</Badge>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto max-w-2xl p-4">
+                                <PopoverContent className="w-auto max-w-2xl p-4 bg-muted shadow-xl">
                                   <div className="flex gap-4">
                                     <div className="flex-1 space-y-2">
                                       <div className="space-y-1">
@@ -271,7 +271,7 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                         </div>
                                         <div className="flex flex-col items-start gap-1">
                                           <span className="font-medium">Remarks:</span>
-                                          <p className="whitespace-pre-wrap bg-muted p-2 rounded-md text-xs w-full">{lead.operationalCase.remarks}</p>
+                                          <p className="whitespace-pre-wrap bg-background p-2 rounded-md text-xs w-full">{lead.operationalCase.remarks}</p>
                                         </div>
                                         <div className="flex items-center gap-2">
                                           <span className="font-medium">Recorded:</span>
@@ -290,7 +290,7 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                             alt="Case Image"
                                             layout="fill"
                                             objectFit="contain"
-                                            className="rounded-md bg-gray-100"
+                                            className="rounded-md"
                                           />
                                         </div>
                                       </div>
