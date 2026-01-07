@@ -1,3 +1,4 @@
+
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -28,19 +29,18 @@ import {
   AlertTriangle,
   Building,
   CreditCard,
-  MapPin,
+  Home,
+  PackageCheck,
   Phone,
+  PhoneForwarded,
   ShoppingBag,
+  Truck,
   User,
   UserCheck,
   X,
   PlusCircle,
   Plus,
   Minus,
-  PhoneForwarded,
-  Truck,
-  PackageCheck,
-  Home,
 } from 'lucide-react';
 import {RadioGroup, RadioGroupItem} from './ui/radio-group';
 import { cn } from '@/lib/utils';
@@ -71,6 +71,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/firestore-writes';
 import { v4 as uuidv4 } from 'uuid';
+import philippineCities from '@/lib/philippine-cities.json';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -178,6 +179,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [customerSuggestions, setCustomerSuggestions] = useState<Lead[]>([]);
   const [companySuggestions, setCompanySuggestions] = useState<Lead[]>([]);
   const [addressSuggestions, setAddressSuggestions] = useState<{ field: keyof Lead, suggestions: string[] }>({ field: 'houseStreet', suggestions: [] });
+  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -227,6 +229,11 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     setAddressSuggestions({ field: 'houseStreet', suggestions: [] });
   };
 
+  const handleCitySuggestionClick = (value: string) => {
+    setValue('city', value, { shouldValidate: true });
+    setCitySuggestions([]);
+  };
+
   const customerNameValue = watch('customerName');
   const companyNameValue = watch('companyName');
   const houseStreetValue = watch('houseStreet');
@@ -260,6 +267,17 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       setCompanySuggestions([]);
     }
   }, [companyNameValue, leads]);
+
+  useEffect(() => {
+    if (cityValue) {
+      const filteredCities = philippineCities.filter(city =>
+        city.toLowerCase().includes(cityValue.toLowerCase())
+      );
+      setCitySuggestions(filteredCities);
+    } else {
+      setCitySuggestions([]);
+    }
+  }, [cityValue]);
   
   const useAddressSuggestions = (fieldName: keyof Lead, value: string) => {
     useEffect(() => {
@@ -278,7 +296,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   
   useAddressSuggestions('houseStreet', houseStreetValue);
   useAddressSuggestions('barangay', barangayValue);
-  useAddressSuggestions('city', cityValue);
   useAddressSuggestions('province', provinceValue);
 
 
@@ -541,7 +558,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormMessage />
                       </FormItem>
                     )}/>
-                     <FormField control={form.control} name="mobileNo" render={({field}) => (
+                    <FormField control={form.control} name="mobileNo" render={({field}) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><Phone className="h-4 w-4 text-primary" />Mobile No. (Optional)</FormLabel>
                         <FormControl><Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} className="h-9 text-xs" /></FormControl>
@@ -616,17 +633,17 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormField control={form.control} name="city" render={({field}) => (
                           <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">City</FormLabel>
-                            <FormControl><Input {...field} className="h-9 text-xs" /></FormControl>
-                            {addressSuggestions.field === 'city' && addressSuggestions.suggestions.length > 0 && (
-                              <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                            <FormControl><Input {...field} autoComplete="off" className="h-9 text-xs" /></FormControl>
+                             {citySuggestions.length > 0 && (
+                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                  {addressSuggestions.suggestions.map((suggestion, index) => (
-                                    <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleAddressSuggestionClick('city', suggestion)}>
-                                      {suggestion}
+                                    {citySuggestions.map((city, index) => (
+                                    <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCitySuggestionClick(city)}>
+                                        {city}
                                     </div>
-                                  ))}
+                                    ))}
                                 </CardContent>
-                              </Card>
+                                </Card>
                             )}
                             <FormMessage />
                           </FormItem>
@@ -653,12 +670,12 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       <FormItem>
                           <FormLabel className="flex items-center gap-2 text-black text-xs">Complete Address</FormLabel>
                           <FormControl>
-                            <Input readOnly value={concatenatedAddress} className="h-18 text-xs bg-muted" />
+                            <Input readOnly value={concatenatedAddress} className="h-20 text-xs bg-muted" />
                           </FormControl>
                       </FormItem>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-2 pt-1">
                   <FormField control={form.control} name="salesRepresentative" render={({field}) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2 text-black text-xs"><UserCheck className="h-4 w-4 text-primary" />CSR</FormLabel>
