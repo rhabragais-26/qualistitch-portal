@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Check, ChevronDown, Send } from 'lucide-react';
 import { Badge } from './ui/badge';
@@ -76,8 +76,8 @@ export function ProdPreparationTable() {
   const [statusFilter, setStatusFilter] = useState('All');
   const { toast } = useToast();
 
-  const [confirmingLead, setConfirmingLead = useState<Lead | null>(null);
-  const [checkedItems, setCheckedItems = useState<Record<number, boolean>>({});
+  const [confirmingLead, setConfirmingLead] = useState<Lead | null>(null);
+  const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
 
   
   const leadsQuery = useMemoFirebase(() => {
