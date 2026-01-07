@@ -855,12 +855,12 @@ export function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle whitespace-nowrap">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle">Overdue Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Initial Program</span></TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Initial Approval</span></TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Test</span></TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Revision</span></TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Final Approval</span></TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Final Program</span></TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Initial Program</span></TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Initial Approval</span></TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Test</span></TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Revision</span></TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Final Approval</span></TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Final Program</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Details</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Done</TableHead>
                 </TableRow>
@@ -935,7 +935,7 @@ export function DigitizingTable() {
                             variant="ghost"
                             size="sm"
                             onClick={() => toggleLeadDetails(lead.id)}
-                            className="h-8 px-2 text-black hover:bg-gray-200"
+                            className="h-7 px-2 text-black hover:bg-gray-200"
                           >
                             View
                             {openLeadId === lead.id ? (
@@ -948,7 +948,7 @@ export function DigitizingTable() {
                         <TableCell className="text-center align-middle py-2">
                             <Button
                                 size="sm"
-                                className="h-8 px-3 text-white font-bold bg-green-600 hover:bg-green-700"
+                                className="h-7 px-3 text-white font-bold bg-emerald-600 hover:bg-emerald-700"
                                 disabled={!lead.isFinalProgram}
                                 onClick={() => setArchiveConfirmLead(lead)}
                             >
