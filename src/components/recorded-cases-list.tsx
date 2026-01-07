@@ -89,7 +89,7 @@ export function RecordedCasesList() {
             <div className="space-y-4">
               {activeCases.map((caseItem) => (
                 <Card key={caseItem.id} className="bg-gray-50">
-                  <CardContent className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                  <CardContent className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                     <div className="md:col-span-3">
                       <p className="text-xs text-gray-500">Date Recorded</p>
                       <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
@@ -102,7 +102,7 @@ export function RecordedCasesList() {
                        <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
                        <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks.charAt(0).toUpperCase() + caseItem.remarks.slice(1)}</p>
                     </div>
-                     <div className="md:col-span-3 flex justify-center pt-2">
+                     <div className="md:col-span-3 flex justify-center">
                       {caseItem.image && (
                          <div 
                            className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
@@ -112,7 +112,7 @@ export function RecordedCasesList() {
                          </div>
                       )}
                     </div>
-                    <div className="md:col-span-2 flex justify-center pt-2">
+                    <div className="md:col-span-2 flex justify-center">
                        <Button 
                           onClick={() => setCaseToResolve(caseItem)} 
                           className="shadow-md transition-transform active:scale-95 text-white font-bold"
