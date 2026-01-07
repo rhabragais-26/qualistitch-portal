@@ -344,7 +344,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
       </AlertDialog>
 
       <Dialog open={isAccountSettingsOpen} onOpenChange={setIsAccountSettingsOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Account Settings</DialogTitle>
             <DialogDescription>
@@ -353,10 +353,9 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
           </DialogHeader>
           <div className="grid gap-3 py-4 text-sm">
             <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20">
-                    <AvatarImage src="" alt="User profile" />
-                    <AvatarFallback className="text-3xl">R</AvatarFallback>
-                </Avatar>
+               <div className="relative h-24 w-24 rounded-md bg-muted flex items-center justify-center text-muted-foreground">
+                    <span className="text-3xl">R</span>
+                </div>
                 <div className="flex-1 space-y-1">
                      <Label htmlFor="profile-picture" className="text-xs">Profile Picture</Label>
                     <div className="flex items-center gap-2">
