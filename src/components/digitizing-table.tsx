@@ -103,6 +103,7 @@ type Lead = {
   revisionTimestamp?: string;
   finalApprovalTimestamp?: string;
   finalProgramTimestamp?: string;
+  digitizingArchivedTimestamp?: string;
 }
 
 type CheckboxField = keyof Pick<Lead, 'isUnderProgramming' | 'isInitialApproval' | 'isLogoTesting' | 'isRevision' | 'isFinalApproval' | 'isFinalProgram'>;
@@ -164,10 +165,12 @@ export function DigitizingTable() {
   const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
 
   const handleCheckboxChange = (leadId: string, field: CheckboxField, checked: boolean) => {
-    if (!checked) {
+    const lead = leads?.find((l) => l.id === leadId);
+    const isCurrentlyChecked = lead ? lead[field] : false;
+
+    if (!checked && isCurrentlyChecked) {
       setUncheckConfirmation({ leadId, field });
-    } else {
-      const lead = leads?.find((l) => l.id === leadId);
+    } else if (checked && !isCurrentlyChecked) {
       setUploadLeadId(leadId);
       setUploadField(field);
 
@@ -349,8 +352,7 @@ export function DigitizingTable() {
     }
     
     if (field === 'isFinalApproval' && value) {
-        updateData['isRevision'] = false;
-        updateData['revisionTimestamp'] = null;
+        // Do not uncheck revision, just disable it
     }
 
     try {
@@ -442,7 +444,10 @@ export function DigitizingTable() {
     if (!archiveConfirmLead || !firestore) return;
     try {
         const leadDocRef = doc(firestore, 'leads', archiveConfirmLead.id);
-        await updateDoc(leadDocRef, { isDigitizingArchived: true });
+        await updateDoc(leadDocRef, { 
+          isDigitizingArchived: true,
+          digitizingArchivedTimestamp: new Date().toISOString(),
+        });
         toast({
             title: "Project Archived",
             description: "The project has been removed from the queue.",
@@ -1002,6 +1007,12 @@ export function DigitizingTable() {
                           </Button>
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
+                          {lead.isDigitizingArchived ? (
+                            <div className="text-xs text-gray-500">
+                                <p>Archived</p>
+                                {lead.digitizingArchivedTimestamp && <p>{formatDateTime(lead.digitizingArchivedTimestamp).dateTimeShort}</p>}
+                            </div>
+                          ) : (
                             <Button
                                 size="sm"
                                 className={cn(
@@ -1013,6 +1024,7 @@ export function DigitizingTable() {
                             >
                                 Done
                             </Button>
+                          )}
                         </TableCell>
                     </TableRow>
                     {openLeadId === lead.id && (
