@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useFirestore } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { doc, updateDoc, collection, query } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -34,6 +34,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
+import { Skeleton } from './ui/skeleton';
 
 type NamedOrder = {
   name: string;
@@ -118,11 +119,7 @@ type FileUploadChecklistItem = {
   timestamp?: string | null;
 };
 
-type DigitizingTableProps = {
-    leads: Lead[];
-}
-
-export function DigitizingTable({ leads }: DigitizingTableProps) {
+export function DigitizingTable() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -131,6 +128,9 @@ export function DigitizingTable({ leads }: DigitizingTableProps) {
   const [priorityFilter, setPriorityFilter] = React.useState('All');
   const [overdueFilter, setOverdueFilter] = React.useState('All');
   const [uncheckConfirmation, setUncheckConfirmation] = React.useState<{ leadId: string; field: CheckboxField; } | null>(null);
+
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
   const [isUploadDialogOpen, setIsUploadDialogOpen] = React.useState(false);
   const [uploadLeadId, setUploadLeadId] = React.useState<string | null>(null);
@@ -755,6 +755,20 @@ export function DigitizingTable({ leads }: DigitizingTableProps) {
       <Image src={src} alt={alt} layout="fill" objectFit="contain" className="rounded-md border" />
     </div>
   );
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2 p-4">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full bg-gray-200" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 p-4">Error loading records: {error.message}</div>;
+  }
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">

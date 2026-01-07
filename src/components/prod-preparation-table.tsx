@@ -1,7 +1,7 @@
 
 'use client';
 
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, query } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -29,7 +29,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { Skeleton } from './ui/skeleton';
 
 type Order = {
   productType: string;
@@ -68,16 +69,15 @@ const programmingStatusOptions = [
     'Pending Initial Program'
 ];
 
-type ProdPreparationTableProps = {
-    leads: Lead[];
-}
-
-export function ProdPreparationTable({ leads }: ProdPreparationTableProps) {
+export function ProdPreparationTable() {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const { toast } = useToast();
+
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
   const [confirmingLead, setConfirmingLead] = useState<Lead | null>(null);
   const [leadToSend, setLeadToSend] = useState<Lead | null>(null);
@@ -191,6 +191,19 @@ export function ProdPreparationTable({ leads }: ProdPreparationTableProps) {
     });
   }, [leads, searchTerm, joNumberSearch, statusFilter]);
 
+  if (isLoading) {
+    return (
+      <div className="space-y-2 p-4">
+        {[...Array(10)].map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full bg-gray-200" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 p-4">Error loading job orders: {error.message}</div>;
+  }
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">

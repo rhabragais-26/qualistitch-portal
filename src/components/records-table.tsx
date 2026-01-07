@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useFirestore, useMemoFirebase } from '@/firebase';
+import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import {
   Table,
@@ -41,6 +41,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { collection, query } from 'firebase/firestore';
+import { Skeleton } from './ui/skeleton';
 
 const productTypes = [
   'Executive Jacket 1',
@@ -98,11 +100,7 @@ type Lead = {
   lastModified: string;
 }
 
-type RecordsTableProps = {
-    leads: Lead[];
-}
-
-export function RecordsTable({ leads }: RecordsTableProps) {
+export function RecordsTable() {
   const firestore = useFirestore();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
@@ -113,6 +111,9 @@ export function RecordsTable({ leads }: RecordsTableProps) {
   );
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
   // State for editing a lead
   const [isEditLeadDialogOpen, setIsEditLeadDialogOpen] = useState(false);
@@ -393,6 +394,20 @@ export function RecordsTable({ leads }: RecordsTableProps) {
     }
     return mobile || landline || null;
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2 p-4">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full bg-gray-200" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 p-4">Error loading records: {error.message}</div>;
+  }
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">

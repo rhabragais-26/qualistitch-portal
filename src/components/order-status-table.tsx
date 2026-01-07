@@ -28,6 +28,8 @@ import { Badge } from './ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import Image from 'next/image';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
 
 type Order = {
   productType: string;
@@ -71,16 +73,21 @@ type OperationalCase = {
   isDeleted?: boolean;
 };
 
-type OrderStatusTableProps = {
-    leads: Lead[];
-    operationalCases: OperationalCase[];
-}
-
-export function OrderStatusTable({ leads, operationalCases }: OrderStatusTableProps) {
+export function OrderStatusTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
+
+  const firestore = useFirestore();
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const operationalCasesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'operationalCases')) : null, [firestore]);
+  
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
+  const { data: operationalCases, isLoading: areCasesLoading, error: casesError } = useCollection<OperationalCase>(operationalCasesQuery);
+
+  const isLoading = areLeadsLoading || areCasesLoading;
+  const error = leadsError || casesError;
   
   const toggleLeadDetails = (leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
@@ -161,6 +168,20 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
       return { ...lead, operationalCase: matchingCase };
     });
   }, [filteredLeads, operationalCases]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2 p-4">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full bg-gray-200" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 p-4">Error loading records: {error.message}</div>;
+  }
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">

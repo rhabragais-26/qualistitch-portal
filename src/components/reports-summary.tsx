@@ -10,6 +10,8 @@ import { format, parse } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { generateReport, GenerateReportOutput } from '@/ai/flows/generate-report-flow';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
 
 type Lead = {
   id: string;
@@ -49,16 +51,14 @@ const COLORS = [
   'hsl(180, 70%, 70%)',
 ];
 
-type ReportsSummaryProps = {
-    leads: Lead[];
-    isLoading: boolean;
-    error: Error | null;
-}
-
-export function ReportsSummary({ leads, isLoading: isLeadsLoading, error: leadsError }: ReportsSummaryProps) {
+export function ReportsSummary() {
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
   const [selectedWeek, setSelectedWeek] = useState<string>('');
+
+  const firestore = useFirestore();
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
   
   const [reportData, setReportData] = useState<GenerateReportOutput | null>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);

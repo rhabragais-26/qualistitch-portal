@@ -8,6 +8,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { generateDigitizingReport, GenerateDigitizingReportOutput } from '@/ai/flows/generate-digitizing-report-flow';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
 
 type Lead = {
   id: string;
@@ -38,14 +40,12 @@ const COLORS = [
   'hsl(340, 70%, 70%)',
 ];
 
-type DigitizingReportsSummaryProps = {
-    leads: Lead[];
-    isLoading: boolean;
-    error: Error | null;
-}
-
-export function DigitizingReportsSummary({ leads, isLoading: isLeadsLoading, error: leadsError }: DigitizingReportsSummaryProps) {
+export function DigitizingReportsSummary() {
   const [priorityFilter, setPriorityFilter] = useState('All');
+  
+  const firestore = useFirestore();
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
   
   const [reportData, setReportData] = useState<GenerateDigitizingReportOutput | null>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);

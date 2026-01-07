@@ -51,75 +51,13 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Avatar, AvatarFallback } from './ui/avatar';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 
-type Lead = {
-  id: string;
-  customerName: string;
-  companyName?: string;
-  contactNumber: string;
-  landlineNumber?: string;
-  location: string;
-  salesRepresentative: string;
-  priorityType: string;
-  paymentType: string;
-  orderType: string;
-  courier: string;
-  orders: any[];
-  submissionDateTime: string;
-  lastModified: string;
-  joNumber?: number;
-  isUnderProgramming?: boolean;
-  isInitialApproval?: boolean;
-  isLogoTesting?: boolean;
-  isRevision?: boolean;
-  isFinalApproval?: boolean;
-  isFinalProgram?: boolean;
-  isPreparedForProduction?: boolean;
-  isSentToProduction?: boolean;
-  isDigitizingArchived?: boolean;
-  layouts?: any[];
-  underProgrammingTimestamp?: string;
-  initialApprovalTimestamp?: string;
-  logoTestingTimestamp?: string;
-  revisionTimestamp?: string;
-  finalApprovalTimestamp?: string;
-  finalProgramTimestamp?: string;
-  digitizingArchivedTimestamp?: string;
-  sentToProductionTimestamp?: string;
-  isCutting?: boolean;
-  isSewing?: boolean;
-  isTrimming?: boolean;
-  isDone?: boolean;
-};
-
-type OperationalCase = {
-  id: string;
-  joNumber: string;
-  caseType: string;
-  remarks: string;
-  image?: string;
-  submissionDateTime: string;
-  customerName: string;
-  contactNumber?: string;
-  landlineNumber?: string;
-  quantity?: number;
-  isArchived?: boolean;
-  isDeleted?: boolean;
-};
-
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
-  children?: (
-    leads: Lead[], 
-    operationalCases: OperationalCase[],
-    isLoading: boolean, 
-    error: Error | null
-  ) => React.ReactNode;
+  children?: React.ReactNode;
 };
 
 export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
@@ -132,23 +70,6 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
   const [showExistingPassword, setShowExistingPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
-
-  
-  const firestore = useFirestore();
-  const { user } = useUser();
-
-  const leadsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'leads'));
-  }, [firestore, user]);
-
-  const operationalCasesQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'operationalCases'));
-  }, [firestore, user]);
-
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
-  const { data: operationalCases, isLoading: areCasesLoading, error: casesError } = useCollection<OperationalCase>(operationalCasesQuery);
 
   useEffect(() => {
     setIsClient(true);
@@ -172,9 +93,6 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
     setShowConfirmDialog(false);
     setNextUrl('');
   };
-
-  const isLoading = areLeadsLoading || areCasesLoading;
-  const error = leadsError || casesError;
 
   return (
     <>
@@ -322,7 +240,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
       </header>
       
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 overflow-hidden">
-        {children && children(leads || [], operationalCases || [], isLoading, error)}
+        {children}
       </main>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>

@@ -6,11 +6,7 @@ import { DigitizingReportsSummary } from '@/components/digitizing-reports-summar
 export default function DigitizingReportsPage() {
   return (
     <Header>
-      {(leads, operationalCases, isLoading, error) => (
-        <div className="grid grid-cols-1 gap-8">
-          <DigitizingReportsSummary leads={leads} isLoading={isLoading} error={error} />
-        </div>
-      )}
+      <DigitizingReportsSummary />
     </Header>
   );
 }

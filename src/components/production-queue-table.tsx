@@ -1,7 +1,7 @@
 
 'use client';
 
-import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, doc, updateDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -25,7 +25,8 @@ import { Badge } from './ui/badge';
 import { formatDateTime } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
 import { ChevronDown } from 'lucide-react';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { Skeleton } from './ui/skeleton';
 
 type Order = {
   productType: string;
@@ -53,15 +54,14 @@ type Lead = {
 
 type ProductionCheckboxField = keyof Pick<Lead, 'isCutting' | 'isSewing' | 'isTrimming' | 'isDone'>;
 
-type ProductionQueueTableProps = {
-    leads: Lead[];
-}
-
-export function ProductionQueueTable({ leads }: ProductionQueueTableProps) {
+export function ProductionQueueTable() {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const { toast } = useToast();
+
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
   
   const formatJoNumber = (joNumber: number | undefined) => {
     if (!joNumber) return '';
@@ -113,6 +113,20 @@ export function ProductionQueueTable({ leads }: ProductionQueueTableProps) {
       return matchesSearch && matchesJo;
     });
   }, [leads, searchTerm, joNumberSearch]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2 p-4">
+        {[...Array(10)].map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full bg-gray-200" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 p-4">Error loading job orders: {error.message}</div>;
+  }
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">

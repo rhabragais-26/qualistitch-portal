@@ -24,6 +24,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from './ui/badge';
 import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
+import { Skeleton } from './ui/skeleton';
 
 const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
@@ -49,15 +52,15 @@ type Lead = {
   courier?: string;
 }
 
-type JobOrderTableProps = {
-  leads: Lead[];
-}
-
-export function JobOrderTable({ leads }: JobOrderTableProps) {
+export function JobOrderTable() {
+  const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [csrFilter, setCsrFilter] = React.useState('All');
   const [hoveredLeadId, setHoveredLeadId] = React.useState<string | null>(null);
   const router = useRouter();
+
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
   const handleProcessJobOrder = (lead: Lead) => {
     router.push(`/job-order/${lead.id}`);
@@ -86,6 +89,20 @@ export function JobOrderTable({ leads }: JobOrderTableProps) {
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2 p-4">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full bg-gray-200" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 p-4">Error loading records: {error.message}</div>;
+  }
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
