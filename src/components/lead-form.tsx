@@ -704,7 +704,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               
               {/* Right Column */}
               <div className="w-1/2 flex flex-col gap-y-3">
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                     <FormField control={form.control} name="orderType" render={({field}) => (
                         <FormItem>
                         <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
@@ -739,8 +739,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       control={form.control}
                       name="priorityType"
                       render={({ field }) => (
-                        <FormItem className="flex items-center gap-x-2 pt-5">
-                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0 pt-2">
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">
                             <AlertTriangle className="h-4 w-4 text-primary" />
                             Priority Type
                           </FormLabel>
@@ -748,7 +748,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                             <RadioGroup
                               onValueChange={field.onChange}
                               value={field.value}
-                              className="flex items-center space-x-1"
+                              className="flex items-center space-x-1 pt-2"
                               disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
                             >
                               {['Rush', 'Regular'].map((option) => (
@@ -826,26 +826,16 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                               <SelectContent>{productTypes.map((type) => (<SelectItem key={type} value={type}>{type}</SelectItem>))}</SelectContent>
                             </Select>
                           </div>
-                          <div className='grid grid-cols-2 gap-4'>
-                            <div className="flex items-center gap-2">
-                              <FormLabel>Color:</FormLabel>
-                              <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={isPatches}>
-                                <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
-                                <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
-                              </Select>
-                            </div>
-                             <div className="space-y-2">
-                                {isPatches && (
-                                   <div className='flex flex-col gap-2'>
-                                     <FormLabel>Size:</FormLabel>
-                                     <Input value="N/A" disabled />
-                                   </div>
-                                )}
-                            </div>
+                          <div className='flex items-center gap-2'>
+                            <FormLabel>Color:</FormLabel>
+                            <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={isPatches}>
+                              <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
+                              <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
+                            </Select>
                           </div>
                            <div className="space-y-4">
                             {!isPatches && <FormLabel>Size Quantities</FormLabel>}
-                             <div className="grid grid-cols-1 gap-x-8 gap-y-4">
+                             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                                 {sizeQuantities.map((item, index) => (
                                     <div key={item.size} className="flex items-center justify-between">
                                         {!isPatches && <FormLabel className="text-sm font-bold w-12">{item.size}</FormLabel>}
@@ -913,3 +903,4 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </Card>
   );
 }
+
