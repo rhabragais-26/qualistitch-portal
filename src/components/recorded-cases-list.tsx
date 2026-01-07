@@ -89,20 +89,20 @@ export function RecordedCasesList() {
             <div className="space-y-4">
               {activeCases.map((caseItem) => (
                 <Card key={caseItem.id} className="bg-gray-50">
-                  <CardContent className="p-4 grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
-                    <div className="md:col-span-1">
+                  <CardContent className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                    <div className="md:col-span-2">
                       <p className="text-xs text-gray-500">Date Recorded</p>
                       <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
                       <p className="text-sm font-semibold mt-2">{caseItem.joNumber}</p>
                       <p className="text-xs text-gray-600">{caseItem.customerName}</p>
                       <p className="text-xs text-gray-500">{getContactDisplay(caseItem)}</p>
                     </div>
-                    <div className="md:col-span-2">
+                    <div className="md:col-span-5">
                        <p className="text-xs text-gray-500">Case & Remarks/Reason</p>
                        <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
                        <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks.charAt(0).toUpperCase() + caseItem.remarks.slice(1)}</p>
                     </div>
-                    <div className="md:col-span-2 flex justify-center items-center gap-4">
+                    <div className="md:col-span-2 flex justify-center items-center">
                       {caseItem.image && (
                          <div 
                            className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
@@ -111,7 +111,12 @@ export function RecordedCasesList() {
                            <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
                          </div>
                       )}
-                      <Button size="sm" variant="outline" onClick={() => setCaseToResolve(caseItem)}>
+                    </div>
+                    <div className="md:col-span-3 flex justify-end items-center">
+                       <Button 
+                          onClick={() => setCaseToResolve(caseItem)} 
+                          className="shadow-md transition-transform active:scale-95 text-white font-bold"
+                        >
                           Resolved
                       </Button>
                     </div>
