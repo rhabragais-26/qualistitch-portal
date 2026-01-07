@@ -845,8 +845,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           </div>
                            <div className="space-y-4">
                             {!isPatches && <FormLabel>Size Quantities</FormLabel>}
-                             <ScrollArea className={cn("h-auto", !isPatches && "h-[200px] border rounded-md p-4")}>
-                                <div className={cn("grid gap-x-8 gap-y-4", !isPatches && "grid-cols-2")}>
+                             <div className="grid grid-cols-1 gap-x-8 gap-y-4">
                                 {sizeQuantities.map((item, index) => (
                                     <div key={item.size} className="flex items-center justify-between">
                                         {!isPatches && <FormLabel className="text-sm font-bold w-12">{item.size}</FormLabel>}
@@ -859,7 +858,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                                 value={item.quantity}
                                                 onChange={(e) => handleSizeQuantityInputChange(index, e.target.value)}
                                                 onBlur={(e) => { if (e.target.value === '') handleSizeQuantityInputChange(index, '0')}}
-                                                className="w-16 text-center"
+                                                className="w-14 text-center"
                                             />
                                             <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, 1)}>
                                                 <Plus className="h-4 w-4" />
@@ -867,8 +866,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                         </div>
                                     </div>
                                 ))}
-                                </div>
-                            </ScrollArea>
+                             </div>
                           </div>
                         </div>
                         <DialogFooter>
