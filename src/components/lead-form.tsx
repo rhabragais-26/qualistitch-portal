@@ -1,4 +1,3 @@
-
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -68,7 +67,7 @@ import { Separator } from './ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { setDocumentNonBlocking } from '@/firebase/firestore-writes';
 import { v4 as uuidv4 } from 'uuid';
 
 // Define the form schema using Zod
@@ -363,6 +362,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
 
   function onSubmit(values: FormValues) {
+    if (!firestore) return;
     const leadId = uuidv4();
     const leadsRef = collection(firestore, 'leads');
     const leadDocRef = doc(leadsRef, leadId);

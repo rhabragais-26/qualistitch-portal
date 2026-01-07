@@ -92,13 +92,6 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
     [firestore]
   );
   const { data: allLeads, isLoading: areLeadsLoading } = useCollection<Lead>(leadsQuery);
-  const [leads, setLeads] = useState<Lead[] | null>(null);
-
-  useEffect(() => {
-    if (allLeads) {
-      setLeads(allLeads);
-    }
-  }, [allLeads]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -117,8 +110,8 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
   const isEditing = !!editingCase;
 
   useEffect(() => {
-    if (editingCase && leads) {
-      const leadForCase = leads.find(l => l.joNumber && formatJoNumber(l.joNumber) === editingCase.joNumber);
+    if (editingCase && allLeads) {
+      const leadForCase = allLeads.find(l => l.joNumber && formatJoNumber(l.joNumber) === editingCase.joNumber);
       setFoundLead(leadForCase || null);
       setJoInput(editingCase.joNumber);
       setValue('joNumber', editingCase.joNumber);
@@ -129,7 +122,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
     } else {
       handleFormReset();
     }
-  }, [editingCase, leads, setValue]);
+  }, [editingCase, allLeads, setValue]);
 
 
   const formatJoNumber = (joNumber: number) => {
@@ -138,7 +131,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
   };
 
   useEffect(() => {
-    if (!leads || !joInput || !showSuggestions || isEditing) {
+    if (!allLeads || !joInput || !showSuggestions || isEditing) {
       setJoSuggestions([]);
       return;
     }
@@ -146,7 +139,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
     const searchInput = joInput.toLowerCase().replace(/[^0-9]/g, '');
     
     if(searchInput.length > 0) {
-        const matchedLeads = leads.filter(lead => 
+        const matchedLeads = allLeads.filter(lead => 
             lead.joNumber && 
             (lead.joNumber.toString().padStart(5, '0').includes(searchInput) ||
              formatJoNumber(lead.joNumber).toLowerCase().includes(joInput.toLowerCase()))
@@ -156,7 +149,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
         setJoSuggestions([]);
     }
 
-  }, [joInput, leads, showSuggestions, isEditing]);
+  }, [joInput, allLeads, showSuggestions, isEditing]);
   
   const handleSuggestionClick = (lead: Lead) => {
     setFoundLead(lead);
