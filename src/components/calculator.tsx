@@ -87,7 +87,7 @@ export function Calculator({ onClose }: { onClose: () => void }) {
     if (input === '') return;
     try {
       // Using a safer evaluation method
-      const calculatedResult = new Function('return ' + input.replace(/[^0-9+\-*/.]/g, ''))();
+      const calculatedResult = new Function('return ' + input.replace(/,/g, '').replace(/[^0-9+\-*/.]/g, ''))();
       if (isNaN(calculatedResult) || !isFinite(calculatedResult)) {
         throw new Error("Invalid calculation");
       }
@@ -145,14 +145,26 @@ export function Calculator({ onClose }: { onClose: () => void }) {
     if (['/', '*', '-', '+', '='].includes(label)) {
       return "bg-orange-500 hover:bg-orange-600";
     }
-    if (label === 'C') {
-        return "bg-red-500 hover:bg-red-600";
-    }
-    if (label === 'DEL') {
-      return "bg-gray-600 hover:bg-gray-700";
+    if (label === 'C' || label === 'DEL') {
+        return "bg-gray-600 hover:bg-gray-700";
     }
     return "bg-gray-700 hover:bg-gray-600";
   }
+  
+  const formatDisplay = (displayValue: string) => {
+    if (!displayValue) return '0';
+    const parts = displayValue.split(/([+\-*/])/);
+    return parts.map(part => {
+      if (/[+\-*/]/.test(part) || part === '') {
+        return part;
+      }
+      if (part.includes('.')) {
+        const [integer, decimal] = part.split('.');
+        return `${parseFloat(integer).toLocaleString()}.${decimal}`;
+      }
+      return parseFloat(part).toLocaleString();
+    }).join('');
+  };
 
   return (
     <div
@@ -176,8 +188,8 @@ export function Calculator({ onClose }: { onClose: () => void }) {
         </CardHeader>
         <CardContent className="p-4">
           <div className="bg-gray-900 rounded-lg p-4 mb-4 text-right">
-            <div className="text-white text-xl h-7">{input || (result !== null ? result : '0')}</div>
-            <div className="text-white text-4xl font-bold h-12">{result !== null && result !== input ? result : ''}</div>
+            <div className="text-white text-xl h-7">{formatDisplay(input) || (result !== null ? formatDisplay(result) : '0')}</div>
+            <div className="text-white text-4xl font-bold h-12">{result !== null && result !== input ? formatDisplay(result) : ''}</div>
           </div>
           <div className="grid grid-cols-4 gap-2">
             {buttons.map((btn) => (
