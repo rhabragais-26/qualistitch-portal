@@ -260,7 +260,7 @@ export function ProdPreparationTable() {
             </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-auto">
+      <CardContent>
         {isLoading && (
           <div className="space-y-2 p-4">
             {[...Array(10)].map((_, i) => (
@@ -274,7 +274,7 @@ export function ProdPreparationTable() {
           </div>
         )}
         {!isLoading && !error && (
-           <div className="border rounded-md h-full">
+           <div className="border rounded-md">
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
@@ -293,14 +293,14 @@ export function ProdPreparationTable() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                {jobOrders?.map((lead, leadIndex) => {
+                {jobOrders?.map((lead) => {
                   const programmingStatus = getProgrammingStatus(lead);
                   return (
                   <React.Fragment key={lead.id}>
                     {lead.orders.map((order, orderIndex) => (
-                         <TableRow key={`${lead.id}-${orderIndex}`} className={cn(orderIndex < lead.orders.length - 1 && "border-b-0", lead.orders.length > 1 && orderIndex === lead.orders.length - 1 && "border-b border-gray-400")}>
+                         <TableRow key={`${lead.id}-${orderIndex}`}>
                             {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black border-b border-gray-400">
+                                <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black">
                                     <Collapsible>
                                         <CollapsibleTrigger asChild>
                                             <div className="flex items-center cursor-pointer">
@@ -316,10 +316,10 @@ export function ProdPreparationTable() {
                                 </TableCell>
                             )}
                             {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="text-xs align-top py-3 text-black border-b border-gray-400">{formatJoNumber(lead.joNumber)}</TableCell>
+                                <TableCell rowSpan={lead.orders.length} className="text-xs align-top py-3 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                             )}
                              {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="align-top py-3 border-b border-gray-400">
+                                <TableCell rowSpan={lead.orders.length} className="align-top py-3">
                                 <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
                                 </TableCell>
                             )}
@@ -328,7 +328,7 @@ export function ProdPreparationTable() {
                             <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
                             <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
                             {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2 border-b border-gray-400">
+                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
                                 {lead.isPreparedForProduction ? (
                                         <div className="flex items-center justify-center text-green-600 font-semibold">
                                             <Check className="mr-2 h-4 w-4" /> Prepared
@@ -344,7 +344,7 @@ export function ProdPreparationTable() {
                                 </TableCell>
                             )}
                              {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2 border-b border-gray-400">
+                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
                                     {lead.isSentToProduction ? (
                                         <div className="flex items-center justify-center font-semibold text-gray-500">
                                             Sent
