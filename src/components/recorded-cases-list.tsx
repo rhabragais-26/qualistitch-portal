@@ -89,7 +89,7 @@ export function RecordedCasesList() {
             <div className="space-y-4">
               {activeCases.map((caseItem) => (
                 <Card key={caseItem.id} className="bg-gray-50">
-                  <CardContent className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                  <CardContent className="p-4 grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
                     <div className="md:col-span-1">
                       <p className="text-xs text-gray-500">Date Recorded</p>
                       <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
@@ -102,7 +102,7 @@ export function RecordedCasesList() {
                        <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
                        <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks.charAt(0).toUpperCase() + caseItem.remarks.slice(1)}</p>
                     </div>
-                    <div className="md:col-span-1 flex justify-center items-center gap-2">
+                    <div className="md:col-span-2 flex justify-center items-center gap-4">
                       {caseItem.image && (
                          <div 
                            className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
@@ -143,7 +143,7 @@ export function RecordedCasesList() {
         )}
         {imageInView && (
           <div 
-            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center animate-in fade-in-50"
+            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center animate-in fade-in"
             onClick={() => setImageInView(null)}
           >
             <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
