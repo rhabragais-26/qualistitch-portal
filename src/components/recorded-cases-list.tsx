@@ -12,6 +12,7 @@ import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent } from './ui/dialog';
 
 type OperationalCase = {
   id: string;
@@ -30,6 +31,7 @@ export function RecordedCasesList() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [caseToResolve, setCaseToResolve] = useState<OperationalCase | null>(null);
+  const [imageInView, setImageInView] = useState<string | null>(null);
   const { toast } = useToast();
 
   const casesQuery = useMemoFirebase(() => {
@@ -104,20 +106,13 @@ export function RecordedCasesList() {
                     </div>
                     <div className="md:col-span-1 flex justify-center items-center gap-2">
                       {caseItem.image && (
-                        <TooltipProvider delayDuration={100}>
-                           <Tooltip>
-                            <TooltipTrigger asChild>
-                               <div className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer">
-                                <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
-                               </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="left" className="p-0 border-0 bg-black/50 shadow-2xl max-w-none w-auto h-auto backdrop-blur-sm">
-                               <div className="relative h-[40rem] w-[40rem]">
-                                <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="contain" />
-                               </div>
-                            </TooltipContent>
-                           </Tooltip>
-                        </TooltipProvider>
+                         <div 
+                           className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
+                           onMouseEnter={() => setImageInView(caseItem.image!)}
+                           onMouseLeave={() => setImageInView(null)}
+                         >
+                           <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
+                         </div>
                       )}
                       <Button size="sm" variant="outline" onClick={() => setCaseToResolve(caseItem)}>
                           Resolved
@@ -148,6 +143,16 @@ export function RecordedCasesList() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+        )}
+        {imageInView && (
+          <div 
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center"
+            onClick={() => setImageInView(null)}
+          >
+            <div className="relative h-[80vh] w-[80vw]">
+              <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
