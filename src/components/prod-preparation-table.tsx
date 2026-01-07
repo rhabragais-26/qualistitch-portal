@@ -92,7 +92,7 @@ export function ProdPreparationTable() {
   const jobOrders = React.useMemo(() => {
     if (!leads) return [];
     
-    const leadsWithJo = leads.filter(lead => lead.joNumber);
+    const leadsWithJo = leads.filter(lead => lead.joNumber && (lead.isFinalApproval || lead.isFinalProgram));
     
     if (!searchTerm && !joNumberSearch) {
       return leadsWithJo;
