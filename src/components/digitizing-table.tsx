@@ -948,7 +948,10 @@ export function DigitizingTable() {
                         <TableCell className="text-center align-middle py-2">
                             <Button
                                 size="sm"
-                                className="h-7 px-3 text-white font-bold bg-emerald-600 hover:bg-emerald-700"
+                                className={cn(
+                                    'h-7 px-3 text-white font-bold',
+                                    lead.isFinalProgram ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-gray-400'
+                                )}
                                 disabled={!lead.isFinalProgram}
                                 onClick={() => setArchiveConfirmLead(lead)}
                             >
@@ -1014,3 +1017,4 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
