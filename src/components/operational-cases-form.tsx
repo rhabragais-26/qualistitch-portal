@@ -336,24 +336,28 @@ export function OperationalCasesForm() {
                 </div>
             )}
             
-            <FormField
-                control={control}
-                name="quantity"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-black"><Inbox className="h-4 w-4 text-primary" />Quantity</FormLabel>
-                        <FormControl>
-                            <Input
-                                type="number"
-                                placeholder="Enter quantity of items"
-                                {...field}
-                                onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                    control={control}
+                    name="quantity"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2 text-black"><Inbox className="h-4 w-4 text-primary" />Quantity</FormLabel>
+                            <FormControl>
+                                <Input
+                                    type="number"
+                                    placeholder="Enter quantity"
+                                    {...field}
+                                    onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}
+                                    onBlur={e => { if (parseInt(e.target.value, 10) < 1) field.onChange(1); }}
+                                    className="w-full"
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
 
             <FormField
               control={control}
