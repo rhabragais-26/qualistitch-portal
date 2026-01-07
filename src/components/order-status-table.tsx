@@ -166,19 +166,19 @@ export function OrderStatusTable() {
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
-                        <TableCell className="font-medium text-xs align-top py-2 text-black">{lead.customerName}</TableCell>
-                        <TableCell className="text-xs align-top py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
-                        <TableCell className="text-xs align-top py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className="font-medium text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
+                        <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
                         <TableCell className={cn(
-                          "text-center text-xs align-top py-2 font-medium",
+                          "text-center text-xs align-middle py-2 font-medium",
                           deadlineInfo.isOverdue && "text-red-600",
                           deadlineInfo.isUrgent && "text-amber-600",
                           !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
                         )}>{deadlineInfo.text}</TableCell>
-                        <TableCell className="text-center text-xs align-top py-2 font-medium">
+                        <TableCell className="text-center text-xs align-middle py-2 font-medium">
                           <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
                         </TableCell>
-                        <TableCell className="text-center align-top py-2">
+                        <TableCell className="text-center align-middle py-2">
                           <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                             View
                             {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
