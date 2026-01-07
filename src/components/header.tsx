@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -13,6 +14,9 @@ import {
   TriangleAlert,
   Package,
   Factory,
+  User,
+  Settings,
+  LogOut,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -33,10 +37,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
+import { Avatar, AvatarFallback } from './ui/avatar';
 
 type Lead = {
   id: string;
@@ -164,7 +170,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
               </span>
             </Link>
           </div>
-          <nav className="flex items-center gap-4 ml-auto">
+          <nav className="flex items-center gap-4">
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -270,6 +276,30 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
               Order Status
             </Button>
           </nav>
+           <div className="flex items-center gap-4 ml-auto">
+             <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2 text-neutral-100 hover:bg-accent hover:text-white">
+                    <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-primary text-primary-foreground">R</AvatarFallback>
+                    </Avatar>
+                    <span>Rha</span>
+                     <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Account Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Sign Out</span>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
       
