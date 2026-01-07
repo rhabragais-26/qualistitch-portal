@@ -134,40 +134,6 @@ type Lead = {
 };
 
 
-const formFields: {
-  name: keyof Omit<FormValues, 'orders'>;
-  label: string;
-  icon: React.ElementType;
-  type: 'input' | 'tel' | 'select' | 'radio';
-  options?: string[];
-  placeholder?: string;
-  className?: string;
-  autoComplete?: 'on' | 'off';
-}[] = [
-  {name: 'customerName', label: 'Customer Name', icon: User, type: 'input', autoComplete: 'off'},
-  {name: 'companyName', label: 'Company Name (Optional)', icon: Building, type: 'input', autoComplete: 'off'},
-  {name: 'mobileNo', label: 'Mobile No. (Optional)', icon: Phone, type: 'tel'},
-  {name: 'landlineNo', label: 'Landline No. (Optional)', icon: PhoneForwarded, type: 'tel'},
-  {name: 'courier', label: 'Courier (Optional)', icon: Truck, type: 'select', options: ['Lalamove', 'J&T', 'In-house'], placeholder: 'Select Courier'},
-  {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
-  {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
-  {name: 'salesRepresentative', label: 'CSR', icon: UserCheck, type: 'select', options: ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], placeholder: 'Select CSR'},
-  {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular'], className: "md:justify-center"},
-];
-
-const addressFields: {
-  name: keyof Omit<FormValues, 'orders'>;
-  label: string;
-  icon: React.ElementType;
-  type: 'input';
-  className?: string;
-}[] = [
-    {name: 'houseStreet', label: 'House No., Street & Others', icon: Home, type: 'input', className: 'md:col-span-2'},
-    {name: 'barangay', label: 'Barangay', icon: MapPin, type: 'input'},
-    {name: 'city', label: 'City', icon: MapPin, type: 'input'},
-    {name: 'province', label: 'Province', icon: MapPin, type: 'input'},
-]
-
 const productTypes = [
   'Executive Jacket 1',
   'Executive Jacket v2 (with lines)',
@@ -539,7 +505,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-4xl shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+    <Card className="w-full max-w-7xl shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -554,95 +520,22 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-              {formFields.map((fieldInfo) => (
-                <FormField
-                  key={fieldInfo.name}
-                  control={form.control}
-                  name={fieldInfo.name}
-                  render={({field}) => (
-                    <FormItem className={cn("relative", fieldInfo.className)}>
-                      <FormLabel className="flex items-center gap-2 text-black text-xs">
-                        <fieldInfo.icon className="h-4 w-4 text-primary" />
-                        {fieldInfo.label}
-                      </FormLabel>
-                      {fieldInfo.type === 'input' || fieldInfo.type === 'tel' ? (
-                        <FormControl>
-                          <Input
-                            type={fieldInfo.type}
-                            {...field}
-                            autoComplete={fieldInfo.autoComplete || 'on'}
-                            onChange={(e) => {
-                              if (fieldInfo.name === 'mobileNo') {
-                                handleMobileNoChange(e, field);
-                              } else if (fieldInfo.name === 'landlineNo') {
-                                handleLandlineNoChange(e, field);
-                              } else {
-                                field.onChange(e);
-                              }
-                            }}
-                            className="h-9 text-xs"
-                          />
-                        </FormControl>
-                      ) : fieldInfo.type === 'select' ? (
-                         <Select onValueChange={field.onChange} value={field.value || ''}>
-                          <FormControl>
-                            <SelectTrigger className={cn("h-9 text-xs", !field.value && 'text-muted-foreground')}>
-                              <SelectValue placeholder={fieldInfo.placeholder || `Select a ${fieldInfo.label.toLowerCase()}`} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {fieldInfo.options?.map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {option === 'COD' ? 'COD (Cash on Delivery)' : option}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            value={field.value}
-                            className={cn("flex items-center space-x-4 pt-2", fieldInfo.className)}
-                            disabled={fieldInfo.name === 'priorityType' && (orderType === 'MTO' || orderType === 'Stock (Jacket Only)')}
-                          >
-                            {fieldInfo.options?.map((option) => (
-                              <FormItem key={option} className="flex items-center space-x-2 space-y-0">
-                                <FormControl>
-                                  <RadioGroupItem value={option} />
-                                </FormControl>
-                                <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
-                              </FormItem>
-                            ))}
-                          </RadioGroup>
-                        </FormControl>
-                      )}
-                      {fieldInfo.name === 'customerName' && customerSuggestions.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-x-12">
+
+              {/* Left Column */}
+              <div className="lg:col-span-3 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                  
+                  <FormField control={form.control} name="customerName" render={({field}) => (
+                    <FormItem className="relative">
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
+                      <FormControl><Input {...field} autoComplete="off" className="h-9 text-xs" /></FormControl>
+                      {customerSuggestions.length > 0 && (
                         <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                          <CardContent className="p-2">
+                          <CardContent className="p-2 max-h-40 overflow-y-auto">
                             {customerSuggestions.map((lead) => (
-                              <div
-                                key={lead.id}
-                                className="p-2 cursor-pointer hover:bg-gray-100"
-                                onClick={() => handleSuggestionClick(lead)}
-                              >
+                              <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
                                 {toTitleCase(lead.customerName)}
-                              </div>
-                            ))}
-                          </CardContent>
-                        </Card>
-                      )}
-                      {fieldInfo.name === 'companyName' && companySuggestions.length > 0 && (
-                        <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                          <CardContent className="p-2">
-                            {companySuggestions.map((lead) => (
-                              <div
-                                key={lead.id}
-                                className="p-2 cursor-pointer hover:bg-gray-100"
-                                onClick={() => handleSuggestionClick(lead)}
-                              >
-                                {lead.companyName ? toTitleCase(lead.companyName) : ''}
                               </div>
                             ))}
                           </CardContent>
@@ -650,246 +543,317 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       )}
                       <FormMessage />
                     </FormItem>
-                  )}
-                />
-              ))}
+                  )}/>
 
-              <div className="md:col-span-2 border rounded-md p-4 relative mt-4">
+                  <FormField control={form.control} name="companyName" render={({field}) => (
+                    <FormItem className="relative">
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><Building className="h-4 w-4 text-primary" />Company Name (Optional)</FormLabel>
+                      <FormControl><Input {...field} autoComplete="off" className="h-9 text-xs" /></FormControl>
+                      {companySuggestions.length > 0 && (
+                        <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                           <CardContent className="p-2 max-h-40 overflow-y-auto">
+                            {companySuggestions.map((lead) => (
+                              <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
+                                {lead.companyName ? toTitleCase(lead.companyName) : ''}
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+                      )}
+                       <FormMessage />
+                    </FormItem>
+                  )}/>
+
+                  <FormField control={form.control} name="mobileNo" render={({field}) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><Phone className="h-4 w-4 text-primary" />Mobile No. (Optional)</FormLabel>
+                      <FormControl><Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} className="h-9 text-xs" /></FormControl>
+                       <FormMessage />
+                    </FormItem>
+                  )}/>
+
+                  <FormField control={form.control} name="landlineNo" render={({field}) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><PhoneForwarded className="h-4 w-4 text-primary" />Landline No. (Optional)</FormLabel>
+                      <FormControl><Input type="tel" {...field} onChange={(e) => handleLandlineNoChange(e, field)} className="h-9 text-xs" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}/>
+                </div>
+
+                <div className="border rounded-md p-4 relative mt-4">
                   <p className="absolute -top-3 left-4 bg-white px-2 text-xs font-medium text-gray-600">Location</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 pt-2">
-                     {addressFields.map((fieldInfo) => (
-                        <FormField
-                            key={fieldInfo.name}
-                            control={form.control}
-                            name={fieldInfo.name}
-                            render={({field}) => (
-                                <FormItem className={cn("relative", fieldInfo.className)}>
-                                <FormLabel className="flex items-center gap-2 text-black text-xs">
-                                    <fieldInfo.icon className="h-4 w-4 text-primary" />
-                                    {fieldInfo.label}
-                                </FormLabel>
-                                <FormControl>
-                                    <Input {...field} className="h-9 text-xs" />
-                                </FormControl>
-                                {addressSuggestions.field === fieldInfo.name && addressSuggestions.suggestions.length > 0 && (
-                                    <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                                    <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                        {addressSuggestions.suggestions.map((suggestion, index) => (
-                                        <div
-                                            key={index}
-                                            className="p-2 cursor-pointer hover:bg-gray-100"
-                                            onClick={() => handleAddressSuggestionClick(fieldInfo.name as keyof Lead, suggestion)}
-                                        >
-                                            {suggestion}
-                                        </div>
-                                        ))}
-                                    </CardContent>
-                                    </Card>
-                                )}
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                     ))}
+                    <FormField control={form.control} name="houseStreet" render={({field}) => (
+                      <FormItem className="relative md:col-span-2">
+                        <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
+                        <FormControl><Input {...field} className="h-9 text-xs" /></FormControl>
+                        {addressSuggestions.field === 'houseStreet' && addressSuggestions.suggestions.length > 0 && (
+                          <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                            <CardContent className="p-2 max-h-40 overflow-y-auto">
+                              {addressSuggestions.suggestions.map((suggestion, index) => (
+                                <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleAddressSuggestionClick('houseStreet', suggestion)}>
+                                  {suggestion}
+                                </div>
+                              ))}
+                            </CardContent>
+                          </Card>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="barangay" render={({field}) => (
+                      <FormItem className="relative">
+                        <FormLabel className="flex items-center gap-2 text-black text-xs"><MapPin className="h-4 w-4 text-primary" />Barangay</FormLabel>
+                        <FormControl><Input {...field} className="h-9 text-xs" /></FormControl>
+                         {addressSuggestions.field === 'barangay' && addressSuggestions.suggestions.length > 0 && (
+                          <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                            <CardContent className="p-2 max-h-40 overflow-y-auto">
+                              {addressSuggestions.suggestions.map((suggestion, index) => (
+                                <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleAddressSuggestionClick('barangay', suggestion)}>
+                                  {suggestion}
+                                </div>
+                              ))}
+                            </CardContent>
+                          </Card>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="city" render={({field}) => (
+                      <FormItem className="relative">
+                        <FormLabel className="flex items-center gap-2 text-black text-xs"><MapPin className="h-4 w-4 text-primary" />City</FormLabel>
+                        <FormControl><Input {...field} className="h-9 text-xs" /></FormControl>
+                        {addressSuggestions.field === 'city' && addressSuggestions.suggestions.length > 0 && (
+                          <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                            <CardContent className="p-2 max-h-40 overflow-y-auto">
+                              {addressSuggestions.suggestions.map((suggestion, index) => (
+                                <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleAddressSuggestionClick('city', suggestion)}>
+                                  {suggestion}
+                                </div>
+                              ))}
+                            </CardContent>
+                          </Card>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="province" render={({field}) => (
+                      <FormItem className="relative">
+                        <FormLabel className="flex items-center gap-2 text-black text-xs"><MapPin className="h-4 w-4 text-primary" />Province</FormLabel>
+                        <FormControl><Input {...field} className="h-9 text-xs" /></FormControl>
+                        {addressSuggestions.field === 'province' && addressSuggestions.suggestions.length > 0 && (
+                          <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                            <CardContent className="p-2 max-h-40 overflow-y-auto">
+                              {addressSuggestions.suggestions.map((suggestion, index) => (
+                                <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleAddressSuggestionClick('province', suggestion)}>
+                                  {suggestion}
+                                </div>
+                              ))}
+                            </CardContent>
+                          </Card>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}/>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                  <FormField control={form.control} name="salesRepresentative" render={({field}) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><UserCheck className="h-4 w-4 text-primary" />CSR</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl><SelectTrigger className={cn("h-9 text-xs", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select CSR" /></SelectTrigger></FormControl>
+                        <SelectContent>{['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}/>
+                  <FormField control={form.control} name="priorityType" render={({field}) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><AlertTriangle className="h-4 w-4 text-primary" />Priority Type</FormLabel>
+                      <FormControl>
+                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex items-center space-x-4 pt-2" disabled={(orderType === 'MTO' || orderType === 'Stock (Jacket Only)')}>
+                          {['Rush', 'Regular'].map((option) => (
+                            <FormItem key={option} className="flex items-center space-x-2 space-y-0">
+                              <FormControl><RadioGroupItem value={option} /></FormControl>
+                              <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
+                            </FormItem>
+                          ))}
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}/>
+                </div>
               </div>
 
-            </div>
+              {/* Right Column */}
+              <div className="lg:col-span-2 space-y-6">
+                 <FormField control={form.control} name="orderType" render={({field}) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl><SelectTrigger className={cn("h-9 text-xs", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
+                        <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                      </Select>
+                       <FormMessage />
+                    </FormItem>
+                  )}/>
+                 <FormField control={form.control} name="courier" render={({field}) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl><SelectTrigger className={cn("h-9 text-xs", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
+                        <SelectContent>{['Lalamove', 'J&T', 'In-house'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                      </Select>
+                       <FormMessage />
+                    </FormItem>
+                  )}/>
+                 <FormField control={form.control} name="paymentType" render={({field}) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><CreditCard className="h-4 w-4 text-primary" />Payment Type</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl><SelectTrigger className={cn("h-9 text-xs", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
+                        <SelectContent>{['Partially Paid', 'Fully Paid', 'COD'].map((option) => (<SelectItem key={option} value={option}>{option === 'COD' ? 'COD (Cash on Delivery)' : option}</SelectItem>))}</SelectContent>
+                      </Select>
+                       <FormMessage />
+                    </FormItem>
+                  )}/>
 
-            <Separator />
-            
-            <div>
-              <FormLabel className="text-black">Orders</FormLabel>
-              <div className="space-y-4 mt-2">
-                <div className="border rounded-md">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="py-2 text-black">Product Type</TableHead>
-                        <TableHead className="py-2 text-black">Color</TableHead>
-                        <TableHead className="py-2 text-black">Size</TableHead>
-                        <TableHead className="py-2 text-black text-center">Quantity</TableHead>
-                        <TableHead className="py-2 text-black text-center">Remaining Stock</TableHead>
-                        <TableHead className="text-right py-2 text-black">Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {fields.map((field, index) => {
-                        const remaining = getRemainingStock(field);
-                        return (
-                          <TableRow key={field.id}>
-                            <TableCell className="py-2 text-black text-xs">{field.productType}</TableCell>
-                            <TableCell className="py-2 text-black text-xs">{field.color}</TableCell>
-                            <TableCell className="py-2 text-black text-xs">{field.size}</TableCell>
-                            <TableCell className="py-2 text-black text-xs">
-                              <div className="flex items-center justify-center gap-2">
-                                <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity - 1)} disabled={field.quantity <= 1}>
-                                  <Minus className="h-3 w-3" />
-                                </Button>
-                                <span className="w-8 text-center">{field.quantity}</span>
-                                <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity + 1)}>
-                                  <Plus className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                            <TableCell className={cn("py-2 text-center font-medium text-xs", typeof remaining === 'number' && remaining < 0 ? 'text-red-500' : 'text-black')}>
-                              {typeof remaining === 'number' ? remaining : 'N/A'}
-                            </TableCell>
-                            <TableCell className="text-right py-2">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => remove(index)}
-                                className="text-destructive hover:text-destructive h-8 w-8"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
+                <div>
+                  <FormLabel className="text-black">Orders</FormLabel>
+                  <div className="space-y-4 mt-2">
+                    <div className="border rounded-md">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="py-2 text-black text-xs">Product</TableHead>
+                            <TableHead className="py-2 text-black text-xs">Color</TableHead>
+                            <TableHead className="py-2 text-black text-xs">Size</TableHead>
+                            <TableHead className="py-2 text-black text-center text-xs">Qty</TableHead>
+                            <TableHead className="py-2 text-black text-center text-xs">Stock</TableHead>
+                            <TableHead className="text-right py-2 text-black text-xs">Action</TableHead>
                           </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-                 <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsOrderDialogOpen(true)}
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Add Order
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Add Order Details</DialogTitle>
-                      <DialogDescription>
-                        Select product details to add
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="space-y-2">
-                        <FormLabel>Product Type:</FormLabel>
-                        <Select onValueChange={setNewOrderProductType} value={newOrderProductType}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a Product Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {productTypes.map((type) => (
-                              <SelectItem key={type} value={type}>
-                                {type}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className='grid grid-cols-2 gap-4'>
-                        <div className="space-y-2">
-                          <FormLabel>Color:</FormLabel>
-                          <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={isPatches}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a Color" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableColors.map((color) => (
-                                <SelectItem key={color} value={color}>
-                                  {color}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <FormLabel>Size:</FormLabel>
-                          <Select onValueChange={setNewOrderSize} value={newOrderSize} disabled={isPatches}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Size" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {productSizes.map((size) => (
-                                <SelectItem key={size} value={size}>
-                                  {size}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                       <div className="space-y-2">
-                          {currentRemainingStock !== null && !isPatches && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <PackageCheck className="h-4 w-4 text-green-600" />
-                              <span>Available Stock:</span>
-                              <span className="font-bold">{currentRemainingStock}</span>
+                        </TableHeader>
+                        <TableBody>
+                          {fields.map((field, index) => {
+                            const remaining = getRemainingStock(field);
+                            return (
+                              <TableRow key={field.id}>
+                                <TableCell className="py-2 text-black text-xs">{field.productType}</TableCell>
+                                <TableCell className="py-2 text-black text-xs">{field.color}</TableCell>
+                                <TableCell className="py-2 text-black text-xs">{field.size}</TableCell>
+                                <TableCell className="py-2 text-black text-xs">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity - 1)} disabled={field.quantity <= 1}>
+                                      <Minus className="h-3 w-3" />
+                                    </Button>
+                                    <span className="w-8 text-center">{field.quantity}</span>
+                                    <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity + 1)}>
+                                      <Plus className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                                <TableCell className={cn("py-2 text-center font-medium text-xs", typeof remaining === 'number' && remaining < 0 ? 'text-red-500' : 'text-black')}>
+                                  {typeof remaining === 'number' ? remaining : 'N/A'}
+                                </TableCell>
+                                <TableCell className="text-right py-2">
+                                  <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive h-8 w-8">
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            )
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button type="button" variant="outline" onClick={() => setIsOrderDialogOpen(true)} className="h-9 text-xs">
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Add Order
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Add Order Details</DialogTitle>
+                          <DialogDescription>Select product details to add</DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="space-y-2">
+                            <FormLabel>Product Type:</FormLabel>
+                            <Select onValueChange={setNewOrderProductType} value={newOrderProductType}>
+                              <SelectTrigger><SelectValue placeholder="Select a Product Type" /></SelectTrigger>
+                              <SelectContent>{productTypes.map((type) => (<SelectItem key={type} value={type}>{type}</SelectItem>))}</SelectContent>
+                            </Select>
+                          </div>
+                          <div className='grid grid-cols-2 gap-4'>
+                            <div className="space-y-2">
+                              <FormLabel>Color:</FormLabel>
+                              <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={isPatches}>
+                                <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
+                                <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
+                              </Select>
                             </div>
-                          )}
-                          <div className="flex items-center gap-2 justify-center">
+                            <div className="space-y-2">
+                              <FormLabel>Size:</FormLabel>
+                              <Select onValueChange={setNewOrderSize} value={newOrderSize} disabled={isPatches}>
+                                <SelectTrigger><SelectValue placeholder="Size" /></SelectTrigger>
+                                <SelectContent>{productSizes.map((size) => (<SelectItem key={size} value={size}>{size}</SelectItem>))}</SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            {currentRemainingStock !== null && !isPatches && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <PackageCheck className="h-4 w-4 text-green-600" />
+                                <span>Available Stock:</span>
+                                <span className="font-bold">{currentRemainingStock}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2 justify-center">
                               <FormLabel>Quantity:</FormLabel>
                               <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => Math.max(1, (typeof q === 'string' ? parseInt(q, 10) || 1 : q) - 1))} disabled={newOrderQuantity === 1}>
                                 <Minus className="h-4 w-4" />
                               </Button>
-                              <Input
-                                type="text"
-                                value={newOrderQuantity}
+                              <Input type="text" value={newOrderQuantity}
                                 onChange={(e) => {
                                   const value = e.target.value;
-                                  if (value === '' || /^[1-9][0-9]*$/.test(value)) {
-                                      setNewOrderQuantity(value === '' ? '' : parseInt(value, 10));
-                                  }
+                                  if (value === '' || /^[1-9][0-9]*$/.test(value)) {setNewOrderQuantity(value === '' ? '' : parseInt(value, 10));}
                                 }}
-                                onBlur={(e) => {
-                                  if (e.target.value === '' || parseInt(e.target.value, 10) < 1) {
-                                    setNewOrderQuantity(1);
-                                  }
-                                }}
+                                onBlur={(e) => {if (e.target.value === '' || parseInt(e.target.value, 10) < 1) {setNewOrderQuantity(1);}}}
                                 className="w-16 text-center"
                               />
                               <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => (typeof q === 'string' ? parseInt(q, 10) || 0 : q) + 1)}>
                                 <Plus className="h-4 w-4" />
                               </Button>
+                            </div>
                           </div>
-                       </div>
-                    </div>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button type="button" variant="outline">
-                          Close
-                        </Button>
-                      </DialogClose>
-                      <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType || (!isPatches && (!newOrderColor || !newOrderSize)) || newOrderQuantity === 0}>
-                        Add
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                        </div>
+                        <DialogFooter>
+                          <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
+                          <Button type="button" onClick={handleAddOrder} disabled={!newOrderProductType || (!isPatches && (!newOrderColor || !newOrderSize)) || newOrderQuantity === 0}>Add</Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  <FormField control={form.control} name="orders" render={({ field }) => (<FormItem><FormMessage /></FormItem>)} />
+                </div>
               </div>
-              <FormField
-                control={form.control}
-                name="orders"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
 
-            <div className="flex justify-end pt-4 gap-4">
+            <div className="flex justify-end pt-4 gap-4 col-span-full">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button type="button" variant="outline">
-                    Reset
-                  </Button>
+                  <Button type="button" variant="outline">Reset</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action will clear all the fields in the form.
-                    </AlertDialogDescription>
+                    <AlertDialogDescription>This action will clear all the fields in the form.</AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -907,5 +871,3 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </Card>
   );
 }
-
-    
