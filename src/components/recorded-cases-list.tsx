@@ -59,7 +59,7 @@ export function RecordedCasesList() {
                       <p className="text-xs text-gray-600">{caseItem.customerName}</p>
                     </div>
                     <div className="md:col-span-2">
-                       <p className="text-xs text-gray-500">Case & Reason</p>
+                       <p className="text-xs text-gray-500">Case & Remarks/Reason</p>
                        <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
                        <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks}</p>
                     </div>
@@ -72,8 +72,8 @@ export function RecordedCasesList() {
                                 <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
                                </div>
                             </TooltipTrigger>
-                            <TooltipContent className="p-0 border-0 bg-transparent shadow-2xl">
-                               <div className="relative h-96 w-96">
+                            <TooltipContent side="left" className="p-0 border-0 bg-transparent shadow-2xl max-w-none w-auto h-auto">
+                               <div className="relative h-[40rem] w-[40rem]">
                                 <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="contain" />
                                </div>
                             </TooltipContent>
