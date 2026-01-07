@@ -284,7 +284,7 @@ export function OperationalCasesForm() {
                 />
             </div>
             
-            {areLeadsLoading && joInput && (
+            {areLeadsLoading && joInput && !foundLead && joSuggestions.length === 0 && (
                  <div className="space-y-2">
                     <Skeleton className="h-4 w-1/4" />
                     <Skeleton className="h-10 w-full" />
