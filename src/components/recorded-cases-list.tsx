@@ -112,7 +112,7 @@ export function RecordedCasesList() {
                          </div>
                       )}
                     </div>
-                    <div className="md:col-span-2 flex justify-end items-center">
+                    <div className="md:col-span-2 flex justify-end pt-2">
                        <Button 
                           onClick={() => setCaseToResolve(caseItem)} 
                           className="shadow-md transition-transform active:scale-95 text-white font-bold"
