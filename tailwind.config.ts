@@ -9,6 +9,9 @@ export default {
   ],
   theme: {
     extend: {
+      gridTemplateColumns: {
+        'auto-fit-100': 'repeat(auto-fit, minmax(150px, 1fr))',
+      },
       fontFamily: {
         body: ['PT Sans', 'sans-serif'],
         headline: ['Poppins', 'sans-serif'],
