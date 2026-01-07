@@ -104,11 +104,11 @@ export function OrderStatusTable() {
     const remainingDays = differenceInDays(deadlineDate, new Date());
     
     if (remainingDays < 0) {
-      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false };
+      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
     } else if (remainingDays <= 3) {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true };
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
     } else {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false };
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
     }
   };
 
@@ -150,7 +150,7 @@ export function OrderStatusTable() {
     
     const lowercasedSearchTerm = searchTerm.toLowerCase();
 
-    return leads.filter(lead => {
+    const filtered = leads.filter(lead => {
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
         (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
@@ -159,6 +159,13 @@ export function OrderStatusTable() {
         : true;
       return matchesSearch;
     });
+
+    return filtered.sort((a, b) => {
+        const aDeadline = calculateDeadline(a);
+        const bDeadline = calculateDeadline(b);
+        return aDeadline.remainingDays - bDeadline.remainingDays;
+    });
+
   }, [leads, searchTerm]);
   
   const leadsWithCases = useMemo(() => {
