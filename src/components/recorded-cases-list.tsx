@@ -42,7 +42,7 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
   const [caseToDelete, setCaseToDelete] = useState<OperationalCase | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
   const [isResolvedCasesOpen, setIsResolvedCasesOpen] = useState(false);
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [popoverStates, setPopoverStates] = useState<{[key: string]: boolean}>({});
   const { toast } = useToast();
 
   const casesQuery = useMemoFirebase(() => {
@@ -186,11 +186,11 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
                       </div>
                       <div className="md:col-span-2 flex justify-center items-center">
                         {caseItem.image && (
-                          <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                           <Popover open={popoverStates[caseItem.id] || false} onOpenChange={(isOpen) => setPopoverStates(prev => ({ ...prev, [caseItem.id]: isOpen }))}>
                             <PopoverTrigger
                               asChild
-                              onMouseEnter={() => setIsPopoverOpen(true)}
-                              onMouseLeave={() => setIsPopoverOpen(false)}
+                              onMouseEnter={() => setPopoverStates(prev => ({ ...prev, [caseItem.id]: true }))}
+                              onMouseLeave={() => setPopoverStates(prev => ({ ...prev, [caseItem.id]: false }))}
                             >
                               <div
                                 className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
@@ -287,13 +287,9 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
       {imageInView && (
         <div
           className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
-          onClick={(e) => {
-             if (e.target === e.currentTarget) {
-                 setImageInView(null);
-             }
-          }}
+          onClick={() => setImageInView(null)}
         >
-          <div className="relative h-[90vh] w-[90vw]">
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
             <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
              <Button
                 variant="ghost"
