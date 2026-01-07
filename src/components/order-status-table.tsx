@@ -26,6 +26,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { differenceInDays, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Badge } from './ui/badge';
 
 type Order = {
   productType: string;
@@ -42,6 +43,13 @@ type Lead = {
   orders: Order[];
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
+  joNumber?: number;
+  isUnderProgramming?: boolean;
+  isInitialApproval?: boolean;
+  isLogoTesting?: boolean;
+  isRevision?: boolean;
+  isFinalApproval?: boolean;
+  isFinalProgram?: boolean;
 }
 
 export function OrderStatusTable() {
@@ -74,6 +82,17 @@ export function OrderStatusTable() {
     } else {
       return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false };
     }
+  };
+
+  const getProgrammingStatus = (lead: Lead) => {
+    if (lead.isFinalProgram) return { text: "Final Program", variant: "success" as const };
+    if (lead.isFinalApproval) return { text: "Final Approval", variant: "success" as const };
+    if (lead.isRevision) return { text: "Revision", variant: "destructive" as const };
+    if (lead.isLogoTesting) return { text: "Test", variant: "warning" as const };
+    if (lead.isInitialApproval) return { text: "Initial Approval", variant: "default" as const };
+    if (lead.isUnderProgramming) return { text: "Initial Program", variant: "default" as const };
+    if (lead.joNumber) return { text: "Pending Digitizing", variant: "secondary" as const };
+    return { text: "Pending J.O.", variant: "secondary" as const };
   };
 
   const filteredLeads = useMemo(() => {
@@ -132,7 +151,8 @@ export function OrderStatusTable() {
                     <TableHead className="text-white font-bold">Customer Name</TableHead>
                     <TableHead className="text-white font-bold">Mobile No.</TableHead>
                     <TableHead className="text-white font-bold">Landline No.</TableHead>
-                    <TableHead className="text-center text-white font-bold">Days Remaining/Days Overdue</TableHead>
+                    <TableHead className="text-center text-white font-bold">Days Remaining/Overdue</TableHead>
+                    <TableHead className="text-center text-white font-bold">Programming Status</TableHead>
                     <TableHead className="text-center text-white font-bold">Ordered Items</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -142,6 +162,7 @@ export function OrderStatusTable() {
                 <TableBody>
                 {filteredLeads.map((lead) => {
                   const deadlineInfo = calculateDeadline(lead);
+                  const programmingStatus = getProgrammingStatus(lead);
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
@@ -154,6 +175,9 @@ export function OrderStatusTable() {
                           deadlineInfo.isUrgent && "text-amber-600",
                           !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
                         )}>{deadlineInfo.text}</TableCell>
+                        <TableCell className="text-center text-xs align-top py-2 font-medium">
+                          <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
+                        </TableCell>
                         <TableCell className="text-center align-top py-2">
                           <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                             View
@@ -163,7 +187,7 @@ export function OrderStatusTable() {
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={5}>
+                        <TableCell colSpan={6}>
                           <div className="p-2">
                             <Table>
                               <TableHeader>
