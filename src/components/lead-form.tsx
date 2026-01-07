@@ -740,25 +740,27 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       name="priorityType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">
-                            <AlertTriangle className="h-4 w-4 text-primary" />
-                            Priority Type
-                          </FormLabel>
-                          <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              value={field.value}
-                              className="flex items-center space-x-1 pt-2"
-                              disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
-                            >
-                              {['Rush', 'Regular'].map((option) => (
-                                <FormItem key={option} className="flex items-center space-x-2 space-y-0">
-                                  <FormControl><RadioGroupItem value={option} /></FormControl>
-                                  <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
-                                </FormItem>
-                              ))}
-                            </RadioGroup>
-                          </FormControl>
+                          <div className="flex items-center">
+                            <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">
+                              <AlertTriangle className="h-4 w-4 text-primary" />
+                              Priority Type
+                            </FormLabel>
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                value={field.value}
+                                className="flex items-center space-x-2 pl-4"
+                                disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
+                              >
+                                {['Rush', 'Regular'].map((option) => (
+                                  <FormItem key={option} className="flex items-center space-x-2 space-y-0">
+                                    <FormControl><RadioGroupItem value={option} /></FormControl>
+                                    <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
+                                  </FormItem>
+                                ))}
+                              </RadioGroup>
+                            </FormControl>
+                          </div>
                         </FormItem>
                       )}
                     />
@@ -837,7 +839,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                             {!isPatches && <FormLabel>Size Quantities</FormLabel>}
                              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                                 {sizeQuantities.map((item, index) => (
-                                    <div key={item.size} className="flex items-center justify-between">
+                                    <div key={item.size} className="flex items-center justify-start gap-4">
                                         {!isPatches && <FormLabel className="text-sm font-bold w-12">{item.size}</FormLabel>}
                                         <div className={cn("flex items-center gap-2", isPatches && "w-full justify-center")}>
                                             <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, -1)}>
@@ -903,4 +905,3 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </Card>
   );
 }
-
