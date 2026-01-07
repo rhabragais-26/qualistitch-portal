@@ -1,4 +1,3 @@
-
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -179,7 +178,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [customerSuggestions, setCustomerSuggestions] = useState<Lead[]>([]);
   const [companySuggestions, setCompanySuggestions] = useState<Lead[]>([]);
   const [addressSuggestions, setAddressSuggestions] = useState<{ field: keyof Lead, suggestions: string[] }>({ field: 'houseStreet', suggestions: [] });
-  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
+  const [citySuggestions, setCitySuggestions] = useState<{ city: string; province: string }[]>([]);
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -229,8 +228,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     setAddressSuggestions({ field: 'houseStreet', suggestions: [] });
   };
 
-  const handleCitySuggestionClick = (value: string) => {
-    setValue('city', value, { shouldValidate: true });
+  const handleCitySuggestionClick = (city: { city: string; province: string }) => {
+    setValue('city', city.city, { shouldValidate: true });
+    setValue('province', city.province, { shouldValidate: true });
     setCitySuggestions([]);
   };
 
@@ -271,7 +271,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   useEffect(() => {
     if (cityValue) {
       const filteredCities = philippineCities.filter(city =>
-        city.toLowerCase().includes(cityValue.toLowerCase())
+        city.city.toLowerCase().includes(cityValue.toLowerCase())
       );
       setCitySuggestions(filteredCities);
     } else {
@@ -543,7 +543,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormField control={form.control} name="customerName" render={({field}) => (
                       <FormItem className="relative">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
-                        <FormControl><Input {...field} autoComplete="off" className="h-9 text-xs" /></FormControl>
+                        <FormControl><Input {...field} autoComplete="off" /></FormControl>
                         {customerSuggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                             <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -561,14 +561,14 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormField control={form.control} name="mobileNo" render={({field}) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><Phone className="h-4 w-4 text-primary" />Mobile No. (Optional)</FormLabel>
-                        <FormControl><Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} className="h-9 text-xs" /></FormControl>
+                        <FormControl><Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}/>
                     <FormField control={form.control} name="companyName" render={({field}) => (
                       <FormItem className="relative pt-1">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><Building className="h-4 w-4 text-primary" />Company Name (Optional)</FormLabel>
-                        <FormControl><Input {...field} autoComplete="off" className="h-9 text-xs" /></FormControl>
+                        <FormControl><Input {...field} autoComplete="off" /></FormControl>
                         {companySuggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                             <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -586,7 +586,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormField control={form.control} name="landlineNo" render={({field}) => (
                       <FormItem className="pt-1">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><PhoneForwarded className="h-4 w-4 text-primary" />Landline No. (Optional)</FormLabel>
-                        <FormControl><Input type="tel" {...field} onChange={(e) => handleLandlineNoChange(e, field)} className="h-9 text-xs" /></FormControl>
+                        <FormControl><Input type="tel" {...field} onChange={(e) => handleLandlineNoChange(e, field)} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}/>
@@ -596,7 +596,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       <FormField control={form.control} name="houseStreet" render={({field}) => (
                         <FormItem className="relative">
                           <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
-                          <FormControl><Input {...field} className="h-9 text-xs" /></FormControl>
+                          <FormControl><Input {...field} /></FormControl>
                           {addressSuggestions.field === 'houseStreet' && addressSuggestions.suggestions.length > 0 && (
                             <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                               <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -615,7 +615,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormField control={form.control} name="barangay" render={({field}) => (
                           <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
-                            <FormControl><Input {...field} className="h-9 text-xs" /></FormControl>
+                            <FormControl><Input {...field} /></FormControl>
                             {addressSuggestions.field === 'barangay' && addressSuggestions.suggestions.length > 0 && (
                               <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -633,13 +633,13 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormField control={form.control} name="city" render={({field}) => (
                           <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">City</FormLabel>
-                            <FormControl><Input {...field} autoComplete="off" className="h-9 text-xs" /></FormControl>
+                            <FormControl><Input {...field} autoComplete="off" /></FormControl>
                              {citySuggestions.length > 0 && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {citySuggestions.map((city, index) => (
                                     <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCitySuggestionClick(city)}>
-                                        {city}
+                                        {city.city}
                                     </div>
                                     ))}
                                 </CardContent>
@@ -652,18 +652,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       <FormField control={form.control} name="province" render={({field}) => (
                         <FormItem className="relative">
                           <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
-                          <FormControl><Input {...field} className="h-9 text-xs" /></FormControl>
-                          {addressSuggestions.field === 'province' && addressSuggestions.suggestions.length > 0 && (
-                            <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                              <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                {addressSuggestions.suggestions.map((suggestion, index) => (
-                                  <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleAddressSuggestionClick('province', suggestion)}>
-                                    {suggestion}
-                                  </div>
-                                ))}
-                              </CardContent>
-                            </Card>
-                          )}
+                          <FormControl><Input {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}/>
@@ -680,7 +669,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormItem>
                       <FormLabel className="flex items-center gap-2 text-black text-xs"><UserCheck className="h-4 w-4 text-primary" />CSR</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl><SelectTrigger className={cn("h-9 text-xs", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select CSR" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className={cn("text-xs", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select CSR" /></SelectTrigger></FormControl>
                         <SelectContent>{['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                       </Select>
                       <FormMessage />
@@ -697,7 +686,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormItem className="flex items-center gap-4">
                       <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl><SelectTrigger className={cn("h-9 text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
                         <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                       </Select>
                        <FormMessage />
@@ -723,7 +712,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormItem className="flex items-center gap-4">
                       <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl><SelectTrigger className={cn("h-9 text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
                         <SelectContent>{['Lalamove', 'J&T', 'LBC', 'In-house', 'Pick-up'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                       </Select>
                        <FormMessage />
@@ -733,7 +722,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormItem className="flex items-center gap-4">
                       <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><CreditCard className="h-4 w-4 text-primary" />Payment Type</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl><SelectTrigger className={cn("h-9 text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
                         <SelectContent>{['Partially Paid', 'Fully Paid', 'COD'].map((option) => (<SelectItem key={option} value={option}>{option === 'COD' ? 'COD (Cash on Delivery)' : option}</SelectItem>))}</SelectContent>
                       </Select>
                        <FormMessage />
@@ -790,7 +779,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     </div>
                     <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button type="button" variant="outline" onClick={() => setIsOrderDialogOpen(true)} className="h-9 text-xs">
+                        <Button type="button" variant="outline" onClick={() => setIsOrderDialogOpen(true)}>
                           <PlusCircle className="mr-2 h-4 w-4" />
                           Add Order
                         </Button>
