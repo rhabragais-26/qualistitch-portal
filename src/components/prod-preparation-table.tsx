@@ -278,24 +278,24 @@ export function ProdPreparationTable() {
             <Table>
                 <TableHeader className="bg-neutral-800">
                   <TableRow>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs">Customer</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs">J.O. No.</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs">Programming Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs">Product Type</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs">Color</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs">Size</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-right py-1 text-xs">Qty</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center py-1 text-xs">Preparation Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center py-1 text-xs">Production Endorsement</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">Customer</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">J.O. No.</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">Programming Status</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">Product Type</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">Color</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Size</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Qty</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center py-1 text-xs px-2">Preparation Status</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center py-1 text-xs px-2">Production Endorsement</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                 {jobOrders?.map((lead) => (
                   <React.Fragment key={lead.id}>
                     {lead.orders.map((order, orderIndex) => (
-                         <TableRow key={`${lead.id}-${orderIndex}`}>
+                         <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex !== lead.orders.length - 1 ? "border-b-0" : ""}>
                             {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black">
+                                <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black border-b">
                                     <Collapsible>
                                         <CollapsibleTrigger asChild>
                                             <div className="flex items-center cursor-pointer">
@@ -311,19 +311,19 @@ export function ProdPreparationTable() {
                                 </TableCell>
                             )}
                             {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="text-xs align-top py-3 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
+                                <TableCell rowSpan={lead.orders.length} className="text-xs align-top py-3 text-black border-b">{formatJoNumber(lead.joNumber)}</TableCell>
                             )}
                              {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="align-top py-3">
+                                <TableCell rowSpan={lead.orders.length} className="align-top py-3 border-b">
                                 <Badge variant={getProgrammingStatus(lead).variant as any}>{getProgrammingStatus(lead).text}</Badge>
                                 </TableCell>
                             )}
                            <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
                             <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
-                            <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
-                            <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
+                            <TableCell className="py-1 px-2 text-xs text-black text-center">{order.size}</TableCell>
+                            <TableCell className="py-1 px-2 text-xs text-black text-center">{order.quantity}</TableCell>
                             {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
+                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2 border-b">
                                 {lead.isPreparedForProduction ? (
                                         <div className="flex items-center justify-center text-green-600 font-semibold">
                                             <Check className="mr-2 h-4 w-4" /> Prepared
@@ -332,7 +332,7 @@ export function ProdPreparationTable() {
                                         <Button
                                             size="sm"
                                             onClick={() => handleOpenPreparedDialog(lead)}
-                                            className="px-2"
+                                            className="h-7 px-2"
                                         >
                                             Prepared
                                         </Button>
@@ -340,7 +340,7 @@ export function ProdPreparationTable() {
                                 </TableCell>
                             )}
                              {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
+                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2 border-b">
                                     {lead.isSentToProduction ? (
                                         <div className="flex items-center justify-center font-semibold text-gray-500">
                                             Sent
@@ -350,7 +350,7 @@ export function ProdPreparationTable() {
                                             size="sm"
                                             onClick={() => handleUpdateStatus(lead.id, 'isSentToProduction')}
                                             disabled={!lead.isFinalProgram}
-                                            className={cn("px-2", !lead.isFinalProgram && "bg-gray-400")}
+                                            className={cn("h-7 px-2", !lead.isFinalProgram && "bg-gray-400")}
                                         >
                                             <Send className="mr-2 h-4 w-4" /> Send to Prod
                                         </Button>
