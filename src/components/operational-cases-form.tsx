@@ -200,7 +200,13 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
   };
   
   const handleFormReset = () => {
-    reset();
+    reset({
+        joNumber: '',
+        caseType: undefined,
+        quantity: 1,
+        remarks: '',
+        image: '',
+    });
     setJoInput('');
     setFoundLead(null);
     setJoSuggestions([]);
@@ -226,10 +232,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
             // Update existing case
             const caseDocRef = doc(firestore, 'operationalCases', editingCase.id);
             await updateDoc(caseDocRef, { ...values, lastModified: new Date().toISOString() });
-            toast({
-              title: 'Case Updated!',
-              description: `The case for J.O. ${values.joNumber} has been updated.`,
-            });
+            handleFormReset(); // Clears the form immediately
             onSaveComplete();
         } else {
             // Create new case
@@ -253,8 +256,8 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
               title: 'Case Recorded!',
               description: `The ${values.caseType} case for J.O. ${values.joNumber} has been successfully recorded.`,
             });
+            handleFormReset();
         }
-        handleFormReset();
 
     } catch (e: any) {
         console.error("Error saving operational case: ", e);
@@ -404,7 +407,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
                     control={control}
                     name="quantity"
                     render={({ field }) => (
-                        <FormItem className="flex items-center gap-2">
+                        <FormItem className="flex items-center gap-4">
                             <FormLabel className="flex items-center gap-2 text-black mb-0 pt-2 shrink-0">
                                 <Inbox className="h-4 w-4 text-primary" />
                                 Quantity
