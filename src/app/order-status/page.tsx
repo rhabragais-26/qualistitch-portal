@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function OrderStatusPage() {
   return (
     <Header>
-      {(leads, isLoading, error) => {
+      {(leads, operationalCases, isLoading, error) => {
         if (isLoading) {
           return (
             <div className="space-y-2 p-4">
@@ -20,7 +20,7 @@ export default function OrderStatusPage() {
         if (error) {
           return <div className="text-red-500 p-4">Error loading records: {error.message}</div>;
         }
-        return <OrderStatusTable leads={leads} />;
+        return <OrderStatusTable leads={leads} operationalCases={operationalCases} />;
       }}
     </Header>
   );

@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -79,10 +78,29 @@ type Lead = {
   isDone?: boolean;
 };
 
+type OperationalCase = {
+  id: string;
+  joNumber: string;
+  caseType: string;
+  remarks: string;
+  image?: string;
+  submissionDateTime: string;
+  customerName: string;
+  contactNumber?: string;
+  landlineNumber?: string;
+  quantity?: number;
+  isArchived?: boolean;
+  isDeleted?: boolean;
+};
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
-  children?: (leads: Lead[], isLoading: boolean, error: Error | null) => React.ReactNode;
+  children?: (
+    leads: Lead[], 
+    operationalCases: OperationalCase[],
+    isLoading: boolean, 
+    error: Error | null
+  ) => React.ReactNode;
 };
 
 export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
@@ -100,7 +118,13 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
     return query(collection(firestore, 'leads'));
   }, [firestore, user]);
 
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+  const operationalCasesQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'operationalCases'));
+  }, [firestore, user]);
+
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
+  const { data: operationalCases, isLoading: areCasesLoading, error: casesError } = useCollection<OperationalCase>(operationalCasesQuery);
 
   useEffect(() => {
     setIsClient(true);
@@ -124,6 +148,9 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
     setShowConfirmDialog(false);
     setNextUrl('');
   };
+
+  const isLoading = areLeadsLoading || areCasesLoading;
+  const error = leadsError || casesError;
 
   return (
     <>
@@ -247,7 +274,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
       </header>
       
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 overflow-hidden">
-        {children && children(leads || [], isLoading, error)}
+        {children && children(leads || [], operationalCases || [], isLoading, error)}
       </main>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>

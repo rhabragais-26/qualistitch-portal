@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function RecordsPage() {
   return (
     <Header>
-      {(leads, isLoading, error) => {
+      {(leads, operationalCases, isLoading, error) => {
         if (isLoading) {
           return (
             <div className="space-y-2 p-4">

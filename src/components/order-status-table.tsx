@@ -23,9 +23,11 @@ import { Button } from './ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { differenceInDays, addDays } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, formatDateTime } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import Image from 'next/image';
 
 type Order = {
   productType: string;
@@ -54,11 +56,25 @@ type Lead = {
   isSentToProduction?: boolean;
 }
 
+type OperationalCase = {
+  id: string;
+  joNumber: string;
+  caseType: string;
+  remarks: string;
+  image?: string;
+  submissionDateTime: string;
+  customerName: string;
+  contactNumber?: string;
+  landlineNumber?: string;
+  quantity?: number;
+};
+
 type OrderStatusTableProps = {
     leads: Lead[];
+    operationalCases: OperationalCase[];
 }
 
-export function OrderStatusTable({ leads }: OrderStatusTableProps) {
+export function OrderStatusTable({ leads, operationalCases }: OrderStatusTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
@@ -112,6 +128,12 @@ export function OrderStatusTable({ leads }: OrderStatusTableProps) {
     }
     return mobile || landline || null;
   };
+  
+  const formatJoNumber = (joNumber: number | undefined) => {
+    if (!joNumber) return '';
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+  };
 
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
@@ -126,6 +148,14 @@ export function OrderStatusTable({ leads }: OrderStatusTableProps) {
       (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(lowercasedSearchTerm))
     );
   }, [leads, searchTerm]);
+  
+  const leadsWithCases = useMemo(() => {
+    if (!filteredLeads || !operationalCases) return [];
+    return filteredLeads.map(lead => {
+      const matchingCase = operationalCases.find(c => c.joNumber === formatJoNumber(lead.joNumber) && !c.isArchived && !c.isDeleted);
+      return { ...lead, operationalCase: matchingCase };
+    });
+  }, [filteredLeads, operationalCases]);
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
@@ -157,11 +187,12 @@ export function OrderStatusTable({ leads }: OrderStatusTableProps) {
                     <TableHead className="text-center text-white font-bold align-middle">Days Remaining/Overdue</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Programming Status</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Item Preparation</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Operational Case</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Ordered Items</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {filteredLeads.map((lead) => {
+                {leadsWithCases.map((lead) => {
                   const deadlineInfo = calculateDeadline(lead);
                   const programmingStatus = getProgrammingStatus(lead);
                   const itemPreparationStatus = getItemPreparationStatus(lead);
@@ -193,6 +224,49 @@ export function OrderStatusTable({ leads }: OrderStatusTableProps) {
                         </TableCell>
                         <TableCell className="text-center text-xs align-middle py-2 font-medium">
                           <Badge variant={itemPreparationStatus.variant as any}>{itemPreparationStatus.text}</Badge>
+                        </TableCell>
+                         <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                            {lead.operationalCase ? (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Badge variant="destructive" className="cursor-pointer">{lead.operationalCase.caseType}</Badge>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80">
+                                  <div className="grid gap-4">
+                                    <div className="space-y-2">
+                                      <h4 className="font-medium leading-none">{lead.operationalCase.caseType}</h4>
+                                      <p className="text-sm text-muted-foreground">
+                                        Case recorded for J.O. {lead.operationalCase.joNumber}
+                                      </p>
+                                    </div>
+                                    <div className="grid gap-2 text-sm">
+                                      <div className="grid grid-cols-3 items-center gap-4">
+                                        <span>Quantity:</span>
+                                        <span className="col-span-2 font-semibold">{lead.operationalCase.quantity}</span>
+                                      </div>
+                                      <div className="grid grid-cols-3 items-start gap-4">
+                                        <span>Remarks:</span>
+                                        <p className="col-span-2 whitespace-pre-wrap">{lead.operationalCase.remarks}</p>
+                                      </div>
+                                      {lead.operationalCase.image && (
+                                        <div className="grid grid-cols-3 items-start gap-4">
+                                            <span>Image:</span>
+                                             <div className="col-span-2 relative h-32 w-full">
+                                                <Image src={lead.operationalCase.image} alt="Case Image" layout="fill" objectFit="contain" className="rounded-md border"/>
+                                             </div>
+                                        </div>
+                                      )}
+                                       <div className="grid grid-cols-3 items-center gap-4">
+                                        <span>Recorded:</span>
+                                        <span className="col-span-2 text-xs">{formatDateTime(lead.operationalCase.submissionDateTime).dateTime}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            ) : (
+                                <span className="text-muted-foreground">-</span>
+                            )}
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
