@@ -223,7 +223,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className="text-neutral-100 hover:bg-accent hover:text-white">
+            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className="text-yellow-400 hover:bg-accent hover:text-white">
               <ListOrdered className="mr-2" />
               Overall Order Status
             </Button>
@@ -357,5 +357,3 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
     </>
   );
 }
-
-    
