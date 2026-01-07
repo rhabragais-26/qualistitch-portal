@@ -71,8 +71,6 @@ type Layout = {
   finalBackDesignEmbUploadTime?: string | null;
   finalLogoDst?: (string | null)[];
   finalLogoDstUploadTimes?: (string | null)[];
-  finalBackDesignDst?: string | null;
-  finalBackDesignDstUploadTime?: string | null;
   finalNamesDst?: (string | null)[];
   finalNamesDstUploadTimes?: (string | null)[];
   sequenceLogo?: (string | null)[];
@@ -704,7 +702,10 @@ export function DigitizingTable() {
 
   const ImagePreview = ({ src, alt, popoverKey }: { src: string; alt: string; popoverKey: string }) => (
     <Popover open={popoverStates[popoverKey]} onOpenChange={(isOpen) => setPopoverStates(prev => ({...prev, [popoverKey]: isOpen}))}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger asChild
+        onMouseEnter={() => setPopoverStates(prev => ({ ...prev, [popoverKey]: true }))}
+        onMouseLeave={() => setPopoverStates(prev => ({ ...prev, [popoverKey]: false }))}
+      >
         <div className="relative w-[200px] h-[150px] cursor-pointer" onClick={() => setImageInView(src)}>
           <Image src={src} alt={alt} layout="fill" objectFit="contain" className="rounded-md border" />
         </div>
