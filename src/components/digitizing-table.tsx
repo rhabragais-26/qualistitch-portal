@@ -927,52 +927,64 @@ export function DigitizingTable() {
                         )}>
                           {deadlineInfo.text}
                         </TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                          <Checkbox
-                            checked={lead.isUnderProgramming || false}
-                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isUnderProgramming', !!checked)}
-                          />
-                          {lead.underProgrammingTimestamp && <div className="text-[10px] text-gray-500 mt-1">{formatDateTime(lead.underProgrammingTimestamp).dateTimeShort}</div>}
+                        <TableCell className="text-center align-middle p-2">
+                          <div className="flex flex-col items-center justify-start h-full gap-1">
+                            <Checkbox
+                              checked={lead.isUnderProgramming || false}
+                              onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isUnderProgramming', !!checked)}
+                            />
+                            {lead.underProgrammingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.underProgrammingTimestamp).dateTimeShort}</div>}
+                          </div>
                         </TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                          <Checkbox
-                            checked={lead.isInitialApproval || false}
-                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isInitialApproval', !!checked)}
-                            disabled={!lead.isUnderProgramming}
-                          />
-                          {lead.initialApprovalTimestamp && <div className="text-[10px] text-gray-500 mt-1">{formatDateTime(lead.initialApprovalTimestamp).dateTimeShort}</div>}
+                        <TableCell className="text-center align-middle p-2">
+                           <div className="flex flex-col items-center justify-start h-full gap-1">
+                            <Checkbox
+                              checked={lead.isInitialApproval || false}
+                              onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isInitialApproval', !!checked)}
+                              disabled={!lead.isUnderProgramming}
+                            />
+                            {lead.initialApprovalTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.initialApprovalTimestamp).dateTimeShort}</div>}
+                          </div>
                         </TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                          <Checkbox
-                            checked={lead.isLogoTesting || false}
-                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isLogoTesting', !!checked)}
-                             disabled={!lead.isInitialApproval}
-                          />
-                          {lead.logoTestingTimestamp && <div className="text-[10px] text-gray-500 mt-1">{formatDateTime(lead.logoTestingTimestamp).dateTimeShort}</div>}
+                        <TableCell className="text-center align-middle p-2">
+                          <div className="flex flex-col items-center justify-start h-full gap-1">
+                            <Checkbox
+                              checked={lead.isLogoTesting || false}
+                              onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isLogoTesting', !!checked)}
+                              disabled={!lead.isInitialApproval}
+                            />
+                            {lead.logoTestingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.logoTestingTimestamp).dateTimeShort}</div>}
+                          </div>
                         </TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                          <Checkbox
-                            checked={lead.isRevision || false}
-                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isRevision', !!checked)}
-                            disabled={!lead.isLogoTesting || lead.isFinalApproval}
-                          />
-                          {lead.revisionTimestamp && <div className="text-[10px] text-gray-500 mt-1">{formatDateTime(lead.revisionTimestamp).dateTimeShort}</div>}
+                        <TableCell className="text-center align-middle p-2">
+                          <div className="flex flex-col items-center justify-start h-full gap-1">
+                            <Checkbox
+                              checked={lead.isRevision || false}
+                              onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isRevision', !!checked)}
+                              disabled={!lead.isLogoTesting || lead.isFinalApproval}
+                            />
+                            {lead.revisionTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.revisionTimestamp).dateTimeShort}</div>}
+                          </div>
                         </TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                          <Checkbox
-                            checked={lead.isFinalApproval || false}
-                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isFinalApproval', !!checked)}
-                            disabled={!lead.isLogoTesting}
-                          />
-                           {lead.finalApprovalTimestamp && <div className="text-[10px] text-gray-500 mt-1">{formatDateTime(lead.finalApprovalTimestamp).dateTimeShort}</div>}
+                        <TableCell className="text-center align-middle p-2">
+                           <div className="flex flex-col items-center justify-start h-full gap-1">
+                            <Checkbox
+                              checked={lead.isFinalApproval || false}
+                              onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isFinalApproval', !!checked)}
+                              disabled={!lead.isLogoTesting}
+                            />
+                            {lead.finalApprovalTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.finalApprovalTimestamp).dateTimeShort}</div>}
+                          </div>
                         </TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                          <Checkbox
-                            checked={lead.isFinalProgram || false}
-                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isFinalProgram', !!checked)}
-                            disabled={!lead.isFinalApproval}
-                          />
-                          {lead.finalProgramTimestamp && <div className="text-[10px] text-gray-500 mt-1">{formatDateTime(lead.finalProgramTimestamp).dateTimeShort}</div>}
+                        <TableCell className="text-center align-middle p-2">
+                           <div className="flex flex-col items-center justify-start h-full gap-1">
+                            <Checkbox
+                              checked={lead.isFinalProgram || false}
+                              onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isFinalProgram', !!checked)}
+                              disabled={!lead.isFinalApproval}
+                            />
+                            {lead.finalProgramTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.finalProgramTimestamp).dateTimeShort}</div>}
+                          </div>
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Button
@@ -1116,7 +1128,7 @@ export function DigitizingTable() {
                     )}
                   </React.Fragment>
                 )})}
-              </TableBody>
+                </TableBody>
             </Table>
           </div>
         )}
