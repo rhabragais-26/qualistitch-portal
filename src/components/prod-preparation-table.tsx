@@ -27,6 +27,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collap
 import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 type Order = {
   productType: string;
@@ -53,11 +54,23 @@ type Lead = {
   isSentToProduction?: boolean;
 }
 
+const programmingStatusOptions = [
+    'All',
+    'Final Program Uploaded',
+    'Final Program Approved',
+    'Under Revision',
+    'Done Testing',
+    'Initial Program Approved',
+    'Done Initial Program',
+    'Pending Initial Program'
+];
+
 export function ProdPreparationTable() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
   const { toast } = useToast();
   
   const leadsQuery = useMemoFirebase(() => {
@@ -67,7 +80,7 @@ export function ProdPreparationTable() {
 
   const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
 
-  const getProgrammingStatus = (lead: Lead) => {
+  const getProgrammingStatus = (lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
     if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
     if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const };
     if (lead.isRevision) return { text: "Under Revision", variant: "destructive" as const };
@@ -119,10 +132,6 @@ export function ProdPreparationTable() {
     
     const leadsWithJo = leads.filter(lead => lead.joNumber);
     
-    if (!searchTerm && !joNumberSearch) {
-      return leadsWithJo;
-    }
-
     return leadsWithJo.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
@@ -137,10 +146,13 @@ export function ProdPreparationTable() {
       const matchesJo = joNumberSearch ? 
         (joString.includes(joNumberSearch) || formattedJoString.toLowerCase().includes(joNumberSearch.toLowerCase()))
         : true;
+        
+      const currentStatus = getProgrammingStatus(lead).text;
+      const matchesStatus = statusFilter === 'All' || currentStatus === statusFilter;
       
-      return matchesSearch && matchesJo;
+      return matchesSearch && matchesJo && matchesStatus;
     });
-  }, [leads, searchTerm, joNumberSearch]);
+  }, [leads, searchTerm, joNumberSearch, statusFilter]);
 
   const isLoading = isAuthLoading || isLeadsLoading;
 
@@ -155,6 +167,16 @@ export function ProdPreparationTable() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-4">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[200px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Filter by Status" />
+                </SelectTrigger>
+                <SelectContent>
+                    {programmingStatusOptions.map(status => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
               <div className="w-full max-w-xs">
                 <Input
                   placeholder="Search customer, company, contact..."
