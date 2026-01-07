@@ -704,11 +704,7 @@ export function DigitizingTable() {
 
   const ImagePreview = ({ src, alt, popoverKey }: { src: string; alt: string; popoverKey: string }) => (
     <Popover open={popoverStates[popoverKey]} onOpenChange={(isOpen) => setPopoverStates(prev => ({...prev, [popoverKey]: isOpen}))}>
-      <PopoverTrigger
-        asChild
-        onMouseEnter={() => setPopoverStates(prev => ({...prev, [popoverKey]: true}))}
-        onMouseLeave={() => setPopoverStates(prev => ({...prev, [popoverKey]: false}))}
-      >
+      <PopoverTrigger asChild>
         <div className="relative w-[200px] h-[150px] cursor-pointer" onClick={() => setImageInView(src)}>
           <Image src={src} alt={alt} layout="fill" objectFit="contain" className="rounded-md border" />
         </div>
@@ -1121,5 +1117,3 @@ export function DigitizingTable() {
     </Card>
   );
 }
-
-    
