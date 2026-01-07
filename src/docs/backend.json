@@ -27,6 +27,14 @@
           "type": "string",
           "description": "Contact number for the lead."
         },
+        "landlineNumber": {
+          "type": "string",
+          "description": "Landline number for the lead."
+        },
+        "location": {
+          "type": "string",
+          "description": "The full, concatenated address for the lead."
+        },
         "houseStreet": {
           "type": "string",
           "description": "House number, street name, and other specific location details."
@@ -290,6 +298,7 @@
         "customerName",
         "companyName",
         "contactNumber",
+        "location",
         "houseStreet",
         "barangay",
         "city",

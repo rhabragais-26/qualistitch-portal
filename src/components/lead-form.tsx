@@ -72,7 +72,6 @@ import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/firestore-writes';
 import { v4 as uuidv4 } from 'uuid';
 import locations from '@/lib/ph-locations.json';
-import { ScrollArea } from './ui/scroll-area';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -903,3 +902,5 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </Card>
   );
 }
+
+    
