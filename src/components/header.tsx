@@ -255,7 +255,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
         </div>
       </header>
       
-      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 overflow-hidden pt-4">
+      <main className="flex-1 w-full overflow-hidden">
         {children}
       </main>
 
