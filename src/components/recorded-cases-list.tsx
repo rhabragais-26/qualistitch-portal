@@ -93,13 +93,13 @@ export function RecordedCasesList() {
   const activeCases = cases?.filter(c => !c.isArchived);
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full" style={{maxWidth: 'calc(100% - 0.5in)'}}>
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
       <CardHeader>
         <CardTitle>Recorded Cases</CardTitle>
         <CardDescription>A log of all submitted operational cases.</CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[calc(100vh-17rem)]">
+        <ScrollArea className="h-[calc(100vh-17rem)] pr-4">
           {isLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
@@ -120,12 +120,12 @@ export function RecordedCasesList() {
                       <p className="text-xs text-gray-600">{caseItem.customerName}</p>
                       <p className="text-xs text-gray-500">{getContactDisplay(caseItem)}</p>
                     </div>
-                    <div className="md:col-span-4">
+                    <div className="md:col-span-5">
                        <p className="text-xs text-gray-500">Case & Remarks/Reason</p>
                        <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
                        <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks.charAt(0).toUpperCase() + caseItem.remarks.slice(1)}</p>
                     </div>
-                     <div className="md:col-span-3 flex justify-center items-start pt-2">
+                     <div className="md:col-span-2 flex justify-center items-start pt-2">
                       {caseItem.image && (
                          <div 
                            className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
@@ -135,7 +135,7 @@ export function RecordedCasesList() {
                          </div>
                       )}
                     </div>
-                    <div className="md:col-span-2 flex flex-col items-center justify-start gap-2 pt-2">
+                    <div className="md:col-span-2 flex flex-col items-center justify-center gap-2">
                        <Button 
                           onClick={() => setCaseToResolve(caseItem)} 
                           className="shadow-md transition-transform active:scale-95 text-white font-bold w-full"
@@ -143,9 +143,9 @@ export function RecordedCasesList() {
                           Resolved
                       </Button>
                       <Button
-                        variant="destructive"
+                        variant="outline"
                         onClick={() => setCaseToDelete(caseItem)}
-                        className="shadow-md transition-transform active:scale-95 text-white font-bold w-full"
+                        className="shadow-md transition-transform active:scale-95 font-bold w-full text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete
