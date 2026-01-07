@@ -61,6 +61,7 @@ export function OperationalCasesForm() {
   const [joInput, setJoInput] = useState('');
   const [foundLead, setFoundLead] = useState<Lead | null>(null);
   const [joSuggestions, setJoSuggestions] = useState<Lead[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(true);
 
   const leadsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'leads')) : null),
@@ -87,7 +88,7 @@ export function OperationalCasesForm() {
   };
 
   useEffect(() => {
-    if (!leads || !joInput) {
+    if (!leads || !joInput || !showSuggestions) {
       setJoSuggestions([]);
       return;
     }
@@ -105,13 +106,14 @@ export function OperationalCasesForm() {
         setJoSuggestions([]);
     }
 
-  }, [joInput, leads]);
+  }, [joInput, leads, showSuggestions]);
   
   const handleSuggestionClick = (lead: Lead) => {
     setFoundLead(lead);
     const fullJoNumber = formatJoNumber(lead.joNumber!);
     setJoInput(fullJoNumber);
     setValue('joNumber', fullJoNumber, { shouldValidate: true });
+    setShowSuggestions(false);
     setJoSuggestions([]);
   };
 
@@ -159,6 +161,7 @@ export function OperationalCasesForm() {
     setJoInput('');
     setFoundLead(null);
     setJoSuggestions([]);
+    setShowSuggestions(true);
     if(imageUploadRef.current) {
         imageUploadRef.current.value = '';
     }
@@ -232,13 +235,14 @@ export function OperationalCasesForm() {
                                 value={joInput}
                                 onChange={(e) => {
                                     setJoInput(e.target.value);
+                                    if(!showSuggestions) setShowSuggestions(true);
                                     if(foundLead) setFoundLead(null);
                                     setValue('joNumber', '');
                                 }}
                                 autoComplete='off'
                             />
                         </FormControl>
-                        {joSuggestions.length > 0 && (
+                        {joSuggestions.length > 0 && showSuggestions && (
                             <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-60 overflow-y-auto">
                                 {joSuggestions.map((lead) => (
