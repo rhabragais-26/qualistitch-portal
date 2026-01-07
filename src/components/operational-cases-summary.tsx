@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -11,17 +12,20 @@ import { Skeleton } from './ui/skeleton';
 type OperationalCase = {
   id: string;
   isArchived?: boolean;
+  caseType: string;
+  quantity?: number;
 };
 
 const chartConfig = {
-  count: {
-    label: 'Count',
+  quantity: {
+    label: 'Quantity',
   },
 };
 
 const COLORS = {
-    Open: 'hsl(var(--chart-2))',
-    Resolved: 'hsl(var(--chart-1))',
+    'Return to Sender (RTS)': 'hsl(var(--chart-1))',
+    'Quality Errors': 'hsl(var(--chart-2))',
+    'Replacement': 'hsl(var(--chart-3))',
 };
 
 export function OperationalCasesSummary() {
@@ -38,13 +42,22 @@ export function OperationalCasesSummary() {
   const reportData = useMemo(() => {
     if (!cases) return [];
 
-    const openCases = cases.filter(c => !c.isArchived).length;
-    const resolvedCases = cases.filter(c => c.isArchived).length;
+    const quantityByCaseType = cases.reduce((acc, caseItem) => {
+        if (caseItem.caseType && caseItem.quantity) {
+            if (!acc[caseItem.caseType]) {
+                acc[caseItem.caseType] = 0;
+            }
+            acc[caseItem.caseType] += caseItem.quantity;
+        }
+        return acc;
+    }, {} as { [key: string]: number });
 
-    return [
-      { name: 'Open', count: openCases, fill: COLORS.Open },
-      { name: 'Resolved', count: resolvedCases, fill: COLORS.Resolved },
-    ];
+
+    return Object.entries(quantityByCaseType).map(([name, quantity]) => ({
+        name,
+        quantity,
+        fill: COLORS[name as keyof typeof COLORS] || 'hsl(var(--chart-4))',
+    }));
   }, [cases]);
 
   const isLoading = isAuthLoading || areCasesLoading;
@@ -54,7 +67,7 @@ export function OperationalCasesSummary() {
       <CardHeader>
         <CardTitle className="text-black">Operational Cases Summary</CardTitle>
         <CardDescription className="text-gray-600">
-          Breakdown of open and resolved operational cases.
+          Total quantity of items per case type.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex items-center justify-center">
@@ -67,15 +80,15 @@ export function OperationalCasesSummary() {
             <ChartContainer config={chartConfig} className="w-full h-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Tooltip content={<ChartTooltipContent nameKey="count" />} />
+                  <Tooltip content={<ChartTooltipContent nameKey="quantity" />} />
                   <Pie
                     data={reportData}
-                    dataKey="count"
+                    dataKey="quantity"
                     nameKey="name"
                     cx="50%"
                     cy="50%"
                     outerRadius={120}
-                    label={({ name, count }) => `${name}: ${count}`}
+                    label={({ name, quantity }) => `${name}: ${quantity}`}
                   >
                     {reportData.map((entry) => (
                       <Cell key={`cell-${entry.name}`} fill={entry.fill} />
