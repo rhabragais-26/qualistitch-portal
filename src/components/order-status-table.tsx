@@ -255,12 +255,12 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                 <PopoverTrigger asChild>
                                   <Badge variant="destructive" className="cursor-pointer">{lead.operationalCase.caseType}</Badge>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-96">
+                                <PopoverContent className="w-auto max-w-md">
                                   <div className="grid gap-4">
-                                    <div className="space-y-2">
+                                    <div className="space-y-1">
                                       <h4 className="font-medium leading-none">{lead.operationalCase.caseType}</h4>
                                       <p className="text-sm text-muted-foreground">
-                                        Case recorded for J.O. {lead.operationalCase.joNumber}
+                                        Case for J.O. {lead.operationalCase.joNumber}
                                       </p>
                                     </div>
                                     <div className="grid gap-2 text-sm">
@@ -276,7 +276,7 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                         <div className="grid grid-cols-3 items-start gap-4">
                                           <span>Image:</span>
                                           <div
-                                            className="col-span-2 relative w-full h-32 cursor-pointer"
+                                            className="col-span-2 relative w-full h-auto max-h-32 cursor-pointer aspect-[4/3]"
                                             onClick={() => setImageInView(lead.operationalCase!.image!)}
                                           >
                                             <Image
