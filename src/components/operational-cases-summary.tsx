@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useMemo } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
@@ -49,7 +48,6 @@ const CasePieChart = ({ data, title }: { data: { name: string; quantity: number;
                             <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                         ))}
                     </Pie>
-                    <Legend verticalAlign="bottom" height={36}/>
                 </PieChart>
             </ResponsiveContainer>
         </ChartContainer>
