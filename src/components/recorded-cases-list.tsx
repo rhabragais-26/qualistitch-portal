@@ -7,12 +7,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from './ui/skeleton';
 import { formatDateTime } from '@/lib/utils';
 import Image from 'next/image';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent } from './ui/dialog';
 
 type OperationalCase = {
   id: string;
@@ -108,8 +106,7 @@ export function RecordedCasesList() {
                       {caseItem.image && (
                          <div 
                            className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
-                           onMouseEnter={() => setImageInView(caseItem.image!)}
-                           onMouseLeave={() => setImageInView(null)}
+                           onClick={() => setImageInView(caseItem.image!)}
                          >
                            <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
                          </div>
@@ -146,10 +143,10 @@ export function RecordedCasesList() {
         )}
         {imageInView && (
           <div 
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center"
+            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center"
             onClick={() => setImageInView(null)}
           >
-            <div className="relative h-[80vh] w-[80vw]">
+            <div className="relative h-[90vh] w-[90vw] animate-in fade-in-50">
               <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
             </div>
           </div>
