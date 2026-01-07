@@ -185,7 +185,7 @@ export function ProdPreparationTable() {
   const isLoading = isAuthLoading || isLeadsLoading;
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
        {confirmingLead && (
         <AlertDialog open={!!confirmingLead} onOpenChange={() => setConfirmingLead(null)}>
           <AlertDialogContent>
@@ -296,9 +296,9 @@ export function ProdPreparationTable() {
                 {jobOrders?.map((lead) => (
                   <React.Fragment key={lead.id}>
                     {lead.orders.map((order, orderIndex) => (
-                         <TableRow key={`${lead.id}-${orderIndex}`} className={cn(orderIndex === lead.orders.length - 1 && "border-b-2 border-gray-400")}>
+                         <TableRow key={`${lead.id}-${orderIndex}`} className={cn("border-b-0")}>
                             {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black">
+                                <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black border-b-2 border-gray-400">
                                     <Collapsible>
                                         <CollapsibleTrigger asChild>
                                             <div className="flex items-center cursor-pointer">
@@ -314,10 +314,10 @@ export function ProdPreparationTable() {
                                 </TableCell>
                             )}
                             {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="text-xs align-top py-3 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
+                                <TableCell rowSpan={lead.orders.length} className="text-xs align-top py-3 text-black border-b-2 border-gray-400">{formatJoNumber(lead.joNumber)}</TableCell>
                             )}
                              {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="align-top py-3">
+                                <TableCell rowSpan={lead.orders.length} className="align-top py-3 border-b-2 border-gray-400">
                                 <Badge variant={getProgrammingStatus(lead).variant as any}>{getProgrammingStatus(lead).text}</Badge>
                                 </TableCell>
                             )}
@@ -326,7 +326,7 @@ export function ProdPreparationTable() {
                             <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
                             <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
                             {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
+                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2 border-b-2 border-gray-400">
                                 {lead.isPreparedForProduction ? (
                                         <div className="flex items-center justify-center text-green-600 font-semibold">
                                             <Check className="mr-2 h-4 w-4" /> Prepared
@@ -343,7 +343,7 @@ export function ProdPreparationTable() {
                                 </TableCell>
                             )}
                              {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
+                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2 border-b-2 border-gray-400">
                                     {lead.isSentToProduction ? (
                                         <div className="flex items-center justify-center font-semibold text-gray-500">
                                             Sent
