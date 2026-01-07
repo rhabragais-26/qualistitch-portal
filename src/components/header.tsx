@@ -18,6 +18,8 @@ import {
   Settings,
   LogOut,
   Upload,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -128,6 +130,10 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
   const [nextUrl, setNextUrl] = useState('');
   const [isClient, setIsClient] = useState(false);
+  const [showExistingPassword, setShowExistingPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+
   
   const firestore = useFirestore();
   const { user } = useUser();
@@ -374,9 +380,26 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="e.g., rha@example.com" />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">New Password</Label>
-              <Input id="password" type="password" />
+            <div className="grid gap-2 relative">
+                <Label htmlFor="existing-password">Existing Password</Label>
+                <Input id="existing-password" type={showExistingPassword ? 'text' : 'password'} />
+                <Button variant="ghost" size="icon" className="absolute right-1 bottom-1 h-7 w-7 text-gray-500" onClick={() => setShowExistingPassword(p => !p)}>
+                    {showExistingPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+            </div>
+            <div className="grid gap-2 relative">
+                <Label htmlFor="new-password">New Password</Label>
+                <Input id="new-password" type={showNewPassword ? 'text' : 'password'} />
+                <Button variant="ghost" size="icon" className="absolute right-1 bottom-1 h-7 w-7 text-gray-500" onClick={() => setShowNewPassword(p => !p)}>
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+            </div>
+            <div className="grid gap-2 relative">
+                <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+                <Input id="confirm-new-password" type={showConfirmNewPassword ? 'text' : 'password'} />
+                <Button variant="ghost" size="icon" className="absolute right-1 bottom-1 h-7 w-7 text-gray-500" onClick={() => setShowConfirmNewPassword(p => !p)}>
+                    {showConfirmNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
             </div>
           </div>
           <DialogFooter>
