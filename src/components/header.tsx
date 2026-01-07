@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -345,73 +344,70 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
       </AlertDialog>
 
       <Dialog open={isAccountSettingsOpen} onOpenChange={setIsAccountSettingsOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Account Settings</DialogTitle>
             <DialogDescription>
               Update your profile information and password.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-3 py-4 text-sm">
             <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20">
                     <AvatarImage src="" alt="User profile" />
                     <AvatarFallback className="text-3xl">R</AvatarFallback>
                 </Avatar>
-                <div className="flex-1 space-y-2">
-                     <Label htmlFor="profile-picture">Profile Picture</Label>
+                <div className="flex-1 space-y-1">
+                     <Label htmlFor="profile-picture" className="text-xs">Profile Picture</Label>
                     <div className="flex items-center gap-2">
-                        <Button asChild variant="outline" size="sm">
+                        <Button asChild variant="outline" size="sm" className="text-xs">
                             <label htmlFor="profile-picture-upload" className="cursor-pointer">
                                 Choose File
                             </label>
                         </Button>
                         <Input id="profile-picture-upload" type="file" className="hidden" />
-                        <Button size="sm" variant="ghost">
-                            <Upload className="h-4 w-4" />
-                        </Button>
                     </div>
                 </div>
             </div>
-             <div className="grid grid-cols-2 gap-4">
-               <div className="grid gap-2">
-                <Label htmlFor="first-name">First Name</Label>
-                <Input id="first-name" placeholder="Juan" />
+             <div className="grid grid-cols-2 gap-3">
+               <div className="grid gap-1">
+                <Label htmlFor="first-name" className="text-xs">First Name</Label>
+                <Input id="first-name" placeholder="Juan" className="text-xs h-9" />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="last-name">Last Name</Label>
-                <Input id="last-name" placeholder="Dela Cruz" />
+              <div className="grid gap-1">
+                <Label htmlFor="last-name" className="text-xs">Last Name</Label>
+                <Input id="last-name" placeholder="Dela Cruz" className="text-xs h-9" />
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="nickname">Nickname</Label>
-              <Input id="nickname" defaultValue="Rha" />
+            <div className="grid gap-1">
+              <Label htmlFor="nickname" className="text-xs">Nickname</Label>
+              <Input id="nickname" defaultValue="Rha" className="text-xs h-9" />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" type="tel" placeholder="e.g., 0912-345-6789" />
+            <div className="grid gap-1">
+              <Label htmlFor="phone" className="text-xs">Phone Number</Label>
+              <Input id="phone" type="tel" placeholder="e.g., 0912-345-6789" className="text-xs h-9" />
             </div>
-             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="e.g., rha@example.com" />
+             <div className="grid gap-1">
+              <Label htmlFor="email" className="text-xs">Email</Label>
+              <Input id="email" type="email" placeholder="e.g., rha@example.com" className="text-xs h-9" />
             </div>
-            <div className="grid gap-2 relative">
-                <Label htmlFor="existing-password">Existing Password</Label>
-                <Input id="existing-password" type={showExistingPassword ? 'text' : 'password'} />
+            <div className="grid gap-1 relative">
+                <Label htmlFor="existing-password"  className="text-xs">Existing Password</Label>
+                <Input id="existing-password" type={showExistingPassword ? 'text' : 'password'} className="text-xs h-9 pr-10" />
                 <Button variant="ghost" size="icon" className="absolute right-1 bottom-1 h-7 w-7 text-gray-500" onClick={() => setShowExistingPassword(p => !p)}>
                     {showExistingPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
             </div>
-            <div className="grid gap-2 relative">
-                <Label htmlFor="new-password">New Password</Label>
-                <Input id="new-password" type={showNewPassword ? 'text' : 'password'} />
+            <div className="grid gap-1 relative">
+                <Label htmlFor="new-password"  className="text-xs">New Password</Label>
+                <Input id="new-password" type={showNewPassword ? 'text' : 'password'} className="text-xs h-9 pr-10" />
                 <Button variant="ghost" size="icon" className="absolute right-1 bottom-1 h-7 w-7 text-gray-500" onClick={() => setShowNewPassword(p => !p)}>
                     {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
             </div>
-            <div className="grid gap-2 relative">
-                <Label htmlFor="confirm-new-password">Confirm New Password</Label>
-                <Input id="confirm-new-password" type={showConfirmNewPassword ? 'text' : 'password'} />
+            <div className="grid gap-1 relative">
+                <Label htmlFor="confirm-new-password"  className="text-xs">Confirm New Password</Label>
+                <Input id="confirm-new-password" type={showConfirmNewPassword ? 'text' : 'password'} className="text-xs h-9 pr-10" />
                 <Button variant="ghost" size="icon" className="absolute right-1 bottom-1 h-7 w-7 text-gray-500" onClick={() => setShowConfirmNewPassword(p => !p)}>
                     {showConfirmNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
