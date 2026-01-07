@@ -41,6 +41,7 @@ import {
   PlusCircle,
   Plus,
   Minus,
+  CalculatorIcon,
 } from 'lucide-react';
 import {RadioGroup, RadioGroupItem} from './ui/radio-group';
 import { cn } from '@/lib/utils';
@@ -72,6 +73,7 @@ import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/firestore-writes';
 import { v4 as uuidv4 } from 'uuid';
 import locations from '@/lib/ph-locations.json';
+import { Calculator } from './calculator';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -181,6 +183,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [companySuggestions, setCompanySuggestions] = useState<Lead[]>([]);
   const [citySuggestions, setCitySuggestions] = useState<{ name: string; province: string, type: string }[]>([]);
   const [barangaySuggestions, setBarangaySuggestions] = useState<string[]>([]);
+  const [showCalculator, setShowCalculator] = useState(false);
   
   const citiesAndMunicipalities = useMemo(() => {
     return locations.provinces.flatMap(province =>
@@ -551,6 +554,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const concatenatedAddress = [houseStreetValue, barangayValue, cityValue, provinceValue].filter(Boolean).join(', ');
 
   return (
+    <>
+    {showCalculator && <Calculator onClose={() => setShowCalculator(false)} />}
     <Card className="w-full mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black max-w-6xl">
       <CardHeader>
         <div className="flex justify-between items-start">
@@ -875,31 +880,37 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                 </div>
               </div>
             </div>
-
-            <div className="flex justify-end pt-4 gap-4 col-span-full">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button type="button" variant="outline">Reset</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>This action will clear all the fields in the form.</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleReset}>Continue</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
-                Submit
+            <div className="flex justify-between pt-4 col-span-full">
+              <Button type="button" variant="outline" onClick={() => setShowCalculator(true)}>
+                <CalculatorIcon className="mr-2 h-4 w-4" />
+                Show Calculator
               </Button>
+              <div className="flex gap-4">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button type="button" variant="outline">Reset</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>This action will clear all the fields in the form.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleReset}>Continue</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
+                  Submit
+                </Button>
+              </div>
             </div>
           </form>
         </Form>
       </CardContent>
     </Card>
+    </>
   );
 }
 
