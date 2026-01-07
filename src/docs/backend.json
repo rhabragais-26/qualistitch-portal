@@ -326,7 +326,7 @@
         "id": { "type": "string" },
         "joNumber": { "type": "string" },
         "caseType": { "type": "string", "enum": ["Return to Sender (RTS)", "Quality Errors", "Replacement"] },
-        "remarks": { "type": "string" },
+        "remarks": { "type": "string", "description": "Initial remarks for the case. Can be appended with reopening remarks." },
         "image": { "type": "string", "description": "Data URL of the uploaded image." },
         "submissionDateTime": { "type": "string", "format": "date-time" },
         "customerName": { "type": "string" },

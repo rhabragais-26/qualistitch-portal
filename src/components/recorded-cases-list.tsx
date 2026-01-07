@@ -91,14 +91,21 @@ export function RecordedCasesList() {
     }
   };
   
-  const handleReopenCase = async (caseId: string) => {
+  const handleReopenCase = async (caseItem: OperationalCase, reopeningRemarks: string) => {
     if (!firestore) return;
     try {
-      const caseDocRef = doc(firestore, 'operationalCases', caseId);
-      await updateDoc(caseDocRef, { isArchived: false });
+      const caseDocRef = doc(firestore, 'operationalCases', caseItem.id);
+      
+      const newRemarks = `${caseItem.remarks}\n(${reopeningRemarks})`;
+      
+      await updateDoc(caseDocRef, { 
+        isArchived: false,
+        remarks: newRemarks,
+      });
+
       toast({
         title: "Case Reopened",
-        description: "The case has been moved back to the active list.",
+        description: "The case has been moved back to the active list with your comments.",
       });
     } catch (e: any) {
       console.error("Error reopening case: ", e);
@@ -124,7 +131,7 @@ export function RecordedCasesList() {
           </div>
           <Button variant="outline" onClick={() => setIsResolvedCasesOpen(true)}>
              <ArchiveRestore className="mr-2 h-4 w-4" />
-             View Resolved
+             View Previous Cases
           </Button>
         </CardHeader>
         <CardContent>
@@ -141,7 +148,7 @@ export function RecordedCasesList() {
               <div className="space-y-4">
                 {activeCases.map((caseItem) => (
                   <Card key={caseItem.id} className="bg-gray-50">
-                    <CardContent className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                    <CardContent className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4">
                       <div className="md:col-span-3">
                         <p className="text-xs text-gray-500">Date Recorded</p>
                         <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
@@ -149,12 +156,19 @@ export function RecordedCasesList() {
                         <p className="text-xs text-gray-600">{caseItem.customerName}</p>
                         <p className="text-xs text-gray-500">{getContactDisplay(caseItem)}</p>
                       </div>
-                      <div className="md:col-span-5 self-start pt-2">
+                      <div className="md:col-span-6 self-start pt-2">
                         <p className="text-xs text-gray-500">Case & Remarks/Reason</p>
                         <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
-                        <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks.charAt(0).toUpperCase() + caseItem.remarks.slice(1)}</p>
+                        <p className="text-sm mt-1 whitespace-pre-wrap">
+                          {caseItem.remarks.split('\n').map((line, index) => {
+                                if (line.startsWith('(') && line.endsWith(')')) {
+                                    return <i key={index} className="block">{line}</i>;
+                                }
+                                return <span key={index} className="block">{line.charAt(0).toUpperCase() + line.slice(1)}</span>;
+                           })}
+                        </p>
                       </div>
-                      <div className="md:col-span-2 flex justify-center items-center">
+                      <div className="md:col-span-1 flex justify-center items-center">
                         {caseItem.image && (
                           <div
                             className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
@@ -174,7 +188,7 @@ export function RecordedCasesList() {
                         <Button
                           variant="outline"
                           onClick={() => setCaseToDelete(caseItem)}
-                          className="shadow-md transition-transform active:scale-95 font-bold w-full text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
+                          className="shadow-md transition-transform active:scale-95 font-bold w-full text-red-500 border-red-500 hover:bg-red-50 hover:text-red-600"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
