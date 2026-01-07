@@ -1,9 +1,10 @@
+
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
 import {useForm, useFieldArray} from 'react-hook-form';
 import * as z from 'zod';
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useMemo} from 'react';
 
 import {Button} from '@/components/ui/button';
 import {
@@ -39,6 +40,7 @@ import {
   Minus,
   PhoneForwarded,
   Truck,
+  PackageCheck,
 } from 'lucide-react';
 import {RadioGroup, RadioGroupItem} from './ui/radio-group';
 import { cn } from '@/lib/utils';
@@ -105,6 +107,15 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+type InventoryItem = {
+  id: string;
+  productType: string;
+  color: string;
+  size: string;
+  stock: number;
+};
+
 
 type Lead = {
   id: string;
@@ -185,6 +196,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads } = useCollection<Lead>(leadsQuery);
+
+  const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
+  const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -395,7 +409,44 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
 
     handleReset();
   }
+  
+  const currentRemainingStock = useMemo(() => {
+    if (!inventoryItems || !newOrderProductType || !newOrderColor || !newOrderSize) {
+      return null;
+    }
+    const itemInInventory = inventoryItems.find(item =>
+      item.productType === newOrderProductType &&
+      item.color === newOrderColor &&
+      item.size === newOrderSize
+    );
+    return itemInInventory ? itemInInventory.stock : 0;
+  }, [inventoryItems, newOrderProductType, newOrderColor, newOrderSize]);
 
+  const getRemainingStock = (order: z.infer<typeof orderSchema>) => {
+    if (!inventoryItems) return 'N/A';
+    const itemInInventory = inventoryItems.find(item =>
+      item.productType === order.productType &&
+      item.color === order.color &&
+      item.size === order.size
+    );
+    const currentOrderQuantity = order.quantity;
+    const stock = itemInInventory ? itemInInventory.stock : 0;
+    
+    // Sum quantities of the same item already in the order list (excluding the current one being calculated)
+    const alreadyOrderedQty = fields.reduce((sum, existingOrder, index) => {
+        if (existingOrder.productType === order.productType &&
+            existingOrder.color === order.color &&
+            existingOrder.size === order.size) {
+            return sum + existingOrder.quantity;
+        }
+        return sum;
+    }, 0);
+
+    // This logic seems a bit complex for just displaying remaining stock.
+    // Let's simplify: remaining stock is stock - what's being ordered.
+    return stock - currentOrderQuantity;
+  };
+  
   const handleAddOrder = () => {
     const quantity = typeof newOrderQuantity === 'string' ? parseInt(newOrderQuantity, 10) : newOrderQuantity;
     const isProductPatches = newOrderProductType === 'Patches';
@@ -556,39 +607,46 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <TableHead className="py-2 text-black">Color</TableHead>
                         <TableHead className="py-2 text-black">Size</TableHead>
                         <TableHead className="py-2 text-black text-center">Quantity</TableHead>
+                        <TableHead className="py-2 text-black text-center">Remaining Stock</TableHead>
                         <TableHead className="text-right py-2 text-black">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {fields.map((field, index) => (
-                        <TableRow key={field.id}>
-                          <TableCell className="py-2 text-black">{field.productType}</TableCell>
-                          <TableCell className="py-2 text-black">{field.color}</TableCell>
-                          <TableCell className="py-2 text-black">{field.size}</TableCell>
-                          <TableCell className="py-2 text-black">
-                            <div className="flex items-center justify-center gap-2">
-                              <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity - 1)} disabled={field.quantity <= 1}>
-                                <Minus className="h-3 w-3" />
+                      {fields.map((field, index) => {
+                        const remaining = getRemainingStock(field);
+                        return (
+                          <TableRow key={field.id}>
+                            <TableCell className="py-2 text-black">{field.productType}</TableCell>
+                            <TableCell className="py-2 text-black">{field.color}</TableCell>
+                            <TableCell className="py-2 text-black">{field.size}</TableCell>
+                            <TableCell className="py-2 text-black">
+                              <div className="flex items-center justify-center gap-2">
+                                <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity - 1)} disabled={field.quantity <= 1}>
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <span className="w-8 text-center">{field.quantity}</span>
+                                <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity + 1)}>
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell className={cn("py-2 text-center font-medium", typeof remaining === 'number' && remaining < 0 ? 'text-red-500' : 'text-black')}>
+                              {typeof remaining === 'number' ? remaining : 'N/A'}
+                            </TableCell>
+                            <TableCell className="text-right py-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => remove(index)}
+                                className="text-destructive hover:text-destructive h-8 w-8"
+                              >
+                                <X className="h-4 w-4" />
                               </Button>
-                              <span className="w-8 text-center">{field.quantity}</span>
-                              <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity + 1)}>
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right py-2">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => remove(index)}
-                              className="text-destructive hover:text-destructive h-8 w-8"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
                     </TableBody>
                   </Table>
                 </div>
@@ -658,31 +716,40 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           </Select>
                         </div>
                       </div>
-                       <div className="flex items-center gap-2 justify-center">
-                        <FormLabel>Quantity:</FormLabel>
-                        <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => Math.max(1, (typeof q === 'string' ? parseInt(q, 10) || 1 : q) - 1))} disabled={newOrderQuantity === 1}>
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <Input
-                          type="text"
-                          value={newOrderQuantity}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === '' || /^[1-9][0-9]*$/.test(value)) {
-                                setNewOrderQuantity(value === '' ? '' : parseInt(value, 10));
-                            }
-                          }}
-                          onBlur={(e) => {
-                            if (e.target.value === '' || parseInt(e.target.value, 10) < 1) {
-                              setNewOrderQuantity(1);
-                            }
-                          }}
-                          className="w-16 text-center"
-                        />
-                        <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => (typeof q === 'string' ? parseInt(q, 10) || 0 : q) + 1)}>
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
+                       <div className="space-y-2">
+                          {currentRemainingStock !== null && !isPatches && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <PackageCheck className="h-4 w-4 text-green-600" />
+                              <span>Available Stock:</span>
+                              <span className="font-bold">{currentRemainingStock}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 justify-center">
+                              <FormLabel>Quantity:</FormLabel>
+                              <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => Math.max(1, (typeof q === 'string' ? parseInt(q, 10) || 1 : q) - 1))} disabled={newOrderQuantity === 1}>
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <Input
+                                type="text"
+                                value={newOrderQuantity}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (value === '' || /^[1-9][0-9]*$/.test(value)) {
+                                      setNewOrderQuantity(value === '' ? '' : parseInt(value, 10));
+                                  }
+                                }}
+                                onBlur={(e) => {
+                                  if (e.target.value === '' || parseInt(e.target.value, 10) < 1) {
+                                    setNewOrderQuantity(1);
+                                  }
+                                }}
+                                className="w-16 text-center"
+                              />
+                              <Button type="button" variant="outline" size="icon" onClick={() => setNewOrderQuantity(q => (typeof q === 'string' ? parseInt(q, 10) || 0 : q) + 1)}>
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                          </div>
+                       </div>
                     </div>
                     <DialogFooter>
                       <DialogClose asChild>
