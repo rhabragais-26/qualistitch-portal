@@ -208,11 +208,11 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="text-white font-bold align-middle">Customer</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Ordered Items</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Days Remaining/Overdue</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Programming Status</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Item Preparation</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Operational Case</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Ordered Items</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -237,6 +237,12 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                 </CollapsibleContent>
                             </Collapsible>
                         </TableCell>
+                        <TableCell className="text-center align-middle py-2">
+                          <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
+                            View
+                            {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                          </Button>
+                        </TableCell>
                         <TableCell className={cn(
                           "text-center text-xs align-middle py-2 font-medium",
                           deadlineInfo.isOverdue && "text-red-600",
@@ -255,7 +261,7 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                 <PopoverTrigger asChild>
                                   <Badge variant="destructive" className="cursor-pointer">{lead.operationalCase.caseType}</Badge>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto max-w-2xl p-4 bg-blue-50 shadow-xl border">
+                                <PopoverContent className="w-auto p-4 bg-blue-50 shadow-xl border">
                                   <div className="flex gap-4">
                                     <div className="flex-1 space-y-2">
                                       <div className="space-y-1">
@@ -301,12 +307,6 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                             ) : (
                                 <span className="text-muted-foreground">-</span>
                             )}
-                        </TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                          <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
-                            View
-                            {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-                          </Button>
                         </TableCell>
                     </TableRow>
                     {openLeadId === lead.id && (
