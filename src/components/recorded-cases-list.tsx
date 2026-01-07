@@ -11,8 +11,9 @@ import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, ArchiveRestore, Edit, Check } from 'lucide-react';
+import { Trash2, ArchiveRestore, Edit, Check, X } from 'lucide-react';
 import { ResolvedCasesDialog } from './resolved-cases-dialog';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 
 type OperationalCase = {
   id: string;
@@ -183,16 +184,25 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
                       </div>
                       <div className="md:col-span-2 flex justify-center items-center">
                         {caseItem.image && (
-                          <div
-                            className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
-                            onClick={() => setImageInView(caseItem.image!)}
-                          >
-                            <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
-                          </div>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <div
+                                className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
+                                onClick={() => setImageInView(caseItem.image!)}
+                              >
+                                <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
+                              </div>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                               <div className="relative h-64 w-full rounded-md overflow-hidden">
+                                <Image src={caseItem.image} alt="Case Image Preview" layout="fill" objectFit="contain" />
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         )}
                       </div>
                       <div className="md:col-span-2 flex flex-col items-center justify-center gap-2">
-                        <Button
+                         <Button
                           size="sm"
                           onClick={() => setCaseToResolve(caseItem)}
                           className="shadow-md transition-transform active:scale-95 text-white font-bold w-full"
@@ -270,11 +280,24 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
       )}
       {imageInView && (
         <div
-          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center animate-in fade-in"
-          onClick={() => setImageInView(null)}
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={(e) => {
+             if (e.target === e.currentTarget) {
+                 setImageInView(null);
+             }
+          }}
         >
           <div className="relative h-[90vh] w-[90vw]">
             <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close image view</span>
+            </Button>
           </div>
         </div>
       )}
