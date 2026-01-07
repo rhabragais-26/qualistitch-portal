@@ -148,16 +148,25 @@ const formFields: {
   {name: 'companyName', label: 'Company Name (Optional)', icon: Building, type: 'input', autoComplete: 'off'},
   {name: 'mobileNo', label: 'Mobile No. (Optional)', icon: Phone, type: 'tel'},
   {name: 'landlineNo', label: 'Landline No. (Optional)', icon: PhoneForwarded, type: 'tel'},
-  {name: 'houseStreet', label: 'House No., Street & Others', icon: Home, type: 'input', className: 'md:col-span-2'},
-  {name: 'barangay', label: 'Barangay', icon: MapPin, type: 'input'},
-  {name: 'city', label: 'City', icon: MapPin, type: 'input'},
-  {name: 'province', label: 'Province', icon: MapPin, type: 'input'},
   {name: 'courier', label: 'Courier (Optional)', icon: Truck, type: 'select', options: ['Lalamove', 'J&T', 'In-house'], placeholder: 'Select Courier'},
   {name: 'paymentType', label: 'Payment Type', icon: CreditCard, type: 'select', options: ['Partially Paid', 'Fully Paid', 'COD'], placeholder: "Select Payment Type"},
   {name: 'orderType', label: 'Order Type', icon: ShoppingBag, type: 'select', options: ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], placeholder: 'Select Order Type'},
   {name: 'salesRepresentative', label: 'CSR', icon: UserCheck, type: 'select', options: ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], placeholder: 'Select CSR'},
   {name: 'priorityType', label: 'Priority Type', icon: AlertTriangle, type: 'radio', options: ['Rush', 'Regular'], className: "md:justify-center"},
 ];
+
+const addressFields: {
+  name: keyof Omit<FormValues, 'orders'>;
+  label: string;
+  icon: React.ElementType;
+  type: 'input';
+  className?: string;
+}[] = [
+    {name: 'houseStreet', label: 'House No., Street & Others', icon: Home, type: 'input', className: 'md:col-span-2'},
+    {name: 'barangay', label: 'Barangay', icon: MapPin, type: 'input'},
+    {name: 'city', label: 'City', icon: MapPin, type: 'input'},
+    {name: 'province', label: 'Province', icon: MapPin, type: 'input'},
+]
 
 const productTypes = [
   'Executive Jacket 1',
@@ -639,26 +648,52 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           </CardContent>
                         </Card>
                       )}
-                      {['houseStreet', 'barangay', 'city', 'province'].includes(fieldInfo.name) && addressSuggestions.field === fieldInfo.name && addressSuggestions.suggestions.length > 0 && (
-                        <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                          <CardContent className="p-2 max-h-40 overflow-y-auto">
-                            {addressSuggestions.suggestions.map((suggestion, index) => (
-                              <div
-                                key={index}
-                                className="p-2 cursor-pointer hover:bg-gray-100"
-                                onClick={() => handleAddressSuggestionClick(fieldInfo.name as keyof Lead, suggestion)}
-                              >
-                                {suggestion}
-                              </div>
-                            ))}
-                          </CardContent>
-                        </Card>
-                      )}
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               ))}
+
+              <div className="md:col-span-2 border rounded-md p-4 relative mt-4">
+                  <p className="absolute -top-3 left-4 bg-white px-2 text-xs font-medium text-gray-600">Location</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 pt-2">
+                     {addressFields.map((fieldInfo) => (
+                        <FormField
+                            key={fieldInfo.name}
+                            control={form.control}
+                            name={fieldInfo.name}
+                            render={({field}) => (
+                                <FormItem className={cn("relative", fieldInfo.className)}>
+                                <FormLabel className="flex items-center gap-2 text-black text-xs">
+                                    <fieldInfo.icon className="h-4 w-4 text-primary" />
+                                    {fieldInfo.label}
+                                </FormLabel>
+                                <FormControl>
+                                    <Input {...field} className="h-9 text-xs" />
+                                </FormControl>
+                                {addressSuggestions.field === fieldInfo.name && addressSuggestions.suggestions.length > 0 && (
+                                    <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                                    <CardContent className="p-2 max-h-40 overflow-y-auto">
+                                        {addressSuggestions.suggestions.map((suggestion, index) => (
+                                        <div
+                                            key={index}
+                                            className="p-2 cursor-pointer hover:bg-gray-100"
+                                            onClick={() => handleAddressSuggestionClick(fieldInfo.name as keyof Lead, suggestion)}
+                                        >
+                                            {suggestion}
+                                        </div>
+                                        ))}
+                                    </CardContent>
+                                    </Card>
+                                )}
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                     ))}
+                  </div>
+              </div>
+
             </div>
 
             <Separator />
