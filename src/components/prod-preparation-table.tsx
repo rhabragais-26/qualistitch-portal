@@ -298,7 +298,7 @@ export function ProdPreparationTable() {
                   return (
                   <React.Fragment key={lead.id}>
                     {lead.orders.map((order, orderIndex) => (
-                         <TableRow key={`${lead.id}-${orderIndex}`}>
+                         <TableRow key={`${lead.id}-${orderIndex}`} className={cn(orderIndex < lead.orders.length - 1 && "border-b-0")}>
                             {orderIndex === 0 && (
                                 <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black border-b border-gray-400">
                                     <Collapsible>
@@ -323,10 +323,10 @@ export function ProdPreparationTable() {
                                 <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
                                 </TableCell>
                             )}
-                           <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
-                            <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
-                            <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
-                            <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
+                           <TableCell className="py-1 px-2 text-xs text-black border-b border-gray-400">{order.productType}</TableCell>
+                            <TableCell className="py-1 px-2 text-xs text-black border-b border-gray-400">{order.color}</TableCell>
+                            <TableCell className="py-1 px-2 text-xs text-black border-b border-gray-400">{order.size}</TableCell>
+                            <TableCell className="py-1 px-2 text-xs text-black text-right border-b border-gray-400">{order.quantity}</TableCell>
                             {orderIndex === 0 && (
                                 <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2 border-b border-gray-400">
                                 {lead.isPreparedForProduction ? (
