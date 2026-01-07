@@ -143,10 +143,10 @@ export function RecordedCasesList() {
         )}
         {imageInView && (
           <div 
-            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center"
+            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center animate-in fade-in-50"
             onClick={() => setImageInView(null)}
           >
-            <div className="relative h-[90vh] w-[90vw] animate-in fade-in-50">
+            <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
               <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
             </div>
           </div>
