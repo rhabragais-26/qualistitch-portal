@@ -683,7 +683,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               
               {/* Right Column */}
               <div className="w-1/2 flex flex-col gap-y-3">
-                 <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                 <div className="grid grid-cols-2 gap-x-4 gap-y-4">
                     <FormField control={form.control} name="orderType" render={({field}) => (
                         <FormItem>
                         <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
