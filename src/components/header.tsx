@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -147,13 +148,13 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                     <PlusSquare className="mr-2" />
                     Add Items
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/inventory/prod-preparation')}>
+                    <Package className="mr-2" />
+                    Prod Preparation
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/inventory/summary')}>
                     <Database className="mr-2" />
                     Summary
-                  </DropdownMenuItem>
-                   <DropdownMenuItem onClick={() => handleNavigation('/inventory/prod-preparation')}>
-                    <Package className="mr-2" />
-                    Prod Preparation
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/inventory/reports')}>
                     <LineChart className="mr-2" />
