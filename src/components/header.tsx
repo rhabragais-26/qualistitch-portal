@@ -17,6 +17,7 @@ import {
   User,
   Settings,
   LogOut,
+  Upload,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -39,10 +40,21 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { Avatar, AvatarFallback } from './ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 
 type Lead = {
   id: string;
@@ -113,6 +125,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
   const [nextUrl, setNextUrl] = useState('');
   const [isClient, setIsClient] = useState(false);
   
@@ -288,7 +301,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setIsAccountSettingsOpen(true)}>
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Account Settings</span>
                     </DropdownMenuItem>
@@ -324,6 +337,56 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isAccountSettingsOpen} onOpenChange={setIsAccountSettingsOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Account Settings</DialogTitle>
+            <DialogDescription>
+              Update your profile information.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="flex items-center gap-4">
+                <Avatar className="h-20 w-20">
+                    <AvatarImage src="" alt="User profile" />
+                    <AvatarFallback className="text-3xl">R</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-2">
+                    <Label htmlFor="profile-picture">Profile Picture</Label>
+                    <div className="relative">
+                        <Input id="profile-picture" type="file" className="w-full" />
+                        <Button size="sm" variant="ghost" className="absolute right-1 top-1/2 -translate-y-1/2 h-7">
+                            <Upload className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="nickname">Nickname</Label>
+              <Input id="nickname" defaultValue="Rha" />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input id="phone" type="tel" placeholder="e.g., 0912-345-6789" />
+            </div>
+             <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" placeholder="e.g., rha@example.com" />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">New Password</Label>
+              <Input id="password" type="password" />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button type="submit" className="text-white font-bold">Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
