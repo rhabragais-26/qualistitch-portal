@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -12,23 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from './ui/button';
 import { Printer } from 'lucide-react';
-import { generateReport, GenerateReportOutput } from '@/ai/flows/generate-report-flow';
-
-type Order = {
-  quantity: number;
-  productType: string;
-  [key: string]: any;
-};
-
-type Lead = {
-  id: string;
-  customerName: string;
-  salesRepresentative: string;
-  priorityType: string;
-  orders: Order[];
-  submissionDateTime: string;
-  [key: string]: any;
-};
+import { generateReport, GenerateReportOutput, Lead } from '@/ai/flows/generate-report-flow';
 
 const chartConfig = {
   quantity: {
@@ -105,7 +90,7 @@ export function ReportsSummary() {
     if (leads) {
       processReport();
     }
-  }, [leads, selectedYear, selectedMonth, selectedWeek, processReport]);
+  }, [leads, processReport]);
 
   const totalPriorityQuantity = useMemo(() => reportData?.priorityData.reduce((sum, item) => sum + item.value, 0) || 0, [reportData?.priorityData]);
   

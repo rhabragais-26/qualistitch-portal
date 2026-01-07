@@ -9,21 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { generateDigitizingReport, GenerateDigitizingReportOutput } from '@/ai/flows/generate-digitizing-report-flow';
-import { addDays, differenceInDays } from 'date-fns';
+import { generateDigitizingReport, GenerateDigitizingReportOutput, Lead } from '@/ai/flows/generate-digitizing-report-flow';
 
-type Lead = {
-  id: string;
-  joNumber?: number;
-  isUnderProgramming?: boolean;
-  isInitialApproval?: boolean;
-  isLogoTesting?: boolean;
-  isRevision?: boolean;
-  isFinalApproval?: boolean;
-  isFinalProgram?: boolean;
-  priorityType: 'Rush' | 'Regular';
-  submissionDateTime: string;
-};
 
 const chartConfig = {
   count: {
@@ -79,7 +66,7 @@ export function DigitizingReportsSummary() {
     if (leads) {
       processReport();
     }
-  }, [leads, priorityFilter, processReport]);
+  }, [leads, processReport]);
   
   const isLoading = isLeadsLoading || isReportLoading;
   const error = leadsError || reportError;

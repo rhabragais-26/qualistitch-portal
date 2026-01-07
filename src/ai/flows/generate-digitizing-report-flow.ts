@@ -12,7 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { addDays, differenceInDays } from 'date-fns';
 
-type Lead = {
+export type Lead = {
   id: string;
   joNumber?: number;
   isUnderProgramming?: boolean;
