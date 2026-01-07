@@ -74,7 +74,7 @@ type Layout = {
   finalNamesDst?: (string | null)[];
   finalNamesDstUploadTimes?: (string | null)[];
   sequenceLogo?: (string | null)[];
-  sequenceLogoUploadTimes?: (string | null)[];
+  sequenceLogoUploadTimes?: string | null;
   sequenceBackDesign?: string | null;
   sequenceBackDesignUploadTime?: string | null;
 };
@@ -149,7 +149,6 @@ export function DigitizingTable() {
 
   const [archiveConfirmLead, setArchiveConfirmLead] = React.useState<Lead | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
-  const [popoverStates, setPopoverStates] = useState<Record<string, boolean>>({});
   
   const leadsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -700,22 +699,10 @@ export function DigitizingTable() {
     return null;
   }
 
-  const ImagePreview = ({ src, alt, popoverKey }: { src: string; alt: string; popoverKey: string }) => (
-    <Popover open={popoverStates[popoverKey] || false} onOpenChange={(isOpen) => setPopoverStates(prev => ({...prev, [popoverKey]: isOpen}))}>
-      <PopoverTrigger asChild
-        onMouseEnter={() => setPopoverStates(prev => ({ ...prev, [popoverKey]: true }))}
-        onMouseLeave={() => setPopoverStates(prev => ({ ...prev, [popoverKey]: false }))}
-      >
-        <div className="relative w-[200px] h-[150px] cursor-pointer" onClick={() => setImageInView(src)}>
-          <Image src={src} alt={alt} layout="fill" objectFit="contain" className="rounded-md border" />
-        </div>
-      </PopoverTrigger>
-      <PopoverContent className="w-80">
-        <div className="relative h-64 w-full rounded-md overflow-hidden">
-          <Image src={src} alt={`${alt} Preview`} layout="fill" objectFit="contain" />
-        </div>
-      </PopoverContent>
-    </Popover>
+  const ImagePreview = ({ src, alt }: { src: string; alt: string;}) => (
+    <div className="relative w-[200px] h-[150px] cursor-pointer" onClick={() => setImageInView(src)}>
+      <Image src={src} alt={alt} layout="fill" objectFit="contain" className="rounded-md border" />
+    </div>
   );
 
   return (
@@ -1008,21 +995,21 @@ export function DigitizingTable() {
                                             {lead.layouts?.[0]?.logoLeftImage && (
                                               <div className="w-fit"> 
                                                 <p className="font-semibold text-gray-500 mb-2">Logo Left</p> 
-                                                <ImagePreview src={lead.layouts[0].logoLeftImage} alt="Initial Program Logo Left" popoverKey={`${lead.id}-init-left`} />
+                                                <ImagePreview src={lead.layouts[0].logoLeftImage} alt="Initial Program Logo Left" />
                                                 {lead.layouts[0].logoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoLeftImageUploadTime).dateTime}</p>}
                                               </div>
                                             )}
                                             {lead.layouts?.[0]?.logoRightImage && (
                                               <div className="w-fit">
                                                 <p className="font-semibold text-gray-500 mb-2">Logo Right</p>
-                                                <ImagePreview src={lead.layouts[0].logoRightImage} alt="Initial Program Logo Right" popoverKey={`${lead.id}-init-right`} />
+                                                <ImagePreview src={lead.layouts[0].logoRightImage} alt="Initial Program Logo Right" />
                                                 {lead.layouts[0].logoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoRightImageUploadTime).dateTime}</p>}
                                               </div>
                                             )}
                                             {lead.layouts?.[0]?.backDesignImage && (
                                               <div className="w-fit">
                                                 <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                                <ImagePreview src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" popoverKey={`${lead.id}-init-back`} />
+                                                <ImagePreview src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" />
                                                 {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}
                                               </div>
                                             )}
@@ -1036,21 +1023,21 @@ export function DigitizingTable() {
                                           {lead.layouts?.[0]?.testLogoLeftImage && (
                                             <div className="w-fit">
                                               <p className="font-semibold text-gray-500 mb-2">Logo Left</p>
-                                              <ImagePreview src={lead.layouts[0].testLogoLeftImage} alt="Test Logo Left" popoverKey={`${lead.id}-test-left`} />
+                                              <ImagePreview src={lead.layouts[0].testLogoLeftImage} alt="Test Logo Left" />
                                               {lead.layouts[0].testLogoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoLeftImageUploadTime).dateTime}</p>}
                                             </div>
                                           )}
                                           {lead.layouts?.[0]?.testLogoRightImage && (
                                             <div className="w-fit">
                                               <p className="font-semibold text-gray-500 mb-2">Logo Right</p>
-                                              <ImagePreview src={lead.layouts[0].testLogoRightImage} alt="Test Logo Right" popoverKey={`${lead.id}-test-right`} />
+                                              <ImagePreview src={lead.layouts[0].testLogoRightImage} alt="Test Logo Right" />
                                               {lead.layouts[0].testLogoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoRightImageUploadTime).dateTime}</p>}
                                             </div>
                                           )}
                                           {lead.layouts?.[0]?.testBackDesignImage && (
                                             <div className="w-fit">
                                               <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                              <ImagePreview src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" popoverKey={`${lead.id}-test-back`} />
+                                              <ImagePreview src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" />
                                               {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}
                                             </div>
                                           )}
@@ -1075,14 +1062,14 @@ export function DigitizingTable() {
                                           {lead.layouts?.[0]?.sequenceLogo?.map((file, index) => file && (
                                               <div key={index} className="w-fit">
                                                   <p className="font-semibold text-gray-500 mb-2">Sequence Logo {index + 1}</p>
-                                                  <ImagePreview src={file} alt={`Sequence Logo ${index + 1}`} popoverKey={`${lead.id}-seq-logo-${index}`} />
+                                                  <ImagePreview src={file} alt={`Sequence Logo ${index + 1}`} />
                                                   {lead.layouts?.[0]?.sequenceLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceLogoUploadTimes![index]!).dateTime}</p>}
                                               </div>
                                           ))}
                                           {lead.layouts?.[0]?.sequenceBackDesign && (
                                               <div className="w-fit">
                                                   <p className="font-semibold text-gray-500 mb-2">Sequence Back</p>
-                                                  <ImagePreview src={lead.layouts[0].sequenceBackDesign} alt="Sequence Back Design" popoverKey={`${lead.id}-seq-back`} />
+                                                  <ImagePreview src={lead.layouts[0].sequenceBackDesign} alt="Sequence Back Design" />
                                                   {lead.layouts[0].sequenceBackDesignUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceBackDesignUploadTime).dateTime}</p>}
                                               </div>
                                           )}
@@ -1097,7 +1084,7 @@ export function DigitizingTable() {
                                                 layout.layoutImage && (
                                                     <div key={index} className="w-fit">
                                                         {lead.layouts.length > 1 && <p className="font-semibold text-gray-500 mb-2">Layout {index + 1}</p>}
-                                                        <ImagePreview src={layout.layoutImage} alt={`Layout ${index + 1}`} popoverKey={`${lead.id}-layout-${index}`} />
+                                                        <ImagePreview src={layout.layoutImage} alt={`Layout ${index + 1}`} />
                                                     </div>
                                                 )
                                             ))}
@@ -1118,3 +1105,5 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
+    
