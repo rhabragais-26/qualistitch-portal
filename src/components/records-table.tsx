@@ -136,9 +136,9 @@ export function RecordsTable() {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ? 
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-        (lead.contactNumber && lead.contactNumber.toLowerCase().includes(lowercasedSearchTerm)) ||
         (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
-        (lead.landlineNumber && lead.landlineNumber.toLowerCase().includes(lowercasedSearchTerm)))
+        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
+        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
         : true;
       
       const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
@@ -1052,3 +1052,5 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
+    
