@@ -75,6 +75,8 @@ type Layout = {
   finalBackDesignEmbUploadTime?: string | null;
   finalLogoDst?: (string | null)[];
   finalLogoDstUploadTimes?: (string | null)[];
+  finalBackDesignDst?: string | null;
+  finalBackDesignDstUploadTime?: string | null;
   finalNamesDst?: (string | null)[];
   finalNamesDstUploadTimes?: (string | null)[];
   sequenceLogo?: (string | null)[];
@@ -1092,7 +1094,7 @@ export function DigitizingTable() {
                                 )}
                                  {(lead.layouts?.[0]?.testLogoLeftImage || lead.layouts?.[0]?.testLogoRightImage || lead.layouts?.[0]?.testBackLogoImage || lead.layouts?.[0]?.testBackDesignImage) && (
                                     <Card className="bg-white">
-                                        <CardHeader><CardTitle className="text-base">Test Images</CardTitle></CardHeader>
+                                        <CardHeader><CardTitle className="text-base">Tested Images</CardTitle></CardHeader>
                                         <CardContent className="flex flex-wrap gap-4 text-xs">
                                           {lead.layouts?.[0]?.testLogoLeftImage && (
                                             <div className="w-fit">
@@ -1190,4 +1192,3 @@ export function DigitizingTable() {
     
 
     
-
