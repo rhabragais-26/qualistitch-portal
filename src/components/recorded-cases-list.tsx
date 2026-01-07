@@ -65,15 +65,15 @@ export function RecordedCasesList() {
                     </div>
                     <div className="md:col-span-1 flex justify-center items-center">
                       {caseItem.image && (
-                        <TooltipProvider>
+                        <TooltipProvider delayDuration={100}>
                            <Tooltip>
                             <TooltipTrigger>
                                <div className="relative h-24 w-24 rounded-md overflow-hidden border">
                                 <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
                                </div>
                             </TooltipTrigger>
-                            <TooltipContent className="p-0 border-0">
-                               <div className="relative h-64 w-64">
+                            <TooltipContent className="p-0 border-0 bg-transparent shadow-2xl">
+                               <div className="relative h-96 w-96">
                                 <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="contain" />
                                </div>
                             </TooltipContent>
