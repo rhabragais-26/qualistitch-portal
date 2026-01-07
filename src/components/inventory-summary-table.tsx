@@ -153,6 +153,11 @@ export function InventorySummaryTable() {
             return productTypeComparison;
         }
 
+        const colorComparison = a.color.localeCompare(b.color);
+        if (colorComparison !== 0) {
+            return colorComparison;
+        }
+
         const sizeAIndex = sizeOrder.indexOf(a.size);
         const sizeBIndex = sizeOrder.indexOf(b.size);
 
