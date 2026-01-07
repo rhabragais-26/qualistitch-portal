@@ -519,11 +519,11 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-x-8">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-x-6">
 
               {/* Left Column */}
-              <div className="lg:col-span-3 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+              <div className="lg:col-span-3 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                   
                   <FormField control={form.control} name="customerName" render={({field}) => (
                     <FormItem className="relative">
@@ -580,13 +580,13 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   )}/>
                 </div>
 
-                <div className="border rounded-md p-3 relative mt-4">
+                <div className="border rounded-md p-3 relative mt-3">
                   <p className="absolute -top-3 left-4 bg-white px-2 text-xs font-medium text-gray-600">Location</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 pt-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 pt-1">
                     <FormField control={form.control} name="houseStreet" render={({field}) => (
                       <FormItem className="relative md:col-span-2">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
-                        <FormControl><Input {...field} className="h-9 text-xs w-[4in]" /></FormControl>
+                        <FormControl><Input {...field} className="h-9 text-xs w-[5in]" /></FormControl>
                         {addressSuggestions.field === 'houseStreet' && addressSuggestions.suggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                             <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -658,7 +658,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                   <FormField control={form.control} name="salesRepresentative" render={({field}) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2 text-black text-xs"><UserCheck className="h-4 w-4 text-primary" />CSR</FormLabel>
@@ -673,7 +673,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               </div>
 
               {/* Right Column */}
-              <div className="lg:col-span-2 space-y-4">
+              <div className="lg:col-span-2 space-y-3">
                  <FormField control={form.control} name="orderType" render={({field}) => (
                     <FormItem className="flex items-center gap-4">
                       <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
@@ -705,7 +705,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl><SelectTrigger className={cn("h-9 text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
-                        <SelectContent>{['Lalamove', 'J&T', 'In-house'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                        <SelectContent>{['Lalamove', 'J&T', 'In-house', 'Pick-up'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                       </Select>
                        <FormMessage />
                     </FormItem>
