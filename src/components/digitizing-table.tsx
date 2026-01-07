@@ -761,7 +761,7 @@ export function DigitizingTable() {
   }
 
   const ImagePreview = ({ src, alt }: { src: string; alt: string;}) => (
-    <div className="relative w-[200px] h-[150px] cursor-pointer" onClick={() => setImageInView(src)}>
+    <div className="relative w-full aspect-square cursor-pointer" onClick={() => setImageInView(src)}>
       <Image src={src} alt={alt} layout="fill" objectFit="contain" className="rounded-md border" />
     </div>
   );
@@ -955,6 +955,11 @@ export function DigitizingTable() {
                 <TableBody>
                 {filteredLeads.map((lead) => {
                   const deadlineInfo = calculateDigitizingDeadline(lead);
+                  const firstLayout = lead.layouts?.[0];
+                  const hasInitialImages = firstLayout?.logoLeftImage || firstLayout?.logoRightImage || firstLayout?.backLogoImage || firstLayout?.backDesignImage;
+                  const hasTestImages = firstLayout?.testLogoLeftImage || firstLayout?.testLogoRightImage || firstLayout?.testBackLogoImage || firstLayout?.testBackDesignImage;
+                  const hasFinalFiles = firstLayout?.finalLogoEmb?.some(f => f) || firstLayout?.finalBackDesignEmb?.some(f => f) || firstLayout?.finalLogoDst?.some(f => f) || firstLayout?.finalBackDesignDst?.some(f => f) || firstLayout?.finalNamesDst?.some(f => f) || firstLayout?.sequenceLogo?.some(f => f) || firstLayout?.sequenceBackDesign?.some(f => f);
+                  const hasLayoutImages = lead.layouts?.some(l => l.layoutImage);
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
@@ -1075,33 +1080,33 @@ export function DigitizingTable() {
                       <TableRow className="bg-gray-50">
                         <TableCell colSpan={13} className="p-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {(lead.layouts?.[0]?.logoLeftImage || lead.layouts?.[0]?.logoRightImage || lead.layouts?.[0]?.backLogoImage || lead.layouts?.[0]?.backDesignImage) && (
+                                {hasInitialImages && (
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Initial Program Images</CardTitle></CardHeader>
-                                        <CardContent className="flex flex-wrap gap-4 text-xs">
+                                        <CardContent className="grid grid-cols-2 gap-4 text-xs">
                                             {lead.layouts?.[0]?.logoLeftImage && (
-                                              <div className="w-fit"> 
+                                              <div> 
                                                 <p className="font-semibold text-gray-500 mb-2">Logo Left</p> 
                                                 <ImagePreview src={lead.layouts[0].logoLeftImage} alt="Initial Program Logo Left" />
                                                 {lead.layouts[0].logoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoLeftImageUploadTime).dateTime}</p>}
                                               </div>
                                             )}
                                             {lead.layouts?.[0]?.logoRightImage && (
-                                              <div className="w-fit">
+                                              <div>
                                                 <p className="font-semibold text-gray-500 mb-2">Logo Right</p>
                                                 <ImagePreview src={lead.layouts[0].logoRightImage} alt="Initial Program Logo Right" />
                                                 {lead.layouts[0].logoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoRightImageUploadTime).dateTime}</p>}
                                               </div>
                                             )}
                                             {lead.layouts?.[0]?.backLogoImage && (
-                                              <div className="w-fit">
+                                              <div>
                                                 <p className="font-semibold text-gray-500 mb-2">Back Logo</p>
                                                 <ImagePreview src={lead.layouts[0].backLogoImage} alt="Initial Program Back Logo" />
                                                 {lead.layouts[0].backLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backLogoImageUploadTime).dateTime}</p>}
                                               </div>
                                             )}
                                             {lead.layouts?.[0]?.backDesignImage && (
-                                              <div className="w-fit">
+                                              <div>
                                                 <p className="font-semibold text-gray-500 mb-2">Back Design</p>
                                                 <ImagePreview src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" />
                                                 {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}
@@ -1110,33 +1115,33 @@ export function DigitizingTable() {
                                         </CardContent>
                                     </Card>
                                 )}
-                                 {(lead.layouts?.[0]?.testLogoLeftImage || lead.layouts?.[0]?.testLogoRightImage || lead.layouts?.[0]?.testBackLogoImage || lead.layouts?.[0]?.testBackDesignImage) && (
+                                 {hasTestImages && (
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Tested Images</CardTitle></CardHeader>
-                                        <CardContent className="flex flex-wrap gap-4 text-xs">
+                                        <CardContent className="grid grid-cols-2 gap-4 text-xs">
                                           {lead.layouts?.[0]?.testLogoLeftImage && (
-                                            <div className="w-fit">
+                                            <div>
                                               <p className="font-semibold text-gray-500 mb-2">Logo Left</p>
                                               <ImagePreview src={lead.layouts[0].testLogoLeftImage} alt="Test Logo Left" />
                                               {lead.layouts[0].testLogoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoLeftImageUploadTime).dateTime}</p>}
                                             </div>
                                           )}
                                           {lead.layouts?.[0]?.testLogoRightImage && (
-                                            <div className="w-fit">
+                                            <div>
                                               <p className="font-semibold text-gray-500 mb-2">Logo Right</p>
                                               <ImagePreview src={lead.layouts[0].testLogoRightImage} alt="Test Logo Right" />
                                               {lead.layouts[0].testLogoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoRightImageUploadTime).dateTime}</p>}
                                             </div>
                                           )}
                                            {lead.layouts?.[0]?.testBackLogoImage && (
-                                            <div className="w-fit">
+                                            <div>
                                               <p className="font-semibold text-gray-500 mb-2">Back Logo</p>
                                               <ImagePreview src={lead.layouts[0].testBackLogoImage} alt="Test Back Logo" />
                                               {lead.layouts[0].testBackLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackLogoImageUploadTime).dateTime}</p>}
                                             </div>
                                           )}
                                           {lead.layouts?.[0]?.testBackDesignImage && (
-                                            <div className="w-fit">
+                                            <div>
                                               <p className="font-semibold text-gray-500 mb-2">Back Design</p>
                                               <ImagePreview src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" />
                                               {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}
@@ -1145,30 +1150,30 @@ export function DigitizingTable() {
                                         </CardContent>
                                     </Card>
                                  )}
-                                 {(lead.layouts?.[0]?.finalLogoEmb?.length || lead.layouts?.[0]?.finalBackDesignEmb || lead.layouts?.[0]?.finalLogoDst?.length || lead.layouts?.[0]?.finalBackDesignDst || lead.layouts?.[0]?.finalNamesDst?.length) && (
+                                 {hasFinalFiles && (
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Final Program Files</CardTitle></CardHeader>
                                         <CardContent className="grid grid-cols-2 gap-4 text-xs">
-                                          {lead.layouts?.[0]?.finalLogoEmb?.map((file, index) => file && (<div key={index} className="relative w-fit"><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>EMB File</p>{lead.layouts?.[0]?.finalLogoEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoEmbUploadTimes![index]!).dateTime}</p>}</div>))}
-                                          {lead.layouts?.[0]?.finalBackDesignEmb?.map((file, index) => file && <div key={index} className="relative w-fit"><p className="font-semibold text-gray-500 mb-2">Back (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>EMB File</p>{lead.layouts[0].finalBackDesignEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignEmbUploadTimes![index]!).dateTime}</p>}</div>)}
-                                          {lead.layouts?.[0]?.finalLogoDst?.map((file, index) => file && (<div key={index} className="relative w-fit"><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>{lead.layouts?.[0]?.finalLogoDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoDstUploadTimes![index]!).dateTime}</p>}</div>))}
-                                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, index) => file && <div key={index} className="relative w-fit"><p className="font-semibold text-gray-500 mb-2">Back (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>{lead.layouts[0].finalBackDesignDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignDstUploadTimes![index]!).dateTime}</p>}</div>)}
+                                          {lead.layouts?.[0]?.finalLogoEmb?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>EMB File</p>{lead.layouts?.[0]?.finalLogoEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoEmbUploadTimes![index]!).dateTime}</p>}</div>))}
+                                          {lead.layouts?.[0]?.finalBackDesignEmb?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>EMB File</p>{lead.layouts[0].finalBackDesignEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignEmbUploadTimes![index]!).dateTime}</p>}</div>)}
+                                          {lead.layouts?.[0]?.finalLogoDst?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>{lead.layouts?.[0]?.finalLogoDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoDstUploadTimes![index]!).dateTime}</p>}</div>))}
+                                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>{lead.layouts[0].finalBackDesignDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignDstUploadTimes![index]!).dateTime}</p>}</div>)}
                                           {lead.layouts?.[0]?.finalNamesDst?.map((file, index) => file && (
-                                            <div key={index} className="relative w-fit">
+                                            <div key={index}>
                                                 <p className="font-semibold text-gray-500 mb-2">Name {index + 1} (DST)</p>
                                                 <p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>
                                                 {lead.layouts?.[0]?.finalNamesDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalNamesDstUploadTimes![index]!).dateTime}</p>}
                                             </div>
                                           ))}
                                           {lead.layouts?.[0]?.sequenceLogo?.map((file, index) => file && (
-                                              <div key={index} className="w-fit">
+                                              <div key={index}>
                                                   <p className="font-semibold text-gray-500 mb-2">Sequence Logo {index + 1}</p>
                                                   <ImagePreview src={file} alt={`Sequence Logo ${index + 1}`} />
                                                   {Array.isArray(lead.layouts?.[0]?.sequenceLogoUploadTimes) && lead.layouts?.[0]?.sequenceLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceLogoUploadTimes![index]!).dateTime}</p>}
                                               </div>
                                           ))}
                                           {lead.layouts?.[0]?.sequenceBackDesign?.map((file, index) => file && (
-                                              <div key={index} className="w-fit">
+                                              <div key={index}>
                                                   <p className="font-semibold text-gray-500 mb-2">Sequence Back</p>
                                                   <ImagePreview src={file} alt="Sequence Back Design" />
                                                   {Array.isArray(lead.layouts?.[0]?.sequenceBackDesignUploadTimes) && lead.layouts?.[0]?.sequenceBackDesignUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceBackDesignUploadTimes![index]!).dateTime}</p>}
@@ -1177,13 +1182,13 @@ export function DigitizingTable() {
                                         </CardContent>
                                     </Card>
                                   )}
-                                {lead.layouts && lead.layouts.length > 0 && (
+                                {hasLayoutImages && (
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Layout Designs</CardTitle></CardHeader>
-                                        <CardContent className="flex flex-wrap gap-4 text-xs">
-                                            {lead.layouts.map((layout, index) => (
+                                        <CardContent className="grid grid-cols-2 gap-4 text-xs">
+                                            {lead.layouts?.map((layout, index) => (
                                                 layout.layoutImage && (
-                                                    <div key={index} className="w-fit">
+                                                    <div key={index}>
                                                         {lead.layouts.length > 1 && <p className="font-semibold text-gray-500 mb-2">Layout {index + 1}</p>}
                                                         <ImagePreview src={layout.layoutImage} alt={`Layout ${index + 1}`} />
                                                     </div>
@@ -1206,8 +1211,3 @@ export function DigitizingTable() {
     </Card>
   );
 }
-
-    
-
-    
-
