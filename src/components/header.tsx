@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -224,7 +225,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
             )}
             <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className="text-neutral-100 hover:bg-accent hover:text-white">
               <ListOrdered className="mr-2" />
-              Order Status
+              Overall Order Status
             </Button>
           </nav>
            <div className="flex items-center gap-4 ml-auto">
@@ -254,7 +255,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
         </div>
       </header>
       
-      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 pt-4 overflow-hidden">
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 overflow-hidden pt-4">
         {children}
       </main>
 
@@ -356,3 +357,5 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
     </>
   );
 }
+
+    
