@@ -157,23 +157,10 @@ export function RecordsTable() {
   };
 
   useEffect(() => {
-    if (searchTerm) {
-      const lowercasedSearchTerm = searchTerm.toLowerCase();
-      const searchWithoutHyphens = lowercasedSearchTerm.replace(/-/g, '');
-      const leadWithMatchingDetails = filteredLeads.find(lead => {
-        const matchesCompany = lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm);
-        const matchesContact = lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchWithoutHyphens);
-        const matchesLandline = lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchWithoutHyphens);
-        return matchesCompany || matchesContact || matchesLandline;
-      });
-
-      if (leadWithMatchingDetails) {
-        setOpenCustomerDetails(leadWithMatchingDetails.id);
-      }
-    } else {
+    if (!searchTerm) {
         setOpenCustomerDetails(null);
     }
-  }, [searchTerm, filteredLeads]);
+  }, [searchTerm]);
 
 
   const handleOpenAddOrderDialog = (leadId: string) => {
