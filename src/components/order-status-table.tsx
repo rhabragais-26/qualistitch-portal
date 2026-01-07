@@ -132,33 +132,31 @@ export function OrderStatusTable() {
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto">
         {isLoading && (
-          <div className="space-y-2">
+          <div className="space-y-2 p-4">
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-16 w-full bg-gray-200" />
             ))}
           </div>
         )}
         {error && (
-          <div className="text-red-500">
+          <div className="text-red-500 p-4">
             Error loading records: {error.message}
           </div>
         )}
         {!isLoading && !error && (
            <div className="border rounded-md relative h-full">
-            <Table>
+            <ScrollArea className="h-full">
+              <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white font-bold">Customer Name</TableHead>
-                    <TableHead className="text-white font-bold">Mobile No.</TableHead>
-                    <TableHead className="text-white font-bold">Landline No.</TableHead>
-                    <TableHead className="text-center text-white font-bold">Days Remaining/Overdue</TableHead>
-                    <TableHead className="text-center text-white font-bold">Programming Status</TableHead>
-                    <TableHead className="text-center text-white font-bold">Ordered Items</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Days Remaining/Overdue</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Programming Status</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Ordered Items</TableHead>
                   </TableRow>
                 </TableHeader>
-            </Table>
-            <ScrollArea className="h-[calc(100%-53px)]">
-              <Table>
                 <TableBody>
                 {filteredLeads.map((lead) => {
                   const deadlineInfo = calculateDeadline(lead);
