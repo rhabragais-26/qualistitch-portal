@@ -85,13 +85,13 @@ export function OrderStatusTable() {
   };
 
   const getProgrammingStatus = (lead: Lead) => {
-    if (lead.isFinalProgram) return { text: "Final Program", variant: "success" as const };
-    if (lead.isFinalApproval) return { text: "Final Approval", variant: "success" as const };
-    if (lead.isRevision) return { text: "Revision", variant: "destructive" as const };
-    if (lead.isLogoTesting) return { text: "Test", variant: "warning" as const };
-    if (lead.isInitialApproval) return { text: "Initial Approval", variant: "default" as const };
-    if (lead.isUnderProgramming) return { text: "Initial Program", variant: "default" as const };
-    if (lead.joNumber) return { text: "Pending Digitizing", variant: "secondary" as const };
+    if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
+    if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const };
+    if (lead.isRevision) return { text: "Under Revision", variant: "destructive" as const };
+    if (lead.isLogoTesting) return { text: "Done Test", variant: "warning" as const };
+    if (lead.isInitialApproval) return { text: "Initial Program Approved", variant: "default" as const };
+    if (lead.isUnderProgramming) return { text: "Done Initial Program", variant: "default" as const };
+    if (lead.joNumber) return { text: "Pending Initial Program", variant: "secondary" as const };
     return { text: "Pending J.O.", variant: "secondary" as const };
   };
 
@@ -148,12 +148,12 @@ export function OrderStatusTable() {
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white font-bold">Customer Name</TableHead>
-                    <TableHead className="text-white font-bold">Mobile No.</TableHead>
-                    <TableHead className="text-white font-bold">Landline No.</TableHead>
-                    <TableHead className="text-center text-white font-bold">Days Remaining/Overdue</TableHead>
-                    <TableHead className="text-center text-white font-bold">Programming Status</TableHead>
-                    <TableHead className="text-center text-white font-bold">Ordered Items</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Days Remaining/Overdue</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Programming Status</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Ordered Items</TableHead>
                   </TableRow>
                 </TableHeader>
             </Table>
