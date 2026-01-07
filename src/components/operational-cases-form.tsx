@@ -60,6 +60,7 @@ export function OperationalCasesForm() {
   const imageUploadRef = useRef<HTMLInputElement>(null);
   const [joInput, setJoInput] = useState('');
   const [foundLead, setFoundLead] = useState<Lead | null>(null);
+  const [joSuggestions, setJoSuggestions] = useState<Lead[]>([]);
 
   const leadsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'leads')) : null),
@@ -80,37 +81,40 @@ export function OperationalCasesForm() {
   const { control, handleSubmit, reset, setValue, watch, trigger } = form;
   const imageValue = watch('image');
 
+  const formatJoNumber = (joNumber: number) => {
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+  };
+
   useEffect(() => {
     if (!leads || !joInput) {
-      setFoundLead(null);
-      setValue('joNumber', '');
+      setJoSuggestions([]);
       return;
     }
 
-    const searchInput = joInput.toLowerCase().replace(/[^0-9]/g, '').slice(-5);
+    const searchInput = joInput.toLowerCase().replace(/[^0-9]/g, '');
     
     if(searchInput.length > 0) {
-        const matchedLead = leads.find(lead => 
+        const matchedLeads = leads.filter(lead => 
             lead.joNumber && 
-            lead.joNumber.toString().padStart(5, '0').endsWith(searchInput)
+            (lead.joNumber.toString().padStart(5, '0').includes(searchInput) ||
+             formatJoNumber(lead.joNumber).toLowerCase().includes(joInput.toLowerCase()))
         );
-        
-        if (matchedLead) {
-            setFoundLead(matchedLead);
-            const currentYear = new Date().getFullYear().toString().slice(-2);
-            const fullJoNumber = `QSBP-${currentYear}-${matchedLead.joNumber!.toString().padStart(5, '0')}`;
-            setValue('joNumber', fullJoNumber, { shouldValidate: true });
-        } else {
-            setFoundLead(null);
-            setValue('joNumber', '');
-        }
+        setJoSuggestions(matchedLeads);
     } else {
-        setFoundLead(null);
-        setValue('joNumber', '');
+        setJoSuggestions([]);
     }
 
-  }, [joInput, leads, setValue]);
+  }, [joInput, leads]);
   
+  const handleSuggestionClick = (lead: Lead) => {
+    setFoundLead(lead);
+    const fullJoNumber = formatJoNumber(lead.joNumber!);
+    setJoInput(fullJoNumber);
+    setValue('joNumber', fullJoNumber, { shouldValidate: true });
+    setJoSuggestions([]);
+  };
+
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -154,6 +158,7 @@ export function OperationalCasesForm() {
     reset();
     setJoInput('');
     setFoundLead(null);
+    setJoSuggestions([]);
     if(imageUploadRef.current) {
         imageUploadRef.current.value = '';
     }
@@ -217,17 +222,37 @@ export function OperationalCasesForm() {
                     control={control}
                     name="joNumber"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="relative">
                         <FormLabel className="flex items-center gap-2 text-black">
                             <Hash className="h-4 w-4 text-primary" /> J.O. Number
                         </FormLabel>
                         <FormControl>
                             <Input
-                                placeholder="Search by last 5 digits of J.O. number"
+                                placeholder="Search J.O. number..."
                                 value={joInput}
-                                onChange={(e) => setJoInput(e.target.value)}
+                                onChange={(e) => {
+                                    setJoInput(e.target.value);
+                                    if(foundLead) setFoundLead(null);
+                                    setValue('joNumber', '');
+                                }}
+                                autoComplete='off'
                             />
                         </FormControl>
+                        {joSuggestions.length > 0 && (
+                            <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                                <CardContent className="p-2 max-h-60 overflow-y-auto">
+                                {joSuggestions.map((lead) => (
+                                    <div
+                                        key={lead.id}
+                                        className="p-2 cursor-pointer hover:bg-gray-100"
+                                        onClick={() => handleSuggestionClick(lead)}
+                                    >
+                                    {formatJoNumber(lead.joNumber!)} - {lead.customerName}
+                                    </div>
+                                ))}
+                                </CardContent>
+                            </Card>
+                        )}
                         <FormMessage />
                         </FormItem>
                     )}
