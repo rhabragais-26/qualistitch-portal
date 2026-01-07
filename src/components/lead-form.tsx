@@ -295,21 +295,22 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
 
   useEffect(() => {
     if (barangayValue && cityValue && provinceValue) {
-      const selectedCity = citiesAndMunicipalities.find(
-        c => c.name.toLowerCase() === cityValue.toLowerCase() && c.province.toLowerCase() === provinceValue.toLowerCase()
-      );
-      if (selectedCity) {
-        const filteredBarangays = selectedCity.barangays.filter(b =>
-          b.toLowerCase().includes(barangayValue.toLowerCase())
-        ).slice(0,10);
-        setBarangaySuggestions(filteredBarangays);
-      } else {
-        setBarangaySuggestions([]);
-      }
+        const selectedCity = citiesAndMunicipalities.find(
+            c => c.name.toLowerCase() === cityValue.toLowerCase() && c.province.toLowerCase() === provinceValue.toLowerCase()
+        );
+        if (selectedCity && selectedCity.barangays) {
+            const filteredBarangays = selectedCity.barangays
+                .filter(b => b.toLowerCase().includes(barangayValue.toLowerCase()))
+                .slice(0, 10);
+            setBarangaySuggestions(filteredBarangays);
+        } else {
+            setBarangaySuggestions([]);
+        }
     } else {
-      setBarangaySuggestions([]);
+        setBarangaySuggestions([]);
     }
-  }, [barangayValue, cityValue, provinceValue, citiesAndMunicipalities]);
+}, [barangayValue, cityValue, provinceValue, citiesAndMunicipalities]);
+
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -728,16 +729,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormMessage />
                         </FormItem>
                     )}/>
-                    <FormField control={form.control} name="courier" render={({field}) => (
-                      <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value || ''}>
-                          <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
-                          <SelectContent>{['Lalamove', 'J&T', 'In-house', 'Pick-up'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
-                          </Select>
-                          <FormMessage />
-                      </FormItem>
-                    )}/>
                     <FormField
                     control={form.control}
                     name="priorityType"
@@ -765,6 +756,16 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         </FormItem>
                     )}
                     />
+                    <FormField control={form.control} name="courier" render={({field}) => (
+                      <FormItem>
+                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ''}>
+                          <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
+                          <SelectContent>{['Lalamove', 'J&T', 'In-house', 'Pick-up'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                    )}/>
                 </div>
 
                 <div className="pt-2">
