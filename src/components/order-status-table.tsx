@@ -88,7 +88,7 @@ export function OrderStatusTable() {
     if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
     if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const };
     if (lead.isRevision) return { text: "Under Revision", variant: "destructive" as const };
-    if (lead.isLogoTesting) return { text: "Done Test", variant: "warning" as const };
+    if (lead.isLogoTesting) return { text: "Done Testing", variant: "warning" as const };
     if (lead.isInitialApproval) return { text: "Initial Program Approved", variant: "default" as const };
     if (lead.isUnderProgramming) return { text: "Done Initial Program", variant: "default" as const };
     if (lead.joNumber) return { text: "Pending Initial Program", variant: "secondary" as const };
@@ -224,3 +224,5 @@ export function OrderStatusTable() {
     </Card>
   );
 }
+
+    
