@@ -74,7 +74,7 @@ type Layout = {
   finalNamesDst?: (string | null)[];
   finalNamesDstUploadTimes?: (string | null)[];
   sequenceLogo?: (string | null)[];
-  sequenceLogoUploadTimes?: string | null;
+  sequenceLogoUploadTimes?: (string | null)[];
   sequenceBackDesign?: string | null;
   sequenceBackDesignUploadTime?: string | null;
 };
@@ -97,6 +97,12 @@ type Lead = {
   isFinalProgram?: boolean;
   isDigitizingArchived?: boolean;
   layouts?: Layout[];
+  underProgrammingTimestamp?: string;
+  initialApprovalTimestamp?: string;
+  logoTestingTimestamp?: string;
+  revisionTimestamp?: string;
+  finalApprovalTimestamp?: string;
+  finalProgramTimestamp?: string;
 }
 
 type CheckboxField = keyof Pick<Lead, 'isUnderProgramming' | 'isInitialApproval' | 'isLogoTesting' | 'isRevision' | 'isFinalApproval' | 'isFinalProgram'>;
@@ -248,7 +254,7 @@ export function DigitizingTable() {
       
        const newSequenceLogoUploadTimes = sequenceLogo.map((file, index) => {
         const existingFile = existingLayout.sequenceLogo?.[index];
-        const existingTime = existingLayout.sequenceLogoUploadTimes?.[index];
+        const existingTime = Array.isArray(existingLayout.sequenceLogoUploadTimes) ? existingLayout.sequenceLogoUploadTimes[index] : null;
         return file && file === existingFile ? existingTime : (file ? now : null);
       });
 
@@ -317,10 +323,14 @@ export function DigitizingTable() {
   const updateStatus = async (leadId: string, field: CheckboxField, value: boolean, showToast: boolean = true) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
+    const now = new Date().toISOString();
+
+    const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
     
     const updateData: { [key: string]: any } = { 
         [field]: value,
-        lastModified: new Date().toISOString(),
+        [timestampField]: value ? now : null,
+        lastModified: now,
     };
 
     if (!value) {
@@ -331,6 +341,8 @@ export function DigitizingTable() {
                 const nextField = sequence[i];
                 if (nextField) {
                   updateData[nextField] = false;
+                  const nextTimestampField = `${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
+                  updateData[nextTimestampField] = null;
                 }
             }
         }
@@ -338,6 +350,7 @@ export function DigitizingTable() {
     
     if (field === 'isFinalApproval' && value) {
         updateData['isRevision'] = false;
+        updateData['revisionTimestamp'] = null;
     }
 
     try {
@@ -531,7 +544,7 @@ export function DigitizingTable() {
       ...(layout.finalLogoDst || []).map((file, i) => ({ label: `Final Program: Logo ${i + 1} (DST)`, uploaded: !!file, fileInfo: '.dst', timestamp: layout.finalLogoDstUploadTimes?.[i] })),
       { label: "Final Program: Back Design (DST)", uploaded: !!layout.finalBackDesignDst, fileInfo: '.dst', timestamp: layout.finalBackDesignDstUploadTime },
       ...(layout.finalNamesDst || []).map((file, i) => ({ label: `Final Program: Name ${i + 1} (DST)`, uploaded: !!file, fileInfo: '.dst', timestamp: layout.finalNamesDstUploadTimes?.[i] })),
-      ...(layout.sequenceLogo || []).map((file, i) => ({ label: `Sequence: Logo ${i + 1}`, uploaded: !!file, fileInfo: 'Image', timestamp: layout.sequenceLogoUploadTimes?.[i] })),
+      ...(layout.sequenceLogo || []).map((file, i) => ({ label: `Sequence: Logo ${i + 1}`, uploaded: !!file, fileInfo: 'Image', timestamp: Array.isArray(layout.sequenceLogoUploadTimes) ? layout.sequenceLogoUploadTimes[i] : null })),
       { label: "Sequence: Back Design", uploaded: !!layout.sequenceBackDesign, fileInfo: 'Image', timestamp: layout.sequenceBackDesignUploadTime },
     ].filter(item => item.uploaded);
   }, [archiveConfirmLead]);
@@ -919,6 +932,7 @@ export function DigitizingTable() {
                             checked={lead.isUnderProgramming || false}
                             onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isUnderProgramming', !!checked)}
                           />
+                          {lead.underProgrammingTimestamp && <div className="text-[10px] text-gray-500 mt-1">{formatDateTime(lead.underProgrammingTimestamp).dateTimeShort}</div>}
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
@@ -926,6 +940,7 @@ export function DigitizingTable() {
                             onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isInitialApproval', !!checked)}
                             disabled={!lead.isUnderProgramming}
                           />
+                          {lead.initialApprovalTimestamp && <div className="text-[10px] text-gray-500 mt-1">{formatDateTime(lead.initialApprovalTimestamp).dateTimeShort}</div>}
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
@@ -933,6 +948,7 @@ export function DigitizingTable() {
                             onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isLogoTesting', !!checked)}
                              disabled={!lead.isInitialApproval}
                           />
+                          {lead.logoTestingTimestamp && <div className="text-[10px] text-gray-500 mt-1">{formatDateTime(lead.logoTestingTimestamp).dateTimeShort}</div>}
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
@@ -940,6 +956,7 @@ export function DigitizingTable() {
                             onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isRevision', !!checked)}
                             disabled={!lead.isLogoTesting || lead.isFinalApproval}
                           />
+                          {lead.revisionTimestamp && <div className="text-[10px] text-gray-500 mt-1">{formatDateTime(lead.revisionTimestamp).dateTimeShort}</div>}
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
@@ -947,6 +964,7 @@ export function DigitizingTable() {
                             onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isFinalApproval', !!checked)}
                             disabled={!lead.isLogoTesting}
                           />
+                           {lead.finalApprovalTimestamp && <div className="text-[10px] text-gray-500 mt-1">{formatDateTime(lead.finalApprovalTimestamp).dateTimeShort}</div>}
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Checkbox
@@ -954,6 +972,7 @@ export function DigitizingTable() {
                             onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isFinalProgram', !!checked)}
                             disabled={!lead.isFinalApproval}
                           />
+                          {lead.finalProgramTimestamp && <div className="text-[10px] text-gray-500 mt-1">{formatDateTime(lead.finalProgramTimestamp).dateTimeShort}</div>}
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Button
@@ -1063,7 +1082,7 @@ export function DigitizingTable() {
                                               <div key={index} className="w-fit">
                                                   <p className="font-semibold text-gray-500 mb-2">Sequence Logo {index + 1}</p>
                                                   <ImagePreview src={file} alt={`Sequence Logo ${index + 1}`} />
-                                                  {lead.layouts?.[0]?.sequenceLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceLogoUploadTimes![index]!).dateTime}</p>}
+                                                  {Array.isArray(lead.layouts?.[0]?.sequenceLogoUploadTimes) && lead.layouts?.[0]?.sequenceLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceLogoUploadTimes![index]!).dateTime}</p>}
                                               </div>
                                           ))}
                                           {lead.layouts?.[0]?.sequenceBackDesign && (
@@ -1105,5 +1124,7 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
+    
 
     
