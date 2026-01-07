@@ -132,7 +132,7 @@ export function InventoryReportTable() {
               <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white font-bold align-middle min-w-[150px]">Color</TableHead>
+                    <TableHead className="text-white font-bold align-middle w-auto">Color</TableHead>
                     {reportData.headers.map(size => (
                       <TableHead key={size} className="text-white font-bold align-middle text-center">{size}</TableHead>
                     ))}
@@ -166,5 +166,3 @@ export function InventoryReportTable() {
     </Card>
   );
 }
-
-    
