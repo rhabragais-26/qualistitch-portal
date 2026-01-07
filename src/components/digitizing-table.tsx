@@ -1085,28 +1085,28 @@ export function DigitizingTable() {
                                         <CardHeader><CardTitle className="text-base">Initial Program Images</CardTitle></CardHeader>
                                         <CardContent className="grid grid-cols-2 gap-4 text-xs">
                                             {lead.layouts?.[0]?.logoLeftImage && (
-                                              <div> 
+                                              <div className="w-auto"> 
                                                 <p className="font-semibold text-gray-500 mb-2">Logo Left</p> 
                                                 <ImagePreview src={lead.layouts[0].logoLeftImage} alt="Initial Program Logo Left" />
                                                 {lead.layouts[0].logoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoLeftImageUploadTime).dateTime}</p>}
                                               </div>
                                             )}
                                             {lead.layouts?.[0]?.logoRightImage && (
-                                              <div>
+                                              <div className="w-auto">
                                                 <p className="font-semibold text-gray-500 mb-2">Logo Right</p>
                                                 <ImagePreview src={lead.layouts[0].logoRightImage} alt="Initial Program Logo Right" />
                                                 {lead.layouts[0].logoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoRightImageUploadTime).dateTime}</p>}
                                               </div>
                                             )}
                                             {lead.layouts?.[0]?.backLogoImage && (
-                                              <div>
+                                              <div className="w-auto">
                                                 <p className="font-semibold text-gray-500 mb-2">Back Logo</p>
                                                 <ImagePreview src={lead.layouts[0].backLogoImage} alt="Initial Program Back Logo" />
                                                 {lead.layouts[0].backLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backLogoImageUploadTime).dateTime}</p>}
                                               </div>
                                             )}
                                             {lead.layouts?.[0]?.backDesignImage && (
-                                              <div>
+                                              <div className="w-auto">
                                                 <p className="font-semibold text-gray-500 mb-2">Back Design</p>
                                                 <ImagePreview src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" />
                                                 {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}
@@ -1120,28 +1120,28 @@ export function DigitizingTable() {
                                         <CardHeader><CardTitle className="text-base">Tested Images</CardTitle></CardHeader>
                                         <CardContent className="grid grid-cols-2 gap-4 text-xs">
                                           {lead.layouts?.[0]?.testLogoLeftImage && (
-                                            <div>
+                                            <div className="w-auto">
                                               <p className="font-semibold text-gray-500 mb-2">Logo Left</p>
                                               <ImagePreview src={lead.layouts[0].testLogoLeftImage} alt="Test Logo Left" />
                                               {lead.layouts[0].testLogoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoLeftImageUploadTime).dateTime}</p>}
                                             </div>
                                           )}
                                           {lead.layouts?.[0]?.testLogoRightImage && (
-                                            <div>
+                                            <div className="w-auto">
                                               <p className="font-semibold text-gray-500 mb-2">Logo Right</p>
                                               <ImagePreview src={lead.layouts[0].testLogoRightImage} alt="Test Logo Right" />
                                               {lead.layouts[0].testLogoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoRightImageUploadTime).dateTime}</p>}
                                             </div>
                                           )}
                                            {lead.layouts?.[0]?.testBackLogoImage && (
-                                            <div>
+                                            <div className="w-auto">
                                               <p className="font-semibold text-gray-500 mb-2">Back Logo</p>
                                               <ImagePreview src={lead.layouts[0].testBackLogoImage} alt="Test Back Logo" />
                                               {lead.layouts[0].testBackLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackLogoImageUploadTime).dateTime}</p>}
                                             </div>
                                           )}
                                           {lead.layouts?.[0]?.testBackDesignImage && (
-                                            <div>
+                                            <div className="w-auto">
                                               <p className="font-semibold text-gray-500 mb-2">Back Design</p>
                                               <ImagePreview src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" />
                                               {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}
