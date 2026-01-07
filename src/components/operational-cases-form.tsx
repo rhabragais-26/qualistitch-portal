@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
@@ -22,16 +22,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TriangleAlert, Upload, Trash2 } from 'lucide-react';
+import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { useFirestore } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Skeleton } from './ui/skeleton';
+
+type Lead = {
+  id: string;
+  joNumber?: number;
+  customerName: string;
+  companyName?: string;
+  contactNumber: string;
+  landlineNumber?: string;
+};
 
 const formSchema = z.object({
+  joNumber: z.string().min(1, { message: 'J.O. Number is required.' }),
   caseType: z.enum(['Return to Sender (RTS)', 'Quality Errors', 'Replacement'], {
     required_error: 'You need to select a case type.',
   }),
@@ -45,18 +57,59 @@ export function OperationalCasesForm() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const imageUploadRef = useRef<HTMLInputElement>(null);
+  const [joInput, setJoInput] = useState('');
+  const [foundLead, setFoundLead] = useState<Lead | null>(null);
+
+  const leadsQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'leads')) : null),
+    [firestore]
+  );
+  const { data: leads, isLoading: areLeadsLoading } = useCollection<Lead>(leadsQuery);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      joNumber: '',
       caseType: undefined,
       remarks: '',
       image: '',
     },
   });
   
-  const { control, handleSubmit, reset, setValue, watch } = form;
+  const { control, handleSubmit, reset, setValue, watch, trigger } = form;
   const imageValue = watch('image');
+
+  useEffect(() => {
+    if (!leads || !joInput) {
+      setFoundLead(null);
+      setValue('joNumber', '');
+      return;
+    }
+
+    const searchInput = joInput.toLowerCase().replace(/[^0-9]/g, '').slice(-5);
+    
+    if(searchInput.length > 0) {
+        const matchedLead = leads.find(lead => 
+            lead.joNumber && 
+            lead.joNumber.toString().padStart(5, '0').endsWith(searchInput)
+        );
+        
+        if (matchedLead) {
+            setFoundLead(matchedLead);
+            const currentYear = new Date().getFullYear().toString().slice(-2);
+            const fullJoNumber = `QSBP-${currentYear}-${matchedLead.joNumber!.toString().padStart(5, '0')}`;
+            setValue('joNumber', fullJoNumber, { shouldValidate: true });
+        } else {
+            setFoundLead(null);
+            setValue('joNumber', '');
+        }
+    } else {
+        setFoundLead(null);
+        setValue('joNumber', '');
+    }
+
+  }, [joInput, leads, setValue]);
+  
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -95,6 +148,15 @@ export function OperationalCasesForm() {
         imageUploadRef.current.value = '';
     }
   };
+  
+  const handleFormReset = () => {
+    reset();
+    setJoInput('');
+    setFoundLead(null);
+    if(imageUploadRef.current) {
+        imageUploadRef.current.value = '';
+    }
+  };
 
   function onSubmit(values: FormValues) {
     if (!firestore) {
@@ -112,6 +174,10 @@ export function OperationalCasesForm() {
     const submissionData = {
         id: caseId,
         ...values,
+        customerName: foundLead?.customerName,
+        companyName: foundLead?.companyName,
+        contactNumber: foundLead?.contactNumber,
+        landlineNumber: foundLead?.landlineNumber,
         submissionDateTime: new Date().toISOString(),
     };
 
@@ -119,14 +185,20 @@ export function OperationalCasesForm() {
     
     toast({
       title: 'Case Recorded!',
-      description: `The ${values.caseType} case has been successfully recorded.`,
+      description: `The ${values.caseType} case for J.O. ${values.joNumber} has been successfully recorded.`,
     });
     
-    reset();
-    if(imageUploadRef.current) {
-        imageUploadRef.current.value = '';
-    }
+    handleFormReset();
   }
+  
+  const getContactDisplay = () => {
+    if (!foundLead) return '';
+    const mobile = foundLead.contactNumber && foundLead.contactNumber !== '-' ? foundLead.contactNumber.replace(/-/g, '') : null;
+    const landline = foundLead.landlineNumber && foundLead.landlineNumber !== '-' ? foundLead.landlineNumber.replace(/-/g, '') : null;
+    if (mobile && landline) return `${mobile} / ${landline}`;
+    return mobile || landline || '';
+  };
+
 
   return (
     <Card className="w-full max-w-2xl shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
@@ -139,30 +211,81 @@ export function OperationalCasesForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-            <FormField
-              control={control}
-              name="caseType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2 text-black">
-                    <TriangleAlert className="h-4 w-4 text-primary" /> Case Type
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a Case Type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Return to Sender (RTS)">Return to Sender (RTS)</SelectItem>
-                      <SelectItem value="Quality Errors">Quality Errors</SelectItem>
-                      <SelectItem value="Replacement">Replacement</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <FormField
+                    control={control}
+                    name="joNumber"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel className="flex items-center gap-2 text-black">
+                            <Hash className="h-4 w-4 text-primary" /> J.O. Number
+                        </FormLabel>
+                        <FormControl>
+                            <Input
+                                placeholder="Search by last 5 digits of J.O. number"
+                                value={joInput}
+                                onChange={(e) => setJoInput(e.target.value)}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                 />
+
+                <FormField
+                  control={control}
+                  name="caseType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black">
+                        <TriangleAlert className="h-4 w-4 text-primary" /> Case Type
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a Case Type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Return to Sender (RTS)">Return to Sender (RTS)</SelectItem>
+                          <SelectItem value="Quality Errors">Quality Errors</SelectItem>
+                          <SelectItem value="Replacement">Replacement</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+            
+            {areLeadsLoading && joInput && (
+                 <div className="space-y-2">
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+            )}
+
+            {foundLead && (
+                 <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div className='flex items-center gap-2'>
+                           <User className="h-4 w-4 text-gray-500" />
+                           <span className="font-medium text-gray-600">Customer:</span>
+                           <span className="text-black">{foundLead.customerName}</span>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                           <Building className="h-4 w-4 text-gray-500" />
+                           <span className="font-medium text-gray-600">Company:</span>
+                           <span className="text-black">{foundLead.companyName && foundLead.companyName !== '-' ? foundLead.companyName : 'N/A'}</span>
+                        </div>
+                         <div className='col-span-2 flex items-center gap-2'>
+                           <Phone className="h-4 w-4 text-gray-500" />
+                           <span className="font-medium text-gray-600">Contact:</span>
+                           <span className="text-black">{getContactDisplay() || 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <FormField
               control={control}
@@ -228,12 +351,8 @@ export function OperationalCasesForm() {
                 )}
             />
 
-
             <div className="flex justify-end gap-4">
-              <Button type="button" variant="outline" size="lg" onClick={() => {
-                reset();
-                if(imageUploadRef.current) imageUploadRef.current.value = '';
-              }}>
+              <Button type="button" variant="outline" size="lg" onClick={handleFormReset}>
                 Reset
               </Button>
               <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
@@ -246,3 +365,5 @@ export function OperationalCasesForm() {
     </Card>
   );
 }
+
+    
