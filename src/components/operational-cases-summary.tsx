@@ -30,7 +30,7 @@ const COLORS = {
 };
 
 const CasePieChart = ({ data, title }: { data: { name: string; quantity: number; fill: string }[], title: string }) => (
-    <div className="w-full h-[300px]">
+    <div className="w-full h-[250px]">
         <h3 className="text-center font-semibold text-lg mb-2">{title}</h3>
         <ChartContainer config={chartConfig} className="w-full h-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -112,15 +112,16 @@ export function OperationalCasesSummary() {
       <CardContent className="flex flex-col items-center justify-start gap-8">
         {isLoading ? (
           <div className="w-full space-y-8">
-            <Skeleton className="h-[300px] w-full bg-gray-200" />
-            <Skeleton className="h-[300px] w-full bg-gray-200" />
+            <Skeleton className="h-[250px] w-full bg-gray-200" />
+            <Skeleton className="h-4 w-full bg-gray-200" />
+            <Skeleton className="h-[250px] w-full bg-gray-200" />
           </div>
         ) : error ? (
           <div className="text-red-500 p-4">Error loading data: {error.message}</div>
         ) : (
           <>
             <CasePieChart data={openCasesData} title="Open Cases" />
-            <Separator className="my-4" />
+            <Separator className="my-2" />
             <CasePieChart data={resolvedCasesData} title="Resolved Cases" />
           </>
         )}
