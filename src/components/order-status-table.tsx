@@ -237,6 +237,7 @@ export function OrderStatusTable() {
                   <TableRow>
                     <TableHead className="text-white font-bold align-middle">Customer</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Ordered Items</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Priority</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Days Remaining/Overdue</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Programming Status</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Item Preparation</TableHead>
@@ -270,6 +271,11 @@ export function OrderStatusTable() {
                             View
                             {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
                           </Button>
+                        </TableCell>
+                        <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                                {lead.priorityType}
+                            </Badge>
                         </TableCell>
                         <TableCell className={cn(
                           "text-center text-xs align-middle py-2 font-medium",
