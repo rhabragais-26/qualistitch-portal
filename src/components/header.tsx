@@ -13,6 +13,7 @@ import {
   Boxes,
   TriangleAlert,
   Package,
+  Factory,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -163,6 +164,23 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                    <DropdownMenuItem onClick={() => handleNavigation('/inventory/operational-cases')}>
                     <TriangleAlert className="mr-2" />
                     Operational Cases
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            {isClient && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                   <Button variant="ghost" className="text-neutral-100 hover:bg-accent hover:text-white">
+                      <Factory className="mr-2" />
+                      Production
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleNavigation('/production/production-queue')}>
+                    <ClipboardList className="mr-2" />
+                    Production Queue
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
