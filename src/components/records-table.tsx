@@ -422,19 +422,19 @@ export function RecordsTable() {
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white">Date &amp; Time</TableHead>
-                    <TableHead className="text-white">Last Modified</TableHead>
-                    <TableHead className="text-white">Customer Name</TableHead>
-                    <TableHead className="text-white">Company Name</TableHead>
-                    <TableHead className="text-white">Mobile No.</TableHead>
-                    <TableHead className="text-white">Landline No.</TableHead>
-                    <TableHead className="text-white">CSR</TableHead>
-                    <TableHead className="text-white">Priority</TableHead>
-                    <TableHead className="text-white">Payment</TableHead>
-                    <TableHead className="text-white">Order Type</TableHead>
-                    <TableHead className="text-white">Courier</TableHead>
-                    <TableHead className="text-center text-white">Items</TableHead>
-                    <TableHead className="text-center text-white">Actions</TableHead>
+                    <TableHead className="text-white align-middle">Date &amp; Time</TableHead>
+                    <TableHead className="text-white align-middle">Last Modified</TableHead>
+                    <TableHead className="text-white align-middle">Customer Name</TableHead>
+                    <TableHead className="text-white align-middle">Company Name</TableHead>
+                    <TableHead className="text-white align-middle">Mobile No.</TableHead>
+                    <TableHead className="text-white align-middle">Landline No.</TableHead>
+                    <TableHead className="text-white align-middle">CSR</TableHead>
+                    <TableHead className="text-white align-middle">Priority</TableHead>
+                    <TableHead className="text-white align-middle">Payment</TableHead>
+                    <TableHead className="text-white align-middle">Order Type</TableHead>
+                    <TableHead className="text-white align-middle">Courier</TableHead>
+                    <TableHead className="text-center text-white align-middle">Items</TableHead>
+                    <TableHead className="text-center text-white align-middle">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
             </Table>
@@ -1027,3 +1027,5 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
+    

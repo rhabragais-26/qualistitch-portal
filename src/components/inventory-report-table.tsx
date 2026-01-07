@@ -141,7 +141,7 @@ export function InventoryReportTable() {
                 <TableBody>
                   {reportData.rows.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={reportData.headers.length + 1} className="text-center text-muted-foreground">
+                        <TableCell colSpan={reportData.headers.length + 1} className="text-center text-muted-foreground align-middle">
                             No inventory data for the selected product type.
                         </TableCell>
                     </TableRow>
@@ -166,3 +166,5 @@ export function InventoryReportTable() {
     </Card>
   );
 }
+
+    
