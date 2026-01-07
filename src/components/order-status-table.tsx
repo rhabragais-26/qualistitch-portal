@@ -20,7 +20,7 @@ import { Skeleton } from './ui/skeleton';
 import React, { useState, useMemo } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { differenceInDays, addDays } from 'date-fns';
 import { cn, formatDateTime } from '@/lib/utils';
@@ -67,6 +67,8 @@ type OperationalCase = {
   contactNumber?: string;
   landlineNumber?: string;
   quantity?: number;
+  isArchived?: boolean;
+  isDeleted?: boolean;
 };
 
 type OrderStatusTableProps = {
@@ -78,6 +80,7 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
   const [searchTerm, setSearchTerm] = useState('');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
+  const [imageInView, setImageInView] = useState<string | null>(null);
   
   const toggleLeadDetails = (leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
@@ -137,16 +140,18 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
 
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
-    if (!searchTerm) return leads;
     
     const lowercasedSearchTerm = searchTerm.toLowerCase();
 
-    return leads.filter(lead =>
-      lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-      (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
-      (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(lowercasedSearchTerm)) ||
-      (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(lowercasedSearchTerm))
-    );
+    return leads.filter(lead => {
+      const matchesSearch = searchTerm ?
+        (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
+        (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
+        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(lowercasedSearchTerm.replace(/-/g, ''))) ||
+        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(lowercasedSearchTerm.replace(/-/g, ''))))
+        : true;
+      return matchesSearch;
+    });
   }, [leads, searchTerm]);
   
   const leadsWithCases = useMemo(() => {
@@ -159,6 +164,25 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
+       {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close image view</span>
+            </Button>
+          </div>
+        </div>
+      )}
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
@@ -231,7 +255,7 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                 <PopoverTrigger asChild>
                                   <Badge variant="destructive" className="cursor-pointer">{lead.operationalCase.caseType}</Badge>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-80">
+                                <PopoverContent className="w-96">
                                   <div className="grid gap-4">
                                     <div className="space-y-2">
                                       <h4 className="font-medium leading-none">{lead.operationalCase.caseType}</h4>
@@ -251,7 +275,7 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                       {lead.operationalCase.image && (
                                         <div className="grid grid-cols-3 items-start gap-4">
                                             <span>Image:</span>
-                                             <div className="col-span-2 relative h-32 w-full">
+                                             <div className="col-span-2 relative h-32 w-full cursor-pointer" onClick={() => setImageInView(lead.operationalCase!.image!)}>
                                                 <Image src={lead.operationalCase.image} alt="Case Image" layout="fill" objectFit="contain" className="rounded-md border"/>
                                              </div>
                                         </div>
