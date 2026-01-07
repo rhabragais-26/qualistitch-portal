@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -42,7 +41,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { ScrollArea } from './ui/scroll-area';
 import { formatDateTime } from '@/lib/utils';
-
+import { cn } from '@/lib/utils';
 
 const productTypes = [
   'Executive Jacket 1',
@@ -152,6 +151,13 @@ export function RecordsTable() {
   const toggleLeadDetails = (leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
   };
+  
+   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
+
+  const toggleCustomerDetails = (leadId: string) => {
+    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
+  };
+
 
   const handleOpenAddOrderDialog = (leadId: string) => {
     setSelectedLeadId(leadId);
@@ -426,10 +432,7 @@ export function RecordsTable() {
                     <TableRow>
                       <TableHead className="text-white align-middle">Date &amp; Time</TableHead>
                       <TableHead className="text-white align-middle">Last Modified</TableHead>
-                      <TableHead className="text-white align-middle">Customer Name</TableHead>
-                      <TableHead className="text-white align-middle">Company Name</TableHead>
-                      <TableHead className="text-white align-middle">Mobile No.</TableHead>
-                      <TableHead className="text-white align-middle">Landline No.</TableHead>
+                      <TableHead className="text-white align-middle">Customer</TableHead>
                       <TableHead className="text-white align-middle">CSR</TableHead>
                       <TableHead className="text-center text-white align-middle">Priority</TableHead>
                       <TableHead className="text-center text-white align-middle">Payment</TableHead>
@@ -451,10 +454,23 @@ export function RecordsTable() {
                            <div>{formatDateTime(lead.lastModified).dateTime}</div>
                            <div className="text-gray-500">{formatDateTime(lead.lastModified).dayOfWeek}</div>
                         </TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
-                        <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
+                        <TableCell className="text-xs align-top py-2 text-black">
+                          <div className="flex items-start">
+                            <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
+                              {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </Button>
+                            <div>
+                              <div className="font-medium">{lead.customerName}</div>
+                                {openCustomerDetails === lead.id && (
+                                  <div className="mt-1 space-y-0.5 text-gray-500">
+                                    {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                                    {lead.contactNumber && lead.contactNumber !== '-' && <div>{lead.contactNumber}</div>}
+                                    {lead.landlineNumber && lead.landlineNumber !== '-' && <div>{lead.landlineNumber}</div>}
+                                  </div>
+                                )}
+                            </div>
+                          </div>
+                        </TableCell>
                         <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
                         <TableCell className="align-middle py-2 text-center">
                           <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
