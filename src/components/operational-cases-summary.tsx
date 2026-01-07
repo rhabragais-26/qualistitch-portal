@@ -108,12 +108,12 @@ export function OperationalCasesSummary() {
           Total quantity of items per case type for open and resolved cases.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col md:flex-row items-center justify-center gap-8">
+      <CardContent className="flex-1 flex flex-col items-center justify-start gap-8 overflow-y-auto">
         {isLoading ? (
-          <>
-            <Skeleton className="h-[350px] w-full md:w-1/2 bg-gray-200" />
-            <Skeleton className="h-[350px] w-full md:w-1/2 bg-gray-200" />
-          </>
+          <div className="w-full space-y-8">
+            <Skeleton className="h-[350px] w-full bg-gray-200" />
+            <Skeleton className="h-[350px] w-full bg-gray-200" />
+          </div>
         ) : error ? (
           <div className="text-red-500 p-4">Error loading data: {error.message}</div>
         ) : (
