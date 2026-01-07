@@ -255,45 +255,46 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                 <PopoverTrigger asChild>
                                   <Badge variant="destructive" className="cursor-pointer">{lead.operationalCase.caseType}</Badge>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto max-w-md">
-                                  <div className="grid gap-4">
-                                    <div className="space-y-1">
-                                      <h4 className="font-medium leading-none">{lead.operationalCase.caseType}</h4>
-                                      <p className="text-sm text-muted-foreground">
-                                        Case for J.O. {lead.operationalCase.joNumber}
-                                      </p>
-                                    </div>
-                                    <div className="grid gap-2 text-sm">
-                                      <div className="grid grid-cols-3 items-center gap-4">
-                                        <span>Quantity:</span>
-                                        <span className="col-span-2 font-semibold">{lead.operationalCase.quantity}</span>
+                                <PopoverContent className="w-auto max-w-2xl p-4">
+                                  <div className="flex gap-4">
+                                    <div className="flex-1 space-y-2">
+                                      <div className="space-y-1">
+                                        <h4 className="font-medium leading-none">{lead.operationalCase.caseType}</h4>
+                                        <p className="text-sm text-muted-foreground">
+                                          Case for J.O. {lead.operationalCase.joNumber}
+                                        </p>
                                       </div>
-                                      <div className="grid grid-cols-3 items-start gap-4">
-                                        <span>Remarks:</span>
-                                        <p className="col-span-2 whitespace-pre-wrap">{lead.operationalCase.remarks}</p>
-                                      </div>
-                                      {lead.operationalCase.image && (
-                                        <div className="grid grid-cols-3 items-start gap-4">
-                                          <span>Image:</span>
-                                          <div
-                                            className="col-span-2 relative w-full h-auto max-h-32 cursor-pointer aspect-[4/3]"
-                                            onClick={() => setImageInView(lead.operationalCase!.image!)}
-                                          >
-                                            <Image
-                                              src={lead.operationalCase.image}
-                                              alt="Case Image"
-                                              layout="fill"
-                                              objectFit="contain"
-                                              className="rounded-md border"
-                                            />
-                                          </div>
+                                      <div className="grid gap-2 text-sm">
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium">Quantity:</span>
+                                          <span className="font-semibold">{lead.operationalCase.quantity}</span>
                                         </div>
-                                      )}
-                                       <div className="grid grid-cols-3 items-center gap-4">
-                                        <span>Recorded:</span>
-                                        <span className="col-span-2 text-xs">{formatDateTime(lead.operationalCase.submissionDateTime).dateTime}</span>
+                                        <div className="flex flex-col items-start gap-1">
+                                          <span className="font-medium">Remarks:</span>
+                                          <p className="whitespace-pre-wrap bg-muted p-2 rounded-md text-xs w-full">{lead.operationalCase.remarks}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium">Recorded:</span>
+                                          <span className="text-xs">{formatDateTime(lead.operationalCase.submissionDateTime).dateTime}</span>
+                                        </div>
                                       </div>
                                     </div>
+                                    {lead.operationalCase.image && (
+                                      <div className="flex-shrink-0 w-48">
+                                        <div
+                                          className="relative w-full h-full cursor-pointer aspect-square"
+                                          onClick={() => setImageInView(lead.operationalCase!.image!)}
+                                        >
+                                          <Image
+                                            src={lead.operationalCase.image}
+                                            alt="Case Image"
+                                            layout="fill"
+                                            objectFit="contain"
+                                            className="rounded-md border bg-gray-100"
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 </PopoverContent>
                               </Popover>
