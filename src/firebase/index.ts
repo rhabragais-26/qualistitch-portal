@@ -3,14 +3,18 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
+import { getFirestore, initializeFirestore } from 'firebase/firestore'
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
   const isInitialized = getApps().length > 0;
   const app = isInitialized ? getApp() : initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const firestore = getFirestore(app);
+  // Firestore now initialized with experimental settings for better connectivity.
+  const firestore = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+  });
+
 
   // NOTE: Emulator connections have been removed to resolve connectivity issues
   // in the development environment. The app will connect to production services.
