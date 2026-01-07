@@ -256,6 +256,15 @@
                 "format": "date-time",
                 "description": "Timestamp for Test right logo upload."
               },
+              "testBackLogoImage": {
+                "type": ["string", "null"],
+                "description": "Data URL of the uploaded back logo image for Test."
+              },
+              "testBackLogoImageUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for Test back logo upload."
+              },
               "testBackDesignImage": {
                 "type": ["string", "null"],
                 "description": "Data URL of the uploaded back design image for Test."
