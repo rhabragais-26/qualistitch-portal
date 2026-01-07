@@ -489,8 +489,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
         title: 'Order Added!',
         description: 'The order has been added to the list.',
       });
-      setNewOrderProductType('');
-      setNewOrderColor('');
       setNewOrderSize('');
       setNewOrderQuantity(1);
     }
@@ -504,7 +502,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-7xl mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+    <Card className="w-full mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black max-w-6xl">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -521,8 +519,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="flex gap-4">
               {/* Left Column */}
-              <div className="w-3/5 space-y-1">
-                <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+              <div className="w-1/2 space-y-2">
+                 <div className="grid grid-cols-2 gap-x-2">
                     <FormField control={form.control} name="customerName" render={({field}) => (
                       <FormItem className="relative">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
@@ -575,8 +573,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     )}/>
                 </div>
                 
-                <div className='pt-1 space-y-1'>
-                  <div className="space-y-1">
+                <div className='pt-1 space-y-2'>
+                    <div className="space-y-1 mt-4">
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><MapPin className="h-4 w-4 text-primary" />Location</FormLabel>
+                    </div>
                       <FormField control={form.control} name="houseStreet" render={({field}) => (
                         <FormItem className="relative">
                           <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
@@ -598,7 +598,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       <div className="grid grid-cols-2 gap-x-2">
                         <FormField control={form.control} name="barangay" render={({field}) => (
                           <FormItem className="relative">
-                            <FormLabel className="flex items-center gap-2 text-black text-xs"><MapPin className="h-4 w-4 text-primary" />Barangay</FormLabel>
+                            <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
                             <FormControl><Input {...field} className="h-9 text-xs" style={{width: '3in'}} /></FormControl>
                             {addressSuggestions.field === 'barangay' && addressSuggestions.suggestions.length > 0 && (
                               <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
@@ -616,7 +616,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         )}/>
                         <FormField control={form.control} name="city" render={({field}) => (
                           <FormItem className="relative">
-                            <FormLabel className="flex items-center gap-2 text-black text-xs"><MapPin className="h-4 w-4 text-primary" />City</FormLabel>
+                            <FormLabel className="flex items-center gap-2 text-black text-xs">City</FormLabel>
                             <FormControl><Input {...field} className="h-9 text-xs" style={{width: '2in'}} /></FormControl>
                             {addressSuggestions.field === 'city' && addressSuggestions.suggestions.length > 0 && (
                               <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
@@ -635,7 +635,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       </div>
                       <FormField control={form.control} name="province" render={({field}) => (
                         <FormItem className="relative">
-                          <FormLabel className="flex items-center gap-2 text-black text-xs"><MapPin className="h-4 w-4 text-primary" />Province</FormLabel>
+                          <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
                           <FormControl><Input {...field} className="h-9 text-xs" style={{width: '3in'}} /></FormControl>
                           {addressSuggestions.field === 'province' && addressSuggestions.suggestions.length > 0 && (
                             <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
@@ -651,10 +651,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           <FormMessage />
                         </FormItem>
                       )}/>
-                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-2">
                   <FormField control={form.control} name="salesRepresentative" render={({field}) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2 text-black text-xs"><UserCheck className="h-4 w-4 text-primary" />CSR</FormLabel>
@@ -668,10 +667,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                 </div>
               </div>
 
-              <Separator orientation="vertical" />
+              <Separator orientation="vertical" className="h-auto"/>
               
               {/* Right Column */}
-              <div className="w-2/5 space-y-1">
+              <div className="w-1/2 space-y-2">
                  <FormField control={form.control} name="orderType" render={({field}) => (
                     <FormItem className="flex items-center gap-4">
                       <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
@@ -699,7 +698,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     </FormItem>
                   )}/>
                  <FormField control={form.control} name="courier" render={({field}) => (
-                    <FormItem className="flex items-center gap-4 pt-2 pb-2">
+                    <FormItem className="flex items-center gap-4">
                       <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl><SelectTrigger className={cn("h-9 text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
@@ -709,7 +708,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     </FormItem>
                   )}/>
                  <FormField control={form.control} name="paymentType" render={({field}) => (
-                    <FormItem className="flex items-center gap-4 pt-2 pb-2">
+                    <FormItem className="flex items-center gap-4">
                       <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><CreditCard className="h-4 w-4 text-primary" />Payment Type</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl><SelectTrigger className={cn("h-9 text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
@@ -742,14 +741,14 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                 <TableCell className="py-2 text-black text-xs">{field.productType}</TableCell>
                                 <TableCell className="py-2 text-black text-xs">{field.color}</TableCell>
                                 <TableCell className="py-2 text-black text-xs">{field.size}</TableCell>
-                                <TableCell className="py-2 text-black text-xs">
-                                  <div className="flex items-center justify-center gap-2">
-                                    <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity - 1)} disabled={field.quantity <= 1}>
-                                      <Minus className="h-3 w-3" />
+                                <TableCell className="py-1 text-black text-xs">
+                                  <div className="flex items-center justify-center gap-1">
+                                    <Button type="button" variant="outline" size="icon" className="h-5 w-5" onClick={() => handleUpdateQuantity(index, field.quantity - 1)} disabled={field.quantity <= 1}>
+                                      <Minus className="h-2.5 w-2.5" />
                                     </Button>
                                     <span className="w-8 text-center">{field.quantity}</span>
-                                    <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleUpdateQuantity(index, field.quantity + 1)}>
-                                      <Plus className="h-3 w-3" />
+                                    <Button type="button" variant="outline" size="icon" className="h-5 w-5" onClick={() => handleUpdateQuantity(index, field.quantity + 1)}>
+                                      <Plus className="h-2.5 w-2.5" />
                                     </Button>
                                   </div>
                                 </TableCell>
