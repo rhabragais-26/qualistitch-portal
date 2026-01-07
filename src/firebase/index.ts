@@ -2,8 +2,8 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore'
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -12,12 +12,8 @@ export function initializeFirebase() {
   const auth = getAuth(app);
   const firestore = getFirestore(app);
 
-  if (process.env.NODE_ENV === 'development' && !isInitialized) {
-    // Point to the emulators running on localhost.
-    // Use 127.0.0.1 instead of localhost to avoid potential DNS resolution issues in some environments.
-    connectFirestoreEmulator(firestore, '127.0.0.1', 8080);
-    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-  }
+  // NOTE: Emulator connections have been removed to resolve connectivity issues
+  // in the development environment. The app will connect to production services.
 
   return { firebaseApp: app, auth, firestore };
 }
