@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -23,6 +24,7 @@ type OperationalCase = {
   customerName: string;
   contactNumber?: string;
   landlineNumber?: string;
+  quantity?: number;
   isArchived?: boolean;
   isDeleted?: boolean;
 };
@@ -71,6 +73,7 @@ export function ResolvedCasesDialog({ isOpen, onClose, archivedCases, deletedCas
                 <div className="col-span-5 self-start pt-2">
                     <p className="text-xs text-gray-500">Case & Remarks</p>
                     <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
+                    {caseItem.quantity && <p className="text-sm font-semibold">Quantity: {caseItem.quantity}</p>}
                     <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks}</p>
                 </div>
                 <div className="col-span-2 flex justify-center">

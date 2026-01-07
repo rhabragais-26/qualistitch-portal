@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays } from 'lucide-react';
+import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays, Inbox } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
@@ -51,6 +51,7 @@ const formSchema = z.object({
   caseType: z.enum(['Return to Sender (RTS)', 'Quality Errors', 'Replacement'], {
     required_error: 'You need to select a case type.',
   }),
+  quantity: z.number().min(1, 'Quantity must be at least 1.'),
   remarks: z.string().min(10, { message: 'Remarks must be at least 10 characters.' }),
   image: z.string().optional(),
 });
@@ -77,6 +78,7 @@ export function OperationalCasesForm() {
     defaultValues: {
       joNumber: '',
       caseType: undefined,
+      quantity: 1,
       remarks: '',
       image: '',
     },
@@ -333,6 +335,25 @@ export function OperationalCasesForm() {
                     </div>
                 </div>
             )}
+            
+            <FormField
+                control={control}
+                name="quantity"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel className="flex items-center gap-2 text-black"><Inbox className="h-4 w-4 text-primary" />Quantity</FormLabel>
+                        <FormControl>
+                            <Input
+                                type="number"
+                                placeholder="Enter quantity of items"
+                                {...field}
+                                onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
 
             <FormField
               control={control}

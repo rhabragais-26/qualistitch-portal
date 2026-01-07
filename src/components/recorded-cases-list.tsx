@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -24,6 +25,7 @@ type OperationalCase = {
   customerName: string;
   contactNumber?: string;
   landlineNumber?: string;
+  quantity?: number;
   isArchived?: boolean;
   isDeleted?: boolean;
 };
@@ -163,9 +165,10 @@ export function RecordedCasesList() {
                         <p className="text-xs text-gray-600">{caseItem.customerName}</p>
                         <p className="text-xs text-gray-500">{getContactDisplay(caseItem)}</p>
                       </div>
-                      <div className="md:col-span-6 self-start pt-2">
+                      <div className="md:col-span-5 self-start pt-2">
                         <p className="text-xs text-gray-500">Case & Remarks/Reason</p>
                         <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
+                        {caseItem.quantity && <p className="text-sm font-semibold">Quantity: {caseItem.quantity}</p>}
                         <p className="text-sm mt-1 whitespace-pre-wrap">
                           {caseItem.remarks.split('\n').map((line, index) => {
                                 if (line.startsWith('(') && line.endsWith(')')) {
@@ -175,7 +178,7 @@ export function RecordedCasesList() {
                            })}
                         </p>
                       </div>
-                      <div className="md:col-span-1 flex justify-center items-center">
+                      <div className="md:col-span-2 flex justify-center items-center">
                         {caseItem.image && (
                           <div
                             className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
