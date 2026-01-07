@@ -70,7 +70,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/firestore-writes';
 import { v4 as uuidv4 } from 'uuid';
-import philippineCities from '@/lib/philippine-cities.json';
+import locations from '@/lib/ph-locations.json';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -87,7 +87,7 @@ const formSchema = z.object({
   landlineNo: z.string().optional(),
   houseStreet: z.string().min(2, {message: 'House/Street is required.'}),
   barangay: z.string().min(2, {message: 'Barangay is required.'}),
-  city: z.string().min(2, {message: 'City is required.'}),
+  city: z.string().min(2, {message: 'City/Municipality is required.'}),
   province: z.string().min(2, {message: 'Province is required.'}),
   courier: z.string().optional(),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
@@ -177,9 +177,19 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Lead[]>([]);
   const [companySuggestions, setCompanySuggestions] = useState<Lead[]>([]);
-  const [addressSuggestions, setAddressSuggestions] = useState<{ field: keyof Lead, suggestions: string[] }>({ field: 'houseStreet', suggestions: [] });
-  const [citySuggestions, setCitySuggestions] = useState<{ city: string; province: string }[]>([]);
-
+  const [citySuggestions, setCitySuggestions] = useState<{ name: string; province: string, type: string }[]>([]);
+  const [barangaySuggestions, setBarangaySuggestions] = useState<string[]>([]);
+  
+  const citiesAndMunicipalities = useMemo(() => {
+    return locations.provinces.flatMap(province =>
+      province.municipalities.map(municipality => ({
+        name: municipality.name,
+        type: municipality.type,
+        province: province.name,
+        barangays: municipality.barangays,
+      }))
+    );
+  }, []);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads } = useCollection<Lead>(leadsQuery);
@@ -220,18 +230,18 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     setValue('province', lead.province ? toTitleCase(lead.province) : '');
     setCustomerSuggestions([]);
     setCompanySuggestions([]);
-    setAddressSuggestions({ field: 'houseStreet', suggestions: [] });
-  };
-  
-  const handleAddressSuggestionClick = (field: keyof Lead, value: string) => {
-    setValue(field as any, value, { shouldValidate: true });
-    setAddressSuggestions({ field: 'houseStreet', suggestions: [] });
   };
 
-  const handleCitySuggestionClick = (city: { city: string; province: string }) => {
-    setValue('city', city.city, { shouldValidate: true });
+  const handleCitySuggestionClick = (city: { name: string; province: string }) => {
+    setValue('city', city.name, { shouldValidate: true });
     setValue('province', city.province, { shouldValidate: true });
+    setValue('barangay', ''); // Reset barangay when city changes
     setCitySuggestions([]);
+  };
+
+  const handleBarangaySuggestionClick = (barangay: string) => {
+    setValue('barangay', barangay, { shouldValidate: true });
+    setBarangaySuggestions([]);
   };
 
   const customerNameValue = watch('customerName');
@@ -270,34 +280,32 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
 
   useEffect(() => {
     if (cityValue) {
-      const filteredCities = philippineCities.filter(city =>
-        city.city.toLowerCase().includes(cityValue.toLowerCase())
-      );
+      const filteredCities = citiesAndMunicipalities.filter(city =>
+        city.name.toLowerCase().includes(cityValue.toLowerCase())
+      ).slice(0, 10);
       setCitySuggestions(filteredCities);
     } else {
       setCitySuggestions([]);
     }
-  }, [cityValue]);
-  
-  const useAddressSuggestions = (fieldName: keyof Lead, value: string) => {
-    useEffect(() => {
-      if (value && leads) {
-        const uniqueSuggestions = Array.from(new Set(
-            leads
-            .map(lead => lead[fieldName] as string)
-            .filter(fieldValue => fieldValue && fieldValue.toLowerCase().includes(value.toLowerCase()))
-        ));
-        setAddressSuggestions({ field: fieldName, suggestions: uniqueSuggestions });
-      } else {
-        setAddressSuggestions({ field: fieldName, suggestions: [] });
-      }
-    }, [value, leads, fieldName]);
-  };
-  
-  useAddressSuggestions('houseStreet', houseStreetValue);
-  useAddressSuggestions('barangay', barangayValue);
-  useAddressSuggestions('province', provinceValue);
+  }, [cityValue, citiesAndMunicipalities]);
 
+  useEffect(() => {
+    if (barangayValue && cityValue && provinceValue) {
+      const selectedCity = citiesAndMunicipalities.find(
+        c => c.name.toLowerCase() === cityValue.toLowerCase() && c.province.toLowerCase() === provinceValue.toLowerCase()
+      );
+      if (selectedCity) {
+        const filteredBarangays = selectedCity.barangays.filter(b =>
+          b.toLowerCase().includes(barangayValue.toLowerCase())
+        ).slice(0,10);
+        setBarangaySuggestions(filteredBarangays);
+      } else {
+        setBarangaySuggestions([]);
+      }
+    } else {
+      setBarangaySuggestions([]);
+    }
+  }, [barangayValue, cityValue, provinceValue, citiesAndMunicipalities]);
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -506,6 +514,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
         title: 'Order Added!',
         description: 'The order has been added to the list.',
       });
+      // Do not clear product type and color
       setNewOrderSize('');
       setNewOrderQuantity(1);
     }
@@ -594,34 +603,43 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                 
                 <div className='pt-1 space-y-2'>
                       <FormField control={form.control} name="houseStreet" render={({field}) => (
-                        <FormItem className="relative">
+                        <FormItem>
                           <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
                           <FormControl><Input {...field} /></FormControl>
-                          {addressSuggestions.field === 'houseStreet' && addressSuggestions.suggestions.length > 0 && (
-                            <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                              <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                {addressSuggestions.suggestions.map((suggestion, index) => (
-                                  <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleAddressSuggestionClick('houseStreet', suggestion)}>
-                                    {suggestion}
-                                  </div>
-                                ))}
-                              </CardContent>
-                            </Card>
-                          )}
                           <FormMessage />
                         </FormItem>
                       )}/>
                       <div className="grid grid-cols-2 gap-x-2">
+                        <FormField control={form.control} name="city" render={({field}) => (
+                          <FormItem className="relative">
+                            <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
+                            <FormControl><Input {...field} autoComplete="off" /></FormControl>
+                             {citySuggestions.length > 0 && (
+                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                                <CardContent className="p-2 max-h-40 overflow-y-auto">
+                                    {citySuggestions.map((city, index) => (
+                                    <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCitySuggestionClick(city)}>
+                                        <p className="font-semibold">{city.name} <span className="font-normal text-gray-500">({city.type})</span></p>
+                                        <p className="text-xs text-gray-500">{city.province}</p>
+                                    </div>
+                                    ))}
+                                </CardContent>
+                                </Card>
+                            )}
+                            {cityValue && citySuggestions.length === 0 && <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"><CardContent className='p-2'><p className='text-muted-foreground'>No results found</p></CardContent></Card>}
+                            <FormMessage />
+                          </FormItem>
+                        )}/>
                         <FormField control={form.control} name="barangay" render={({field}) => (
                           <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
-                            {addressSuggestions.field === 'barangay' && addressSuggestions.suggestions.length > 0 && (
+                            <FormControl><Input {...field} autoComplete="off" /></FormControl>
+                            {barangaySuggestions.length > 0 && (
                               <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                  {addressSuggestions.suggestions.map((suggestion, index) => (
-                                    <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleAddressSuggestionClick('barangay', suggestion)}>
-                                      {suggestion}
+                                  {barangaySuggestions.map((barangay, index) => (
+                                    <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleBarangaySuggestionClick(barangay)}>
+                                      {barangay}
                                     </div>
                                   ))}
                                 </CardContent>
@@ -630,29 +648,11 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                             <FormMessage />
                           </FormItem>
                         )}/>
-                        <FormField control={form.control} name="city" render={({field}) => (
-                          <FormItem className="relative">
-                            <FormLabel className="flex items-center gap-2 text-black text-xs">City</FormLabel>
-                            <FormControl><Input {...field} autoComplete="off" /></FormControl>
-                             {citySuggestions.length > 0 && (
-                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                                <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                    {citySuggestions.map((city, index) => (
-                                    <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCitySuggestionClick(city)}>
-                                        {city.city}
-                                    </div>
-                                    ))}
-                                </CardContent>
-                                </Card>
-                            )}
-                            <FormMessage />
-                          </FormItem>
-                        )}/>
                       </div>
                       <FormField control={form.control} name="province" render={({field}) => (
-                        <FormItem className="relative">
+                        <FormItem>
                           <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
+                          <FormControl><Input {...field} readOnly className="bg-muted" /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )}/>
