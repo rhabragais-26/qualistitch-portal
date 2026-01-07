@@ -547,7 +547,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
             <div className="flex gap-4">
               {/* Left Column */}
-              <div className="w-1/2 space-y-2">
+              <div className="w-1/2 flex flex-col gap-2">
                  <div className="grid grid-cols-2 gap-x-2">
                     <FormField control={form.control} name="customerName" render={({field}) => (
                       <FormItem className="relative">
@@ -575,7 +575,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       </FormItem>
                     )}/>
                     <FormField control={form.control} name="companyName" render={({field}) => (
-                      <FormItem className="relative pt-1">
+                      <FormItem className="relative pt-2">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><Building className="h-4 w-4 text-primary" />Company Name (Optional)</FormLabel>
                         <FormControl><Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCompanySuggestions([]), 150)}/></FormControl>
                         {companySuggestions.length > 0 && (
@@ -593,7 +593,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       </FormItem>
                     )}/>
                     <FormField control={form.control} name="landlineNo" render={({field}) => (
-                      <FormItem className="pt-1">
+                      <FormItem className="pt-2">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><PhoneForwarded className="h-4 w-4 text-primary" />Landline No. (Optional)</FormLabel>
                         <FormControl><Input type="tel" {...field} onChange={(e) => handleLandlineNoChange(e, field)} /></FormControl>
                         <FormMessage />
@@ -601,7 +601,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     )}/>
                 </div>
                 
-                <div className='pt-1 space-y-2'>
+                <div className='pt-2 flex flex-col gap-2'>
                       <FormField control={form.control} name="houseStreet" render={({field}) => (
                         <FormItem>
                           <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
@@ -664,7 +664,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       </FormItem>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-2 pt-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-2 pt-2">
                   <FormField control={form.control} name="salesRepresentative" render={({field}) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2 text-black text-xs"><UserCheck className="h-4 w-4 text-primary" />CSR</FormLabel>
@@ -681,7 +681,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               <Separator orientation="vertical" className="h-auto"/>
               
               {/* Right Column */}
-              <div className="w-1/2 space-y-2">
+              <div className="w-1/2 flex flex-col gap-2">
                  <FormField control={form.control} name="orderType" render={({field}) => (
                     <FormItem className="flex items-center gap-4">
                       <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
