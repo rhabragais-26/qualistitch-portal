@@ -63,7 +63,11 @@ export function Calculator({ onClose }: { onClose: () => void }) {
 
   const handleButtonClick = (value: string) => {
     if (result !== null) {
-      setInput(result + value);
+      if (['+', '-', '*', '/'].includes(value)) {
+        setInput(result + value);
+      } else {
+        setInput(value);
+      }
       setResult(null);
     } else {
       setInput(input + value);
@@ -80,17 +84,42 @@ export function Calculator({ onClose }: { onClose: () => void }) {
   };
 
   const handleCalculate = () => {
+    if (input === '') return;
     try {
       // Using a safer evaluation method
-      const calculatedResult = new Function('return ' + input)();
+      const calculatedResult = new Function('return ' + input.replace(/[^0-9+\-*/.]/g, ''))();
       if (isNaN(calculatedResult) || !isFinite(calculatedResult)) {
         throw new Error("Invalid calculation");
       }
       setResult(calculatedResult.toString());
+      setInput(calculatedResult.toString());
     } catch (error) {
       setResult('Error');
+      setInput('');
     }
   };
+  
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      e.preventDefault();
+      if (e.key >= '0' && e.key <= '9' || e.key === '.') {
+        handleButtonClick(e.key);
+      } else if (['+', '-', '*', '/'].includes(e.key)) {
+        handleButtonClick(e.key);
+      } else if (e.key === 'Enter' || e.key === '=') {
+        handleCalculate();
+      } else if (e.key === 'Backspace') {
+        handleBackspace();
+      } else if (e.key.toLowerCase() === 'c' || e.key === 'Delete') {
+        handleClear();
+      } else if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [input, result, onClose]);
 
   const buttons = [
     { label: 'C', action: handleClear, className: "bg-red-500 hover:bg-red-600 col-span-2" },
@@ -117,7 +146,10 @@ export function Calculator({ onClose }: { onClose: () => void }) {
     if (['/', '*', '-', '+', '='].includes(label)) {
       return "bg-orange-500 hover:bg-orange-600";
     }
-    if (label === 'C' || label === 'DEL') {
+    if (label === 'C') {
+        return "bg-red-500 hover:bg-red-600";
+    }
+    if (label === 'DEL') {
       return "bg-gray-600 hover:bg-gray-700";
     }
     return "bg-gray-700 hover:bg-gray-600";
@@ -145,8 +177,8 @@ export function Calculator({ onClose }: { onClose: () => void }) {
         </CardHeader>
         <CardContent className="p-4">
           <div className="bg-gray-900 rounded-lg p-4 mb-4 text-right">
-            <div className="text-gray-400 text-xl h-7">{input || (result !== null ? '' : '0')}</div>
-            <div className="text-white text-4xl font-bold h-12">{result !== null ? result : ''}</div>
+            <div className="text-white text-xl h-7">{input || (result !== null ? result : '0')}</div>
+            <div className="text-white text-4xl font-bold h-12">{result !== null && result !== input ? result : ''}</div>
           </div>
           <div className="grid grid-cols-4 gap-2">
             {buttons.map((btn) => (
