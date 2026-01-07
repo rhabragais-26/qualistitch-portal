@@ -11,6 +11,7 @@ import {
   ScanLine,
   Boxes,
   TriangleAlert,
+  Package,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -85,7 +86,7 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="text-neutral-100 hover:bg-neutral-700 hover:text-neutral-100">
+                  <Button variant="ghost" className="text-neutral-100 hover:bg-accent hover:text-white">
                     <PenSquare className="mr-2" />
                     Data Entry
                     <ChevronDown className="ml-2 h-4 w-4" />
@@ -114,7 +115,7 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className="text-neutral-100 hover:bg-neutral-700 hover:text-neutral-100">
+                   <Button variant="ghost" className="text-neutral-100 hover:bg-accent hover:text-white">
                       <ScanLine className="mr-2" />
                       Digitizing
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -135,7 +136,7 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className="text-neutral-100 hover:bg-neutral-700 hover:text-neutral-100">
+                   <Button variant="ghost" className="text-neutral-100 hover:bg-accent hover:text-white">
                       <Boxes className="mr-2" />
                       Inventory
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -150,6 +151,10 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                     <Database className="mr-2" />
                     Summary
                   </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => handleNavigation('/inventory/prod-preparation')}>
+                    <Package className="mr-2" />
+                    Prod Preparation
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/inventory/reports')}>
                     <LineChart className="mr-2" />
                     Reports
@@ -161,7 +166,7 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className="text-neutral-100 hover:bg-neutral-700 hover:text-neutral-100">
+            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className="text-neutral-100 hover:bg-accent hover:text-white">
               <ListOrdered className="mr-2" />
               Order Status
             </Button>
