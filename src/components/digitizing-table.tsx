@@ -701,7 +701,7 @@ export function DigitizingTable() {
   }
 
   const ImagePreview = ({ src, alt, popoverKey }: { src: string; alt: string; popoverKey: string }) => (
-    <Popover open={popoverStates[popoverKey]} onOpenChange={(isOpen) => setPopoverStates(prev => ({...prev, [popoverKey]: isOpen}))}>
+    <Popover open={popoverStates[popoverKey] || false} onOpenChange={(isOpen) => setPopoverStates(prev => ({...prev, [popoverKey]: isOpen}))}>
       <PopoverTrigger asChild
         onMouseEnter={() => setPopoverStates(prev => ({ ...prev, [popoverKey]: true }))}
         onMouseLeave={() => setPopoverStates(prev => ({ ...prev, [popoverKey]: false }))}
