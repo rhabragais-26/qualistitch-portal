@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -50,6 +49,8 @@ type Lead = {
   isRevision?: boolean;
   isFinalApproval?: boolean;
   isFinalProgram?: boolean;
+  isPreparedForProduction?: boolean;
+  isSentToProduction?: boolean;
 }
 
 export function OrderStatusTable() {
@@ -93,6 +94,12 @@ export function OrderStatusTable() {
     if (lead.isUnderProgramming) return { text: "Done Initial Program", variant: "default" as const };
     if (lead.joNumber) return { text: "Pending Initial Program", variant: "secondary" as const };
     return { text: "Pending J.O.", variant: "secondary" as const };
+  };
+
+  const getItemPreparationStatus = (lead: Lead): { text: string; variant: "success" | "warning" | "secondary" } => {
+    if (lead.isSentToProduction) return { text: 'Sent to Production', variant: 'success' };
+    if (lead.isPreparedForProduction) return { text: 'Prepared', variant: 'warning' };
+    return { text: 'Pending', variant: 'secondary' };
   };
 
   const filteredLeads = useMemo(() => {
@@ -154,6 +161,7 @@ export function OrderStatusTable() {
                     <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Days Remaining/Overdue</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Programming Status</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Item Preparation</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Ordered Items</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -161,6 +169,7 @@ export function OrderStatusTable() {
                 {filteredLeads.map((lead) => {
                   const deadlineInfo = calculateDeadline(lead);
                   const programmingStatus = getProgrammingStatus(lead);
+                  const itemPreparationStatus = getItemPreparationStatus(lead);
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
@@ -176,6 +185,9 @@ export function OrderStatusTable() {
                         <TableCell className="text-center text-xs align-middle py-2 font-medium">
                           <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
                         </TableCell>
+                        <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                          <Badge variant={itemPreparationStatus.variant as any}>{itemPreparationStatus.text}</Badge>
+                        </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                             View
@@ -185,7 +197,7 @@ export function OrderStatusTable() {
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={6}>
+                        <TableCell colSpan={7}>
                           <div className="p-2">
                             <Table>
                               <TableHeader>
