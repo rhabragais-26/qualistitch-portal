@@ -102,7 +102,7 @@ export function RecordedCasesList() {
                        <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
                        <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks.charAt(0).toUpperCase() + caseItem.remarks.slice(1)}</p>
                     </div>
-                     <div className="md:col-span-2 flex justify-center items-center">
+                     <div className="md:col-span-2 flex justify-center items-start pt-2">
                       {caseItem.image && (
                          <div 
                            className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
