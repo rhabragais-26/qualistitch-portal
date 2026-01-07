@@ -290,7 +290,7 @@ export function OrderStatusTable({ leads, operationalCases }: OrderStatusTablePr
                                             alt="Case Image"
                                             layout="fill"
                                             objectFit="contain"
-                                            className="rounded-md border bg-gray-100"
+                                            className="rounded-md bg-gray-100"
                                           />
                                         </div>
                                       </div>
