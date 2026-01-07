@@ -70,13 +70,13 @@ export function RecordedCasesList() {
   const activeCases = cases?.filter(c => !c.isArchived);
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full" style={{maxWidth: 'calc(100% - 0.5in)'}}>
       <CardHeader>
         <CardTitle>Recorded Cases</CardTitle>
         <CardDescription>A log of all submitted operational cases.</CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[calc(100vh-20rem)]">
+        <ScrollArea className="h-[calc(100vh-17rem)]">
           {isLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
