@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 import {
   Table,
@@ -18,7 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Skeleton } from './ui/skeleton';
 import React, { useState, useMemo } from 'react';
 import { Input } from './ui/input';
 import { Checkbox } from './ui/checkbox';
@@ -27,7 +25,7 @@ import { Badge } from './ui/badge';
 import { formatDateTime } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
 import { ChevronDown } from 'lucide-react';
-import { Button } from './ui/button';
+import { useFirestore } from '@/firebase';
 
 type Order = {
   productType: string;
@@ -55,20 +53,16 @@ type Lead = {
 
 type ProductionCheckboxField = keyof Pick<Lead, 'isCutting' | 'isSewing' | 'isTrimming' | 'isDone'>;
 
-export function ProductionQueueTable() {
+type ProductionQueueTableProps = {
+    leads: Lead[];
+}
+
+export function ProductionQueueTable({ leads }: ProductionQueueTableProps) {
   const firestore = useFirestore();
-  const { user, isUserLoading: isAuthLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const { toast } = useToast();
   
-  const leadsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'leads'), orderBy('submissionDateTime', 'desc'));
-  }, [firestore, user]);
-
-  const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
-
   const formatJoNumber = (joNumber: number | undefined) => {
     if (!joNumber) return '';
     const currentYear = new Date().getFullYear().toString().slice(-2);
@@ -120,8 +114,6 @@ export function ProductionQueueTable() {
     });
   }, [leads, searchTerm, joNumberSearch]);
 
-  const isLoading = isAuthLoading || isLeadsLoading;
-
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
@@ -153,19 +145,6 @@ export function ProductionQueueTable() {
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading && (
-          <div className="space-y-2 p-4">
-            {[...Array(10)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full bg-gray-200" />
-            ))}
-          </div>
-        )}
-        {error && (
-          <div className="text-red-500 p-4">
-            Error loading job orders: {error.message}
-          </div>
-        )}
-        {!isLoading && !error && (
            <div className="border rounded-md">
             <Table>
                 <TableHeader className="bg-neutral-800">
@@ -231,7 +210,6 @@ export function ProductionQueueTable() {
                 </TableBody>
             </Table>
           </div>
-        )}
       </CardContent>
     </Card>
   );

@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -18,7 +18,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Skeleton } from './ui/skeleton';
 import React, { ChangeEvent, useMemo, useState } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -35,8 +34,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-
 
 type NamedOrder = {
   name: string;
@@ -121,10 +118,12 @@ type FileUploadChecklistItem = {
   timestamp?: string | null;
 };
 
+type DigitizingTableProps = {
+    leads: Lead[];
+}
 
-export function DigitizingTable() {
+export function DigitizingTable({ leads }: DigitizingTableProps) {
   const firestore = useFirestore();
-  const { user, isUserLoading: isAuthLoading } = useUser();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [joNumberSearch, setJoNumberSearch] = React.useState('');
@@ -165,13 +164,6 @@ export function DigitizingTable() {
   const [archiveConfirmLead, setArchiveConfirmLead] = React.useState<Lead | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
   
-  const leadsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'leads'), orderBy('submissionDateTime', 'desc'));
-  }, [firestore, user]);
-
-  const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
-
   const handleCheckboxChange = (leadId: string, field: CheckboxField, checked: boolean) => {
     const lead = leads?.find((l) => l.id === leadId);
     const isCurrentlyChecked = lead ? lead[field] : false;
@@ -526,8 +518,6 @@ export function DigitizingTable() {
     });
 
   }, [leads, searchTerm, joNumberSearch, priorityFilter, overdueFilter]);
-
-  const isLoading = isAuthLoading || isLeadsLoading;
 
   const fileChecklistItems: FileUploadChecklistItem[] = useMemo(() => {
     if (!archiveConfirmLead) return [];
@@ -920,19 +910,6 @@ export function DigitizingTable() {
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto">
-        {isLoading && (
-          <div className="space-y-2 p-4">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full bg-gray-200" />
-            ))}
-          </div>
-        )}
-        {error && (
-          <div className="text-red-500 p-4">
-            Error loading records: {error.message}
-          </div>
-        )}
-        {!isLoading && !error && (
            <div className="border rounded-md h-full">
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
@@ -1078,7 +1055,7 @@ export function DigitizingTable() {
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={13} className="p-4 border-t">
+                        <TableCell colSpan={13} className="p-4 border-t-2 border-gray-300">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {hasInitialImages && (
                                     <Card className="bg-white">
@@ -1206,7 +1183,6 @@ export function DigitizingTable() {
                 </TableBody>
             </Table>
           </div>
-        )}
       </CardContent>
     </Card>
   );

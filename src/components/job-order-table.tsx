@@ -1,8 +1,6 @@
 
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -18,7 +16,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Skeleton } from './ui/skeleton';
 import React from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -52,20 +49,15 @@ type Lead = {
   courier?: string;
 }
 
-export function JobOrderTable() {
-  const firestore = useFirestore();
-  const { user, isUserLoading: isAuthLoading } = useUser();
+type JobOrderTableProps = {
+  leads: Lead[];
+}
+
+export function JobOrderTable({ leads }: JobOrderTableProps) {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [csrFilter, setCsrFilter] = React.useState('All');
   const [hoveredLeadId, setHoveredLeadId] = React.useState<string | null>(null);
   const router = useRouter();
-  
-  const leadsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'leads'), orderBy('submissionDateTime', 'desc'));
-  }, [firestore, user]);
-
-  const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
 
   const handleProcessJobOrder = (lead: Lead) => {
     router.push(`/job-order/${lead.id}`);
@@ -88,8 +80,6 @@ export function JobOrderTable() {
       return matchesSearch && matchesCsr;
     });
   }, [leads, searchTerm, csrFilter]);
-
-  const isLoading = isAuthLoading || isLeadsLoading;
 
   const formatJoNumber = (joNumber: number | undefined) => {
     if (!joNumber) return '';
@@ -131,19 +121,6 @@ export function JobOrderTable() {
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto">
-        {isLoading && (
-          <div className="space-y-2 p-4">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full bg-gray-200" />
-            ))}
-          </div>
-        )}
-        {error && (
-          <div className="text-red-500 p-4">
-            Error loading records: {error.message}
-          </div>
-        )}
-        {!isLoading && !error && (
            <div className="border rounded-md h-full">
                 <Table>
                   <TableHeader className="bg-neutral-800 sticky top-0 z-10">
@@ -208,10 +185,7 @@ export function JobOrderTable() {
                     </TableBody>
                 </Table>
           </div>
-        )}
       </CardContent>
     </Card>
   );
 }
-
-    

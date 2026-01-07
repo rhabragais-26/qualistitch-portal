@@ -2,18 +2,28 @@
 "use client";
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
-import { format, parse, getYear } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from './ui/button';
-import { Printer } from 'lucide-react';
-import { generateReport, GenerateReportOutput, Lead } from '@/ai/flows/generate-report-flow';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { generateReport, GenerateReportOutput } from '@/ai/flows/generate-report-flow';
+
+type Lead = {
+  id: string;
+  customerName: string;
+  salesRepresentative: string;
+  priorityType: string;
+  orders: {
+    quantity: number;
+    productType: string;
+    [key: string]: any;
+  }[];
+  submissionDateTime: string;
+  [key: string]: any;
+};
 
 const chartConfig = {
   quantity: {
@@ -39,9 +49,13 @@ const COLORS = [
   'hsl(180, 70%, 70%)',
 ];
 
-export function ReportsSummary() {
-  const firestore = useFirestore();
-  const { user } = useUser();
+type ReportsSummaryProps = {
+    leads: Lead[];
+    isLoading: boolean;
+    error: Error | null;
+}
+
+export function ReportsSummary({ leads, isLoading: isLeadsLoading, error: leadsError }: ReportsSummaryProps) {
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
   const [selectedWeek, setSelectedWeek] = useState<string>('');
@@ -49,13 +63,6 @@ export function ReportsSummary() {
   const [reportData, setReportData] = useState<GenerateReportOutput | null>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
   const [reportError, setReportError] = useState<string | null>(null);
-
-  const leadsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'leads'));
-  }, [firestore, user]);
-
-  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
 
   const months = useMemo(() => [
       { value: '1', label: 'January' }, { value: '2', label: 'February' },
@@ -87,10 +94,12 @@ export function ReportsSummary() {
   }, [leads, selectedYear, selectedMonth, selectedWeek]);
 
   useEffect(() => {
-    if (leads) {
+    if (leads && leads.length > 0) {
       processReport();
+    } else if (!isLeadsLoading) {
+        setIsReportLoading(false);
     }
-  }, [leads, processReport]);
+  }, [leads, processReport, isLeadsLoading]);
 
   const totalPriorityQuantity = useMemo(() => reportData?.priorityData.reduce((sum, item) => sum + item.value, 0) || 0, [reportData?.priorityData]);
   

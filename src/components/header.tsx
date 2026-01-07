@@ -16,7 +16,6 @@ import {
   Factory,
 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
@@ -37,17 +36,71 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
+
+type Lead = {
+  id: string;
+  customerName: string;
+  companyName?: string;
+  contactNumber: string;
+  landlineNumber?: string;
+  location: string;
+  salesRepresentative: string;
+  priorityType: string;
+  paymentType: string;
+  orderType: string;
+  courier: string;
+  orders: any[];
+  submissionDateTime: string;
+  lastModified: string;
+  joNumber?: number;
+  isUnderProgramming?: boolean;
+  isInitialApproval?: boolean;
+  isLogoTesting?: boolean;
+  isRevision?: boolean;
+  isFinalApproval?: boolean;
+  isFinalProgram?: boolean;
+  isPreparedForProduction?: boolean;
+  isSentToProduction?: boolean;
+  isDigitizingArchived?: boolean;
+  layouts?: any[];
+  underProgrammingTimestamp?: string;
+  initialApprovalTimestamp?: string;
+  logoTestingTimestamp?: string;
+  revisionTimestamp?: string;
+  finalApprovalTimestamp?: string;
+  finalProgramTimestamp?: string;
+  digitizingArchivedTimestamp?: string;
+  sentToProductionTimestamp?: string;
+  isCutting?: boolean;
+  isSewing?: boolean;
+  isTrimming?: boolean;
+  isDone?: boolean;
+};
+
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
+  children?: (leads: Lead[], isLoading: boolean, error: Error | null) => React.ReactNode;
 };
 
-export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
+export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [nextUrl, setNextUrl] = useState('');
   const [isClient, setIsClient] = useState(false);
+  
+  const firestore = useFirestore();
+  const { user } = useUser();
+
+  const leadsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'leads'));
+  }, [firestore, user]);
+
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
   useEffect(() => {
     setIsClient(true);
@@ -192,6 +245,10 @@ export function Header({ isNewOrderPageDirty = false }: HeaderProps) {
           </nav>
         </div>
       </header>
+      
+      <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 overflow-hidden">
+        {children && children(leads || [], isLoading, error)}
+      </main>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>

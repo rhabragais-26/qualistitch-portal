@@ -1,7 +1,6 @@
+
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -55,20 +54,15 @@ type Lead = {
   isSentToProduction?: boolean;
 }
 
-export function OrderStatusTable() {
-  const firestore = useFirestore();
-  const { user, isUserLoading: isAuthLoading } = useUser();
+type OrderStatusTableProps = {
+    leads: Lead[];
+}
+
+export function OrderStatusTable({ leads }: OrderStatusTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   
-  const leadsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'leads'), orderBy('submissionDateTime', 'desc'));
-  }, [firestore, user]);
-
-  const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
-
   const toggleLeadDetails = (leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
   };
@@ -133,8 +127,6 @@ export function OrderStatusTable() {
     );
   }, [leads, searchTerm]);
 
-  const isLoading = isAuthLoading || isLeadsLoading;
-
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
       <CardHeader>
@@ -156,19 +148,6 @@ export function OrderStatusTable() {
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto">
-        {isLoading && (
-          <div className="space-y-2 p-4">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full bg-gray-200" />
-            ))}
-          </div>
-        )}
-        {error && (
-          <div className="text-red-500 p-4">
-            Error loading records: {error.message}
-          </div>
-        )}
-        {!isLoading && !error && (
            <div className="border rounded-md relative h-full">
             <ScrollArea className="h-full">
               <Table>
@@ -256,7 +235,6 @@ export function OrderStatusTable() {
               </Table>
             </ScrollArea>
           </div>
-        )}
       </CardContent>
     </Card>
   );

@@ -1,7 +1,7 @@
+
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -17,8 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Skeleton } from './ui/skeleton';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Check, ChevronDown, Send } from 'lucide-react';
 import { Badge } from './ui/badge';
@@ -30,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
+import { useFirestore } from '@/firebase';
 
 type Order = {
   productType: string;
@@ -68,9 +68,12 @@ const programmingStatusOptions = [
     'Pending Initial Program'
 ];
 
-export function ProdPreparationTable() {
+type ProdPreparationTableProps = {
+    leads: Lead[];
+}
+
+export function ProdPreparationTable({ leads }: ProdPreparationTableProps) {
   const firestore = useFirestore();
-  const { user, isUserLoading: isAuthLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -79,14 +82,6 @@ export function ProdPreparationTable() {
   const [confirmingLead, setConfirmingLead] = useState<Lead | null>(null);
   const [leadToSend, setLeadToSend] = useState<Lead | null>(null);
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
-
-  
-  const leadsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'leads'), orderBy('submissionDateTime', 'desc'));
-  }, [firestore, user]);
-
-  const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
 
   const getProgrammingStatus = (lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
     if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
@@ -196,7 +191,6 @@ export function ProdPreparationTable() {
     });
   }, [leads, searchTerm, joNumberSearch, statusFilter]);
 
-  const isLoading = isAuthLoading || isLeadsLoading;
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
@@ -292,19 +286,6 @@ export function ProdPreparationTable() {
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading && (
-          <div className="space-y-2 p-4">
-            {[...Array(10)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full bg-gray-200" />
-            ))}
-          </div>
-        )}
-        {error && (
-          <div className="text-red-500 p-4">
-            Error loading job orders: {error.message}
-          </div>
-        )}
-        {!isLoading && !error && (
            <div className="border rounded-md">
             <Table>
                 <TableHeader className="bg-neutral-800">
@@ -396,7 +377,6 @@ export function ProdPreparationTable() {
                 </TableBody>
             </Table>
           </div>
-        )}
       </CardContent>
     </Card>
   );

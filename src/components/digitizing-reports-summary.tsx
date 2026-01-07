@@ -2,15 +2,25 @@
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { generateDigitizingReport, GenerateDigitizingReportOutput, Lead } from '@/ai/flows/generate-digitizing-report-flow';
+import { generateDigitizingReport, GenerateDigitizingReportOutput } from '@/ai/flows/generate-digitizing-report-flow';
 
+type Lead = {
+  id: string;
+  joNumber?: number;
+  isUnderProgramming?: boolean;
+  isInitialApproval?: boolean;
+  isLogoTesting?: boolean;
+  isRevision?: boolean;
+  isFinalApproval?: boolean;
+  isFinalProgram?: boolean;
+  priorityType: 'Rush' | 'Regular';
+  submissionDateTime: string;
+};
 
 const chartConfig = {
   count: {
@@ -28,21 +38,18 @@ const COLORS = [
   'hsl(340, 70%, 70%)',
 ];
 
-export function DigitizingReportsSummary() {
-  const firestore = useFirestore();
-  const { user } = useUser();
+type DigitizingReportsSummaryProps = {
+    leads: Lead[];
+    isLoading: boolean;
+    error: Error | null;
+}
+
+export function DigitizingReportsSummary({ leads, isLoading: isLeadsLoading, error: leadsError }: DigitizingReportsSummaryProps) {
   const [priorityFilter, setPriorityFilter] = useState('All');
   
   const [reportData, setReportData] = useState<GenerateDigitizingReportOutput | null>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
   const [reportError, setReportError] = useState<string | null>(null);
-
-  const leadsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'leads'));
-  }, [firestore, user]);
-
-  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
 
   const processReport = useCallback(async () => {
     if (!leads) return;
@@ -63,10 +70,12 @@ export function DigitizingReportsSummary() {
   }, [leads, priorityFilter]);
 
   useEffect(() => {
-    if (leads) {
+    if (leads && leads.length > 0) {
       processReport();
+    } else if (!isLeadsLoading) {
+        setIsReportLoading(false);
     }
-  }, [leads, processReport]);
+  }, [leads, processReport, isLeadsLoading]);
   
   const isLoading = isLeadsLoading || isReportLoading;
   const error = leadsError || reportError;

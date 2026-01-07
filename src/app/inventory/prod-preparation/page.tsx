@@ -1,13 +1,27 @@
+
+'use client';
 import { Header } from '@/components/header';
 import { ProdPreparationTable } from '@/components/prod-preparation-table';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProdPreparationPage() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
-        <ProdPreparationTable />
-      </main>
-    </div>
+    <Header>
+      {(leads, isLoading, error) => {
+        if (isLoading) {
+          return (
+            <div className="space-y-2 p-4">
+              {[...Array(10)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full bg-gray-200" />
+              ))}
+            </div>
+          );
+        }
+        if (error) {
+          return <div className="text-red-500 p-4">Error loading job orders: {error.message}</div>;
+        }
+        return <ProdPreparationTable leads={leads} />;
+      }}
+    </Header>
   );
 }

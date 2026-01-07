@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { useFirestore, useMemoFirebase } from '@/firebase';
+import { doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -20,10 +20,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from './ui/badge';
-import { Skeleton } from './ui/skeleton';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, PlusCircle, Plus, Minus, Edit, Trash2, Truck } from 'lucide-react';
+import { ChevronDown, ChevronUp, PlusCircle, Plus, Minus, Edit, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -38,9 +37,8 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { ScrollArea } from './ui/scroll-area';
 import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
@@ -73,7 +71,7 @@ const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', '
 const paymentTypes = ['Partially Paid', 'Fully Paid', 'COD'];
 const orderTypes = ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'];
 const priorityTypes = ['Rush', 'Regular'];
-const courierTypes = ['Lalamove', 'J&T', 'In-house'];
+const courierTypes = ['Lalamove', 'J&T', 'In-house', 'Pick-up'];
 
 
 type Order = {
@@ -100,9 +98,12 @@ type Lead = {
   lastModified: string;
 }
 
-export function RecordsTable() {
+type RecordsTableProps = {
+    leads: Lead[];
+}
+
+export function RecordsTable({ leads }: RecordsTableProps) {
   const firestore = useFirestore();
-  const { user, isUserLoading: isAuthLoading } = useUser();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [newOrderProductType, setNewOrderProductType] = useState('');
@@ -123,13 +124,6 @@ export function RecordsTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [csrFilter, setCsrFilter] = useState('All');
   
-  const leadsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'leads'), orderBy('submissionDateTime', 'desc'));
-  }, [firestore, user]);
-
-  const { data: leads, isLoading: isLeadsLoading, error } = useCollection<Lead>(leadsQuery);
-
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
 
@@ -147,8 +141,6 @@ export function RecordsTable() {
       return matchesSearch && matchesCsr;
     });
   }, [leads, searchTerm, csrFilter]);
-
-  const isLoading = isAuthLoading || isLeadsLoading;
 
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
@@ -342,41 +334,6 @@ export function RecordsTable() {
       });
     }
   };
-
-  const handleUpdateOrderQuantity = async (leadId: string, orderIndex: number, newQuantity: number) => {
-    if (newQuantity < 1 || !firestore) return;
-
-    const lead = leads?.find(l => l.id === leadId);
-    if (!lead) return;
-
-    const updatedOrders = lead.orders.map((order, index) => {
-        if (index === orderIndex) {
-            return { ...order, quantity: newQuantity };
-        }
-        return order;
-    });
-
-    const leadDocRef = doc(firestore, 'leads', leadId);
-
-    try {
-        await updateDoc(leadDocRef, {
-            orders: updatedOrders,
-            lastModified: new Date().toISOString(),
-        });
-        toast({
-            title: "Quantity Updated!",
-            description: "The order quantity has been updated.",
-        });
-    } catch (e: any) {
-        console.error("Error updating quantity: ", e);
-        toast({
-            variant: "destructive",
-            title: "Update Failed",
-            description: e.message || "Could not update the quantity.",
-        });
-    }
-};
-
   
   const handleDeleteOrder = async (leadId: string, orderIndex: number) => {
     if (!firestore) return;
@@ -427,14 +384,6 @@ export function RecordsTable() {
     }
   }
 
-  const toTitleCase = (str: string) => {
-    if (!str) return '';
-    return str
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  };
-
   const getContactDisplay = (lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
@@ -479,19 +428,6 @@ export function RecordsTable() {
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto">
-        {isLoading && (
-          <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full bg-gray-200" />
-            ))}
-          </div>
-        )}
-        {error && (
-          <div className="text-red-500">
-            Error loading records: {error.message}
-          </div>
-        )}
-        {!isLoading && !error && (
           <div className="border rounded-md relative">
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
@@ -649,7 +585,6 @@ export function RecordsTable() {
                 </TableBody>
             </Table>
           </div>
-        )}
       </CardContent>
        <Dialog open={isOrderDialogOpen} onOpenChange={(isOpen) => {
           if (!isOpen) {
@@ -1070,9 +1005,3 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
-
-    
-
-    
-
-    
