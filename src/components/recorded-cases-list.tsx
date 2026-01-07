@@ -97,12 +97,12 @@ export function RecordedCasesList() {
                       <p className="text-xs text-gray-600">{caseItem.customerName}</p>
                       <p className="text-xs text-gray-500">{getContactDisplay(caseItem)}</p>
                     </div>
-                    <div className="md:col-span-5">
+                    <div className="md:col-span-4">
                        <p className="text-xs text-gray-500">Case & Remarks/Reason</p>
                        <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
                        <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks.charAt(0).toUpperCase() + caseItem.remarks.slice(1)}</p>
                     </div>
-                     <div className="md:col-span-2 flex justify-center items-start pt-2">
+                     <div className="md:col-span-3 flex justify-center items-center pt-2">
                       {caseItem.image && (
                          <div 
                            className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
@@ -112,7 +112,7 @@ export function RecordedCasesList() {
                          </div>
                       )}
                     </div>
-                    <div className="md:col-span-2 flex justify-end pt-2">
+                    <div className="md:col-span-2 flex justify-center items-center">
                        <Button 
                           onClick={() => setCaseToResolve(caseItem)} 
                           className="shadow-md transition-transform active:scale-95 text-white font-bold"
