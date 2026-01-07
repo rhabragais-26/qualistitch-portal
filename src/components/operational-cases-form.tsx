@@ -360,7 +360,7 @@ export function OperationalCasesForm() {
                         <FormControl>
                             <div 
                                 tabIndex={0}
-                                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
+                                className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-32 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
                                 onPaste={handleImagePaste}
                                 onDoubleClick={() => imageUploadRef.current?.click()}
                                 onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
