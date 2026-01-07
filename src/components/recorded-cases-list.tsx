@@ -11,7 +11,8 @@ import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ArchiveRestore } from 'lucide-react';
+import { ResolvedCasesDialog } from './resolved-cases-dialog';
 
 type OperationalCase = {
   id: string;
@@ -32,6 +33,7 @@ export function RecordedCasesList() {
   const [caseToResolve, setCaseToResolve] = useState<OperationalCase | null>(null);
   const [caseToDelete, setCaseToDelete] = useState<OperationalCase | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
+  const [isResolvedCasesOpen, setIsResolvedCasesOpen] = useState(false);
   const { toast } = useToast();
 
   const casesQuery = useMemoFirebase(() => {
@@ -88,127 +90,163 @@ export function RecordedCasesList() {
       });
     }
   };
+  
+  const handleReopenCase = async (caseId: string) => {
+    if (!firestore) return;
+    try {
+      const caseDocRef = doc(firestore, 'operationalCases', caseId);
+      await updateDoc(caseDocRef, { isArchived: false });
+      toast({
+        title: "Case Reopened",
+        description: "The case has been moved back to the active list.",
+      });
+    } catch (e: any) {
+      console.error("Error reopening case: ", e);
+      toast({
+        variant: "destructive",
+        title: "Reopen Failed",
+        description: e.message || "Could not reopen the case.",
+      });
+    }
+  };
 
 
   const activeCases = cases?.filter(c => !c.isArchived);
+  const archivedCases = cases?.filter(c => c.isArchived);
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
-      <CardHeader>
-        <CardTitle>Recorded Cases</CardTitle>
-        <CardDescription>A log of all submitted operational cases.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[calc(100vh-17rem)] pr-4">
-          {isLoading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-24 w-full" />
-              ))}
-            </div>
-          ) : error ? (
-            <p className="text-destructive">Error loading cases: {error.message}</p>
-          ) : activeCases && activeCases.length > 0 ? (
-            <div className="space-y-4">
-              {activeCases.map((caseItem) => (
-                <Card key={caseItem.id} className="bg-gray-50">
-                  <CardContent className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                    <div className="md:col-span-3">
-                      <p className="text-xs text-gray-500">Date Recorded</p>
-                      <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
-                      <p className="text-sm font-semibold mt-2">{caseItem.joNumber}</p>
-                      <p className="text-xs text-gray-600">{caseItem.customerName}</p>
-                      <p className="text-xs text-gray-500">{getContactDisplay(caseItem)}</p>
-                    </div>
-                    <div className="md:col-span-5">
-                       <p className="text-xs text-gray-500">Case & Remarks/Reason</p>
-                       <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
-                       <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks.charAt(0).toUpperCase() + caseItem.remarks.slice(1)}</p>
-                    </div>
-                     <div className="md:col-span-2 flex justify-center items-start pt-2">
-                      {caseItem.image && (
-                         <div 
-                           className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
-                           onClick={() => setImageInView(caseItem.image!)}
-                         >
-                           <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
-                         </div>
-                      )}
-                    </div>
-                    <div className="md:col-span-2 flex flex-col items-center justify-center gap-2">
-                       <Button 
-                          onClick={() => setCaseToResolve(caseItem)} 
-                          className="shadow-md transition-transform active:scale-95 text-white font-bold w-full"
-                        >
-                          Resolved
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => setCaseToDelete(caseItem)}
-                        className="shadow-md transition-transform active:scale-95 font-bold w-full text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-48">
-                <p className="text-muted-foreground">No operational cases have been recorded yet.</p>
-            </div>
-          )}
-        </ScrollArea>
-        {caseToResolve && (
-            <AlertDialog open={!!caseToResolve} onOpenChange={(isOpen) => !isOpen && setCaseToResolve(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will mark the case for J.O. {caseToResolve.joNumber} as resolved and remove it from this list. This action cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleResolveCase}>Confirm</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        )}
-         {caseToDelete && (
-            <AlertDialog open={!!caseToDelete} onOpenChange={(isOpen) => !isOpen && setCaseToDelete(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this case?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the case for J.O. {caseToDelete.joNumber}.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDeleteCase}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Delete
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        )}
-        {imageInView && (
-          <div 
-            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center animate-in fade-in"
-            onClick={() => setImageInView(null)}
-          >
-            <div className="relative h-[90vh] w-[90vw]">
-              <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
-            </div>
+    <>
+      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
+        <CardHeader className="flex flex-row justify-between items-center">
+          <div>
+            <CardTitle>Recorded Cases</CardTitle>
+            <CardDescription>A log of all submitted operational cases.</CardDescription>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <Button variant="outline" onClick={() => setIsResolvedCasesOpen(true)}>
+             <ArchiveRestore className="mr-2 h-4 w-4" />
+             View Resolved
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[calc(100vh-17rem)] pr-4">
+            {isLoading ? (
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-24 w-full" />
+                ))}
+              </div>
+            ) : error ? (
+              <p className="text-destructive">Error loading cases: {error.message}</p>
+            ) : activeCases && activeCases.length > 0 ? (
+              <div className="space-y-4">
+                {activeCases.map((caseItem) => (
+                  <Card key={caseItem.id} className="bg-gray-50">
+                    <CardContent className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                      <div className="md:col-span-3">
+                        <p className="text-xs text-gray-500">Date Recorded</p>
+                        <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
+                        <p className="text-sm font-semibold mt-2">{caseItem.joNumber}</p>
+                        <p className="text-xs text-gray-600">{caseItem.customerName}</p>
+                        <p className="text-xs text-gray-500">{getContactDisplay(caseItem)}</p>
+                      </div>
+                      <div className="md:col-span-5 self-start pt-2">
+                        <p className="text-xs text-gray-500">Case & Remarks/Reason</p>
+                        <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
+                        <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks.charAt(0).toUpperCase() + caseItem.remarks.slice(1)}</p>
+                      </div>
+                      <div className="md:col-span-2 flex justify-center items-center">
+                        {caseItem.image && (
+                          <div
+                            className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
+                            onClick={() => setImageInView(caseItem.image!)}
+                          >
+                            <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="md:col-span-2 flex flex-col items-center justify-center gap-2">
+                        <Button
+                            onClick={() => setCaseToResolve(caseItem)}
+                            className="shadow-md transition-transform active:scale-95 text-white font-bold w-full"
+                          >
+                            Resolved
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setCaseToDelete(caseItem)}
+                          className="shadow-md transition-transform active:scale-95 font-bold w-full text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-48">
+                  <p className="text-muted-foreground">No operational cases have been recorded yet.</p>
+              </div>
+            )}
+          </ScrollArea>
+        </CardContent>
+      </Card>
+      {caseToResolve && (
+          <AlertDialog open={!!caseToResolve} onOpenChange={(isOpen) => !isOpen && setCaseToResolve(null)}>
+              <AlertDialogContent>
+                  <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                          This will mark the case for J.O. {caseToResolve.joNumber} as resolved and remove it from this list. This action cannot be undone.
+                      </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleResolveCase}>Confirm</AlertDialogAction>
+                  </AlertDialogFooter>
+              </AlertDialogContent>
+          </AlertDialog>
+      )}
+      {caseToDelete && (
+          <AlertDialog open={!!caseToDelete} onOpenChange={(isOpen) => !isOpen && setCaseToDelete(null)}>
+              <AlertDialogContent>
+                  <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this case?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the case for J.O. {caseToDelete.joNumber}.
+                      </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteCase}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                  </AlertDialogFooter>
+              </AlertDialogContent>
+          </AlertDialog>
+      )}
+      {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]">
+            <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
+          </div>
+        </div>
+      )}
+       {archivedCases && (
+        <ResolvedCasesDialog
+          isOpen={isResolvedCasesOpen}
+          onClose={() => setIsResolvedCasesOpen(false)}
+          archivedCases={archivedCases}
+          onReopenCase={handleReopenCase}
+        />
+      )}
+    </>
   );
 }
