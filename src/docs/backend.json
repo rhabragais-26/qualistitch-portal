@@ -220,6 +220,15 @@
                 "format": "date-time",
                 "description": "Timestamp for Initial Program right logo upload."
               },
+              "backLogoImage": {
+                "type": ["string", "null"],
+                "description": "Data URL of the uploaded back logo image for Initial Program."
+              },
+              "backLogoImageUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for Initial Program back logo upload."
+              },
               "backDesignImage": {
                 "type": ["string", "null"],
                 "description": "Data URL of the uploaded back design image for Initial Program."
