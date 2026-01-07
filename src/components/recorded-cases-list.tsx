@@ -174,7 +174,7 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
                         <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
                         {caseItem.quantity && <p className="text-sm font-semibold">Quantity: {caseItem.quantity}</p>}
                         <p className="text-sm mt-1 whitespace-pre-wrap">
-                          {caseItem.remarks.split('\n').map((line, index) => {
+                          {caseItem.remarks && caseItem.remarks.split('\n').map((line, index) => {
                                 if (line.startsWith('(') && line.endsWith(')')) {
                                     return <i key={index} className="block">{line}</i>;
                                 }
