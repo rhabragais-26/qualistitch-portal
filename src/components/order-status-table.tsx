@@ -148,12 +148,12 @@ export function OrderStatusTable() {
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Days Remaining/Overdue</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Programming Status</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Ordered Items</TableHead>
+                    <TableHead className="text-white font-bold">Customer Name</TableHead>
+                    <TableHead className="text-white font-bold">Mobile No.</TableHead>
+                    <TableHead className="text-white font-bold">Landline No.</TableHead>
+                    <TableHead className="text-center text-white font-bold">Days Remaining/Overdue</TableHead>
+                    <TableHead className="text-center text-white font-bold">Programming Status</TableHead>
+                    <TableHead className="text-center text-white font-bold">Ordered Items</TableHead>
                   </TableRow>
                 </TableHeader>
             </Table>
