@@ -332,7 +332,8 @@
         "customerName": { "type": "string" },
         "companyName": { "type": "string" },
         "contactNumber": { "type": "string" },
-        "landlineNumber": { "type": "string" }
+        "landlineNumber": { "type": "string" },
+        "isArchived": { "type": "boolean", "description": "Indicates if the case is resolved and archived." }
       },
       "required": ["id", "joNumber", "caseType", "remarks", "submissionDateTime"]
     }
