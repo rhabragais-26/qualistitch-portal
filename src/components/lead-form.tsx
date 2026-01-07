@@ -670,6 +670,21 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       <FormMessage />
                     </FormItem>
                   )}/>
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="lg:col-span-2 space-y-6">
+                 <FormField control={form.control} name="orderType" render={({field}) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl><SelectTrigger className={cn("h-9 text-xs", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
+                        <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                      </Select>
+                       <FormMessage />
+                    </FormItem>
+                  )}/>
                   <FormField control={form.control} name="priorityType" render={({field}) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-2 text-black text-xs"><AlertTriangle className="h-4 w-4 text-primary" />Priority Type</FormLabel>
@@ -684,21 +699,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         </RadioGroup>
                       </FormControl>
                       <FormMessage />
-                    </FormItem>
-                  )}/>
-                </div>
-              </div>
-
-              {/* Right Column */}
-              <div className="lg:col-span-2 space-y-6">
-                 <FormField control={form.control} name="orderType" render={({field}) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-black text-xs"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl><SelectTrigger className={cn("h-9 text-xs", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
-                        <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
-                      </Select>
-                       <FormMessage />
                     </FormItem>
                   )}/>
                  <FormField control={form.control} name="courier" render={({field}) => (
