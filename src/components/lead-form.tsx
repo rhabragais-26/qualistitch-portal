@@ -685,11 +685,11 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                        <FormMessage />
                     </FormItem>
                   )}/>
-                  <FormField control={form.control} name="priorityType" render={({field}) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-black text-xs"><AlertTriangle className="h-4 w-4 text-primary" />Priority Type</FormLabel>
+                 <FormField control={form.control} name="priorityType" render={({field}) => (
+                    <FormItem className="flex items-center gap-4">
+                      <FormLabel className="w-28 flex items-center gap-2 text-black text-xs shrink-0"><AlertTriangle className="h-4 w-4 text-primary" />Priority Type</FormLabel>
                       <FormControl>
-                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex items-center space-x-4 pt-2" disabled={(orderType === 'MTO' || orderType === 'Stock (Jacket Only)')}>
+                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex items-center space-x-4 h-9" disabled={(orderType === 'MTO' || orderType === 'Stock (Jacket Only)')}>
                           {['Rush', 'Regular'].map((option) => (
                             <FormItem key={option} className="flex items-center space-x-2 space-y-0">
                               <FormControl><RadioGroupItem value={option} /></FormControl>
@@ -871,5 +871,3 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     </Card>
   );
 }
-
-    
