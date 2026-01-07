@@ -704,7 +704,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               
               {/* Right Column */}
               <div className="w-1/2 flex flex-col gap-y-3">
-                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-2">
+                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="orderType" render={({field}) => (
                         <FormItem>
                         <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
@@ -735,12 +735,12 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           <FormMessage />
                       </FormItem>
                     )}/>
-                     <FormField
+                    <FormField
                       control={form.control}
                       name="priorityType"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">
+                        <FormItem className="flex items-center gap-x-2 pt-5">
+                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0 pt-2">
                             <AlertTriangle className="h-4 w-4 text-primary" />
                             Priority Type
                           </FormLabel>
@@ -748,7 +748,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                             <RadioGroup
                               onValueChange={field.onChange}
                               value={field.value}
-                              className="flex items-center space-x-2 pt-2"
+                              className="flex items-center space-x-1"
                               disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
                             >
                               {['Rush', 'Regular'].map((option) => (
@@ -827,7 +827,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                             </Select>
                           </div>
                           <div className='grid grid-cols-2 gap-4'>
-                            <div className="space-y-2">
+                            <div className="flex items-center gap-2">
                               <FormLabel>Color:</FormLabel>
                               <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={isPatches}>
                                 <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
