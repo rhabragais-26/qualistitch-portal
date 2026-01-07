@@ -530,25 +530,25 @@ export function RecordsTable() {
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
                         <TableCell colSpan={13} className="p-0">
-                           <div className="p-4">
+                           <div className="p-2">
                             <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
                              <Table>
                               <TableHeader>
                                 <TableRow>
-                                  <TableHead className="py-1 text-black">Product Type</TableHead>
-                                  <TableHead className="py-1 text-black">Color</TableHead>
-                                  <TableHead className="py-1 text-black">Size</TableHead>
-                                  <TableHead className="py-1 text-black text-center">Quantity</TableHead>
-                                  <TableHead className="text-right py-1 text-black pr-8">Action</TableHead>
+                                  <TableHead className="py-1 px-2 text-black">Product Type</TableHead>
+                                  <TableHead className="py-1 px-2 text-black">Color</TableHead>
+                                  <TableHead className="py-1 px-2 text-black">Size</TableHead>
+                                  <TableHead className="py-1 px-2 text-black text-center">Quantity</TableHead>
+                                  <TableHead className="text-right py-1 px-2 text-black pr-8">Action</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
                                 {lead.orders?.map((order: any, index: number) => (
-                                  <TableRow key={index}>
-                                    <TableCell className="py-1 text-xs text-black">{order.productType}</TableCell>
-                                    <TableCell className="py-1 text-xs text-black">{order.color}</TableCell>
-                                    <TableCell className="py-1 text-xs text-black">{order.size}</TableCell>
-                                    <TableCell className="py-1 text-xs text-black text-center">
+                                  <TableRow key={index} className="border-0">
+                                    <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
+                                    <TableCell className="py-1 px-2 text-xs text-black text-center">
                                       {order.quantity}
                                     </TableCell>
                                     <TableCell className="text-right py-1">
@@ -580,9 +580,9 @@ export function RecordsTable() {
                               </TableBody>
                               <TableFooter>
                                  <TableRow>
-                                  <TableCell colSpan={3} className="text-right font-bold text-black">Total Quantity</TableCell>
-                                  <TableCell className="font-bold text-black text-center">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
-                                  <TableCell className='text-right'>
+                                  <TableCell colSpan={3} className="text-right font-bold text-black py-1 px-2">Total Quantity</TableCell>
+                                  <TableCell className="font-bold text-black text-center py-1 px-2">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
+                                  <TableCell className='text-right py-1 px-2'>
                                     <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
                                       <PlusCircle className="h-4 w-4 mr-1" />
                                       Add Order
