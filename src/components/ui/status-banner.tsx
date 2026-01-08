@@ -8,6 +8,7 @@ type StatusBannerProps = {
   backgroundColor?: string;
   backgroundClassName?: string;
   textColorClassName?: string;
+  borderColor?: string;
   borderClassName?: string;
   className?: string;
 };
@@ -17,14 +18,15 @@ export function StatusBanner({
     backgroundColor, 
     backgroundClassName, 
     textColorClassName,
+    borderColor,
     borderClassName,
     className 
 }: StatusBannerProps) {
   return (
     <div className={cn("relative w-48 h-8", className)}>
       <div 
-        className={cn("absolute inset-0 w-full h-full border-2 rounded-full", borderClassName)} 
-        style={{ backgroundColor: backgroundColor }}
+        className={cn("absolute inset-0 w-full h-full border-2 rounded-full", backgroundClassName, borderClassName)} 
+        style={{ backgroundColor: backgroundColor, borderColor: borderColor }}
       >
       </div>
       <div
