@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -173,32 +174,27 @@ export function OrderStatusTable() {
     return { text: 'ONGOING', variant: 'warning' };
   }, []);
   
-   const getProgressValue = useCallback((lead: Lead): number => {
-    // Shipment
+  const getProgressValue = useCallback((lead: Lead): number => {
     if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') return 100;
     if (lead.shipmentStatus === 'Packed') return 95;
     
-    // Production
     if (lead.isDone) return 90;
     if (lead.isTrimming) return 85;
     if (lead.sewerType && lead.sewerType !== 'Pending') return 70;
     if (lead.productionType && lead.productionType !== 'Pending') return 50;
 
-    // Item Preparation
     if (lead.isSentToProduction) return 40;
     if (lead.isPreparedForProduction) return 35;
 
-    // Programming
     if (lead.isFinalProgram) return 30;
     if (lead.isFinalApproval) return 20;
-    if (lead.isRevision) return 15; // Revision is a branch, not linear step
+    if (lead.isRevision) return 15;
     if (lead.isLogoTesting) return 15;
     if (lead.isInitialApproval) return 10;
     if (lead.isUnderProgramming) return 5;
-
-    if (lead.joNumber) return 0; // J.O. created but no programming yet
-
-    return 0; // No J.O.
+    if (lead.joNumber) return 0;
+    
+    return 0;
   }, []);
 
   const getContactDisplay = useCallback((lead: Lead) => {
@@ -387,7 +383,7 @@ export function OrderStatusTable() {
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="text-white font-bold align-middle w-[250px]">Customer</TableHead>
-                    <TableHead className="text-white font-bold align-middle w-[400px]">Progress</TableHead>
+                    <TableHead className="text-white font-bold align-middle w-[400px] text-center">Progress</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[120px]">Order Details</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Deadline</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Operational Case</TableHead>
@@ -435,9 +431,9 @@ export function OrderStatusTable() {
                                     <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                                 )}
                                 {openCustomerDetails === lead.id && (
-                                  <div className="pt-2 text-gray-500 space-y-1 text-xs font-normal">
-                                      {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
-                                      {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
+                                  <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
+                                      {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                                      {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                   </div>
                                 )}
                             </TableCell>
@@ -445,7 +441,7 @@ export function OrderStatusTable() {
                                 <div className="flex flex-col gap-2">
                                   <div className="flex items-center gap-2">
                                     <Progress value={progress} className="h-2 flex-1" />
-                                    <span className="text-xs font-medium text-gray-600">{progress}%</span>
+                                    <span className={cn("text-xs font-medium text-gray-600", progress > 0 && "font-bold")}>{progress}%</span>
                                   </div>
                                     <div className="grid grid-cols-4 gap-2 text-xs">
                                         <div className="flex flex-col items-center gap-1">
@@ -571,7 +567,7 @@ export function OrderStatusTable() {
                           </TableRow>
                         )}
                     </React.Fragment>
-                  )
+                  );
                 })}
                 </TableBody>
               </Table>
@@ -581,3 +577,4 @@ export function OrderStatusTable() {
     </Card>
   );
 }
+
