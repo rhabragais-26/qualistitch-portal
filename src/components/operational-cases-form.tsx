@@ -35,6 +35,7 @@ import { addDays, format } from 'date-fns';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from './ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { cn } from '@/lib/utils';
+import { Label } from './ui/label';
 
 type LeadOrder = {
   productType: string;
@@ -82,7 +83,8 @@ type OperationalCase = {
 const formSchema = z.object({
   joNumber: z.string().min(1, { message: 'J.O. Number is required.' }),
   caseType: z.enum(['Return to Sender (RTS)', 'Quality Errors', 'Replacement'], {
-    required_error: 'You need to select a case type.',
+    required_error: "Case Type is required",
+    invalid_type_error: "Case Type is required",
   }),
   quantity: z.number().min(1, 'A total quantity of at least 1 is required.'),
   remarks: z.string().min(10, { message: 'Remarks must be at least 10 characters.' }),
@@ -257,7 +259,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
     }
 
     // Manually trigger validation for the quantity field
-    const isValid = await trigger('quantity');
+    const isValid = await trigger();
     if (!isValid) {
       return;
     }
@@ -467,7 +469,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
                             value={caseItems.reduce((sum, item) => sum + item.quantity, 0)}
                             className="w-24 text-center font-bold bg-gray-100"
                         />
-                        <Button type="button" variant="outline" onClick={() => setIsQuantityDialogOpen(true)} disabled={!foundLead}>
+                        <Button type="button" onClick={() => setIsQuantityDialogOpen(true)} disabled={!foundLead}>
                             Select Items with Related Case
                         </Button>
                     </div>
