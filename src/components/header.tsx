@@ -20,6 +20,8 @@ import {
   Eye,
   EyeOff,
   Truck,
+  Ship,
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -229,7 +231,14 @@ export function Header({
                   </Button>
                 </DropdownMenuTrigger>
                  <DropdownMenuContent align="end">
-                  {/* Logistics menu items can be added here */}
+                    <DropdownMenuItem onClick={() => handleNavigation('/logistics/shipment-status')}>
+                        <Ship className="mr-2" />
+                        Shipment Status
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/logistics/summary')}>
+                        <FileText className="mr-2" />
+                        Summary
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
