@@ -104,6 +104,23 @@
     );
     animation: glowing-gold 3s ease-in-out infinite;
   }
+  
+  @keyframes shining-text-animation {
+    0% { background-position: 200% center; }
+    100% { background-position: -200% center; }
+  }
+
+  .shining-text {
+    background-size: 200% auto;
+    @apply bg-clip-text text-transparent;
+    animation: shining-text-animation 2s linear infinite;
+  }
+  
+  .shining-black-border {
+    border-image-slice: 1;
+    border-image-source: linear-gradient(to right, #4a4a4a, #a0a0a0, #4a4a4a);
+    animation: shining-text-animation 2s linear infinite;
+  }
 
   @keyframes blink-caret {
     from, to { opacity: 1 }
