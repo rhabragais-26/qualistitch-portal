@@ -270,7 +270,7 @@ export function OrderStatusTable() {
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
                   return (
                   <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
-                    <>
+                    <tbody>
                       <TableRow>
                           <TableCell className="font-medium text-xs align-top py-2 text-black w-[250px]">
                             <Collapsible open={openCustomerDetails === lead.id} onOpenChange={() => toggleCustomerDetails(lead.id)}>
@@ -396,7 +396,7 @@ export function OrderStatusTable() {
                           </TableCell>
                         </TableRow>
                       </CollapsibleContent>
-                    </>
+                    </tbody>
                   </Collapsible>
                 )})}
                 </TableBody>
