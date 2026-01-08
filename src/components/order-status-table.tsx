@@ -174,7 +174,7 @@ export function OrderStatusTable() {
       const matchingCase = operationalCases.find(c => c.joNumber === formatJoNumber(lead.joNumber) && !c.isArchived && !c.isDeleted);
       return { ...lead, operationalCase: matchingCase };
     });
-  }, [filteredLeads, operationalCases]);
+  }, [filteredLeads, operationalCases, formatJoNumber]);
 
   if (isLoading) {
     return (
@@ -251,130 +251,132 @@ export function OrderStatusTable() {
                   const itemPreparationStatus = getItemPreparationStatus(lead);
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
                   return (
-                  <React.Fragment key={lead.id}>
-                    <TableRow>
-                        <TableCell className="font-medium text-xs align-top py-2 text-black w-[250px]">
-                           <Collapsible open={openCustomerDetails === lead.id} onOpenChange={() => toggleCustomerDetails(lead.id)}>
-                                <CollapsibleTrigger asChild>
-                                    <div className="flex items-center cursor-pointer">
-                                        <span>{lead.customerName}</span>
-                                        <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
+                  <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
+                    <>
+                      <TableRow>
+                          <TableCell className="font-medium text-xs align-top py-2 text-black w-[250px]">
+                            <Collapsible open={openCustomerDetails === lead.id} onOpenChange={() => toggleCustomerDetails(lead.id)}>
+                                  <CollapsibleTrigger asChild>
+                                      <div className="flex items-center cursor-pointer">
+                                          <span>{lead.customerName}</span>
+                                          <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                      </div>
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent className="pt-2 text-gray-500 space-y-1 text-xs">
+                                      {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
+                                      {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
+                                  </CollapsibleContent>
+                              </Collapsible>
+                          </TableCell>
+                          <TableCell className="text-center align-middle py-2">
+                              <CollapsibleTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 px-2 text-black hover:bg-gray-200">
+                                      {totalQuantity}
+                                      {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                                  </Button>
+                              </CollapsibleTrigger>
+                          </TableCell>
+                          <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                              <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
+                                  {lead.priorityType}
+                              </Badge>
+                          </TableCell>
+                          <TableCell className={cn(
+                            "text-center text-xs align-middle py-2 font-medium",
+                            deadlineInfo.isOverdue && "text-red-500",
+                            deadlineInfo.isUrgent && "text-amber-600",
+                            !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
+                          )}>{deadlineInfo.text}</TableCell>
+                          <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                            <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
+                          </TableCell>
+                          <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                            <Badge variant={itemPreparationStatus.variant as any}>{itemPreparationStatus.text}</Badge>
+                          </TableCell>
+                          <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                              {lead.operationalCase ? (
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Badge variant="destructive" className="cursor-pointer">{lead.operationalCase.caseType}</Badge>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-4 bg-blue-50 shadow-xl border">
+                                    <div className="flex gap-4">
+                                      <div className="flex-1 space-y-2">
+                                        <div className="space-y-1">
+                                          <h4 className="font-medium leading-none">{lead.operationalCase.caseType}</h4>
+                                          <p className="text-sm text-muted-foreground">
+                                            Case for J.O. {lead.operationalCase.joNumber}
+                                          </p>
+                                        </div>
+                                        <div className="grid gap-2 text-sm">
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-medium">Quantity:</span>
+                                            <span className="font-semibold">{lead.operationalCase.quantity}</span>
+                                          </div>
+                                          <div className="flex flex-col items-start gap-1">
+                                            <span className="font-medium">Remarks:</span>
+                                            <p className="whitespace-pre-wrap bg-background p-2 rounded-md text-xs w-full">{lead.operationalCase.remarks}</p>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-medium">Recorded:</span>
+                                            <span className="text-xs">{formatDateTime(lead.operationalCase.submissionDateTime).dateTime}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      {lead.operationalCase.image && (
+                                        <div className="flex-shrink-0 w-48 h-48">
+                                          <div
+                                            className="relative w-full h-full cursor-pointer"
+                                            onClick={() => setImageInView(lead.operationalCase!.image!)}
+                                          >
+                                            <Image
+                                              src={lead.operationalCase.image}
+                                              alt="Case Image"
+                                              layout="fill"
+                                              objectFit="contain"
+                                              className="rounded-md"
+                                            />
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="pt-2 text-gray-500 space-y-1 text-xs">
-                                    {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
-                                    {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
-                                </CollapsibleContent>
-                            </Collapsible>
-                        </TableCell>
-                        <TableCell className="text-center align-middle py-2">
-                            <CollapsibleTrigger asChild>
-                                <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
-                                    {totalQuantity}
-                                    {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-                                </Button>
-                            </CollapsibleTrigger>
-                        </TableCell>
-                        <TableCell className="text-center text-xs align-middle py-2 font-medium">
-                            <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
-                                {lead.priorityType}
-                            </Badge>
-                        </TableCell>
-                        <TableCell className={cn(
-                          "text-center text-xs align-middle py-2 font-medium",
-                          deadlineInfo.isOverdue && "text-red-500",
-                          deadlineInfo.isUrgent && "text-amber-600",
-                          !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
-                        )}>{deadlineInfo.text}</TableCell>
-                        <TableCell className="text-center text-xs align-middle py-2 font-medium">
-                          <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center text-xs align-middle py-2 font-medium">
-                          <Badge variant={itemPreparationStatus.variant as any}>{itemPreparationStatus.text}</Badge>
-                        </TableCell>
-                         <TableCell className="text-center text-xs align-middle py-2 font-medium">
-                            {lead.operationalCase ? (
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Badge variant="destructive" className="cursor-pointer">{lead.operationalCase.caseType}</Badge>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-4 bg-blue-50 shadow-xl border">
-                                  <div className="flex gap-4">
-                                    <div className="flex-1 space-y-2">
-                                      <div className="space-y-1">
-                                        <h4 className="font-medium leading-none">{lead.operationalCase.caseType}</h4>
-                                        <p className="text-sm text-muted-foreground">
-                                          Case for J.O. {lead.operationalCase.joNumber}
-                                        </p>
-                                      </div>
-                                      <div className="grid gap-2 text-sm">
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-medium">Quantity:</span>
-                                          <span className="font-semibold">{lead.operationalCase.quantity}</span>
-                                        </div>
-                                        <div className="flex flex-col items-start gap-1">
-                                          <span className="font-medium">Remarks:</span>
-                                          <p className="whitespace-pre-wrap bg-background p-2 rounded-md text-xs w-full">{lead.operationalCase.remarks}</p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-medium">Recorded:</span>
-                                          <span className="text-xs">{formatDateTime(lead.operationalCase.submissionDateTime).dateTime}</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    {lead.operationalCase.image && (
-                                      <div className="flex-shrink-0 w-48 h-48">
-                                        <div
-                                          className="relative w-full h-full cursor-pointer"
-                                          onClick={() => setImageInView(lead.operationalCase!.image!)}
-                                        >
-                                          <Image
-                                            src={lead.operationalCase.image}
-                                            alt="Case Image"
-                                            layout="fill"
-                                            objectFit="contain"
-                                            className="rounded-md"
-                                          />
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                            ) : (
-                                <span className="text-muted-foreground">-</span>
-                            )}
-                        </TableCell>
-                    </TableRow>
-                    {openLeadId === lead.id && (
-                      <TableRow className="bg-gray-50">
-                        <TableCell colSpan={7}>
-                          <div className="p-2">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead className="py-1 px-2 text-black font-bold">Product</TableHead>
-                                  <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
-                                  <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
-                                  <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {lead.orders.map((order, index) => (
-                                  <TableRow key={index} className="border-0">
-                                    <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
-                                    <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
-                                    <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
-                                    <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </TableCell>
+                                  </PopoverContent>
+                                </Popover>
+                              ) : (
+                                  <span className="text-muted-foreground">-</span>
+                              )}
+                          </TableCell>
                       </TableRow>
-                    )}
-                  </React.Fragment>
+                      <CollapsibleContent asChild>
+                        <TableRow className="bg-gray-50">
+                          <TableCell colSpan={7}>
+                            <div className="p-2">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead className="py-1 px-2 text-black font-bold">Product</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {lead.orders.map((order, index) => (
+                                    <TableRow key={index} className="border-0">
+                                      <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
+                                      <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
+                                      <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
+                                      <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      </CollapsibleContent>
+                    </>
+                  </Collapsible>
                 )})}
                 </TableBody>
               </Table>
