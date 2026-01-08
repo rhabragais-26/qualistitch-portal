@@ -34,6 +34,7 @@ import { Skeleton } from './ui/skeleton';
 import { addDays, format } from 'date-fns';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from './ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { cn } from '@/lib/utils';
 
 type LeadOrder = {
   productType: string;
@@ -636,7 +637,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             open={openDropdown === `${item.id}-productType`}
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-productType`, open)}
                                         >
-                                            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger className="w-auto min-w-[120px]"><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>{availableOptions.productTypes.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
@@ -647,7 +648,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             open={openDropdown === `${item.id}-color`}
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-color`, open)}
                                         >
-                                            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger className="w-auto min-w-[120px]"><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>{availableOptions.colors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
@@ -658,7 +659,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             open={openDropdown === `${item.id}-size`}
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-size`, open)}
                                         >
-                                            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger className="w-auto min-w-[120px]"><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>{availableOptions.sizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
