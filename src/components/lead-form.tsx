@@ -616,7 +616,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                          <div className="flex items-center gap-2">
                             <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
                             {customerStatus === 'Repeat' && <span className="font-bold text-xs px-2 py-1 bg-neutral-800 rounded-full"><span className="shining-metal">(Repeat Buyer)</span></span>}
-                            {customerStatus === 'New' && <span className="font-bold text-xs px-2 py-1 bg-blue-500 text-white rounded-full">(New Customer)</span>}
+                            {customerStatus === 'New' && <span className="font-bold text-xs px-2 py-1 border border-blue-500 text-black rounded-full">(New Customer)</span>}
                         </div>
                         <FormControl>
                           <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} />
