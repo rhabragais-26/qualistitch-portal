@@ -582,7 +582,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormField control={form.control} name="customerName" render={({field}) => (
                       <FormItem className="relative">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
-                        <FormControl><Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 200)}/></FormControl>
+                        <FormControl>
+                          <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} />
+                        </FormControl>
                         {customerSuggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                             <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -607,7 +609,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <FormField control={form.control} name="companyName" render={({field}) => (
                       <FormItem className="relative pt-2">
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><Building className="h-4 w-4 text-primary" />Company Name (Optional)</FormLabel>
-                        <FormControl><Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCompanySuggestions([]), 200)}/></FormControl>
+                        <FormControl>
+                          <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCompanySuggestions([]), 150)} />
+                        </FormControl>
                         {companySuggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                             <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -643,7 +647,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                            <FormField control={form.control} name="barangay" render={({field}) => (
                             <FormItem className="relative">
                               <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
-                              <FormControl><Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 200)} autoComplete="off" /></FormControl>
+                              <FormControl>
+                                <Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 150)} autoComplete="off" />
+                              </FormControl>
                               {barangayValue && barangaySuggestions.length > 0 && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                   <CardContent className="p-2 max-h-40 overflow-y-auto">
@@ -661,7 +667,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           <FormField control={form.control} name="city" render={({field}) => (
                             <FormItem className="relative">
                               <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
-                              <FormControl><Input {...field} onBlur={() => setTimeout(() => setCitySuggestions([]), 200)} autoComplete="off" /></FormControl>
+                              <FormControl>
+                                <Input {...field} onBlur={() => setTimeout(() => setCitySuggestions([]), 150)} autoComplete="off" />
+                              </FormControl>
                               {cityValue && citySuggestions.length > 0 && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
