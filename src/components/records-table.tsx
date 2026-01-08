@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
@@ -124,6 +123,16 @@ export function RecordsTable() {
   const [editingOrder, setEditingOrder] = useState<{ leadId: string; order: Order; index: number } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [csrFilter, setCsrFilter] = useState('All');
+
+  const customerLeadCounts = useMemo(() => {
+    if (!leads) return new Map<string, number>();
+    const counts = new Map<string, number>();
+    leads.forEach(lead => {
+        const name = lead.customerName.toLowerCase();
+        counts.set(name, (counts.get(name) || 0) + 1);
+    });
+    return counts;
+  }, [leads]);
   
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
@@ -460,7 +469,10 @@ export function RecordsTable() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {filteredLeads.map((lead) => (
+                {filteredLeads.map((lead) => {
+                  const leadCount = customerLeadCounts.get(lead.customerName.toLowerCase()) || 0;
+                  const isRepeat = leadCount > 1;
+                  return(
                   <React.Fragment key={lead.id}>
                     <TableRow>
                       <TableCell className="text-xs align-middle py-2 text-black">
@@ -476,14 +488,24 @@ export function RecordsTable() {
                           <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
                             {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </Button>
-                          <div>
-                            <div className="font-medium">{lead.customerName}</div>
-                              {openCustomerDetails === lead.id && (
-                                <div className="mt-1 space-y-0.5 text-gray-500">
-                                  {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
-                                  {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
-                                </div>
-                              )}
+                          <div className='flex flex-col'>
+                            <span className="font-medium">{lead.customerName}</span>
+                            {isRepeat ? (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                  {leadCount}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-blue-600 font-semibold">New Customer</span>
+                            )}
+                            {openCustomerDetails === lead.id && (
+                              <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
+                                {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                                {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -596,7 +618,7 @@ export function RecordsTable() {
                       </TableRow>
                     )}
                   </React.Fragment>
-                ))}
+                )})}
                 </TableBody>
             </Table>
           </div>
