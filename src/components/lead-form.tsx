@@ -223,11 +223,19 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   
   const { control, handleSubmit, reset, watch, setValue, formState: { isDirty } } = form;
 
+  const toTitleCase = (str: string) => {
+    if (!str) return '';
+    return str
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+  
   const handleSuggestionClick = (lead: Lead) => {
     setValue('customerName', toTitleCase(lead.customerName));
-    setValue('companyName', lead.companyName ? toTitleCase(lead.companyName) : '');
-    setValue('mobileNo', lead.contactNumber || '');
-    setValue('landlineNo', lead.landlineNumber || '');
+    setValue('companyName', lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '');
+    setValue('mobileNo', lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '');
+    setValue('landlineNo', lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber : '');
     setValue('houseStreet', lead.houseStreet ? toTitleCase(lead.houseStreet) : '');
     setValue('barangay', lead.barangay ? toTitleCase(lead.barangay) : '');
     setValue('city', lead.city ? toTitleCase(lead.city) : '');
@@ -394,14 +402,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       orders: [],
     });
   }
-
-  const toTitleCase = (str: string) => {
-    if (!str) return '';
-    return str
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  };
 
   const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
     const rawValue = e.target.value.replace(/\D/g, '');
