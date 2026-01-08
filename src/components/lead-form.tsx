@@ -73,7 +73,6 @@ import { setDocumentNonBlocking } from '@/firebase/firestore-writes';
 import { v4 as uuidv4 } from 'uuid';
 import locations from '@/lib/ph-locations.json';
 import { Calculator } from './calculator';
-import { SectionTitle } from './ui/section-title';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -603,8 +602,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     <Card className="w-full mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black max-w-6xl">
       <CardHeader>
         <div className="flex justify-between items-start">
-          <div className="flex flex-col items-center">
-            <SectionTitle>Create New Order</SectionTitle>
+          <div>
+            <CardTitle className="font-headline text-2xl">Create New Order</CardTitle>
             <CardDescription className="text-gray-600 mt-2">Fill in the details below to create a record for customer and order.</CardDescription>
           </div>
           <div className="text-base text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
@@ -623,8 +622,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       <FormItem className="relative">
                          <div className="flex items-center gap-2">
                             <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
-                            {customerStatus === 'Repeat' && <span className="font-bold text-xs shining-metal">(Repeat Buyer)</span>}
-                            {customerStatus === 'New' && <span className="font-bold text-xs text-blue-600">(New Customer)</span>}
+                            {customerStatus === 'Repeat' && <span className="font-bold text-xs px-2 py-1 bg-neutral-800 rounded-full shining-metal">(Repeat Buyer)</span>}
+                            {customerStatus === 'New' && <span className="font-bold text-xs px-2 py-1 bg-blue-800 text-white rounded-full">(New Customer)</span>}
                         </div>
                         <FormControl>
                           <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} />
