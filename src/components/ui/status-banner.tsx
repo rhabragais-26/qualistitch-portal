@@ -27,8 +27,13 @@ export function StatusBanner({ text, backgroundColor, textColor, className }: St
             <stop offset="100%" style={{ stopColor: '#B8860B', stopOpacity: 1 }} />
           </linearGradient>
         </defs>
-        <path
-          d="M8 1 H191 L184 31 H1 L8 1Z"
+        <rect
+          x="1"
+          y="1"
+          width="190"
+          height="30"
+          rx="15"
+          ry="15"
           fill={backgroundColor}
           stroke="url(#gold-gradient)"
           strokeWidth="2"

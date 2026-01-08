@@ -592,26 +592,28 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
         <div className="flex justify-between items-start">
           <div className="flex-1">
               <CardTitle className="font-headline text-2xl">Create New Order</CardTitle>
-              <CardDescription className="text-gray-600 mt-2">Fill in the details below to create a record for customer and order.</CardDescription>
-              <div className="mt-3 h-10">
-                {customerStatus === 'Repeat' && (
-                  <div className="animate-in fade-in-down">
-                    <StatusBanner 
-                      text="Repeat Buyer" 
-                      backgroundColor="#A37E2C"
-                      textColor="#0a0a0a"
-                    />
-                  </div>
-                )}
-                {customerStatus === 'New' && (
-                  <div className="animate-in fade-in-down">
-                    <StatusBanner 
-                      text="New Customer" 
-                      backgroundColor="#FFFFFF"
-                      textColor="#8A6817"
-                    />
-                  </div>
-                )}
+               <div className="flex items-center gap-4 mt-2">
+                <CardDescription className="text-gray-600">Fill in the details below to create a record for customer and order.</CardDescription>
+                <div className="h-8">
+                  {customerStatus === 'Repeat' && (
+                    <div className="animate-in fade-in-down">
+                      <StatusBanner 
+                        text="Repeat Buyer" 
+                        backgroundColor="#A37E2C"
+                        textColor="#0a0a0a"
+                      />
+                    </div>
+                  )}
+                  {customerStatus === 'New' && (
+                    <div className="animate-in fade-in-down">
+                      <StatusBanner 
+                        text="New Customer" 
+                        backgroundColor="#FFFFFF"
+                        textColor="#8A6817"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
           </div>
           <div className="text-base text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
