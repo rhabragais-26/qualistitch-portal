@@ -597,19 +597,18 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                 <div className="h-8">
                   {customerStatus === 'Repeat' && (
                     <div className="animate-in fade-in-down">
-                      <StatusBanner 
-                        text="Repeat Buyer" 
-                        backgroundColor="#000"
+                       <StatusBanner
+                        text="Repeat Buyer"
                         backgroundClassName="shining-metal from-neutral-800 via-neutral-600 to-neutral-800"
                         textColorClassName="text-white font-bold"
                         borderColor="#B8860B"
-                      />
+                       />
                     </div>
                   )}
                   {customerStatus === 'New' && (
                     <div className="animate-in fade-in-down">
-                      <StatusBanner 
-                        text="New Customer" 
+                      <StatusBanner
+                        text="New Customer"
                         backgroundColor="#FFFFFF"
                         textColorClassName="text-black font-bold"
                         borderClassName="shining-black-border"

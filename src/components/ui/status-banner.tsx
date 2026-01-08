@@ -23,10 +23,14 @@ export function StatusBanner({
     className 
 }: StatusBannerProps) {
   return (
-    <div className={cn("relative w-48 h-8", className)}>
+    <div className={cn(
+      "relative w-48 h-8 rounded-full border-2 overflow-hidden", 
+      borderClassName,
+      className
+    )} style={{ borderColor }}>
       <div 
-        className={cn("absolute inset-0 w-full h-full border-2 rounded-full", backgroundClassName, borderClassName)} 
-        style={{ backgroundColor: backgroundColor, borderColor: borderColor }}
+        className={cn("absolute inset-0 w-full h-full", backgroundClassName)} 
+        style={{ backgroundColor }}
       >
       </div>
       <div

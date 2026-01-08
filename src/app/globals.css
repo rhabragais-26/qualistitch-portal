@@ -80,46 +80,19 @@
   }
 
   .shining-metal {
-    @apply from-yellow-400 via-yellow-200 to-amber-500 bg-clip-text text-transparent;
     background-size: 200% auto;
     animation: shining-metal 2s linear infinite;
     background-image: linear-gradient(110deg, var(--tw-gradient-stops));
   }
-  
-  @keyframes glowing-gold {
-    0% { background-position: -100% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: -100% 50%; }
-  }
-  
-  .glowing-gold {
-    background-size: 200% 200%;
-    background-image: linear-gradient(
-      -45deg,
-      #B8860B,
-      #D4AF37,
-      #F7DC6F,
-      #D4AF37,
-      #B8860B
-    );
-    animation: glowing-gold 3s ease-in-out infinite;
-  }
-  
-  @keyframes shining-text-animation {
-    0% { background-position: 200% center; }
-    100% { background-position: -200% center; }
-  }
 
   .shining-text {
-    background-size: 200% auto;
     @apply bg-clip-text text-transparent;
-    animation: shining-text-animation 2s linear infinite;
   }
   
   .shining-black-border {
     border-image-slice: 1;
     border-image-source: linear-gradient(to right, #4a4a4a, #a0a0a0, #4a4a4a);
-    animation: shining-text-animation 2s linear infinite;
+    animation: shining-metal 2s linear infinite;
   }
 
   @keyframes blink-caret {
