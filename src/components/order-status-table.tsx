@@ -147,13 +147,14 @@ export function OrderStatusTable() {
   };
 
   const getOverallStatus = (lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
-    if (lead.operationalCase) return { text: 'With Operational Case', variant: 'destructive' };
-    if (lead.isDone) return { text: 'Completed', variant: 'success' };
-    if (lead.isSentToProduction) return { text: 'In Production', variant: 'warning' };
-    if (lead.isPreparedForProduction) return { text: 'For Item Preparation', variant: 'warning' };
-    if (lead.isFinalProgram) return { text: 'Ready for Item Prep', variant: 'secondary' };
-    if (lead.joNumber) return { text: 'In Digitizing', variant: 'secondary' };
-    return { text: 'For J.O. Creation', variant: 'secondary' };
+    if (lead.isDone) {
+        return { text: 'Completed', variant: 'success' };
+    }
+    if (!lead.joNumber) {
+        return { text: 'Pending', variant: 'secondary' };
+    }
+    // Any other state where a JO exists but is not done is considered ongoing.
+    return { text: 'Ongoing', variant: 'warning' };
   };
 
 
@@ -285,8 +286,7 @@ export function OrderStatusTable() {
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
                   const isCollapsibleOpen = openLeadId === lead.id;
                   return (
-                    <Collapsible asChild key={lead.id} open={isCollapsibleOpen} onOpenChange={() => toggleLeadDetails(lead.id)}>
-                      <React.Fragment>
+                    <React.Fragment key={lead.id}>
                         <TableRow>
                             <TableCell className="font-medium text-xs align-top py-2 text-black w-[250px]">
                               <Collapsible open={openCustomerDetails === lead.id} onOpenChange={() => toggleCustomerDetails(lead.id)}>
@@ -303,12 +303,10 @@ export function OrderStatusTable() {
                                 </Collapsible>
                             </TableCell>
                             <TableCell className="text-center align-middle py-2">
-                                <CollapsibleTrigger asChild>
-                                  <div className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100">
-                                    <span className="font-semibold text-sm">{totalQuantity}</span>
-                                    {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-                                  </div>
-                               </CollapsibleTrigger>
+                                <div onClick={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100">
+                                  <span className="font-semibold text-sm">{totalQuantity}</span>
+                                  {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                                </div>
                             </TableCell>
                             <TableCell className="text-center text-xs align-middle py-2 font-medium">
                                 <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
@@ -390,8 +388,8 @@ export function OrderStatusTable() {
                                 <Badge variant={overallStatus.variant}>{overallStatus.text}</Badge>
                             </TableCell>
                         </TableRow>
-                        <CollapsibleContent asChild>
-                             <TableRow className="bg-gray-50">
+                        {isCollapsibleOpen && (
+                              <TableRow className="bg-gray-50">
                                 <TableCell colSpan={10}>
                                   <div className="p-2">
                                     <Table>
@@ -417,9 +415,8 @@ export function OrderStatusTable() {
                                   </div>
                                 </TableCell>
                               </TableRow>
-                        </CollapsibleContent>
+                        )}
                       </React.Fragment>
-                    </Collapsible>
                   )})}
                 </TableBody>
               </Table>
@@ -429,3 +426,5 @@ export function OrderStatusTable() {
     </Card>
   );
 }
+
+    
