@@ -582,17 +582,15 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
                         <FormControl><Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 200)}/></FormControl>
                         {customerSuggestions.length > 0 && (
-                          <div onMouseDown={(e) => e.preventDefault()}>
-                            <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                              <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                {customerSuggestions.map((lead) => (
-                                  <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
-                                    {toTitleCase(lead.customerName)}
-                                  </div>
-                                ))}
-                              </CardContent>
-                            </Card>
-                          </div>
+                          <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                            <CardContent className="p-2 max-h-40 overflow-y-auto">
+                              {customerSuggestions.map((lead) => (
+                                <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
+                                  {toTitleCase(lead.customerName)}
+                                </div>
+                              ))}
+                            </CardContent>
+                          </Card>
                         )}
                         <FormMessage />
                       </FormItem>
@@ -609,17 +607,15 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         <FormLabel className="flex items-center gap-2 text-black text-xs"><Building className="h-4 w-4 text-primary" />Company Name (Optional)</FormLabel>
                         <FormControl><Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCompanySuggestions([]), 200)}/></FormControl>
                         {companySuggestions.length > 0 && (
-                          <div onMouseDown={(e) => e.preventDefault()}>
-                            <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                              <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                {companySuggestions.map((lead) => (
-                                  <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
-                                    {lead.companyName ? toTitleCase(lead.companyName) : ''}
-                                  </div>
-                                ))}
-                              </CardContent>
-                            </Card>
-                          </div>
+                          <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                            <CardContent className="p-2 max-h-40 overflow-y-auto">
+                              {companySuggestions.map((lead) => (
+                                <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
+                                  {lead.companyName ? toTitleCase(lead.companyName) : ''}
+                                </div>
+                              ))}
+                            </CardContent>
+                          </Card>
                         )}
                         <FormMessage />
                       </FormItem>
@@ -647,7 +643,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                               <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
                               <FormControl><Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 200)} autoComplete="off" /></FormControl>
                               {barangayValue && barangaySuggestions.length > 0 && (
-                                <div onMouseDown={(e) => e.preventDefault()}>
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                   <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {barangaySuggestions.map((barangay, index) => (
@@ -657,7 +652,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                     ))}
                                   </CardContent>
                                 </Card>
-                                </div>
                               )}
                               <FormMessage />
                             </FormItem>
@@ -667,18 +661,16 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                               <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
                               <FormControl><Input {...field} onBlur={() => setTimeout(() => setCitySuggestions([]), 200)} autoComplete="off" /></FormControl>
                               {cityValue && citySuggestions.length > 0 && (
-                                <div onMouseDown={(e) => e.preventDefault()}>
-                                  <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                                  <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                      {citySuggestions.map((city, index) => (
-                                      <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCitySuggestionClick(city)}>
-                                          <p className="font-semibold">{city.name} <span className="font-normal text-gray-500">({city.type})</span></p>
-                                          <p className="text-xs text-gray-500">{city.province}</p>
-                                      </div>
-                                      ))}
-                                  </CardContent>
-                                  </Card>
-                                </div>
+                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                                <CardContent className="p-2 max-h-40 overflow-y-auto">
+                                    {citySuggestions.map((city, index) => (
+                                    <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCitySuggestionClick(city)}>
+                                        <p className="font-semibold">{city.name} <span className="font-normal text-gray-500">({city.type})</span></p>
+                                        <p className="text-xs text-gray-500">{city.province}</p>
+                                    </div>
+                                    ))}
+                                </CardContent>
+                                </Card>
                               )}
                               {cityValue && citySuggestions.length === 0 && !citiesAndMunicipalities.some(c => c.name.toLowerCase() === cityValue.toLowerCase()) && <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"><CardContent className='p-2'><p className='text-muted-foreground'>No results found</p></CardContent></Card>}
                               <FormMessage />
