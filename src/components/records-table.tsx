@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
@@ -535,7 +536,7 @@ export function RecordsTable() {
                       <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.orderType}</TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.courier === '-' ? '' : lead.courier}</TableCell>
                       <TableCell className="text-center align-middle py-2">
-                        <Button variant="ghost" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
+                        <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                           View
                           {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
                         </Button>
