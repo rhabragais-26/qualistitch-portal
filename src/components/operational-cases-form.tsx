@@ -258,7 +258,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
         return;
     }
 
-    // Manually trigger validation for the quantity field
+    // Manually trigger validation for all fields
     const isValid = await trigger();
     if (!isValid) {
       return;
@@ -469,7 +469,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
                             value={caseItems.reduce((sum, item) => sum + item.quantity, 0)}
                             className="w-24 text-center font-bold bg-gray-100"
                         />
-                        <Button type="button" onClick={() => setIsQuantityDialogOpen(true)} disabled={!foundLead}>
+                         <Button type="button" onClick={() => setIsQuantityDialogOpen(true)} disabled={!foundLead} variant="default" className="text-white font-bold">
                             Select Items with Related Case
                         </Button>
                     </div>
@@ -581,12 +581,18 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
     const [items, setItems] = useState<CaseItem[]>(initialItems.length > 0 ? initialItems : [{ id: uuidv4(), productType: '', color: '', size: '', quantity: 1 }]);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-    const availableOptions = useMemo(() => {
-        const productTypes = [...new Set(leadOrders.map(o => o.productType))];
-        const colors = [...new Set(leadOrders.map(o => o.color))];
-        const sizes = [...new Set(leadOrders.map(o => o.size))];
-        return { productTypes, colors, sizes };
+    const availableProductTypes = useMemo(() => {
+        return [...new Set(leadOrders.map(o => o.productType))];
     }, [leadOrders]);
+    
+    const getAvailableColors = (productType: string) => {
+        return [...new Set(leadOrders.filter(o => o.productType === productType).map(o => o.color))];
+    };
+
+    const getAvailableSizes = (productType: string, color: string) => {
+        return [...new Set(leadOrders.filter(o => o.productType === productType && o.color === color).map(o => o.size))];
+    };
+
 
     const addNewItem = () => {
         setItems(prev => [...prev, { id: uuidv4(), productType: '', color: '', size: '', quantity: 1 }]);
@@ -597,7 +603,19 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
     };
 
     const updateItem = (id: string, field: keyof CaseItem, value: string | number) => {
-        setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+        setItems(prev => prev.map(item => {
+            if (item.id === id) {
+                const updatedItem = { ...item, [field]: value };
+                if (field === 'productType') {
+                    updatedItem.color = '';
+                    updatedItem.size = '';
+                } else if (field === 'color') {
+                    updatedItem.size = '';
+                }
+                return updatedItem;
+            }
+            return item;
+        }));
     };
 
     const handleSave = () => {
@@ -641,7 +659,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-productType`, open)}
                                         >
                                             <SelectTrigger className="w-full"><SelectValue placeholder="Select..." /></SelectTrigger>
-                                            <SelectContent>{availableOptions.productTypes.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                                            <SelectContent>{availableProductTypes.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
                                     <TableCell>
@@ -650,9 +668,12 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             onValueChange={(v) => updateItem(item.id, 'color', v)}
                                             open={openDropdown === `${item.id}-color`}
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-color`, open)}
+                                            disabled={!item.productType}
                                         >
                                             <SelectTrigger className="w-full"><SelectValue placeholder="Select..." /></SelectTrigger>
-                                            <SelectContent>{availableOptions.colors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                                            <SelectContent>
+                                                {getAvailableColors(item.productType).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                            </SelectContent>
                                         </Select>
                                     </TableCell>
                                     <TableCell>
@@ -661,9 +682,12 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             onValueChange={(v) => updateItem(item.id, 'size', v)}
                                             open={openDropdown === `${item.id}-size`}
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-size`, open)}
+                                            disabled={!item.productType || !item.color}
                                         >
                                             <SelectTrigger className="w-full"><SelectValue placeholder="Select..." /></SelectTrigger>
-                                            <SelectContent>{availableOptions.sizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                            <SelectContent>
+                                                {getAvailableSizes(item.productType, item.color).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                            </SelectContent>
                                         </Select>
                                     </TableCell>
                                     <TableCell>
