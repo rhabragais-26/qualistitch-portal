@@ -609,7 +609,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>Select Items with Related Case</DialogTitle>
                     <DialogDescription>
