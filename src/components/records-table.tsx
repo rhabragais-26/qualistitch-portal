@@ -423,9 +423,9 @@ export function RecordsTable() {
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-black">Lead Records</CardTitle>
+              <CardTitle className="text-black">Recorded Orders</CardTitle>
               <CardDescription className="text-gray-600">
-                Here are all the lead entries submitted through the form.
+                Here are all the customer orders submitted through the form.
               </CardDescription>
             </div>
             <div className="flex items-center gap-4">
