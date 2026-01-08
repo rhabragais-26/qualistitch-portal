@@ -83,6 +83,12 @@ export function Header({
   useEffect(() => {
     setIsClient(true);
   }, []);
+  
+  const getActiveMenuClass = (paths: string[]) => {
+    return paths.some(path => pathname === path || (path !== '/' && pathname.startsWith(path)))
+      ? 'bg-white text-black hover:bg-white hover:text-black font-bold'
+      : 'text-neutral-100 hover:bg-accent hover:text-white';
+  };
 
   const handleNavigation = (url: string) => {
     const isDirty = (isNewOrderPageDirty && pathname === '/') || 
@@ -125,7 +131,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="text-neutral-100 hover:bg-accent hover:text-white">
+                  <Button variant="ghost" className={getActiveMenuClass(['/', '/records', '/job-order', '/reports'])}>
                     <PenSquare className="mr-2" />
                     Sales
                     <ChevronDown className="ml-2 h-4 w-4" />
@@ -154,7 +160,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className="text-neutral-100 hover:bg-accent hover:text-white">
+                   <Button variant="ghost" className={getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports'])}>
                       <ScanLine className="mr-2" />
                       Digitizing
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -175,7 +181,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className="text-neutral-100 hover:bg-accent hover:text-white">
+                   <Button variant="ghost" className={getActiveMenuClass(['/inventory/add-items', '/inventory/item-preparation-for-production', '/inventory/summary', '/inventory/reports', '/inventory/operational-cases'])}>
                       <Boxes className="mr-2" />
                       Inventory
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -208,7 +214,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className="text-neutral-100 hover:bg-accent hover:text-white">
+                   <Button variant="ghost" className={getActiveMenuClass(['/production/production-queue'])}>
                       <Factory className="mr-2" />
                       Production
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -225,7 +231,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className="text-neutral-100 hover:bg-accent hover:text-white">
+                   <Button variant="ghost" className={getActiveMenuClass(['/logistics/shipment-status', '/logistics/summary'])}>
                       <Truck className="mr-2" />
                       Logistics
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -243,7 +249,7 @@ export function Header({
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className="text-yellow-400 hover:bg-accent hover:text-white">
+            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className={cn("text-yellow-400 hover:bg-accent hover:text-white", getActiveMenuClass(['/order-status']))}>
               <ListOrdered className="mr-2" />
               Overall Order Status
             </Button>
