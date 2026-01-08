@@ -184,6 +184,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [barangaySuggestions, setBarangaySuggestions] = useState<string[]>([]);
   const [showCalculator, setShowCalculator] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [customerStatus, setCustomerStatus] = useState<'New' | 'Repeat' | null>(null);
   
   const citiesAndMunicipalities = useMemo(() => {
     return locations.provinces.flatMap(province =>
@@ -233,7 +234,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
   
   const handleSuggestionClick = (lead: Lead) => {
-    setSelectedLead(lead); // Track the selected lead
+    setSelectedLead(lead); 
     setValue('customerName', toTitleCase(lead.customerName), { shouldDirty: true });
     setValue('companyName', lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '', { shouldDirty: true });
     setValue('mobileNo', lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '', { shouldDirty: true });
@@ -268,6 +269,22 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const barangayValue = watch('barangay');
   const cityValue = watch('city');
   const provinceValue = watch('province');
+
+  // Effect to manage customer status label
+  useEffect(() => {
+    if (!customerNameValue) {
+      setCustomerStatus(null);
+      return;
+    }
+    if (selectedLead) {
+      setCustomerStatus('Repeat');
+      return;
+    }
+    const isExisting = leads?.some(
+      (lead) => lead.customerName.toLowerCase() === customerNameValue.toLowerCase()
+    );
+    setCustomerStatus(isExisting ? 'Repeat' : 'New');
+  }, [customerNameValue, selectedLead, leads]);
 
   // Effect to show/hide customer suggestions
   useEffect(() => {
@@ -603,7 +620,11 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                  <div className="grid grid-cols-2 gap-x-2">
                     <FormField control={form.control} name="customerName" render={({field}) => (
                       <FormItem className="relative">
-                        <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
+                         <div className="flex items-center gap-2">
+                            <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
+                            {customerStatus === 'Repeat' && <span className="font-bold text-xs shining-metal">(Repeat Buyer)</span>}
+                            {customerStatus === 'New' && <span className="font-bold text-xs text-blue-600">(New Customer)</span>}
+                        </div>
                         <FormControl>
                           <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} />
                         </FormControl>
@@ -672,7 +693,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                               <FormControl>
                                 <Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 150)} autoComplete="off" />
                               </FormControl>
-                              {barangayValue && barangaySuggestions.length > 0 && (
+                              {barangayValue && barangaySuggestions.length > 0 && !selectedLead && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                   <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {barangaySuggestions.map((barangay, index) => (
@@ -692,7 +713,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                               <FormControl>
                                 <Input {...field} onBlur={() => setTimeout(() => setCitySuggestions([]), 150)} autoComplete="off" />
                               </FormControl>
-                              {cityValue && citySuggestions.length > 0 && (
+                              {cityValue && citySuggestions.length > 0 && !selectedLead && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {citySuggestions.map((city, index) => (
