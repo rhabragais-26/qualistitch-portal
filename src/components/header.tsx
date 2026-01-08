@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -174,7 +175,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/inventory/item-preparation-for-production')}>
                     <Package className="mr-2" />
-                    Item Preparation for Production
+                    Item Preparation for Prod
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/inventory/summary')}>
                     <Database className="mr-2" />
@@ -254,7 +255,7 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
         </div>
       </header>
       
-      <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 overflow-hidden">
+      <main className="flex-1 w-full overflow-hidden">
         {children}
       </main>
 
