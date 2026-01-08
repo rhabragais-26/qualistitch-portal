@@ -183,6 +183,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [citySuggestions, setCitySuggestions] = useState<{ name: string; province: string, type: string }[]>([]);
   const [barangaySuggestions, setBarangaySuggestions] = useState<string[]>([]);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [suppressSuggestions, setSuppressSuggestions] = useState(false);
   
   const citiesAndMunicipalities = useMemo(() => {
     return locations.provinces.flatMap(province =>
@@ -232,6 +233,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
   
   const handleSuggestionClick = (lead: Lead) => {
+    setSuppressSuggestions(true);
     setValue('customerName', toTitleCase(lead.customerName));
     setValue('companyName', lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '');
     setValue('mobileNo', lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '');
@@ -244,13 +246,16 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     setCompanySuggestions([]);
     setCitySuggestions([]);
     setBarangaySuggestions([]);
+    setTimeout(() => setSuppressSuggestions(false), 100);
   };
 
   const handleCitySuggestionClick = (city: { name: string; province: string }) => {
+    setSuppressSuggestions(true);
     setValue('city', city.name, { shouldValidate: true });
     setValue('province', city.province, { shouldValidate: true });
     setValue('barangay', ''); // Reset barangay when city changes
     setCitySuggestions([]);
+    setTimeout(() => setSuppressSuggestions(false), 100);
   };
 
   const handleBarangaySuggestionClick = (barangay: string) => {
@@ -266,7 +271,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const provinceValue = watch('province');
 
   useEffect(() => {
-    if (customerNameValue && leads) {
+    if (customerNameValue && leads && !suppressSuggestions) {
       const uniqueSuggestions = leads.filter(
         (lead, index, self) =>
           lead.customerName.toLowerCase().includes(customerNameValue.toLowerCase()) &&
@@ -276,10 +281,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     } else {
       setCustomerSuggestions([]);
     }
-  }, [customerNameValue, leads]);
+  }, [customerNameValue, leads, suppressSuggestions]);
 
   useEffect(() => {
-    if (companyNameValue && leads) {
+    if (companyNameValue && leads && !suppressSuggestions) {
       const uniqueSuggestions = leads.filter(
         (lead, index, self) =>
           lead.companyName &&
@@ -290,10 +295,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     } else {
       setCompanySuggestions([]);
     }
-  }, [companyNameValue, leads]);
+  }, [companyNameValue, leads, suppressSuggestions]);
 
   useEffect(() => {
-    if (cityValue) {
+    if (cityValue && !suppressSuggestions) {
       const filteredCities = citiesAndMunicipalities.filter(city =>
         city.name.toLowerCase().includes(cityValue.toLowerCase())
       ).slice(0, 10);
@@ -301,10 +306,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     } else {
       setCitySuggestions([]);
     }
-  }, [cityValue, citiesAndMunicipalities]);
+  }, [cityValue, citiesAndMunicipalities, suppressSuggestions]);
 
   useEffect(() => {
-    if (barangayValue && cityValue && provinceValue) {
+    if (barangayValue && cityValue && provinceValue && !suppressSuggestions) {
         const selectedCity = citiesAndMunicipalities.find(
             c => c.name.toLowerCase() === cityValue.toLowerCase() && c.province.toLowerCase() === provinceValue.toLowerCase()
         );
@@ -319,7 +324,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     } else {
         setBarangaySuggestions([]);
     }
-}, [barangayValue, cityValue, provinceValue, citiesAndMunicipalities]);
+}, [barangayValue, cityValue, provinceValue, citiesAndMunicipalities, suppressSuggestions]);
 
 
   useEffect(() => {
