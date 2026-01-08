@@ -269,12 +269,12 @@ export function OrderStatusTable() {
                               </Collapsible>
                           </TableCell>
                           <TableCell className="text-center align-middle py-2">
-                              <CollapsibleTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-8 px-2 text-black hover:bg-gray-200">
-                                      {totalQuantity}
-                                      {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-                                  </Button>
-                              </CollapsibleTrigger>
+                             <CollapsibleTrigger asChild>
+                                <div className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100">
+                                    <span className="font-semibold text-sm">{totalQuantity}</span>
+                                    {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                                </div>
+                            </CollapsibleTrigger>
                           </TableCell>
                           <TableCell className="text-center text-xs align-middle py-2 font-medium">
                               <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
