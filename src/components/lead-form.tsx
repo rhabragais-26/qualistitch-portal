@@ -73,6 +73,7 @@ import { setDocumentNonBlocking } from '@/firebase/firestore-writes';
 import { v4 as uuidv4 } from 'uuid';
 import locations from '@/lib/ph-locations.json';
 import { Calculator } from './calculator';
+import { SectionTitle } from './ui/section-title';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -602,9 +603,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     <Card className="w-full mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black max-w-6xl">
       <CardHeader>
         <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="font-headline text-xl text-black">Create New Order</CardTitle>
-            <CardDescription className="text-gray-600">Fill in the details below to create a record for customer and order.</CardDescription>
+          <div className="flex flex-col items-center">
+            <SectionTitle>Create New Order</SectionTitle>
+            <CardDescription className="text-gray-600 mt-2">Fill in the details below to create a record for customer and order.</CardDescription>
           </div>
           <div className="text-base text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
             <div>{dateString} - {dayOfWeek} | <span className="blinking-time">{timeString}</span></div>
