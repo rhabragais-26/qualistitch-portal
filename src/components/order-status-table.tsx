@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -192,14 +191,14 @@ export function OrderStatusTable() {
     // Programming
     if (lead.isFinalProgram) return 30;
     if (lead.isFinalApproval) return 20;
-    if (lead.isRevision) return 15;
+    if (lead.isRevision) return 15; // Revision is a branch, not linear step
     if (lead.isLogoTesting) return 15;
     if (lead.isInitialApproval) return 10;
     if (lead.isUnderProgramming) return 5;
 
-    if (lead.joNumber) return 0;
+    if (lead.joNumber) return 0; // J.O. created but no programming yet
 
-    return 0;
+    return 0; // No J.O.
   }, []);
 
   const getContactDisplay = useCallback((lead: Lead) => {
@@ -572,7 +571,8 @@ export function OrderStatusTable() {
                           </TableRow>
                         )}
                     </React.Fragment>
-                  )}})
+                  )
+                })}
                 </TableBody>
               </Table>
             </ScrollArea>
@@ -581,7 +581,3 @@ export function OrderStatusTable() {
     </Card>
   );
 }
-
-  
-
-    
