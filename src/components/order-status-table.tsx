@@ -159,7 +159,6 @@ export function OrderStatusTable() {
     if (!lead.joNumber) {
         return { text: 'Pending', variant: 'secondary' };
     }
-    // Any other state where a JO exists but is not done is considered ongoing.
     return { text: 'Ongoing', variant: 'warning' };
   };
 
@@ -273,6 +272,7 @@ export function OrderStatusTable() {
                     <TableHead className="text-white font-bold align-middle">Customer</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Ordered Items</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Priority</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">J.O. No.</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Days Remaining/Overdue</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Programming Status</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Item Preparation</TableHead>
@@ -319,6 +319,7 @@ export function OrderStatusTable() {
                                     {lead.priorityType}
                                 </Badge>
                             </TableCell>
+                             <TableCell className="text-center text-xs align-middle py-2 font-medium">{formatJoNumber(lead.joNumber)}</TableCell>
                             <TableCell className={cn(
                               "text-center text-xs align-middle py-2 font-medium",
                               deadlineInfo.isOverdue && "text-red-500",
@@ -396,7 +397,7 @@ export function OrderStatusTable() {
                         </TableRow>
                         {isCollapsibleOpen && (
                               <TableRow className="bg-gray-50">
-                                <TableCell colSpan={10}>
+                                <TableCell colSpan={11}>
                                   <div className="p-2">
                                     <Table>
                                       <TableHeader>
