@@ -183,6 +183,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [citySuggestions, setCitySuggestions] = useState<{ name: string; province: string, type: string }[]>([]);
   const [barangaySuggestions, setBarangaySuggestions] = useState<string[]>([]);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   
   const citiesAndMunicipalities = useMemo(() => {
     return locations.provinces.flatMap(province =>
@@ -232,16 +233,17 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
   
   const handleSuggestionClick = (lead: Lead) => {
-    setValue('customerName', toTitleCase(lead.customerName));
-    setValue('companyName', lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '');
-    setValue('mobileNo', lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '');
-    setValue('landlineNo', lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber : '');
-    setValue('houseStreet', lead.houseStreet ? toTitleCase(lead.houseStreet) : '');
-    setValue('barangay', lead.barangay ? toTitleCase(lead.barangay) : '');
-    setValue('city', lead.city ? toTitleCase(lead.city) : '');
-    setValue('province', lead.province ? toTitleCase(lead.province) : '');
+    setSelectedLead(lead); // Track the selected lead
+    setValue('customerName', toTitleCase(lead.customerName), { shouldDirty: true });
+    setValue('companyName', lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '', { shouldDirty: true });
+    setValue('mobileNo', lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '', { shouldDirty: true });
+    setValue('landlineNo', lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber : '', { shouldDirty: true });
+    setValue('houseStreet', lead.houseStreet ? toTitleCase(lead.houseStreet) : '', { shouldDirty: true });
+    setValue('barangay', lead.barangay ? toTitleCase(lead.barangay) : '', { shouldDirty: true });
+    setValue('city', lead.city ? toTitleCase(lead.city) : '', { shouldDirty: true });
+    setValue('province', lead.province ? toTitleCase(lead.province) : '', { shouldDirty: true });
     
-    // Clear all suggestion lists
+    // Immediately clear all suggestion lists
     setCustomerSuggestions([]);
     setCompanySuggestions([]);
     setCitySuggestions([]);
@@ -267,21 +269,38 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const cityValue = watch('city');
   const provinceValue = watch('province');
 
+  // Effect to show/hide customer suggestions
   useEffect(() => {
-    if (customerNameValue && leads) {
-      const uniqueSuggestions = leads.filter(
-        (lead, index, self) =>
-          lead.customerName.toLowerCase().includes(customerNameValue.toLowerCase()) &&
-          self.findIndex((l) => l.customerName.toLowerCase() === lead.customerName.toLowerCase()) === index
-      );
-      setCustomerSuggestions(uniqueSuggestions);
+    if (customerNameValue && leads && !selectedLead) {
+        const uniqueSuggestions = leads.filter(
+            (lead, index, self) =>
+                lead.customerName.toLowerCase().includes(customerNameValue.toLowerCase()) &&
+                self.findIndex((l) => l.customerName.toLowerCase() === lead.customerName.toLowerCase()) === index
+        );
+        setCustomerSuggestions(uniqueSuggestions);
     } else {
-      setCustomerSuggestions([]);
+        setCustomerSuggestions([]);
     }
-  }, [customerNameValue, leads]);
+  }, [customerNameValue, leads, selectedLead]);
 
+  // Effect to clear dependent fields if customerName is changed after selection
   useEffect(() => {
-    if (companyNameValue && leads) {
+    if (selectedLead && customerNameValue !== toTitleCase(selectedLead.customerName)) {
+      setSelectedLead(null); // Deselect the lead
+      // Clear all related fields
+      setValue('companyName', '');
+      setValue('mobileNo', '');
+      setValue('landlineNo', '');
+      setValue('houseStreet', '');
+      setValue('barangay', '');
+      setValue('city', '');
+      setValue('province', '');
+    }
+  }, [customerNameValue, selectedLead, setValue]);
+
+  // Effect for company suggestions
+  useEffect(() => {
+    if (companyNameValue && leads && !selectedLead) {
       const uniqueSuggestions = leads.filter(
         (lead, index, self) =>
           lead.companyName &&
@@ -292,10 +311,11 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     } else {
       setCompanySuggestions([]);
     }
-  }, [companyNameValue, leads]);
+  }, [companyNameValue, leads, selectedLead]);
 
+  // Effect for city suggestions
   useEffect(() => {
-    if (cityValue) {
+    if (cityValue && !selectedLead) {
       const filteredCities = citiesAndMunicipalities.filter(city =>
         city.name.toLowerCase().includes(cityValue.toLowerCase())
       ).slice(0, 10);
@@ -303,10 +323,11 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     } else {
       setCitySuggestions([]);
     }
-  }, [cityValue, citiesAndMunicipalities]);
+  }, [cityValue, citiesAndMunicipalities, selectedLead]);
 
+  // Effect for barangay suggestions
   useEffect(() => {
-    if (barangayValue && cityValue && provinceValue) {
+    if (barangayValue && cityValue && provinceValue && !selectedLead) {
         const selectedCity = citiesAndMunicipalities.find(
             c => c.name.toLowerCase() === cityValue.toLowerCase() && c.province.toLowerCase() === provinceValue.toLowerCase()
         );
@@ -321,7 +342,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     } else {
         setBarangaySuggestions([]);
     }
-}, [barangayValue, cityValue, provinceValue, citiesAndMunicipalities]);
+  }, [barangayValue, cityValue, provinceValue, citiesAndMunicipalities, selectedLead]);
 
 
   useEffect(() => {
@@ -405,6 +426,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       salesRepresentative: undefined,
       orders: [],
     });
+    setSelectedLead(null);
   }
 
   const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
