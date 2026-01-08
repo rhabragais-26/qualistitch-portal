@@ -576,7 +576,7 @@ type QuantityDialogProps = {
 }
 
 function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: QuantityDialogProps) {
-    const [items, setItems] = useState<CaseItem[]>(initialItems);
+    const [items, setItems] = useState<CaseItem[]>(initialItems.length > 0 ? initialItems : [{ id: uuidv4(), productType: '', color: '', size: '', quantity: 1 }]);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
     const availableOptions = useMemo(() => {
@@ -630,36 +630,36 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                         <TableBody>
                             {items.map(item => (
                                 <TableRow key={item.id}>
-                                    <TableCell>
+                                    <TableCell className="w-[200px]">
                                         <Select 
                                             value={item.productType} 
                                             onValueChange={(v) => updateItem(item.id, 'productType', v)}
                                             open={openDropdown === `${item.id}-productType`}
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-productType`, open)}
                                         >
-                                            <SelectTrigger className="w-auto min-w-[120px]"><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger className="w-full"><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>{availableOptions.productTypes.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="w-[150px]">
                                         <Select 
                                             value={item.color} 
                                             onValueChange={(v) => updateItem(item.id, 'color', v)}
                                             open={openDropdown === `${item.id}-color`}
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-color`, open)}
                                         >
-                                            <SelectTrigger className="w-auto min-w-[120px]"><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger className="w-full"><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>{availableOptions.colors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="w-[100px]">
                                         <Select 
                                             value={item.size} 
                                             onValueChange={(v) => updateItem(item.id, 'size', v)}
                                             open={openDropdown === `${item.id}-size`}
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-size`, open)}
                                         >
-                                            <SelectTrigger className="w-auto min-w-[120px]"><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger className="w-full"><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>{availableOptions.sizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
