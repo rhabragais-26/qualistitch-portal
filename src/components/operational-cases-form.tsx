@@ -606,7 +606,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Set Item Quantities for Case</DialogTitle>
+                    <DialogTitle>Select Items with Related Case</DialogTitle>
                     <DialogDescription>
                         Specify the product, color, size, and quantity for each item included in this operational case.
                     </DialogDescription>
