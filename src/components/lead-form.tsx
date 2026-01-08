@@ -234,8 +234,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
   
   const handleSuggestionClick = (lead: Lead) => {
-    setSelectedLead(lead); 
-    setValue('customerName', toTitleCase(lead.customerName), { shouldDirty: true });
+    setSelectedLead(lead);
+    setValue('customerName', toTitleCase(lead.customerName), { shouldDirty: true, shouldValidate: true });
     setValue('companyName', lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '', { shouldDirty: true });
     setValue('mobileNo', lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '', { shouldDirty: true });
     setValue('landlineNo', lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber : '', { shouldDirty: true });
@@ -243,8 +243,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     setValue('barangay', lead.barangay ? toTitleCase(lead.barangay) : '', { shouldDirty: true });
     setValue('city', lead.city ? toTitleCase(lead.city) : '', { shouldDirty: true });
     setValue('province', lead.province ? toTitleCase(lead.province) : '', { shouldDirty: true });
-    
-    // Immediately clear all suggestion lists
+
     setCustomerSuggestions([]);
     setCompanySuggestions([]);
     setCitySuggestions([]);
@@ -252,14 +251,14 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
 
   const handleCitySuggestionClick = (city: { name: string; province: string }) => {
-    setValue('city', city.name, { shouldValidate: true });
-    setValue('province', city.province, { shouldValidate: true });
+    setValue('city', city.name, { shouldValidate: true, shouldDirty: true });
+    setValue('province', city.province, { shouldValidate: true, shouldDirty: true });
     setValue('barangay', ''); // Reset barangay when city changes
     setCitySuggestions([]);
   };
 
   const handleBarangaySuggestionClick = (barangay: string) => {
-    setValue('barangay', barangay, { shouldValidate: true });
+    setValue('barangay', barangay, { shouldValidate: true, shouldDirty: true });
     setBarangaySuggestions([]);
   };
 
@@ -270,7 +269,19 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const cityValue = watch('city');
   const provinceValue = watch('province');
 
-  // Effect to manage customer status label
+  useEffect(() => {
+    if (selectedLead && customerNameValue !== toTitleCase(selectedLead.customerName)) {
+      setSelectedLead(null);
+      setValue('companyName', '');
+      setValue('mobileNo', '');
+      setValue('landlineNo', '');
+      setValue('houseStreet', '');
+      setValue('barangay', '');
+      setValue('city', '');
+      setValue('province', '');
+    }
+  }, [customerNameValue, selectedLead, setValue]);
+
   useEffect(() => {
     if (!customerNameValue) {
       setCustomerStatus(null);
@@ -286,7 +297,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     setCustomerStatus(isExisting ? 'Repeat' : 'New');
   }, [customerNameValue, selectedLead, leads]);
 
-  // Effect to show/hide customer suggestions
   useEffect(() => {
     if (customerNameValue && leads && !selectedLead) {
         const uniqueSuggestions = leads.filter(
@@ -300,22 +310,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     }
   }, [customerNameValue, leads, selectedLead]);
 
-  // Effect to clear dependent fields if customerName is changed after selection
-  useEffect(() => {
-    if (selectedLead && customerNameValue !== toTitleCase(selectedLead.customerName)) {
-      setSelectedLead(null); // Deselect the lead
-      // Clear all related fields
-      setValue('companyName', '');
-      setValue('mobileNo', '');
-      setValue('landlineNo', '');
-      setValue('houseStreet', '');
-      setValue('barangay', '');
-      setValue('city', '');
-      setValue('province', '');
-    }
-  }, [customerNameValue, selectedLead, setValue]);
-
-  // Effect for company suggestions
   useEffect(() => {
     if (companyNameValue && leads && !selectedLead) {
       const uniqueSuggestions = leads.filter(
@@ -330,7 +324,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     }
   }, [companyNameValue, leads, selectedLead]);
 
-  // Effect for city suggestions
   useEffect(() => {
     if (cityValue && !selectedLead) {
       const filteredCities = citiesAndMunicipalities.filter(city =>
@@ -342,7 +335,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     }
   }, [cityValue, citiesAndMunicipalities, selectedLead]);
 
-  // Effect for barangay suggestions
   useEffect(() => {
     if (barangayValue && cityValue && provinceValue && !selectedLead) {
         const selectedCity = citiesAndMunicipalities.find(
@@ -622,7 +614,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       <FormItem className="relative">
                          <div className="flex items-center gap-2">
                             <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
-                            {customerStatus === 'Repeat' && <span className="font-bold text-xs px-2 py-1 bg-neutral-800 rounded-full shining-metal">(Repeat Buyer)</span>}
+                            {customerStatus === 'Repeat' && <span className="font-bold text-xs px-2 py-1 bg-neutral-800 rounded-full"><span className="shining-metal">(Repeat Buyer)</span></span>}
                             {customerStatus === 'New' && <span className="font-bold text-xs px-2 py-1 bg-blue-800 text-white rounded-full">(New Customer)</span>}
                         </div>
                         <FormControl>
