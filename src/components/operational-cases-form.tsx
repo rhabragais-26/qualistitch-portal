@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays, Inbox, PlusCircle, Minus, X } from 'lucide-react';
+import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays, Inbox, PlusCircle, Minus, X, Plus } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, setDoc, updateDoc } from 'firebase/firestore';
@@ -255,6 +255,12 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
         });
         return;
     }
+
+    // Manually trigger validation for the quantity field
+    const isValid = await trigger('quantity');
+    if (!isValid) {
+      return;
+    }
     
     try {
         const submissionData = {
@@ -449,7 +455,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
             <FormField
               control={control}
               name="quantity"
-              render={() => (
+              render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-black">
                       <Inbox className="h-4 w-4 text-primary" />
