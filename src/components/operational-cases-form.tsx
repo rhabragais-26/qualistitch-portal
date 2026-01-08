@@ -674,7 +674,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                     <DialogClose asChild>
                         <Button type="button" variant="outline">Cancel</Button>
                     </DialogClose>
-                    <Button onClick={handleSave}>Save Quantities</Button>
+                    <Button onClick={handleSave}>Save</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
