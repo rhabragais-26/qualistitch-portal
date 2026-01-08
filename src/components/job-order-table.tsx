@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -51,6 +52,10 @@ type Lead = {
   courier?: string;
 }
 
+type EnrichedLead = Lead & {
+  orderNumber: number;
+};
+
 export function JobOrderTable() {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -70,11 +75,34 @@ export function JobOrderTable() {
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   }, []);
+  
+  const processedLeads = useMemo(() => {
+    if (!leads) return [];
+
+    const groupedByCustomer = new Map<string, Lead[]>();
+    leads.forEach(lead => {
+        const name = lead.customerName.toLowerCase();
+        if (!groupedByCustomer.has(name)) {
+            groupedByCustomer.set(name, []);
+        }
+        groupedByCustomer.get(name)!.push(lead);
+    });
+    
+    const enrichedLeads: EnrichedLead[] = [];
+    groupedByCustomer.forEach((customerLeads) => {
+        customerLeads.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+        customerLeads.forEach((lead, index) => {
+            enrichedLeads.push({ ...lead, orderNumber: index + 1 });
+        });
+    });
+
+    return enrichedLeads;
+  }, [leads]);
 
   const filteredLeads = React.useMemo(() => {
-    if (!leads) return [];
+    if (!processedLeads) return [];
     
-    return leads.filter(lead => {
+    return processedLeads.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
@@ -87,7 +115,7 @@ export function JobOrderTable() {
 
       return matchesSearch && matchesCsr;
     });
-  }, [leads, searchTerm, csrFilter]);
+  }, [processedLeads, searchTerm, csrFilter]);
 
   if (isLoading) {
     return (
@@ -159,9 +187,22 @@ export function JobOrderTable() {
                       const isJoSaved = !!lead.joNumber;
                       const creationDate = formatDateTime(lead.submissionDateTime);
                       const modifiedDate = formatDateTime(lead.lastModified);
+                      const isRepeat = lead.orderNumber > 1;
                       return (
                         <TableRow key={lead.id}>
-                            <TableCell className="font-medium text-xs align-middle py-2 text-black">{lead.customerName}</TableCell>
+                            <TableCell className="font-medium text-xs align-middle py-2 text-black">
+                                {lead.customerName}
+                                {isRepeat ? (
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                        <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                        <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                        {lead.orderNumber}
+                                        </span>
+                                    </div>
+                                    ) : (
+                                    <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                                )}
+                            </TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
@@ -205,3 +246,5 @@ export function JobOrderTable() {
     </Card>
   );
 }
+
+  
