@@ -589,9 +589,23 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     <Card className="w-full mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black max-w-6xl">
       <CardHeader>
         <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="font-headline text-2xl">Create New Order</CardTitle>
-            <CardDescription className="text-gray-600 mt-2">Fill in the details below to create a record for customer and order.</CardDescription>
+          <div className="flex items-center gap-4">
+            <div>
+                <CardTitle className="font-headline text-2xl">Create New Order</CardTitle>
+                <CardDescription className="text-gray-600 mt-2">Fill in the details below to create a record for customer and order.</CardDescription>
+            </div>
+            <div>
+              {customerStatus === 'Repeat' && (
+                <span className="bg-neutral-800 rounded-md px-2 py-1 text-xs">
+                  <span className="font-bold shining-metal">(Repeat Buyer)</span>
+                </span>
+              )}
+              {customerStatus === 'New' && (
+                <span className="border border-blue-500 rounded-md px-2 py-1 text-xs text-black font-bold">
+                  (New Customer)
+                </span>
+              )}
+            </div>
           </div>
           <div className="text-base text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
             <div>{dateString} - {dayOfWeek} | <span className="blinking-time">{timeString}</span></div>
@@ -748,18 +762,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               
               {/* Right Column */}
               <div className="w-1/2 flex flex-col gap-y-3">
-                <div className='flex justify-end mb-2'>
-                    {customerStatus === 'Repeat' && (
-                        <span className="bg-neutral-800 rounded-md px-2 py-1 text-xs">
-                        <span className="shining-metal font-bold">(Repeat Buyer)</span>
-                        </span>
-                    )}
-                    {customerStatus === 'New' && (
-                        <span className="border border-blue-500 rounded-md px-2 py-1 text-xs text-black font-bold">
-                        (New Customer)
-                        </span>
-                    )}
-                </div>
                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="orderType" render={({field}) => (
                         <FormItem>
