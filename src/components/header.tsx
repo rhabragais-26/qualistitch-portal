@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -59,10 +58,15 @@ import { Label } from './ui/label';
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
+  isOperationalCasesPageDirty?: boolean;
   children?: React.ReactNode;
 };
 
-export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
+export function Header({ 
+  isNewOrderPageDirty = false, 
+  isOperationalCasesPageDirty = false,
+  children 
+}: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -78,7 +82,10 @@ export function Header({ isNewOrderPageDirty = false, children }: HeaderProps) {
   }, []);
 
   const handleNavigation = (url: string) => {
-    if (isNewOrderPageDirty && pathname === '/' && pathname !== url) {
+    const isDirty = (isNewOrderPageDirty && pathname === '/') || 
+                    (isOperationalCasesPageDirty && pathname === '/inventory/operational-cases');
+
+    if (isDirty && pathname !== url) {
       setNextUrl(url);
       setShowConfirmDialog(true);
     } else {

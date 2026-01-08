@@ -95,9 +95,10 @@ type OperationalCasesFormProps = {
   editingCase: OperationalCase | null;
   onCancelEdit: () => void;
   onSaveComplete: () => void;
+  onDirtyChange: (isDirty: boolean) => void;
 }
 
-export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete }: OperationalCasesFormProps) {
+export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete, onDirtyChange }: OperationalCasesFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const imageUploadRef = useRef<HTMLInputElement>(null);
@@ -127,10 +128,15 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
     },
   });
   
-  const { control, handleSubmit, reset, setValue, watch } = form;
+  const { control, handleSubmit, reset, setValue, watch, formState: { isDirty } } = form;
   const imageValue = watch('image');
 
   const isEditing = !!editingCase;
+
+  useEffect(() => {
+    onDirtyChange(isDirty);
+  }, [isDirty, onDirtyChange]);
+
 
   useEffect(() => {
     if (editingCase && allLeads) {

@@ -15,13 +15,14 @@ type OperationalCase = {
   customerName: string;
   contactNumber?: string;
   landlineNumber?: string;
-  quantity?: number;
+  caseItems: any[];
   isArchived?: boolean;
   isDeleted?: boolean;
 };
 
 export default function OperationalCasesPage() {
   const [editingCase, setEditingCase] = useState<OperationalCase | null>(null);
+  const [isFormDirty, setIsFormDirty] = useState(false);
 
   const handleEdit = (caseItem: OperationalCase) => {
     setEditingCase(caseItem);
@@ -39,21 +40,23 @@ export default function OperationalCasesPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
-            <div className="lg:col-span-2 lg:sticky lg:top-24">
-                 <OperationalCasesForm 
-                    editingCase={editingCase}
-                    onCancelEdit={handleCancelEdit}
-                    onSaveComplete={handleSaveComplete}
-                 />
-            </div>
-            <div className="lg:col-span-3">
-                <RecordedCasesList onEdit={handleEdit} />
-            </div>
-        </div>
-      </main>
+      <Header isOperationalCasesPageDirty={isFormDirty}>
+        <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+              <div className="lg:col-span-2 lg:sticky lg:top-24">
+                   <OperationalCasesForm 
+                      editingCase={editingCase}
+                      onCancelEdit={handleCancelEdit}
+                      onSaveComplete={handleSaveComplete}
+                      onDirtyChange={setIsFormDirty}
+                   />
+              </div>
+              <div className="lg:col-span-3">
+                  <RecordedCasesList onEdit={handleEdit} />
+              </div>
+          </div>
+        </main>
+      </Header>
     </div>
   );
 }
