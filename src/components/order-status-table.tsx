@@ -439,16 +439,15 @@ export function OrderStatusTable() {
                             </TableCell>
                             <TableCell className="align-top py-3">
                                 <div className="flex flex-col gap-2">
-                                  <div className="relative w-full pt-4">
-                                      <span
-                                        className={cn(
-                                          "absolute bottom-full mb-1 text-xs text-primary",
-                                          progress > 0 && "font-bold"
-                                        )}
-                                        style={{ left: `calc(${Math.min(progress, 100)}% - 14px)` }}
-                                      >
-                                        {progress}%
-                                      </span>
+                                   <div className="relative w-full">
+                                      {progress > 0 && (
+                                        <span
+                                            className="absolute bottom-full text-xs text-primary font-bold"
+                                            style={{ left: `calc(${Math.min(progress, 100)}% - 14px)` }}
+                                        >
+                                            {progress}%
+                                        </span>
+                                      )}
                                       <Progress value={progress} className="h-2 w-full" />
                                   </div>
                                     <div className="grid grid-cols-4 gap-2 text-xs">
