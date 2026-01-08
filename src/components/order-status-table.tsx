@@ -379,8 +379,9 @@ export function OrderStatusTable() {
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="text-white font-bold align-middle w-[250px]">Customer</TableHead>
-                    <TableHead className="text-white font-bold align-middle w-[400px] text-center">Progress</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle w-[120px]">Order Details</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Order Type</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[150px]">Ordered Items</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[400px]">Progress</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Deadline</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Operational Case</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[120px]">Overall Status</TableHead>
@@ -433,21 +434,33 @@ export function OrderStatusTable() {
                                   </div>
                                 )}
                             </TableCell>
+                            <TableCell className="text-center align-top py-3">
+                               <div className='flex flex-col items-center gap-1'>
+                                <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
+                                    {lead.priorityType}
+                                </Badge>
+                                <div className="text-gray-500 text-[10px] mt-1 whitespace-nowrap">{lead.orderType}</div>
+                               </div>
+                            </TableCell>
+                            <TableCell className="text-center align-top py-3">
+                               <div onClick={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100 mt-1">
+                                    <span className="font-semibold text-sm">{totalQuantity} items</span>
+                                    {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                                </div>
+                            </TableCell>
                              <TableCell className="align-top py-3">
                                 <div className="flex flex-col gap-2">
-                                    <div className="relative w-full">
-                                        {progress > 0 && (
-                                            <div
-                                                className="absolute top-[-2px] px-2 py-1 text-xs text-white font-bold bg-[#333] rounded-md shadow-lg"
-                                                style={{
-                                                    left: `${Math.min(progress, 100)}%`,
-                                                    transform: 'translateX(-50%)',
-                                                }}
-                                            >
-                                                {progress}%
-                                                <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-[4px] border-t-[#333]"></div>
-                                            </div>
-                                        )}
+                                    <div className="relative pt-4">
+                                        <div
+                                            className="absolute top-[-2px] px-2 py-1 text-xs text-white font-bold bg-[#333] rounded-md shadow-lg"
+                                            style={{
+                                                left: `${Math.min(progress, 100)}%`,
+                                                transform: 'translateX(-50%)',
+                                            }}
+                                        >
+                                            {progress}%
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-[4px] border-t-[#333]"></div>
+                                        </div>
                                         <div className="h-2 w-full bg-gray-300 rounded-full overflow-hidden mt-4">
                                             <div
                                                 className="h-full bg-[hsl(var(--chart-1))] rounded-full striped-progress"
@@ -474,18 +487,6 @@ export function OrderStatusTable() {
                                         </div>
                                     </div>
                                 </div>
-                            </TableCell>
-                            <TableCell className="text-center align-top py-3">
-                              <div className='flex flex-col items-center gap-1'>
-                                <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
-                                    {lead.priorityType}
-                                </Badge>
-                                <div className="text-gray-500 text-[10px] mt-1 whitespace-nowrap">{lead.orderType}</div>
-                                <div onClick={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100 mt-1">
-                                    <span className="font-semibold text-sm">{totalQuantity} items</span>
-                                    {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-                                </div>
-                              </div>
                             </TableCell>
                             <TableCell className={cn(
                               "text-center text-xs align-top py-3 font-medium",
@@ -589,4 +590,3 @@ export function OrderStatusTable() {
     </Card>
   );
 }
-
