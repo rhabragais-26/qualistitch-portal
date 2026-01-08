@@ -249,6 +249,7 @@ export function OrderStatusTable() {
                   const deadlineInfo = calculateDeadline(lead);
                   const programmingStatus = getProgrammingStatus(lead);
                   const itemPreparationStatus = getItemPreparationStatus(lead);
+                  const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
@@ -267,10 +268,12 @@ export function OrderStatusTable() {
                             </Collapsible>
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
-                          <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
-                            View
-                            {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-                          </Button>
+                            <CollapsibleTrigger asChild>
+                                <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
+                                    {totalQuantity}
+                                    {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+                                </Button>
+                            </CollapsibleTrigger>
                         </TableCell>
                         <TableCell className="text-center text-xs align-middle py-2 font-medium">
                             <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
@@ -381,5 +384,3 @@ export function OrderStatusTable() {
     </Card>
   );
 }
-
-    
