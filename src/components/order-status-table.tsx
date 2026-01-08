@@ -363,7 +363,7 @@ export function OrderStatusTable() {
                                     <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
                                         {lead.priorityType}
                                     </Badge>
-                                    <div className="text-gray-500 text-[10px] mt-1">{lead.orderType}</div>
+                                    <div className="text-gray-500 text-[10px] mt-1 whitespace-nowrap">{lead.orderType}</div>
                                 </div>
                             </TableCell>
                             <TableCell className="text-center text-xs align-top py-3 font-medium whitespace-nowrap">{formatJoNumber(lead.joNumber)}</TableCell>
@@ -445,7 +445,7 @@ export function OrderStatusTable() {
                                 )}
                             </TableCell>
                             <TableCell className="text-center text-xs align-top py-3 font-medium">
-                                <Badge variant={overallStatus.variant} className="uppercase">{overallStatus.text}</Badge>
+                                <Badge variant={overallStatus.variant} className="uppercase rounded-md">{overallStatus.text}</Badge>
                             </TableCell>
                         </TableRow>
                         {openLeadId === lead.id && (

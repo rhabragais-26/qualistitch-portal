@@ -964,7 +964,7 @@ export function DigitizingTable() {
                             <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                               {lead.priorityType}
                             </Badge>
-                            <div className="text-gray-500 text-[10px] mt-1">{lead.orderType}</div>
+                            <div className="text-gray-500 text-[10px] mt-1 whitespace-nowrap">{lead.orderType}</div>
                         </div>
                       </TableCell>
                       <TableCell className="font-medium text-xs align-top py-3 text-black whitespace-nowrap">{formatJoNumber(lead.joNumber)}</TableCell>
