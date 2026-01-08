@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -16,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
@@ -62,11 +61,11 @@ export function JobOrderTable() {
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
-  const handleProcessJobOrder = (lead: Lead) => {
+  const handleProcessJobOrder = useCallback((lead: Lead) => {
     router.push(`/job-order/${lead.id}`);
-  };
+  }, [router]);
 
-  const formatJoNumber = useMemo(() => (joNumber: number | undefined) => {
+  const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
@@ -206,5 +205,3 @@ export function JobOrderTable() {
     </Card>
   );
 }
-
-    

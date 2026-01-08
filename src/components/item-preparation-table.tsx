@@ -1,4 +1,3 @@
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -393,5 +392,3 @@ export function ItemPreparationTable() {
     </Card>
   );
 }
-
-    

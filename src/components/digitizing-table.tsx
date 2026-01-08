@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -544,7 +543,7 @@ export function DigitizingTable() {
     ].filter(item => item.uploaded);
   }, [archiveConfirmLead]);
 
-  const renderUploadDialogContent = () => {
+  const renderUploadDialogContent = useCallback(() => {
     if (uploadField === 'isUnderProgramming' || uploadField === 'isLogoTesting') {
       const title = uploadField === 'isUnderProgramming' ? 'Upload Program Files' : 'Upload Actual Tested Image';
       return (
@@ -749,7 +748,7 @@ export function DigitizingTable() {
       );
     }
     return null;
-  }
+  }, [uploadField, handleImagePaste, handleFileUpload, handleRemoveImage, handleMultipleFileUpload, addFile, removeFile, handleUploadDialogSave, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign]);
 
   const ImagePreview = ({ src, alt }: { src: string; alt: string;}) => (
     <div className="relative w-full aspect-square cursor-pointer" onClick={() => setImageInView(src)}>
