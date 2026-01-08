@@ -46,6 +46,7 @@ type Lead = {
   companyName?: string;
   contactNumber: string;
   landlineNumber?: string;
+  orderType: string;
   orders: Order[];
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
@@ -357,37 +358,40 @@ export function OrderStatusTable() {
                                   </div>
                               )}
                             </TableCell>
-                            <TableCell className="text-center text-xs align-middle py-2 font-medium">
-                                <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
-                                    {lead.priorityType}
-                                </Badge>
+                            <TableCell className="text-center text-xs align-top py-2 font-medium">
+                                <div>
+                                    <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
+                                        {lead.priorityType}
+                                    </Badge>
+                                    <div className="text-gray-500 text-[10px] mt-1">{lead.orderType}</div>
+                                </div>
                             </TableCell>
-                            <TableCell className="text-center text-xs align-middle py-2 font-medium whitespace-nowrap">{formatJoNumber(lead.joNumber)}</TableCell>
-                            <TableCell className="text-center align-middle py-2">
+                            <TableCell className="text-center text-xs align-top py-3 font-medium whitespace-nowrap">{formatJoNumber(lead.joNumber)}</TableCell>
+                            <TableCell className="text-center align-top py-3">
                               <div onClick={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100">
                                 <span className="font-semibold text-sm">{totalQuantity}</span>
                                 {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                               </div>
                             </TableCell>
                             <TableCell className={cn(
-                              "text-center text-xs align-middle py-2 font-medium",
+                              "text-center text-xs align-top py-3 font-medium",
                               deadlineInfo.isOverdue && "text-red-500",
                               deadlineInfo.isUrgent && "text-amber-600",
                               !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
                             )}>{deadlineInfo.text}</TableCell>
-                            <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                            <TableCell className="text-center text-xs align-top py-3 font-medium">
                               <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
                             </TableCell>
-                            <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                            <TableCell className="text-center text-xs align-top py-3 font-medium">
                               <Badge variant={itemPreparationStatus.variant as any}>{itemPreparationStatus.text}</Badge>
                             </TableCell>
-                            <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                            <TableCell className="text-center text-xs align-top py-3 font-medium">
                               <Badge variant={productionStatus.variant as any}>{productionStatus.text}</Badge>
                             </TableCell>
-                            <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                            <TableCell className="text-center text-xs align-top py-3 font-medium">
                                 <Badge variant="secondary">{lead.shipmentStatus || 'Pending'}</Badge>
                             </TableCell>
-                            <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                            <TableCell className="text-center text-xs align-top py-3 font-medium">
                                 {lead.operationalCase ? (
                                   <Popover>
                                     <PopoverTrigger asChild>
@@ -440,7 +444,7 @@ export function OrderStatusTable() {
                                     <span className="text-muted-foreground">-</span>
                                 )}
                             </TableCell>
-                            <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                            <TableCell className="text-center text-xs align-top py-3 font-medium">
                                 <Badge variant={overallStatus.variant} className="uppercase">{overallStatus.text}</Badge>
                             </TableCell>
                         </TableRow>

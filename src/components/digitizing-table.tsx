@@ -90,6 +90,7 @@ type Lead = {
   contactNumber: string;
   landlineNumber?: string;
   salesRepresentative: string;
+  orderType: string;
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
   joNumber?: number;
@@ -954,18 +955,21 @@ export function DigitizingTable() {
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
-                      <TableCell className="font-medium text-xs align-middle py-2 text-black">
+                      <TableCell className="font-medium text-xs align-top py-3 text-black">
                         {lead.customerName}
                       </TableCell>
-                      <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
-                      <TableCell className="align-middle py-2">
-                        <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                          {lead.priorityType}
-                        </Badge>
+                      <TableCell className="text-xs align-top py-3 text-black">{lead.salesRepresentative}</TableCell>
+                      <TableCell className="align-top py-3">
+                        <div>
+                            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                              {lead.priorityType}
+                            </Badge>
+                            <div className="text-gray-500 text-[10px] mt-1">{lead.orderType}</div>
+                        </div>
                       </TableCell>
-                      <TableCell className="font-medium text-xs align-middle py-2 text-black whitespace-nowrap">{formatJoNumber(lead.joNumber)}</TableCell>
+                      <TableCell className="font-medium text-xs align-top py-3 text-black whitespace-nowrap">{formatJoNumber(lead.joNumber)}</TableCell>
                        <TableCell className={cn(
-                          "text-center text-xs align-middle py-2 font-medium",
+                          "text-center text-xs align-top py-3 font-medium",
                           deadlineInfo.isOverdue && "text-red-600",
                           deadlineInfo.isUrgent && "text-amber-600",
                           !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
@@ -1145,20 +1149,20 @@ export function DigitizingTable() {
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Final Program Files</CardTitle></CardHeader>
                                         <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs">
-                                          {lead.layouts?.[0]?.finalLogoEmb?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>EMB File</p>{lead.layouts?.[0]?.finalLogoEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoEmbUploadTimes![index]!).dateTime}</p>}</div>))}
+                                          {lead.layouts?.[0]?.finalLogoEmb?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo ${index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>EMB File</p>{lead.layouts?.[0]?.finalLogoEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoEmbUploadTimes![index]!).dateTime}</p>}</div>))}
                                           {lead.layouts?.[0]?.finalBackDesignEmb?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>EMB File</p>{lead.layouts[0].finalBackDesignEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignEmbUploadTimes![index]!).dateTime}</p>}</div>)}
-                                          {lead.layouts?.[0]?.finalLogoDst?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>{lead.layouts?.[0]?.finalLogoDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoDstUploadTimes![index]!).dateTime}</p>}</div>))}
+                                          {lead.layouts?.[0]?.finalLogoDst?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo ${index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>{lead.layouts?.[0]?.finalLogoDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoDstUploadTimes![index]!).dateTime}</p>}</div>))}
                                           {lead.layouts?.[0]?.finalBackDesignDst?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>{lead.layouts[0].finalBackDesignDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignDstUploadTimes![index]!).dateTime}</p>}</div>)}
                                           {lead.layouts?.[0]?.finalNamesDst?.map((file, index) => file && (
                                             <div key={index}>
-                                                <p className="font-semibold text-gray-500 mb-2">Name {index + 1} (DST)</p>
+                                                <p className="font-semibold text-gray-500 mb-2">Name ${index + 1} (DST)</p>
                                                 <p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>
                                                 {lead.layouts?.[0]?.finalNamesDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalNamesDstUploadTimes![index]!).dateTime}</p>}
                                             </div>
                                           ))}
                                           {lead.layouts?.[0]?.sequenceLogo?.map((file, index) => file && (
                                               <div key={index}>
-                                                  <p className="font-semibold text-gray-500 mb-2">Sequence Logo {index + 1}</p>
+                                                  <p className="font-semibold text-gray-500 mb-2">Sequence Logo ${index + 1}</p>
                                                   <ImagePreview src={file} alt={`Sequence Logo ${index + 1}`} />
                                                   {Array.isArray(lead.layouts?.[0]?.sequenceLogoUploadTimes) && lead.layouts?.[0]?.sequenceLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceLogoUploadTimes![index]!).dateTime}</p>}
                                               </div>
@@ -1180,7 +1184,7 @@ export function DigitizingTable() {
                                             {lead.layouts?.map((layout, index) => (
                                                 layout.layoutImage && (
                                                     <div key={index}>
-                                                        {lead.layouts.length > 1 && <p className="font-semibold text-gray-500 mb-2">Layout {index + 1}</p>}
+                                                        {lead.layouts.length > 1 && <p className="font-semibold text-gray-500 mb-2">Layout ${index + 1}</p>}
                                                         <ImagePreview src={layout.layoutImage} alt={`Layout ${index + 1}`} />
                                                     </div>
                                                 )
@@ -1201,5 +1205,3 @@ export function DigitizingTable() {
     </Card>
   );
 }
-
-    
