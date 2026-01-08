@@ -74,6 +74,7 @@ import { setDocumentNonBlocking } from '@/firebase/firestore-writes';
 import { v4 as uuidv4 } from 'uuid';
 import locations from '@/lib/ph-locations.json';
 import { Calculator } from './calculator';
+import { StatusBanner } from '@/components/ui/status-banner';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -589,23 +590,29 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     <Card className="w-full mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black max-w-6xl">
       <CardHeader>
         <div className="flex justify-between items-start">
-          <div className="flex items-center gap-4">
-            <div>
-                <CardTitle className="font-headline text-2xl">Create New Order</CardTitle>
-                <CardDescription className="text-gray-600 mt-2">Fill in the details below to create a record for customer and order.</CardDescription>
-            </div>
-            <div>
-              {customerStatus === 'Repeat' && (
-                <span className="bg-neutral-800 rounded-md px-2 py-1 text-xs">
-                  <span className="font-bold shining-metal">(Repeat Buyer)</span>
-                </span>
-              )}
-              {customerStatus === 'New' && (
-                <span className="border border-blue-500 rounded-md px-2 py-1 text-xs text-black font-bold">
-                  (New Customer)
-                </span>
-              )}
-            </div>
+          <div className="flex-1">
+              <CardTitle className="font-headline text-2xl">Create New Order</CardTitle>
+              <CardDescription className="text-gray-600 mt-2">Fill in the details below to create a record for customer and order.</CardDescription>
+              <div className="mt-3 h-10">
+                {customerStatus === 'Repeat' && (
+                  <div className="animate-in fade-in-down">
+                    <StatusBanner 
+                      text="Repeat Buyer" 
+                      backgroundColor="#A37E2C"
+                      textColor="#0a0a0a"
+                    />
+                  </div>
+                )}
+                {customerStatus === 'New' && (
+                  <div className="animate-in fade-in-down">
+                    <StatusBanner 
+                      text="New Customer" 
+                      backgroundColor="#FFFFFF"
+                      textColor="#8A6817"
+                    />
+                  </div>
+                )}
+              </div>
           </div>
           <div className="text-base text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
             <div>{dateString} - {dayOfWeek} | <span className="blinking-time">{timeString}</span></div>
