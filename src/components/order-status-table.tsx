@@ -192,15 +192,14 @@ export function OrderStatusTable() {
     // Programming
     if (lead.isFinalProgram) return 30;
     if (lead.isFinalApproval) return 20;
-    if (lead.isRevision) return 15; // Revision doesn't go back, but holds progress
+    if (lead.isRevision) return 15;
     if (lead.isLogoTesting) return 15;
     if (lead.isInitialApproval) return 10;
     if (lead.isUnderProgramming) return 5;
 
-    // Initial State
-    if (lead.joNumber) return 0; // "Pending Initial Program"
+    if (lead.joNumber) return 0;
 
-    return 0; // Default for "Pending J.O."
+    return 0;
   }, []);
 
   const getContactDisplay = useCallback((lead: Lead) => {
@@ -319,7 +318,7 @@ export function OrderStatusTable() {
              <Button
                 variant="ghost"
                 size="icon"
-                onClick={()={() => setImageInView(null)}
+                onClick={() => setImageInView(null)}
                 className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
             >
                 <X className="h-6 w-6" />
@@ -521,7 +520,7 @@ export function OrderStatusTable() {
                                           <div className="flex-shrink-0 w-48 h-48">
                                             <div
                                               className="relative w-full h-full cursor-pointer"
-                                              onClick={()={() => setImageInView(lead.operationalCase!.image!)}
+                                              onClick={() => setImageInView(lead.operationalCase!.image!)}
                                             >
                                               <Image
                                                 src={lead.operationalCase.image}
@@ -584,3 +583,5 @@ export function OrderStatusTable() {
 }
 
   
+
+    
