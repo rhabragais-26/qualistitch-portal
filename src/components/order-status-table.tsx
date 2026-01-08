@@ -17,7 +17,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
@@ -30,6 +30,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 
 type Order = {
   productType: string;
@@ -61,7 +62,7 @@ type Lead = {
   productionType?: ProductionType;
   sewerType?: ProductionType;
   isDone?: boolean;
-  operationalCase?: OperationalCase; // Added for join
+  operationalCase?: OperationalCase;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippedTimestamp?: string;
 }
@@ -83,6 +84,9 @@ type OperationalCase = {
 
 export function OrderStatusTable() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [joNumberSearch, setJoNumberSearch] = useState('');
+  const [overallStatusFilter, setOverallStatusFilter] = useState('All');
+  const [overdueStatusFilter, setOverdueStatusFilter] = useState('All');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
@@ -105,7 +109,7 @@ export function OrderStatusTable() {
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
   };
 
-  const calculateDeadline = (lead: Lead) => {
+  const calculateDeadline = useCallback((lead: Lead) => {
     if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
         return { text: `Shipped: ${formatDateTime(lead.shippedTimestamp).dateTimeShort}`, isOverdue: false, isUrgent: false, remainingDays: Infinity };
     }
@@ -122,9 +126,9 @@ export function OrderStatusTable() {
     } else {
       return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
     }
-  };
+  }, []);
 
-  const getProgrammingStatus = (lead: Lead) => {
+  const getProgrammingStatus = useCallback((lead: Lead) => {
     if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
     if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const };
     if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const };
@@ -133,15 +137,15 @@ export function OrderStatusTable() {
     if (lead.isUnderProgramming) return { text: "Done Initial Program", variant: "default" as const };
     if (lead.joNumber) return { text: "Pending Initial Program", variant: "secondary" as const };
     return { text: "Pending J.O.", variant: "secondary" as const };
-  };
+  }, []);
 
-  const getItemPreparationStatus = (lead: Lead): { text: string; variant: "success" | "warning" | "secondary" } => {
+  const getItemPreparationStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "secondary" } => {
     if (lead.isSentToProduction) return { text: 'Sent to Production', variant: 'success' };
     if (lead.isPreparedForProduction) return { text: 'Prepared', variant: 'warning' };
     return { text: 'Pending', variant: 'secondary' };
-  };
+  }, []);
 
-  const getProductionStatus = (lead: Lead): { text: string; variant: "success" | "warning" | "destructive" | "secondary" } => {
+  const getProductionStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "destructive" | "secondary" } => {
     if (lead.isDone) return { text: 'Done Production', variant: 'success' };
     if (lead.sewerType && lead.sewerType !== 'Pending') {
       return { text: `Ongoing with Sewer (${lead.sewerType})`, variant: 'warning' };
@@ -150,9 +154,9 @@ export function OrderStatusTable() {
       return { text: `Ongoing Production (${lead.productionType})`, variant: 'warning' };
     }
     return { text: 'Pending', variant: 'secondary' };
-  };
+  }, []);
 
-  const getOverallStatus = (lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
+  const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
     if (lead.isDone) {
         return { text: 'Completed', variant: 'success' };
     }
@@ -160,10 +164,10 @@ export function OrderStatusTable() {
         return { text: 'Pending', variant: 'secondary' };
     }
     return { text: 'Ongoing', variant: 'warning' };
-  };
+  }, []);
 
 
-  const getContactDisplay = (lead: Lead) => {
+  const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
@@ -171,13 +175,13 @@ export function OrderStatusTable() {
       return `${mobile} / ${landline}`;
     }
     return mobile || landline || null;
-  };
+  }, []);
   
-  const formatJoNumber = (joNumber: number | undefined) => {
+  const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-  };
+  }, []);
 
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
@@ -191,7 +195,19 @@ export function OrderStatusTable() {
         (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(lowercasedSearchTerm.replace(/-/g, ''))) ||
         (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(lowercasedSearchTerm.replace(/-/g, ''))))
         : true;
-      return matchesSearch;
+      
+      const joString = formatJoNumber(lead.joNumber);
+      const matchesJo = joNumberSearch ? joString.toLowerCase().includes(joNumberSearch.toLowerCase()) : true;
+
+      const overallStatus = getOverallStatus(lead).text;
+      const matchesOverallStatus = overallStatusFilter === 'All' || overallStatus === overallStatusFilter;
+      
+      const deadlineInfo = calculateDeadline(lead);
+      const matchesOverdueStatus = overdueStatusFilter === 'All' ||
+        (overdueStatusFilter === 'Overdue' && deadlineInfo.isOverdue) ||
+        (overdueStatusFilter === 'Nearly Overdue' && !deadlineInfo.isOverdue && deadlineInfo.isUrgent);
+
+      return matchesSearch && matchesJo && matchesOverallStatus && matchesOverdueStatus;
     });
 
     return filtered.sort((a, b) => {
@@ -200,7 +216,7 @@ export function OrderStatusTable() {
         return aDeadline.remainingDays - bDeadline.remainingDays;
     });
 
-  }, [leads, searchTerm]);
+  }, [leads, searchTerm, joNumberSearch, overallStatusFilter, overdueStatusFilter, formatJoNumber, getOverallStatus, calculateDeadline]);
   
   const leadsWithCases = useMemo(() => {
     if (!filteredLeads || !operationalCases) return [];
@@ -253,13 +269,40 @@ export function OrderStatusTable() {
                 Here is the overall status of all customer orders.
               </CardDescription>
             </div>
-             <div className="w-full max-w-sm">
-              <Input
-                placeholder="Search customer, company, or contact..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-gray-100 text-black placeholder:text-gray-500"
-              />
+            <div className="flex items-center gap-2">
+                <Input
+                    placeholder="Search J.O. No..."
+                    value={joNumberSearch}
+                    onChange={(e) => setJoNumberSearch(e.target.value)}
+                    className="bg-gray-100 text-black placeholder:text-gray-500 w-40"
+                />
+                 <Input
+                  placeholder="Search customer, company, or contact..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+                <Select value={overallStatusFilter} onValueChange={setOverallStatusFilter}>
+                  <SelectTrigger className="w-[200px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Filter by Overall Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Statuses</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Ongoing">Ongoing</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={overdueStatusFilter} onValueChange={setOverdueStatusFilter}>
+                  <SelectTrigger className="w-[200px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Filter by Overdue Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Overdue Statuses</SelectItem>
+                    <SelectItem value="Overdue">Overdue</SelectItem>
+                    <SelectItem value="Nearly Overdue">Nearly Overdue</SelectItem>
+                  </SelectContent>
+                </Select>
             </div>
         </div>
       </CardHeader>
@@ -433,4 +476,3 @@ export function OrderStatusTable() {
     </Card>
   );
 }
-
