@@ -38,6 +38,8 @@ type Order = {
   quantity: number;
 }
 
+type ProductionType = "Pending" | "In-house" | "Outsource";
+
 type Lead = {
   id: string;
   customerName: string;
@@ -56,6 +58,9 @@ type Lead = {
   isFinalProgram?: boolean;
   isPreparedForProduction?: boolean;
   isSentToProduction?: boolean;
+  productionType?: ProductionType;
+  sewerType?: ProductionType;
+  isDone?: boolean;
 }
 
 type OperationalCase = {
@@ -126,6 +131,17 @@ export function OrderStatusTable() {
   const getItemPreparationStatus = (lead: Lead): { text: string; variant: "success" | "warning" | "secondary" } => {
     if (lead.isSentToProduction) return { text: 'Sent to Production', variant: 'success' };
     if (lead.isPreparedForProduction) return { text: 'Prepared', variant: 'warning' };
+    return { text: 'Pending', variant: 'secondary' };
+  };
+
+  const getProductionStatus = (lead: Lead): { text: string; variant: "success" | "warning" | "destructive" | "secondary" } => {
+    if (lead.isDone) return { text: 'Done Production', variant: 'success' };
+    if (lead.sewerType && lead.sewerType !== 'Pending') {
+      return { text: `Ongoing with Sewer (${lead.sewerType})`, variant: 'warning' };
+    }
+    if (lead.productionType && lead.productionType !== 'Pending') {
+      return { text: `Ongoing Production (${lead.productionType})`, variant: 'warning' };
+    }
     return { text: 'Pending', variant: 'secondary' };
   };
 
@@ -241,6 +257,7 @@ export function OrderStatusTable() {
                     <TableHead className="text-center text-white font-bold align-middle">Days Remaining/Overdue</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Programming Status</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Item Preparation</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Production Status</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Operational Case</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -249,6 +266,7 @@ export function OrderStatusTable() {
                   const deadlineInfo = calculateDeadline(lead);
                   const programmingStatus = getProgrammingStatus(lead);
                   const itemPreparationStatus = getItemPreparationStatus(lead);
+                  const productionStatus = getProductionStatus(lead);
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
                   return (
                   <Collapsible asChild key={lead.id} open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
@@ -292,6 +310,9 @@ export function OrderStatusTable() {
                           </TableCell>
                           <TableCell className="text-center text-xs align-middle py-2 font-medium">
                             <Badge variant={itemPreparationStatus.variant as any}>{itemPreparationStatus.text}</Badge>
+                          </TableCell>
+                          <TableCell className="text-center text-xs align-middle py-2 font-medium">
+                            <Badge variant={productionStatus.variant as any}>{productionStatus.text}</Badge>
                           </TableCell>
                           <TableCell className="text-center text-xs align-middle py-2 font-medium">
                               {lead.operationalCase ? (
@@ -349,7 +370,7 @@ export function OrderStatusTable() {
                       </TableRow>
                       <CollapsibleContent asChild>
                         <TableRow className="bg-gray-50">
-                          <TableCell colSpan={7}>
+                          <TableCell colSpan={8}>
                             <div className="p-2">
                               <Table>
                                 <TableHeader>

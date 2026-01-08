@@ -27,6 +27,7 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collap
 import { ChevronDown } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 type Order = {
   productType: string;
@@ -34,6 +35,8 @@ type Order = {
   size: string;
   quantity: number;
 }
+
+type ProductionType = "Pending" | "In-house" | "Outsource";
 
 type Lead = {
   id: string;
@@ -50,9 +53,12 @@ type Lead = {
   isSewing?: boolean;
   isTrimming?: boolean;
   isDone?: boolean;
+  productionType?: ProductionType;
+  sewerType?: ProductionType;
 }
 
-type ProductionCheckboxField = keyof Pick<Lead, 'isCutting' | 'isSewing' | 'isTrimming' | 'isDone'>;
+type ProductionCheckboxField = keyof Pick<Lead, 'isTrimming' | 'isDone'>;
+type ProductionSelectField = 'productionType' | 'sewerType';
 
 export function ProductionQueueTable() {
   const firestore = useFirestore();
@@ -76,7 +82,7 @@ export function ProductionQueueTable() {
     return mobile || landline || null;
   }, []);
 
-  const handleStatusChange = useCallback(async (leadId: string, field: ProductionCheckboxField, value: boolean) => {
+  const handleStatusChange = useCallback(async (leadId: string, field: ProductionCheckboxField | ProductionSelectField, value: boolean | string) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
@@ -208,10 +214,28 @@ export function ProductionQueueTable() {
                         </ul>
                       </TableCell>
                       <TableCell className="text-center align-middle">
-                        <Checkbox checked={lead.isCutting} onCheckedChange={(checked) => handleStatusChange(lead.id, 'isCutting', !!checked)} />
+                        <Select value={lead.productionType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}>
+                          <SelectTrigger className="w-[120px] text-xs h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="In-house">In-house</SelectItem>
+                            <SelectItem value="Outsource">Outsource</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="text-center align-middle">
-                        <Checkbox checked={lead.isSewing} onCheckedChange={(checked) => handleStatusChange(lead.id, 'isSewing', !!checked)} />
+                        <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}>
+                          <SelectTrigger className="w-[120px] text-xs h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="In-house">In-house</SelectItem>
+                            <SelectItem value="Outsource">Outsource</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="text-center align-middle">
                         <Checkbox checked={lead.isTrimming} onCheckedChange={(checked) => handleStatusChange(lead.id, 'isTrimming', !!checked)} />
@@ -228,5 +252,3 @@ export function ProductionQueueTable() {
     </Card>
   );
 }
-
-    
