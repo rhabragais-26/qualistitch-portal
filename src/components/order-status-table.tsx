@@ -30,6 +30,7 @@ import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 type Order = {
   productType: string;
@@ -66,6 +67,11 @@ type Lead = {
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippedTimestamp?: string;
 }
+
+type EnrichedLead = Lead & {
+  orderNumber: number;
+  totalCustomerQuantity: number;
+};
 
 type OperationalCase = {
   id: string;
@@ -183,12 +189,43 @@ export function OrderStatusTable() {
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   }, []);
 
-  const filteredLeads = useMemo(() => {
+  const processedLeads = useMemo(() => {
     if (!leads) return [];
+  
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
+  
+    leads.forEach(lead => {
+      const name = lead.customerName.toLowerCase();
+      if (!customerOrderStats[name]) {
+        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+      }
+      customerOrderStats[name].orders.push(lead);
+      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+      customerOrderStats[name].totalQuantity += orderQuantity;
+    });
+  
+    const enrichedLeads: EnrichedLead[] = [];
+  
+    Object.values(customerOrderStats).forEach(({ orders, totalQuantity }) => {
+      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+      orders.forEach((lead, index) => {
+        enrichedLeads.push({
+          ...lead,
+          orderNumber: index + 1,
+          totalCustomerQuantity: totalQuantity,
+        });
+      });
+    });
+  
+    return enrichedLeads;
+  }, [leads]);
+
+  const filteredLeads = useMemo(() => {
+    if (!processedLeads) return [];
     
     const lowercasedSearchTerm = searchTerm.toLowerCase();
 
-    const filtered = leads.filter(lead => {
+    const filtered = processedLeads.filter(lead => {
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
         (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
@@ -216,7 +253,7 @@ export function OrderStatusTable() {
         return aDeadline.remainingDays - bDeadline.remainingDays;
     });
 
-  }, [leads, searchTerm, joNumberSearch, overallStatusFilter, overdueStatusFilter, formatJoNumber, getOverallStatus, calculateDeadline]);
+  }, [processedLeads, searchTerm, joNumberSearch, overallStatusFilter, overdueStatusFilter, formatJoNumber, getOverallStatus, calculateDeadline]);
   
   const leadsWithCases = useMemo(() => {
     if (!filteredLeads || !operationalCases) return [];
@@ -343,21 +380,41 @@ export function OrderStatusTable() {
                   const overallStatus = getOverallStatus(lead);
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
                   const isCollapsibleOpen = openLeadId === lead.id;
+                  const isRepeat = lead.orderNumber > 1;
                   
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow>
                             <TableCell className="font-medium align-top py-2 text-black w-[250px] text-sm">
-                              <div className="flex items-center cursor-pointer" onClick={() => toggleCustomerDetails(lead.id)}>
-                                  <span>{lead.customerName}</span>
-                                  <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" data-state={openCustomerDetails === lead.id ? 'open' : 'closed'} />
-                              </div>
-                              {openCustomerDetails === lead.id && (
+                                <div className="flex items-center cursor-pointer" onClick={() => toggleCustomerDetails(lead.id)}>
+                                    <span>{lead.customerName}</span>
+                                    <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" data-state={openCustomerDetails === lead.id ? 'open' : 'closed'} />
+                                </div>
+                                {isRepeat ? (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="flex items-center gap-1.5 cursor-pointer mt-1">
+                                            <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                            <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                              {lead.orderNumber}
+                                            </span>
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  ) : (
+                                    <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                                )}
+                                {openCustomerDetails === lead.id && (
                                   <div className="pt-2 text-gray-500 space-y-1 text-xs font-normal">
                                       {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
                                       {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
                                   </div>
-                              )}
+                                )}
                             </TableCell>
                             <TableCell className="text-center text-xs align-top py-2 font-medium">
                                 <div>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
@@ -27,6 +28,7 @@ import { ChevronDown } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
 type Order = {
   productType: string;
@@ -55,6 +57,11 @@ type Lead = {
   productionType?: ProductionType;
   sewerType?: ProductionType;
 }
+
+type EnrichedLead = Lead & {
+  orderNumber: number;
+  totalCustomerQuantity: number;
+};
 
 type ProductionCheckboxField = keyof Pick<Lead, 'isTrimming' | 'isDone'>;
 type ProductionSelectField = 'productionType' | 'sewerType';
@@ -99,11 +106,42 @@ export function ProductionQueueTable() {
       });
     }
   }, [firestore, toast]);
+  
+  const processedLeads = useMemo(() => {
+    if (!leads) return [];
+  
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
+  
+    leads.forEach(lead => {
+      const name = lead.customerName.toLowerCase();
+      if (!customerOrderStats[name]) {
+        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+      }
+      customerOrderStats[name].orders.push(lead);
+      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+      customerOrderStats[name].totalQuantity += orderQuantity;
+    });
+  
+    const enrichedLeads: EnrichedLead[] = [];
+  
+    Object.values(customerOrderStats).forEach(({ orders, totalQuantity }) => {
+      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+      orders.forEach((lead, index) => {
+        enrichedLeads.push({
+          ...lead,
+          orderNumber: index + 1,
+          totalCustomerQuantity: totalQuantity,
+        });
+      });
+    });
+  
+    return enrichedLeads;
+  }, [leads]);
 
   const productionQueue = useMemo(() => {
-    if (!leads) return [];
+    if (!processedLeads) return [];
     
-    const sentToProd = leads.filter(lead => lead.isSentToProduction);
+    const sentToProd = processedLeads.filter(lead => lead.isSentToProduction);
     
     return sentToProd.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -117,7 +155,7 @@ export function ProductionQueueTable() {
       
       return matchesSearch && matchesJo;
     });
-  }, [leads, searchTerm, joNumberSearch, formatJoNumber]);
+  }, [processedLeads, searchTerm, joNumberSearch, formatJoNumber]);
 
   if (isLoading) {
     return (
@@ -180,70 +218,91 @@ export function ProductionQueueTable() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {productionQueue?.map((lead) => (
-                  <TableRow key={lead.id}>
-                      <TableCell className="font-medium text-xs align-top py-3 text-black">
-                        <Collapsible>
-                          <CollapsibleTrigger asChild>
-                              <div className="flex items-center cursor-pointer">
-                                  <span>{lead.customerName}</span>
-                                  <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
-                              </div>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
-                              {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
-                              {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
-                          </CollapsibleContent>
-                        </Collapsible>
-                      </TableCell>
-                      <TableCell className="text-xs align-top py-3 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
-                      <TableCell className="align-top py-3">
-                        <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                          {lead.priorityType}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs align-top py-3 text-black">{formatDateTime(lead.submissionDateTime).dateTime}</TableCell>
-                      <TableCell className="text-xs align-top py-3 text-black">
-                        <ul className="space-y-1">
-                          {lead.orders.map((order, index) => (
-                            <li key={index}>
-                              {order.quantity}x {order.productType} ({order.color}, {order.size})
-                            </li>
-                          ))}
-                        </ul>
-                      </TableCell>
-                      <TableCell className="text-center align-middle">
-                        <Select value={lead.productionType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}>
-                          <SelectTrigger className="w-[120px] text-xs h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Pending">Pending</SelectItem>
-                            <SelectItem value="In-house">In-house</SelectItem>
-                            <SelectItem value="Outsource">Outsource</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-center align-middle">
-                        <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}>
-                          <SelectTrigger className="w-[120px] text-xs h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Pending">Pending</SelectItem>
-                            <SelectItem value="In-house">In-house</SelectItem>
-                            <SelectItem value="Outsource">Outsource</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-center align-middle">
-                        <Checkbox checked={lead.isTrimming} onCheckedChange={(checked) => handleStatusChange(lead.id, 'isTrimming', !!checked)} />
-                      </TableCell>
-                       <TableCell className="text-center align-middle">
-                        <Checkbox checked={lead.isDone} onCheckedChange={(checked) => handleStatusChange(lead.id, 'isDone', !!checked)} />
-                      </TableCell>
-                  </TableRow>
-                ))}
+                {productionQueue?.map((lead) => {
+                  const isRepeat = lead.orderNumber > 1;
+                  return (
+                    <TableRow key={lead.id}>
+                        <TableCell className="font-medium text-xs align-top py-3 text-black">
+                          <Collapsible>
+                            <CollapsibleTrigger asChild>
+                                <div className="flex items-center cursor-pointer">
+                                    <span>{lead.customerName}</span>
+                                    <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                </div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
+                                {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
+                                {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
+                            </CollapsibleContent>
+                          </Collapsible>
+                           {isRepeat ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1.5 cursor-pointer mt-1">
+                                      <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                      <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                        {lead.orderNumber}
+                                      </span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                            )}
+                        </TableCell>
+                        <TableCell className="text-xs align-top py-3 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
+                        <TableCell className="align-top py-3">
+                          <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                            {lead.priorityType}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs align-top py-3 text-black">{formatDateTime(lead.submissionDateTime).dateTime}</TableCell>
+                        <TableCell className="text-xs align-top py-3 text-black">
+                          <ul className="space-y-1">
+                            {lead.orders.map((order, index) => (
+                              <li key={index}>
+                                {order.quantity}x {order.productType} ({order.color}, {order.size})
+                              </li>
+                            ))}
+                          </ul>
+                        </TableCell>
+                        <TableCell className="text-center align-middle">
+                          <Select value={lead.productionType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}>
+                            <SelectTrigger className="w-[120px] text-xs h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Pending">Pending</SelectItem>
+                              <SelectItem value="In-house">In-house</SelectItem>
+                              <SelectItem value="Outsource">Outsource</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-center align-middle">
+                          <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}>
+                            <SelectTrigger className="w-[120px] text-xs h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Pending">Pending</SelectItem>
+                              <SelectItem value="In-house">In-house</SelectItem>
+                              <SelectItem value="Outsource">Outsource</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-center align-middle">
+                          <Checkbox checked={lead.isTrimming} onCheckedChange={(checked) => handleStatusChange(lead.id, 'isTrimming', !!checked)} />
+                        </TableCell>
+                         <TableCell className="text-center align-middle">
+                          <Checkbox checked={lead.isDone} onCheckedChange={(checked) => handleStatusChange(lead.id, 'isDone', !!checked)} />
+                        </TableCell>
+                    </TableRow>
+                )})}
                 </TableBody>
             </Table>
           </div>

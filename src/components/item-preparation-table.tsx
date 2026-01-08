@@ -1,3 +1,4 @@
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -30,6 +31,7 @@ import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
 type Order = {
   productType: string;
@@ -46,6 +48,7 @@ type Lead = {
   landlineNumber?: string;
   orders: Order[];
   joNumber?: number;
+  submissionDateTime: string;
   isUnderProgramming?: boolean;
   isInitialApproval?: boolean;
   isLogoTesting?: boolean;
@@ -56,6 +59,11 @@ type Lead = {
   isSentToProduction?: boolean;
   sentToProductionTimestamp?: string;
 }
+
+type EnrichedLead = Lead & {
+  orderNumber: number;
+  totalCustomerQuantity: number;
+};
 
 const programmingStatusOptions = [
     'All',
@@ -161,11 +169,42 @@ export function ItemPreparationTable() {
     setLeadToSend(null);
   }, [leadToSend, handleUpdateStatus]);
 
+  const processedLeads = useMemo(() => {
+    if (!leads) return [];
+  
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
+  
+    leads.forEach(lead => {
+      const name = lead.customerName.toLowerCase();
+      if (!customerOrderStats[name]) {
+        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+      }
+      customerOrderStats[name].orders.push(lead);
+      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+      customerOrderStats[name].totalQuantity += orderQuantity;
+    });
+  
+    const enrichedLeads: EnrichedLead[] = [];
+  
+    Object.values(customerOrderStats).forEach(({ orders, totalQuantity }) => {
+      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+      orders.forEach((lead, index) => {
+        enrichedLeads.push({
+          ...lead,
+          orderNumber: index + 1,
+          totalCustomerQuantity: totalQuantity,
+        });
+      });
+    });
+  
+    return enrichedLeads;
+  }, [leads]);
+
 
   const jobOrders = React.useMemo(() => {
-    if (!leads) return [];
+    if (!processedLeads) return [];
     
-    const leadsWithJo = leads.filter(lead => lead.joNumber);
+    const leadsWithJo = processedLeads.filter(lead => lead.joNumber);
     
     return leadsWithJo.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -187,7 +226,7 @@ export function ItemPreparationTable() {
       
       return matchesSearch && matchesJo && matchesStatus;
     });
-  }, [leads, searchTerm, joNumberSearch, statusFilter, formatJoNumber, getProgrammingStatus]);
+  }, [processedLeads, searchTerm, joNumberSearch, statusFilter, formatJoNumber, getProgrammingStatus]);
 
   if (isLoading) {
     return (
@@ -313,78 +352,99 @@ export function ItemPreparationTable() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {jobOrders?.map((lead) => (
-                  <React.Fragment key={lead.id}>
-                    {lead.orders.map((order, orderIndex) => (
-                         <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex !== lead.orders.length - 1 ? "" : "border-b-2 border-black"}>
-                            {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black">
-                                    <Collapsible>
-                                        <CollapsibleTrigger asChild>
-                                            <div className="flex items-center cursor-pointer">
-                                                <span>{lead.customerName}</span>
-                                                <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                            </div>
-                                        </CollapsibleTrigger>
-                                        <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
-                                            {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
-                                            {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
-                                        </CollapsibleContent>
-                                    </Collapsible>
-                                </TableCell>
-                            )}
-                            {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="text-xs align-top py-3 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
-                            )}
-                             {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="align-top py-3">
-                                <Badge variant={getProgrammingStatus(lead).variant as any}>{getProgrammingStatus(lead).text}</Badge>
-                                </TableCell>
-                            )}
-                           <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
-                            <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
-                            <TableCell className="py-1 px-2 text-xs text-black text-center">{order.size}</TableCell>
-                            <TableCell className="py-1 px-2 text-xs text-black text-center">{order.quantity}</TableCell>
-                            {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
-                                {lead.isPreparedForProduction ? (
-                                        <div className="flex items-center justify-center text-green-600 font-semibold">
-                                            <Check className="mr-2 h-4 w-4" /> Prepared
-                                        </div>
-                                    ) : (
-                                        <Button
-                                            size="sm"
-                                            onClick={() => handleOpenPreparedDialog(lead)}
-                                            className="h-7 px-2"
-                                        >
-                                            Prepared
-                                        </Button>
-                                    )}
-                                </TableCell>
-                            )}
-                             {orderIndex === 0 && (
-                                <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
-                                    {lead.isSentToProduction ? (
-                                        <div className="text-xs text-gray-500">
-                                            <div>{formatDateTime(lead.sentToProductionTimestamp!).dateTime}</div>
-                                            <div>{formatDateTime(lead.sentToProductionTimestamp!).dayOfWeek}</div>
-                                        </div>
-                                    ) : (
-                                        <Button
-                                            size="sm"
-                                            onClick={() => setLeadToSend(lead)}
-                                            disabled={!lead.isFinalProgram}
-                                            className={cn("h-7 px-2", !lead.isFinalProgram && "bg-gray-400")}
-                                        >
-                                            <Send className="mr-2 h-4 w-4" /> Send to Prod
-                                        </Button>
-                                    )}
-                                </TableCell>
-                            )}
-                         </TableRow>
-                    ))}
-                  </React.Fragment>
-                ))}
+                {jobOrders?.map((lead) => {
+                  const isRepeat = lead.orderNumber > 1;
+                  return (
+                    <React.Fragment key={lead.id}>
+                      {lead.orders.map((order, orderIndex) => (
+                          <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex !== lead.orders.length - 1 ? "" : "border-b-2 border-black"}>
+                              {orderIndex === 0 && (
+                                  <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black">
+                                      <Collapsible>
+                                          <CollapsibleTrigger asChild>
+                                              <div className="flex items-center cursor-pointer">
+                                                  <span>{lead.customerName}</span>
+                                                  <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                              </div>
+                                          </CollapsibleTrigger>
+                                          <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
+                                              {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
+                                              {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
+                                          </CollapsibleContent>
+                                      </Collapsible>
+                                       {isRepeat ? (
+                                          <TooltipProvider>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <div className="flex items-center gap-1.5 cursor-pointer mt-1">
+                                                  <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                                  <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                                    {lead.orderNumber}
+                                                  </span>
+                                                </div>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
+                                        ) : (
+                                          <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                                        )}
+                                  </TableCell>
+                              )}
+                              {orderIndex === 0 && (
+                                  <TableCell rowSpan={lead.orders.length} className="text-xs align-top py-3 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
+                              )}
+                              {orderIndex === 0 && (
+                                  <TableCell rowSpan={lead.orders.length} className="align-top py-3">
+                                  <Badge variant={getProgrammingStatus(lead).variant as any}>{getProgrammingStatus(lead).text}</Badge>
+                                  </TableCell>
+                              )}
+                            <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
+                              <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
+                              <TableCell className="py-1 px-2 text-xs text-black text-center">{order.size}</TableCell>
+                              <TableCell className="py-1 px-2 text-xs text-black text-center">{order.quantity}</TableCell>
+                              {orderIndex === 0 && (
+                                  <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
+                                  {lead.isPreparedForProduction ? (
+                                          <div className="flex items-center justify-center text-green-600 font-semibold">
+                                              <Check className="mr-2 h-4 w-4" /> Prepared
+                                          </div>
+                                      ) : (
+                                          <Button
+                                              size="sm"
+                                              onClick={() => handleOpenPreparedDialog(lead)}
+                                              className="h-7 px-2"
+                                          >
+                                              Prepared
+                                          </Button>
+                                      )}
+                                  </TableCell>
+                              )}
+                              {orderIndex === 0 && (
+                                  <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
+                                      {lead.isSentToProduction ? (
+                                          <div className="text-xs text-gray-500">
+                                              <div>{formatDateTime(lead.sentToProductionTimestamp!).dateTime}</div>
+                                              <div>{formatDateTime(lead.sentToProductionTimestamp!).dayOfWeek}</div>
+                                          </div>
+                                      ) : (
+                                          <Button
+                                              size="sm"
+                                              onClick={() => setLeadToSend(lead)}
+                                              disabled={!lead.isFinalProgram}
+                                              className={cn("h-7 px-2", !lead.isFinalProgram && "bg-gray-400")}
+                                          >
+                                              <Send className="mr-2 h-4 w-4" /> Send to Prod
+                                          </Button>
+                                      )}
+                                  </TableCell>
+                              )}
+                          </TableRow>
+                      ))}
+                    </React.Fragment>
+                )})}
                 </TableBody>
             </Table>
           </div>
