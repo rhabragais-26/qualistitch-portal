@@ -63,6 +63,7 @@ type Lead = {
   isSentToProduction?: boolean;
   productionType?: ProductionType;
   sewerType?: ProductionType;
+  isTrimming?: boolean;
   isDone?: boolean;
   operationalCase?: OperationalCase;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
@@ -136,14 +137,14 @@ export function OrderStatusTable() {
   }, []);
 
   const getProgrammingStatus = useCallback((lead: Lead) => {
-    if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const, progress: 100 };
-    if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const, progress: 90 };
-    if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const, progress: 60 };
-    if (lead.isLogoTesting) return { text: "Done Testing", variant: "warning" as const, progress: 50 };
-    if (lead.isInitialApproval) return { text: "Initial Program Approved", variant: "default" as const, progress: 40 };
-    if (lead.isUnderProgramming) return { text: "Done Initial Program", variant: "default" as const, progress: 30 };
-    if (lead.joNumber) return { text: "Pending Initial Program", variant: "secondary" as const, progress: 20 };
-    return { text: "Pending J.O.", variant: "secondary" as const, progress: 10 };
+    if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const, progress: 60 };
+    if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const, progress: 50 };
+    if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const, progress: 40 };
+    if (lead.isLogoTesting) return { text: "Done Testing", variant: "warning" as const, progress: 40 };
+    if (lead.isInitialApproval) return { text: "Initial Program Approved", variant: "default" as const, progress: 30 };
+    if (lead.isUnderProgramming) return { text: "Done Initial Program", variant: "default" as const, progress: 20 };
+    if (lead.joNumber) return { text: "Pending Initial Program", variant: "secondary" as const, progress: 10 };
+    return { text: "Pending J.O.", variant: "secondary" as const, progress: 5 };
   }, []);
 
   const getItemPreparationStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "secondary" } => {
@@ -164,7 +165,7 @@ export function OrderStatusTable() {
   }, []);
 
   const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
-    if (lead.isDone) {
+    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
         return { text: 'COMPLETED', variant: 'success' };
     }
     if (!lead.joNumber) {
@@ -174,10 +175,15 @@ export function OrderStatusTable() {
   }, []);
   
    const getProgressValue = useCallback((lead: Lead): number => {
-    if (lead.isDone) return 100;
-    if (lead.sewerType !== "Pending" || lead.productionType !== "Pending") return 85;
+    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') return 100;
+    if (lead.shipmentStatus === 'Packed') return 95;
+    if (lead.isDone) return 90;
+    if (lead.isTrimming) return 85;
+    if (lead.sewerType && lead.sewerType !== 'Pending') return 80;
+    if (lead.productionType && lead.productionType !== 'Pending') return 75;
     if (lead.isSentToProduction) return 70;
-    if (lead.isPreparedForProduction) return 60;
+    if (lead.isPreparedForProduction) return 65;
+    
     const programmingStatus = getProgrammingStatus(lead);
     return programmingStatus.progress;
   }, [getProgrammingStatus]);
@@ -251,7 +257,7 @@ export function OrderStatusTable() {
       const deadlineInfo = calculateDeadline(lead);
       const matchesOverdueStatus = overdueStatusFilter === 'All' ||
         (overdueStatusFilter === 'Overdue' && deadlineInfo.isOverdue) ||
-        (overdueStatusFilter === 'Nearly Overdue' && !deadlineInfo.isUrgent && deadlineInfo.isUrgent);
+        (overdueStatusFilter === 'Nearly Overdue' && !deadlineInfo.isOverdue && deadlineInfo.isUrgent);
 
       return matchesSearch && matchesJo && matchesOverallStatus && matchesOverdueStatus;
     });
@@ -424,7 +430,10 @@ export function OrderStatusTable() {
                             </TableCell>
                             <TableCell className="align-top py-3">
                                 <div className="flex flex-col gap-2">
-                                    <Progress value={progress} className="h-2" />
+                                  <div className="flex items-center gap-2">
+                                    <Progress value={progress} className="h-2 flex-1" />
+                                    <span className="text-xs font-medium text-gray-600">{progress}%</span>
+                                  </div>
                                     <div className="grid grid-cols-4 gap-2 text-xs">
                                         <div className="flex flex-col items-center gap-1">
                                             <p className="font-semibold text-gray-500">Programming</p>
