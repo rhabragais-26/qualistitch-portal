@@ -354,6 +354,7 @@ export function ItemPreparationTable() {
                 <TableBody>
                 {jobOrders?.map((lead) => {
                   const isRepeat = lead.orderNumber > 1;
+                  const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
                   return (
                     <React.Fragment key={lead.id}>
                       {lead.orders.map((order, orderIndex) => (
@@ -394,7 +395,10 @@ export function ItemPreparationTable() {
                                   </TableCell>
                               )}
                               {orderIndex === 0 && (
-                                  <TableCell rowSpan={lead.orders.length} className="text-xs align-top py-3 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
+                                  <TableCell rowSpan={lead.orders.length} className="text-xs align-top py-3 text-black">
+                                    <div>{formatJoNumber(lead.joNumber)}</div>
+                                    <div className="font-bold text-gray-600 mt-1">Total Qty: {totalQuantity}</div>
+                                  </TableCell>
                               )}
                               {orderIndex === 0 && (
                                   <TableCell rowSpan={lead.orders.length} className="align-top py-3">
