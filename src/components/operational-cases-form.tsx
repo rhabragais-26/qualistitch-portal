@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -577,6 +576,7 @@ type QuantityDialogProps = {
 
 function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: QuantityDialogProps) {
     const [items, setItems] = useState<CaseItem[]>(initialItems);
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
     const availableOptions = useMemo(() => {
         const productTypes = [...new Set(leadOrders.map(o => o.productType))];
@@ -600,6 +600,10 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
     const handleSave = () => {
         const validItems = items.filter(item => item.productType && item.color && item.size && item.quantity > 0);
         onSave(validItems);
+    };
+
+    const handleOpenChange = (id: string, open: boolean) => {
+        setOpenDropdown(open ? id : null);
     };
 
     return (
@@ -626,19 +630,34 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                             {items.map(item => (
                                 <TableRow key={item.id}>
                                     <TableCell>
-                                        <Select value={item.productType} onValueChange={(v) => updateItem(item.id, 'productType', v)}>
+                                        <Select 
+                                            value={item.productType} 
+                                            onValueChange={(v) => updateItem(item.id, 'productType', v)}
+                                            open={openDropdown === `${item.id}-productType`}
+                                            onOpenChange={(open) => handleOpenChange(`${item.id}-productType`, open)}
+                                        >
                                             <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>{availableOptions.productTypes.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
                                     <TableCell>
-                                        <Select value={item.color} onValueChange={(v) => updateItem(item.id, 'color', v)}>
+                                        <Select 
+                                            value={item.color} 
+                                            onValueChange={(v) => updateItem(item.id, 'color', v)}
+                                            open={openDropdown === `${item.id}-color`}
+                                            onOpenChange={(open) => handleOpenChange(`${item.id}-color`, open)}
+                                        >
                                             <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>{availableOptions.colors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
                                     <TableCell>
-                                        <Select value={item.size} onValueChange={(v) => updateItem(item.id, 'size', v)}>
+                                        <Select 
+                                            value={item.size} 
+                                            onValueChange={(v) => updateItem(item.id, 'size', v)}
+                                            open={openDropdown === `${item.id}-size`}
+                                            onOpenChange={(open) => handleOpenChange(`${item.id}-size`, open)}
+                                        >
                                             <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>{availableOptions.sizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                                         </Select>
