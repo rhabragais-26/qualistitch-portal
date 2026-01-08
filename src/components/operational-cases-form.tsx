@@ -150,7 +150,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
 
   useEffect(() => {
     const totalQuantity = caseItems.reduce((sum, item) => sum + item.quantity, 0);
-    setValue('quantity', totalQuantity, { shouldValidate: true });
+    setValue('quantity', totalQuantity);
   }, [caseItems, setValue]);
 
 
