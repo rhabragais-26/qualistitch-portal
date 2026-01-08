@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -117,11 +118,11 @@ export function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b bg-muted/40 no-print">
+      <header className="sticky top-0 z-40 w-full border-b bg-black no-print">
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex items-center">
             <Link href="/" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/'); }}>
-              <span className={cn("font-bold font-headline flex items-baseline shining-metal from-neutral-800 via-neutral-600 to-neutral-800 shining-text")}>
+              <span className={cn("font-bold font-headline flex items-baseline shining-metal from-amber-200 via-yellow-400 to-amber-200 shining-text")}>
                 <span className="text-3xl">Q</span>
                 <span className="text-2xl">UALISTITCH Inc.</span>
               </span>
@@ -257,7 +258,7 @@ export function Header({
            <div className="flex items-center gap-4 ml-auto">
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2 text-black hover:bg-accent/90 hover:text-white">
+                  <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-accent/90 hover:text-white">
                     <Avatar className="h-8 w-8">
                         <AvatarFallback className="bg-primary text-primary-foreground">R</AvatarFallback>
                     </Avatar>
