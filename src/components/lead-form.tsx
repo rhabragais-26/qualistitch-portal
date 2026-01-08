@@ -609,24 +609,20 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       <FormItem className="relative">
                         <div className="flex items-center gap-2">
                           <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
-                        </div>
-                        <div className="relative">
-                          <FormControl>
-                            <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} className="pr-10" />
-                          </FormControl>
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                             {customerStatus === 'Repeat' && (
-                                <div className="h-5 w-5 rounded-full bg-neutral-800 flex items-center justify-center" title="Repeat Buyer">
-                                    <span className="shining-metal font-bold text-xs">R</span>
-                                </div>
+                                <span className="bg-neutral-800 rounded-md px-2 py-1 text-xs">
+                                    <span className="shining-metal font-bold">(Repeat Buyer)</span>
+                                </span>
                             )}
                             {customerStatus === 'New' && (
-                                <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center" title="New Customer">
-                                    <span className="font-bold text-xs text-white">N</span>
-                                </div>
+                                <span className="border border-blue-500 rounded-md px-2 py-1 text-xs text-black font-bold">
+                                    (New Customer)
+                                </span>
                             )}
-                          </div>
                         </div>
+                        <FormControl>
+                          <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} />
+                        </FormControl>
                         {customerSuggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                             <CardContent className="p-2 max-h-40 overflow-y-auto">
