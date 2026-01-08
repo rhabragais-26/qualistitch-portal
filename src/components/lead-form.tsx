@@ -271,17 +271,11 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const provinceValue = watch('province');
 
   useEffect(() => {
-    if (selectedLead && customerNameValue !== toTitleCase(selectedLead.customerName)) {
+    if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
       setSelectedLead(null);
-      setValue('companyName', '');
-      setValue('mobileNo', '');
-      setValue('landlineNo', '');
-      setValue('houseStreet', '');
-      setValue('barangay', '');
-      setValue('city', '');
-      setValue('province', '');
+      // Do not clear the other fields here, let the user decide.
     }
-  }, [customerNameValue, selectedLead, setValue]);
+  }, [customerNameValue, selectedLead]);
 
   useEffect(() => {
     if (!customerNameValue) {
@@ -613,14 +607,26 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                  <div className="grid grid-cols-2 gap-x-2">
                     <FormField control={form.control} name="customerName" render={({field}) => (
                       <FormItem className="relative">
-                         <div className="flex items-center gap-2">
-                            <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
-                            {customerStatus === 'Repeat' && <span className="font-bold text-xs px-2 py-1 bg-neutral-800 rounded-full"><span className="shining-metal">(Repeat Buyer)</span></span>}
-                            {customerStatus === 'New' && <span className="font-bold text-xs px-2 py-1 border border-blue-500 text-black rounded-full">(New Customer)</span>}
+                        <div className="flex items-center gap-2">
+                          <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
                         </div>
-                        <FormControl>
-                          <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} />
-                        </FormControl>
+                        <div className="relative">
+                          <FormControl>
+                            <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} className="pr-10" />
+                          </FormControl>
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                            {customerStatus === 'Repeat' && (
+                                <div className="h-5 w-5 rounded-full bg-neutral-800 flex items-center justify-center" title="Repeat Buyer">
+                                    <span className="shining-metal font-bold text-xs">R</span>
+                                </div>
+                            )}
+                            {customerStatus === 'New' && (
+                                <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center" title="New Customer">
+                                    <span className="font-bold text-xs text-white">N</span>
+                                </div>
+                            )}
+                          </div>
+                        </div>
                         {customerSuggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                             <CardContent className="p-2 max-h-40 overflow-y-auto">
