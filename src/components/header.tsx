@@ -95,7 +95,10 @@ export function Header({
 
   const confirmNavigation = () => {
     setShowConfirmDialog(false);
-    router.push(nextUrl);
+    // Use a short timeout to ensure the dialog closes before navigation starts.
+    setTimeout(() => {
+      router.push(nextUrl);
+    }, 100);
   };
 
   const cancelNavigation = () => {
