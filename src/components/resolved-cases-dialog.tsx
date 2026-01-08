@@ -12,7 +12,15 @@ import Image from 'next/image';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
+
+type CaseItem = {
+    productType: string;
+    color: string;
+    size: string;
+    quantity: number;
+}
 
 type OperationalCase = {
   id: string;
@@ -24,6 +32,7 @@ type OperationalCase = {
   customerName: string;
   contactNumber?: string;
   landlineNumber?: string;
+  caseItems: CaseItem[];
   quantity?: number;
   isArchived?: boolean;
   isDeleted?: boolean;
@@ -62,34 +71,53 @@ export function ResolvedCasesDialog({ isOpen, onClose, archivedCases, deletedCas
      <ScrollArea className="h-full pr-6">
       <div className="space-y-4">
         {cases.length > 0 ? (
-          cases.map((caseItem) => (
-            <Card key={caseItem.id} className="bg-gray-50">
-              <CardContent className="p-4 grid grid-cols-12 gap-4 items-center">
-                <div className="col-span-3">
-                  <p className="text-xs text-gray-500">{listType === 'resolved' ? 'Date Resolved' : 'Date Deleted'}</p>
-                  <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
-                  <p className="text-sm font-semibold mt-2">{caseItem.joNumber}</p>
-                  <p className="text-xs text-gray-600">{caseItem.customerName}</p>
-                </div>
-                <div className="col-span-5 self-start pt-2">
-                    <p className="text-xs text-gray-500">Case & Remarks</p>
-                    <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
-                    {caseItem.quantity && <p className="text-sm font-semibold">Quantity: {caseItem.quantity}</p>}
-                    <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks}</p>
-                </div>
-                <div className="col-span-2 flex justify-center">
-                  {caseItem.image && (
-                    <div className="relative h-24 w-24 rounded-md border overflow-hidden">
-                      <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
-                    </div>
-                  )}
-                </div>
-                <div className="col-span-2 flex justify-center">
-                  <Button variant="outline" onClick={() => setCaseToReopen(caseItem)}>Reopen Case</Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+          cases.map((caseItem) => {
+            const totalQuantity = caseItem.caseItems?.reduce((sum, item) => sum + item.quantity, 0) || caseItem.quantity || 0;
+            return (
+              <Card key={caseItem.id} className="bg-gray-50">
+                <CardContent className="p-4 grid grid-cols-12 gap-4 items-center">
+                  <div className="col-span-3">
+                    <p className="text-xs text-gray-500">{listType === 'resolved' ? 'Date Resolved' : 'Date Deleted'}</p>
+                    <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
+                    <p className="text-sm font-semibold mt-2">{caseItem.joNumber}</p>
+                    <p className="text-xs text-gray-600">{caseItem.customerName}</p>
+                  </div>
+                  <div className="col-span-5 self-start pt-2">
+                      <p className="text-xs text-gray-500">Case & Remarks</p>
+                      <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
+                      <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <p className="text-sm font-semibold cursor-pointer">Total Quantity: {totalQuantity}</p>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <div className="p-2 text-xs">
+                                    <h4 className="font-bold mb-2">Item Breakdown</h4>
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        {caseItem.caseItems?.map(item => (
+                                            <li key={item.id}>{item.quantity}x {item.productType} ({item.color}, {item.size})</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <p className="text-sm mt-1 whitespace-pre-wrap">{caseItem.remarks}</p>
+                  </div>
+                  <div className="col-span-2 flex justify-center">
+                    {caseItem.image && (
+                      <div className="relative h-24 w-24 rounded-md border overflow-hidden">
+                        <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="col-span-2 flex justify-center">
+                    <Button variant="outline" onClick={() => setCaseToReopen(caseItem)}>Reopen Case</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })
         ) : (
           <div className="flex items-center justify-center h-48">
             <p className="text-muted-foreground">No {listType} cases found.</p>
@@ -175,3 +203,5 @@ export function ResolvedCasesDialog({ isOpen, onClose, archivedCases, deletedCas
     </>
   );
 }
+
+    

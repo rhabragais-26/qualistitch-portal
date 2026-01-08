@@ -15,6 +15,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Trash2, ArchiveRestore, Edit, Check, X } from 'lucide-react';
 import { ResolvedCasesDialog } from './resolved-cases-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+
+type CaseItem = {
+    productType: string;
+    color: string;
+    size: string;
+    quantity: number;
+}
 
 type OperationalCase = {
   id: string;
@@ -26,6 +34,7 @@ type OperationalCase = {
   customerName: string;
   contactNumber?: string;
   landlineNumber?: string;
+  caseItems: CaseItem[];
   quantity?: number;
   isArchived?: boolean;
   isDeleted?: boolean;
@@ -107,7 +116,7 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
       
       let newRemarks = caseItem.remarks;
       if (reopeningRemarks.trim()) {
-        newRemarks = `${caseItem.remarks}\n(${reopeningRemarks})`;
+        newRemarks = `${caseItem.remarks}\n\nReopening Remarks:\n(${reopeningRemarks})`;
       }
       
       await updateDoc(caseDocRef, { 
@@ -161,83 +170,102 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
               <p className="text-destructive">Error loading cases: {error.message}</p>
             ) : activeCases && activeCases.length > 0 ? (
               <div className="space-y-4">
-                {activeCases.map((caseItem) => (
-                  <Card key={caseItem.id} className="bg-gray-50">
-                    <CardContent className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4">
-                      <div className="md:col-span-3">
-                        <p className="text-xs text-gray-500">Date Recorded</p>
-                        <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
-                        <p className="text-sm font-semibold mt-2">{caseItem.joNumber}</p>
-                        <p className="text-xs text-gray-600">{caseItem.customerName}</p>
-                        <p className="text-xs text-gray-500">{getContactDisplay(caseItem)}</p>
-                      </div>
-                      <div className="md:col-span-5 self-start pt-2">
-                        <p className="text-xs text-gray-500">Case & Remarks/Reason</p>
-                        <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
-                        {caseItem.quantity && <p className="text-sm font-semibold">Quantity: {caseItem.quantity}</p>}
-                        <p className="text-sm mt-1 whitespace-pre-wrap">
-                          {caseItem.remarks && caseItem.remarks.split('\n').map((line, index) => {
-                                if (line.startsWith('(') && line.endsWith(')')) {
-                                    return <i key={index} className="block">{line}</i>;
-                                }
-                                return <span key={index} className="block">{line.charAt(0).toUpperCase() + line.slice(1)}</span>;
-                           })}
-                        </p>
-                      </div>
-                      <div className="md:col-span-2 flex justify-center items-center">
-                        {caseItem.image && (
-                           <Popover open={popoverStates[caseItem.id] || false} onOpenChange={(isOpen) => setPopoverStates(prev => ({ ...prev, [caseItem.id]: isOpen }))}>
-                            <PopoverTrigger
-                              asChild
-                              onMouseEnter={() => setPopoverStates(prev => ({ ...prev, [caseItem.id]: true }))}
-                              onMouseLeave={() => setPopoverStates(prev => ({ ...prev, [caseItem.id]: false }))}
-                            >
-                              <div
-                                className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
-                                onClick={() => setImageInView(caseItem.image!)}
+                {activeCases.map((caseItem) => {
+                  const totalQuantity = caseItem.caseItems?.reduce((sum, item) => sum + item.quantity, 0) || caseItem.quantity || 0;
+                  return (
+                    <Card key={caseItem.id} className="bg-gray-50">
+                      <CardContent className="p-4 grid grid-cols-1 md:grid-cols-12 gap-4">
+                        <div className="md:col-span-3">
+                          <p className="text-xs text-gray-500">Date Recorded</p>
+                          <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
+                          <p className="text-sm font-semibold mt-2">{caseItem.joNumber}</p>
+                          <p className="text-xs text-gray-600">{caseItem.customerName}</p>
+                          <p className="text-xs text-gray-500">{getContactDisplay(caseItem)}</p>
+                        </div>
+                        <div className="md:col-span-5 self-start pt-2">
+                          <p className="text-xs text-gray-500">Case & Remarks/Reason</p>
+                          <p className="text-sm font-semibold text-destructive">{caseItem.caseType}</p>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <p className="text-sm font-semibold cursor-pointer">Total Quantity: {totalQuantity}</p>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                  <div className="p-2 text-xs">
+                                      <h4 className="font-bold mb-2">Item Breakdown</h4>
+                                      <ul className="list-disc pl-4 space-y-1">
+                                          {caseItem.caseItems?.map(item => (
+                                              <li key={item.id}>{item.quantity}x {item.productType} ({item.color}, {item.size})</li>
+                                          ))}
+                                      </ul>
+                                  </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <p className="text-sm mt-1 whitespace-pre-wrap">
+                            {caseItem.remarks && caseItem.remarks.split('\n').map((line, index) => {
+                                  if (line.startsWith('(') && line.endsWith(')')) {
+                                      return <i key={index} className="block">{line}</i>;
+                                  }
+                                  return <span key={index} className="block">{line.charAt(0).toUpperCase() + line.slice(1)}</span>;
+                             })}
+                          </p>
+                        </div>
+                        <div className="md:col-span-2 flex justify-center items-center">
+                          {caseItem.image && (
+                             <Popover open={popoverStates[caseItem.id] || false} onOpenChange={(isOpen) => setPopoverStates(prev => ({ ...prev, [caseItem.id]: isOpen }))}>
+                              <PopoverTrigger
+                                asChild
+                                onMouseEnter={() => setPopoverStates(prev => ({ ...prev, [caseItem.id]: true }))}
+                                onMouseLeave={() => setPopoverStates(prev => ({ ...prev, [caseItem.id]: false }))}
                               >
-                                <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
-                              </div>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-80">
-                               <div className="relative h-64 w-full rounded-md overflow-hidden">
-                                <Image src={caseItem.image} alt="Case Image Preview" layout="fill" objectFit="contain" />
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        )}
-                      </div>
-                      <div className="md:col-span-2 flex flex-col items-center justify-center gap-2">
-                         <Button
-                          size="sm"
-                          onClick={() => setCaseToResolve(caseItem)}
-                          className="shadow-md transition-transform active:scale-95 text-white font-bold w-full"
-                        >
-                          <Check className="mr-2 h-4 w-4" />
-                          Resolved
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onEdit(caseItem)}
-                          className="shadow-md transition-transform active:scale-95 font-bold w-full"
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setCaseToDelete(caseItem)}
-                          className="shadow-md transition-transform active:scale-95 font-bold w-full text-red-500 border-red-500 hover:bg-red-50 hover:text-red-600"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                                <div
+                                  className="relative h-24 w-24 rounded-md overflow-hidden border cursor-pointer"
+                                  onClick={() => setImageInView(caseItem.image!)}
+                                >
+                                  <Image src={caseItem.image} alt="Case Image" layout="fill" objectFit="cover" />
+                                </div>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-80">
+                                 <div className="relative h-64 w-full rounded-md overflow-hidden">
+                                  <Image src={caseItem.image} alt="Case Image Preview" layout="fill" objectFit="contain" />
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </div>
+                        <div className="md:col-span-2 flex flex-col items-center justify-center gap-2">
+                           <Button
+                            size="sm"
+                            onClick={() => setCaseToResolve(caseItem)}
+                            className="shadow-md transition-transform active:scale-95 text-white font-bold w-full"
+                          >
+                            <Check className="mr-2 h-4 w-4" />
+                            Resolved
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onEdit(caseItem)}
+                            className="shadow-md transition-transform active:scale-95 font-bold w-full"
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setCaseToDelete(caseItem)}
+                            className="shadow-md transition-transform active:scale-95 font-bold w-full text-red-500 border-red-500 hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
               </div>
             ) : (
               <div className="flex items-center justify-center h-48">
@@ -315,3 +343,5 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
     </>
   );
 }
+
+    

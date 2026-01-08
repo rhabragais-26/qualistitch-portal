@@ -27,12 +27,21 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays, Inbox } from 'lucide-react';
+import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays, Inbox, PlusCircle, Minus, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, setDoc, updateDoc } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { addDays, format } from 'date-fns';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from './ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+
+type LeadOrder = {
+  productType: string;
+  color: string;
+  size: string;
+  quantity: number;
+}
 
 type Lead = {
   id: string;
@@ -43,6 +52,15 @@ type Lead = {
   landlineNumber?: string;
   submissionDateTime: string;
   priorityType: 'Rush' | 'Regular';
+  orders: LeadOrder[];
+};
+
+type CaseItem = {
+    id: string;
+    productType: string;
+    color: string;
+    size: string;
+    quantity: number;
 };
 
 type OperationalCase = {
@@ -55,6 +73,7 @@ type OperationalCase = {
   customerName: string;
   contactNumber?: string;
   landlineNumber?: string;
+  caseItems: CaseItem[];
   quantity?: number;
   isArchived?: boolean;
   isDeleted?: boolean;
@@ -65,7 +84,7 @@ const formSchema = z.object({
   caseType: z.enum(['Return to Sender (RTS)', 'Quality Errors', 'Replacement'], {
     required_error: 'You need to select a case type.',
   }),
-  quantity: z.number().min(1, 'Quantity must be at least 1.'),
+  quantity: z.number().min(1, 'A total quantity of at least 1 is required.'),
   remarks: z.string().min(10, { message: 'Remarks must be at least 10 characters.' }),
   image: z.string().optional(),
 });
@@ -87,6 +106,9 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
   const [joSuggestions, setJoSuggestions] = useState<Lead[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(true);
 
+  const [isQuantityDialogOpen, setIsQuantityDialogOpen] = useState(false);
+  const [caseItems, setCaseItems] = useState<CaseItem[]>([]);
+
   const leadsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'leads')) : null),
     [firestore]
@@ -98,7 +120,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
     defaultValues: {
       joNumber: '',
       caseType: undefined,
-      quantity: 1,
+      quantity: 0,
       remarks: '',
       image: '',
     },
@@ -114,15 +136,22 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
       const leadForCase = allLeads.find(l => l.joNumber && formatJoNumber(l.joNumber) === editingCase.joNumber);
       setFoundLead(leadForCase || null);
       setJoInput(editingCase.joNumber);
+      setCaseItems(editingCase.caseItems || []);
+      const totalQuantity = editingCase.caseItems?.reduce((sum, item) => sum + item.quantity, 0) || editingCase.quantity || 0;
       setValue('joNumber', editingCase.joNumber);
       setValue('caseType', editingCase.caseType as any);
-      setValue('quantity', editingCase.quantity || 1);
+      setValue('quantity', totalQuantity);
       setValue('remarks', editingCase.remarks);
       setValue('image', editingCase.image || '');
     } else {
       handleFormReset();
     }
   }, [editingCase, allLeads, setValue]);
+
+  useEffect(() => {
+    const totalQuantity = caseItems.reduce((sum, item) => sum + item.quantity, 0);
+    setValue('quantity', totalQuantity, { shouldValidate: true });
+  }, [caseItems, setValue]);
 
 
   const formatJoNumber = (joNumber: number) => {
@@ -202,7 +231,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
     reset({
         joNumber: '',
         caseType: undefined,
-        quantity: 1,
+        quantity: 0,
         remarks: '',
         image: '',
     });
@@ -210,6 +239,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
     setFoundLead(null);
     setJoSuggestions([]);
     setShowSuggestions(true);
+    setCaseItems([]);
     if(imageUploadRef.current) {
         imageUploadRef.current.value = '';
     }
@@ -227,10 +257,19 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
     }
     
     try {
+        const submissionData = {
+          joNumber: values.joNumber,
+          caseType: values.caseType,
+          remarks: values.remarks,
+          image: values.image,
+          quantity: values.quantity,
+          caseItems: caseItems,
+        }
+
         if (isEditing && editingCase) {
             // Update existing case
             const caseDocRef = doc(firestore, 'operationalCases', editingCase.id);
-            await updateDoc(caseDocRef, { ...values, lastModified: new Date().toISOString() });
+            await updateDoc(caseDocRef, { ...submissionData, lastModified: new Date().toISOString() });
             handleFormReset();
             onSaveComplete();
         } else {
@@ -239,9 +278,9 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
             const operationalCasesRef = collection(firestore, 'operationalCases');
             const caseDocRef = doc(operationalCasesRef, caseId);
             
-            const submissionData = {
+            const fullData = {
                 id: caseId,
-                ...values,
+                ...submissionData,
                 customerName: foundLead?.customerName,
                 companyName: foundLead?.companyName,
                 contactNumber: foundLead?.contactNumber || '',
@@ -249,7 +288,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
                 submissionDateTime: new Date().toISOString(),
             };
 
-            await setDoc(caseDocRef, submissionData);
+            await setDoc(caseDocRef, fullData);
             
             toast({
               title: 'Case Recorded!',
@@ -284,8 +323,14 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
     return format(deliveryDate, 'MMM dd, yyyy');
   };
 
+  const handleCaseItemsChange = (items: CaseItem[]) => {
+    setCaseItems(items);
+    setIsQuantityDialogOpen(false);
+  }
+
 
   return (
+    <>
     <Card className="w-full max-w-2xl shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
         <CardTitle className="font-headline text-xl text-black">{isEditing ? 'Edit Operational Case' : 'Record Operational Case'}</CardTitle>
@@ -401,32 +446,29 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
                 </div>
             )}
             
-            <div className="grid grid-cols-1">
-                 <FormField
-                    control={control}
-                    name="quantity"
-                    render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                            <FormLabel className="flex items-center gap-2 text-black mb-0 shrink-0">
-                                <Inbox className="h-4 w-4 text-primary" />
-                                Quantity
-                            </FormLabel>
-                            <FormControl>
-                                <Input
-                                    type="number"
-                                    placeholder="1"
-                                    {...field}
-                                    onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)}
-                                    onBlur={e => { if (!e.target.value || parseInt(e.target.value, 10) < 1) field.onChange(1); }}
-                                    className="w-20"
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
-
+            <FormField
+              control={control}
+              name="quantity"
+              render={() => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-black">
+                      <Inbox className="h-4 w-4 text-primary" />
+                      Total Quantity
+                    </FormLabel>
+                    <div className='flex items-center gap-4'>
+                        <Input
+                            readOnly
+                            value={caseItems.reduce((sum, item) => sum + item.quantity, 0)}
+                            className="w-24 text-center font-bold bg-gray-100"
+                        />
+                        <Button type="button" variant="outline" onClick={() => setIsQuantityDialogOpen(true)} disabled={!foundLead}>
+                            Set Quantities
+                        </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+              )}
+            />
 
             <FormField
               control={control}
@@ -505,5 +547,132 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
         </Form>
       </CardContent>
     </Card>
+    {isQuantityDialogOpen && foundLead && (
+        <QuantityDialog
+            isOpen={isQuantityDialogOpen}
+            onClose={() => setIsQuantityDialogOpen(false)}
+            onSave={handleCaseItemsChange}
+            leadOrders={foundLead.orders}
+            initialItems={caseItems}
+        />
+    )}
+    </>
   );
 }
+
+// Dialog component for setting quantities
+type QuantityDialogProps = {
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (items: CaseItem[]) => void;
+    leadOrders: LeadOrder[];
+    initialItems: CaseItem[];
+}
+
+function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: QuantityDialogProps) {
+    const [items, setItems] = useState<CaseItem[]>(initialItems);
+
+    const availableOptions = useMemo(() => {
+        const productTypes = [...new Set(leadOrders.map(o => o.productType))];
+        const colors = [...new Set(leadOrders.map(o => o.color))];
+        const sizes = [...new Set(leadOrders.map(o => o.size))];
+        return { productTypes, colors, sizes };
+    }, [leadOrders]);
+
+    const addNewItem = () => {
+        setItems(prev => [...prev, { id: uuidv4(), productType: '', color: '', size: '', quantity: 1 }]);
+    };
+
+    const removeItem = (id: string) => {
+        setItems(prev => prev.filter(item => item.id !== id));
+    };
+
+    const updateItem = (id: string, field: keyof CaseItem, value: string | number) => {
+        setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+    };
+
+    const handleSave = () => {
+        const validItems = items.filter(item => item.productType && item.color && item.size && item.quantity > 0);
+        onSave(validItems);
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Set Item Quantities for Case</DialogTitle>
+                    <DialogDescription>
+                        Specify the product, color, size, and quantity for each item included in this operational case.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 max-h-[60vh] overflow-y-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Product Type</TableHead>
+                                <TableHead>Color</TableHead>
+                                <TableHead>Size</TableHead>
+                                <TableHead className="w-[150px] text-center">Quantity</TableHead>
+                                <TableHead className="w-[50px]"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {items.map(item => (
+                                <TableRow key={item.id}>
+                                    <TableCell>
+                                        <Select value={item.productType} onValueChange={(v) => updateItem(item.id, 'productType', v)}>
+                                            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectContent>{availableOptions.productTypes.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                                        </Select>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Select value={item.color} onValueChange={(v) => updateItem(item.id, 'color', v)}>
+                                            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectContent>{availableOptions.colors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                                        </Select>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Select value={item.size} onValueChange={(v) => updateItem(item.id, 'size', v)}>
+                                            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectContent>{availableOptions.sizes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                                        </Select>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center justify-center gap-1">
+                                            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => updateItem(item.id, 'quantity', Math.max(1, item.quantity - 1))}>
+                                                <Minus className="h-4 w-4" />
+                                            </Button>
+                                            <Input
+                                                type="number"
+                                                value={item.quantity}
+                                                onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value, 10) || 1)}
+                                                className="w-16 text-center"
+                                            />
+                                            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => updateItem(item.id, 'quantity', item.quantity + 1)}>
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                    <Button type="button" variant="outline" className="mt-4" onClick={addNewItem}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Item
+                    </Button>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button onClick={handleSave}>Save Quantities</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+    
