@@ -435,26 +435,26 @@ export function OrderStatusTable() {
                             </TableCell>
                              <TableCell className="align-top py-3">
                                 <div className="flex flex-col gap-2">
-                                  <div className="relative w-full pt-4">
-                                     {progress > 0 && (
-                                        <div
-                                            className="absolute bottom-full mb-1 px-2 py-1 text-xs text-white font-bold bg-[#333] rounded-md shadow-lg"
-                                            style={{
-                                                left: `${Math.min(progress, 100)}%`,
-                                                transform: 'translateX(-50%)',
-                                            }}
-                                        >
-                                            {progress}%
-                                            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-[4px] border-t-[#333]"></div>
+                                    <div className="relative w-full">
+                                        {progress > 0 && (
+                                            <div
+                                                className="absolute top-[-2px] px-2 py-1 text-xs text-white font-bold bg-[#333] rounded-md shadow-lg"
+                                                style={{
+                                                    left: `${Math.min(progress, 100)}%`,
+                                                    transform: 'translateX(-50%)',
+                                                }}
+                                            >
+                                                {progress}%
+                                                <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-[4px] border-t-[#333]"></div>
+                                            </div>
+                                        )}
+                                        <div className="h-2 w-full bg-gray-300 rounded-full overflow-hidden mt-4">
+                                            <div
+                                                className="h-full bg-[hsl(var(--chart-1))] rounded-full striped-progress"
+                                                style={{ width: `${progress}%` }}
+                                            ></div>
                                         </div>
-                                    )}
-                                    <div className="h-2 w-full bg-gray-300 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-[#357ABD] rounded-full striped-progress"
-                                            style={{ width: `${progress}%` }}
-                                        ></div>
                                     </div>
-                                  </div>
                                     <div className="grid grid-cols-4 gap-2 text-xs">
                                         <div className="flex flex-col items-center gap-1">
                                             <p className="font-semibold text-gray-500">Programming</p>
@@ -589,3 +589,4 @@ export function OrderStatusTable() {
     </Card>
   );
 }
+
