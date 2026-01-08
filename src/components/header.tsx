@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -26,7 +25,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
 import {
   AlertDialog,
@@ -84,14 +83,14 @@ export function Header({
     setIsClient(true);
   }, []);
   
-  const getActiveMenuClass = (paths: string[]) => {
+  const getActiveMenuClass = useCallback((paths: string[]) => {
     const isActive = paths.some(path => pathname === path || (path !== '/' && pathname.startsWith(path)));
     return isActive
       ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-      : 'bg-secondary text-secondary-foreground hover:bg-accent hover:text-white';
-  };
+      : 'bg-secondary text-secondary-foreground hover:bg-accent/90 hover:text-white';
+  }, [pathname]);
 
-  const handleNavigation = (url: string) => {
+  const handleNavigation = useCallback((url: string) => {
     const isDirty = (isNewOrderPageDirty && pathname === '/') || 
                     (isOperationalCasesPageDirty && pathname === '/inventory/operational-cases');
 
@@ -101,20 +100,21 @@ export function Header({
     } else {
       router.push(url);
     }
-  };
+  }, [isNewOrderPageDirty, isOperationalCasesPageDirty, pathname, router]);
 
-  const confirmNavigation = () => {
+  const confirmNavigation = useCallback(() => {
     setShowConfirmDialog(false);
-    // Use a short timeout to ensure the dialog closes before navigation starts.
     setTimeout(() => {
-      router.push(nextUrl);
+      if (nextUrl) {
+        router.push(nextUrl);
+      }
     }, 100);
-  };
+  }, [nextUrl, router]);
 
-  const cancelNavigation = () => {
+  const cancelNavigation = useCallback(() => {
     setShowConfirmDialog(false);
     setNextUrl('');
-  };
+  }, []);
 
   return (
     <>
@@ -232,16 +232,16 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/logistics/shipment-status', '/logistics/summary']))}>
+                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/logistics/shipment-queue', '/logistics/summary']))}>
                       <Truck className="mr-2" />
                       Logistics
                       <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleNavigation('/logistics/shipment-status')}>
+                    <DropdownMenuItem onClick={() => handleNavigation('/logistics/shipment-queue')}>
                         <Ship className="mr-2" />
-                        Shipment Status
+                        Shipment Queue
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/logistics/summary')}>
                         <FileText className="mr-2" />
@@ -384,5 +384,3 @@ export function Header({
     </>
   );
 }
-
-    
