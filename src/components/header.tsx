@@ -126,7 +126,7 @@ export function Header({
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="text-neutral-100 hover:bg-accent hover:text-white">
                     <PenSquare className="mr-2" />
-                    Data Entry
+                    Sales
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
