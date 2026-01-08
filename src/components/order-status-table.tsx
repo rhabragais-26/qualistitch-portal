@@ -283,7 +283,7 @@ export function OrderStatusTable() {
                   className="bg-gray-100 text-black placeholder:text-gray-500"
                 />
                 <div className="flex items-center gap-1">
-                  <span className="text-sm font-medium text-gray-600">Filter by Overall Status:</span>
+                  <span className="text-sm font-medium text-gray-600 w-24 leading-tight">Filter by Overall Status:</span>
                   <Select value={overallStatusFilter} onValueChange={setOverallStatusFilter}>
                     <SelectTrigger className="w-auto bg-gray-100 text-black placeholder:text-gray-500">
                       <SelectValue placeholder="Filter by Overall Status" />
@@ -297,7 +297,7 @@ export function OrderStatusTable() {
                   </Select>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="text-sm font-medium text-gray-600">Filter by Overdue Status:</span>
+                  <span className="text-sm font-medium text-gray-600 w-24 leading-tight">Filter by Overdue Status:</span>
                   <Select value={overdueStatusFilter} onValueChange={setOverdueStatusFilter}>
                     <SelectTrigger className="w-auto bg-gray-100 text-black placeholder:text-gray-500">
                       <SelectValue placeholder="Filter by Overdue Status" />
@@ -339,7 +339,7 @@ export function OrderStatusTable() {
                   const productionStatus = getProductionStatus(lead);
                   const overallStatus = getOverallStatus(lead);
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-                  const isCollapsibleOpen = openLeadId === lead.id;
+                  
                   return (
                     <React.Fragment key={lead.id}>
                       <TableRow>
@@ -358,11 +358,11 @@ export function OrderStatusTable() {
                               </Collapsible>
                           </TableCell>
                           <TableCell className="text-center align-middle py-2">
-                              <Collapsible open={isCollapsibleOpen} onOpenChange={() => toggleLeadDetails(lead.id)}>
+                              <Collapsible open={openLeadId === lead.id} onOpenChange={() => toggleLeadDetails(lead.id)}>
                                 <CollapsibleTrigger asChild>
                                   <div className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100">
                                     <span className="font-semibold text-sm">{totalQuantity}</span>
-                                    {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                                    {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                                   </div>
                                 </CollapsibleTrigger>
                               </Collapsible>
@@ -372,7 +372,7 @@ export function OrderStatusTable() {
                                   {lead.priorityType}
                               </Badge>
                           </TableCell>
-                            <TableCell className="text-center text-xs align-middle py-2 font-medium whitespace-nowrap">{formatJoNumber(lead.joNumber)}</TableCell>
+                          <TableCell className="text-center text-xs align-middle py-2 font-medium whitespace-nowrap">{formatJoNumber(lead.joNumber)}</TableCell>
                           <TableCell className={cn(
                             "text-center text-xs align-middle py-2 font-medium",
                             deadlineInfo.isOverdue && "text-red-500",
@@ -448,34 +448,34 @@ export function OrderStatusTable() {
                               <Badge variant={overallStatus.variant}>{overallStatus.text}</Badge>
                           </TableCell>
                       </TableRow>
-                      {isCollapsibleOpen && (
-                            <TableRow className="bg-gray-50">
-                              <TableCell colSpan={11}>
-                                <div className="p-2">
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow>
-                                        <TableHead className="py-1 px-2 text-black font-bold">Product</TableHead>
-                                        <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
-                                        <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
-                                        <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {lead.orders.map((order, index) => (
-                                        <TableRow key={index} className="border-0">
-                                          <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
-                                          <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
-                                          <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
-                                          <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
-                                        </TableRow>
-                                      ))}
-                                    </TableBody>
-                                  </Table>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                      )}
+                      <CollapsibleContent asChild>
+                        <tr>
+                            <TableCell colSpan={11}>
+                            <div className="p-2 bg-gray-50">
+                                <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                    <TableHead className="py-1 px-2 text-black font-bold">Product</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {lead.orders.map((order, index) => (
+                                    <TableRow key={index} className="border-0">
+                                        <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
+                                    </TableRow>
+                                    ))}
+                                </TableBody>
+                                </Table>
+                            </div>
+                            </TableCell>
+                        </tr>
+                      </CollapsibleContent>
                     </React.Fragment>
                   )})}
                 </TableBody>
@@ -486,3 +486,5 @@ export function OrderStatusTable() {
     </Card>
   );
 }
+
+    
