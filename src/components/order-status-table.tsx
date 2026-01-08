@@ -285,7 +285,8 @@ export function OrderStatusTable() {
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
                   const isCollapsibleOpen = openLeadId === lead.id;
                   return (
-                    <React.Fragment key={lead.id}>
+                    <Collapsible asChild key={lead.id} open={isCollapsibleOpen} onOpenChange={() => toggleLeadDetails(lead.id)}>
+                      <React.Fragment>
                         <TableRow>
                             <TableCell className="font-medium text-xs align-top py-2 text-black w-[250px]">
                               <Collapsible open={openCustomerDetails === lead.id} onOpenChange={() => toggleCustomerDetails(lead.id)}>
@@ -302,8 +303,8 @@ export function OrderStatusTable() {
                                 </Collapsible>
                             </TableCell>
                             <TableCell className="text-center align-middle py-2">
-                               <CollapsibleTrigger asChild>
-                                  <div onClick={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100">
+                                <CollapsibleTrigger asChild>
+                                  <div className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100">
                                     <span className="font-semibold text-sm">{totalQuantity}</span>
                                     {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                                   </div>
@@ -417,7 +418,8 @@ export function OrderStatusTable() {
                                 </TableCell>
                               </TableRow>
                         </CollapsibleContent>
-                    </React.Fragment>
+                      </React.Fragment>
+                    </Collapsible>
                   )})}
                 </TableBody>
               </Table>
