@@ -183,7 +183,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [citySuggestions, setCitySuggestions] = useState<{ name: string; province: string, type: string }[]>([]);
   const [barangaySuggestions, setBarangaySuggestions] = useState<string[]>([]);
   const [showCalculator, setShowCalculator] = useState(false);
-  const [suppressSuggestions, setSuppressSuggestions] = useState(false);
   
   const citiesAndMunicipalities = useMemo(() => {
     return locations.provinces.flatMap(province =>
@@ -233,7 +232,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
   
   const handleSuggestionClick = (lead: Lead) => {
-    setSuppressSuggestions(true);
     setValue('customerName', toTitleCase(lead.customerName));
     setValue('companyName', lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '');
     setValue('mobileNo', lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '');
@@ -242,20 +240,19 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     setValue('barangay', lead.barangay ? toTitleCase(lead.barangay) : '');
     setValue('city', lead.city ? toTitleCase(lead.city) : '');
     setValue('province', lead.province ? toTitleCase(lead.province) : '');
+    
+    // Clear all suggestion lists
     setCustomerSuggestions([]);
     setCompanySuggestions([]);
     setCitySuggestions([]);
     setBarangaySuggestions([]);
-    setTimeout(() => setSuppressSuggestions(false), 100);
   };
 
   const handleCitySuggestionClick = (city: { name: string; province: string }) => {
-    setSuppressSuggestions(true);
     setValue('city', city.name, { shouldValidate: true });
     setValue('province', city.province, { shouldValidate: true });
     setValue('barangay', ''); // Reset barangay when city changes
     setCitySuggestions([]);
-    setTimeout(() => setSuppressSuggestions(false), 100);
   };
 
   const handleBarangaySuggestionClick = (barangay: string) => {
@@ -271,7 +268,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const provinceValue = watch('province');
 
   useEffect(() => {
-    if (customerNameValue && leads && !suppressSuggestions) {
+    if (customerNameValue && leads) {
       const uniqueSuggestions = leads.filter(
         (lead, index, self) =>
           lead.customerName.toLowerCase().includes(customerNameValue.toLowerCase()) &&
@@ -281,10 +278,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     } else {
       setCustomerSuggestions([]);
     }
-  }, [customerNameValue, leads, suppressSuggestions]);
+  }, [customerNameValue, leads]);
 
   useEffect(() => {
-    if (companyNameValue && leads && !suppressSuggestions) {
+    if (companyNameValue && leads) {
       const uniqueSuggestions = leads.filter(
         (lead, index, self) =>
           lead.companyName &&
@@ -295,10 +292,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     } else {
       setCompanySuggestions([]);
     }
-  }, [companyNameValue, leads, suppressSuggestions]);
+  }, [companyNameValue, leads]);
 
   useEffect(() => {
-    if (cityValue && !suppressSuggestions) {
+    if (cityValue) {
       const filteredCities = citiesAndMunicipalities.filter(city =>
         city.name.toLowerCase().includes(cityValue.toLowerCase())
       ).slice(0, 10);
@@ -306,10 +303,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     } else {
       setCitySuggestions([]);
     }
-  }, [cityValue, citiesAndMunicipalities, suppressSuggestions]);
+  }, [cityValue, citiesAndMunicipalities]);
 
   useEffect(() => {
-    if (barangayValue && cityValue && provinceValue && !suppressSuggestions) {
+    if (barangayValue && cityValue && provinceValue) {
         const selectedCity = citiesAndMunicipalities.find(
             c => c.name.toLowerCase() === cityValue.toLowerCase() && c.province.toLowerCase() === provinceValue.toLowerCase()
         );
@@ -324,7 +321,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     } else {
         setBarangaySuggestions([]);
     }
-}, [barangayValue, cityValue, provinceValue, citiesAndMunicipalities, suppressSuggestions]);
+}, [barangayValue, cityValue, provinceValue, citiesAndMunicipalities]);
 
 
   useEffect(() => {
