@@ -355,12 +355,13 @@ export function ItemPreparationTable() {
                 {jobOrders?.map((lead) => {
                   const isRepeat = lead.orderNumber > 1;
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+                  const numOrders = lead.orders.length;
                   return (
                     <React.Fragment key={lead.id}>
                       {lead.orders.map((order, orderIndex) => (
-                          <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex !== lead.orders.length - 1 ? "" : "border-b-2 border-black"}>
+                          <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex === numOrders -1 ? "" : "border-b-0"}>
                               {orderIndex === 0 && (
-                                  <TableCell rowSpan={lead.orders.length} className="font-medium text-xs align-top py-3 text-black">
+                                  <TableCell rowSpan={numOrders + 1} className="font-medium text-xs align-top py-3 text-black border-b-2 border-black">
                                       <Collapsible>
                                           <CollapsibleTrigger asChild>
                                               <div className="flex items-center cursor-pointer">
@@ -395,13 +396,12 @@ export function ItemPreparationTable() {
                                   </TableCell>
                               )}
                               {orderIndex === 0 && (
-                                  <TableCell rowSpan={lead.orders.length} className="text-xs align-top py-3 text-black">
+                                  <TableCell rowSpan={numOrders + 1} className="text-xs align-top py-3 text-black border-b-2 border-black">
                                     <div>{formatJoNumber(lead.joNumber)}</div>
-                                    <div className="font-bold text-gray-600 mt-1">Total Qty: {totalQuantity}</div>
                                   </TableCell>
                               )}
                               {orderIndex === 0 && (
-                                  <TableCell rowSpan={lead.orders.length} className="align-top py-3">
+                                  <TableCell rowSpan={numOrders + 1} className="align-top py-3 border-b-2 border-black">
                                   <Badge variant={getProgrammingStatus(lead).variant as any}>{getProgrammingStatus(lead).text}</Badge>
                                   </TableCell>
                               )}
@@ -410,7 +410,7 @@ export function ItemPreparationTable() {
                               <TableCell className="py-1 px-2 text-xs text-black text-center">{order.size}</TableCell>
                               <TableCell className="py-1 px-2 text-xs text-black text-center">{order.quantity}</TableCell>
                               {orderIndex === 0 && (
-                                  <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
+                                  <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
                                   {lead.isPreparedForProduction ? (
                                           <div className="flex items-center justify-center text-green-600 font-semibold">
                                               <Check className="mr-2 h-4 w-4" /> Prepared
@@ -427,7 +427,7 @@ export function ItemPreparationTable() {
                                   </TableCell>
                               )}
                               {orderIndex === 0 && (
-                                  <TableCell rowSpan={lead.orders.length} className="text-center align-middle py-2">
+                                  <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
                                       {lead.isSentToProduction ? (
                                           <div className="text-xs text-gray-500">
                                               <div>{formatDateTime(lead.sentToProductionTimestamp!).dateTime}</div>
@@ -447,6 +447,11 @@ export function ItemPreparationTable() {
                               )}
                           </TableRow>
                       ))}
+                      {/* Total Row */}
+                      <TableRow className="border-b-2 border-black">
+                          <TableCell colSpan={3} className="py-1 px-2 text-xs font-bold text-right">Total Quantity</TableCell>
+                          <TableCell className="py-1 px-2 text-xs text-center font-bold">{totalQuantity}</TableCell>
+                      </TableRow>
                     </React.Fragment>
                 )})}
                 </TableBody>
