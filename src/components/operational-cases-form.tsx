@@ -26,13 +26,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays, Inbox, PlusCircle, Minus, X, Plus } from 'lucide-react';
+import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays, Inbox, PlusCircle, X, Plus, Minus } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, setDoc, updateDoc } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { addDays, format } from 'date-fns';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from './ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from './ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { cn } from '@/lib/utils';
 import { Label } from './ui/label';
@@ -83,7 +83,6 @@ const formSchema = z.object({
   joNumber: z.string().min(1, { message: 'J.O. Number is required.' }),
   caseType: z.enum(['Return to Sender (RTS)', 'Quality Errors', 'Replacement'], {
     required_error: "Case Type is required",
-    invalid_type_error: "Case Type is required",
   }),
   quantity: z.number().min(1, 'A total quantity of at least 1 is required.'),
   remarks: z.string().min(10, { message: 'Remarks must be at least 10 characters.' }),
@@ -118,6 +117,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onSubmit',
     defaultValues: {
       joNumber: '',
       caseType: undefined,
@@ -127,7 +127,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
     },
   });
   
-  const { control, handleSubmit, reset, setValue, watch, trigger } = form;
+  const { control, handleSubmit, reset, setValue, watch } = form;
   const imageValue = watch('image');
 
   const isEditing = !!editingCase;
@@ -151,8 +151,8 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
 
   useEffect(() => {
     const totalQuantity = caseItems.reduce((sum, item) => sum + item.quantity, 0);
-    setValue('quantity', totalQuantity, { shouldValidate: form.formState.isSubmitted });
-  }, [caseItems, setValue, form.formState.isSubmitted]);
+    setValue('quantity', totalQuantity);
+  }, [caseItems, setValue]);
 
 
   const formatJoNumber = (joNumber: number) => {
@@ -255,12 +255,6 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
             description: 'Firestore is not available. Please try again later.'
         });
         return;
-    }
-
-    // Manually trigger validation for all fields
-    const isValid = await trigger();
-    if (!isValid) {
-      return;
     }
     
     try {
@@ -658,18 +652,18 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                 const maxQty = getMaxQuantity(item.productType, item.color, item.size);
                                 return (
                                 <TableRow key={item.id}>
-                                    <TableCell>
+                                    <TableCell className="min-w-[200px]">
                                         <Select 
                                             value={item.productType} 
                                             onValueChange={(v) => updateItem(item.id, 'productType', v)}
                                             open={openDropdown === `${item.id}-productType`}
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-productType`, open)}
                                         >
-                                            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger className="w-auto"><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>{availableProductTypes.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="min-w-[150px]">
                                         <Select 
                                             value={item.color} 
                                             onValueChange={(v) => updateItem(item.id, 'color', v)}
@@ -677,7 +671,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-color`, open)}
                                             disabled={!item.productType}
                                         >
-                                            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger className="w-auto"><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>
                                                 {getAvailableColors(item.productType).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                                             </SelectContent>
@@ -691,7 +685,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-size`, open)}
                                             disabled={!item.productType || !item.color}
                                         >
-                                            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger className="w-auto"><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>
                                                 {getAvailableSizes(item.productType, item.color).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                                             </SelectContent>
