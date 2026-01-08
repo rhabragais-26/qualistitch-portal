@@ -31,6 +31,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Progress } from './ui/progress';
 
 type Order = {
   productType: string;
@@ -135,14 +136,14 @@ export function OrderStatusTable() {
   }, []);
 
   const getProgrammingStatus = useCallback((lead: Lead) => {
-    if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
-    if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const };
-    if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const };
-    if (lead.isLogoTesting) return { text: "Done Testing", variant: "warning" as const };
-    if (lead.isInitialApproval) return { text: "Initial Program Approved", variant: "default" as const };
-    if (lead.isUnderProgramming) return { text: "Done Initial Program", variant: "default" as const };
-    if (lead.joNumber) return { text: "Pending Initial Program", variant: "secondary" as const };
-    return { text: "Pending J.O.", variant: "secondary" as const };
+    if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const, progress: 100 };
+    if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const, progress: 90 };
+    if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const, progress: 60 };
+    if (lead.isLogoTesting) return { text: "Done Testing", variant: "warning" as const, progress: 50 };
+    if (lead.isInitialApproval) return { text: "Initial Program Approved", variant: "default" as const, progress: 40 };
+    if (lead.isUnderProgramming) return { text: "Done Initial Program", variant: "default" as const, progress: 30 };
+    if (lead.joNumber) return { text: "Pending Initial Program", variant: "secondary" as const, progress: 20 };
+    return { text: "Pending J.O.", variant: "secondary" as const, progress: 10 };
   }, []);
 
   const getItemPreparationStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "secondary" } => {
@@ -171,7 +172,15 @@ export function OrderStatusTable() {
     }
     return { text: 'ONGOING', variant: 'warning' };
   }, []);
-
+  
+   const getProgressValue = useCallback((lead: Lead): number => {
+    if (lead.isDone) return 100;
+    if (lead.sewerType !== "Pending" || lead.productionType !== "Pending") return 85;
+    if (lead.isSentToProduction) return 70;
+    if (lead.isPreparedForProduction) return 60;
+    const programmingStatus = getProgrammingStatus(lead);
+    return programmingStatus.progress;
+  }, [getProgrammingStatus]);
 
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
@@ -358,17 +367,12 @@ export function OrderStatusTable() {
               <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white font-bold align-middle">Customer</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Priority</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle whitespace-nowrap">J.O. No.</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Ordered Items</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Days Remaining/Overdue</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Programming Status</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Item Preparation</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Production Status</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Shipment Status</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Operational Case</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle uppercase">Overall Status</TableHead>
+                    <TableHead className="text-white font-bold align-middle w-[250px]">Customer</TableHead>
+                    <TableHead className="text-white font-bold align-middle w-[400px]">Progress</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[120px]">Order Details</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[150px]">Deadline</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[150px]">Operational Case</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[120px]">Overall Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -381,15 +385,17 @@ export function OrderStatusTable() {
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
                   const isCollapsibleOpen = openLeadId === lead.id;
                   const isRepeat = lead.orderNumber > 1;
+                  const progress = getProgressValue(lead);
                   
                   return (
                     <React.Fragment key={lead.id}>
-                        <TableRow>
-                            <TableCell className="font-medium align-top py-2 text-black w-[250px] text-sm">
-                                <div className="flex items-center cursor-pointer" onClick={() => toggleCustomerDetails(lead.id)}>
+                        <TableRow className="border-b-2 border-gray-300">
+                            <TableCell className="font-medium align-top py-3 text-black text-sm">
+                                <div className="flex items-center cursor-pointer font-bold" onClick={() => toggleCustomerDetails(lead.id)}>
                                     <span>{lead.customerName}</span>
                                     <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" data-state={openCustomerDetails === lead.id ? 'open' : 'closed'} />
                                 </div>
+                                 <p className="text-xs text-gray-500 font-normal">{formatJoNumber(lead.joNumber)}</p>
                                 {isRepeat ? (
                                     <TooltipProvider>
                                       <Tooltip>
@@ -416,19 +422,39 @@ export function OrderStatusTable() {
                                   </div>
                                 )}
                             </TableCell>
-                            <TableCell className="text-center text-xs align-top py-2 font-medium">
-                                <div>
-                                    <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
-                                        {lead.priorityType}
-                                    </Badge>
-                                    <div className="text-gray-500 text-[10px] mt-1 whitespace-nowrap">{lead.orderType}</div>
+                            <TableCell className="align-top py-3">
+                                <div className="flex flex-col gap-2">
+                                    <Progress value={progress} className="h-2" />
+                                    <div className="grid grid-cols-4 gap-2 text-xs">
+                                        <div className="flex flex-col items-center gap-1">
+                                            <p className="font-semibold text-gray-500">Programming</p>
+                                            <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
+                                        </div>
+                                        <div className="flex flex-col items-center gap-1">
+                                            <p className="font-semibold text-gray-500">Item Prep</p>
+                                            <Badge variant={itemPreparationStatus.variant as any}>{itemPreparationStatus.text}</Badge>
+                                        </div>
+                                        <div className="flex flex-col items-center gap-1">
+                                            <p className="font-semibold text-gray-500">Production</p>
+                                            <Badge variant={productionStatus.variant as any}>{productionStatus.text}</Badge>
+                                        </div>
+                                        <div className="flex flex-col items-center gap-1">
+                                            <p className="font-semibold text-gray-500">Shipment</p>
+                                            <Badge variant="secondary">{lead.shipmentStatus || 'Pending'}</Badge>
+                                        </div>
+                                    </div>
                                 </div>
                             </TableCell>
-                            <TableCell className="text-center text-xs align-top py-3 font-medium whitespace-nowrap">{formatJoNumber(lead.joNumber)}</TableCell>
                             <TableCell className="text-center align-top py-3">
-                              <div onClick={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100">
-                                <span className="font-semibold text-sm">{totalQuantity}</span>
-                                {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                              <div className='flex flex-col items-center gap-1'>
+                                <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
+                                    {lead.priorityType}
+                                </Badge>
+                                <div className="text-gray-500 text-[10px] mt-1 whitespace-nowrap">{lead.orderType}</div>
+                                <div onClick={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100 mt-1">
+                                    <span className="font-semibold text-sm">{totalQuantity} items</span>
+                                    {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell className={cn(
@@ -437,18 +463,6 @@ export function OrderStatusTable() {
                               deadlineInfo.isUrgent && "text-amber-600",
                               !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
                             )}>{deadlineInfo.text}</TableCell>
-                            <TableCell className="text-center text-xs align-top py-3 font-medium">
-                              <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
-                            </TableCell>
-                            <TableCell className="text-center text-xs align-top py-3 font-medium">
-                              <Badge variant={itemPreparationStatus.variant as any}>{itemPreparationStatus.text}</Badge>
-                            </TableCell>
-                            <TableCell className="text-center text-xs align-top py-3 font-medium">
-                              <Badge variant={productionStatus.variant as any}>{productionStatus.text}</Badge>
-                            </TableCell>
-                            <TableCell className="text-center text-xs align-top py-3 font-medium">
-                                <Badge variant="secondary">{lead.shipmentStatus || 'Pending'}</Badge>
-                            </TableCell>
                             <TableCell className="text-center text-xs align-top py-3 font-medium">
                                 {lead.operationalCase ? (
                                   <Popover>
