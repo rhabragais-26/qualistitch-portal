@@ -109,13 +109,13 @@ export function OrderStatusTable() {
   const isLoading = areLeadsLoading || areCasesLoading;
   const error = leadsError || casesError;
   
-  const toggleLeadDetails = (leadId: string) => {
+  const toggleLeadDetails = useCallback((leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
-  };
+  }, [openLeadId]);
 
-  const toggleCustomerDetails = (leadId: string) => {
+  const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
-  };
+  }, [openCustomerDetails]);
 
   const calculateDeadline = useCallback((lead: Lead) => {
     if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
@@ -137,14 +137,14 @@ export function OrderStatusTable() {
   }, []);
 
   const getProgrammingStatus = useCallback((lead: Lead) => {
-    if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const, progress: 60 };
-    if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const, progress: 50 };
-    if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const, progress: 40 };
-    if (lead.isLogoTesting) return { text: "Done Testing", variant: "warning" as const, progress: 40 };
-    if (lead.isInitialApproval) return { text: "Initial Program Approved", variant: "default" as const, progress: 30 };
-    if (lead.isUnderProgramming) return { text: "Done Initial Program", variant: "default" as const, progress: 20 };
-    if (lead.joNumber) return { text: "Pending Initial Program", variant: "secondary" as const, progress: 10 };
-    return { text: "Pending J.O.", variant: "secondary" as const, progress: 5 };
+    if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
+    if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const };
+    if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const };
+    if (lead.isLogoTesting) return { text: "Done Testing", variant: "warning" as const };
+    if (lead.isInitialApproval) return { text: "Initial Program Approved", variant: "default" as const };
+    if (lead.isUnderProgramming) return { text: "Done Initial Program", variant: "default" as const };
+    if (lead.joNumber) return { text: "Pending Initial Program", variant: "secondary" as const };
+    return { text: "Pending J.O.", variant: "secondary" as const };
   }, []);
 
   const getItemPreparationStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "secondary" } => {
@@ -175,18 +175,33 @@ export function OrderStatusTable() {
   }, []);
   
    const getProgressValue = useCallback((lead: Lead): number => {
+    // Shipment
     if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') return 100;
     if (lead.shipmentStatus === 'Packed') return 95;
+    
+    // Production
     if (lead.isDone) return 90;
     if (lead.isTrimming) return 85;
-    if (lead.sewerType && lead.sewerType !== 'Pending') return 80;
-    if (lead.productionType && lead.productionType !== 'Pending') return 75;
-    if (lead.isSentToProduction) return 70;
-    if (lead.isPreparedForProduction) return 65;
-    
-    const programmingStatus = getProgrammingStatus(lead);
-    return programmingStatus.progress;
-  }, [getProgrammingStatus]);
+    if (lead.sewerType && lead.sewerType !== 'Pending') return 70;
+    if (lead.productionType && lead.productionType !== 'Pending') return 50;
+
+    // Item Preparation
+    if (lead.isSentToProduction) return 40;
+    if (lead.isPreparedForProduction) return 35;
+
+    // Programming
+    if (lead.isFinalProgram) return 30;
+    if (lead.isFinalApproval) return 20;
+    if (lead.isRevision) return 15; // Revision doesn't go back, but holds progress
+    if (lead.isLogoTesting) return 15;
+    if (lead.isInitialApproval) return 10;
+    if (lead.isUnderProgramming) return 5;
+
+    // Initial State
+    if (lead.joNumber) return 0; // "Pending Initial Program"
+
+    return 0; // Default for "Pending J.O."
+  }, []);
 
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
@@ -304,7 +319,7 @@ export function OrderStatusTable() {
              <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setImageInView(null)}
+                onClick={()={() => setImageInView(null)}
                 className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
             >
                 <X className="h-6 w-6" />
@@ -506,7 +521,7 @@ export function OrderStatusTable() {
                                           <div className="flex-shrink-0 w-48 h-48">
                                             <div
                                               className="relative w-full h-full cursor-pointer"
-                                              onClick={() => setImageInView(lead.operationalCase!.image!)}
+                                              onClick={()={() => setImageInView(lead.operationalCase!.image!)}
                                             >
                                               <Image
                                                 src={lead.operationalCase.image}
@@ -558,7 +573,7 @@ export function OrderStatusTable() {
                           </TableRow>
                         )}
                     </React.Fragment>
-                  )})}
+                  )}})
                 </TableBody>
               </Table>
             </ScrollArea>
@@ -567,3 +582,5 @@ export function OrderStatusTable() {
     </Card>
   );
 }
+
+  
