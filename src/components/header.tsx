@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -87,8 +86,8 @@ export function Header({
   const getActiveMenuClass = (paths: string[]) => {
     const isActive = paths.some(path => pathname === path || (path !== '/' && pathname.startsWith(path)));
     return isActive
-      ? 'bg-white text-black rounded-b-none rounded-t-lg border-b-0 -mb-[2px] pb-[10px] z-10'
-      : 'text-black hover:bg-white/70 hover:text-black';
+      ? 'bg-primary text-primary-foreground'
+      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80';
   };
 
   const handleNavigation = (url: string) => {
@@ -118,7 +117,7 @@ export function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b bg-card text-black no-print">
+      <header className="sticky top-0 z-40 w-full border-b bg-muted/40 no-print">
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex items-center">
             <Link href="/" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/'); }}>
@@ -128,11 +127,11 @@ export function Header({
               </span>
             </Link>
           </div>
-          <nav className="flex items-center gap-4 h-full">
+          <nav className="flex items-center gap-2 h-full">
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className={cn("h-full font-bold", getActiveMenuClass(['/', '/records', '/job-order', '/reports']))}>
+                  <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/', '/records', '/job-order', '/reports']))}>
                     <PenSquare className="mr-2" />
                     Sales
                     <ChevronDown className="ml-2 h-4 w-4" />
@@ -161,7 +160,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-full font-bold", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports']))}>
+                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports']))}>
                       <ScanLine className="mr-2" />
                       Digitizing
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -182,7 +181,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-full font-bold", getActiveMenuClass(['/inventory/add-items', '/inventory/item-preparation-for-production', '/inventory/summary', '/inventory/reports', '/inventory/operational-cases']))}>
+                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/inventory/add-items', '/inventory/item-preparation-for-production', '/inventory/summary', '/inventory/reports', '/inventory/operational-cases']))}>
                       <Boxes className="mr-2" />
                       Inventory
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -215,7 +214,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-full font-bold", getActiveMenuClass(['/production/production-queue']))}>
+                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/production/production-queue']))}>
                       <Factory className="mr-2" />
                       Production
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -232,7 +231,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-full font-bold", getActiveMenuClass(['/logistics/shipment-status', '/logistics/summary']))}>
+                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/logistics/shipment-status', '/logistics/summary']))}>
                       <Truck className="mr-2" />
                       Logistics
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -250,7 +249,7 @@ export function Header({
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className={cn("h-full font-bold", getActiveMenuClass(['/order-status']))}>
+            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/order-status']))}>
               <ListOrdered className="mr-2" />
               Overall Order Status
             </Button>
@@ -384,5 +383,3 @@ export function Header({
     </>
   );
 }
-
-    
