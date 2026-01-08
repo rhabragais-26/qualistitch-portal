@@ -205,7 +205,7 @@ export function OrderStatusTable() {
       const deadlineInfo = calculateDeadline(lead);
       const matchesOverdueStatus = overdueStatusFilter === 'All' ||
         (overdueStatusFilter === 'Overdue' && deadlineInfo.isOverdue) ||
-        (overdueStatusFilter === 'Nearly Overdue' && !deadlineInfo.isOverdue && deadlineInfo.isUrgent);
+        (overdueStatusFilter === 'Nearly Overdue' && !deadlineInfo.isUrgent && deadlineInfo.isUrgent);
 
       return matchesSearch && matchesJo && matchesOverallStatus && matchesOverdueStatus;
     });
@@ -342,11 +342,12 @@ export function OrderStatusTable() {
                   const productionStatus = getProductionStatus(lead);
                   const overallStatus = getOverallStatus(lead);
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+                  const isCollapsibleOpen = openLeadId === lead.id;
                   
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow>
-                            <TableCell className="font-bold text-sm align-top py-2 text-black w-[250px]">
+                            <TableCell className="font-bold align-top py-2 text-black w-[250px] text-base">
                               <div className="flex items-center cursor-pointer" onClick={() => toggleCustomerDetails(lead.id)}>
                                   <span>{lead.customerName}</span>
                                   <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" data-state={openCustomerDetails === lead.id ? 'open' : 'closed'} />
@@ -370,7 +371,7 @@ export function OrderStatusTable() {
                             <TableCell className="text-center align-top py-3">
                               <div onClick={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100">
                                 <span className="font-semibold text-sm">{totalQuantity}</span>
-                                {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                                {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                               </div>
                             </TableCell>
                             <TableCell className={cn(
@@ -444,13 +445,13 @@ export function OrderStatusTable() {
                                     <span className="text-muted-foreground">-</span>
                                 )}
                             </TableCell>
-                            <TableCell className="text-center text-xs align-top py-3 font-medium">
-                                <Badge variant={overallStatus.variant} className="uppercase rounded-md">{overallStatus.text}</Badge>
+                            <TableCell className="text-center align-top py-3 font-medium">
+                                <Badge variant={overallStatus.variant} className="uppercase rounded-md text-sm">{overallStatus.text}</Badge>
                             </TableCell>
                         </TableRow>
-                        {openLeadId === lead.id && (
+                        {isCollapsibleOpen && (
                           <TableRow>
-                            <TableCell colSpan={11}>
+                              <TableCell colSpan={11}>
                               <div className="p-2 bg-gray-50">
                                 <Table>
                                   <TableHeader>
