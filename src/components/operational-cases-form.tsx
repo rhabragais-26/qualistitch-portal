@@ -593,6 +593,10 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
         return [...new Set(leadOrders.filter(o => o.productType === productType && o.color === color).map(o => o.size))];
     };
 
+    const getMaxQuantity = (productType: string, color: string, size: string) => {
+        return leadOrders.find(o => o.productType === productType && o.color === color && o.size === size)?.quantity || 0;
+    }
+
 
     const addNewItem = () => {
         setItems(prev => [...prev, { id: uuidv4(), productType: '', color: '', size: '', quantity: 1 }]);
@@ -649,7 +653,9 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {items.map(item => (
+                            {items.map(item => {
+                                const maxQty = getMaxQuantity(item.productType, item.color, item.size);
+                                return (
                                 <TableRow key={item.id}>
                                     <TableCell>
                                         <Select 
@@ -698,10 +704,11 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             <Input
                                                 type="number"
                                                 value={item.quantity}
-                                                onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value, 10) || 1)}
+                                                onChange={(e) => updateItem(item.id, 'quantity', Math.min(maxQty, parseInt(e.target.value, 10) || 1))}
                                                 className="w-16 text-center"
+                                                max={maxQty}
                                             />
-                                            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => updateItem(item.id, 'quantity', item.quantity + 1)}>
+                                            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => updateItem(item.id, 'quantity', Math.min(maxQty, item.quantity + 1))} disabled={item.quantity >= maxQty}>
                                                 <Plus className="h-4 w-4" />
                                             </Button>
                                         </div>
@@ -710,7 +717,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                         <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            )})}
                         </TableBody>
                     </Table>
                     <Button type="button" variant="outline" className="mt-4" onClick={addNewItem}>
