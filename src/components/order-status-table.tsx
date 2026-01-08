@@ -177,15 +177,12 @@ export function OrderStatusTable() {
   const getProgressValue = useCallback((lead: Lead): number => {
     if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') return 100;
     if (lead.shipmentStatus === 'Packed') return 95;
-    
     if (lead.isDone) return 90;
     if (lead.isTrimming) return 85;
     if (lead.sewerType && lead.sewerType !== 'Pending') return 70;
     if (lead.productionType && lead.productionType !== 'Pending') return 50;
-
     if (lead.isSentToProduction) return 40;
     if (lead.isPreparedForProduction) return 35;
-
     if (lead.isFinalProgram) return 30;
     if (lead.isFinalApproval) return 20;
     if (lead.isRevision) return 15;
@@ -193,7 +190,6 @@ export function OrderStatusTable() {
     if (lead.isInitialApproval) return 10;
     if (lead.isUnderProgramming) return 5;
     if (lead.joNumber) return 0;
-    
     return 0;
   }, []);
 
@@ -437,21 +433,27 @@ export function OrderStatusTable() {
                                   </div>
                                 )}
                             </TableCell>
-                            <TableCell className="align-top py-4">
+                             <TableCell className="align-top py-3">
                                 <div className="flex flex-col gap-2">
-                                   <div className="relative w-full pt-4">
-                                      {progress > 0 && (
-                                        <span
-                                            className="absolute text-xs font-bold text-[color:hsl(var(--chart-6))]"
-                                            style={{ 
-                                              left: `calc(${Math.min(progress, 100)}% - 14px)`,
-                                              bottom: 'calc(100% - 1rem)'
+                                  <div className="relative w-full pt-4">
+                                     {progress > 0 && (
+                                        <div
+                                            className="absolute bottom-full mb-1 px-2 py-1 text-xs text-white font-bold bg-[#333] rounded-md shadow-lg"
+                                            style={{
+                                                left: `${Math.min(progress, 100)}%`,
+                                                transform: 'translateX(-50%)',
                                             }}
                                         >
                                             {progress}%
-                                        </span>
-                                      )}
-                                      <Progress value={progress} className="h-2 w-full" indicatorClassName="bg-[hsl(var(--chart-6))]" />
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-[4px] border-t-[#333]"></div>
+                                        </div>
+                                    )}
+                                    <div className="h-2 w-full bg-gray-300 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-[#357ABD] rounded-full striped-progress"
+                                            style={{ width: `${progress}%` }}
+                                        ></div>
+                                    </div>
                                   </div>
                                     <div className="grid grid-cols-4 gap-2 text-xs">
                                         <div className="flex flex-col items-center gap-1">
