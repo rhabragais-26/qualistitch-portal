@@ -283,7 +283,7 @@ export function OrderStatusTable() {
                   className="bg-gray-100 text-black placeholder:text-gray-500"
                 />
                 <Select value={overallStatusFilter} onValueChange={setOverallStatusFilter}>
-                  <SelectTrigger className="w-[200px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectTrigger className="w-auto bg-gray-100 text-black placeholder:text-gray-500">
                     <SelectValue placeholder="Filter by Overall Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -294,7 +294,7 @@ export function OrderStatusTable() {
                   </SelectContent>
                 </Select>
                 <Select value={overdueStatusFilter} onValueChange={setOverdueStatusFilter}>
-                  <SelectTrigger className="w-[200px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectTrigger className="w-auto bg-gray-100 text-black placeholder:text-gray-500">
                     <SelectValue placeholder="Filter by Overdue Status" />
                   </SelectTrigger>
                   <SelectContent>
