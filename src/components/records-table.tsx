@@ -99,6 +99,10 @@ type Lead = {
   lastModified: string;
 }
 
+type EnrichedLead = Lead & {
+  orderNumber: number;
+};
+
 export function RecordsTable() {
   const firestore = useFirestore();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
@@ -124,20 +128,33 @@ export function RecordsTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [csrFilter, setCsrFilter] = useState('All');
 
-  const customerLeadCounts = useMemo(() => {
-    if (!leads) return new Map<string, number>();
-    const counts = new Map<string, number>();
+  const processedLeads = useMemo(() => {
+    if (!leads) return [];
+
+    const groupedByCustomer = new Map<string, Lead[]>();
     leads.forEach(lead => {
         const name = lead.customerName.toLowerCase();
-        counts.set(name, (counts.get(name) || 0) + 1);
+        if (!groupedByCustomer.has(name)) {
+            groupedByCustomer.set(name, []);
+        }
+        groupedByCustomer.get(name)!.push(lead);
     });
-    return counts;
+    
+    const enrichedLeads: EnrichedLead[] = [];
+    groupedByCustomer.forEach((customerLeads) => {
+        customerLeads.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+        customerLeads.forEach((lead, index) => {
+            enrichedLeads.push({ ...lead, orderNumber: index + 1 });
+        });
+    });
+
+    return enrichedLeads;
   }, [leads]);
   
   const filteredLeads = useMemo(() => {
-    if (!leads) return [];
+    if (!processedLeads) return [];
 
-    return leads.filter(lead => {
+    return processedLeads.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ? 
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
@@ -149,8 +166,8 @@ export function RecordsTable() {
       const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
 
       return matchesSearch && matchesCsr;
-    });
-  }, [leads, searchTerm, csrFilter]);
+    }).sort((a,b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
+  }, [processedLeads, searchTerm, csrFilter]);
 
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
@@ -470,8 +487,7 @@ export function RecordsTable() {
                 </TableHeader>
                 <TableBody>
                 {filteredLeads.map((lead) => {
-                  const leadCount = customerLeadCounts.get(lead.customerName.toLowerCase()) || 0;
-                  const isRepeat = leadCount > 1;
+                  const isRepeat = lead.orderNumber > 1;
                   return(
                   <React.Fragment key={lead.id}>
                     <TableRow>
@@ -491,15 +507,15 @@ export function RecordsTable() {
                           <div className='flex flex-col'>
                             <span className="font-medium">{lead.customerName}</span>
                             {isRepeat ? (
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                  {leadCount}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-xs text-blue-600 font-semibold">New Customer</span>
-                            )}
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                  <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                    {lead.orderNumber}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-blue-600 font-semibold">New Customer</span>
+                              )}
                             {openCustomerDetails === lead.id && (
                               <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
                                 {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
@@ -557,10 +573,10 @@ export function RecordsTable() {
                              <Table>
                               <TableHeader>
                                 <TableRow>
-                                  <TableHead className="py-1 px-2 text-black">Product Type</TableHead>
-                                  <TableHead className="py-1 px-2 text-black">Color</TableHead>
-                                  <TableHead className="py-1 px-2 text-black">Size</TableHead>
-                                  <TableHead className="py-1 px-2 text-black text-center">Quantity</TableHead>
+                                  <TableHead className="py-1 px-2 text-black font-bold">Product Type</TableHead>
+                                  <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
+                                  <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
+                                  <TableHead className="py-1 px-2 text-black font-bold text-center">Quantity</TableHead>
                                   <TableHead className="text-right py-1 px-2 text-black pr-8">Action</TableHead>
                                 </TableRow>
                               </TableHeader>
