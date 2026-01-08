@@ -110,6 +110,10 @@ type Lead = {
   digitizingArchivedTimestamp?: string;
 }
 
+type EnrichedLead = Lead & {
+  orderNumber: number;
+};
+
 type CheckboxField = keyof Pick<Lead, 'isUnderProgramming' | 'isInitialApproval' | 'isLogoTesting' | 'isRevision' | 'isFinalApproval' | 'isFinalProgram'>;
 
 type FileUploadChecklistItem = {
@@ -481,11 +485,34 @@ export function DigitizingTable() {
       return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
     }
   }, []);
+  
+  const processedLeads = useMemo(() => {
+    if (!leads) return [];
+
+    const groupedByCustomer = new Map<string, Lead[]>();
+    leads.forEach(lead => {
+        const name = lead.customerName.toLowerCase();
+        if (!groupedByCustomer.has(name)) {
+            groupedByCustomer.set(name, []);
+        }
+        groupedByCustomer.get(name)!.push(lead);
+    });
+    
+    const enrichedLeads: EnrichedLead[] = [];
+    groupedByCustomer.forEach((customerLeads) => {
+        customerLeads.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+        customerLeads.forEach((lead, index) => {
+            enrichedLeads.push({ ...lead, orderNumber: index + 1 });
+        });
+    });
+
+    return enrichedLeads;
+  }, [leads]);
 
   const filteredLeads = React.useMemo(() => {
-    if (!leads) return [];
+    if (!processedLeads) return [];
     
-    const leadsWithJo = leads.filter(lead => lead.joNumber && !lead.isDigitizingArchived);
+    const leadsWithJo = processedLeads.filter(lead => lead.joNumber && !lead.isDigitizingArchived);
 
     const filtered = leadsWithJo.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -517,7 +544,7 @@ export function DigitizingTable() {
         return aDeadline.remainingDays - bDeadline.remainingDays;
     });
 
-  }, [leads, searchTerm, joNumberSearch, priorityFilter, overdueFilter, formatJoNumber, calculateDigitizingDeadline]);
+  }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueFilter, formatJoNumber, calculateDigitizingDeadline]);
 
   const fileChecklistItems: FileUploadChecklistItem[] = useMemo(() => {
     if (!archiveConfirmLead) return [];
@@ -951,11 +978,22 @@ export function DigitizingTable() {
                   const hasTestImages = firstLayout?.testLogoLeftImage || firstLayout?.testLogoRightImage || firstLayout?.testBackLogoImage || firstLayout?.testBackDesignImage;
                   const hasFinalFiles = firstLayout?.finalLogoEmb?.some(f => f) || firstLayout?.finalBackDesignEmb?.some(f => f) || firstLayout?.finalLogoDst?.some(f => f) || firstLayout?.finalBackDesignDst?.some(f => f) || firstLayout?.finalNamesDst?.some(f => f) || firstLayout?.sequenceLogo?.some(f => f) || firstLayout?.sequenceBackDesign?.some(f => f);
                   const hasLayoutImages = lead.layouts?.some(l => l.layoutImage);
+                  const isRepeat = lead.orderNumber > 1;
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
                       <TableCell className="font-medium text-xs align-top py-3 text-black">
                         {lead.customerName}
+                        {isRepeat ? (
+                            <div className="flex items-center gap-1.5 mt-1">
+                                <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                {lead.orderNumber}
+                                </span>
+                            </div>
+                            ) : (
+                            <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                        )}
                       </TableCell>
                       <TableCell className="text-xs align-top py-3 text-black">{lead.salesRepresentative}</TableCell>
                       <TableCell className="align-top py-3">
@@ -1036,7 +1074,7 @@ export function DigitizingTable() {
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <Button
-                            variant="ghost"
+                            variant="secondary"
                             size="sm"
                             onClick={() => toggleLeadDetails(lead.id)}
                             className="h-7 px-2 text-black hover:bg-gray-200"
