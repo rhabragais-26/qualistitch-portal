@@ -468,7 +468,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
                             className="w-24 text-center font-bold bg-gray-100"
                         />
                         <Button type="button" variant="outline" onClick={() => setIsQuantityDialogOpen(true)} disabled={!foundLead}>
-                            Set Quantities
+                            Select Items with Related Case
                         </Button>
                     </div>
                     <FormMessage />
@@ -602,10 +602,11 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
         const validItems = items.filter(item => item.productType && item.color && item.size && item.quantity > 0);
         onSave(validItems);
     };
-
+    
     const handleOpenChange = (id: string, open: boolean) => {
         setOpenDropdown(open ? id : null);
     };
+
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -630,7 +631,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                         <TableBody>
                             {items.map(item => (
                                 <TableRow key={item.id}>
-                                    <TableCell className="w-[200px]">
+                                    <TableCell>
                                         <Select 
                                             value={item.productType} 
                                             onValueChange={(v) => updateItem(item.id, 'productType', v)}
@@ -641,7 +642,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             <SelectContent>{availableOptions.productTypes.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
-                                    <TableCell className="w-[150px]">
+                                    <TableCell>
                                         <Select 
                                             value={item.color} 
                                             onValueChange={(v) => updateItem(item.id, 'color', v)}
@@ -652,7 +653,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             <SelectContent>{availableOptions.colors.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
-                                    <TableCell className="w-[100px]">
+                                    <TableCell>
                                         <Select 
                                             value={item.size} 
                                             onValueChange={(v) => updateItem(item.id, 'size', v)}
