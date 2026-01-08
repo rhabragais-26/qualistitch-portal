@@ -62,6 +62,8 @@ type Lead = {
   sewerType?: ProductionType;
   isDone?: boolean;
   operationalCase?: OperationalCase; // Added for join
+  shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  shippedTimestamp?: string;
 }
 
 type OperationalCase = {
@@ -104,6 +106,10 @@ export function OrderStatusTable() {
   };
 
   const calculateDeadline = (lead: Lead) => {
+    if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
+        return { text: `Shipped: ${formatDateTime(lead.shippedTimestamp).dateTimeShort}`, isOverdue: false, isUrgent: false, remainingDays: Infinity };
+    }
+
     const submissionDate = new Date(lead.submissionDateTime);
     const deadlineDays = lead.priorityType === 'Rush' ? 7 : 22;
     const deadlineDate = addDays(submissionDate, deadlineDays);
@@ -329,7 +335,7 @@ export function OrderStatusTable() {
                               <Badge variant={productionStatus.variant as any}>{productionStatus.text}</Badge>
                             </TableCell>
                             <TableCell className="text-center text-xs align-middle py-2 font-medium">
-                                <Badge variant="secondary">Pending</Badge>
+                                <Badge variant="secondary">{lead.shipmentStatus || 'Pending'}</Badge>
                             </TableCell>
                             <TableCell className="text-center text-xs align-middle py-2 font-medium">
                                 {lead.operationalCase ? (
@@ -426,5 +432,3 @@ export function OrderStatusTable() {
     </Card>
   );
 }
-
-    

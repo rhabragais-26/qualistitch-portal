@@ -171,6 +171,16 @@
             "format": "date-time",
             "description": "Timestamp for when the digitizing process was archived."
         },
+        "shipmentStatus": {
+          "type": "string",
+          "enum": ["Pending", "Packed", "Shipped", "Delivered", "Cancelled"],
+          "description": "The shipment status of the order."
+        },
+        "shippedTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp for when the order was shipped."
+        },
         "orders": {
           "type": "array",
           "items": {
