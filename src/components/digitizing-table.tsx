@@ -18,7 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { ChangeEvent, useMemo, useState, useCallback } from 'react';
+import React, { ChangeEvent, useMemo, useState, useCallback, useRef } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X } from 'lucide-react';
