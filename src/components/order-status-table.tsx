@@ -381,7 +381,7 @@ export function OrderStatusTable() {
                     <TableHead className="text-white font-bold align-middle w-[250px]">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[120px]">Order Type</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[150px]">Ordered Items</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle w-[400px]">Progress</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[400px]">Order Fulfillment Progress</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Deadline</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Operational Case</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[120px]">Overall Status</TableHead>
@@ -452,14 +452,15 @@ export function OrderStatusTable() {
                                 <div className="flex flex-col gap-2">
                                     <div className="relative pt-4">
                                         <div
-                                            className="absolute top-[-2px] px-2 py-1 text-xs text-white font-bold bg-[#333] rounded-md shadow-lg"
+                                            className="absolute top-[-2px] px-2 py-1 text-xs text-white font-bold bg-[hsl(var(--chart-1))] rounded-md shadow-lg"
                                             style={{
                                                 left: `${Math.min(progress, 100)}%`,
                                                 transform: 'translateX(-50%)',
+                                                display: progress > 0 ? 'block' : 'none',
                                             }}
                                         >
                                             {progress}%
-                                            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-[4px] border-t-[#333]"></div>
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-[4px] border-t-[hsl(var(--chart-1))]"></div>
                                         </div>
                                         <div className="h-2 w-full bg-gray-300 rounded-full overflow-hidden mt-4">
                                             <div
