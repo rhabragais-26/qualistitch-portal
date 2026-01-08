@@ -1,4 +1,3 @@
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -69,7 +68,7 @@ const programmingStatusOptions = [
     'Pending Initial Program'
 ];
 
-export function ProdPreparationTable() {
+export function ItemPreparationTable() {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
@@ -260,9 +259,9 @@ export function ProdPreparationTable() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-black">Production Preparation</CardTitle>
+            <CardTitle className="text-black">Item Preparation for Production</CardTitle>
             <CardDescription className="text-gray-600">
-              Job orders ready for production preparation.
+              Job orders ready for item preparation for production.
             </CardDescription>
           </div>
           <div className="flex items-center gap-4">
