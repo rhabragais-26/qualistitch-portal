@@ -609,16 +609,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       <FormItem className="relative">
                         <div className="flex items-center gap-2">
                           <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
-                            {customerStatus === 'Repeat' && (
-                                <span className="bg-neutral-800 rounded-md px-2 py-1 text-xs">
-                                    <span className="shining-metal font-bold">(Repeat Buyer)</span>
-                                </span>
-                            )}
-                            {customerStatus === 'New' && (
-                                <span className="border border-blue-500 rounded-md px-2 py-1 text-xs text-black font-bold">
-                                    (New Customer)
-                                </span>
-                            )}
                         </div>
                         <FormControl>
                           <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} />
@@ -758,6 +748,18 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               
               {/* Right Column */}
               <div className="w-1/2 flex flex-col gap-y-3">
+                <div className='flex justify-end mb-2'>
+                    {customerStatus === 'Repeat' && (
+                        <span className="bg-neutral-800 rounded-md px-2 py-1 text-xs">
+                        <span className="shining-metal font-bold">(Repeat Buyer)</span>
+                        </span>
+                    )}
+                    {customerStatus === 'New' && (
+                        <span className="border border-blue-500 rounded-md px-2 py-1 text-xs text-black font-bold">
+                        (New Customer)
+                        </span>
+                    )}
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="orderType" render={({field}) => (
                         <FormItem>
