@@ -402,7 +402,7 @@ export function OrderStatusTable() {
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow className="border-b-2 border-gray-300">
-                            <TableCell className="font-medium align-top py-3 text-black text-sm">
+                            <TableCell className="font-medium align-middle py-3 text-black text-sm">
                                 <div className="flex items-center cursor-pointer font-bold" onClick={() => toggleCustomerDetails(lead.id)}>
                                     <span>{lead.customerName}</span>
                                     <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" data-state={openCustomerDetails === lead.id ? 'open' : 'closed'} />
@@ -434,7 +434,7 @@ export function OrderStatusTable() {
                                   </div>
                                 )}
                             </TableCell>
-                            <TableCell className="text-center align-top py-3">
+                            <TableCell className="text-center align-middle py-3">
                                <div className='flex flex-col items-center gap-1'>
                                 <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
                                     {lead.priorityType}
@@ -442,13 +442,13 @@ export function OrderStatusTable() {
                                 <div className="text-gray-500 text-[10px] mt-1 whitespace-nowrap">{lead.orderType}</div>
                                </div>
                             </TableCell>
-                            <TableCell className="text-center align-top py-3">
+                            <TableCell className="text-center align-middle py-3">
                                <div onClick={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100 mt-1">
                                     <span className="font-semibold text-sm">{totalQuantity} items</span>
                                     {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                                 </div>
                             </TableCell>
-                             <TableCell className="align-top py-3">
+                             <TableCell className="align-middle py-3">
                                 <div className="flex flex-col gap-2">
                                     <div className="relative pt-4">
                                         <div
@@ -489,12 +489,12 @@ export function OrderStatusTable() {
                                 </div>
                             </TableCell>
                             <TableCell className={cn(
-                              "text-center text-xs align-top py-3 font-medium",
+                              "text-center text-xs align-middle py-3 font-medium",
                               deadlineInfo.isOverdue && "text-red-500",
                               deadlineInfo.isUrgent && "text-amber-600",
                               !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
                             )}>{deadlineInfo.text}</TableCell>
-                            <TableCell className="text-center text-xs align-top py-3 font-medium">
+                            <TableCell className="text-center text-xs align-middle py-3 font-medium">
                                 {lead.operationalCase ? (
                                   <Popover>
                                     <PopoverTrigger asChild>
@@ -547,7 +547,7 @@ export function OrderStatusTable() {
                                     <span className="text-muted-foreground">-</span>
                                 )}
                             </TableCell>
-                            <TableCell className="text-center align-top py-3 font-medium">
+                            <TableCell className="text-center align-middle py-3 font-medium">
                                 <Badge variant={overallStatus.variant} className="uppercase rounded-md text-sm">{overallStatus.text}</Badge>
                             </TableCell>
                         </TableRow>
