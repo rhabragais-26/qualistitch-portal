@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -77,7 +78,7 @@ export function InventorySummaryTable() {
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [productTypeFilter, setProductTypeFilter] = React.useState('All');
   const [colorFilter, setColorFilter] = React.useState('All');
-  const [statusFilter, setStatusFilter] = React.useState('All Statuses');
+  const [statusFilter, setStatusFilter = React.useState('All Statuses');
   
   const inventoryQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -217,7 +218,7 @@ export function InventorySummaryTable() {
             </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-auto">
+      <CardContent className="flex-1 overflow-hidden">
         {isLoading ? (
           <div className="space-y-2 p-4">
             {[...Array(10)].map((_, i) => (
