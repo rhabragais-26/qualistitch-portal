@@ -1,3 +1,4 @@
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -16,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from './ui/button';
 import { Check, ChevronDown, Send } from 'lucide-react';
 import { Badge } from './ui/badge';
@@ -82,7 +83,7 @@ export function ItemPreparationTable() {
   const [leadToSend, setLeadToSend] = useState<Lead | null>(null);
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
 
-  const getProgrammingStatus = (lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
+  const getProgrammingStatus = useCallback((lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
     if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
     if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const };
     if (lead.isRevision) return { text: "Under Revision", variant: "destructive" as const };
@@ -91,9 +92,9 @@ export function ItemPreparationTable() {
     if (lead.isUnderProgramming) return { text: "Done Initial Program", variant: "default" as const };
     if (lead.joNumber) return { text: "Pending Initial Program", variant: "secondary" as const };
     return { text: "Pending J.O.", variant: "secondary" as const };
-  };
+  }, []);
 
-  const getContactDisplay = (lead: Lead) => {
+  const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
@@ -101,36 +102,20 @@ export function ItemPreparationTable() {
       return `${mobile} / ${landline}`;
     }
     return mobile || landline || null;
-  };
+  }, []);
 
-  const formatJoNumber = (joNumber: number | undefined) => {
+  const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-  };
+  }, []);
 
-  const handleOpenPreparedDialog = (lead: Lead) => {
+  const handleOpenPreparedDialog = useCallback((lead: Lead) => {
     setConfirmingLead(lead);
     setCheckedItems({});
-  };
+  }, []);
 
-  const handleConfirmPrepared = async () => {
-    if (!confirmingLead) return;
-    await handleUpdateStatus(confirmingLead.id, 'isPreparedForProduction');
-    setConfirmingLead(null);
-  };
-  
-  const handleCheckboxChange = (index: number, checked: boolean) => {
-    setCheckedItems(prev => ({ ...prev, [index]: checked }));
-  };
-
-  const areAllItemsChecked = useMemo(() => {
-    if (!confirmingLead) return false;
-    return confirmingLead.orders.length === Object.keys(checkedItems).filter(key => checkedItems[parseInt(key)]).length;
-  }, [confirmingLead, checkedItems]);
-
-
-  const handleUpdateStatus = async (leadId: string, field: 'isPreparedForProduction' | 'isSentToProduction') => {
+  const handleUpdateStatus = useCallback(async (leadId: string, field: 'isPreparedForProduction' | 'isSentToProduction') => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     
@@ -154,13 +139,28 @@ export function ItemPreparationTable() {
             description: e.message || "Could not update the status.",
         });
     }
-  };
+  }, [firestore, toast]);
 
-  const handleConfirmSendToProd = async () => {
+  const handleConfirmPrepared = useCallback(async () => {
+    if (!confirmingLead) return;
+    await handleUpdateStatus(confirmingLead.id, 'isPreparedForProduction');
+    setConfirmingLead(null);
+  }, [confirmingLead, handleUpdateStatus]);
+  
+  const handleCheckboxChange = useCallback((index: number, checked: boolean) => {
+    setCheckedItems(prev => ({ ...prev, [index]: checked }));
+  }, []);
+
+  const areAllItemsChecked = useMemo(() => {
+    if (!confirmingLead) return false;
+    return confirmingLead.orders.length === Object.keys(checkedItems).filter(key => checkedItems[parseInt(key)]).length;
+  }, [confirmingLead, checkedItems]);
+
+  const handleConfirmSendToProd = useCallback(async () => {
     if (!leadToSend) return;
     await handleUpdateStatus(leadToSend.id, 'isSentToProduction');
     setLeadToSend(null);
-  };
+  }, [leadToSend, handleUpdateStatus]);
 
 
   const jobOrders = React.useMemo(() => {
@@ -188,7 +188,7 @@ export function ItemPreparationTable() {
       
       return matchesSearch && matchesJo && matchesStatus;
     });
-  }, [leads, searchTerm, joNumberSearch, statusFilter]);
+  }, [leads, searchTerm, joNumberSearch, statusFilter, formatJoNumber, getProgrammingStatus]);
 
   if (isLoading) {
     return (
@@ -393,3 +393,5 @@ export function ItemPreparationTable() {
     </Card>
   );
 }
+
+    

@@ -80,6 +80,11 @@ export function DigitizingReportsSummary() {
   const isLoading = isLeadsLoading || isReportLoading;
   const error = leadsError || reportError;
 
+  const { statusSummary, overdueSummary } = useMemo(() => {
+    if (!reportData) return { statusSummary: [], overdueSummary: [] };
+    return reportData;
+  }, [reportData]);
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -105,8 +110,6 @@ export function DigitizingReportsSummary() {
   if (!reportData) {
      return <p>No data available to generate reports.</p>;
   }
-
-  const { statusSummary, overdueSummary } = reportData;
 
   return (
     <>
@@ -191,3 +194,5 @@ export function DigitizingReportsSummary() {
     </>
   );
 }
+
+    

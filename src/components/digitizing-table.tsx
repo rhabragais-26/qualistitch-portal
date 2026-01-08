@@ -18,7 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { ChangeEvent, useMemo, useState } from 'react';
+import React, { ChangeEvent, useMemo, useState, useCallback } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X } from 'lucide-react';
@@ -164,7 +164,53 @@ export function DigitizingTable() {
   const [archiveConfirmLead, setArchiveConfirmLead] = React.useState<Lead | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
   
-  const handleCheckboxChange = (leadId: string, field: CheckboxField, checked: boolean) => {
+  const updateStatus = useCallback(async (leadId: string, field: CheckboxField, value: boolean, showToast: boolean = true) => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', leadId);
+    const now = new Date().toISOString();
+
+    const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
+    
+    const updateData: { [key: string]: any } = { 
+        [field]: value,
+        [timestampField]: value ? now : null,
+        lastModified: now,
+    };
+
+    if (!value) {
+        const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
+        const currentIndex = sequence.indexOf(field);
+        if (currentIndex > -1) {
+            for (let i = currentIndex + 1; i < sequence.length; i++) {
+                const nextField = sequence[i];
+                if (nextField) {
+                  updateData[nextField] = false;
+                  const nextTimestampField = `${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
+                  updateData[nextTimestampField] = null;
+                }
+            }
+        }
+    }
+    
+    if (field === 'isFinalApproval' && value) {
+        // Do not uncheck revision, just disable it
+    }
+
+    try {
+      await updateDoc(leadDocRef, updateData);
+    } catch (e) {
+        console.error('Error updating status:', e);
+        if (e instanceof Error) {
+            toast({
+                variant: 'destructive',
+                title: 'Update Failed',
+                description: e.message || 'Could not update the status.',
+            });
+        }
+    }
+  }, [firestore, toast]);
+
+  const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, checked: boolean) => {
     const lead = leads?.find((l) => l.id === leadId);
     const isCurrentlyChecked = lead ? lead[field] : false;
 
@@ -200,12 +246,12 @@ export function DigitizingTable() {
         updateStatus(leadId, field, true);
       }
     }
-  };
+  }, [leads, updateStatus]);
 
-  const handleUploadDialogSave = async () => {
-    if (!uploadLeadId || !uploadField || !firestore) return;
+  const handleUploadDialogSave = useCallback(async () => {
+    if (!uploadLeadId || !uploadField || !firestore || !leads) return;
 
-    const lead = leads?.find(l => l.id === uploadLeadId);
+    const lead = leads.find(l => l.id === uploadLeadId);
     if (!lead) return;
 
     const currentLayouts = lead.layouts && lead.layouts.length > 0 ? [...lead.layouts] : [{}];
@@ -303,62 +349,16 @@ export function DigitizingTable() {
         description: e.message || 'Could not save the images and update status.',
       });
     }
-  };
+  }, [uploadLeadId, uploadField, firestore, leads, updateStatus, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign]);
 
-  const confirmUncheck = () => {
+  const confirmUncheck = useCallback(() => {
     if (uncheckConfirmation) {
       updateStatus(uncheckConfirmation.leadId, uncheckConfirmation.field, false);
       setUncheckConfirmation(null);
     }
-  };
+  }, [uncheckConfirmation, updateStatus]);
 
-  const updateStatus = async (leadId: string, field: CheckboxField, value: boolean, showToast: boolean = true) => {
-    if (!firestore) return;
-    const leadDocRef = doc(firestore, 'leads', leadId);
-    const now = new Date().toISOString();
-
-    const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
-    
-    const updateData: { [key: string]: any } = { 
-        [field]: value,
-        [timestampField]: value ? now : null,
-        lastModified: now,
-    };
-
-    if (!value) {
-        const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
-        const currentIndex = sequence.indexOf(field);
-        if (currentIndex > -1) {
-            for (let i = currentIndex + 1; i < sequence.length; i++) {
-                const nextField = sequence[i];
-                if (nextField) {
-                  updateData[nextField] = false;
-                  const nextTimestampField = `${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
-                  updateData[nextTimestampField] = null;
-                }
-            }
-        }
-    }
-    
-    if (field === 'isFinalApproval' && value) {
-        // Do not uncheck revision, just disable it
-    }
-
-    try {
-      await updateDoc(leadDocRef, updateData);
-    } catch (e) {
-        console.error('Error updating status:', e);
-        if (e instanceof Error) {
-            toast({
-                variant: 'destructive',
-                title: 'Update Failed',
-                description: e.message || 'Could not update the status.',
-            });
-        }
-    }
-  };
-
-  const handleImagePaste = (event: React.ClipboardEvent<HTMLDivElement>, imageSetter: React.Dispatch<React.SetStateAction<string>> | ((index: number, value: string) => void), index?: number) => {
+  const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, imageSetter: React.Dispatch<React.SetStateAction<string>> | ((index: number, value: string) => void), index?: number) => {
     const items = event.clipboardData.items;
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf('image') !== -1) {
@@ -378,9 +378,9 @@ export function DigitizingTable() {
         }
       }
     }
-  };
+  }, []);
 
-  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>, fileSetter: React.Dispatch<React.SetStateAction<string>> | ((index: number, value: string) => void), index?: number) => {
+  const handleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, fileSetter: React.Dispatch<React.SetStateAction<string>> | ((index: number, value: string) => void), index?: number) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -395,9 +395,9 @@ export function DigitizingTable() {
       };
       reader.readAsDataURL(file);
     }
-  };
+  }, []);
   
-  const handleMultipleFileUpload = (event: ChangeEvent<HTMLInputElement>, filesState: (string|null)[], setFilesState: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+  const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, filesState: (string|null)[], setFilesState: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
       const file = event.target.files?.[0];
       if (file) {
           const reader = new FileReader();
@@ -410,26 +410,26 @@ export function DigitizingTable() {
           };
           reader.readAsDataURL(file);
       }
-  };
+  }, []);
 
 
-  const addFile = (filesState: (string|null)[], setFilesState: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+  const addFile = useCallback((filesState: (string|null)[], setFilesState: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
     setFilesState([...filesState, null]);
-  };
+  }, []);
 
-  const removeFile = (filesState: (string|null)[], setFilesState: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+  const removeFile = useCallback((filesState: (string|null)[], setFilesState: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
       const newFiles = [...filesState];
       newFiles.splice(index, 1);
       setFilesState(newFiles);
-  };
+  }, []);
 
 
-  const handleRemoveImage = (e: React.MouseEvent, imageSetter: React.Dispatch<React.SetStateAction<string>>) => {
+  const handleRemoveImage = useCallback((e: React.MouseEvent, imageSetter: React.Dispatch<React.SetStateAction<string>>) => {
     e.stopPropagation();
     imageSetter('');
-  };
+  }, []);
 
-  const handleConfirmArchive = async () => {
+  const handleConfirmArchive = useCallback(async () => {
     if (!archiveConfirmLead || !firestore) return;
     try {
         const leadDocRef = doc(firestore, 'leads', archiveConfirmLead.id);
@@ -450,20 +450,20 @@ export function DigitizingTable() {
             description: e.message || 'Could not archive the project.',
         });
     }
-  };
+  }, [archiveConfirmLead, firestore, toast]);
 
 
-  const toggleLeadDetails = (leadId: string) => {
+  const toggleLeadDetails = useCallback((leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
-  };
+  }, [openLeadId]);
   
-  const formatJoNumber = (joNumber: number | undefined) => {
+  const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-  };
+  }, []);
 
-  const calculateDigitizingDeadline = (lead: Lead) => {
+  const calculateDigitizingDeadline = useCallback((lead: Lead) => {
     if (lead.isFinalProgram) {
       return { text: 'Completed', isOverdue: false, isUrgent: false, remainingDays: Infinity };
     }
@@ -480,7 +480,7 @@ export function DigitizingTable() {
     } else {
       return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
     }
-  };
+  }, []);
 
   const filteredLeads = React.useMemo(() => {
     if (!leads) return [];
@@ -517,7 +517,7 @@ export function DigitizingTable() {
         return aDeadline.remainingDays - bDeadline.remainingDays;
     });
 
-  }, [leads, searchTerm, joNumberSearch, priorityFilter, overdueFilter]);
+  }, [leads, searchTerm, joNumberSearch, priorityFilter, overdueFilter, formatJoNumber, calculateDigitizingDeadline]);
 
   const fileChecklistItems: FileUploadChecklistItem[] = useMemo(() => {
     if (!archiveConfirmLead) return [];
@@ -1201,3 +1201,5 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
+    

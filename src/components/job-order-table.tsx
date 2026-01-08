@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
@@ -66,6 +66,12 @@ export function JobOrderTable() {
     router.push(`/job-order/${lead.id}`);
   };
 
+  const formatJoNumber = useMemo(() => (joNumber: number | undefined) => {
+    if (!joNumber) return '';
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+  }, []);
+
   const filteredLeads = React.useMemo(() => {
     if (!leads) return [];
     
@@ -83,12 +89,6 @@ export function JobOrderTable() {
       return matchesSearch && matchesCsr;
     });
   }, [leads, searchTerm, csrFilter]);
-
-  const formatJoNumber = (joNumber: number | undefined) => {
-    if (!joNumber) return '';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-  };
 
   if (isLoading) {
     return (
@@ -206,3 +206,5 @@ export function JobOrderTable() {
     </Card>
   );
 }
+
+    

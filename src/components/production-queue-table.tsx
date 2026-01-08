@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Input } from './ui/input';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
@@ -63,20 +63,20 @@ export function ProductionQueueTable() {
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
   
-  const formatJoNumber = (joNumber: number | undefined) => {
+  const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-  };
+  }, []);
 
-  const getContactDisplay = (lead: Lead) => {
+  const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
     if (mobile && landline) return `${mobile} / ${landline}`;
     return mobile || landline || null;
-  };
+  }, []);
 
-  const handleStatusChange = async (leadId: string, field: ProductionCheckboxField, value: boolean) => {
+  const handleStatusChange = useCallback(async (leadId: string, field: ProductionCheckboxField, value: boolean) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
@@ -93,7 +93,7 @@ export function ProductionQueueTable() {
         description: e.message || "Could not update the status.",
       });
     }
-  };
+  }, [firestore, toast]);
 
   const productionQueue = useMemo(() => {
     if (!leads) return [];
@@ -112,7 +112,7 @@ export function ProductionQueueTable() {
       
       return matchesSearch && matchesJo;
     });
-  }, [leads, searchTerm, joNumberSearch]);
+  }, [leads, searchTerm, joNumberSearch, formatJoNumber]);
 
   if (isLoading) {
     return (
@@ -228,3 +228,5 @@ export function ProductionQueueTable() {
     </Card>
   );
 }
+
+    
