@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -87,8 +86,8 @@ export function Header({
   const getActiveMenuClass = (paths: string[]) => {
     const isActive = paths.some(path => pathname === path || (path !== '/' && pathname.startsWith(path)));
     return isActive
-      ? 'bg-white text-black hover:bg-white hover:text-black font-bold rounded-t-lg border-b-0 -mb-[2px] pb-[10px] z-10'
-      : 'text-neutral-100 hover:bg-accent hover:text-white';
+      ? 'text-primary border-b-4 border-primary'
+      : 'text-black';
   };
 
   const handleNavigation = (url: string) => {
@@ -118,11 +117,11 @@ export function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b-2 border-neutral-800 bg-neutral-800 text-neutral-100 no-print">
+      <header className="sticky top-0 z-40 w-full border-b bg-card text-black no-print">
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex items-center">
             <Link href="/" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/'); }}>
-              <span className={cn("font-bold font-headline flex items-baseline shining-metal from-neutral-300 via-white to-neutral-300 shining-text")}>
+              <span className={cn("font-bold font-headline flex items-baseline shining-metal from-neutral-800 via-neutral-600 to-neutral-800 shining-text")}>
                 <span className="text-3xl">Q</span>
                 <span className="text-2xl">UALISTITCH Inc.</span>
               </span>
@@ -132,7 +131,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className={cn("h-full", getActiveMenuClass(['/', '/records', '/job-order', '/reports']))}>
+                  <Button variant="ghost" className={cn("h-full font-bold", getActiveMenuClass(['/', '/records', '/job-order', '/reports']))}>
                     <PenSquare className="mr-2" />
                     Sales
                     <ChevronDown className="ml-2 h-4 w-4" />
@@ -161,7 +160,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-full", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports']))}>
+                   <Button variant="ghost" className={cn("h-full font-bold", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports']))}>
                       <ScanLine className="mr-2" />
                       Digitizing
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -182,7 +181,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-full", getActiveMenuClass(['/inventory/add-items', '/inventory/item-preparation-for-production', '/inventory/summary', '/inventory/reports', '/inventory/operational-cases']))}>
+                   <Button variant="ghost" className={cn("h-full font-bold", getActiveMenuClass(['/inventory/add-items', '/inventory/item-preparation-for-production', '/inventory/summary', '/inventory/reports', '/inventory/operational-cases']))}>
                       <Boxes className="mr-2" />
                       Inventory
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -215,7 +214,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-full", getActiveMenuClass(['/production/production-queue']))}>
+                   <Button variant="ghost" className={cn("h-full font-bold", getActiveMenuClass(['/production/production-queue']))}>
                       <Factory className="mr-2" />
                       Production
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -232,7 +231,7 @@ export function Header({
             {isClient && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-full", getActiveMenuClass(['/logistics/shipment-status', '/logistics/summary']))}>
+                   <Button variant="ghost" className={cn("h-full font-bold", getActiveMenuClass(['/logistics/shipment-status', '/logistics/summary']))}>
                       <Truck className="mr-2" />
                       Logistics
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -250,7 +249,7 @@ export function Header({
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className={cn("h-full", getActiveMenuClass(['/order-status']), "text-yellow-400 hover:bg-accent hover:text-white")}>
+            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className={cn("h-full font-bold", getActiveMenuClass(['/order-status']))}>
               <ListOrdered className="mr-2" />
               Overall Order Status
             </Button>
@@ -258,7 +257,7 @@ export function Header({
            <div className="flex items-center gap-4 ml-auto">
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2 text-neutral-100 hover:bg-accent hover:text-white">
+                  <Button variant="ghost" className="flex items-center gap-2 text-black hover:bg-accent/90 hover:text-white">
                     <Avatar className="h-8 w-8">
                         <AvatarFallback className="bg-primary text-primary-foreground">R</AvatarFallback>
                     </Avatar>
