@@ -271,7 +271,7 @@ export function OrderStatusTable() {
             </div>
             <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Filter by Overall Status:</span>
+                  <span className="text-sm font-medium text-gray-600 w-32 whitespace-nowrap">Filter by Overall Status:</span>
                   <Select value={overallStatusFilter} onValueChange={setOverallStatusFilter}>
                     <SelectTrigger className="w-auto bg-gray-100 text-black placeholder:text-gray-500">
                       <SelectValue placeholder="Filter by Overall Status" />
@@ -285,7 +285,7 @@ export function OrderStatusTable() {
                   </Select>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Filter by Overdue Status:</span>
+                  <span className="text-sm font-medium text-gray-600 w-36 whitespace-nowrap">Filter by Overdue Status:</span>
                   <Select value={overdueStatusFilter} onValueChange={setOverdueStatusFilter}>
                     <SelectTrigger className="w-auto bg-gray-100 text-black placeholder:text-gray-500">
                       <SelectValue placeholder="Filter by Overdue Status" />
@@ -331,7 +331,7 @@ export function OrderStatusTable() {
                     <TableHead className="text-center text-white font-bold align-middle">Production Status</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Shipment Status</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle">Operational Case</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Overall Status</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle uppercase">Overall Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -347,7 +347,7 @@ export function OrderStatusTable() {
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow>
-                            <TableCell className="font-bold align-top py-2 text-black w-[250px] text-base">
+                            <TableCell className="font-bold align-top py-2 text-black w-[250px] text-sm">
                               <div className="flex items-center cursor-pointer" onClick={() => toggleCustomerDetails(lead.id)}>
                                   <span>{lead.customerName}</span>
                                   <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" data-state={openCustomerDetails === lead.id ? 'open' : 'closed'} />
