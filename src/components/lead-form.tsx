@@ -242,6 +242,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     setValue('province', lead.province ? toTitleCase(lead.province) : '');
     setCustomerSuggestions([]);
     setCompanySuggestions([]);
+    setCitySuggestions([]);
+    setBarangaySuggestions([]);
   };
 
   const handleCitySuggestionClick = (city: { name: string; province: string }) => {
