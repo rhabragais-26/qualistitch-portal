@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -86,8 +87,8 @@ export function Header({
   const getActiveMenuClass = (paths: string[]) => {
     const isActive = paths.some(path => pathname === path || (path !== '/' && pathname.startsWith(path)));
     return isActive
-      ? 'text-primary border-b-4 border-primary'
-      : 'text-black';
+      ? 'bg-white text-black rounded-b-none rounded-t-lg border-b-0 -mb-[2px] pb-[10px] z-10'
+      : 'text-black hover:bg-white/70 hover:text-black';
   };
 
   const handleNavigation = (url: string) => {
@@ -383,3 +384,5 @@ export function Header({
     </>
   );
 }
+
+    
