@@ -25,7 +25,6 @@ import { ScrollArea } from './ui/scroll-area';
 import { differenceInDays, addDays } from 'date-fns';
 import { cn, formatDateTime } from '@/lib/utils';
 import { Badge } from './ui/badge';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -158,12 +157,12 @@ export function OrderStatusTable() {
 
   const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
     if (lead.isDone) {
-        return { text: 'Completed', variant: 'success' };
+        return { text: 'COMPLETED', variant: 'success' };
     }
     if (!lead.joNumber) {
-        return { text: 'Pending', variant: 'secondary' };
+        return { text: 'PENDING', variant: 'secondary' };
     }
-    return { text: 'Ongoing', variant: 'warning' };
+    return { text: 'ONGOING', variant: 'warning' };
   }, []);
 
 
@@ -278,9 +277,9 @@ export function OrderStatusTable() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All">All Statuses</SelectItem>
-                      <SelectItem value="Pending">Pending</SelectItem>
-                      <SelectItem value="Ongoing">Ongoing</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="PENDING">Pending</SelectItem>
+                      <SelectItem value="ONGOING">Ongoing</SelectItem>
+                      <SelectItem value="COMPLETED">Completed</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -297,12 +296,15 @@ export function OrderStatusTable() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Input
-                    placeholder="Search J.O. No..."
-                    value={joNumberSearch}
-                    onChange={(e) => setJoNumberSearch(e.target.value)}
-                    className="bg-gray-100 text-black placeholder:text-gray-500 w-40"
-                />
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-600">Search:</span>
+                    <Input
+                        placeholder="J.O. No..."
+                        value={joNumberSearch}
+                        onChange={(e) => setJoNumberSearch(e.target.value)}
+                        className="bg-gray-100 text-black placeholder:text-gray-500 w-40"
+                    />
+                </div>
                  <Input
                   placeholder="Search customer, company, or contact..."
                   value={searchTerm}
@@ -344,19 +346,17 @@ export function OrderStatusTable() {
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow>
-                            <TableCell className="font-bold text-base align-top py-2 text-black w-[250px]">
-                              <Collapsible open={openCustomerDetails === lead.id} onOpenChange={() => toggleCustomerDetails(lead.id)}>
-                                    <CollapsibleTrigger asChild>
-                                        <div className="flex items-center cursor-pointer">
-                                            <span>{lead.customerName}</span>
-                                            <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                        </div>
-                                    </CollapsibleTrigger>
-                                    <CollapsibleContent className="pt-2 text-gray-500 space-y-1 text-xs">
-                                        {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
-                                        {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
-                                    </CollapsibleContent>
-                                </Collapsible>
+                            <TableCell className="font-bold text-sm align-top py-2 text-black w-[250px]">
+                              <div className="flex items-center cursor-pointer" onClick={() => toggleCustomerDetails(lead.id)}>
+                                  <span>{lead.customerName}</span>
+                                  <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" data-state={openCustomerDetails === lead.id ? 'open' : 'closed'} />
+                              </div>
+                              {openCustomerDetails === lead.id && (
+                                  <div className="pt-2 text-gray-500 space-y-1 text-xs font-normal">
+                                      {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
+                                      {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
+                                  </div>
+                              )}
                             </TableCell>
                             <TableCell className="text-center text-xs align-middle py-2 font-medium">
                                 <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
@@ -442,35 +442,35 @@ export function OrderStatusTable() {
                                 )}
                             </TableCell>
                               <TableCell className="text-center text-xs align-middle py-2 font-medium">
-                                <Badge variant={overallStatus.variant}>{overallStatus.text}</Badge>
+                                <Badge variant={overallStatus.variant} className="rounded-md">{overallStatus.text}</Badge>
                             </TableCell>
                         </TableRow>
-                         {isCollapsibleOpen && (
+                        {isCollapsibleOpen && (
                           <TableRow>
-                              <TableCell colSpan={11}>
+                            <TableCell colSpan={11}>
                               <div className="p-2 bg-gray-50">
-                                  <Table>
+                                <Table>
                                   <TableHeader>
-                                      <TableRow>
+                                    <TableRow>
                                       <TableHead className="py-1 px-2 text-black font-bold">Product</TableHead>
                                       <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
                                       <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
                                       <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
-                                      </TableRow>
+                                    </TableRow>
                                   </TableHeader>
                                   <TableBody>
-                                      {lead.orders.map((order, index) => (
+                                    {lead.orders.map((order, index) => (
                                       <TableRow key={index} className="border-0">
-                                          <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
-                                          <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
-                                          <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
-                                          <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
                                       </TableRow>
-                                      ))}
+                                    ))}
                                   </TableBody>
-                                  </Table>
+                                </Table>
                               </div>
-                              </TableCell>
+                            </TableCell>
                           </TableRow>
                         )}
                     </React.Fragment>
