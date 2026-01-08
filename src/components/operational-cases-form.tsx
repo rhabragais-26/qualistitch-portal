@@ -75,7 +75,6 @@ type OperationalCase = {
   contactNumber?: string;
   landlineNumber?: string;
   caseItems: CaseItem[];
-  quantity?: number;
   isArchived?: boolean;
   isDeleted?: boolean;
 };
@@ -139,7 +138,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
       setFoundLead(leadForCase || null);
       setJoInput(editingCase.joNumber);
       setCaseItems(editingCase.caseItems || []);
-      const totalQuantity = editingCase.caseItems?.reduce((sum, item) => sum + item.quantity, 0) || editingCase.quantity || 0;
+      const totalQuantity = editingCase.caseItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
       setValue('joNumber', editingCase.joNumber);
       setValue('caseType', editingCase.caseType as any);
       setValue('quantity', totalQuantity);
@@ -152,8 +151,8 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
 
   useEffect(() => {
     const totalQuantity = caseItems.reduce((sum, item) => sum + item.quantity, 0);
-    setValue('quantity', totalQuantity);
-  }, [caseItems, setValue]);
+    setValue('quantity', totalQuantity, { shouldValidate: form.formState.isSubmitted });
+  }, [caseItems, setValue, form.formState.isSubmitted]);
 
 
   const formatJoNumber = (joNumber: number) => {
@@ -469,7 +468,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
                             value={caseItems.reduce((sum, item) => sum + item.quantity, 0)}
                             className="w-24 text-center font-bold bg-gray-100"
                         />
-                         <Button type="button" onClick={() => setIsQuantityDialogOpen(true)} disabled={!foundLead} variant="default" className="text-white font-bold">
+                         <Button type="button" onClick={() => setIsQuantityDialogOpen(true)} disabled={!foundLead} variant="default" className="text-white font-bold bg-primary hover:bg-primary/90">
                             Select Items with Related Case
                         </Button>
                     </div>
@@ -586,10 +585,12 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
     }, [leadOrders]);
     
     const getAvailableColors = (productType: string) => {
+        if (!productType) return [];
         return [...new Set(leadOrders.filter(o => o.productType === productType).map(o => o.color))];
     };
 
     const getAvailableSizes = (productType: string, color: string) => {
+        if (!productType || !color) return [];
         return [...new Set(leadOrders.filter(o => o.productType === productType && o.color === color).map(o => o.size))];
     };
 
@@ -664,7 +665,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             open={openDropdown === `${item.id}-productType`}
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-productType`, open)}
                                         >
-                                            <SelectTrigger className="w-full"><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>{availableProductTypes.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
@@ -676,7 +677,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-color`, open)}
                                             disabled={!item.productType}
                                         >
-                                            <SelectTrigger className="w-full"><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>
                                                 {getAvailableColors(item.productType).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                                             </SelectContent>
@@ -690,7 +691,7 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-size`, open)}
                                             disabled={!item.productType || !item.color}
                                         >
-                                            <SelectTrigger className="w-full"><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>
                                                 {getAvailableSizes(item.productType, item.color).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                                             </SelectContent>
