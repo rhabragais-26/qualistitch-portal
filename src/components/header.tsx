@@ -87,8 +87,8 @@ export function Header({
   const getActiveMenuClass = (paths: string[]) => {
     const isActive = paths.some(path => pathname === path || (path !== '/' && pathname.startsWith(path)));
     return isActive
-      ? 'bg-primary text-primary-foreground'
-      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80';
+      ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+      : 'bg-secondary text-secondary-foreground hover:bg-accent hover:text-white';
   };
 
   const handleNavigation = (url: string) => {
@@ -384,3 +384,5 @@ export function Header({
     </>
   );
 }
+
+    
