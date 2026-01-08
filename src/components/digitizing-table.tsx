@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -128,46 +129,46 @@ type FileUploadChecklistItem = {
 export function DigitizingTable() {
   const firestore = useFirestore();
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = React.useState('');
-  const [joNumberSearch, setJoNumberSearch] = React.useState('');
-  const [openLeadId, setOpenLeadId] = React.useState<string | null>(null);
-  const [priorityFilter, setPriorityFilter] = React.useState('All');
-  const [overdueFilter, setOverdueFilter] = React.useState('All');
-  const [uncheckConfirmation, setUncheckConfirmation] = React.useState<{ leadId: string; field: CheckboxField; } | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [joNumberSearch, setJoNumberSearch] = useState('');
+  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState('All');
+  const [overdueFilter, setOverdueFilter] = useState('All');
+  const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField; } | null>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = React.useState(false);
-  const [uploadLeadId, setUploadLeadId] = React.useState<string | null>(null);
-  const [uploadField, setUploadField] = React.useState<CheckboxField | null>(null);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [uploadLeadId, setUploadLeadId] = useState<string | null>(null);
+  const [uploadField, setUploadField] = useState<CheckboxField | null>(null);
   
-  const [logoLeftImage, setLogoLeftImage] = React.useState<string>('');
-  const [logoRightImage, setLogoRightImage] = React.useState<string>('');
-  const [backLogoImage, setBackLogoImage] = React.useState<string>('');
-  const [backDesignImage, setBackDesignImage] = React.useState<string>('');
-  const logoLeftImageUploadRef = React.useRef<HTMLInputElement>(null);
-  const logoRightImageUploadRef = React.useRef<HTMLInputElement>(null);
-  const backLogoImageUploadRef = React.useRef<HTMLInputElement>(null);
-  const backDesignImageUploadRef = React.useRef<HTMLInputElement>(null);
+  const [logoLeftImage, setLogoLeftImage] = useState<string>('');
+  const [logoRightImage, setLogoRightImage] = useState<string>('');
+  const [backLogoImage, setBackLogoImage] = useState<string>('');
+  const [backDesignImage, setBackDesignImage] = useState<string>('');
+  const logoLeftImageUploadRef = useRef<HTMLInputElement>(null);
+  const logoRightImageUploadRef = useRef<HTMLInputElement>(null);
+  const backLogoImageUploadRef = useRef<HTMLInputElement>(null);
+  const backDesignImageUploadRef = useRef<HTMLInputElement>(null);
 
-  const [finalLogoEmb, setFinalLogoEmb] = React.useState<(string | null)[]>([null]);
-  const [finalBackDesignEmb, setFinalBackDesignEmb] = React.useState<(string | null)[]>([null]);
-  const [finalLogoDst, setFinalLogoDst] = React.useState<(string | null)[]>([null]);
-  const [finalBackDesignDst, setFinalBackDesignDst] = React.useState<(string | null)[]>([]);
-  const [finalNamesDst, setFinalNamesDst] = React.useState<(string | null)[]>([]);
-  const [sequenceLogo, setSequenceLogo] = React.useState<(string | null)[]>([null]);
-  const [sequenceBackDesign, setSequenceBackDesign] = React.useState<(string | null)[]>([null]);
+  const [finalLogoEmb, setFinalLogoEmb] = useState<(string | null)[]>([null]);
+  const [finalBackDesignEmb, setFinalBackDesignEmb] = useState<(string | null)[]>([null]);
+  const [finalLogoDst, setFinalLogoDst] = useState<(string | null)[]>([null]);
+  const [finalBackDesignDst, setFinalBackDesignDst] = useState<(string | null)[]>([]);
+  const [finalNamesDst, setFinalNamesDst] = useState<(string | null)[]>([]);
+  const [sequenceLogo, setSequenceLogo] = useState<(string | null)[]>([null]);
+  const [sequenceBackDesign, setSequenceBackDesign] = useState<(string | null)[]>([null]);
 
-  const finalLogoEmbUploadRefs = React.useRef<(HTMLInputElement | null)[]>([]);
-  const finalBackDesignEmbUploadRefs = React.useRef<(HTMLInputElement | null)[]>([]);
-  const finalLogoDstUploadRefs = React.useRef<(HTMLInputElement | null)[]>([]);
-  const finalBackDesignDstUploadRefs = React.useRef<(HTMLInputElement | null)[]>([]);
-  const finalNamesDstUploadRefs = React.useRef<(HTMLInputElement | null)[]>([]);
-  const sequenceLogoUploadRefs = React.useRef<(HTMLInputElement | null)[]>([]);
-  const sequenceBackDesignUploadRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  const finalLogoEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const finalBackDesignEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const finalLogoDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const finalBackDesignDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const finalNamesDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const sequenceLogoUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const sequenceBackDesignUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const [archiveConfirmLead, setArchiveConfirmLead] = React.useState<Lead | null>(null);
+  const [archiveConfirmLead, setArchiveConfirmLead] = useState<Lead | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
   
   const updateStatus = useCallback(async (leadId: string, field: CheckboxField, value: boolean, showToast: boolean = true) => {
@@ -991,6 +992,7 @@ export function DigitizingTable() {
                   const hasFinalFiles = firstLayout?.finalLogoEmb?.some(f => f) || firstLayout?.finalBackDesignEmb?.some(f => f) || firstLayout?.finalLogoDst?.some(f => f) || firstLayout?.finalBackDesignDst?.some(f => f) || firstLayout?.finalNamesDst?.some(f => f) || firstLayout?.sequenceLogo?.some(f => f) || firstLayout?.sequenceBackDesign?.some(f => f);
                   const hasLayoutImages = lead.layouts?.some(l => l.layoutImage);
                   const isRepeat = lead.orderNumber > 1;
+                  const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
@@ -1018,11 +1020,13 @@ export function DigitizingTable() {
                       </TableCell>
                       <TableCell className="text-xs align-top py-3 text-black">{lead.salesRepresentative}</TableCell>
                       <TableCell className="align-top py-3">
-                        <div>
+                        <div className="flex flex-col items-center gap-1">
                             <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                               {lead.priorityType}
                             </Badge>
-                            <div className="text-gray-500 text-[10px] mt-1 whitespace-nowrap">{lead.orderType}</div>
+                            <div className={cn("text-gray-500 text-[10px] whitespace-nowrap", specialOrderTypes.includes(lead.orderType) && "font-bold")}>
+                                {lead.orderType}
+                            </div>
                         </div>
                       </TableCell>
                       <TableCell className="font-medium text-xs align-top py-3 text-black whitespace-nowrap">{formatJoNumber(lead.joNumber)}</TableCell>
@@ -1263,3 +1267,5 @@ export function DigitizingTable() {
     </Card>
   );
 }
+
+    
