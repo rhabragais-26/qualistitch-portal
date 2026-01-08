@@ -270,8 +270,8 @@ export function OrderStatusTable() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-medium text-gray-600 w-24 leading-tight">Filter by Overall Status:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Filter by Overall Status:</span>
                   <Select value={overallStatusFilter} onValueChange={setOverallStatusFilter}>
                     <SelectTrigger className="w-auto bg-gray-100 text-black placeholder:text-gray-500">
                       <SelectValue placeholder="Filter by Overall Status" />
@@ -284,8 +284,8 @@ export function OrderStatusTable() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-medium text-gray-600 w-24 leading-tight">Filter by Overdue Status:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Filter by Overdue Status:</span>
                   <Select value={overdueStatusFilter} onValueChange={setOverdueStatusFilter}>
                     <SelectTrigger className="w-auto bg-gray-100 text-black placeholder:text-gray-500">
                       <SelectValue placeholder="Filter by Overdue Status" />
@@ -344,7 +344,7 @@ export function OrderStatusTable() {
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow>
-                            <TableCell className="font-medium text-xs align-top py-2 text-black w-[250px]">
+                            <TableCell className="font-bold text-base align-top py-2 text-black w-[250px]">
                               <Collapsible open={openCustomerDetails === lead.id} onOpenChange={() => toggleCustomerDetails(lead.id)}>
                                     <CollapsibleTrigger asChild>
                                         <div className="flex items-center cursor-pointer">
