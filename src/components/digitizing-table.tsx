@@ -34,6 +34,7 @@ import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 type NamedOrder = {
   name: string;
@@ -112,6 +113,7 @@ type Lead = {
 
 type EnrichedLead = Lead & {
   orderNumber: number;
+  totalCustomerQuantity: number;
 };
 
 type CheckboxField = keyof Pick<Lead, 'isUnderProgramming' | 'isInitialApproval' | 'isLogoTesting' | 'isRevision' | 'isFinalApproval' | 'isFinalProgram'>;
@@ -488,24 +490,34 @@ export function DigitizingTable() {
   
   const processedLeads = useMemo(() => {
     if (!leads) return [];
-
-    const groupedByCustomer = new Map<string, Lead[]>();
+  
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
+  
+    // First, group orders and calculate total quantities for each customer
     leads.forEach(lead => {
-        const name = lead.customerName.toLowerCase();
-        if (!groupedByCustomer.has(name)) {
-            groupedByCustomer.set(name, []);
-        }
-        groupedByCustomer.get(name)!.push(lead);
+      const name = lead.customerName.toLowerCase();
+      if (!customerOrderStats[name]) {
+        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+      }
+      customerOrderStats[name].orders.push(lead);
+      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+      customerOrderStats[name].totalQuantity += orderQuantity;
     });
-    
+  
     const enrichedLeads: EnrichedLead[] = [];
-    groupedByCustomer.forEach((customerLeads) => {
-        customerLeads.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-        customerLeads.forEach((lead, index) => {
-            enrichedLeads.push({ ...lead, orderNumber: index + 1 });
+  
+    // Now, create the enriched lead objects with order numbers
+    Object.values(customerOrderStats).forEach(({ orders, totalQuantity }) => {
+      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+      orders.forEach((lead, index) => {
+        enrichedLeads.push({
+          ...lead,
+          orderNumber: index + 1,
+          totalCustomerQuantity: totalQuantity,
         });
+      });
     });
-
+  
     return enrichedLeads;
   }, [leads]);
 
@@ -985,13 +997,22 @@ export function DigitizingTable() {
                       <TableCell className="font-medium text-xs align-top py-3 text-black">
                         {lead.customerName}
                         {isRepeat ? (
-                            <div className="flex items-center gap-1.5 mt-1">
-                                <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                {lead.orderNumber}
-                                </span>
-                            </div>
-                            ) : (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center gap-1.5 cursor-pointer">
+                                    <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                    <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                      {lead.orderNumber}
+                                    </span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
                             <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                         )}
                       </TableCell>

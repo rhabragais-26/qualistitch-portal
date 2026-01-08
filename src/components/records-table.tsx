@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
@@ -20,7 +19,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from './ui/badge';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, PlusCircle, Plus, Minus, Edit, Trash2 } from 'lucide-react';
 import {
@@ -43,6 +42,7 @@ import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { collection, query } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 const productTypes = [
   'Executive Jacket 1',
@@ -102,6 +102,7 @@ type Lead = {
 
 type EnrichedLead = Lead & {
   orderNumber: number;
+  totalCustomerQuantity: number;
 };
 
 export function RecordsTable() {
@@ -131,24 +132,34 @@ export function RecordsTable() {
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
-
-    const groupedByCustomer = new Map<string, Lead[]>();
+  
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
+  
+    // First, group orders and calculate total quantities for each customer
     leads.forEach(lead => {
-        const name = lead.customerName.toLowerCase();
-        if (!groupedByCustomer.has(name)) {
-            groupedByCustomer.set(name, []);
-        }
-        groupedByCustomer.get(name)!.push(lead);
+      const name = lead.customerName.toLowerCase();
+      if (!customerOrderStats[name]) {
+        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+      }
+      customerOrderStats[name].orders.push(lead);
+      const orderQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+      customerOrderStats[name].totalQuantity += orderQuantity;
     });
-    
+  
     const enrichedLeads: EnrichedLead[] = [];
-    groupedByCustomer.forEach((customerLeads) => {
-        customerLeads.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-        customerLeads.forEach((lead, index) => {
-            enrichedLeads.push({ ...lead, orderNumber: index + 1 });
+  
+    // Now, create the enriched lead objects with order numbers
+    Object.values(customerOrderStats).forEach(({ orders, totalQuantity }) => {
+      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+      orders.forEach((lead, index) => {
+        enrichedLeads.push({
+          ...lead,
+          orderNumber: index + 1,
+          totalCustomerQuantity: totalQuantity,
         });
+      });
     });
-
+  
     return enrichedLeads;
   }, [leads]);
   
@@ -172,9 +183,9 @@ export function RecordsTable() {
 
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
-  const toggleCustomerDetails = (leadId: string) => {
+  const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
-  };
+  }, [openCustomerDetails]);
 
   useEffect(() => {
     if (!searchTerm) {
@@ -183,10 +194,10 @@ export function RecordsTable() {
   }, [searchTerm]);
 
 
-  const handleOpenAddOrderDialog = (leadId: string) => {
+  const handleOpenAddOrderDialog = useCallback((leadId: string) => {
     setSelectedLeadId(leadId);
     setIsOrderDialogOpen(true);
-  };
+  }, []);
   
   const isPolo = newOrderProductType.includes('Polo Shirt');
   const isPatches = newOrderProductType === 'Patches';
@@ -208,15 +219,15 @@ export function RecordsTable() {
    }
  }, [isPatches]);
 
-  const resetAddOrderForm = () => {
+  const resetAddOrderForm = useCallback(() => {
     setNewOrderProductType('');
     setNewOrderColor('');
     setSizeQuantities(productSizes.map(size => ({ size, quantity: 0 })));
     setSelectedLeadId(null);
     setIsOrderDialogOpen(false);
-  }
+  }, []);
 
-  const handleAddOrder = async () => {
+  const handleAddOrder = useCallback(async () => {
     if (!selectedLeadId || !firestore) return;
 
     const isProductPatches = newOrderProductType === 'Patches';
@@ -272,9 +283,9 @@ export function RecordsTable() {
             description: 'Please enter a quantity for at least one size.',
         });
     }
-  };
+  }, [selectedLeadId, firestore, newOrderProductType, newOrderColor, sizeQuantities, toast, resetAddOrderForm]);
 
-  const handleSizeQuantityChange = (index: number, change: number) => {
+  const handleSizeQuantityChange = useCallback((index: number, change: number) => {
     setSizeQuantities(current =>
       current.map((item, i) =>
         i === index
@@ -282,9 +293,9 @@ export function RecordsTable() {
           : item
       )
     );
-  };
+  }, []);
   
-  const handleSizeQuantityInputChange = (index: number, value: string) => {
+  const handleSizeQuantityInputChange = useCallback((index: number, value: string) => {
     setSizeQuantities(current =>
       current.map((item, i) =>
         i === index
@@ -292,14 +303,14 @@ export function RecordsTable() {
           : item
       )
     );
-  };
+  }, []);
   
-  const handleOpenEditLeadDialog = (lead: Lead) => {
+  const handleOpenEditLeadDialog = useCallback((lead: Lead) => {
     setEditingLead(lead);
     setIsEditLeadDialogOpen(true);
-  }
+  }, []);
 
-  const handleEditLead = async (updatedLead: Partial<Lead>) => {
+  const handleEditLead = useCallback(async (updatedLead: Partial<Lead>) => {
     if (!editingLead || !firestore) return;
 
     const leadDocRef = doc(firestore, 'leads', editingLead.id);
@@ -323,18 +334,18 @@ export function RecordsTable() {
         description: e.message || "Could not update the lead.",
       });
     }
-  };
+  }, [editingLead, firestore, toast]);
 
-  const handleOpenEditDialog = (leadId: string, order: Order, index: number) => {
+  const handleOpenEditDialog = useCallback((leadId: string, order: Order, index: number) => {
     setEditingOrder({ leadId, order, index });
     setIsEditDialogOpen(true);
-  };
+  }, []);
   
-  const handleEditOrder = async (updatedOrder: Order) => {
-    if (!editingOrder || !firestore) return;
+  const handleEditOrder = useCallback(async (updatedOrder: Order) => {
+    if (!editingOrder || !firestore || !leads) return;
   
     const { leadId, index } = editingOrder;
-    const lead = leads?.find(l => l.id === leadId);
+    const lead = leads.find(l => l.id === leadId);
     if (!lead) return;
   
     const updatedOrders = [...lead.orders];
@@ -361,11 +372,11 @@ export function RecordsTable() {
         description: e.message || "Could not update the order.",
       });
     }
-  };
+  }, [editingOrder, firestore, leads, toast]);
   
-  const handleDeleteOrder = async (leadId: string, orderIndex: number) => {
-    if (!firestore) return;
-    const lead = leads?.find(l => l.id === leadId);
+  const handleDeleteOrder = useCallback(async (leadId: string, orderIndex: number) => {
+    if (!firestore || !leads) return;
+    const lead = leads.find(l => l.id === leadId);
     if (!lead) return;
   
     const orderToDelete = lead.orders[orderIndex];
@@ -389,9 +400,9 @@ export function RecordsTable() {
         description: e.message- "Could not delete the order.",
       });
     }
-  };
+  }, [firestore, leads, toast]);
 
-  const handleDeleteLead = async (leadId: string) => {
+  const handleDeleteLead = useCallback(async (leadId: string) => {
     if(!leadId || !firestore) return;
 
     const leadDocRef = doc(firestore, 'leads', leadId);
@@ -410,9 +421,9 @@ export function RecordsTable() {
         description: e.message || "Could not delete the lead.",
       });
     }
-  }
+  }, [firestore, toast]);
 
-  const getContactDisplay = (lead: Lead) => {
+  const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
@@ -420,7 +431,7 @@ export function RecordsTable() {
       return `${mobile} / ${landline}`;
     }
     return mobile || landline || null;
-  };
+  }, []);
 
   if (isLoading) {
     return (
@@ -508,12 +519,21 @@ export function RecordsTable() {
                           <div className='flex flex-col'>
                             <span className="font-medium">{lead.customerName}</span>
                             {isRepeat ? (
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                  <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                    {lead.orderNumber}
-                                  </span>
-                                </div>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="flex items-center gap-1.5 cursor-pointer">
+                                        <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                        <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                          {lead.orderNumber}
+                                        </span>
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               ) : (
                                 <span className="text-xs text-blue-600 font-semibold">New Customer</span>
                               )}
