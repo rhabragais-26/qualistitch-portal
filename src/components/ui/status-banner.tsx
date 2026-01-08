@@ -5,12 +5,13 @@ import { cn } from "@/lib/utils";
 
 type StatusBannerProps = {
   text: string;
-  backgroundColor: string;
+  backgroundColor?: string;
+  backgroundClassName?: string;
   textColor: string;
   className?: string;
 };
 
-export function StatusBanner({ text, backgroundColor, textColor, className }: StatusBannerProps) {
+export function StatusBanner({ text, backgroundColor, backgroundClassName, textColor, className }: StatusBannerProps) {
   return (
     <div className={cn("relative w-48 h-8", className)}>
       <svg
@@ -35,6 +36,7 @@ export function StatusBanner({ text, backgroundColor, textColor, className }: St
           rx="15"
           ry="15"
           fill={backgroundColor}
+          className={backgroundClassName}
           stroke="url(#gold-gradient)"
           strokeWidth="2"
         />

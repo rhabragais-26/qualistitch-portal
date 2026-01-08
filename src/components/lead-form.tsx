@@ -599,8 +599,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <div className="animate-in fade-in-down">
                       <StatusBanner 
                         text="Repeat Buyer" 
-                        backgroundColor="#A37E2C"
-                        textColor="#0a0a0a"
+                        backgroundClassName="glowing-gold"
+                        textColor="#FFFFFF"
                       />
                     </div>
                   )}
