@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader } from './ui/card';
 import { X, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export function Calculator({ onClose }: { onClose: () => void }) {
+export function Calculator({ onClose, onDraggingChange }: { onClose: () => void, onDraggingChange: (isDragging: boolean) => void }) {
   const [input, setInput] = useState('');
   const [result, setResult] = useState<string | null>(null);
 
@@ -18,13 +18,17 @@ export function Calculator({ onClose }: { onClose: () => void }) {
   const dragStartPos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
+    onDraggingChange(isDragging);
+  }, [isDragging, onDraggingChange]);
+
+  useEffect(() => {
     // Center the calculator on initial render
     const centerX = window.innerWidth / 2 - 160; // 160 is half of 320px width
     const centerY = window.innerHeight / 2 - 240; // 240 is half of 480px height
     setPosition({ x: centerX, y: centerY });
   }, []);
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (headerRef.current && headerRef.current.contains(e.target as Node)) {
         setIsDragging(true);
         dragStartPos.current = {
@@ -32,20 +36,20 @@ export function Calculator({ onClose }: { onClose: () => void }) {
             y: e.clientY - position.y,
         };
     }
-  };
+  }, [position.x, position.y]);
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isDragging) {
       setPosition({
         x: e.clientX - dragStartPos.current.x,
         y: e.clientY - dragStartPos.current.y,
       });
     }
-  };
+  }, [isDragging]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
 
   useEffect(() => {
     if (isDragging) {
@@ -60,7 +64,7 @@ export function Calculator({ onClose }: { onClose: () => void }) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging]);
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const handleButtonClick = (value: string) => {
     if (result !== null) {
@@ -170,7 +174,7 @@ export function Calculator({ onClose }: { onClose: () => void }) {
   return (
     <div
       ref={cardRef}
-      className="fixed z-50"
+      className={cn("fixed z-50", isDragging && 'select-none')}
       style={{ left: `${position.x}px`, top: `${position.y}px` }}
       onMouseDown={handleMouseDown}
     >
@@ -212,5 +216,3 @@ export function Calculator({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
-
-    
