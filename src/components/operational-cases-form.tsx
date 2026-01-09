@@ -1,9 +1,10 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
@@ -98,7 +99,7 @@ type OperationalCasesFormProps = {
   onDirtyChange: (isDirty: boolean) => void;
 }
 
-export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete, onDirtyChange }: OperationalCasesFormProps) {
+const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete, onDirtyChange }: OperationalCasesFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const imageUploadRef = useRef<HTMLInputElement>(null);
@@ -565,7 +566,7 @@ export function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete
     )}
     </>
   );
-}
+});
 
 // Dialog component for setting quantities
 type QuantityDialogProps = {
@@ -735,3 +736,5 @@ function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialItems }: Q
         </Dialog>
     )
 }
+
+export { OperationalCasesFormMemo as OperationalCasesForm };

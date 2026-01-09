@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Edit, Save, Trash2, Plus, Minus } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -141,7 +141,7 @@ function EditItemDialog({
 }
 
 
-export function StagedItemsList({ items, onUpdateItem, onRemoveItem, onSaveAll }: StagedItemsListProps) {
+const StagedItemsListMemo = React.memo(function StagedItemsList({ items, onUpdateItem, onRemoveItem, onSaveAll }: StagedItemsListProps) {
     const [editingItem, setEditingItem] = useState<StagedItem | null>(null);
   
     return (
@@ -206,4 +206,6 @@ export function StagedItemsList({ items, onUpdateItem, onRemoveItem, onSaveAll }
         )}
       </Card>
     );
-}
+});
+
+export { StagedItemsListMemo as StagedItemsList };

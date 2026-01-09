@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
 import {
   Table,
@@ -36,6 +35,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 
 type NamedOrder = {
   name: string;
@@ -132,7 +132,7 @@ type FileUploadChecklistItem = {
   timestamp?: string | null;
 };
 
-export function DigitizingTable() {
+const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -1286,4 +1286,6 @@ export function DigitizingTable() {
       </CardContent>
     </Card>
   );
-}
+});
+
+export { DigitizingTableMemo as DigitizingTable };

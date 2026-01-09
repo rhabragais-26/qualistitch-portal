@@ -4,7 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import * as z from 'zod';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -71,7 +71,7 @@ type AddItemFormProps = {
     onAddItem: (item: Omit<StagedItem, 'id'>) => void;
 }
 
-export function AddItemForm({ onAddItem }: AddItemFormProps) {
+const AddItemFormMemo = React.memo(function AddItemForm({ onAddItem }: AddItemFormProps) {
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -264,4 +264,6 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
       </CardContent>
     </Card>
   );
-}
+});
+
+export { AddItemFormMemo as AddItemForm };

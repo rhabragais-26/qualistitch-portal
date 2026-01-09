@@ -1,5 +1,7 @@
+
 'use client';
 
+import React from 'react';
 import {
   Card,
   CardContent,
@@ -8,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-export function LogisticsSummary() {
+const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
@@ -24,4 +26,6 @@ export function LogisticsSummary() {
       </CardContent>
     </Card>
   );
-}
+});
+
+export { LogisticsSummaryMemo as LogisticsSummary };

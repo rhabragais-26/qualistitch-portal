@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -44,7 +45,7 @@ const paymentTypes = ['Partially Paid', 'Fully Paid', 'COD'];
 const orderTypes = ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'];
 const priorityTypes = ['Rush', 'Regular'];
 
-export function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
+const EditLeadDialogMemo = React.memo(function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   lead: Lead;
@@ -225,4 +226,6 @@ export function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: 
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+export { EditLeadDialogMemo as EditLeadDialog };

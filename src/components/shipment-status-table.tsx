@@ -1,5 +1,7 @@
+
 'use client';
 
+import React from 'react';
 import {
   Table,
   TableBody,
@@ -16,7 +18,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-export function ShipmentStatusTable() {
+const ShipmentStatusTableMemo = React.memo(function ShipmentStatusTable() {
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
@@ -49,4 +51,6 @@ export function ShipmentStatusTable() {
       </CardContent>
     </Card>
   );
-}
+});
+
+export { ShipmentStatusTableMemo as ShipmentStatusTable };

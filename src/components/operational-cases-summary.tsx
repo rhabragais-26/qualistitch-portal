@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -28,7 +29,7 @@ const COLORS = {
     'Replacement': 'hsl(var(--chart-3))',
 };
 
-const CasePieChart = ({ data, title }: { data: { name: string; quantity: number; fill: string }[], title: string }) => (
+const CasePieChart = React.memo(({ data, title }: { data: { name: string; quantity: number; fill: string }[], title: string }) => (
     <div className="w-full h-[250px]">
         <h3 className="text-center font-semibold text-lg mb-2">{title}</h3>
         <ChartContainer config={chartConfig} className="w-full h-full">
@@ -52,10 +53,11 @@ const CasePieChart = ({ data, title }: { data: { name: string; quantity: number;
             </ResponsiveContainer>
         </ChartContainer>
     </div>
-);
+));
+CasePieChart.displayName = 'CasePieChart';
 
 
-export function OperationalCasesSummary() {
+const OperationalCasesSummaryMemo = React.memo(function OperationalCasesSummary() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
 
@@ -126,4 +128,6 @@ export function OperationalCasesSummary() {
       </CardContent>
     </Card>
   );
-}
+});
+
+export { OperationalCasesSummaryMemo as OperationalCasesSummary };

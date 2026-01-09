@@ -44,7 +44,7 @@ type RecordedCasesListProps = {
   onEdit: (caseItem: OperationalCase) => void;
 };
 
-export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
+const RecordedCasesListMemo = React.memo(function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [caseToResolve, setCaseToResolve] = useState<OperationalCase | null>(null);
@@ -194,8 +194,8 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
                                   <div className="p-2 text-xs">
                                       <h4 className="font-bold mb-2">Item Breakdown</h4>
                                       <ul className="list-disc pl-4 space-y-1">
-                                          {caseItem.caseItems?.map(item => (
-                                              <li key={item.id}>{item.quantity}x {item.productType} ({item.color}, {item.size})</li>
+                                          {caseItem.caseItems?.map((item, index) => (
+                                              <li key={index}>{item.quantity}x {item.productType} ({item.color}, {item.size})</li>
                                           ))}
                                       </ul>
                                   </div>
@@ -342,6 +342,6 @@ export function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
       )}
     </>
   );
-}
+});
 
-    
+export { RecordedCasesListMemo as RecordedCasesList };
