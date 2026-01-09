@@ -490,9 +490,9 @@ export function RecordsTable() {
                     <TableHead className="text-white align-middle">Customer</TableHead>
                     <TableHead className="text-white align-middle">CSR</TableHead>
                     <TableHead className="text-center text-white align-middle">Priority</TableHead>
-                    <TableHead className="text-center text-white align-middle">Payment</TableHead>
                     <TableHead className="text-center text-white align-middle">Order Type</TableHead>
                     <TableHead className="text-center text-white align-middle">Courier</TableHead>
+                    <TableHead className="text-center text-white align-middle">Payment</TableHead>
                     <TableHead className="text-center text-white align-middle">Items</TableHead>
                     <TableHead className="text-center text-white align-middle">Actions</TableHead>
                   </TableRow>
@@ -507,8 +507,8 @@ export function RecordsTable() {
                          <Collapsible>
                             <CollapsibleTrigger asChild>
                                <div className="flex items-center cursor-pointer">
-                                  <div className="flex items-center">
-                                      <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                  <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                  <div className='flex items-center'>
                                       <span>{formatDateTime(lead.submissionDateTime).dateTime}</span>
                                   </div>
                                 </div>
@@ -562,9 +562,9 @@ export function RecordsTable() {
                           {lead.priorityType}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.paymentType}</TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.orderType}</TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.courier === '-' ? '' : lead.courier}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.paymentType}</TableCell>
                       <TableCell className="text-center align-middle py-2">
                         <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                           View
