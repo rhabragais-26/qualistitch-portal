@@ -119,7 +119,7 @@ export function OrderStatusTable() {
 
   const calculateDeadline = useCallback((lead: Lead) => {
     if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
-        return { text: `Shipped: ${formatDateTime(lead.shippedTimestamp).dateTimeShort}`, isOverdue: false, isUrgent: false, remainingDays: Infinity };
+        return { text: <><span className="font-bold">Shipped:</span> {formatDateTime(lead.shippedTimestamp).dateTimeShort}</>, isOverdue: false, isUrgent: false, remainingDays: Infinity };
     }
 
     const submissionDate = new Date(lead.submissionDateTime);
@@ -128,11 +128,11 @@ export function OrderStatusTable() {
     const remainingDays = differenceInDays(deadlineDate, new Date());
     
     if (remainingDays < 0) {
-      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
+      return { text: <><span className="font-bold">{Math.abs(remainingDays)} day(s)</span> overdue</>, isOverdue: true, isUrgent: false, remainingDays };
     } else if (remainingDays <= 3) {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
+      return { text: <><span className="font-bold">{remainingDays} day(s)</span> remaining</>, isOverdue: false, isUrgent: true, remainingDays };
     } else {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
+      return { text: <><span className="font-bold">{remainingDays} day(s)</span> remaining</>, isOverdue: false, isUrgent: false, remainingDays };
     }
   }, []);
 
@@ -381,7 +381,7 @@ export function OrderStatusTable() {
                     <TableHead className="text-white font-bold align-middle w-[250px]">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[120px]">Priority Type</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[150px]">Ordered Items</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle w-[400px]">Order Fulfillment Progress</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[500px]">Order Fulfillment Progress</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Deadline</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Operational Case</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[120px]">Overall Status</TableHead>
@@ -439,7 +439,7 @@ export function OrderStatusTable() {
                                 <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
                                     {lead.priorityType}
                                 </Badge>
-                                <div className="text-gray-500 text-xs mt-1 whitespace-nowrap text-[12px]">{lead.orderType}</div>
+                                <div className="text-gray-500 text-[12px] font-bold mt-1 whitespace-nowrap">{lead.orderType}</div>
                                </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
@@ -449,7 +449,7 @@ export function OrderStatusTable() {
                                 </div>
                             </TableCell>
                              <TableCell className="align-middle py-3">
-                                <div className="flex flex-col gap-2">
+                                <div className="flex flex-col gap-1">
                                     <div className="relative pt-4">
                                         <div
                                             className="absolute top-[-2px] px-2 py-1 text-xs text-white font-bold bg-[hsl(var(--chart-1))] rounded-md shadow-lg"
@@ -472,7 +472,7 @@ export function OrderStatusTable() {
                                     <div className="grid grid-cols-4 gap-2 text-xs">
                                         <div className="flex flex-col items-center gap-1">
                                             <p className="font-semibold text-gray-500">Programming</p>
-                                            <Badge variant={programmingStatus.variant as any} className="text-center justify-center">{programmingStatus.text}</Badge>
+                                            <Badge variant={programmingStatus.variant as any} className="text-center justify-center w-[120px] whitespace-normal break-words">{programmingStatus.text}</Badge>
                                         </div>
                                         <div className="flex flex-col items-center gap-1">
                                             <p className="font-semibold text-gray-500">Item Prep</p>
@@ -490,7 +490,7 @@ export function OrderStatusTable() {
                                 </div>
                             </TableCell>
                             <TableCell className={cn(
-                              "text-center text-xs align-middle py-3 font-medium",
+                              "text-center text-xs align-middle py-3",
                               deadlineInfo.isOverdue && "text-red-500",
                               deadlineInfo.isUrgent && "text-amber-600",
                               !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
