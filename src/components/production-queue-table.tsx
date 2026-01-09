@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
@@ -33,9 +34,6 @@ import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import Image from 'next/image';
-import JSZip from 'jszip';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 type Order = {
   productType: string;
@@ -604,62 +602,60 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
     });
   };
 
-  const handleDownload = (url: string, name: string) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async (url: string, name: string) => {
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const fileHandle = await (window as any).showSaveFilePicker({
+            suggestedName: name,
+        });
+        const writable = await fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+    } catch (err) {
+        console.error('File save failed:', err);
+    }
   };
 
   const handleDownloadAll = async () => {
-    const zip = new JSZip();
-    const filesToDownload = [...finalFiles];
+      try {
+        const dirHandle = await (window as any).showDirectoryPicker();
+        
+        const filesToDownload = [...finalFiles];
 
-    // Add layout image to zip if available
-    if(firstLayoutImage){
-      const response = await fetch(firstLayoutImage);
-      const blob = await response.blob();
-      zip.file('job-order-layout.png', blob);
-    }
-    
-    // Add sequence images to zip
-    const sequenceLogoFiles = lead.layouts?.[0]?.sequenceLogo?.filter((s): s is FileObject => !!s?.url);
-    if(sequenceLogoFiles){
-      for (const [index, file] of sequenceLogoFiles.entries()) {
-        const response = await fetch(file.url);
-        const blob = await response.blob();
-        zip.file(`sequence-logo-${index + 1}.png`, blob);
-      }
-    }
-    const sequenceBackFiles = lead.layouts?.[0]?.sequenceBackDesign?.filter((s): s is FileObject => !!s?.url);
-    if(sequenceBackFiles){
-      for (const [index, file] of sequenceBackFiles.entries()) {
-        const response = await fetch(file.url);
-        const blob = await response.blob();
-        zip.file(`sequence-back-${index + 1}.png`, blob);
-      }
-    }
-
-    // Add other final files
-    for (const file of filesToDownload) {
-        if(file) {
-            const response = await fetch(file.url);
-            const blob = await response.blob();
-            zip.file(file.name, blob);
+        if(firstLayoutImage){
+           filesToDownload.push({ name: 'job-order-layout.png', url: firstLayoutImage, type: 'Layout' });
         }
+        
+        const sequenceLogoFiles = lead.layouts?.[0]?.sequenceLogo?.filter((s): s is FileObject => !!s?.url);
+        if(sequenceLogoFiles){
+            sequenceLogoFiles.forEach((file, index) => {
+                filesToDownload.push({ name: `sequence-logo-${index + 1}.png`, url: file.url, type: 'Sequence' });
+            });
+        }
+
+        const sequenceBackFiles = lead.layouts?.[0]?.sequenceBackDesign?.filter((s): s is FileObject => !!s?.url);
+        if(sequenceBackFiles){
+            sequenceBackFiles.forEach((file, index) => {
+                filesToDownload.push({ name: `sequence-back-${index + 1}.png`, url: file.url, type: 'Sequence' });
+            });
+        }
+        
+        for (const file of filesToDownload) {
+            if(file) {
+                const response = await fetch(file.url);
+                const blob = await response.blob();
+                const fileHandle = await dirHandle.getFileHandle(file.name, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+            }
+        }
+    } catch (err) {
+        console.error('Download all failed:', err);
     }
-    
-    zip.generateAsync({ type: "blob" }).then(function(content) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(content);
-        link.download = `${lead.joNumber}-production-files.zip`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    });
   };
+
 
   return (
     <>
@@ -687,13 +683,12 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
             <h3 className="font-bold text-lg text-primary">Job Order Form</h3>
             <div className="flex items-center justify-center h-96 border rounded-md bg-gray-50 text-muted-foreground">
                 <Button onClick={handleJobOrderPrint} variant="secondary" size="lg" className="text-black">
-                    Generate and Print J.O. PDF
+                    Check Job Order and Layout
                 </Button>
             </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {lead.layouts?.some(l => l.sequenceLogo?.some(s => s?.url) || l.sequenceBackDesign?.some(s => s?.url)) && (
-            <div className="space-y-2">
+           <div className="space-y-2">
               <h3 className="font-bold text-lg text-primary">Sequence</h3>
               <div className="grid grid-cols-2 gap-2">
                 {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
@@ -704,8 +699,7 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
                 ))}
               </div>
             </div>
-          )}
-          {finalFiles.length > 0 && (
+          
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
@@ -723,7 +717,6 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
                 ))}
               </ul>
             </div>
-          )}
         </div>
       </div>
     </>

@@ -190,8 +190,7 @@ export default function JobOrderPage() {
   return (
     <div className="bg-white text-black min-h-screen">
       <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md z-50">
-        <div className="container mx-auto max-w-5xl flex justify-between items-center">
-            <div className="flex-1" />
+        <div className="container mx-auto max-w-5xl flex justify-center items-center">
             <div className="flex-1 flex justify-center items-center gap-2 min-w-[300px]">
                  <Button
                     variant="outline"
@@ -209,12 +208,6 @@ export default function JobOrderPage() {
                 >
                     Next
                     <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-            </div>
-             <div className="flex-1 flex justify-end gap-2">
-                <Button onClick={handlePrint} className="text-white font-bold" disabled={!lead?.joNumber}>
-                  <Printer className="mr-2 h-4 w-4" />
-                  Print
                 </Button>
             </div>
         </div>
