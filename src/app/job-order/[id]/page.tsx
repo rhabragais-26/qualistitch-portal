@@ -3,22 +3,16 @@
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, ChevronLeft, ChevronRight, Printer } from 'lucide-react';
+import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useMemo, useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useEffect, useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
 
 type DesignDetails = {
   left?: boolean;
@@ -145,10 +139,6 @@ export default function JobOrderPage() {
     }
   }, [lead, allLeads]);
 
-   const handlePrint = () => {
-    window.print();
-  };
-
   if (isLeadLoading || areAllLeadsLoading || !lead) {
     return (
       <div className="p-10 bg-white">
@@ -227,34 +217,11 @@ export default function JobOrderPage() {
                     <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                     <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                      <div className="flex items-center gap-2">
-                        <p><strong>Recipient's Name:</strong></p>
-                        <Input
-                            readOnly
-                            value={lead.recipientName}
-                            className="h-8 text-xs flex-1 no-print"
-                        />
-                        <span className="print-only">{lead.recipientName}</span>
+                        <p><strong>Recipient's Name:</strong> {lead.recipientName}</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <strong className='flex-shrink-0'>Delivery Date:</strong>
-                        <div className='w-full no-print'>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    disabled
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-[240px] justify-start text-left font-normal h-8 text-xs",
-                                        !deliveryDate && "text-muted-foreground"
-                                    )}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : <span>Pick a date</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                            </Popover>
-                        </div>
-                        <span className="print-only">{deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
+                        <p>{deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</p>
                     </div>
                 </div>
                 <div className="space-y-2">
@@ -262,25 +229,12 @@ export default function JobOrderPage() {
                     <p><strong>Type of Order:</strong> {lead.orderType}</p>
                     <div className="flex items-center gap-2">
                         <strong className='flex-shrink-0'>Courier:</strong>
-                        <div className='w-full no-print'>
-                        <Select value={lead.courier || 'Pick-up'} disabled>
-                            <SelectTrigger className="h-8 text-xs">
-                                <SelectValue />
-                            </SelectTrigger>
-                        </Select>
-                        </div>
-                        <span className="print-only">{lead.courier}</span>
+                        <p>{lead.courier}</p>
                     </div>
                     <p><strong>Contact No:</strong> {getContactDisplay()}</p>
                 </div>
                 <div className="col-span-2 mt-2 flex items-center gap-2">
-                    <p><strong>Delivery Address:</strong></p>
-                    <Input
-                        readOnly
-                        value={lead.location}
-                        className="h-8 text-xs flex-1 no-print"
-                    />
-                    <span className="print-only">{lead.location}</span>
+                    <p><strong>Delivery Address:</strong> {lead.location}</p>
                 </div>
             </div>
 
@@ -324,15 +278,7 @@ export default function JobOrderPage() {
                     <Checkbox className="mx-auto" checked={order.design?.backText || false} disabled />
                     </td>
                     <td className="border border-black p-0.5">
-                    <div className="no-print">
-                        <Textarea
-                        readOnly
-                        value={order.remarks}
-                        className="text-xs p-1 h-[30px]"
-                        placeholder="Add remarks..."
-                        />
-                    </div>
-                    <p className="print-only text-xs">{order.remarks}</p>
+                      <p className="text-xs">{order.remarks}</p>
                     </td>
                 </tr>
                 ))}
