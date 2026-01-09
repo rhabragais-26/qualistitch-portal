@@ -486,7 +486,7 @@ export function RecordsTable() {
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white align-middle">Date &amp; Time</TableHead>
+                    <TableHead className="text-white align-middle">Date & Time</TableHead>
                     <TableHead className="text-white align-middle">Customer</TableHead>
                     <TableHead className="text-white align-middle">CSR</TableHead>
                     <TableHead className="text-center text-white align-middle">Priority</TableHead>
@@ -515,7 +515,7 @@ export function RecordsTable() {
                               </div>
                             </CollapsibleTrigger>
                             <CollapsibleContent className="pt-1 text-gray-500 text-xs">
-                                <span className='font-bold text-gray-600'>Modified:</span>
+                                <span className='font-bold text-gray-600'>Last Modified:</span>
                                 <div>{formatDateTime(lead.lastModified).dateTime}</div>
                                 <div>{formatDateTime(lead.lastModified).dayOfWeek}</div>
                             </CollapsibleContent>
