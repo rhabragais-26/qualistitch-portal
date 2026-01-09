@@ -507,13 +507,13 @@ export function RecordsTable() {
                          <Collapsible>
                             <CollapsibleTrigger asChild>
                                <div className="flex items-center cursor-pointer">
-                                  <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                  <div>
-                                      <div>{formatDateTime(lead.submissionDateTime).dateTime}</div>
-                                      <div className="text-gray-500">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
+                                  <div className="flex items-center">
+                                      <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                      <span>{formatDateTime(lead.submissionDateTime).dateTime}</span>
                                   </div>
-                              </div>
+                                </div>
                             </CollapsibleTrigger>
+                             <div className="pl-5 text-gray-500">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
                             <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-xs">
                                 <span className='font-bold text-gray-600'>Last Modified:</span>
                                 <div>{formatDateTime(lead.lastModified).dateTime}</div>
