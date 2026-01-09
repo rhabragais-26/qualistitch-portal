@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
@@ -693,10 +694,14 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
                 <h3 className="font-bold text-lg text-primary">Sequence</h3>
                 <div className="grid grid-cols-2 gap-2">
                     {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
-                    <Image key={`seq-logo-${index}`} src={seq.url} alt={`Sequence Logo ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
+                    <div key={`seq-logo-${index}`} className="relative cursor-pointer" onClick={() => setImageInView(seq.url)}>
+                        <Image src={seq.url} alt={`Sequence Logo ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
+                    </div>
                     ))}
                     {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && seq.url && (
-                    <Image key={`seq-back-${index}`} src={seq.url} alt={`Sequence Back Design ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
+                     <div key={`seq-back-${index}`} className="relative cursor-pointer" onClick={() => setImageInView(seq.url)}>
+                        <Image src={seq.url} alt={`Sequence Back Design ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
+                    </div>
                     ))}
                 </div>
             </div>
@@ -728,6 +733,7 @@ ProductionDocuments.displayName = 'ProductionDocuments';
     
 
   
+
 
 
 
