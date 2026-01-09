@@ -81,6 +81,7 @@ export function Header({
   const [showExistingPassword, setShowExistingPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -119,6 +120,16 @@ export function Header({
     setNextUrl('');
   }, []);
 
+  const handleMenuOpenChange = (menuName: string, isOpen: boolean) => {
+    if (isOpen) {
+      setOpenMenu(menuName);
+    } else {
+      if (openMenu === menuName) {
+        setOpenMenu(null);
+      }
+    }
+  };
+
   return (
     <>
       <header className="sticky top-0 z-40 w-full border-b bg-black no-print">
@@ -133,7 +144,7 @@ export function Header({
           </div>
           <nav className="flex items-center gap-2 h-full">
             {isClient && (
-              <DropdownMenu>
+              <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/', '/records', '/job-order', '/reports']))}>
                     <TrendingUp className="mr-2" />
@@ -162,7 +173,7 @@ export function Header({
               </DropdownMenu>
             )}
             {isClient && (
-              <DropdownMenu>
+              <DropdownMenu open={openMenu === 'digitizing'} onOpenChange={(isOpen) => handleMenuOpenChange('digitizing', isOpen)}>
                 <DropdownMenuTrigger asChild>
                    <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports']))}>
                       <ScanLine className="mr-2" />
@@ -183,7 +194,7 @@ export function Header({
               </DropdownMenu>
             )}
             {isClient && (
-              <DropdownMenu>
+              <DropdownMenu open={openMenu === 'inventory'} onOpenChange={(isOpen) => handleMenuOpenChange('inventory', isOpen)}>
                 <DropdownMenuTrigger asChild>
                    <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/inventory/add-items', '/inventory/item-preparation-for-production', '/inventory/summary', '/inventory/reports', '/inventory/operational-cases']))}>
                       <Boxes className="mr-2" />
@@ -216,7 +227,7 @@ export function Header({
               </DropdownMenu>
             )}
             {isClient && (
-              <DropdownMenu>
+              <DropdownMenu open={openMenu === 'production'} onOpenChange={(isOpen) => handleMenuOpenChange('production', isOpen)}>
                 <DropdownMenuTrigger asChild>
                    <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/production/production-queue']))}>
                       <Cog className="mr-2" />
@@ -233,7 +244,7 @@ export function Header({
               </DropdownMenu>
             )}
             {isClient && (
-              <DropdownMenu>
+              <DropdownMenu open={openMenu === 'logistics'} onOpenChange={(isOpen) => handleMenuOpenChange('logistics', isOpen)}>
                 <DropdownMenuTrigger asChild>
                    <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/logistics/shipment-queue', '/logistics/summary']))}>
                       <Truck className="mr-2" />
