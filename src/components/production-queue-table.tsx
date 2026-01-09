@@ -91,12 +91,15 @@ type Lead = {
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
   isCutting?: boolean;
+  cuttingTimestamp?: string;
   isSewing?: boolean;
+  sewingTimestamp?: string;
   isTrimming?: boolean;
   isDone?: boolean;
   productionType?: ProductionType;
   sewerType?: ProductionType;
   isEmbroideryDone?: boolean;
+  embroideryDoneTimestamp?: string;
   isEndorsedToLogistics?: boolean;
   doneProductionTimestamp?: string;
   deliveryDate?: string;
@@ -136,10 +139,9 @@ const getStatusColor = (status?: ProductionType) => {
 
 const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success" | "warning" | "secondary" | "default" | "destructive" } => {
     if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
-    if (lead.isDone) return { text: "Done Production", variant: "success" };
-    if (lead.isSewing) return { text: "Ongoing with Sewer", variant: "warning" };
-    if (lead.isEmbroideryDone) return { text: "Ongoing Embroidery", variant: "warning" };
-    if(lead.isCutting) return { text: "Production Started", variant: "warning" };
+    if (lead.isSewing) return { text: "Done Production", variant: "success" };
+    if (lead.isEmbroideryDone) return { text: "Endorsed to Sewer", variant: "warning" };
+    if(lead.isCutting) return { text: "Ongoing Embroidery", variant: "warning" };
     return { text: "Pending", variant: "secondary" };
 };
 
@@ -196,10 +198,13 @@ export function ProductionQueueTable() {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     
-    const updateData: {[key:string]: any} = { [field]: value };
+    const now = new Date().toISOString();
+    const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
+    const updateData: {[key:string]: any} = { [field]: value, [timestampField]: now };
+
     if (field === 'isSewing' && value) {
       updateData.isDone = true;
-      updateData.doneProductionTimestamp = new Date().toISOString();
+      updateData.doneProductionTimestamp = now;
     }
 
     updateDoc(leadDocRef, updateData).catch((e: any) => {
@@ -217,18 +222,23 @@ export function ProductionQueueTable() {
     const { leadId, field } = uncheckConfirmation;
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
-        const updateData: {[key:string]: any} = { [field]: false };
+        const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
+        const updateData: {[key:string]: any} = { [field]: false, [timestampField]: null };
+
         if (field === 'isSewing') {
           updateData.isDone = false;
           updateData.doneProductionTimestamp = null;
         } else if (field === 'isEmbroideryDone') {
             updateData.isSewing = false;
+            updateData.sewingTimestamp = null;
             updateData.isDone = false;
             updateData.sewerType = 'Pending';
             updateData.doneProductionTimestamp = null;
         } else if (field === 'isCutting') {
           updateData.isEmbroideryDone = false;
+          updateData.embroideryDoneTimestamp = null;
           updateData.isSewing = false;
+          updateData.sewingTimestamp = null;
           updateData.isDone = false;
           updateData.productionType = 'Pending';
           updateData.sewerType = 'Pending';
@@ -495,10 +505,13 @@ export function ProductionQueueTable() {
                               </Button>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
-                               <Checkbox
-                                checked={lead.isCutting || false}
-                                onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
-                              />
+                               <div className="flex flex-col items-center justify-center gap-1">
+                                <Checkbox
+                                    checked={lead.isCutting || false}
+                                    onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
+                                />
+                                {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
+                               </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
                               <Select
@@ -517,11 +530,14 @@ export function ProductionQueueTable() {
                               </Select>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
-                               <Checkbox
-                                checked={lead.isEmbroideryDone || false}
-                                onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
-                                disabled={!lead.isCutting || !lead.productionType || lead.productionType === 'Pending'}
-                              />
+                               <div className="flex flex-col items-center justify-center gap-1">
+                                <Checkbox
+                                    checked={lead.isEmbroideryDone || false}
+                                    onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
+                                    disabled={!lead.isCutting || !lead.productionType || lead.productionType === 'Pending'}
+                                />
+                                {lead.embroideryDoneTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.embroideryDoneTimestamp).dateTimeShort}</div>}
+                               </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
                                <Select
@@ -540,11 +556,14 @@ export function ProductionQueueTable() {
                               </Select>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
-                              <Checkbox
-                                checked={lead.isSewing || false}
-                                onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
-                                disabled={!lead.isEmbroideryDone || !lead.sewerType || lead.sewerType === 'Pending'}
-                              />
+                              <div className="flex flex-col items-center justify-center gap-1">
+                                <Checkbox
+                                  checked={lead.isSewing || false}
+                                  onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
+                                  disabled={!lead.isEmbroideryDone || !lead.sewerType || lead.sewerType === 'Pending'}
+                                />
+                                {lead.sewingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
+                              </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
                                <Badge variant={productionStatus.variant}>{productionStatus.text}</Badge>
@@ -741,3 +760,4 @@ ProductionDocuments.displayName = 'ProductionDocuments';
 
 
     
+

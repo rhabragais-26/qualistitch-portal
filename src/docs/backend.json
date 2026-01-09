@@ -157,11 +157,14 @@
           "description": "The date and time when the order was sent to production."
         },
         "isCutting": { "type": "boolean", "description": "Indicates if the order is in the cutting stage." },
+        "cuttingTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when 'isCutting' was checked." },
         "productionType": { "type": "string", "enum": ["Pending", "In-house", "Outsource 1", "Outsource 2", "Outsource 3"], "description": "Indicates if production (cutting) is In-house or Outsourced." },
         "sewerType": { "type": "string", "enum": ["Pending", "In-house", "Outsource 1", "Outsource 2", "Outsource 3"], "description": "Indicates if sewing is In-house or Outsourced." },
         "isSewing": { "type": "boolean", "description": "Indicates if the order is in the sewing stage." },
+        "sewingTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when 'isSewing' was checked." },
         "isTrimming": { "type": "boolean", "description": "Indicates if the order is in the trimming stage." },
         "isDone": { "type": "boolean", "description": "Indicates if the order is completely done." },
+        "doneProductionTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the production is marked as done." },
         "isEndorsedToLogistics": { "type": "boolean", "description": "Indicates if the order has been endorsed to logistics." },
         "isDigitizingArchived": {
           "type": "boolean",
@@ -186,6 +189,7 @@
             "type": "boolean",
             "description": "Indicates if the embroidery for the order is done."
         },
+        "embroideryDoneTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when 'isEmbroideryDone' was checked." },
         "orders": {
           "type": "array",
           "items": {
