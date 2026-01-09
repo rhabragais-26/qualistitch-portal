@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -41,6 +40,20 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
   const [isDirty, setIsDirty] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<TabValue>('corporateJacket');
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
 
   useEffect(() => {
     const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -151,19 +164,19 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
             tabIndex={0}
             className={cn(
                 "relative group flex-1 rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-700/50 min-w-[600px]",
-                (!data || !data.image) && "border-2 border-dashed border-gray-600 p-4"
+                data && !data.image && "border-2 border-dashed border-gray-600 p-4"
             )}
             onDoubleClick={() => fileInputRef.current?.click()}
             onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
         >
-            {!data || !data.image ? (
+            {data && !data.image ? (
                 <>
                     <Upload className="h-10 w-10 mb-2" />
                     <p>Double-click to upload or paste image</p>
                 </>
             ) : (
                 <>
-                    <Image src={data.image} alt={`${tab} Size Chart`} layout="fill" objectFit="contain" />
+                    <Image src={data.image!} alt={`${tab} Size Chart`} layout="fill" objectFit="contain" />
                     <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeImage(tab)}>
                         <Trash2 className="h-4 w-4"/>
                     </Button>
@@ -218,7 +231,7 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="p-4 flex justify-center">
+        <CardFooter className="p-4 flex justify-center mt-4">
             <Button 
               onClick={handleSave} 
               disabled={!isDirty} 
