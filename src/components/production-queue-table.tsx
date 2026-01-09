@@ -73,13 +73,13 @@ const productionOptions: ProductionType[] = ["Pending", "In-house", "Outsource 1
 const getStatusColor = (status?: ProductionType) => {
   switch (status) {
     case 'In-house':
-      return 'bg-blue-100 text-blue-800';
+      return 'bg-pink-100 text-pink-800';
     case 'Outsource 1':
       return 'bg-purple-100 text-purple-800';
     case 'Outsource 2':
         return 'bg-indigo-100 text-indigo-800';
     case 'Outsource 3':
-        return 'bg-pink-100 text-pink-800';
+        return 'bg-blue-100 text-blue-800';
     case 'Pending':
     default:
       return 'bg-gray-100 text-gray-800';
@@ -271,7 +271,7 @@ export function ProductionQueueTable() {
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Ordered Items</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Production Category</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Embroidery</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Sewing</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Sewing Category</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
