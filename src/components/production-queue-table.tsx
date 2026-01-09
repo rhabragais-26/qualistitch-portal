@@ -60,7 +60,6 @@ type NamedOrder = {
 type FileObject = {
   name: string;
   url: string;
-  type: string;
 };
 
 type Layout = {
@@ -622,7 +621,11 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
       try {
         const dirHandle = await (window as any).showDirectoryPicker();
         
-        const filesToDownload = [...finalFiles];
+        const filesToDownload: { name: string; url: string; type: string; }[] = [];
+
+        if(finalFiles.length > 0) {
+            filesToDownload.push(...finalFiles.filter((f): f is FileObject & { type: string } => !!f));
+        }
 
         if(firstLayoutImage){
            filesToDownload.push({ name: 'job-order-layout.png', url: firstLayoutImage, type: 'Layout' });
@@ -681,8 +684,8 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
       )}
       <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 gap-6">
         <div className="space-y-2">
-            <h3 className="font-bold text-lg text-primary">Job Order Form</h3>
-            <Button onClick={handleJobOrderPrint} variant="secondary" size="lg" className="text-black">
+            <h3 className="font-bold text-lg text-primary">Job Order and Layout</h3>
+            <Button onClick={handleJobOrderPrint} variant="default" size="lg">
                 Check Job Order and Layout
             </Button>
         </div>
@@ -725,4 +728,5 @@ ProductionDocuments.displayName = 'ProductionDocuments';
     
 
   
+
 
