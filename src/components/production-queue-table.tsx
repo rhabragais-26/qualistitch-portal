@@ -128,7 +128,7 @@ export function ProductionQueueTable() {
     }
   }, [firestore, toast]);
   
-  const handleCheckboxChange = useCallback(async (leadId: string, field: 'isEmbroideryDone', value: boolean) => {
+  const handleCheckboxChange = useCallback(async (leadId: string, field: 'isEmbroideryDone' | 'isSewing', value: boolean) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
@@ -272,6 +272,7 @@ export function ProductionQueueTable() {
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Production Category</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Embroidery</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Sewing Category</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Sewing</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -372,6 +373,12 @@ export function ProductionQueueTable() {
                               ))}
                             </SelectContent>
                           </Select>
+                        </TableCell>
+                        <TableCell className="text-center align-middle">
+                          <Checkbox
+                            checked={lead.isSewing || false}
+                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
+                          />
                         </TableCell>
                     </TableRow>
                 )})}

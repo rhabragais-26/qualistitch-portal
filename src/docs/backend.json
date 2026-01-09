@@ -181,6 +181,10 @@
           "format": "date-time",
           "description": "Timestamp for when the order was shipped."
         },
+        "isEmbroideryDone": {
+            "type": "boolean",
+            "description": "Indicates if the embroidery for the order is done."
+        },
         "orders": {
           "type": "array",
           "items": {
