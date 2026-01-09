@@ -471,10 +471,6 @@ export function DigitizingTable() {
   }, []);
 
   const calculateDigitizingDeadline = useCallback((lead: Lead) => {
-    if (lead.isFinalProgram) {
-      return { text: 'Completed', isOverdue: false, isUrgent: false, remainingDays: Infinity };
-    }
-    
     const submissionDate = new Date(lead.submissionDateTime);
     const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
     const deadlineDate = addDays(submissionDate, deadlineDays);
