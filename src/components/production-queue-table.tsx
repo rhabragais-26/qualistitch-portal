@@ -226,12 +226,12 @@ export function ProductionQueueTable() {
             <Table>
                 <TableHeader className="bg-neutral-800">
                   <TableRow>
-                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs">Customer</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs">J.O. No.</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs">Priority</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs">Overdue Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs">Date Sent</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs">Ordered Items</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Customer</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">J.O. No.</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Priority</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Overdue Status</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Date Sent</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Ordered Items</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Cutting</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Sewing</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Trimming</TableHead>
@@ -244,10 +244,10 @@ export function ProductionQueueTable() {
                   const deadlineInfo = calculateProductionDeadline(lead);
                   return (
                     <TableRow key={lead.id}>
-                        <TableCell className="font-medium text-xs align-top py-3 text-black">
+                        <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
                           <Collapsible>
                             <CollapsibleTrigger asChild>
-                                <div className="flex items-center cursor-pointer">
+                                <div className="flex items-center justify-center cursor-pointer">
                                     <span>{lead.customerName}</span>
                                     <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
                                 </div>
@@ -261,7 +261,7 @@ export function ProductionQueueTable() {
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-1.5 cursor-pointer mt-1">
+                                    <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
                                       <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                       <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
                                         {lead.orderNumber}
@@ -277,23 +277,23 @@ export function ProductionQueueTable() {
                               <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                             )}
                         </TableCell>
-                        <TableCell className="text-xs align-top py-3 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
-                        <TableCell className="align-top py-3">
+                        <TableCell className="text-xs align-middle py-3 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
+                        <TableCell className="align-middle py-3 text-center">
                           <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                             {lead.priorityType}
                           </Badge>
                         </TableCell>
                         <TableCell className={cn(
-                          "text-center text-xs align-top py-3 font-medium",
+                          "text-center text-xs align-middle py-3 font-medium",
                           deadlineInfo.isOverdue && "text-red-600",
                           deadlineInfo.isUrgent && "text-amber-600",
                           !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
                         )}>
                           {deadlineInfo.text}
                         </TableCell>
-                        <TableCell className="text-xs align-top py-3 text-black">{formatDateTime(lead.submissionDateTime).dateTime}</TableCell>
-                        <TableCell className="text-xs align-top py-3 text-black">
-                          <ul className="space-y-1">
+                        <TableCell className="text-xs align-middle py-3 text-black text-center">{formatDateTime(lead.submissionDateTime).dateTime}</TableCell>
+                        <TableCell className="text-xs align-middle py-3 text-black">
+                          <ul className="space-y-1 text-center">
                             {lead.orders.map((order, index) => (
                               <li key={index}>
                                 {order.quantity}x {order.productType} ({order.color}, {order.size})
@@ -340,5 +340,3 @@ export function ProductionQueueTable() {
     </Card>
   );
 }
-
-    
