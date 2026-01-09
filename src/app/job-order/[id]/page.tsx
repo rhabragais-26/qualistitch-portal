@@ -266,16 +266,16 @@ export default function JobOrderPage() {
                     <td className="border border-black p-0.5 text-center">{order.size}</td>
                     <td className="border border-black p-0.5 text-center">{order.quantity}</td>
                     <td className="border border-black p-0.5 text-center">
-                        <Checkbox className="mx-auto" checked={order.design?.left || false} disabled />
+                        <Checkbox className="mx-auto pointer-events-none" checked={order.design?.left || false} />
                     </td>
                     <td className="border border-black p-0.5 text-center">
-                    <Checkbox className="mx-auto" checked={order.design?.right || false} disabled />
+                    <Checkbox className="mx-auto pointer-events-none" checked={order.design?.right || false} />
                     </td>
                     <td className="border border-black p-0.5 text-center">
-                    <Checkbox className="mx-auto" checked={order.design?.backLogo || false} disabled />
+                    <Checkbox className="mx-auto pointer-events-none" checked={order.design?.backLogo || false} />
                     </td>
                     <td className="border border-black p-0.5 text-center">
-                    <Checkbox className="mx-auto" checked={order.design?.backText || false} disabled />
+                    <Checkbox className="mx-auto pointer-events-none" checked={order.design?.backText || false} />
                     </td>
                     <td className="border border-black p-0.5">
                       <p className="text-xs">{order.remarks}</p>
