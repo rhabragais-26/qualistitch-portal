@@ -304,7 +304,7 @@ export function OrderStatusTable() {
              <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setImageInView(null)}
+                onClick={()={() => setImageInView(null)}
                 className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
             >
                 <X className="h-6 w-6" />
@@ -374,7 +374,7 @@ export function OrderStatusTable() {
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="text-white font-bold align-middle w-[250px]">Customer</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Priority Type</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[150px]">Priority Type</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[150px]">Ordered Items</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[500px]">Order Fulfillment Progress</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Deadline</TableHead>
@@ -426,23 +426,23 @@ export function OrderStatusTable() {
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
                                <div className='flex flex-col items-center gap-1'>
-                                <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'} className={cn(lead.priorityType === 'Rush' ? "hover:bg-red-500" : "hover:bg-secondary")}>
+                                <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                                     {lead.priorityType}
                                 </Badge>
                                 <div className="text-gray-500 text-base font-bold mt-1 whitespace-nowrap">{lead.orderType}</div>
                                </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
-                               <div onClick={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100 mt-1">
+                               <div onClick={()={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100 mt-1">
                                     <span className="font-semibold text-sm">{totalQuantity} items</span>
                                     {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                                 </div>
                             </TableCell>
                              <TableCell className="align-middle py-3">
-                                <div className="flex flex-col gap-1">
+                                <div className="border rounded-md p-2">
                                     <div className="relative pt-4">
                                         <div
-                                            className="absolute top-[-2px] px-2 py-1 text-xs text-white font-bold bg-[hsl(var(--chart-1))] rounded-md shadow-lg"
+                                            className="absolute top-0 px-2 py-1 text-xs text-white font-bold bg-[hsl(var(--chart-1))] rounded-md shadow-lg"
                                             style={{
                                                 left: `${Math.min(progress, 100)}%`,
                                                 transform: 'translateX(-50%)',
@@ -459,10 +459,10 @@ export function OrderStatusTable() {
                                             ></div>
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-4 gap-2 text-xs">
+                                    <div className="grid grid-cols-4 gap-2 text-xs mt-2">
                                         <div className="flex flex-col items-center gap-1">
                                             <p className="font-semibold text-gray-500">Programming</p>
-                                            <Badge variant={programmingStatus.variant as any} className="text-center justify-center w-[120px] whitespace-normal break-words">{programmingStatus.text}</Badge>
+                                            <Badge variant={programmingStatus.variant as any} className="text-center justify-center w-full whitespace-normal break-words">{programmingStatus.text}</Badge>
                                         </div>
                                         <div className="flex flex-col items-center gap-1">
                                             <p className="font-semibold text-gray-500">Item Prep</p>
@@ -519,7 +519,7 @@ export function OrderStatusTable() {
                                           <div className="flex-shrink-0 w-48 h-48">
                                             <div
                                               className="relative w-full h-full cursor-pointer"
-                                              onClick={() => setImageInView(lead.operationalCase!.image!)}
+                                              onClick={()={() => setImageInView(lead.operationalCase!.image!)}
                                             >
                                               <Image
                                                 src={lead.operationalCase.image}
@@ -581,3 +581,5 @@ export function OrderStatusTable() {
     </Card>
   );
 }
+
+    
