@@ -142,6 +142,12 @@ const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success
     return { text: "Pending", variant: "secondary" };
 };
 
+const formatJoNumber = (joNumber: number | undefined) => {
+    if (!joNumber) return '';
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+};
+
 
 export function ProductionQueueTable() {
   const firestore = useFirestore();
@@ -153,12 +159,6 @@ export function ProductionQueueTable() {
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
   
-  const formatJoNumber = useCallback((joNumber: number | undefined) => {
-    if (!joNumber) return '';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-  }, []);
-
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
@@ -341,7 +341,7 @@ export function ProductionQueueTable() {
       
       return matchesSearch && matchesJo;
     });
-  }, [processedLeads, searchTerm, joNumberSearch, formatJoNumber]);
+  }, [processedLeads, searchTerm, joNumberSearch]);
 
   if (isLoading) {
     return (
@@ -475,7 +475,7 @@ export function ProductionQueueTable() {
                             </TableCell>
                             <TableCell className={cn(
                               "text-center text-xs align-top py-3 font-medium",
-                              deadlineInfo.isOverdue && "text-red-600",
+                              deadlineInfo.isOverdue && "text-red-500",
                               deadlineInfo.isUrgent && "text-amber-600",
                               !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
                             )}>
@@ -556,7 +556,7 @@ export function ProductionQueueTable() {
                                     onClick={() => handleEndorseToLogistics(lead.id)}
                                     disabled={!lead.isDone}
                                     className={cn(
-                                        "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
+                                        "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
                                     )}
                                 >
                                     <Send className="h-3.5 w-3.5" />
