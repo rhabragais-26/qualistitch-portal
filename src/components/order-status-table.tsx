@@ -397,7 +397,7 @@ export function OrderStatusTable() {
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow className="border-b-2 border-gray-300">
-                            <TableCell className="font-medium align-middle py-3 text-black text-sm">
+                            <TableCell className="font-medium align-top py-3 text-black text-sm">
                                 <div className="font-bold">{lead.customerName}</div>
                                 <p className="text-xs text-gray-500 font-normal">{formatJoNumber(lead.joNumber)}</p>
                                 {isRepeat ? (
@@ -538,8 +538,8 @@ export function OrderStatusTable() {
                                     <span className="text-muted-foreground">-</span>
                                 )}
                             </TableCell>
-                            <TableCell className="text-center align-middle py-3 font-medium">
-                                <Badge variant={overallStatus.variant} className="uppercase rounded-md text-sm">{overallStatus.text}</Badge>
+                            <TableCell className="text-center align-middle p-1 font-medium">
+                                <Badge variant={overallStatus.variant} className="uppercase rounded-md text-sm w-full h-full flex items-center justify-center">{overallStatus.text}</Badge>
                             </TableCell>
                         </TableRow>
                         {isCollapsibleOpen && (
@@ -558,10 +558,10 @@ export function OrderStatusTable() {
                                   <TableBody>
                                     {lead.orders.map((order, index) => (
                                       <TableRow key={index} className="border-0">
-                                        <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black text-right">{order.quantity}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.productType}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.color}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.size}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-right align-middle">{order.quantity}</TableCell>
                                       </TableRow>
                                     ))}
                                   </TableBody>
