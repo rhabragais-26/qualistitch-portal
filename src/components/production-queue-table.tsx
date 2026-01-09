@@ -34,6 +34,8 @@ import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import Image from 'next/image';
 import JSZip from 'jszip';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 type Order = {
   productType: string;
@@ -591,6 +593,17 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
   
   const firstLayoutImage = lead.layouts?.find(l => l.layoutImage)?.layoutImage;
 
+  const handleJobOrderPrint = () => {
+    const jobOrderUrl = `/job-order/${lead.id}`;
+    const printWindow = window.open(jobOrderUrl, '_blank', 'height=800,width=1200');
+
+    printWindow?.addEventListener('load', () => {
+      setTimeout(() => {
+        printWindow?.print();
+      }, 500); // Delay to ensure content and styles are loaded
+    });
+  };
+
   const handleDownload = (url: string, name: string) => {
     const link = document.createElement('a');
     link.href = url;
@@ -671,19 +684,12 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
       )}
       <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
-          <h3 className="font-bold text-lg text-primary">Job Order Form Preview</h3>
-            {firstLayoutImage ? (
-                <div
-                className="relative w-full h-96 rounded-md border overflow-hidden cursor-pointer"
-                onClick={() => setImageInView(firstLayoutImage)}
-              >
-                <Image src={firstLayoutImage} alt="Job Order Layout" layout="fill" objectFit="contain" />
-              </div>
-            ) : (
-                <div className="flex items-center justify-center h-96 border rounded-md bg-gray-50 text-muted-foreground">
-                    No layout image available.
-                </div>
-            )}
+            <h3 className="font-bold text-lg text-primary">Job Order Form</h3>
+            <div className="flex items-center justify-center h-96 border rounded-md bg-gray-50 text-muted-foreground">
+                <Button onClick={handleJobOrderPrint} variant="secondary" size="lg" className="text-black">
+                    Generate and Print J.O. PDF
+                </Button>
+            </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {lead.layouts?.some(l => l.sequenceLogo?.some(s => s?.url) || l.sequenceBackDesign?.some(s => s?.url)) && (
