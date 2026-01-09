@@ -476,7 +476,7 @@ export function ProductionQueueTable() {
                                 size="sm"
                                 onClick={() => handleEndorseToLogistics(lead.id)}
                                 disabled={!lead.isDone}
-                                className={cn("h-8 text-white font-bold", !lead.isDone ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700")}
+                                className={cn("h-auto py-1.5 px-2 text-white font-bold whitespace-normal text-center", !lead.isDone ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700")}
                             >
                                 <Send className="mr-2 h-4 w-4" />
                                 Send to Logistics
