@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
@@ -93,8 +94,8 @@ const getStatusColor = (status?: ProductionType) => {
 
 const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success" | "warning" | "secondary" | "default" } => {
     if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
-    if (lead.isDone) return { text: "Done Production", variant: "success" };
-    if (lead.sewerType && lead.sewerType !== 'Pending') return { text: "Ongoing with Sewer", variant: "warning" };
+    if (lead.isSewing) return { text: "Done Production", variant: "success" };
+    if (lead.isEmbroideryDone) return { text: "Ongoing with Sewer", variant: "warning" };
     if (lead.productionType && lead.productionType !== 'Pending') return { text: "Ongoing Embroidery", variant: "warning" };
     return { text: "Pending", variant: "secondary" };
 };
@@ -150,7 +151,13 @@ export function ProductionQueueTable() {
     
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
-    updateDoc(leadDocRef, { [field]: value }).catch((e: any) => {
+    
+    const updateData: {[key:string]: any} = { [field]: value };
+    if (field === 'isSewing' && value) {
+      updateData.isDone = true;
+    }
+
+    updateDoc(leadDocRef, updateData).catch((e: any) => {
         console.error(`Error updating ${field}:`, e);
         toast({
             variant: 'destructive',
@@ -165,7 +172,11 @@ export function ProductionQueueTable() {
     const { leadId, field } = uncheckConfirmation;
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
-        await updateDoc(leadDocRef, { [field]: false });
+        const updateData: {[key:string]: any} = { [field]: false };
+        if (field === 'isSewing') {
+          updateData.isDone = false;
+        }
+        await updateDoc(leadDocRef, updateData);
     } catch (e: any) {
         console.error(`Error unchecking ${field}:`, e);
         toast({
@@ -177,25 +188,6 @@ export function ProductionQueueTable() {
         setUncheckConfirmation(null);
     }
   }, [uncheckConfirmation, firestore, toast]);
-
-  const handleDoneProduction = useCallback(async (leadId: string) => {
-    if (!firestore) return;
-    const leadDocRef = doc(firestore, 'leads', leadId);
-    try {
-        await updateDoc(leadDocRef, { isDone: true });
-        toast({
-            title: "Production Completed",
-            description: "The order has been marked as done.",
-        });
-    } catch (e: any) {
-        console.error("Error marking as done:", e);
-        toast({
-            variant: 'destructive',
-            title: "Update Failed",
-            description: e.message || "Could not mark the order as done.",
-        });
-    }
-  }, [firestore, toast]);
   
   const handleEndorseToLogistics = useCallback(async (leadId: string) => {
     if (!firestore) return;
