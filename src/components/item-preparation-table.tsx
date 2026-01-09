@@ -33,6 +33,7 @@ import { Label } from './ui/label';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
+import { addDays } from 'date-fns';
 
 type Order = {
   productType: string;
@@ -357,6 +358,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                   const isRepeat = lead.orderNumber > 1;
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
                   const numOrders = lead.orders.length;
+                  const programmingStatus = getProgrammingStatus(lead);
                   return (
                     <React.Fragment key={lead.id}>
                       {lead.orders.map((order, orderIndex) => (
@@ -403,7 +405,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                               )}
                               {orderIndex === 0 && (
                                   <TableCell rowSpan={numOrders + 1} className="align-top py-3 border-b-2 border-black">
-                                  <Badge variant={getProgrammingStatus(lead).variant as any}>{getProgrammingStatus(lead).text}</Badge>
+                                  <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
                                   </TableCell>
                               )}
                             <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
@@ -421,7 +423,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                               size="sm"
                                               onClick={() => handleOpenPreparedDialog(lead)}
                                               className="h-7 px-2"
-                                              disabled={!lead.isFinalProgram}
+                                              disabled={programmingStatus.text === 'Pending Initial Program'}
                                           >
                                               Prepared
                                           </Button>
@@ -470,6 +472,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
 
 
 
