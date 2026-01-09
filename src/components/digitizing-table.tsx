@@ -988,11 +988,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
-                    <TableHead className="text-white font-bold align-middle">Customer</TableHead>
-                    <TableHead className="text-white font-bold align-middle">CSR</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Priority</TableHead>
-                    <TableHead className="text-white font-bold align-middle whitespace-nowrap">J.O. No.</TableHead>
-                    <TableHead className="text-white font-bold align-middle">Overdue Status</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Customer</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">CSR</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center whitespace-nowrap">J.O. No.</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Overdue Status</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Initial Program</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Initial Approval</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Tested</span></TableHead>
@@ -1016,13 +1016,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
-                      <TableCell className="font-medium text-xs align-top py-3 text-black">
+                      <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
                         {lead.customerName}
                         {isRepeat ? (
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-1.5 cursor-pointer">
+                                  <div className="flex items-center justify-center gap-1.5 cursor-pointer">
                                     <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                     <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
                                       {lead.orderNumber}
@@ -1038,8 +1038,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                             <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                         )}
                       </TableCell>
-                      <TableCell className="text-xs align-top py-3 text-black">{lead.salesRepresentative}</TableCell>
-                      <TableCell className="align-top py-3">
+                      <TableCell className="text-xs align-middle py-3 text-black text-center">{lead.salesRepresentative}</TableCell>
+                      <TableCell className="align-middle py-3 text-center">
                         <div className="flex flex-col items-center gap-1">
                             <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                               {lead.priorityType}
@@ -1049,9 +1049,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                             </div>
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium text-xs align-top py-3 text-black whitespace-nowrap">{formatJoNumber(lead.joNumber)}</TableCell>
+                      <TableCell className="font-medium text-xs align-middle py-3 text-black whitespace-nowrap text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                        <TableCell className={cn(
-                          "text-center text-xs align-top py-3 font-medium",
+                          "text-center text-xs align-middle py-3 font-medium",
                           deadlineInfo.isOverdue && "text-red-600",
                           deadlineInfo.isUrgent && "text-amber-600",
                           !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
