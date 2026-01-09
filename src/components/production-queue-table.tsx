@@ -60,6 +60,7 @@ type NamedOrder = {
 type FileObject = {
   name: string;
   url: string;
+  type: string;
 };
 
 type Layout = {
@@ -678,44 +679,42 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
           </div>
         </div>
       )}
-      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-4">
+      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 gap-6">
+        <div className="space-y-2">
             <h3 className="font-bold text-lg text-primary">Job Order Form</h3>
-            <div className="flex items-center justify-center h-96 border rounded-md bg-gray-50 text-muted-foreground">
-                <Button onClick={handleJobOrderPrint} variant="secondary" size="lg" className="text-black">
-                    Check Job Order and Layout
-                </Button>
-            </div>
+            <Button onClick={handleJobOrderPrint} variant="secondary" size="lg" className="text-black">
+                Check Job Order and Layout
+            </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div className="space-y-2">
-              <h3 className="font-bold text-lg text-primary">Sequence</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
-                  <Image key={`seq-logo-${index}`} src={seq.url} alt={`Sequence Logo ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
-                ))}
-                {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && seq.url && (
-                  <Image key={`seq-back-${index}`} src={seq.url} alt={`Sequence Back Design ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
-                ))}
-              </div>
-            </div>
-          
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
-                <Button onClick={handleDownloadAll} size="sm" className="text-white font-bold"><Download className="mr-2 h-4 w-4" />Download All</Button>
-              </div>
-               <ul className="space-y-2 text-sm list-inside">
-                {finalFiles.map((file, index) => (
-                  file && 
-                  <li key={index} className="flex items-center justify-between p-2 bg-white rounded-md border">
-                    <span className="truncate"><strong>{file.type}:</strong> {file.name}</span>
-                    <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-8 w-8 text-primary">
-                        <Download className="h-4 w-4" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
+                <h3 className="font-bold text-lg text-primary">Sequence</h3>
+                <div className="grid grid-cols-2 gap-2">
+                    {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
+                    <Image key={`seq-logo-${index}`} src={seq.url} alt={`Sequence Logo ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
+                    ))}
+                    {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && seq.url && (
+                    <Image key={`seq-back-${index}`} src={seq.url} alt={`Sequence Back Design ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
+                    ))}
+                </div>
+            </div>
+            
+            <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                    <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
+                    <Button onClick={handleDownloadAll} size="sm" className="text-white font-bold"><Download className="mr-2 h-4 w-4" />Download All</Button>
+                </div>
+                <ul className="space-y-2 text-sm list-inside">
+                    {finalFiles.map((file, index) => (
+                    file && 
+                    <li key={index} className="flex items-center justify-between p-2 bg-white rounded-md border">
+                        <span className="truncate"><strong>{file.type}:</strong> {file.name}</span>
+                        <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-8 w-8 text-primary">
+                            <Download className="h-4 w-4" />
+                        </Button>
+                    </li>
+                    ))}
+                </ul>
             </div>
         </div>
       </div>
@@ -726,3 +725,4 @@ ProductionDocuments.displayName = 'ProductionDocuments';
     
 
   
+
