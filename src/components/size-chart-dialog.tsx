@@ -7,13 +7,28 @@ import { Card, CardContent, CardHeader, CardFooter } from './ui/card';
 import { X, GripVertical, Upload, Trash2, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const LOCAL_STORAGE_KEY = 'sizeChartData';
 
-type SizeChartData = {
-  image: string;
-  uploadTime: string;
+type SizeChartInfo = {
+  image: string | null;
+  uploadTime: string | null;
 };
+
+type SizeChartData = {
+  corporateJacket: SizeChartInfo;
+  bomberJacket: SizeChartInfo;
+  poloShirt: SizeChartInfo;
+};
+
+const initialSizeChartData: SizeChartData = {
+  corporateJacket: { image: null, uploadTime: null },
+  bomberJacket: { image: null, uploadTime: null },
+  poloShirt: { image: null, uploadTime: null },
+};
+
+type TabValue = keyof SizeChartData;
 
 export function SizeChartDialog({ onClose }: { onClose: () => void }) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -22,29 +37,24 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   
-  const [image, setImage] = useState<string | null>(null);
-  const [uploadTime, setUploadTime] = useState<string | null>(null);
+  const [sizeChartData, setSizeChartData] = useState<SizeChartData>(initialSizeChartData);
   const [isDirty, setIsDirty] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState<TabValue>('corporateJacket');
 
   useEffect(() => {
-    // Load from localStorage on mount
     const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (savedData) {
-        const { image: savedImage, uploadTime: savedUploadTime }: SizeChartData = JSON.parse(savedData);
-        setImage(savedImage);
-        setUploadTime(savedUploadTime);
+        setSizeChartData(JSON.parse(savedData));
     }
 
-    // Center the dialog on initial render
     if (cardRef.current) {
         const { offsetWidth, offsetHeight } = cardRef.current;
         const centerX = window.innerWidth / 2 - offsetWidth / 2;
         const centerY = window.innerHeight / 2 - offsetHeight / 2;
         setPosition({ x: centerX, y: centerY });
     } else {
-        // Fallback for initial render before ref is set
-        const centerX = window.innerWidth / 2 - 400; // a_string_var = """Hello World!"""
+        const centerX = window.innerWidth / 2 - 325; // approx half-width
         const centerY = window.innerHeight / 2 - 350;
         setPosition({ x: centerX, y: centerY });
     }
@@ -81,55 +91,93 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     }
-
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  const handleImageUpload = (file: File) => {
+  const handleImageUpload = (file: File, tab: TabValue) => {
     const reader = new FileReader();
     reader.onload = (e) => {
-      setImage(e.target?.result as string);
-      setUploadTime(new Date().toISOString());
+      setSizeChartData(prev => ({
+        ...prev,
+        [tab]: {
+          image: e.target?.result as string,
+          uploadTime: new Date().toISOString()
+        }
+      }));
       setIsDirty(true);
     };
     reader.readAsDataURL(file);
   }
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>, tab: TabValue) => {
     if (e.target.files?.[0]) {
-        handleImageUpload(e.target.files[0]);
+        handleImageUpload(e.target.files[0], tab);
     }
   };
 
-  const onPaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+  const onPaste = (e: React.ClipboardEvent<HTMLDivElement>, tab: TabValue) => {
     const items = e.clipboardData.items;
     for (const item of items) {
         if (item.type.indexOf('image') !== -1) {
             const blob = item.getAsFile();
-            if(blob) handleImageUpload(blob);
+            if(blob) handleImageUpload(blob, tab);
         }
     }
   };
 
-  const removeImage = () => {
-    setImage(null);
-    setUploadTime(null);
+  const removeImage = (tab: TabValue) => {
+    setSizeChartData(prev => ({
+      ...prev,
+      [tab]: { image: null, uploadTime: null }
+    }));
     setIsDirty(true);
     if(fileInputRef.current) fileInputRef.current.value = '';
   }
 
   const handleSave = () => {
-    if (image && uploadTime) {
-      const dataToSave: SizeChartData = { image, uploadTime };
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
-    } else {
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-    }
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sizeChartData));
     setIsDirty(false);
     onClose();
+  }
+  
+  const renderUploadBox = (tab: TabValue) => {
+    const data = sizeChartData[tab];
+    return (
+      <div onPaste={(e) => onPaste(e, tab)} className="h-full flex flex-col">
+        <div
+            tabIndex={0}
+            className={cn(
+                "relative group flex-1 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-700/50 min-w-[600px]",
+                !data.image && "p-4"
+            )}
+            onDoubleClick={() => fileInputRef.current?.click()}
+            onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
+        >
+            {!data.image ? (
+                <>
+                    <Upload className="h-10 w-10 mb-2" />
+                    <p>Double-click to upload or paste image</p>
+                </>
+            ) : (
+                <>
+                    <Image src={data.image} alt={`${tab} Size Chart`} layout="fill" objectFit="contain" />
+                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeImage(tab)}>
+                        <Trash2 className="h-4 w-4"/>
+                    </Button>
+                </>
+            )}
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFileChange(e, tab)}/>
+        </div>
+        {data.uploadTime && (
+            <p className="text-xs text-center text-gray-500 mt-2">
+                Uploaded on: {new Date(data.uploadTime).toLocaleString()}
+            </p>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -152,41 +200,28 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent className="p-4 flex-1 flex flex-col" onPaste={onPaste}>
-            <div
-                tabIndex={0}
-                className={cn(
-                    "relative group flex-1 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-700/50 min-w-[600px]",
-                    !image && "p-4"
-                )}
-                onDoubleClick={() => fileInputRef.current?.click()}
-                onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
-            >
-                {!image ? (
-                    <>
-                        <Upload className="h-10 w-10 mb-2" />
-                        <p>Double-click to upload or paste image</p>
-                    </>
-                ) : (
-                    <>
-                        <Image src={image} alt="Size Chart" layout="fill" objectFit="contain" />
-                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={removeImage}>
-                            <Trash2 className="h-4 w-4"/>
-                        </Button>
-                    </>
-                )}
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange}/>
-            </div>
-            {uploadTime && (
-                <p className="text-xs text-center text-gray-500 mt-2">
-                    Uploaded on: {new Date(uploadTime).toLocaleString()}
-                </p>
-            )}
+        <CardContent className="p-4 flex-1 flex flex-col">
+          <Tabs defaultValue="corporateJacket" className="w-full h-full flex flex-col" onValueChange={(v) => setActiveTab(v as TabValue)}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="corporateJacket">Corporate Jacket</TabsTrigger>
+              <TabsTrigger value="bomberJacket">Bomber Jacket</TabsTrigger>
+              <TabsTrigger value="poloShirt">Polo Shirt</TabsTrigger>
+            </TabsList>
+            <TabsContent value="corporateJacket" className="flex-1 mt-4">
+              {renderUploadBox('corporateJacket')}
+            </TabsContent>
+            <TabsContent value="bomberJacket" className="flex-1 mt-4">
+              {renderUploadBox('bomberJacket')}
+            </TabsContent>
+            <TabsContent value="poloShirt" className="flex-1 mt-4">
+              {renderUploadBox('poloShirt')}
+            </TabsContent>
+          </Tabs>
         </CardContent>
         <CardFooter className="p-2 flex justify-center">
             <Button onClick={handleSave} disabled={!isDirty} className="text-white font-bold">
                 <Save className="mr-2 h-4 w-4" />
-                Save
+                Save Changes
             </Button>
         </CardFooter>
       </Card>
