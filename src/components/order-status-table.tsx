@@ -397,7 +397,7 @@ export function OrderStatusTable() {
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow className="border-b-2 border-gray-300">
-                            <TableCell className="font-medium align-top py-3 text-black text-sm">
+                            <TableCell className="font-medium align-middle py-3 text-black text-sm">
                                 <div className="font-bold">{lead.customerName}</div>
                                 <p className="text-xs text-gray-500 font-normal">{formatJoNumber(lead.joNumber)}</p>
                                 {isRepeat ? (
