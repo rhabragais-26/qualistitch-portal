@@ -315,7 +315,7 @@ export function ProductionQueueTable() {
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalQuantity += orderQuantity;
+      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
     });
   
     const enrichedLeads: EnrichedLead[] = [];
@@ -398,7 +398,7 @@ export function ProductionQueueTable() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-4">
-              <div className="w-full max-w-xs">
+              <div className="w-full max-w-lg">
                 <Input
                   placeholder="Search customer, company and contact number"
                   value={searchTerm}
@@ -760,4 +760,5 @@ ProductionDocuments.displayName = 'ProductionDocuments';
 
 
     
+
 
