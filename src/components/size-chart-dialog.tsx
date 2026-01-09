@@ -151,12 +151,12 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
             tabIndex={0}
             className={cn(
                 "relative group flex-1 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-700/50 min-w-[600px]",
-                !data.image && "p-4"
+                data && !data.image && "p-4"
             )}
             onDoubleClick={() => fileInputRef.current?.click()}
             onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
         >
-            {!data.image ? (
+            {!data || !data.image ? (
                 <>
                     <Upload className="h-10 w-10 mb-2" />
                     <p>Double-click to upload or paste image</p>
@@ -171,7 +171,7 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
             )}
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFileChange(e, tab)}/>
         </div>
-        {data.uploadTime && (
+        {data && data.uploadTime && (
             <p className="text-xs text-center text-gray-500 mt-2">
                 Uploaded on: {new Date(data.uploadTime).toLocaleString()}
             </p>
