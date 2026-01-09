@@ -73,7 +73,7 @@ const productionOptions: ProductionType[] = ["Pending", "In-house", "Outsource 1
 const getStatusColor = (status?: ProductionType) => {
   switch (status) {
     case 'In-house':
-      return 'bg-pink-100 text-pink-800';
+      return 'bg-yellow-100 text-yellow-800';
     case 'Outsource 1':
       return 'bg-purple-100 text-purple-800';
     case 'Outsource 2':
