@@ -23,12 +23,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
 import { formatDateTime, cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Check } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { addDays, differenceInDays } from 'date-fns';
+import { Checkbox } from './ui/checkbox';
 
 type Order = {
   productType: string;
@@ -57,6 +58,7 @@ type Lead = {
   isDone?: boolean;
   productionType?: ProductionType;
   sewerType?: ProductionType;
+  isEmbroideryDone?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -97,6 +99,21 @@ export function ProductionQueueTable() {
         title: "Status Updated",
         description: "The production status has been updated.",
       });
+    } catch (e: any) {
+      console.error(`Error updating ${field}:`, e);
+      toast({
+        variant: 'destructive',
+        title: "Update Failed",
+        description: e.message || "Could not update the status.",
+      });
+    }
+  }, [firestore, toast]);
+  
+  const handleCheckboxChange = useCallback(async (leadId: string, field: 'isEmbroideryDone', value: boolean) => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', leadId);
+    try {
+      await updateDoc(leadDocRef, { [field]: value });
     } catch (e: any) {
       console.error(`Error updating ${field}:`, e);
       toast({
@@ -233,8 +250,9 @@ export function ProductionQueueTable() {
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Overdue Status</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Date Sent</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Ordered Items</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Cutting</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Production Category</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Sewing</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Embroidery</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -329,6 +347,12 @@ export function ProductionQueueTable() {
                               <SelectItem value="Outsource">Outsource</SelectItem>
                             </SelectContent>
                           </Select>
+                        </TableCell>
+                        <TableCell className="text-center align-middle">
+                          <Checkbox
+                            checked={lead.isEmbroideryDone || false}
+                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
+                          />
                         </TableCell>
                     </TableRow>
                 )})}
