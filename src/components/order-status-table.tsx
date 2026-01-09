@@ -304,7 +304,7 @@ export function OrderStatusTable() {
              <Button
                 variant="ghost"
                 size="icon"
-                onClick={()={() => setImageInView(null)}
+                onClick={() => setImageInView(null)}
                 className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
             >
                 <X className="h-6 w-6" />
@@ -433,7 +433,7 @@ export function OrderStatusTable() {
                                </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
-                               <div onClick={()={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100 mt-1">
+                               <div onClick={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100 mt-1">
                                     <span className="font-semibold text-sm">{totalQuantity} items</span>
                                     {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                                 </div>
@@ -519,7 +519,7 @@ export function OrderStatusTable() {
                                           <div className="flex-shrink-0 w-48 h-48">
                                             <div
                                               className="relative w-full h-full cursor-pointer"
-                                              onClick={()={() => setImageInView(lead.operationalCase!.image!)}
+                                              onClick={() => setImageInView(lead.operationalCase!.image!)}
                                             >
                                               <Image
                                                 src={lead.operationalCase.image}
@@ -581,5 +581,3 @@ export function OrderStatusTable() {
     </Card>
   );
 }
-
-    
