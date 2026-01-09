@@ -31,6 +31,8 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/t
 import { addDays, differenceInDays } from 'date-fns';
 import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+
 
 type Order = {
   productType: string;
@@ -68,6 +70,7 @@ type EnrichedLead = Lead & {
 };
 
 type ProductionSelectField = 'productionType' | 'sewerType';
+type CheckboxField = 'isEmbroideryDone' | 'isSewing';
 
 const productionOptions: ProductionType[] = ["Pending", "In-house", "Outsource 1", "Outsource 2", "Outsource 3"];
 
@@ -93,6 +96,7 @@ export function ProductionQueueTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const { toast } = useToast();
+  const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField } | null>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
@@ -129,20 +133,41 @@ export function ProductionQueueTable() {
     }
   }, [firestore, toast]);
   
-  const handleCheckboxChange = useCallback(async (leadId: string, field: 'isEmbroideryDone' | 'isSewing', value: boolean) => {
+  const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, value: boolean) => {
+    if (!value) {
+        setUncheckConfirmation({ leadId, field });
+        return;
+    }
+    
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
-    try {
-      await updateDoc(leadDocRef, { [field]: value });
-    } catch (e: any) {
-      console.error(`Error updating ${field}:`, e);
-      toast({
-        variant: 'destructive',
-        title: "Update Failed",
-        description: e.message || "Could not update the status.",
-      });
-    }
+    updateDoc(leadDocRef, { [field]: value }).catch((e: any) => {
+        console.error(`Error updating ${field}:`, e);
+        toast({
+            variant: 'destructive',
+            title: "Update Failed",
+            description: e.message || "Could not update the status.",
+        });
+    });
   }, [firestore, toast]);
+  
+  const confirmUncheck = useCallback(async () => {
+    if (!uncheckConfirmation || !firestore) return;
+    const { leadId, field } = uncheckConfirmation;
+    const leadDocRef = doc(firestore, 'leads', leadId);
+    try {
+        await updateDoc(leadDocRef, { [field]: false });
+    } catch (e: any) {
+        console.error(`Error unchecking ${field}:`, e);
+        toast({
+            variant: 'destructive',
+            title: "Update Failed",
+            description: e.message || "Could not update the status.",
+        });
+    } finally {
+        setUncheckConfirmation(null);
+    }
+  }, [uncheckConfirmation, firestore, toast]);
 
   const handleDoneProduction = useCallback(async (leadId: string) => {
     if (!firestore) return;
@@ -250,6 +275,20 @@ export function ProductionQueueTable() {
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+      <AlertDialog open={!!uncheckConfirmation} onOpenChange={(open) => !open && setUncheckConfirmation(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Unchecking this box will mark the task as not done. Are you sure you want to proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmUncheck}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
@@ -366,8 +405,12 @@ export function ProductionQueueTable() {
                           </ul>
                         </TableCell>
                         <TableCell className="text-center align-middle">
-                          <Select value={lead.productionType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}>
-                            <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold", getStatusColor(lead.productionType))}>
+                          <Select
+                            value={lead.productionType || 'Pending'}
+                            onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
+                            disabled={lead.isEmbroideryDone}
+                          >
+                            <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType))}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -378,14 +421,18 @@ export function ProductionQueueTable() {
                           </Select>
                         </TableCell>
                         <TableCell className="text-center align-middle">
-                          <Checkbox
+                           <Checkbox
                             checked={lead.isEmbroideryDone || false}
                             onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle">
-                          <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}>
-                            <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold", getStatusColor(lead.sewerType))}>
+                           <Select
+                            value={lead.sewerType || 'Pending'}
+                            onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
+                            disabled={lead.isSewing}
+                           >
+                            <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType))}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
