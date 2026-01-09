@@ -342,9 +342,9 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
             <Table>
                 <TableHeader className="bg-neutral-800">
                   <TableRow>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">Customer</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">J.O. No.</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">Programming Status</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Customer</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">J.O. No.</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Programming Status</TableHead>
                     <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">Product Type</TableHead>
                     <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">Color</TableHead>
                     <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Size</TableHead>
@@ -472,6 +472,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
 
 
 
