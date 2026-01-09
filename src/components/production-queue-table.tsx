@@ -72,7 +72,7 @@ type EnrichedLead = Lead & {
 };
 
 type ProductionSelectField = 'productionType' | 'sewerType';
-type CheckboxField = 'isEmbroideryDone' | 'isSewing';
+type CheckboxField = 'isCutting' | 'isEmbroideryDone' | 'isSewing';
 
 const productionOptions: ProductionType[] = ["Pending", "In-house", "Outsource 1", "Outsource 2", "Outsource 3"];
 
@@ -94,6 +94,7 @@ const getStatusColor = (status?: ProductionType) => {
 
 const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success" | "warning" | "secondary" | "default" } => {
     if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
+    if (!lead.isCutting) return { text: "Pending", variant: "secondary" };
     if (lead.isSewing) return { text: "Done Production", variant: "success" };
     if (lead.isEmbroideryDone) return { text: "Ongoing with Sewer", variant: "warning" };
     if (lead.productionType && lead.productionType !== 'Pending') return { text: "Ongoing Embroidery", variant: "warning" };
@@ -175,6 +176,14 @@ export function ProductionQueueTable() {
         const updateData: {[key:string]: any} = { [field]: false };
         if (field === 'isSewing') {
           updateData.isDone = false;
+        }
+        if (field === 'isCutting') {
+          // Uncheck all subsequent steps if start production is unchecked
+          updateData.isEmbroideryDone = false;
+          updateData.isSewing = false;
+          updateData.isDone = false;
+          updateData.productionType = 'Pending';
+          updateData.sewerType = 'Pending';
         }
         await updateDoc(leadDocRef, updateData);
     } catch (e: any) {
@@ -347,6 +356,7 @@ export function ProductionQueueTable() {
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Overdue Status</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Ordered Items</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Start Production</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Production Category</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Embroidery</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Sewing Category</TableHead>
@@ -425,10 +435,16 @@ export function ProductionQueueTable() {
                           </ul>
                         </TableCell>
                         <TableCell className="text-center align-middle">
+                           <Checkbox
+                            checked={lead.isCutting || false}
+                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
+                          />
+                        </TableCell>
+                        <TableCell className="text-center align-middle">
                           <Select
                             value={lead.productionType || 'Pending'}
                             onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
-                            disabled={lead.isEmbroideryDone}
+                            disabled={lead.isEmbroideryDone || !lead.isCutting}
                           >
                             <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType))}>
                               <SelectValue />
@@ -444,13 +460,14 @@ export function ProductionQueueTable() {
                            <Checkbox
                             checked={lead.isEmbroideryDone || false}
                             onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
+                            disabled={!lead.isCutting}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle">
                            <Select
                             value={lead.sewerType || 'Pending'}
                             onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
-                            disabled={lead.isSewing}
+                            disabled={lead.isSewing || !lead.isCutting}
                            >
                             <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType))}>
                               <SelectValue />
@@ -466,6 +483,7 @@ export function ProductionQueueTable() {
                           <Checkbox
                             checked={lead.isSewing || false}
                             onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
+                            disabled={!lead.isCutting}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle">
@@ -476,10 +494,10 @@ export function ProductionQueueTable() {
                                 size="sm"
                                 onClick={() => handleEndorseToLogistics(lead.id)}
                                 disabled={!lead.isDone}
-                                className={cn("h-7 px-2 text-white font-bold text-xs", !lead.isDone ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700")}
+                                className={cn("h-7 px-1 text-white font-bold text-xs", !lead.isDone ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700")}
                             >
                                 <Send className="mr-1.5 h-3.5 w-3.5" />
-                                Send to Logistics
+                                <span className='whitespace-normal break-words'>Send to Logistics</span>
                             </Button>
                         </TableCell>
                     </TableRow>
