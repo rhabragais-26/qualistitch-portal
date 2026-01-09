@@ -30,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { addDays, differenceInDays } from 'date-fns';
 import { Checkbox } from './ui/checkbox';
+import { Button } from './ui/button';
 
 type Order = {
   productType: string;
@@ -142,6 +143,25 @@ export function ProductionQueueTable() {
       });
     }
   }, [firestore, toast]);
+
+  const handleDoneProduction = useCallback(async (leadId: string) => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', leadId);
+    try {
+        await updateDoc(leadDocRef, { isDone: true });
+        toast({
+            title: "Production Completed",
+            description: "The order has been marked as done.",
+        });
+    } catch (e: any) {
+        console.error("Error marking as done:", e);
+        toast({
+            variant: 'destructive',
+            title: "Update Failed",
+            description: e.message || "Could not mark the order as done.",
+        });
+    }
+  }, [firestore, toast]);
   
   const calculateProductionDeadline = useCallback((lead: Lead) => {
     if (lead.isDone) {
@@ -196,7 +216,7 @@ export function ProductionQueueTable() {
   const productionQueue = useMemo(() => {
     if (!processedLeads) return [];
     
-    const sentToProd = processedLeads.filter(lead => lead.isSentToProduction);
+    const sentToProd = processedLeads.filter(lead => lead.isSentToProduction && !lead.isDone);
     
     return sentToProd.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -273,6 +293,7 @@ export function ProductionQueueTable() {
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Embroidery</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Sewing Category</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Sewing</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Production Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -379,6 +400,16 @@ export function ProductionQueueTable() {
                             checked={lead.isSewing || false}
                             onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
                           />
+                        </TableCell>
+                        <TableCell className="text-center align-middle">
+                            <Button
+                                size="sm"
+                                onClick={() => handleDoneProduction(lead.id)}
+                                disabled={!lead.isSewing}
+                                className={cn("h-8 text-white font-bold", !lead.isSewing ? "bg-gray-400" : "bg-emerald-600 hover:bg-emerald-700")}
+                            >
+                                Done Production
+                            </Button>
                         </TableCell>
                     </TableRow>
                 )})}
