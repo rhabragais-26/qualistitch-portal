@@ -139,7 +139,7 @@ const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success
     if (lead.isDone) return { text: "Done Production", variant: "success" };
     if (lead.isSewing) return { text: "Ongoing with Sewer", variant: "warning" };
     if (lead.isEmbroideryDone) return { text: "Ongoing Embroidery", variant: "warning" };
-    if(lead.isCutting) return { text: "Ongoing Cutting", variant: "warning" };
+    if(lead.isCutting) return { text: "Production Started", variant: "warning" };
     return { text: "Pending", variant: "secondary" };
 };
 
