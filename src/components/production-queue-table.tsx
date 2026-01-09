@@ -676,7 +676,7 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
           </div>
         </div>
       )}
-      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-x-6">
         <div className="col-span-1">
             <h3 className="font-bold text-lg text-primary">Job Order and Layout</h3>
             <Button onClick={handleJobOrderPrint} variant="default" size="lg" className="bg-primary text-white hover:bg-primary/90 mt-2">
@@ -698,7 +698,7 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
               ))}
           </div>
         </div>
-        <div className="space-y-2 md:col-span-2">
+        <div className="space-y-2 col-span-2">
             <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
             <div className="max-h-48 overflow-y-auto pr-2">
               <div className="grid grid-cols-2 gap-2 text-sm">
@@ -723,6 +723,7 @@ ProductionDocuments.displayName = 'ProductionDocuments';
     
 
   
+
 
 
 
