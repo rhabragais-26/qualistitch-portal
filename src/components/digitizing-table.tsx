@@ -250,7 +250,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
         setFinalLogoEmb(lead?.layouts?.[0]?.finalLogoEmb?.length ? lead?.layouts?.[0]?.finalLogoEmb : [null]);
         setFinalBackDesignEmb(lead?.layouts?.[0]?.finalBackDesignEmb?.length ? lead?.layouts?.[0]?.finalBackDesignEmb : [null]);
         setFinalLogoDst(lead?.layouts?.[0]?.finalLogoDst?.length ? lead?.layouts?.[0]?.finalLogoDst : [null]);
-        setFinalBackDesignDst(lead.layouts[0].finalBackDesignDst);
+        setFinalBackDesignDst(lead?.layouts?.[0]?.finalBackDesignDst || []);
         setFinalNamesDst(lead?.layouts?.[0]?.finalNamesDst || []);
         setSequenceLogo(lead?.layouts?.[0]?.sequenceLogo?.length ? lead.layouts[0].sequenceLogo : [null]);
         setSequenceBackDesign(lead?.layouts?.[0]?.sequenceBackDesign?.length ? lead.layouts[0].sequenceBackDesign : [null]);
@@ -281,7 +281,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
             logoRightImage: logoRightImage || null,
             logoRightImageUploadTime: logoRightImage ? (existingLayout.logoRightImage === logoRightImage ? existingLayout.logoRightImageUploadTime : now) : null,
             backLogoImage: backLogoImage || null,
-            backLogoImageUploadTime: backLogoImage ? (existingLayout.backLogoImage === logoBackLogoImage ? existingLayout.logoBackLogoImageUploadTime : now) : null,
+            backLogoImageUploadTime: backLogoImage ? (existingLayout.backLogoImage === backLogoImage ? existingLayout.backLogoImageUploadTime : now) : null,
             backDesignImage: backDesignImage || null,
             backDesignImageUploadTime: backDesignImage ? (existingLayout.backDesignImage === backDesignImage ? existingLayout.backDesignImageUploadTime : now) : null,
         };
@@ -487,8 +487,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   }, []);
 
   const calculateDigitizingDeadline = useCallback((lead: Lead) => {
-    if (lead.isFinalProgram) {
-        const remainingDays = differenceInDays(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 2 : 6), new Date(lead.finalProgramTimestamp!));
+    if (lead.isFinalProgram && lead.finalProgramTimestamp) {
+        const remainingDays = differenceInDays(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 2 : 6), new Date(lead.finalProgramTimestamp));
         return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
     }
     const submissionDate = new Date(lead.submissionDateTime);
@@ -870,7 +870,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setArchiveConfirmLead(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmArchive}>Send to Production</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmArchive}>Done</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1227,27 +1227,27 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Final Program Files</CardTitle></CardHeader>
                                         <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs">
-                                          {lead.layouts?.[0]?.finalLogoEmb?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts?.[0]?.finalLogoEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoEmbUploadTimes![index]!).dateTime}</p>}</div>))}
-                                          {lead.layouts?.[0]?.finalBackDesignEmb?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back Design {index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts[0].finalBackDesignEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignEmbUploadTimes![index]!).dateTime}</p>}</div>)}
-                                          {lead.layouts?.[0]?.finalLogoDst?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts?.[0]?.finalLogoDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoDstUploadTimes![index]!).dateTime}</p>}</div>))}
-                                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back Design {index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts[0].finalBackDesignDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignDstUploadTimes![index]!).dateTime}</p>}</div>)}
+                                          {lead.layouts?.[0]?.finalLogoEmb?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo ${index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts?.[0]?.finalLogoEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoEmbUploadTimes![index]!).dateTime}</p>}</div>))}
+                                          {lead.layouts?.[0]?.finalBackDesignEmb?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back Design ${index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts[0].finalBackDesignEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignEmbUploadTimes![index]!).dateTime}</p>}</div>)}
+                                          {lead.layouts?.[0]?.finalLogoDst?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo ${index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts?.[0]?.finalLogoDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoDstUploadTimes![index]!).dateTime}</p>}</div>))}
+                                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back Design ${index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts[0].finalBackDesignDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignDstUploadTimes![index]!).dateTime}</p>}</div>)}
                                           {lead.layouts?.[0]?.finalNamesDst?.map((file, index) => file && (
                                             <div key={index}>
-                                                <p className="font-semibold text-gray-500 mb-2">Name {index + 1} (DST)</p>
+                                                <p className="font-semibold text-gray-500 mb-2">Name ${index + 1} (DST)</p>
                                                 <p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>
                                                 {lead.layouts?.[0]?.finalNamesDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalNamesDstUploadTimes![index]!).dateTime}</p>}
                                             </div>
                                           ))}
                                           {lead.layouts?.[0]?.sequenceLogo?.map((file, index) => file && (
                                               <div key={index}>
-                                                  <p className="font-semibold text-gray-500 mb-2">Sequence Logo {index + 1}</p>
+                                                  <p className="font-semibold text-gray-500 mb-2">Sequence Logo ${index + 1}</p>
                                                   <ImagePreview src={file.url} alt={`Sequence Logo ${index + 1}`} className="w-24 h-24"/>
                                                   {Array.isArray(lead.layouts?.[0]?.sequenceLogoUploadTimes) && lead.layouts?.[0]?.sequenceLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceLogoUploadTimes![index]!).dateTime}</p>}
                                               </div>
                                           ))}
                                           {lead.layouts?.[0]?.sequenceBackDesign?.map((file, index) => file && (
                                               <div key={index}>
-                                                  <p className="font-semibold text-gray-500 mb-2">Sequence Back Design {index + 1}</p>
+                                                  <p className="font-semibold text-gray-500 mb-2">Sequence Back Design ${index + 1}</p>
                                                   <ImagePreview src={file.url} alt="Sequence Back Design" className="w-32 h-24"/>
                                                   {Array.isArray(lead.layouts?.[0]?.sequenceBackDesignUploadTimes) && lead.layouts?.[0]?.sequenceBackDesignUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceBackDesignUploadTimes![index]!).dateTime}</p>}
                                               </div>
@@ -1286,5 +1286,3 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
-
-    
