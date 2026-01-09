@@ -429,10 +429,15 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                               {orderIndex === 0 && (
                                   <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
                                       {lead.isSentToProduction ? (
-                                          <div className="text-xs text-gray-500">
-                                              <div>{formatDateTime(lead.sentToProductionTimestamp!).dateTime}</div>
-                                              <div>{formatDateTime(lead.sentToProductionTimestamp!).dayOfWeek}</div>
-                                          </div>
+                                        <div className="flex flex-col items-center gap-1">
+                                            <div className="flex items-center text-green-500 font-semibold">
+                                                <Check className="mr-2 h-4 w-4" /> Sent
+                                            </div>
+                                            <div className="text-xs text-gray-500">
+                                                <div>{formatDateTime(lead.sentToProductionTimestamp!).dateTime}</div>
+                                                <div>{formatDateTime(lead.sentToProductionTimestamp!).dayOfWeek}</div>
+                                            </div>
+                                        </div>
                                       ) : (
                                           <Button
                                               size="sm"
