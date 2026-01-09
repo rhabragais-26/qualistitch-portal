@@ -394,20 +394,21 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
     }
   }, []);
 
-  const handleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, fileSetter: React.Dispatch<React.SetStateAction<string>> | ((index: number, value: string) => void), index?: number) => {
+  const handleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, fileSetter: React.Dispatch<React.SetStateAction<string>> | ((index: number, value: FileObject) => void), index?: number) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-           if (typeof index === 'number' && typeof fileSetter === 'function') {
-             (fileSetter as (index: number, value: string) => void)(index, e.target.result as string);
-           } else {
-             (fileSetter as React.Dispatch<React.SetStateAction<string>>)(e.target.result as string);
-           }
-        }
-      };
-      reader.readAsDataURL(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (e.target?.result) {
+                const fileObject = { name: file.name, url: e.target.result as string };
+                if (typeof index === 'number' && typeof fileSetter === 'function') {
+                    (fileSetter as (index: number, value: FileObject) => void)(index, fileObject);
+                } else {
+                    (fileSetter as React.Dispatch<React.SetStateAction<string>>)(fileObject.url);
+                }
+            }
+        };
+        reader.readAsDataURL(file);
     }
   }, []);
   
@@ -433,13 +434,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
 
   const removeFile = useCallback((filesState: (FileObject | null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
     const newFiles = [...filesState];
-    newFiles[index] = null;
+    newFiles.splice(index, 1);
     setFilesState(newFiles);
 
-    const inputRef = refs.current[index];
-    if (inputRef) {
-        inputRef.value = '';
-    }
+    const newRefs = [...refs.current];
+    newRefs.splice(index, 1);
+    refs.current = newRefs;
   }, []);
 
 
@@ -483,8 +483,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
 
   const calculateDigitizingDeadline = useCallback((lead: Lead) => {
     if (lead.isFinalProgram) {
-      const timestamp = lead.finalProgramTimestamp || lead.submissionDateTime;
-      return { text: `Finalized on ${formatDateTime(timestamp).dateTimeShort}`, isOverdue: false, isUrgent: false, remainingDays: Infinity };
+        const timestamp = lead.finalProgramTimestamp || lead.submissionDateTime;
+        return { text: `Finalized on ${formatDateTime(timestamp).dateTimeShort}`, isOverdue: false, isUrgent: false, remainingDays: Infinity };
     }
     const submissionDate = new Date(lead.submissionDateTime);
     const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
@@ -662,7 +662,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                   {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload .emb</p></div>)}
                                   <input type="file" accept=".emb" ref={el => finalLogoEmbUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalLogoEmb, setFinalLogoEmb, index)} className="hidden" />
                               </div>
-                               {file && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalLogoEmb, setFinalLogoEmb, index, finalLogoEmbUploadRefs)}>
+                               {(file || finalLogoEmb.length > 1) && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalLogoEmb, setFinalLogoEmb, index, finalLogoEmbUploadRefs)}>
                                   <Trash2 className="h-4 w-4" />
                                 </Button>)}
                           </div>
@@ -683,7 +683,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                   {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload .emb</p></div>)}
                                   <input type="file" accept=".emb" ref={el => finalBackDesignEmbUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalBackDesignEmb, setFinalBackDesignEmb, index)} className="hidden" />
                               </div>
-                               {file && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalBackDesignEmb, setFinalBackDesignEmb, index, finalBackDesignEmbUploadRefs)}>
+                               {(file || finalBackDesignEmb.length > 1) && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalBackDesignEmb, setFinalBackDesignEmb, index, finalBackDesignEmbUploadRefs)}>
                                   <Trash2 className="h-4 w-4" />
                                 </Button>)}
                           </div>
@@ -704,7 +704,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                   {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
                                   <input type="file" accept=".dst" ref={el => finalLogoDstUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalLogoDst, setFinalLogoDst, index)} className="hidden" />
                               </div>
-                              {file && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalLogoDst, setFinalLogoDst, index, finalLogoDstUploadRefs)}>
+                              {(file || finalLogoDst.length > 1) && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalLogoDst, setFinalLogoDst, index, finalLogoDstUploadRefs)}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>)}
                           </div>
@@ -725,7 +725,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                   {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
                                   <input type="file" accept=".dst" ref={el => finalBackDesignDstUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalBackDesignDst, setFinalBackDesignDst, index)} className="hidden" />
                               </div>
-                             {file && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalBackDesignDst, setFinalBackDesignDst, index, finalBackDesignDstUploadRefs)}>
+                             {(file || finalBackDesignDst.length > 1) && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalBackDesignDst, setFinalBackDesignDst, index, finalBackDesignDstUploadRefs)}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>)}
                           </div>
@@ -743,7 +743,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                               {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
                               <input type="file" accept=".dst" ref={el => finalNamesDstUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalNamesDst, setFinalNamesDst, index)} className="hidden" />
                             </div>
-                            {file && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalNamesDst, setFinalNamesDst, index, finalNamesDstUploadRefs)}> <Trash2 className="h-4 w-4" /> </Button>)}
+                            {(file || finalNamesDst.length > 0) && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalNamesDst, setFinalNamesDst, index, finalNamesDstUploadRefs)}> <Trash2 className="h-4 w-4" /> </Button>)}
                           </div>
                         ))}
                       </div>
@@ -768,7 +768,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                         {sequenceLogo.map((file, index) => (
                           <div key={index} className="flex items-center gap-2">
                             <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-32 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, (idx, val) => { const newFiles = [...sequenceLogo]; newFiles[idx] = val; setSequenceLogo(newFiles); }, index)} onDoubleClick={() => sequenceLogoUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                                  {file ? (<> <Image src={file.url} alt={`Sequence Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> {file && (<Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); removeFile(sequenceLogo, setSequenceLogo, index, sequenceLogoUploadRefs); }}> <Trash2 className="h-3 w-3" /> </Button>)} </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
+                                  {file ? (<> <Image src={file.url} alt={`Sequence Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> {(file || sequenceLogo.length > 1) && (<Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); removeFile(sequenceLogo, setSequenceLogo, index, sequenceLogoUploadRefs); }}> <Trash2 className="h-3 w-3" /> </Button>)} </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
                                   <input type="file" ref={el => sequenceLogoUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, sequenceLogo, setSequenceLogo, index)} className="hidden" />
                             </div>
                           </div>
@@ -786,7 +786,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                             {sequenceBackDesign.map((file, index) => (
                             <div key={index} className="flex items-center gap-2">
                                 <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-32 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, (idx, val) => { const newFiles = [...sequenceBackDesign]; newFiles[idx] = val; setSequenceBackDesign(newFiles); }, index)} onDoubleClick={() => sequenceBackDesignUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                                    {file ? (<> <Image src={file.url} alt={`Sequence Back Design ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> {file && (<Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); removeFile(sequenceBackDesign, setSequenceBackDesign, index, sequenceBackDesignUploadRefs); }}> <Trash2 className="h-3 w-3" /> </Button>)} </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
+                                    {file ? (<> <Image src={file.url} alt={`Sequence Back Design ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> {(file || sequenceBackDesign.length > 1) && (<Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); removeFile(sequenceBackDesign, setSequenceBackDesign, index, sequenceBackDesignUploadRefs); }}> <Trash2 className="h-3 w-3" /> </Button>)} </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
                                     <input type="file" ref={el => sequenceBackDesignUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, sequenceBackDesign, setSequenceBackDesign, index)} className="hidden" />
                                 </div>
                             </div>
