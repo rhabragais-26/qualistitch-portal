@@ -390,7 +390,7 @@ export function ProductionQueueTable() {
           <div className="flex items-center gap-4">
               <div className="w-full max-w-xs">
                 <Input
-                  placeholder="Search customer, company, contact number..."
+                  placeholder="Search customer, company and contact number"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="bg-gray-100 text-black placeholder:text-gray-500"
@@ -685,10 +685,10 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
                 </div>
             )}
         </div>
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {lead.layouts?.some(l => l.sequenceLogo?.some(s => s?.url) || l.sequenceBackDesign?.some(s => s?.url)) && (
-            <div>
-              <h3 className="font-bold text-lg text-primary mb-2">Sequence</h3>
+            <div className="space-y-2">
+              <h3 className="font-bold text-lg text-primary">Sequence</h3>
               <div className="grid grid-cols-2 gap-2">
                 {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
                   <Image key={`seq-logo-${index}`} src={seq.url} alt={`Sequence Logo ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
@@ -700,8 +700,8 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
             </div>
           )}
           {finalFiles.length > 0 && (
-            <div>
-              <div className="flex justify-between items-center mb-2">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
                 <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
                 <Button onClick={handleDownloadAll} size="sm" className="text-white font-bold"><Download className="mr-2 h-4 w-4" />Download All</Button>
               </div>
@@ -726,9 +726,4 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
 ProductionDocuments.displayName = 'ProductionDocuments';
     
 
-
-
-
-
-
-
+  
