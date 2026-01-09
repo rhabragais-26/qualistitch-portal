@@ -157,8 +157,8 @@
           "description": "The date and time when the order was sent to production."
         },
         "isCutting": { "type": "boolean", "description": "Indicates if the order is in the cutting stage." },
-        "productionType": { "type": "string", "enum": ["Pending", "In-house", "Outsource"], "description": "Indicates if production (cutting) is In-house or Outsourced." },
-        "sewerType": { "type": "string", "enum": ["Pending", "In-house", "Outsource"], "description": "Indicates if sewing is In-house or Outsourced." },
+        "productionType": { "type": "string", "enum": ["Pending", "In-house", "Outsource 1", "Outsource 2", "Outsource 3"], "description": "Indicates if production (cutting) is In-house or Outsourced." },
+        "sewerType": { "type": "string", "enum": ["Pending", "In-house", "Outsource 1", "Outsource 2", "Outsource 3"], "description": "Indicates if sewing is In-house or Outsourced." },
         "isSewing": { "type": "boolean", "description": "Indicates if the order is in the sewing stage." },
         "isTrimming": { "type": "boolean", "description": "Indicates if the order is in the trimming stage." },
         "isDone": { "type": "boolean", "description": "Indicates if the order is completely done." },

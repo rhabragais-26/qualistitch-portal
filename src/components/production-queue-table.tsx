@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
 import { formatDateTime, cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -38,7 +38,7 @@ type Order = {
   quantity: number;
 }
 
-type ProductionType = "Pending" | "In-house" | "Outsource";
+type ProductionType = "Pending" | "In-house" | "Outsource 1" | "Outsource 2" | "Outsource 3";
 
 type Lead = {
   id: string;
@@ -67,6 +67,25 @@ type EnrichedLead = Lead & {
 };
 
 type ProductionSelectField = 'productionType' | 'sewerType';
+
+const productionOptions: ProductionType[] = ["Pending", "In-house", "Outsource 1", "Outsource 2", "Outsource 3"];
+
+const getStatusColor = (status?: ProductionType) => {
+  switch (status) {
+    case 'In-house':
+      return 'bg-blue-100 text-blue-800';
+    case 'Outsource 1':
+      return 'bg-purple-100 text-purple-800';
+    case 'Outsource 2':
+        return 'bg-indigo-100 text-indigo-800';
+    case 'Outsource 3':
+        return 'bg-pink-100 text-pink-800';
+    case 'Pending':
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
 
 export function ProductionQueueTable() {
   const firestore = useFirestore();
@@ -326,13 +345,13 @@ export function ProductionQueueTable() {
                         </TableCell>
                         <TableCell className="text-center align-middle">
                           <Select value={lead.productionType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}>
-                            <SelectTrigger className="w-[120px] text-xs h-8 mx-auto">
+                            <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold", getStatusColor(lead.productionType))}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Pending">Pending</SelectItem>
-                              <SelectItem value="In-house">In-house</SelectItem>
-                              <SelectItem value="Outsource">Outsource</SelectItem>
+                              {productionOptions.map(option => (
+                                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </TableCell>
@@ -344,13 +363,13 @@ export function ProductionQueueTable() {
                         </TableCell>
                         <TableCell className="text-center align-middle">
                           <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}>
-                            <SelectTrigger className="w-[120px] text-xs h-8 mx-auto">
+                            <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold", getStatusColor(lead.sewerType))}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Pending">Pending</SelectItem>
-                              <SelectItem value="In-house">In-house</SelectItem>
-                              <SelectItem value="Outsource">Outsource</SelectItem>
+                               {productionOptions.map(option => (
+                                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </TableCell>
