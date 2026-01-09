@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -45,6 +44,11 @@ type NamedOrder = {
   backText: string;
 };
 
+type FileObject = {
+  name: string;
+  url: string;
+};
+
 type Layout = {
   layoutImage?: string;
   dstLogoLeft?: string;
@@ -68,19 +72,19 @@ type Layout = {
   testBackLogoImageUploadTime?: string | null;
   testBackDesignImage?: string | null;
   testBackDesignImageUploadTime?: string | null;
-  finalLogoEmb?: (string | null)[];
+  finalLogoEmb?: (FileObject | null)[];
   finalLogoEmbUploadTimes?: (string | null)[];
-  finalBackDesignEmb?: (string | null)[];
+  finalBackDesignEmb?: (FileObject | null)[];
   finalBackDesignEmbUploadTimes?: (string | null)[];
-  finalLogoDst?: (string | null)[];
+  finalLogoDst?: (FileObject | null)[];
   finalLogoDstUploadTimes?: (string | null)[];
-  finalBackDesignDst?: (string | null)[];
+  finalBackDesignDst?: (FileObject | null)[];
   finalBackDesignDstUploadTimes?: (string | null)[];
-  finalNamesDst?: (string | null)[];
+  finalNamesDst?: (FileObject | null)[];
   finalNamesDstUploadTimes?: (string | null)[];
-  sequenceLogo?: (string | null)[];
+  sequenceLogo?: (FileObject | null)[];
   sequenceLogoUploadTimes?: (string | null)[];
-  sequenceBackDesign?: (string | null)[];
+  sequenceBackDesign?: (FileObject | null)[];
   sequenceBackDesignUploadTimes?: (string | null)[];
 };
 
@@ -110,6 +114,7 @@ type Lead = {
   finalApprovalTimestamp?: string;
   finalProgramTimestamp?: string;
   digitizingArchivedTimestamp?: string;
+  isPreparedForProduction?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -152,13 +157,13 @@ export function DigitizingTable() {
   const backLogoImageUploadRef = useRef<HTMLInputElement>(null);
   const backDesignImageUploadRef = useRef<HTMLInputElement>(null);
 
-  const [finalLogoEmb, setFinalLogoEmb] = useState<(string | null)[]>([null]);
-  const [finalBackDesignEmb, setFinalBackDesignEmb] = useState<(string | null)[]>([null]);
-  const [finalLogoDst, setFinalLogoDst] = useState<(string | null)[]>([null]);
-  const [finalBackDesignDst, setFinalBackDesignDst] = useState<(string | null)[]>([]);
-  const [finalNamesDst, setFinalNamesDst] = useState<(string | null)[]>([]);
-  const [sequenceLogo, setSequenceLogo] = useState<(string | null)[]>([null]);
-  const [sequenceBackDesign, setSequenceBackDesign] = useState<(string | null)[]>([null]);
+  const [finalLogoEmb, setFinalLogoEmb] = useState<(FileObject | null)[]>([null]);
+  const [finalBackDesignEmb, setFinalBackDesignEmb] = useState<(FileObject | null)[]>([null]);
+  const [finalLogoDst, setFinalLogoDst] = useState<(FileObject | null)[]>([null]);
+  const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([]);
+  const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
+  const [sequenceLogo, setSequenceLogo] = useState<(FileObject | null)[]>([null]);
+  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
 
   const finalLogoEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalBackDesignEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -294,11 +299,11 @@ export function DigitizingTable() {
     } else if (uploadField === 'isFinalProgram') {
       const existingLayout = currentLayouts[0] || {};
 
-      const createTimestampArray = (newFiles: (string|null)[], oldFiles?: (string|null)[], oldTimes?: (string|null)[]) => {
+      const createTimestampArray = (newFiles: (FileObject|null)[], oldFiles?: (FileObject|null)[], oldTimes?: (string|null)[]) => {
           return newFiles.map((file, index) => {
               const existingFile = oldFiles?.[index];
               const existingTime = oldTimes?.[index];
-              return file && file === existingFile ? existingTime : (file ? now : null);
+              return file && file.url === existingFile?.url ? existingTime : (file ? now : null);
           });
       };
 
@@ -341,10 +346,10 @@ export function DigitizingTable() {
       setFinalLogoEmb([null]);
       setFinalBackDesignEmb([null]);
       setFinalLogoDst([null]);
-      setFinalBackDesignDst([null]);
+      setFinalBackDesignDst([]);
       setFinalNamesDst([]);
       setSequenceLogo([null]);
-      setSequenceBackDesign([null]);
+      setSequenceBackDesign([]);
       setIsUploadDialogOpen(false);
       setUploadLeadId(null);
       setUploadField(null);
@@ -365,7 +370,7 @@ export function DigitizingTable() {
     }
   }, [uncheckConfirmation, updateStatus]);
 
-  const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, imageSetter: React.Dispatch<React.SetStateAction<string>> | ((index: number, value: string) => void), index?: number) => {
+  const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, imageSetter: React.Dispatch<React.SetStateAction<string>> | ((index: number, value: FileObject) => void), index?: number) => {
     const items = event.clipboardData.items;
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf('image') !== -1) {
@@ -374,10 +379,11 @@ export function DigitizingTable() {
           const reader = new FileReader();
           reader.onload = (e) => {
             if (e.target?.result) {
+              const fileObject = { name: "pasted-image.png", url: e.target.result as string };
               if (typeof index === 'number' && typeof imageSetter === 'function') {
-                (imageSetter as (index: number, value: string) => void)(index, e.target.result as string);
+                (imageSetter as (index: number, value: FileObject) => void)(index, fileObject);
               } else {
-                (imageSetter as React.Dispatch<React.SetStateAction<string>>)(e.target.result as string);
+                (imageSetter as React.Dispatch<React.SetStateAction<string>>)(fileObject.url);
               }
             }
           };
@@ -404,14 +410,14 @@ export function DigitizingTable() {
     }
   }, []);
   
-  const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, filesState: (string|null)[], setFilesState: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+  const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number) => {
       const file = event.target.files?.[0];
       if (file) {
           const reader = new FileReader();
           reader.onload = (e) => {
               if (e.target?.result) {
                   const newFiles = [...filesState];
-                  newFiles[index] = e.target.result as string;
+                  newFiles[index] = { name: file.name, url: e.target.result as string };
                   setFilesState(newFiles);
               }
           };
@@ -420,11 +426,11 @@ export function DigitizingTable() {
   }, []);
 
 
-  const addFile = useCallback((filesState: (string|null)[], setFilesState: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+  const addFile = useCallback((filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>) => {
     setFilesState([...filesState, null]);
   }, []);
 
-  const removeFile = useCallback((filesState: (string|null)[], setFilesState: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+  const removeFile = useCallback((filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number) => {
       const newFiles = [...filesState];
       newFiles.splice(index, 1);
       setFilesState(newFiles);
@@ -441,20 +447,19 @@ export function DigitizingTable() {
     try {
         const leadDocRef = doc(firestore, 'leads', archiveConfirmLead.id);
         await updateDoc(leadDocRef, { 
-          isDigitizingArchived: true,
-          digitizingArchivedTimestamp: new Date().toISOString(),
+          isPreparedForProduction: true,
         });
         toast({
-            title: "Project Archived",
-            description: "The project has been removed from the queue.",
+            title: "Project Sent to Production",
+            description: "The project has been moved to the Item Preparation queue.",
         });
         setArchiveConfirmLead(null);
     } catch (e: any) {
-        console.error('Error archiving lead:', e);
+        console.error('Error sending to production:', e);
         toast({
             variant: 'destructive',
-            title: 'Archive Failed',
-            description: e.message || 'Could not archive the project.',
+            title: 'Action Failed',
+            description: e.message || 'Could not send the project to production.',
         });
     }
   }, [archiveConfirmLead, firestore, toast]);
@@ -521,7 +526,7 @@ export function DigitizingTable() {
   const filteredLeads = React.useMemo(() => {
     if (!processedLeads) return [];
     
-    const leadsWithJo = processedLeads.filter(lead => lead.joNumber && !lead.isDigitizingArchived);
+    const leadsWithJo = processedLeads.filter(lead => lead.joNumber && !lead.isPreparedForProduction && !lead.isDigitizingArchived);
 
     const filtered = leadsWithJo.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -644,7 +649,7 @@ export function DigitizingTable() {
                       {finalLogoEmb.map((file, index) => (
                           <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoEmbUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                                  {file ? (<p className="text-xs truncate px-2">{file.split(',')[0].slice(5, 30)}...</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload .emb</p></div>)}
+                                  {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload .emb</p></div>)}
                                   <input type="file" accept=".emb" ref={el => finalLogoEmbUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalLogoEmb, setFinalLogoEmb, index)} className="hidden" />
                               </div>
                               {index > 0 && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalLogoEmb, setFinalLogoEmb, index)}> <Trash2 className="h-4 w-4" /> </Button>}
@@ -663,7 +668,7 @@ export function DigitizingTable() {
                        {finalBackDesignEmb.map((file, index) => (
                           <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignEmbUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                                  {file ? (<p className="text-xs truncate px-2">{file.split(',')[0].slice(5, 30)}...</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload .emb</p></div>)}
+                                  {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload .emb</p></div>)}
                                   <input type="file" accept=".emb" ref={el => finalBackDesignEmbUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalBackDesignEmb, setFinalBackDesignEmb, index)} className="hidden" />
                               </div>
                               {index > 0 && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalBackDesignEmb, setFinalBackDesignEmb, index)}> <Trash2 className="h-4 w-4" /> </Button>}
@@ -682,7 +687,7 @@ export function DigitizingTable() {
                       {finalLogoDst.map((file, index) => (
                          <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoDstUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                                  {file ? (<p className="text-xs truncate px-2">{file.split(',')[0].slice(5, 30)}...</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
+                                  {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
                                   <input type="file" accept=".dst" ref={el => finalLogoDstUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalLogoDst, setFinalLogoDst, index)} className="hidden" />
                               </div>
                              {index > 0 && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalLogoDst, setFinalLogoDst, index)}> <Trash2 className="h-4 w-4" /> </Button>}
@@ -701,7 +706,7 @@ export function DigitizingTable() {
                        {finalBackDesignDst.map((file, index) => (
                          <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignDstUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                                  {file ? (<p className="text-xs truncate px-2">{file.split(',')[0].slice(5, 30)}...</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
+                                  {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
                                   <input type="file" accept=".dst" ref={el => finalBackDesignDstUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalBackDesignDst, setFinalBackDesignDst, index)} className="hidden" />
                               </div>
                              {index > 0 && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalBackDesignDst, setFinalBackDesignDst, index)}> <Trash2 className="h-4 w-4" /> </Button>}
@@ -717,7 +722,7 @@ export function DigitizingTable() {
                         {finalNamesDst.map((file, index) => (
                           <div key={index} className="flex items-center gap-2">
                             <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-1 text-center h-12 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalNamesDstUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                              {file ? (<p className="text-xs truncate px-2">{file.split(',')[0].slice(5, 30)}...</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
+                              {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
                               <input type="file" accept=".dst" ref={el => finalNamesDstUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalNamesDst, setFinalNamesDst, index)} className="hidden" />
                             </div>
                             <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalNamesDst, setFinalNamesDst, index)}> <Trash2 className="h-4 w-4" /> </Button>
@@ -745,7 +750,7 @@ export function DigitizingTable() {
                         {sequenceLogo.map((file, index) => (
                           <div key={index} className="flex items-center gap-2">
                             <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-32 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, (idx, val) => { const newFiles = [...sequenceLogo]; newFiles[idx] = val; setSequenceLogo(newFiles); }, index)} onDoubleClick={() => sequenceLogoUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                                  {file ? (<> <Image src={file} alt={`Sequence Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); const newFiles = [...sequenceLogo]; newFiles[index] = null; setSequenceLogo(newFiles); }}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
+                                  {file ? (<> <Image src={file.url} alt={`Sequence Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); const newFiles = [...sequenceLogo]; newFiles[index] = null; setSequenceLogo(newFiles); }}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
                                   <input type="file" ref={el => sequenceLogoUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, sequenceLogo, setSequenceLogo, index)} className="hidden" />
                             </div>
                             {index > 0 && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(sequenceLogo, setSequenceLogo, index)}> <Trash2 className="h-4 w-4" /> </Button>}
@@ -764,7 +769,7 @@ export function DigitizingTable() {
                             {sequenceBackDesign.map((file, index) => (
                             <div key={index} className="flex items-center gap-2">
                                 <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-32 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, (idx, val) => { const newFiles = [...sequenceBackDesign]; newFiles[idx] = val; setSequenceBackDesign(newFiles); }, index)} onDoubleClick={() => sequenceBackDesignUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                                    {file ? (<> <Image src={file} alt={`Sequence Back Design ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); const newFiles = [...sequenceBackDesign]; newFiles[index] = null; setSequenceBackDesign(newFiles); }}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
+                                    {file ? (<> <Image src={file.url} alt={`Sequence Back Design ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); const newFiles = [...sequenceBackDesign]; newFiles[index] = null; setSequenceBackDesign(newFiles); }}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
                                     <input type="file" ref={el => sequenceBackDesignUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, sequenceBackDesign, setSequenceBackDesign, index)} className="hidden" />
                                 </div>
                                 {index > 0 && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(sequenceBackDesign, setSequenceBackDesign, index)}> <Trash2 className="h-4 w-4" /> </Button>}
@@ -826,9 +831,9 @@ export function DigitizingTable() {
       <AlertDialog open={!!archiveConfirmLead} onOpenChange={(open) => !open && setArchiveConfirmLead(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Archive Project?</AlertDialogTitle>
+            <AlertDialogTitle>Send to Production?</AlertDialogTitle>
             <AlertDialogDescription>
-              Please review the uploaded files before archiving. This action will remove the project from the active queue.
+              Please review the uploaded files before proceeding. This action will send the project to the Item Preparation queue.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="max-h-60 overflow-y-auto my-4 pr-2">
@@ -850,7 +855,7 @@ export function DigitizingTable() {
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setArchiveConfirmLead(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmArchive}>Archive Project</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmArchive}>Send to Production</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -864,10 +869,10 @@ export function DigitizingTable() {
             setFinalLogoEmb([null]);
             setFinalBackDesignEmb([null]);
             setFinalLogoDst([null]);
-            setFinalBackDesignDst([null]);
+            setFinalBackDesignDst([]);
             setFinalNamesDst([]);
             setSequenceLogo([null]);
-            setSequenceBackDesign([null]);
+            setSequenceBackDesign([]);
             if (uploadLeadId && uploadField && isUploadDialogOpen) { // Check isUploadDialogOpen to prevent race condition
               const lead = leads?.find(l => l.id === uploadLeadId);
               if (lead) {
@@ -1207,28 +1212,28 @@ export function DigitizingTable() {
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Final Program Files</CardTitle></CardHeader>
                                         <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs">
-                                          {lead.layouts?.[0]?.finalLogoEmb?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo ${index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>EMB File</p>{lead.layouts?.[0]?.finalLogoEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoEmbUploadTimes![index]!).dateTime}</p>}</div>))}
-                                          {lead.layouts?.[0]?.finalBackDesignEmb?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>EMB File</p>{lead.layouts[0].finalBackDesignEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignEmbUploadTimes![index]!).dateTime}</p>}</div>)}
-                                          {lead.layouts?.[0]?.finalLogoDst?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo ${index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>{lead.layouts?.[0]?.finalLogoDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoDstUploadTimes![index]!).dateTime}</p>}</div>))}
-                                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>{lead.layouts[0].finalBackDesignDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignDstUploadTimes![index]!).dateTime}</p>}</div>)}
+                                          {lead.layouts?.[0]?.finalLogoEmb?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo ${index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts?.[0]?.finalLogoEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoEmbUploadTimes![index]!).dateTime}</p>}</div>))}
+                                          {lead.layouts?.[0]?.finalBackDesignEmb?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts[0].finalBackDesignEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignEmbUploadTimes![index]!).dateTime}</p>}</div>)}
+                                          {lead.layouts?.[0]?.finalLogoDst?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo ${index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts?.[0]?.finalLogoDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoDstUploadTimes![index]!).dateTime}</p>}</div>))}
+                                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts[0].finalBackDesignDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignDstUploadTimes![index]!).dateTime}</p>}</div>)}
                                           {lead.layouts?.[0]?.finalNamesDst?.map((file, index) => file && (
                                             <div key={index}>
                                                 <p className="font-semibold text-gray-500 mb-2">Name ${index + 1} (DST)</p>
-                                                <p className='text-black text-sm p-2 border rounded-md bg-gray-100'>DST File</p>
+                                                <p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>
                                                 {lead.layouts?.[0]?.finalNamesDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalNamesDstUploadTimes![index]!).dateTime}</p>}
                                             </div>
                                           ))}
                                           {lead.layouts?.[0]?.sequenceLogo?.map((file, index) => file && (
                                               <div key={index}>
                                                   <p className="font-semibold text-gray-500 mb-2">Sequence Logo ${index + 1}</p>
-                                                  <ImagePreview src={file} alt={`Sequence Logo ${index + 1}`} />
+                                                  <ImagePreview src={file.url} alt={`Sequence Logo ${index + 1}`} />
                                                   {Array.isArray(lead.layouts?.[0]?.sequenceLogoUploadTimes) && lead.layouts?.[0]?.sequenceLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceLogoUploadTimes![index]!).dateTime}</p>}
                                               </div>
                                           ))}
                                           {lead.layouts?.[0]?.sequenceBackDesign?.map((file, index) => file && (
                                               <div key={index}>
                                                   <p className="font-semibold text-gray-500 mb-2">Sequence Back</p>
-                                                  <ImagePreview src={file} alt="Sequence Back Design" />
+                                                  <ImagePreview src={file.url} alt="Sequence Back Design" />
                                                   {Array.isArray(lead.layouts?.[0]?.sequenceBackDesignUploadTimes) && lead.layouts?.[0]?.sequenceBackDesignUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceBackDesignUploadTimes![index]!).dateTime}</p>}
                                               </div>
                                           ))}
