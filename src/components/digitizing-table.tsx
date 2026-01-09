@@ -1,3 +1,4 @@
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -441,7 +442,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
     newRefs.splice(index, 1);
     refs.current = newRefs;
     
-    // Also reset the file input value if possible
     if(refs.current[index]) {
         refs.current[index]!.value = '';
     }
@@ -487,6 +487,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   }, []);
 
   const calculateDigitizingDeadline = useCallback((lead: Lead) => {
+    if (lead.isFinalProgram) {
+        const remainingDays = differenceInDays(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 2 : 6), new Date());
+        return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
+    }
     const submissionDate = new Date(lead.submissionDateTime);
     const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
     const deadlineDate = addDays(submissionDate, deadlineDays);
@@ -1229,20 +1233,20 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Final Program Files</CardTitle></CardHeader>
                                         <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs">
-                                          {lead.layouts?.[0]?.finalLogoEmb?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo ${index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts?.[0]?.finalLogoEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoEmbUploadTimes![index]!).dateTime}</p>}</div>))}
+                                          {lead.layouts?.[0]?.finalLogoEmb?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts?.[0]?.finalLogoEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoEmbUploadTimes![index]!).dateTime}</p>}</div>))}
                                           {lead.layouts?.[0]?.finalBackDesignEmb?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts[0].finalBackDesignEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignEmbUploadTimes![index]!).dateTime}</p>}</div>)}
-                                          {lead.layouts?.[0]?.finalLogoDst?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo ${index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts?.[0]?.finalLogoDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoDstUploadTimes![index]!).dateTime}</p>}</div>))}
+                                          {lead.layouts?.[0]?.finalLogoDst?.map((file, index) => file && (<div key={index}><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts?.[0]?.finalLogoDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoDstUploadTimes![index]!).dateTime}</p>}</div>))}
                                           {lead.layouts?.[0]?.finalBackDesignDst?.map((file, index) => file && <div key={index}><p className="font-semibold text-gray-500 mb-2">Back (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>{lead.layouts[0].finalBackDesignDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignDstUploadTimes![index]!).dateTime}</p>}</div>)}
                                           {lead.layouts?.[0]?.finalNamesDst?.map((file, index) => file && (
                                             <div key={index}>
-                                                <p className="font-semibold text-gray-500 mb-2">Name ${index + 1} (DST)</p>
+                                                <p className="font-semibold text-gray-500 mb-2">Name {index + 1} (DST)</p>
                                                 <p className='text-black text-sm p-2 border rounded-md bg-gray-100'>{file.name}</p>
                                                 {lead.layouts?.[0]?.finalNamesDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalNamesDstUploadTimes![index]!).dateTime}</p>}
                                             </div>
                                           ))}
                                           {lead.layouts?.[0]?.sequenceLogo?.map((file, index) => file && (
                                               <div key={index}>
-                                                  <p className="font-semibold text-gray-500 mb-2">Sequence Logo ${index + 1}</p>
+                                                  <p className="font-semibold text-gray-500 mb-2">Sequence Logo {index + 1}</p>
                                                   <ImagePreview src={file.url} alt={`Sequence Logo ${index + 1}`} />
                                                   {Array.isArray(lead.layouts?.[0]?.sequenceLogoUploadTimes) && lead.layouts?.[0]?.sequenceLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceLogoUploadTimes![index]!).dateTime}</p>}
                                               </div>
