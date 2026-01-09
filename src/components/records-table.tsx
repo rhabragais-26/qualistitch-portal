@@ -503,7 +503,7 @@ export function RecordsTable() {
                   return(
                   <React.Fragment key={lead.id}>
                     <TableRow>
-                      <TableCell className="text-xs align-middle py-2 text-black">
+                      <TableCell className="text-xs align-top py-2 text-black">
                          <Collapsible>
                             <CollapsibleTrigger asChild>
                                <div className="flex items-center cursor-pointer">
