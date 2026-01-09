@@ -157,23 +157,30 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
           </Button>
         </CardHeader>
         <CardContent className="p-4 flex-1 flex flex-col" onPaste={onPaste}>
-            {!image ? (
-                <div
-                    className="flex-1 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-700/50"
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    <Upload className="h-10 w-10 mb-2" />
-                    <p>Click to upload or paste an image</p>
-                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange}/>
-                </div>
-            ) : (
-                <div className="relative flex-1 group">
-                    <Image src={image} alt="Size Chart" layout="fill" objectFit="contain" />
-                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={removeImage}>
-                        <Trash2 className="h-4 w-4"/>
-                    </Button>
-                </div>
-            )}
+            <div
+                tabIndex={0}
+                className={cn(
+                    "relative group flex-1 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-700/50",
+                    !image && "p-4"
+                )}
+                onDoubleClick={() => fileInputRef.current?.click()}
+                onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
+            >
+                {!image ? (
+                    <>
+                        <Upload className="h-10 w-10 mb-2" />
+                        <p>Double-click to upload or paste image</p>
+                    </>
+                ) : (
+                    <>
+                        <Image src={image} alt="Size Chart" layout="fill" objectFit="contain" />
+                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={removeImage}>
+                            <Trash2 className="h-4 w-4"/>
+                        </Button>
+                    </>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange}/>
+            </div>
             {uploadTime && (
                 <p className="text-xs text-center text-gray-500 mt-2">
                     Uploaded on: {new Date(uploadTime).toLocaleString()}
