@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
@@ -97,7 +96,7 @@ const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success
     if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
     if (lead.isDone) return { text: "Done Production", variant: "success" };
     if (lead.isEmbroideryDone) return { text: "Ongoing with Sewer", variant: "warning" };
-    if (lead.isCutting) return { text: "Ongoing Embroidery", variant: "default" };
+    if (lead.isCutting) return { text: "Ongoing Embroidery", variant: "warning" };
     return { text: "Pending", variant: "secondary" };
 };
 
@@ -525,3 +524,5 @@ export function ProductionQueueTable() {
     </Card>
   );
 }
+
+    
