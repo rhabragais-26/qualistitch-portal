@@ -46,6 +46,7 @@ type Lead = {
   companyName?: string;
   contactNumber: string;
   landlineNumber?: string;
+  orderType: string;
   orders: Order[];
   joNumber?: number;
   isSentToProduction?: boolean;
@@ -242,6 +243,7 @@ export function ProductionQueueTable() {
                 {productionQueue?.map((lead) => {
                   const isRepeat = lead.orderNumber > 1;
                   const deadlineInfo = calculateProductionDeadline(lead);
+                  const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
                   return (
                     <TableRow key={lead.id}>
                         <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
@@ -279,9 +281,14 @@ export function ProductionQueueTable() {
                         </TableCell>
                         <TableCell className="text-xs align-middle py-3 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className="align-middle py-3 text-center">
-                          <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                            {lead.priorityType}
-                          </Badge>
+                          <div className="flex flex-col items-center gap-1">
+                            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                              {lead.priorityType}
+                            </Badge>
+                            <div className={cn("text-gray-500 text-[10px] whitespace-nowrap", specialOrderTypes.includes(lead.orderType) && "font-bold")}>
+                              {lead.orderType}
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell className={cn(
                           "text-center text-xs align-middle py-3 font-medium",
@@ -292,7 +299,7 @@ export function ProductionQueueTable() {
                           {deadlineInfo.text}
                         </TableCell>
                         <TableCell className="text-xs align-middle py-3 text-black text-center">{formatDateTime(lead.submissionDateTime).dateTime}</TableCell>
-                        <TableCell className="text-xs align-middle py-3 text-black">
+                        <TableCell className="text-xs align-middle py-3 text-black text-center">
                           <ul className="space-y-1 text-center">
                             {lead.orders.map((order, index) => (
                               <li key={index}>
