@@ -22,13 +22,14 @@ import { Input } from './ui/input';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
 import { ChevronDown } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
+import { addDays, differenceInDays } from 'date-fns';
 
 type Order = {
   productType: string;
@@ -107,6 +108,25 @@ export function ProductionQueueTable() {
     }
   }, [firestore, toast]);
   
+  const calculateProductionDeadline = useCallback((lead: Lead) => {
+    if (lead.isDone) {
+      return { text: 'Completed', isOverdue: false, isUrgent: false, remainingDays: Infinity };
+    }
+    
+    const submissionDate = new Date(lead.submissionDateTime);
+    const deadlineDays = lead.priorityType === 'Rush' ? 6 : 10;
+    const deadlineDate = addDays(submissionDate, deadlineDays);
+    const remainingDays = differenceInDays(deadlineDate, new Date());
+    
+    if (remainingDays < 0) {
+      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
+    } else if (remainingDays <= 2) {
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
+    } else {
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
+    }
+  }, []);
+
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
@@ -209,6 +229,7 @@ export function ProductionQueueTable() {
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs">Priority</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs">Overdue Status</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs">Date Sent</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs">Ordered Items</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Cutting</TableHead>
@@ -220,6 +241,7 @@ export function ProductionQueueTable() {
                 <TableBody>
                 {productionQueue?.map((lead) => {
                   const isRepeat = lead.orderNumber > 1;
+                  const deadlineInfo = calculateProductionDeadline(lead);
                   return (
                     <TableRow key={lead.id}>
                         <TableCell className="font-medium text-xs align-top py-3 text-black">
@@ -260,6 +282,14 @@ export function ProductionQueueTable() {
                           <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                             {lead.priorityType}
                           </Badge>
+                        </TableCell>
+                        <TableCell className={cn(
+                          "text-center text-xs align-top py-3 font-medium",
+                          deadlineInfo.isOverdue && "text-red-600",
+                          deadlineInfo.isUrgent && "text-amber-600",
+                          !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
+                        )}>
+                          {deadlineInfo.text}
                         </TableCell>
                         <TableCell className="text-xs align-top py-3 text-black">{formatDateTime(lead.submissionDateTime).dateTime}</TableCell>
                         <TableCell className="text-xs align-top py-3 text-black">
@@ -310,3 +340,5 @@ export function ProductionQueueTable() {
     </Card>
   );
 }
+
+    
