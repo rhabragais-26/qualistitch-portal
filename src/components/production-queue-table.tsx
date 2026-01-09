@@ -21,9 +21,9 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
-import { formatDateTime, cn } from '@/lib/utils';
+import { format, formatDateTime, cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
-import { ChevronDown, Send } from 'lucide-react';
+import { ChevronDown, Send, FileText } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -32,7 +32,7 @@ import { addDays, differenceInDays } from 'date-fns';
 import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-
+import Image from 'next/image';
 
 type Order = {
   productType: string;
@@ -40,6 +40,40 @@ type Order = {
   size: string;
   quantity: number;
 }
+
+type DesignDetails = {
+  left?: boolean;
+  right?: boolean;
+  backLogo?: boolean;
+  backText?: boolean;
+};
+
+type NamedOrder = {
+  name: string;
+  color: string;
+  size: string;
+  quantity: number;
+  backText: string;
+};
+
+type FileObject = {
+  name: string;
+  url: string;
+};
+
+type Layout = {
+  layoutImage?: string;
+  dstLogoLeft?: string;
+  dstLogoRight?: string;
+  dstBackLogo?: string;
+  dstBackText?: string;
+  namedOrders?: NamedOrder[];
+  finalLogoDst?: (FileObject | null)[];
+  finalBackDesignDst?: (FileObject | null)[];
+  finalNamesDst?: (FileObject | null)[];
+  sequenceLogo?: (FileObject | null)[];
+  sequenceBackDesign?: (FileObject | null)[];
+};
 
 type ProductionType = "Pending" | "In-house" | "Outsource 1" | "Outsource 2" | "Outsource 3";
 
@@ -64,6 +98,13 @@ type Lead = {
   isEmbroideryDone?: boolean;
   isEndorsedToLogistics?: boolean;
   doneProductionTimestamp?: string;
+  deliveryDate?: string;
+  courier: string;
+  location: string;
+  recipientName?: string;
+  paymentType: string;
+  salesRepresentative: string;
+  layouts?: Layout[];
 }
 
 type EnrichedLead = Lead & {
@@ -368,7 +409,7 @@ export function ProductionQueueTable() {
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Overdue Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Ordered Items</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Production Documents</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Start Production</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Production Category</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Embroidery</TableHead>
@@ -385,137 +426,144 @@ export function ProductionQueueTable() {
                   const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
                   const productionStatus = getProductionStatusLabel(lead);
                   return (
-                    <TableRow key={lead.id}>
-                        <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
-                          <Collapsible>
-                            <CollapsibleTrigger asChild>
-                                <div className="flex items-center justify-center cursor-pointer">
-                                    <span>{lead.customerName}</span>
-                                    <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                </div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
-                                {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
-                                {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
-                            </CollapsibleContent>
-                          </Collapsible>
-                           {isRepeat ? (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
-                                      <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                      <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                        {lead.orderNumber}
-                                      </span>
+                    <React.Fragment key={lead.id}>
+                        <TableRow>
+                            <TableCell className="font-medium text-xs align-top py-3 text-black text-center">
+                              <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                    <div className="flex items-center justify-center cursor-pointer">
+                                        <span>{lead.customerName}</span>
+                                        <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
                                     </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            ) : (
-                              <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                            )}
-                        </TableCell>
-                        <TableCell className="text-xs align-middle py-3 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
-                        <TableCell className="align-middle py-3 text-center">
-                          <div className="flex flex-col items-center gap-1">
-                            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                              {lead.priorityType}
-                            </Badge>
-                             <div className={cn("text-gray-500 text-[10px] whitespace-nowrap", specialOrderTypes.includes(lead.orderType) && "font-bold")}>
-                              {lead.orderType}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className={cn(
-                          "text-center text-xs align-middle py-3 font-medium",
-                          deadlineInfo.isOverdue && "text-red-600",
-                          deadlineInfo.isUrgent && "text-amber-600",
-                          !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
-                        )}>
-                          {deadlineInfo.text}
-                        </TableCell>
-                        <TableCell className="text-xs align-middle py-3 text-black text-center">
-                          <ul className="space-y-1 text-center">
-                            {lead.orders.map((order, index) => (
-                              <li key={index}>
-                                {order.quantity}x {order.productType} ({order.color}, {order.size})
-                              </li>
-                            ))}
-                          </ul>
-                        </TableCell>
-                        <TableCell className="text-center align-middle">
-                           <Checkbox
-                            checked={lead.isCutting || false}
-                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
-                          />
-                        </TableCell>
-                        <TableCell className="text-center align-middle">
-                          <Select
-                            value={lead.productionType || 'Pending'}
-                            onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
-                            disabled={!lead.isCutting || lead.isEmbroideryDone}
-                          >
-                            <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType))}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {productionOptions.map(option => (
-                                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="text-center align-middle">
-                           <Checkbox
-                            checked={lead.isEmbroideryDone || false}
-                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
-                            disabled={!lead.isCutting}
-                          />
-                        </TableCell>
-                        <TableCell className="text-center align-middle">
-                           <Select
-                            value={lead.sewerType || 'Pending'}
-                            onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
-                            disabled={!lead.isEmbroideryDone || lead.isSewing}
-                           >
-                            <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType))}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                               {productionOptions.map(option => (
-                                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="text-center align-middle">
-                          <Checkbox
-                            checked={lead.isSewing || false}
-                            onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
-                            disabled={!lead.isEmbroideryDone}
-                          />
-                        </TableCell>
-                        <TableCell className="text-center align-middle">
-                           <Badge variant={productionStatus.variant}>{productionStatus.text}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center align-middle">
-                             <Button
-                                size="sm"
-                                onClick={() => handleEndorseToLogistics(lead.id)}
-                                disabled={!lead.isDone}
-                                className={cn(
-                                    "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
+                                    {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
+                                    {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
+                                </CollapsibleContent>
+                              </Collapsible>
+                               {isRepeat ? (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
+                                          <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                          <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                            {lead.orderNumber}
+                                          </span>
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                ) : (
+                                  <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                                 )}
-                            >
-                                <Send className="h-3.5 w-3.5" />
-                                <span className='whitespace-normal break-words'>Send to Logistics</span>
-                            </Button>
-                        </TableCell>
-                    </TableRow>
+                            </TableCell>
+                            <TableCell className="text-xs align-top py-3 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
+                            <TableCell className="align-top py-3 text-center">
+                              <div className="flex flex-col items-center gap-1">
+                                <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                                  {lead.priorityType}
+                                </Badge>
+                                 <div className={cn("text-gray-500 text-[10px] whitespace-nowrap", specialOrderTypes.includes(lead.orderType) && "font-bold")}>
+                                  {lead.orderType}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className={cn(
+                              "text-center text-xs align-top py-3 font-medium",
+                              deadlineInfo.isOverdue && "text-red-600",
+                              deadlineInfo.isUrgent && "text-amber-600",
+                              !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
+                            )}>
+                              {deadlineInfo.text}
+                            </TableCell>
+                            <TableCell className="text-xs align-top py-3 text-black text-center">
+                              <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                  <Button variant="ghost" className="h-8 px-2 flex items-center gap-1 text-black hover:bg-gray-100">
+                                    <FileText className="h-4 w-4" />
+                                    View Documents
+                                    <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:rotate-180" />
+                                  </Button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                  <ProductionDocuments lead={lead} />
+                                </CollapsibleContent>
+                              </Collapsible>
+                            </TableCell>
+                            <TableCell className="text-center align-top py-3">
+                               <Checkbox
+                                checked={lead.isCutting || false}
+                                onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
+                              />
+                            </TableCell>
+                            <TableCell className="text-center align-top py-3">
+                              <Select
+                                value={lead.productionType || 'Pending'}
+                                onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
+                                disabled={!lead.isCutting || lead.isEmbroideryDone}
+                              >
+                                <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType))}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {productionOptions.map(option => (
+                                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell className="text-center align-top py-3">
+                               <Checkbox
+                                checked={lead.isEmbroideryDone || false}
+                                onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
+                                disabled={!lead.isCutting}
+                              />
+                            </TableCell>
+                            <TableCell className="text-center align-top py-3">
+                               <Select
+                                value={lead.sewerType || 'Pending'}
+                                onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
+                                disabled={!lead.isEmbroideryDone || lead.isSewing}
+                               >
+                                <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType))}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                   {productionOptions.map(option => (
+                                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell className="text-center align-top py-3">
+                              <Checkbox
+                                checked={lead.isSewing || false}
+                                onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
+                                disabled={!lead.isEmbroideryDone}
+                              />
+                            </TableCell>
+                            <TableCell className="text-center align-top py-3">
+                               <Badge variant={productionStatus.variant}>{productionStatus.text}</Badge>
+                            </TableCell>
+                            <TableCell className="text-center align-top py-3">
+                                 <Button
+                                    size="sm"
+                                    onClick={() => handleEndorseToLogistics(lead.id)}
+                                    disabled={!lead.isDone}
+                                    className={cn(
+                                        "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
+                                    )}
+                                >
+                                    <Send className="h-3.5 w-3.5" />
+                                    <span className='whitespace-normal break-words'>Send to Logistics</span>
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    </React.Fragment>
                 )})}
                 </TableBody>
             </Table>
@@ -525,4 +573,109 @@ export function ProductionQueueTable() {
   );
 }
 
+const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
+  const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+
+  const getContactDisplay = () => {
+    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
+    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+
+    if (mobile && landline) {
+      return `${mobile} / ${landline}`;
+    }
+    return mobile || landline || 'N/A';
+  };
+  
+  const finalFiles = [
+    ...(lead.layouts?.[0]?.finalLogoDst?.filter(f => f).map(f => ({ ...f, type: 'Logo (DST)' })) || []),
+    ...(lead.layouts?.[0]?.finalBackDesignDst?.filter(f => f).map(f => ({ ...f, type: 'Back Design (DST)' })) || []),
+    ...(lead.layouts?.[0]?.finalNamesDst?.filter(f => f).map(f => ({ ...f, type: 'Name (DST)' })) || []),
+  ];
+
+  return (
+    <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-4">
+        <h3 className="font-bold text-lg text-primary">Job Order Form Preview</h3>
+        <Card className="p-6 bg-white text-black text-xs">
+          <div className="grid grid-cols-2 gap-x-4">
+            <div>
+              <p><strong>Client:</strong> {lead.customerName}</p>
+              <p><strong>Recipient:</strong> {lead.recipientName || lead.customerName}</p>
+              <p><strong>Date of Transaction:</strong> {formatDateTime(lead.submissionDateTime).dateTime}</p>
+              <p><strong>Delivery Date:</strong> {lead.deliveryDate ? format(new Date(lead.deliveryDate), 'MMMM d, yyyy') : 'N/A'}</p>
+            </div>
+            <div className="text-right">
+              <p><strong>J.O. No:</strong> {formatJoNumber(lead.joNumber)}</p>
+              <p><strong>CSR:</strong> {lead.salesRepresentative}</p>
+              <p><strong>Courier:</strong> {lead.courier}</p>
+              <p><strong>Payment:</strong> {lead.paymentType}</p>
+            </div>
+          </div>
+          <p className="mt-2"><strong>Delivery Address:</strong> {lead.location}</p>
+          <p><strong>Contact:</strong> {getContactDisplay()}</p>
+          
+          <h4 className="font-bold mt-4 mb-2 text-sm">Order Details</h4>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-8 px-2">Product</TableHead>
+                <TableHead className="h-8 px-2">Color</TableHead>
+                <TableHead className="h-8 px-2">Size</TableHead>
+                <TableHead className="h-8 px-2 text-right">Qty</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {lead.orders.map((order, index) => (
+                <TableRow key={index}>
+                  <TableCell className="py-1 px-2">{order.productType}</TableCell>
+                  <TableCell className="py-1 px-2">{order.color}</TableCell>
+                  <TableCell className="py-1 px-2">{order.size}</TableCell>
+                  <TableCell className="py-1 px-2 text-right">{order.quantity}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <p className="text-right font-bold mt-2">Total Quantity: {totalQuantity}</p>
+        </Card>
+
+      </div>
+      <div className="space-y-4">
+        {lead.layouts?.some(l => l.layoutImage) && (
+            <div>
+                <h3 className="font-bold text-lg text-primary mb-2">Layout</h3>
+                <div className="grid grid-cols-2 gap-2">
+                    {lead.layouts.map((layout, index) => (
+                        layout.layoutImage && <Image key={index} src={layout.layoutImage} alt={`Layout ${index+1}`} width={200} height={150} className="rounded-md border object-contain"/>
+                    ))}
+                </div>
+            </div>
+        )}
+        {lead.layouts?.some(l => l.sequenceLogo?.some(s => s) || l.sequenceBackDesign?.some(s => s)) && (
+          <div>
+            <h3 className="font-bold text-lg text-primary mb-2">Sequence</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && (
+                <Image key={`seq-logo-${index}`} src={seq.url} alt={`Sequence Logo ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
+              ))}
+              {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && (
+                <Image key={`seq-back-${index}`} src={seq.url} alt={`Sequence Back Design ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
+              ))}
+            </div>
+          </div>
+        )}
+        {finalFiles.length > 0 && (
+          <div>
+            <h3 className="font-bold text-lg text-primary mb-2">Final Program Files</h3>
+             <ul className="space-y-1 text-sm list-disc list-inside">
+              {finalFiles.map((file, index) => (
+                file && <li key={index} className="truncate"><strong>{file.type}:</strong> {file.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+ProductionDocuments.displayName = 'ProductionDocuments';
     
