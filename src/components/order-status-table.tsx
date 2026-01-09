@@ -96,7 +96,6 @@ export function OrderStatusTable() {
   const [overallStatusFilter, setOverallStatusFilter] = useState('All');
   const [overdueStatusFilter, setOverdueStatusFilter] = useState('All');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
-  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
 
   const firestore = useFirestore();
@@ -112,10 +111,6 @@ export function OrderStatusTable() {
   const toggleLeadDetails = useCallback((leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
   }, [openLeadId]);
-
-  const toggleCustomerDetails = useCallback((leadId: string) => {
-    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
-  }, [openCustomerDetails]);
 
   const calculateDeadline = useCallback((lead: Lead) => {
     if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
@@ -403,11 +398,8 @@ export function OrderStatusTable() {
                     <React.Fragment key={lead.id}>
                         <TableRow className="border-b-2 border-gray-300">
                             <TableCell className="font-medium align-middle py-3 text-black text-sm">
-                                <div className="flex items-center cursor-pointer font-bold" onClick={() => toggleCustomerDetails(lead.id)}>
-                                    <span>{lead.customerName}</span>
-                                    <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" data-state={openCustomerDetails === lead.id ? 'open' : 'closed'} />
-                                </div>
-                                 <p className="text-xs text-gray-500 font-normal">{formatJoNumber(lead.joNumber)}</p>
+                                <div className="font-bold">{lead.customerName}</div>
+                                <p className="text-xs text-gray-500 font-normal">{formatJoNumber(lead.joNumber)}</p>
                                 {isRepeat ? (
                                     <TooltipProvider>
                                       <Tooltip>
@@ -427,19 +419,17 @@ export function OrderStatusTable() {
                                   ) : (
                                     <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                                 )}
-                                {openCustomerDetails === lead.id && (
-                                  <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
-                                      {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
-                                      {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
-                                  </div>
-                                )}
+                                <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
+                                    {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                                    {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                                </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
                                <div className='flex flex-col items-center gap-1'>
-                                <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
+                                <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'} className={cn(lead.priorityType === 'Rush' ? "hover:bg-red-500" : "hover:bg-secondary")}>
                                     {lead.priorityType}
                                 </Badge>
-                                <div className="text-gray-500 text-[12px] font-bold mt-1 whitespace-nowrap">{lead.orderType}</div>
+                                <div className="text-gray-500 text-base font-bold mt-1 whitespace-nowrap">{lead.orderType}</div>
                                </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
