@@ -510,7 +510,7 @@ export function ProductionQueueTable() {
                                     checked={lead.isCutting || false}
                                     onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
                                 />
-                                {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
+                                {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
                                </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
@@ -536,7 +536,7 @@ export function ProductionQueueTable() {
                                     onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
                                     disabled={!lead.isCutting || !lead.productionType || lead.productionType === 'Pending'}
                                 />
-                                {lead.embroideryDoneTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.embroideryDoneTimestamp).dateTimeShort}</div>}
+                                {lead.embroideryDoneTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.embroideryDoneTimestamp).dateTimeShort}</div>}
                                </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
@@ -562,7 +562,7 @@ export function ProductionQueueTable() {
                                   onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
                                   disabled={!lead.isEmbroideryDone || !lead.sewerType || lead.sewerType === 'Pending'}
                                 />
-                                {lead.sewingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
+                                {lead.sewingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
                               </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
@@ -760,6 +760,7 @@ ProductionDocuments.displayName = 'ProductionDocuments';
 
 
     
+
 
 
 
