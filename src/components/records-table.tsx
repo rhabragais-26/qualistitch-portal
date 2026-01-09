@@ -43,6 +43,7 @@ import { cn } from '@/lib/utils';
 import { collection, query } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
 const productTypes = [
   'Executive Jacket 1',
@@ -486,7 +487,6 @@ export function RecordsTable() {
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="text-white align-middle">Date &amp; Time</TableHead>
-                    <TableHead className="text-white align-middle">Last Modified</TableHead>
                     <TableHead className="text-white align-middle">Customer</TableHead>
                     <TableHead className="text-white align-middle">CSR</TableHead>
                     <TableHead className="text-center text-white align-middle">Priority</TableHead>
@@ -504,12 +504,22 @@ export function RecordsTable() {
                   <React.Fragment key={lead.id}>
                     <TableRow>
                       <TableCell className="text-xs align-middle py-2 text-black">
-                         <div>{formatDateTime(lead.submissionDateTime).dateTime}</div>
-                         <div className="text-gray-500">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
-                      </TableCell>
-                      <TableCell className="text-xs align-middle py-2 text-black">
-                         <div>{formatDateTime(lead.lastModified).dateTime}</div>
-                         <div className="text-gray-500">{formatDateTime(lead.lastModified).dayOfWeek}</div>
+                         <Collapsible>
+                            <CollapsibleTrigger asChild>
+                               <div className="flex items-center cursor-pointer">
+                                  <div>
+                                      <div>{formatDateTime(lead.submissionDateTime).dateTime}</div>
+                                      <div className="text-gray-500">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
+                                  </div>
+                                  <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
+                              </div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="pt-1 text-gray-500 text-xs">
+                                <span className='font-bold text-gray-600'>Modified:</span>
+                                <div>{formatDateTime(lead.lastModified).dateTime}</div>
+                                <div>{formatDateTime(lead.lastModified).dayOfWeek}</div>
+                            </CollapsibleContent>
+                        </Collapsible>
                       </TableCell>
                       <TableCell className="text-xs align-top py-2 text-black">
                         <div className="flex items-start">
