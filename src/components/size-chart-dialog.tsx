@@ -18,15 +18,14 @@ type SizeChartData = {
 export function SizeChartDialog({ onClose }: { onClose: () => void }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
-  const resizeHandleRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [size, setSize] = useState({ width: 500, height: 600 });
+  const [size, setSize] = useState({ width: 800, height: 700 });
   const [isDragging, setIsDragging] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   
   const [image, setImage] = useState<string | null>(null);
   const [uploadTime, setUploadTime] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -42,7 +41,7 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
     const centerX = window.innerWidth / 2 - size.width / 2;
     const centerY = window.innerHeight / 2 - size.height / 2;
     setPosition({ x: centerX, y: centerY });
-  }, []);
+  }, [size.width, size.height]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (headerRef.current?.contains(e.target as Node)) {
@@ -50,12 +49,6 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
         dragStartPos.current = {
             x: e.clientX - position.x,
             y: e.clientY - position.y,
-        };
-    } else if (resizeHandleRef.current?.contains(e.target as Node)) {
-        setIsResizing(true);
-        dragStartPos.current = {
-            x: e.clientX,
-            y: e.clientY,
         };
     }
   }, [position.x, position.y]);
@@ -66,24 +59,15 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
         x: e.clientX - dragStartPos.current.x,
         y: e.clientY - dragStartPos.current.y,
       });
-    } else if (isResizing) {
-       const dx = e.clientX - dragStartPos.current.x;
-       const dy = e.clientY - dragStartPos.current.y;
-       dragStartPos.current = { x: e.clientX, y: e.clientY };
-       setSize(prevSize => ({
-           width: Math.max(300, prevSize.width + dx),
-           height: Math.max(200, prevSize.height + dy),
-       }));
     }
-  }, [isDragging, isResizing]);
+  }, [isDragging]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-    setIsResizing(false);
   }, []);
 
   useEffect(() => {
-    if (isDragging || isResizing) {
+    if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     } else {
@@ -95,13 +79,14 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, isResizing, handleMouseMove, handleMouseUp]);
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const handleImageUpload = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       setImage(e.target?.result as string);
       setUploadTime(new Date().toISOString());
+      setIsDirty(true);
     };
     reader.readAsDataURL(file);
   }
@@ -125,6 +110,7 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
   const removeImage = () => {
     setImage(null);
     setUploadTime(null);
+    setIsDirty(true);
     if(fileInputRef.current) fileInputRef.current.value = '';
   }
 
@@ -132,8 +118,11 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
     if (image && uploadTime) {
       const dataToSave: SizeChartData = { image, uploadTime };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
-      onClose();
+    } else {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
     }
+    setIsDirty(false);
+    onClose();
   }
 
   return (
@@ -187,20 +176,12 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
                 </p>
             )}
         </CardContent>
-        <CardFooter className="p-2 flex justify-end">
-            <Button onClick={handleSave} disabled={!image} className="text-white font-bold">
+        <CardFooter className="p-2 flex justify-center">
+            <Button onClick={handleSave} disabled={!isDirty} className="text-white font-bold">
                 <Save className="mr-2 h-4 w-4" />
                 Save
             </Button>
         </CardFooter>
-         <div 
-            ref={resizeHandleRef} 
-            className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize" 
-            style={{ 
-                borderBottom: '2px solid hsl(var(--muted-foreground))', 
-                borderRight: '2px solid hsl(var(--muted-foreground))' 
-            }}
-        />
       </Card>
     </div>
   );
