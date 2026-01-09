@@ -671,7 +671,7 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
               </TableBody>
             </Table>
             <p className="text-right font-bold mt-2">Total Quantity: {totalQuantity}</p>
-          </Card>>
+          </Card>
 
         </div>
         <div className="space-y-4">
@@ -715,4 +715,5 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
 });
 ProductionDocuments.displayName = 'ProductionDocuments';
     
+
 
