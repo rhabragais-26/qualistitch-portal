@@ -3,10 +3,17 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
-import { Card, CardContent, CardHeader } from './ui/card';
-import { X, GripVertical, Upload, Trash2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardFooter } from './ui/card';
+import { X, GripVertical, Upload, Trash2, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+
+const LOCAL_STORAGE_KEY = 'sizeChartData';
+
+type SizeChartData = {
+  image: string;
+  uploadTime: string;
+};
 
 export function SizeChartDialog({ onClose }: { onClose: () => void }) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -19,10 +26,18 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
   const dragStartPos = useRef({ x: 0, y: 0 });
   
   const [image, setImage] = useState<string | null>(null);
-  const [uploadTime, setUploadTime] = useState<Date | null>(null);
+  const [uploadTime, setUploadTime] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // Load from localStorage on mount
+    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedData) {
+        const { image: savedImage, uploadTime: savedUploadTime }: SizeChartData = JSON.parse(savedData);
+        setImage(savedImage);
+        setUploadTime(savedUploadTime);
+    }
+
     // Center the dialog on initial render
     const centerX = window.innerWidth / 2 - size.width / 2;
     const centerY = window.innerHeight / 2 - size.height / 2;
@@ -86,7 +101,7 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
     const reader = new FileReader();
     reader.onload = (e) => {
       setImage(e.target?.result as string);
-      setUploadTime(new Date());
+      setUploadTime(new Date().toISOString());
     };
     reader.readAsDataURL(file);
   }
@@ -111,6 +126,14 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
     setImage(null);
     setUploadTime(null);
     if(fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  const handleSave = () => {
+    if (image && uploadTime) {
+      const dataToSave: SizeChartData = { image, uploadTime };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
+      onClose();
+    }
   }
 
   return (
@@ -153,10 +176,16 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
             )}
             {uploadTime && (
                 <p className="text-xs text-center text-gray-500 mt-2">
-                    Uploaded on: {uploadTime.toLocaleString()}
+                    Uploaded on: {new Date(uploadTime).toLocaleString()}
                 </p>
             )}
         </CardContent>
+        <CardFooter className="p-2 flex justify-end">
+            <Button onClick={handleSave} disabled={!image} className="text-white font-bold">
+                <Save className="mr-2 h-4 w-4" />
+                Save
+            </Button>
+        </CardFooter>
          <div 
             ref={resizeHandleRef} 
             className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize" 
