@@ -42,6 +42,7 @@ import {
   Plus,
   Minus,
   CalculatorIcon,
+  Ruler,
 } from 'lucide-react';
 import {RadioGroup, RadioGroupItem} from './ui/radio-group';
 import { cn } from '@/lib/utils';
@@ -74,6 +75,7 @@ import { setDocumentNonBlocking } from '@/firebase/firestore-writes';
 import { v4 as uuidv4 } from 'uuid';
 import locations from '@/lib/ph-locations.json';
 import { Calculator } from './calculator';
+import { SizeChartDialog } from './size-chart-dialog';
 import { StatusBanner } from '@/components/ui/status-banner';
 
 // Define the form schema using Zod
@@ -185,6 +187,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [citySuggestions, setCitySuggestions] = useState<{ name: string; province: string, type: string }[]>([]);
   const [barangaySuggestions, setBarangaySuggestions] = useState<string[]>([]);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [showSizeChart, setShowSizeChart] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [customerStatus, setCustomerStatus] = useState<'New' | 'Repeat' | null>(null);
   
@@ -587,6 +590,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   return (
     <>
     {showCalculator && <Calculator onClose={() => setShowCalculator(false)} />}
+    {showSizeChart && <SizeChartDialog onClose={() => setShowSizeChart(false)} />}
     <Card className="w-full mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black max-w-6xl">
       <CardHeader>
         <div className="flex justify-between items-start">
@@ -601,7 +605,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         text="Repeat Buyer"
                         backgroundClassName="shining-metal from-neutral-800 via-neutral-600 to-neutral-800"
                         textColorClassName="shining-text from-amber-200 via-yellow-400 to-amber-200 font-bold"
-                        borderClassName="shining-metal-border"
+                        borderClassName="shining-black-border"
                        />
                     </div>
                   )}
@@ -952,10 +956,16 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
               </div>
             </div>
             <div className="flex justify-between pt-4 col-span-full">
-              <Button type="button" variant="outline" onClick={() => setShowCalculator(true)}>
-                <CalculatorIcon className="mr-2 h-4 w-4" />
-                Show Calculator
-              </Button>
+              <div className="flex gap-4">
+                 <Button type="button" variant="outline" onClick={() => setShowCalculator(true)}>
+                  <CalculatorIcon className="mr-2 h-4 w-4" />
+                  Show Calculator
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowSizeChart(true)}>
+                  <Ruler className="mr-2 h-4 w-4" />
+                  Check Size Chart
+                </Button>
+              </div>
               <div className="flex gap-4">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
