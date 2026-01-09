@@ -377,7 +377,7 @@ export function OrderStatusTable() {
                     <TableHead className="text-white font-bold align-middle text-center w-[150px]">Priority Type</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[150px]">Ordered Items</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[500px]">Order Fulfillment Progress</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle w-[150px]">Deadline</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[150px]">Overdue Status</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Operational Case</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[120px]">Overall Status</TableHead>
                   </TableRow>
@@ -539,7 +539,7 @@ export function OrderStatusTable() {
                                 )}
                             </TableCell>
                             <TableCell className="text-center align-middle p-1 font-medium">
-                                <Badge variant={overallStatus.variant} className="uppercase rounded-md text-sm w-full h-full flex items-center justify-center">{overallStatus.text}</Badge>
+                                <Badge variant={overallStatus.variant} className="uppercase rounded-md text-sm">{overallStatus.text}</Badge>
                             </TableCell>
                         </TableRow>
                         {isCollapsibleOpen && (
@@ -581,3 +581,5 @@ export function OrderStatusTable() {
     </Card>
   );
 }
+
+    
