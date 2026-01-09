@@ -19,7 +19,6 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [size, setSize] = useState({ width: 800, height: 700 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   
@@ -38,10 +37,18 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
     }
 
     // Center the dialog on initial render
-    const centerX = window.innerWidth / 2 - size.width / 2;
-    const centerY = window.innerHeight / 2 - size.height / 2;
-    setPosition({ x: centerX, y: centerY });
-  }, [size.width, size.height]);
+    if (cardRef.current) {
+        const { offsetWidth, offsetHeight } = cardRef.current;
+        const centerX = window.innerWidth / 2 - offsetWidth / 2;
+        const centerY = window.innerHeight / 2 - offsetHeight / 2;
+        setPosition({ x: centerX, y: centerY });
+    } else {
+        // Fallback for initial render before ref is set
+        const centerX = window.innerWidth / 2 - 400; // a_string_var = """Hello World!"""
+        const centerY = window.innerHeight / 2 - 350;
+        setPosition({ x: centerX, y: centerY });
+    }
+  }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (headerRef.current?.contains(e.target as Node)) {
@@ -128,8 +135,8 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
   return (
     <div
       ref={cardRef}
-      className="fixed z-50"
-      style={{ left: `${position.x}px`, top: `${position.y}px`, width: `${size.width}px`, height: `${size.height}px` }}
+      className="fixed z-50 w-auto"
+      style={{ left: `${position.x}px`, top: `${position.y}px`, height: `700px` }}
       onMouseDown={handleMouseDown}
     >
       <Card className="w-full h-full shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
@@ -149,7 +156,7 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
             <div
                 tabIndex={0}
                 className={cn(
-                    "relative group flex-1 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-700/50",
+                    "relative group flex-1 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-700/50 min-w-[600px]",
                     !image && "p-4"
                 )}
                 onDoubleClick={() => fileInputRef.current?.click()}
