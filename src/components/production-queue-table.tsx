@@ -154,6 +154,7 @@ export function ProductionQueueTable() {
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const { toast } = useToast();
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField } | null>(null);
+  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
@@ -342,6 +343,10 @@ export function ProductionQueueTable() {
     });
   }, [processedLeads, searchTerm, joNumberSearch]);
 
+  const toggleLeadDetails = useCallback((leadId: string) => {
+    setOpenLeadId(openLeadId === leadId ? null : leadId);
+  }, [openLeadId]);
+
   if (isLoading) {
     return (
       <div className="space-y-2 p-4">
@@ -481,18 +486,11 @@ export function ProductionQueueTable() {
                               {deadlineInfo.text}
                             </TableCell>
                             <TableCell className="text-xs align-top py-3 text-black text-center">
-                              <Collapsible>
-                                <CollapsibleTrigger asChild>
-                                  <Button variant="ghost" className="h-8 px-2 flex items-center gap-1 text-black hover:bg-gray-100">
-                                    <FileText className="h-4 w-4" />
-                                    View Documents
-                                    <ChevronDown className="h-4 w-4 transition-transform [&[data-state=open]]:rotate-180" />
-                                  </Button>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent>
-                                  <ProductionDocuments lead={lead} />
-                                </CollapsibleContent>
-                              </Collapsible>
+                              <Button variant="ghost" className="h-8 px-2 flex items-center gap-1 text-black hover:bg-gray-100" onClick={() => toggleLeadDetails(lead.id)}>
+                                <FileText className="h-4 w-4" />
+                                View Documents
+                                <ChevronDown className={cn("h-4 w-4 transition-transform", openLeadId === lead.id && "rotate-180")} />
+                              </Button>
                             </TableCell>
                             <TableCell className="text-center align-top py-3">
                                <Checkbox
@@ -563,6 +561,13 @@ export function ProductionQueueTable() {
                                 </Button>
                             </TableCell>
                         </TableRow>
+                        {openLeadId === lead.id && (
+                          <TableRow>
+                            <TableCell colSpan={12} className="p-0">
+                                <ProductionDocuments lead={lead} />
+                            </TableCell>
+                          </TableRow>
+                        )}
                     </React.Fragment>
                 )})}
                 </TableBody>
@@ -607,7 +612,7 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
       )}
       <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
-          <h3 className="font-bold text-lg text-primary">Job Order Form</h3>
+          <h3 className="font-bold text-lg text-primary">Job Order Form Preview</h3>
             {firstLayoutImage ? (
                 <div
                 className="relative w-full h-96 rounded-md border overflow-hidden cursor-pointer"
@@ -652,6 +657,7 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
 });
 ProductionDocuments.displayName = 'ProductionDocuments';
     
+
 
 
 
