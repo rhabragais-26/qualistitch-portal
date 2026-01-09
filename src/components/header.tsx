@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -124,7 +125,7 @@ export function Header({
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex items-center">
             <Link href="/" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/'); }}>
-              <span className={cn("font-bold font-headline flex items-baseline shining-metal from-amber-200 via-yellow-400 to-amber-200 shining-text")}>
+              <span className={cn("font-bold font-headline flex items-baseline shining-metal from-amber-200 via-yellow-400 to-amber-200 shining-text whitespace-nowrap")}>
                 <span className="text-3xl">Q</span>
                 <span className="text-2xl">UALISTITCH Inc.</span>
               </span>
@@ -147,7 +148,7 @@ export function Header({
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/records')}>
                     <Database className="mr-2" />
-                    View Records
+                    View Orders
                   </DropdownMenuItem>
                    <DropdownMenuItem onClick={() => handleNavigation('/job-order')}>
                     <ClipboardList className="mr-2" />
@@ -345,13 +346,15 @@ export function Header({
               <Label htmlFor="nickname" className="text-xs">Nickname</Label>
               <Input id="nickname" defaultValue="Rha" className="text-xs h-9" />
             </div>
-            <div className="grid gap-1">
-              <Label htmlFor="phone" className="text-xs">Phone Number</Label>
-              <Input id="phone" type="tel" placeholder="e.g., 0912-345-6789" className="text-xs h-9" />
-            </div>
-             <div className="grid gap-1">
-              <Label htmlFor="email" className="text-xs">Email</Label>
-              <Input id="email" type="email" placeholder="e.g., rha@example.com" className="text-xs h-9" />
+             <div className="grid grid-cols-5 gap-3">
+              <div className="grid gap-1 col-span-2">
+                <Label htmlFor="phone" className="text-xs">Phone Number</Label>
+                <Input id="phone" type="tel" placeholder="e.g., 0912-345-6789" className="text-xs h-9" />
+              </div>
+              <div className="grid gap-1 col-span-3">
+                <Label htmlFor="email" className="text-xs">Email</Label>
+                <Input id="email" type="email" placeholder="e.g., rha@example.com" className="text-xs h-9" />
+              </div>
             </div>
             <div className="grid gap-1 relative">
                 <Label htmlFor="existing-password"  className="text-xs">Existing Password</Label>
