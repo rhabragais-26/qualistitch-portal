@@ -420,6 +420,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                               size="sm"
                                               onClick={() => handleOpenPreparedDialog(lead)}
                                               className="h-7 px-2"
+                                              disabled={!lead.isFinalProgram}
                                           >
                                               Prepared
                                           </Button>
@@ -430,12 +431,11 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                   <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
                                       {lead.isSentToProduction ? (
                                         <div className="flex flex-col items-center gap-1">
-                                            <div className="flex items-center text-green-500 font-semibold">
+                                            <div className="flex items-center text-green-600 font-semibold">
                                                 <Check className="mr-2 h-4 w-4" /> Sent
                                             </div>
                                             <div className="text-xs text-gray-500">
-                                                <div>{formatDateTime(lead.sentToProductionTimestamp!).dateTime}</div>
-                                                <div>{formatDateTime(lead.sentToProductionTimestamp!).dayOfWeek}</div>
+                                                <div>{formatDateTime(lead.sentToProductionTimestamp!).dateTimeShort}</div>
                                             </div>
                                         </div>
                                       ) : (
@@ -469,4 +469,5 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
 
