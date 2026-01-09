@@ -682,36 +682,31 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
           </div>
         </div>
       )}
-      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-                <h3 className="font-bold text-lg text-primary">Job Order and Layout</h3>
-                <Button onClick={handleJobOrderPrint} variant="default" size="lg">
-                    Check Job Order and Layout
-                </Button>
-            </div>
-            <div className="space-y-2">
-                <h3 className="font-bold text-lg text-primary">Sequence</h3>
-                <div className="grid grid-cols-2 gap-2">
-                    {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
-                    <div key={`seq-logo-${index}`} className="relative cursor-pointer" onClick={() => setImageInView(seq.url)}>
-                        <Image src={seq.url} alt={`Sequence Logo ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
-                    </div>
-                    ))}
-                    {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && seq.url && (
-                     <div key={`seq-back-${index}`} className="relative cursor-pointer" onClick={() => setImageInView(seq.url)}>
-                        <Image src={seq.url} alt={`Sequence Back Design ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
-                    </div>
-                    ))}
+      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-3 gap-6">
+        <div className="space-y-2 col-span-1">
+            <h3 className="font-bold text-lg text-primary">Job Order and Layout</h3>
+            <Button onClick={handleJobOrderPrint} variant="default" size="lg" className="bg-teal-600 text-white hover:bg-teal-700">
+                Check Job Order and Layout
+            </Button>
+        </div>
+        <div className="space-y-2 col-span-1">
+            <h3 className="font-bold text-lg text-primary">Sequence</h3>
+            <div className="flex gap-2">
+                {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
+                <div key={`seq-logo-${index}`} className="relative cursor-pointer w-32 h-24">
+                    <Image src={seq.url} alt={`Sequence Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border"/>
                 </div>
+                ))}
+                {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && seq.url && (
+                    <div key={`seq-back-${index}`} className="relative cursor-pointer w-32 h-24">
+                    <Image src={seq.url} alt={`Sequence Back Design ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border"/>
+                </div>
+                ))}
             </div>
         </div>
-        <div className="space-y-2">
-            <div className="flex justify-between items-center">
-                <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
-                <Button onClick={handleDownloadAll} size="sm" className="text-white font-bold"><Download className="mr-2 h-4 w-4" />Download All</Button>
-            </div>
-            <div className="max-h-48 overflow-y-auto pr-2">
+        <div className="space-y-2 col-span-1">
+            <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
+            <div className="max-h-32 overflow-y-auto pr-2">
               <ul className="space-y-2 text-sm list-inside">
                   {finalFiles.map((file, index) => (
                   file && 
@@ -724,6 +719,7 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
                   ))}
               </ul>
             </div>
+             <Button onClick={handleDownloadAll} size="sm" className="text-white font-bold mt-2"><Download className="mr-2 h-4 w-4" />Download All</Button>
         </div>
       </div>
     </>
@@ -733,6 +729,7 @@ ProductionDocuments.displayName = 'ProductionDocuments';
     
 
   
+
 
 
 
