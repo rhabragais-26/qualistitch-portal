@@ -379,7 +379,7 @@ export function OrderStatusTable() {
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="text-white font-bold align-middle w-[250px]">Customer</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Order Type</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[120px]">Priority Type</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[150px]">Ordered Items</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[400px]">Order Fulfillment Progress</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Deadline</TableHead>
@@ -439,7 +439,7 @@ export function OrderStatusTable() {
                                 <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
                                     {lead.priorityType}
                                 </Badge>
-                                <div className="text-gray-500 text-[10px] mt-1 whitespace-nowrap">{lead.orderType}</div>
+                                <div className="text-gray-500 text-xs mt-1 whitespace-nowrap">{lead.orderType}</div>
                                </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
