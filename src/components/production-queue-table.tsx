@@ -306,12 +306,12 @@ export function ProductionQueueTable() {
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
@@ -519,7 +519,7 @@ export function ProductionQueueTable() {
                                 onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
                                 disabled={!lead.isCutting || lead.isEmbroideryDone}
                               >
-                                <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType))}>
+                                <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType))}>
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -545,7 +545,7 @@ export function ProductionQueueTable() {
                                 onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
                                 disabled={!lead.isEmbroideryDone || lead.isSewing}
                                >
-                                <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType))}>
+                                <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType))}>
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -760,6 +760,7 @@ ProductionDocuments.displayName = 'ProductionDocuments';
 
 
     
+
 
 
 
