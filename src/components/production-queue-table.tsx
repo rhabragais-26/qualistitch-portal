@@ -21,15 +21,14 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
-import { format } from 'date-fns';
+import { format, addDays, differenceInDays } from 'date-fns';
 import { formatDateTime, cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
-import { ChevronDown, Send, FileText } from 'lucide-react';
+import { ChevronDown, Send, FileText, X } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
-import { addDays, differenceInDays } from 'date-fns';
 import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
@@ -575,6 +574,7 @@ export function ProductionQueueTable() {
 }
 
 const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
+  const [imageInView, setImageInView] = useState<string | null>(null);
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
 
   const getContactDisplay = () => {
@@ -592,91 +592,127 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
     ...(lead.layouts?.[0]?.finalBackDesignDst?.filter(f => f).map(f => ({ ...f, type: 'Back Design (DST)' })) || []),
     ...(lead.layouts?.[0]?.finalNamesDst?.filter(f => f).map(f => ({ ...f, type: 'Name (DST)' })) || []),
   ];
+  
+  const firstLayoutImage = lead.layouts?.find(l => l.layoutImage)?.layoutImage;
 
   return (
-    <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="space-y-4">
-        <h3 className="font-bold text-lg text-primary">Job Order Form Preview</h3>
-        <Card className="p-6 bg-white text-black text-xs">
-          <div className="grid grid-cols-2 gap-x-4">
-            <div>
-              <p><strong>Client:</strong> {lead.customerName}</p>
-              <p><strong>Recipient:</strong> {lead.recipientName || lead.customerName}</p>
-              <p><strong>Date of Transaction:</strong> {formatDateTime(lead.submissionDateTime).dateTime}</p>
-              <p><strong>Delivery Date:</strong> {lead.deliveryDate ? format(new Date(lead.deliveryDate), 'MMMM d, yyyy') : 'N/A'}</p>
-            </div>
-            <div className="text-right">
-              <p><strong>J.O. No:</strong> {formatJoNumber(lead.joNumber)}</p>
-              <p><strong>CSR:</strong> {lead.salesRepresentative}</p>
-              <p><strong>Courier:</strong> {lead.courier}</p>
-              <p><strong>Payment:</strong> {lead.paymentType}</p>
-            </div>
+    <>
+      {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close image view</span>
+            </Button>
           </div>
-          <p className="mt-2"><strong>Delivery Address:</strong> {lead.location}</p>
-          <p><strong>Contact:</strong> {getContactDisplay()}</p>
-          
-          <h4 className="font-bold mt-4 mb-2 text-sm">Order Details</h4>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="h-8 px-2">Product</TableHead>
-                <TableHead className="h-8 px-2">Color</TableHead>
-                <TableHead className="h-8 px-2">Size</TableHead>
-                <TableHead className="h-8 px-2 text-right">Qty</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {lead.orders.map((order, index) => (
-                <TableRow key={index}>
-                  <TableCell className="py-1 px-2">{order.productType}</TableCell>
-                  <TableCell className="py-1 px-2">{order.color}</TableCell>
-                  <TableCell className="py-1 px-2">{order.size}</TableCell>
-                  <TableCell className="py-1 px-2 text-right">{order.quantity}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <p className="text-right font-bold mt-2">Total Quantity: {totalQuantity}</p>
-        </Card>
+        </div>
+      )}
+      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <h3 className="font-bold text-lg text-primary">Job Order Form Preview</h3>
+          <Card className="p-6 bg-white text-black text-xs">
+            <div className="grid grid-cols-2 gap-x-4">
+              <div>
+                <p><strong>Client:</strong> {lead.customerName}</p>
+                <p><strong>Recipient:</strong> {lead.recipientName || lead.customerName}</p>
+                <p><strong>Date of Transaction:</strong> {formatDateTime(lead.submissionDateTime).dateTime}</p>
+                <p><strong>Delivery Date:</strong> {lead.deliveryDate ? format(new Date(lead.deliveryDate), 'MMMM d, yyyy') : 'N/A'}</p>
+              </div>
+              <div className="text-right">
+                <p><strong>J.O. No:</strong> {formatJoNumber(lead.joNumber)}</p>
+                <p><strong>CSR:</strong> {lead.salesRepresentative}</p>
+                <p><strong>Courier:</strong> {lead.courier}</p>
+                <p><strong>Payment:</strong> {lead.paymentType}</p>
+              </div>
+            </div>
+            <p className="mt-2"><strong>Delivery Address:</strong> {lead.location}</p>
+            <p><strong>Contact:</strong> {getContactDisplay()}</p>
 
-      </div>
-      <div className="space-y-4">
-        {lead.layouts?.some(l => l.layoutImage) && (
-            <div>
-                <h3 className="font-bold text-lg text-primary mb-2">Layout</h3>
-                <div className="grid grid-cols-2 gap-2">
-                    {lead.layouts.map((layout, index) => (
-                        layout.layoutImage && <Image key={index} src={layout.layoutImage} alt={`Layout ${index+1}`} width={200} height={150} className="rounded-md border object-contain"/>
-                    ))}
+            {firstLayoutImage && (
+              <div className="mt-4">
+                <p className="font-bold text-sm mb-2">Layout Image</p>
+                <div
+                  className="relative w-32 h-24 rounded-md border overflow-hidden cursor-pointer"
+                  onClick={() => setImageInView(firstLayoutImage)}
+                >
+                  <Image src={firstLayoutImage} alt="Job Order Layout" layout="fill" objectFit="cover" />
                 </div>
+              </div>
+            )}
+            
+            <h4 className="font-bold mt-4 mb-2 text-sm">Order Details</h4>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="h-8 px-2">Product</TableHead>
+                  <TableHead className="h-8 px-2">Color</TableHead>
+                  <TableHead className="h-8 px-2">Size</TableHead>
+                  <TableHead className="h-8 px-2 text-right">Qty</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {lead.orders.map((order, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="py-1 px-2">{order.productType}</TableCell>
+                    <TableCell className="py-1 px-2">{order.color}</TableCell>
+                    <TableCell className="py-1 px-2">{order.size}</TableCell>
+                    <TableCell className="py-1 px-2 text-right">{order.quantity}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <p className="text-right font-bold mt-2">Total Quantity: {totalQuantity}</p>
+          </Card>>
+
+        </div>
+        <div className="space-y-4">
+          {lead.layouts?.some(l => l.layoutImage) && (
+              <div>
+                  <h3 className="font-bold text-lg text-primary mb-2">Layout</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                      {lead.layouts.map((layout, index) => (
+                          layout.layoutImage && <Image key={index} src={layout.layoutImage} alt={`Layout ${index+1}`} width={200} height={150} className="rounded-md border object-contain"/>
+                      ))}
+                  </div>
+              </div>
+          )}
+          {lead.layouts?.some(l => l.sequenceLogo?.some(s => s?.url) || l.sequenceBackDesign?.some(s => s?.url)) && (
+            <div>
+              <h3 className="font-bold text-lg text-primary mb-2">Sequence</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
+                  <Image key={`seq-logo-${index}`} src={seq.url} alt={`Sequence Logo ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
+                ))}
+                {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && seq.url && (
+                  <Image key={`seq-back-${index}`} src={seq.url} alt={`Sequence Back Design ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
+                ))}
+              </div>
             </div>
-        )}
-        {lead.layouts?.some(l => l.sequenceLogo?.some(s => s?.url) || l.sequenceBackDesign?.some(s => s?.url)) && (
-          <div>
-            <h3 className="font-bold text-lg text-primary mb-2">Sequence</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
-                <Image key={`seq-logo-${index}`} src={seq.url} alt={`Sequence Logo ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
-              ))}
-              {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && seq.url && (
-                <Image key={`seq-back-${index}`} src={seq.url} alt={`Sequence Back Design ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
-              ))}
+          )}
+          {finalFiles.length > 0 && (
+            <div>
+              <h3 className="font-bold text-lg text-primary mb-2">Final Program Files</h3>
+               <ul className="space-y-1 text-sm list-disc list-inside">
+                {finalFiles.map((file, index) => (
+                  file && <li key={index} className="truncate"><strong>{file.type}:</strong> {file.name}</li>
+                ))}
+              </ul>
             </div>
-          </div>
-        )}
-        {finalFiles.length > 0 && (
-          <div>
-            <h3 className="font-bold text-lg text-primary mb-2">Final Program Files</h3>
-             <ul className="space-y-1 text-sm list-disc list-inside">
-              {finalFiles.map((file, index) => (
-                file && <li key={index} className="truncate"><strong>{file.type}:</strong> {file.name}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 });
 ProductionDocuments.displayName = 'ProductionDocuments';
     
+
