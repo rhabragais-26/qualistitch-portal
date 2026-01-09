@@ -21,7 +21,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
-import { format, addDays, differenceInDays } from 'date-fns';
+import { addDays, differenceInDays, format } from 'date-fns';
 import { formatDateTime, cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
 import { ChevronDown, Send, FileText, X, Download } from 'lucide-react';
@@ -137,8 +137,9 @@ const getStatusColor = (status?: ProductionType) => {
 const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success" | "warning" | "secondary" | "default" | "destructive" } => {
     if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
     if (lead.isDone) return { text: "Done Production", variant: "success" };
-    if (lead.isEmbroideryDone) return { text: "Ongoing with Sewer", variant: "warning" };
-    if(lead.isCutting) return { text: "Ongoing Embroidery", variant: "warning" };
+    if (lead.isSewing) return { text: "Ongoing with Sewer", variant: "warning" };
+    if (lead.isEmbroideryDone) return { text: "Ongoing Embroidery", variant: "warning" };
+    if(lead.isCutting) return { text: "Ongoing Cutting", variant: "warning" };
     return { text: "Pending", variant: "secondary" };
 };
 
@@ -724,6 +725,7 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
 });
 ProductionDocuments.displayName = 'ProductionDocuments';
     
+
 
 
 
