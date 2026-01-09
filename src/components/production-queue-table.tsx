@@ -677,43 +677,41 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
         </div>
       )}
       <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-2 col-span-1">
-              <h3 className="font-bold text-lg text-primary">Job Order and Layout</h3>
-              <Button onClick={handleJobOrderPrint} variant="default" size="lg" className="bg-teal-600 text-white hover:bg-teal-700">
-                  Check Job Order and Layout
-              </Button>
-          </div>
-          <div className="space-y-2 col-span-1">
-              <h3 className="font-bold text-lg text-primary">Sequence</h3>
-              <div className="flex gap-2 flex-wrap">
-                  {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
-                  <div key={`seq-logo-${index}`} className="relative cursor-pointer w-24 h-24" onClick={() => setImageInView(seq.url)}>
-                      <Image src={seq.url} alt={`Sequence Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border"/>
-                  </div>
-                  ))}
-                  {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && seq.url && (
-                      <div key={`seq-back-${index}`} className="relative cursor-pointer w-24 h-24" onClick={() => setImageInView(seq.url)}>
-                      <Image src={seq.url} alt={`Sequence Back Design ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border"/>
+        <div className="space-y-2 col-span-1">
+            <h3 className="font-bold text-lg text-primary">Job Order and Layout</h3>
+            <Button onClick={handleJobOrderPrint} variant="default" size="lg" className="bg-primary text-white hover:bg-primary/90">
+                Check Job Order and Layout
+            </Button>
+        </div>
+        <div className="space-y-2 col-span-1">
+            <h3 className="font-bold text-lg text-primary">Sequence</h3>
+            <div className="flex gap-2 flex-wrap">
+                {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
+                <div key={`seq-logo-${index}`} className="relative cursor-pointer w-24 h-24" onClick={() => setImageInView(seq.url)}>
+                    <Image src={seq.url} alt={`Sequence Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border"/>
+                </div>
+                ))}
+                {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && seq.url && (
+                    <div key={`seq-back-${index}`} className="relative cursor-pointer w-24 h-24" onClick={() => setImageInView(seq.url)}>
+                    <Image src={seq.url} alt={`Sequence Back Design ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border"/>
+                </div>
+                ))}
+            </div>
+        </div>
+        <div className="space-y-2 md:col-span-2">
+            <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
+            <div className="max-h-48 overflow-y-auto pr-2">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                  {finalFiles.map((file, index) => (
+                  file && 
+                  <div key={index} className="flex items-center justify-between p-1 bg-white rounded-md border">
+                      <span className="truncate text-xs pl-1"><strong>{file.type}:</strong> {file.name}</span>
+                      <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-7 w-7 text-primary">
+                          <Download className="h-4 w-4" />
+                      </Button>
                   </div>
                   ))}
               </div>
-          </div>
-        </div>
-        <div className="space-y-2 col-span-1">
-            <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
-            <div className="max-h-32 overflow-y-auto pr-2">
-              <ul className="space-y-2 text-sm list-inside">
-                  {finalFiles.map((file, index) => (
-                  file && 
-                  <li key={index} className="flex items-center justify-between p-2 bg-white rounded-md border">
-                      <span className="truncate"><strong>{file.type}:</strong> {file.name}</span>
-                      <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-8 w-8 text-primary">
-                          <Download className="h-4 w-4" />
-                      </Button>
-                  </li>
-                  ))}
-              </ul>
             </div>
              <Button onClick={handleDownloadAll} size="sm" className="text-white font-bold mt-2"><Download className="mr-2 h-4 w-4" />Download All</Button>
         </div>
@@ -725,6 +723,7 @@ ProductionDocuments.displayName = 'ProductionDocuments';
     
 
   
+
 
 
 
