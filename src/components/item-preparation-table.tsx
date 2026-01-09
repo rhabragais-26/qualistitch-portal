@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -412,7 +413,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                               {orderIndex === 0 && (
                                   <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
                                   {lead.isPreparedForProduction ? (
-                                          <div className="flex items-center justify-center text-green-600 font-semibold">
+                                          <div className="flex items-center justify-center text-sm text-green-600 font-semibold">
                                               <Check className="mr-2 h-4 w-4" /> Prepared
                                           </div>
                                       ) : (
@@ -431,7 +432,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                   <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
                                       {lead.isSentToProduction ? (
                                         <div className="flex flex-col items-center gap-1">
-                                            <div className="flex items-center text-green-600 font-semibold">
+                                            <div className="flex items-center text-sm text-green-600 font-semibold">
                                                 <Check className="mr-2 h-4 w-4" /> Sent
                                             </div>
                                             <div className="text-xs text-gray-500">
@@ -469,5 +470,6 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
 
 
