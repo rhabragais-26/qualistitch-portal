@@ -166,7 +166,9 @@ export function ProductionQueueTable() {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-        (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)))
+        (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
+        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
+        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
         : true;
       
       const joString = formatJoNumber(lead.joNumber);
@@ -203,7 +205,7 @@ export function ProductionQueueTable() {
           <div className="flex items-center gap-4">
               <div className="w-full max-w-xs">
                 <Input
-                  placeholder="Search customer, company..."
+                  placeholder="Search customer, company, or contact..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="bg-gray-100 text-black placeholder:text-gray-500"
