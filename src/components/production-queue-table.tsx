@@ -257,7 +257,7 @@ export function ProductionQueueTable() {
     } catch (e: any) {
       console.error("Error endorsing to logistics:", e);
       toast({
-        variant: 'destructive',
+        variant: "destructive",
         title: "Endorsement Failed",
         description: e.message || "Could not endorse the order.",
       });
@@ -388,7 +388,7 @@ export function ProductionQueueTable() {
           <div className="flex items-center gap-4">
               <div className="w-full max-w-xs">
                 <Input
-                  placeholder="Search customer, company, or contact..."
+                  placeholder="Search customer, company and contact number"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="bg-gray-100 text-black placeholder:text-gray-500"
@@ -433,7 +433,7 @@ export function ProductionQueueTable() {
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow>
-                            <TableCell className="font-medium text-xs align-top py-3 text-black text-center">
+                            <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
                               <Collapsible>
                                 <CollapsibleTrigger asChild>
                                     <div className="flex items-center justify-center cursor-pointer">
@@ -466,8 +466,8 @@ export function ProductionQueueTable() {
                                   <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                                 )}
                             </TableCell>
-                            <TableCell className="text-xs align-top py-3 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
-                            <TableCell className="align-top py-3 text-center">
+                            <TableCell className="text-xs align-middle py-3 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
+                            <TableCell className="align-middle py-3 text-center">
                               <div className="flex flex-col items-center gap-1">
                                 <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                                   {lead.priorityType}
@@ -478,27 +478,27 @@ export function ProductionQueueTable() {
                               </div>
                             </TableCell>
                             <TableCell className={cn(
-                              "text-center text-xs align-top py-3 font-medium",
+                              "text-center text-xs align-middle py-3 font-medium",
                               deadlineInfo.isOverdue && "text-red-500",
                               deadlineInfo.isUrgent && "text-amber-600",
                               !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
                             )}>
                               {deadlineInfo.text}
                             </TableCell>
-                            <TableCell className="text-xs align-top py-3 text-black text-center">
+                            <TableCell className="text-xs align-middle py-3 text-black text-center">
                               <Button variant="ghost" className="h-8 px-2 flex items-center gap-1 text-black hover:bg-gray-100" onClick={() => toggleLeadDetails(lead.id)}>
                                 <FileText className="h-4 w-4" />
                                 View Documents
                                 <ChevronDown className={cn("h-4 w-4 transition-transform", openLeadId === lead.id && "rotate-180")} />
                               </Button>
                             </TableCell>
-                            <TableCell className="text-center align-top py-3">
+                            <TableCell className="text-center align-middle py-3">
                                <Checkbox
                                 checked={lead.isCutting || false}
                                 onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
                               />
                             </TableCell>
-                            <TableCell className="text-center align-top py-3">
+                            <TableCell className="text-center align-middle py-3">
                               <Select
                                 value={lead.productionType || 'Pending'}
                                 onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
@@ -514,14 +514,14 @@ export function ProductionQueueTable() {
                                 </SelectContent>
                               </Select>
                             </TableCell>
-                            <TableCell className="text-center align-top py-3">
+                            <TableCell className="text-center align-middle py-3">
                                <Checkbox
                                 checked={lead.isEmbroideryDone || false}
                                 onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
                                 disabled={!lead.isCutting}
                               />
                             </TableCell>
-                            <TableCell className="text-center align-top py-3">
+                            <TableCell className="text-center align-middle py-3">
                                <Select
                                 value={lead.sewerType || 'Pending'}
                                 onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
@@ -537,17 +537,17 @@ export function ProductionQueueTable() {
                                 </SelectContent>
                               </Select>
                             </TableCell>
-                            <TableCell className="text-center align-top py-3">
+                            <TableCell className="text-center align-middle py-3">
                               <Checkbox
                                 checked={lead.isSewing || false}
                                 onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
                                 disabled={!lead.isEmbroideryDone}
                               />
                             </TableCell>
-                            <TableCell className="text-center align-top py-3">
+                            <TableCell className="text-center align-middle py-3">
                                <Badge variant={productionStatus.variant}>{productionStatus.text}</Badge>
                             </TableCell>
-                            <TableCell className="text-center align-top py-3">
+                            <TableCell className="text-center align-middle py-3">
                                  <Button
                                     size="sm"
                                     onClick={() => handleEndorseToLogistics(lead.id)}
@@ -657,6 +657,7 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
 });
 ProductionDocuments.displayName = 'ProductionDocuments';
     
+
 
 
 
