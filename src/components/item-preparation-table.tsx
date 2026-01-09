@@ -76,7 +76,7 @@ const programmingStatusOptions = [
     'Pending Initial Program'
 ];
 
-export function ItemPreparationTable() {
+const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
@@ -460,4 +460,8 @@ export function ItemPreparationTable() {
       </CardContent>
     </Card>
   );
-}
+});
+ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
+
+export { ItemPreparationTableMemo as ItemPreparationTable };
+
