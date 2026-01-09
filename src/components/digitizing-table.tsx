@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -652,7 +653,11 @@ export function DigitizingTable() {
                                   {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload .emb</p></div>)}
                                   <input type="file" accept=".emb" ref={el => finalLogoEmbUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalLogoEmb, setFinalLogoEmb, index)} className="hidden" />
                               </div>
-                              {index > 0 && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalLogoEmb, setFinalLogoEmb, index)}> <Trash2 className="h-4 w-4" /> </Button>}
+                              {file && (
+                                <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => {const newFiles = [...finalLogoEmb]; newFiles[index] = null; setFinalLogoEmb(newFiles);}}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                           </div>
                       ))}
                       </div>
@@ -671,7 +676,11 @@ export function DigitizingTable() {
                                   {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload .emb</p></div>)}
                                   <input type="file" accept=".emb" ref={el => finalBackDesignEmbUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalBackDesignEmb, setFinalBackDesignEmb, index)} className="hidden" />
                               </div>
-                              {index > 0 && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalBackDesignEmb, setFinalBackDesignEmb, index)}> <Trash2 className="h-4 w-4" /> </Button>}
+                              {file && (
+                                <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => {const newFiles = [...finalBackDesignEmb]; newFiles[index] = null; setFinalBackDesignEmb(newFiles);}}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                           </div>
                         ))}
                       </div>
@@ -690,7 +699,11 @@ export function DigitizingTable() {
                                   {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
                                   <input type="file" accept=".dst" ref={el => finalLogoDstUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalLogoDst, setFinalLogoDst, index)} className="hidden" />
                               </div>
-                             {index > 0 && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalLogoDst, setFinalLogoDst, index)}> <Trash2 className="h-4 w-4" /> </Button>}
+                             {file && (
+                                <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => {const newFiles = [...finalLogoDst]; newFiles[index] = null; setFinalLogoDst(newFiles);}}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                           </div>
                       ))}
                       </div>
@@ -709,7 +722,11 @@ export function DigitizingTable() {
                                   {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
                                   <input type="file" accept=".dst" ref={el => finalBackDesignDstUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalBackDesignDst, setFinalBackDesignDst, index)} className="hidden" />
                               </div>
-                             {index > 0 && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalBackDesignDst, setFinalBackDesignDst, index)}> <Trash2 className="h-4 w-4" /> </Button>}
+                             {file && (
+                                <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => {const newFiles = [...finalBackDesignDst]; newFiles[index] = null; setFinalBackDesignDst(newFiles);}}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                           </div>
                       ))}
                       </div>
@@ -753,7 +770,7 @@ export function DigitizingTable() {
                                   {file ? (<> <Image src={file.url} alt={`Sequence Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); const newFiles = [...sequenceLogo]; newFiles[index] = null; setSequenceLogo(newFiles); }}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
                                   <input type="file" ref={el => sequenceLogoUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, sequenceLogo, setSequenceLogo, index)} className="hidden" />
                             </div>
-                            {index > 0 && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(sequenceLogo, setSequenceLogo, index)}> <Trash2 className="h-4 w-4" /> </Button>}
+                            {file && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => {const newFiles = [...sequenceLogo]; newFiles[index] = null; setSequenceLogo(newFiles);}}> <Trash2 className="h-4 w-4" /> </Button>}
                           </div>
                         ))}
                       </div>
@@ -772,7 +789,7 @@ export function DigitizingTable() {
                                     {file ? (<> <Image src={file.url} alt={`Sequence Back Design ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); const newFiles = [...sequenceBackDesign]; newFiles[index] = null; setSequenceBackDesign(newFiles); }}> <Trash2 className="h-3 w-3" /> </Button> </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
                                     <input type="file" ref={el => sequenceBackDesignUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, sequenceBackDesign, setSequenceBackDesign, index)} className="hidden" />
                                 </div>
-                                {index > 0 && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(sequenceBackDesign, setSequenceBackDesign, index)}> <Trash2 className="h-4 w-4" /> </Button>}
+                                {file && <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => {const newFiles = [...sequenceBackDesign]; newFiles[index] = null; setSequenceBackDesign(newFiles);}}> <Trash2 className="h-4 w-4" /> </Button>}
                             </div>
                             ))}
                         </div>
@@ -1268,5 +1285,3 @@ export function DigitizingTable() {
     </Card>
   );
 }
-
-    
