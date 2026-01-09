@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export const formatDateTime = (isoString: string) => {
     if (!isoString) return { dateTime: '-', dayOfWeek: '-', dateTimeShort: '-' };
     const date = new Date(isoString);
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const dayOfWeek = days[date.getDay()];
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const month = months[date.getMonth()];
