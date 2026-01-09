@@ -162,6 +162,7 @@
         "isSewing": { "type": "boolean", "description": "Indicates if the order is in the sewing stage." },
         "isTrimming": { "type": "boolean", "description": "Indicates if the order is in the trimming stage." },
         "isDone": { "type": "boolean", "description": "Indicates if the order is completely done." },
+        "isEndorsedToLogistics": { "type": "boolean", "description": "Indicates if the order has been endorsed to logistics." },
         "isDigitizingArchived": {
           "type": "boolean",
           "description": "Indicates if the lead is archived and should be hidden from the digitizing queue."

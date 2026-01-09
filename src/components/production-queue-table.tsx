@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
 import { formatDateTime, cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Send } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -62,6 +62,7 @@ type Lead = {
   productionType?: ProductionType;
   sewerType?: ProductionType;
   isEmbroideryDone?: boolean;
+  isEndorsedToLogistics?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -88,6 +89,14 @@ const getStatusColor = (status?: ProductionType) => {
     default:
       return 'bg-gray-100 text-gray-800';
   }
+};
+
+const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success" | "warning" | "secondary" | "default" } => {
+    if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
+    if (lead.isDone) return { text: "Done Production", variant: "success" };
+    if (lead.sewerType && lead.sewerType !== 'Pending') return { text: "Ongoing with Sewer", variant: "warning" };
+    if (lead.productionType && lead.productionType !== 'Pending') return { text: "Ongoing Embroidery", variant: "warning" };
+    return { text: "Pending", variant: "secondary" };
 };
 
 
@@ -188,6 +197,25 @@ export function ProductionQueueTable() {
     }
   }, [firestore, toast]);
   
+  const handleEndorseToLogistics = useCallback(async (leadId: string) => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', leadId);
+    try {
+        await updateDoc(leadDocRef, { isEndorsedToLogistics: true });
+        toast({
+            title: "Endorsed to Logistics",
+            description: "The order has been sent to the logistics team.",
+        });
+    } catch (e: any) {
+        console.error("Error endorsing to logistics:", e);
+        toast({
+            variant: 'destructive',
+            title: "Endorsement Failed",
+            description: e.message || "Could not endorse the order.",
+        });
+    }
+  }, [firestore, toast]);
+  
   const calculateProductionDeadline = useCallback((lead: Lead) => {
     if (lead.isDone) {
       return { text: 'Completed', isOverdue: false, isUrgent: false, remainingDays: Infinity };
@@ -241,7 +269,7 @@ export function ProductionQueueTable() {
   const productionQueue = useMemo(() => {
     if (!processedLeads) return [];
     
-    const sentToProd = processedLeads.filter(lead => lead.isSentToProduction && !lead.isDone);
+    const sentToProd = processedLeads.filter(lead => lead.isSentToProduction && !lead.isEndorsedToLogistics);
     
     return sentToProd.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -326,13 +354,13 @@ export function ProductionQueueTable() {
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Overdue Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Date Sent</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Ordered Items</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Production Category</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Embroidery</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Sewing Category</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Sewing</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Production Status</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Endorsement</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -340,6 +368,7 @@ export function ProductionQueueTable() {
                   const isRepeat = lead.orderNumber > 1;
                   const deadlineInfo = calculateProductionDeadline(lead);
                   const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
+                  const productionStatus = getProductionStatusLabel(lead);
                   return (
                     <TableRow key={lead.id}>
                         <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
@@ -394,7 +423,6 @@ export function ProductionQueueTable() {
                         )}>
                           {deadlineInfo.text}
                         </TableCell>
-                        <TableCell className="text-xs align-middle py-3 text-black text-center">{formatDateTime(lead.submissionDateTime).dateTime}</TableCell>
                         <TableCell className="text-xs align-middle py-3 text-black text-center">
                           <ul className="space-y-1 text-center">
                             {lead.orders.map((order, index) => (
@@ -449,13 +477,17 @@ export function ProductionQueueTable() {
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle">
+                           <Badge variant={productionStatus.variant}>{productionStatus.text}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center align-middle">
                             <Button
                                 size="sm"
-                                onClick={() => handleDoneProduction(lead.id)}
-                                disabled={!lead.isSewing}
-                                className={cn("h-8 text-white font-bold", !lead.isSewing ? "bg-gray-400" : "bg-emerald-600 hover:bg-emerald-700")}
+                                onClick={() => handleEndorseToLogistics(lead.id)}
+                                disabled={!lead.isDone}
+                                className={cn("h-8 text-white font-bold", !lead.isDone ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700")}
                             >
-                                Done Production
+                                <Send className="mr-2 h-4 w-4" />
+                                Send to Logistics
                             </Button>
                         </TableCell>
                     </TableRow>
