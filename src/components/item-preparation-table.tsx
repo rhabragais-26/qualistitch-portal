@@ -437,8 +437,8 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                           <Button
                                               size="sm"
                                               onClick={() => setLeadToSend(lead)}
-                                              disabled={!lead.isFinalProgram}
-                                              className={cn("h-7 px-2", !lead.isFinalProgram && "bg-gray-400")}
+                                              disabled={!lead.isPreparedForProduction}
+                                              className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
                                           >
                                               <Send className="mr-2 h-4 w-4" /> Send to Prod
                                           </Button>
