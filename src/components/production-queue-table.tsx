@@ -24,7 +24,7 @@ import { Badge } from './ui/badge';
 import { format, addDays, differenceInDays } from 'date-fns';
 import { formatDateTime, cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
-import { ChevronDown, Send, FileText, X } from 'lucide-react';
+import { ChevronDown, Send, FileText, X, Download } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -33,6 +33,7 @@ import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import Image from 'next/image';
+import JSZip from 'jszip';
 
 type Order = {
   productType: string;
@@ -388,7 +389,7 @@ export function ProductionQueueTable() {
           <div className="flex items-center gap-4">
               <div className="w-full max-w-xs">
                 <Input
-                  placeholder="Search customer, company and contact number"
+                  placeholder="Search customer, company, contact number..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="bg-gray-100 text-black placeholder:text-gray-500"
@@ -589,6 +590,63 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
   
   const firstLayoutImage = lead.layouts?.find(l => l.layoutImage)?.layoutImage;
 
+  const handleDownload = (url: string, name: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadAll = async () => {
+    const zip = new JSZip();
+    const filesToDownload = [...finalFiles];
+
+    // Add layout image to zip if available
+    if(firstLayoutImage){
+      const response = await fetch(firstLayoutImage);
+      const blob = await response.blob();
+      zip.file('job-order-layout.png', blob);
+    }
+    
+    // Add sequence images to zip
+    const sequenceLogoFiles = lead.layouts?.[0]?.sequenceLogo?.filter((s): s is FileObject => !!s?.url);
+    if(sequenceLogoFiles){
+      for (const [index, file] of sequenceLogoFiles.entries()) {
+        const response = await fetch(file.url);
+        const blob = await response.blob();
+        zip.file(`sequence-logo-${index + 1}.png`, blob);
+      }
+    }
+    const sequenceBackFiles = lead.layouts?.[0]?.sequenceBackDesign?.filter((s): s is FileObject => !!s?.url);
+    if(sequenceBackFiles){
+      for (const [index, file] of sequenceBackFiles.entries()) {
+        const response = await fetch(file.url);
+        const blob = await response.blob();
+        zip.file(`sequence-back-${index + 1}.png`, blob);
+      }
+    }
+
+    // Add other final files
+    for (const file of filesToDownload) {
+        if(file) {
+            const response = await fetch(file.url);
+            const blob = await response.blob();
+            zip.file(file.name, blob);
+        }
+    }
+    
+    zip.generateAsync({ type: "blob" }).then(function(content) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = `${lead.joNumber}-production-files.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+  };
+
   return (
     <>
       {imageInView && (
@@ -642,10 +700,19 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
           )}
           {finalFiles.length > 0 && (
             <div>
-              <h3 className="font-bold text-lg text-primary mb-2">Final Program Files</h3>
-               <ul className="space-y-1 text-sm list-disc list-inside">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
+                <Button onClick={handleDownloadAll} size="sm" className="text-white font-bold"><Download className="mr-2 h-4 w-4" />Download All</Button>
+              </div>
+               <ul className="space-y-2 text-sm list-inside">
                 {finalFiles.map((file, index) => (
-                  file && <li key={index} className="truncate"><strong>{file.type}:</strong> {file.name}</li>
+                  file && 
+                  <li key={index} className="flex items-center justify-between p-2 bg-white rounded-md border">
+                    <span className="truncate"><strong>{file.type}:</strong> {file.name}</span>
+                    <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-8 w-8 text-primary">
+                        <Download className="h-4 w-4" />
+                    </Button>
+                  </li>
                 ))}
               </ul>
             </div>
@@ -657,6 +724,7 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
 });
 ProductionDocuments.displayName = 'ProductionDocuments';
     
+
 
 
 
