@@ -677,13 +677,33 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
         </div>
       )}
       <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-x-6">
-        <div className="col-span-1">
-            <h3 className="font-bold text-lg text-primary">Job Order and Layout</h3>
-            <Button onClick={handleJobOrderPrint} variant="default" size="lg" className="bg-primary text-white hover:bg-primary/90 mt-2">
-                Check Job Order and Layout
-            </Button>
+        <div className="space-y-4">
+            <div>
+                <h3 className="font-bold text-lg text-primary">Job Order and Layout</h3>
+                <Button onClick={handleJobOrderPrint} variant="default" size="lg" className="bg-primary text-white hover:bg-primary/90 mt-2">
+                    Check Job Order and Layout
+                </Button>
+            </div>
+            <div className="mt-6">
+                <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
+                <div className="max-h-48 overflow-y-auto pr-2 mt-2">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                        {finalFiles.map((file, index) => (
+                        file && 
+                        <div key={index} className="flex items-center justify-between p-1 bg-white rounded-md border">
+                            <span className="truncate text-xs pl-1"><strong>{file.type}:</strong> {file.name}</span>
+                            <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-7 w-7 text-primary">
+                                <Download className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        ))}
+                    </div>
+                </div>
+                <Button onClick={handleDownloadAll} size="sm" className="text-white font-bold mt-2"><Download className="mr-2 h-4 w-4" />Download All</Button>
+            </div>
         </div>
-        <div className="space-y-2 col-span-1">
+
+        <div className="space-y-2">
           <h3 className="font-bold text-lg text-primary">Sequence</h3>
           <div className="flex gap-2 flex-wrap">
               {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
@@ -698,23 +718,6 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
               ))}
           </div>
         </div>
-        <div className="space-y-2 col-span-2">
-            <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
-            <div className="max-h-48 overflow-y-auto pr-2">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                  {finalFiles.map((file, index) => (
-                  file && 
-                  <div key={index} className="flex items-center justify-between p-1 bg-white rounded-md border">
-                      <span className="truncate text-xs pl-1"><strong>{file.type}:</strong> {file.name}</span>
-                      <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-7 w-7 text-primary">
-                          <Download className="h-4 w-4" />
-                      </Button>
-                  </div>
-                  ))}
-              </div>
-            </div>
-             <Button onClick={handleDownloadAll} size="sm" className="text-white font-bold mt-2"><Download className="mr-2 h-4 w-4" />Download All</Button>
-        </div>
       </div>
     </>
   );
@@ -723,6 +726,7 @@ ProductionDocuments.displayName = 'ProductionDocuments';
     
 
   
+
 
 
 
