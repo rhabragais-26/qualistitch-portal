@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -29,7 +30,7 @@ const initialSizeChartData: SizeChartData = {
 
 type TabValue = keyof SizeChartData;
 
-export function SizeChartDialog({ onClose }: { onClose: () => void }) {
+export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => void; onDraggingChange: (isDragging: boolean) => void; }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -40,6 +41,10 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
   const [isDirty, setIsDirty] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<TabValue>('corporateJacket');
+
+  useEffect(() => {
+    onDraggingChange(isDragging);
+  }, [isDragging, onDraggingChange]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -68,7 +73,7 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
         setPosition({ x: centerX, y: centerY });
     } else {
         const centerX = window.innerWidth / 2 - 325; // approx half-width
-        const centerY = window.innerHeight / 2 - 350;
+        const centerY = window.innerHeight / 2 - 400; // approx half-height
         setPosition({ x: centerX, y: centerY });
     }
   }, []);
@@ -153,7 +158,6 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
   const handleSave = () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sizeChartData));
     setIsDirty(false);
-    onClose();
   }
   
   const renderUploadBox = (tab: TabValue) => {
@@ -174,14 +178,14 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
                     <Upload className="h-10 w-10 mb-2" />
                     <p>Double-click to upload or paste image</p>
                 </>
-            ) : (
+            ) : data && data.image ? (
                 <>
-                    <Image src={data.image!} alt={`${tab} Size Chart`} layout="fill" objectFit="contain" />
+                    <Image src={data.image} alt={`${tab} Size Chart`} layout="fill" objectFit="contain" />
                     <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeImage(tab)}>
                         <Trash2 className="h-4 w-4"/>
                     </Button>
                 </>
-            )}
+            ) : null}
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFileChange(e, tab)}/>
         </div>
         {data && data.uploadTime && (
@@ -196,7 +200,7 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
   return (
     <div
       ref={cardRef}
-      className="fixed z-50 w-auto"
+      className={cn("fixed z-50 w-auto", isDragging && "select-none")}
       style={{ left: `${position.x}px`, top: `${position.y}px`, height: `800px` }}
       onMouseDown={handleMouseDown}
     >
@@ -220,13 +224,13 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
               <TabsTrigger value="bomberJacket">Bomber Jacket</TabsTrigger>
               <TabsTrigger value="poloShirt">Polo Shirt</TabsTrigger>
             </TabsList>
-            <TabsContent value="corporateJacket" className="flex-1 mt-4">
+            <TabsContent value="corporateJacket" className="flex-1">
               {renderUploadBox('corporateJacket')}
             </TabsContent>
-            <TabsContent value="bomberJacket" className="flex-1 mt-4">
+            <TabsContent value="bomberJacket" className="flex-1">
               {renderUploadBox('bomberJacket')}
             </TabsContent>
-            <TabsContent value="poloShirt" className="flex-1 mt-4">
+            <TabsContent value="poloShirt" className="flex-1">
               {renderUploadBox('poloShirt')}
             </TabsContent>
           </Tabs>

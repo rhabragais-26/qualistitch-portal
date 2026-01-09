@@ -188,6 +188,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [barangaySuggestions, setBarangaySuggestions] = useState<string[]>([]);
   const [showCalculator, setShowCalculator] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
+  const [isSizeChartDragging, setIsSizeChartDragging] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [customerStatus, setCustomerStatus] = useState<'New' | 'Repeat' | null>(null);
   
@@ -590,8 +591,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   return (
     <>
     {showCalculator && <Calculator onClose={() => setShowCalculator(false)} />}
-    {showSizeChart && <SizeChartDialog onClose={() => setShowSizeChart(false)} />}
-    <Card className="w-full mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black max-w-6xl">
+    {showSizeChart && <SizeChartDialog onClose={() => setShowSizeChart(false)} onDraggingChange={setIsSizeChartDragging} />}
+    <Card className={cn("w-full mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black max-w-6xl", isSizeChartDragging && 'select-none')}>
       <CardHeader>
         <div className="flex justify-between items-start">
           <div className="flex-1">
