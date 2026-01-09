@@ -439,7 +439,7 @@ export function OrderStatusTable() {
                                 <Badge className={cn(lead.priorityType === 'Rush' && 'bg-red-500 text-white')}>
                                     {lead.priorityType}
                                 </Badge>
-                                <div className="text-gray-500 text-xs mt-1 whitespace-nowrap">{lead.orderType}</div>
+                                <div className="text-gray-500 text-xs mt-1 whitespace-nowrap text-[12px]">{lead.orderType}</div>
                                </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
@@ -472,19 +472,19 @@ export function OrderStatusTable() {
                                     <div className="grid grid-cols-4 gap-2 text-xs">
                                         <div className="flex flex-col items-center gap-1">
                                             <p className="font-semibold text-gray-500">Programming</p>
-                                            <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
+                                            <Badge variant={programmingStatus.variant as any} className="text-center justify-center">{programmingStatus.text}</Badge>
                                         </div>
                                         <div className="flex flex-col items-center gap-1">
                                             <p className="font-semibold text-gray-500">Item Prep</p>
-                                            <Badge variant={itemPreparationStatus.variant as any}>{itemPreparationStatus.text}</Badge>
+                                            <Badge variant={itemPreparationStatus.variant as any} className="text-center justify-center">{itemPreparationStatus.text}</Badge>
                                         </div>
                                         <div className="flex flex-col items-center gap-1">
                                             <p className="font-semibold text-gray-500">Production</p>
-                                            <Badge variant={productionStatus.variant as any}>{productionStatus.text}</Badge>
+                                            <Badge variant={productionStatus.variant as any} className="text-center justify-center">{productionStatus.text}</Badge>
                                         </div>
                                         <div className="flex flex-col items-center gap-1">
                                             <p className="font-semibold text-gray-500">Shipment</p>
-                                            <Badge variant="secondary">{lead.shipmentStatus || 'Pending'}</Badge>
+                                            <Badge variant="secondary" className="text-center justify-center">{lead.shipmentStatus || 'Pending'}</Badge>
                                         </div>
                                     </div>
                                 </div>
