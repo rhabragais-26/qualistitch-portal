@@ -150,8 +150,8 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
         <div
             tabIndex={0}
             className={cn(
-                "relative group flex-1 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-700/50 min-w-[600px]",
-                data && !data.image && "p-4"
+                "relative group flex-1 rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-700/50 min-w-[600px]",
+                (!data || !data.image) && "border-2 border-dashed border-gray-600 p-4"
             )}
             onDoubleClick={() => fileInputRef.current?.click()}
             onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
@@ -218,8 +218,12 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="p-2 flex justify-center">
-            <Button onClick={handleSave} disabled={!isDirty} className="text-white font-bold">
+        <CardFooter className="p-4 flex justify-center">
+            <Button 
+              onClick={handleSave} 
+              disabled={!isDirty} 
+              className="text-white font-bold disabled:bg-gray-500 disabled:text-gray-300"
+            >
                 <Save className="mr-2 h-4 w-4" />
                 Save Changes
             </Button>
