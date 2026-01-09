@@ -148,13 +148,13 @@ export function OrderStatusTable() {
     return { text: 'Pending', variant: 'secondary' };
   }, []);
 
-  const getProductionStatus = useCallback((lead: Lead): { text: string; subtext?: string; variant: "success" | "warning" | "destructive" | "secondary" } => {
+  const getProductionStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "destructive" | "secondary" } => {
     if (lead.isDone) return { text: 'Done Production', variant: 'success' };
     if (lead.sewerType && lead.sewerType !== 'Pending') {
-      return { text: `Ongoing with Sewer`, subtext: `(${lead.sewerType})`, variant: 'warning' };
+      return { text: `Ongoing with Sewer (${lead.sewerType})`, variant: 'warning' };
     }
     if (lead.productionType && lead.productionType !== 'Pending') {
-      return { text: `Ongoing Production`, subtext: `(${lead.productionType})`, variant: 'warning' };
+      return { text: `Ongoing Production (${lead.productionType})`, variant: 'warning' };
     }
     return { text: 'Pending', variant: 'secondary' };
   }, []);
@@ -470,9 +470,8 @@ export function OrderStatusTable() {
                                         </div>
                                         <div className="flex flex-col items-center gap-1">
                                           <p className="font-semibold text-gray-500">Production</p>
-                                          <Badge variant={productionStatus.variant as any} className="text-center justify-center">
+                                          <Badge variant={productionStatus.variant as any} className="text-center justify-center whitespace-normal break-words">
                                             {productionStatus.text}
-                                            {productionStatus.subtext && <span className="block">{productionStatus.subtext}</span>}
                                           </Badge>
                                         </div>
                                         <div className="flex flex-col items-center gap-1">
