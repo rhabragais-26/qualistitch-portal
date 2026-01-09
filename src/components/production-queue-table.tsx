@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
@@ -22,14 +21,14 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
-import { formatDateTime, cn } from '@/lib/utils';
+import { format, formatDateTime, cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
 import { ChevronDown, Send, FileText } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
-import { addDays, differenceInDays, format } from 'date-fns';
+import { addDays, differenceInDays } from 'date-fns';
 import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
@@ -138,7 +137,7 @@ const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success
     if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
     if (lead.isDone) return { text: "Done Production", variant: "success" };
     if (lead.isEmbroideryDone) return { text: "Ongoing with Sewer", variant: "warning" };
-    if (lead.isCutting) return { text: "Ongoing Embroidery", variant: "warning" };
+    if(lead.isCutting) return { text: "Ongoing Embroidery", variant: "warning" };
     return { text: "Pending", variant: "secondary" };
 };
 
@@ -651,14 +650,14 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
                 </div>
             </div>
         )}
-        {lead.layouts?.some(l => l.sequenceLogo?.some(s => s) || l.sequenceBackDesign?.some(s => s)) && (
+        {lead.layouts?.some(l => l.sequenceLogo?.some(s => s?.url) || l.sequenceBackDesign?.some(s => s?.url)) && (
           <div>
             <h3 className="font-bold text-lg text-primary mb-2">Sequence</h3>
             <div className="grid grid-cols-2 gap-2">
-              {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && (
+              {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
                 <Image key={`seq-logo-${index}`} src={seq.url} alt={`Sequence Logo ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
               ))}
-              {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && (
+              {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && seq.url && (
                 <Image key={`seq-back-${index}`} src={seq.url} alt={`Sequence Back Design ${index + 1}`} width={200} height={150} className="rounded-md border object-contain"/>
               ))}
             </div>
