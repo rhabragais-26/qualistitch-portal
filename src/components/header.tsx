@@ -22,6 +22,8 @@ import {
   Truck,
   Ship,
   FileText,
+  TrendingUp,
+  Cog,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -133,7 +135,7 @@ export function Header({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/', '/records', '/job-order', '/reports']))}>
-                    <PenSquare className="mr-2" />
+                    <TrendingUp className="mr-2" />
                     Sales
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
@@ -216,7 +218,7 @@ export function Header({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                    <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/production/production-queue']))}>
-                      <Factory className="mr-2" />
+                      <Cog className="mr-2" />
                       Production
                       <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
