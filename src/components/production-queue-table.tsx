@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/card';
 import React, { useState, useMemo, useCallback } from 'react';
 import { Input } from './ui/input';
-import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
 import { formatDateTime, cn } from '@/lib/utils';
@@ -65,7 +64,6 @@ type EnrichedLead = Lead & {
   totalCustomerQuantity: number;
 };
 
-type ProductionCheckboxField = keyof Pick<Lead, 'isTrimming' | 'isDone'>;
 type ProductionSelectField = 'productionType' | 'sewerType';
 
 export function ProductionQueueTable() {
@@ -90,7 +88,7 @@ export function ProductionQueueTable() {
     return mobile || landline || null;
   }, []);
 
-  const handleStatusChange = useCallback(async (leadId: string, field: ProductionCheckboxField | ProductionSelectField, value: boolean | string) => {
+  const handleStatusChange = useCallback(async (leadId: string, field: ProductionSelectField, value: string) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
@@ -235,8 +233,6 @@ export function ProductionQueueTable() {
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Ordered Items</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Cutting</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Sewing</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Trimming</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -285,7 +281,7 @@ export function ProductionQueueTable() {
                             <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                               {lead.priorityType}
                             </Badge>
-                            <div className={cn("text-gray-500 text-[10px] whitespace-nowrap", specialOrderTypes.includes(lead.orderType) && "font-bold")}>
+                             <div className={cn("text-gray-500 text-[10px] whitespace-nowrap", specialOrderTypes.includes(lead.orderType) && "font-bold")}>
                               {lead.orderType}
                             </div>
                           </div>
@@ -331,12 +327,6 @@ export function ProductionQueueTable() {
                               <SelectItem value="Outsource">Outsource</SelectItem>
                             </SelectContent>
                           </Select>
-                        </TableCell>
-                        <TableCell className="text-center align-middle">
-                          <Checkbox checked={lead.isTrimming} onCheckedChange={(checked) => handleStatusChange(lead.id, 'isTrimming', !!checked)} />
-                        </TableCell>
-                         <TableCell className="text-center align-middle">
-                          <Checkbox checked={lead.isDone} onCheckedChange={(checked) => handleStatusChange(lead.id, 'isDone', !!checked)} />
                         </TableCell>
                     </TableRow>
                 )})}
