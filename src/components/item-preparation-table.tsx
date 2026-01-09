@@ -362,7 +362,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                   return (
                     <React.Fragment key={lead.id}>
                       {lead.orders.map((order, orderIndex) => (
-                          <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex === numOrders -1 ? "" : "border-b-0"}>
+                          <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex === 0 ? "border-t-2 border-black" : ""}>
                               {orderIndex === 0 && (
                                   <TableCell rowSpan={numOrders + 1} className="font-medium text-xs align-top py-3 text-black border-b-2 border-black">
                                       <Collapsible>
@@ -399,12 +399,12 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                   </TableCell>
                               )}
                               {orderIndex === 0 && (
-                                  <TableCell rowSpan={numOrders + 1} className="text-xs align-top py-3 text-black border-b-2 border-black">
+                                  <TableCell rowSpan={numOrders + 1} className="text-xs align-top py-3 text-black border-b-2 border-black text-center">
                                     <div>{formatJoNumber(lead.joNumber)}</div>
                                   </TableCell>
                               )}
                               {orderIndex === 0 && (
-                                  <TableCell rowSpan={numOrders + 1} className="align-top py-3 border-b-2 border-black">
+                                  <TableCell rowSpan={numOrders + 1} className="align-top py-3 border-b-2 border-black text-center">
                                   <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
                                   </TableCell>
                               )}
@@ -415,9 +415,9 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                               {orderIndex === 0 && (
                                   <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
                                   {lead.isPreparedForProduction ? (
-                                          <div className="flex items-center justify-center text-sm text-green-600 font-semibold">
-                                              <Check className="mr-2 h-4 w-4" /> Prepared
-                                          </div>
+                                        <div className="flex items-center justify-center text-sm text-green-600 font-semibold">
+                                            <Check className="mr-2 h-4 w-4" /> Prepared
+                                        </div>
                                       ) : (
                                           <Button
                                               size="sm"
@@ -456,7 +456,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                           </TableRow>
                       ))}
                       {/* Total Row */}
-                      <TableRow className="border-b-2 border-black">
+                      <TableRow className="border-b-2 border-black bg-gray-50">
                           <TableCell colSpan={3} className="py-1 px-2 text-xs font-bold text-right">Total Quantity</TableCell>
                           <TableCell className="py-1 px-2 text-xs text-center font-bold">{totalQuantity}</TableCell>
                       </TableRow>
@@ -472,6 +472,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
 
 
 
