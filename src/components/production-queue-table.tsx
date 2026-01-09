@@ -64,6 +64,7 @@ type Lead = {
   sewerType?: ProductionType;
   isEmbroideryDone?: boolean;
   isEndorsedToLogistics?: boolean;
+  doneProductionTimestamp?: string;
 }
 
 type EnrichedLead = Lead & {
@@ -96,7 +97,7 @@ const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success
     if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
     if (lead.isDone) return { text: "Done Production", variant: "success" };
     if (lead.isEmbroideryDone) return { text: "Ongoing with Sewer", variant: "warning" };
-    if (lead.isCutting) return { text: "Ongoing Embroidery", variant: "default" };
+    if (lead.isCutting) return { text: "Ongoing Embroidery", variant: "warning" };
     return { text: "Pending", variant: "secondary" };
 };
 
@@ -155,6 +156,7 @@ export function ProductionQueueTable() {
     const updateData: {[key:string]: any} = { [field]: value };
     if (field === 'isSewing' && value) {
       updateData.isDone = true;
+      updateData.doneProductionTimestamp = new Date().toISOString();
     }
 
     updateDoc(leadDocRef, updateData).catch((e: any) => {
@@ -175,14 +177,19 @@ export function ProductionQueueTable() {
         const updateData: {[key:string]: any} = { [field]: false };
         if (field === 'isSewing') {
           updateData.isDone = false;
-        }
-        if (field === 'isCutting') {
-          // Uncheck all subsequent steps if start production is unchecked
+          updateData.doneProductionTimestamp = null;
+        } else if (field === 'isEmbroideryDone') {
+            updateData.isSewing = false;
+            updateData.isDone = false;
+            updateData.sewerType = 'Pending';
+            updateData.doneProductionTimestamp = null;
+        } else if (field === 'isCutting') {
           updateData.isEmbroideryDone = false;
           updateData.isSewing = false;
           updateData.isDone = false;
           updateData.productionType = 'Pending';
           updateData.sewerType = 'Pending';
+          updateData.doneProductionTimestamp = null;
         }
         await updateDoc(leadDocRef, updateData);
     } catch (e: any) {
@@ -217,8 +224,16 @@ export function ProductionQueueTable() {
   }, [firestore, toast]);
   
   const calculateProductionDeadline = useCallback((lead: Lead) => {
-    if (lead.isDone) {
-      return { text: 'Completed', isOverdue: false, isUrgent: false, remainingDays: Infinity };
+    if (lead.isDone && lead.doneProductionTimestamp) {
+        const submissionDate = new Date(lead.submissionDateTime);
+        const deadlineDays = lead.priorityType === 'Rush' ? 6 : 10;
+        const deadlineDate = addDays(submissionDate, deadlineDays);
+        const doneDate = new Date(lead.doneProductionTimestamp);
+        const remainingDays = differenceInDays(deadlineDate, doneDate);
+        if (remainingDays < 0) {
+            return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
+        }
+        return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
     }
     
     const submissionDate = new Date(lead.submissionDateTime);
@@ -443,7 +458,7 @@ export function ProductionQueueTable() {
                           <Select
                             value={lead.productionType || 'Pending'}
                             onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
-                            disabled={!lead.isCutting}
+                            disabled={!lead.isCutting || lead.isEmbroideryDone}
                           >
                             <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType))}>
                               <SelectValue />
