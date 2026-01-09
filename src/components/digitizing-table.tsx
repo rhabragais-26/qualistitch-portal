@@ -665,7 +665,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                           <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoEmbUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                                   {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload .emb</p></div>)}
-                                  <input type="file" accept=".emb" ref={el => finalLogoEmbUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalLogoEmb, setFinalLogoEmb, index)} className="hidden" />
+                                  <input type="file" accept=".emb" ref={el => {finalLogoEmbUploadRefs.current[index] = el}} onChange={(e) => handleMultipleFileUpload(e, finalLogoEmb, setFinalLogoEmb, index)} className="hidden" />
                               </div>
                                {(file || index > 0) && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalLogoEmb, setFinalLogoEmb, index, finalLogoEmbUploadRefs)}>
                                   <Trash2 className="h-4 w-4" />
@@ -686,7 +686,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                           <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignEmbUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                                   {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload .emb</p></div>)}
-                                  <input type="file" accept=".emb" ref={el => finalBackDesignEmbUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalBackDesignEmb, setFinalBackDesignEmb, index)} className="hidden" />
+                                  <input type="file" accept=".emb" ref={el => {finalBackDesignEmbUploadRefs.current[index] = el}} onChange={(e) => handleMultipleFileUpload(e, finalBackDesignEmb, setFinalBackDesignEmb, index)} className="hidden" />
                               </div>
                                {(file || index > 0) && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalBackDesignEmb, setFinalBackDesignEmb, index, finalBackDesignEmbUploadRefs)}>
                                   <Trash2 className="h-4 w-4" />
@@ -707,7 +707,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                          <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoDstUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                                   {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
-                                  <input type="file" accept=".dst" ref={el => finalLogoDstUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalLogoDst, setFinalLogoDst, index)} className="hidden" />
+                                  <input type="file" accept=".dst" ref={el => {finalLogoDstUploadRefs.current[index] = el}} onChange={(e) => handleMultipleFileUpload(e, finalLogoDst, setFinalLogoDst, index)} className="hidden" />
                               </div>
                               {(file || index > 0) && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalLogoDst, setFinalLogoDst, index, finalLogoDstUploadRefs)}>
                                 <Trash2 className="h-4 w-4" />
@@ -728,7 +728,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                          <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignDstUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                                   {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
-                                  <input type="file" accept=".dst" ref={el => finalBackDesignDstUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalBackDesignDst, setFinalBackDesignDst, index)} className="hidden" />
+                                  <input type="file" accept=".dst" ref={el => {finalBackDesignDstUploadRefs.current[index] = el}} onChange={(e) => handleMultipleFileUpload(e, finalBackDesignDst, setFinalBackDesignDst, index)} className="hidden" />
                               </div>
                              {(file || index > 0) && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalBackDesignDst, setFinalBackDesignDst, index, finalBackDesignDstUploadRefs)}>
                                 <Trash2 className="h-4 w-4" />
@@ -746,9 +746,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                           <div key={index} className="flex items-center gap-2">
                             <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-1 text-center h-12 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalNamesDstUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                               {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"> <Upload className="h-4 w-4" /> <p className="text-xs">Upload .dst</p> </div>)}
-                              <input type="file" accept=".dst" ref={el => finalNamesDstUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, finalNamesDst, setFinalNamesDst, index)} className="hidden" />
+                              <input type="file" accept=".dst" ref={el => {finalNamesDstUploadRefs.current[index] = el}} onChange={(e) => handleMultipleFileUpload(e, finalNamesDst, setFinalNamesDst, index)} className="hidden" />
                             </div>
-                            {(file || index >= 0) && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalNamesDst, setFinalNamesDst, index, finalNamesDstUploadRefs)}> <Trash2 className="h-4 w-4" /> </Button>)}
+                            {(file || index > 0) && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalNamesDst, setFinalNamesDst, index, finalNamesDstUploadRefs)}> <Trash2 className="h-4 w-4" /> </Button>)}
                           </div>
                         ))}
                       </div>
@@ -774,7 +774,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                           <div key={index} className="flex items-center gap-2">
                             <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-32 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, (idx, val) => { const newFiles = [...sequenceLogo]; newFiles[idx] = val; setSequenceLogo(newFiles); }, index)} onDoubleClick={() => sequenceLogoUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                                   {file ? (<> <Image src={file.url} alt={`Sequence Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> {(file || index > 0) && (<Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); removeFile(sequenceLogo, setSequenceLogo, index, sequenceLogoUploadRefs); }}> <Trash2 className="h-3 w-3" /> </Button>)} </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
-                                  <input type="file" ref={el => sequenceLogoUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, sequenceLogo, setSequenceLogo, index)} className="hidden" />
+                                  <input type="file" ref={el => {sequenceLogoUploadRefs.current[index] = el}} onChange={(e) => handleMultipleFileUpload(e, sequenceLogo, setSequenceLogo, index)} className="hidden" />
                             </div>
                           </div>
                         ))}
@@ -792,7 +792,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                             <div key={index} className="flex items-center gap-2">
                                 <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-32 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, (idx, val) => { const newFiles = [...sequenceBackDesign]; newFiles[idx] = val; setSequenceBackDesign(newFiles); }, index)} onDoubleClick={() => sequenceBackDesignUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                                     {file ? (<> <Image src={file.url} alt={`Sequence Back Design ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> {(file || index > 0) && (<Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); removeFile(sequenceBackDesign, setSequenceBackDesign, index, sequenceBackDesignUploadRefs); }}> <Trash2 className="h-3 w-3" /> </Button>)} </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
-                                    <input type="file" ref={el => sequenceBackDesignUploadRefs.current[index] = el} onChange={(e) => handleMultipleFileUpload(e, sequenceBackDesign, setSequenceBackDesign, index)} className="hidden" />
+                                    <input type="file" ref={el => {sequenceBackDesignUploadRefs.current[index] = el}} onChange={(e) => handleMultipleFileUpload(e, sequenceBackDesign, setSequenceBackDesign, index)} className="hidden" />
                                 </div>
                             </div>
                             ))}
@@ -812,8 +812,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
     return null;
   }, [uploadField, handleImagePaste, handleFileUpload, handleRemoveImage, handleMultipleFileUpload, addFile, removeFile, handleUploadDialogSave, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign]);
 
-  const ImagePreview = ({ src, alt }: { src: string; alt: string;}) => (
-    <div className="relative w-full aspect-square cursor-pointer" onClick={() => setImageInView(src)}>
+  const ImagePreview = ({ src, alt, className }: { src: string; alt: string; className?:string;}) => (
+    <div className={cn("relative cursor-pointer", className)} onClick={() => setImageInView(src)}>
       <Image src={src} alt={alt} layout="fill" objectFit="contain" className="rounded-md border" />
     </div>
   );
@@ -1166,28 +1166,28 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                             {lead.layouts?.[0]?.logoLeftImage && (
                                               <div> 
                                                 <p className="font-semibold text-gray-500 mb-2">Logo Left</p> 
-                                                <ImagePreview src={lead.layouts[0].logoLeftImage} alt="Initial Program Logo Left" />
+                                                <ImagePreview src={lead.layouts[0].logoLeftImage} alt="Initial Program Logo Left" className="w-24 h-24"/>
                                                 {lead.layouts[0].logoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoLeftImageUploadTime).dateTime}</p>}
                                               </div>
                                             )}
                                             {lead.layouts?.[0]?.logoRightImage && (
                                               <div>
                                                 <p className="font-semibold text-gray-500 mb-2">Logo Right</p>
-                                                <ImagePreview src={lead.layouts[0].logoRightImage} alt="Initial Program Logo Right" />
+                                                <ImagePreview src={lead.layouts[0].logoRightImage} alt="Initial Program Logo Right" className="w-24 h-24"/>
                                                 {lead.layouts[0].logoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoRightImageUploadTime).dateTime}</p>}
                                               </div>
                                             )}
                                             {lead.layouts?.[0]?.backLogoImage && (
                                               <div>
                                                 <p className="font-semibold text-gray-500 mb-2">Back Logo</p>
-                                                <ImagePreview src={lead.layouts[0].backLogoImage} alt="Initial Program Back Logo" />
+                                                <ImagePreview src={lead.layouts[0].backLogoImage} alt="Initial Program Back Logo" className="w-24 h-24"/>
                                                 {lead.layouts[0].backLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backLogoImageUploadTime).dateTime}</p>}
                                               </div>
                                             )}
                                             {lead.layouts?.[0]?.backDesignImage && (
                                               <div>
                                                 <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                                <ImagePreview src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" />
+                                                <ImagePreview src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" className="w-32 h-24"/>
                                                 {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}
                                               </div>
                                             )}
@@ -1201,28 +1201,28 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                           {lead.layouts?.[0]?.testLogoLeftImage && (
                                             <div>
                                               <p className="font-semibold text-gray-500 mb-2">Logo Left</p>
-                                              <ImagePreview src={lead.layouts[0].testLogoLeftImage} alt="Test Logo Left" />
+                                              <ImagePreview src={lead.layouts[0].testLogoLeftImage} alt="Test Logo Left" className="w-24 h-24"/>
                                               {lead.layouts[0].testLogoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoLeftImageUploadTime).dateTime}</p>}
                                             </div>
                                           )}
                                           {lead.layouts?.[0]?.testLogoRightImage && (
                                             <div>
                                               <p className="font-semibold text-gray-500 mb-2">Logo Right</p>
-                                              <ImagePreview src={lead.layouts[0].testLogoRightImage} alt="Test Logo Right" />
+                                              <ImagePreview src={lead.layouts[0].testLogoRightImage} alt="Test Logo Right" className="w-24 h-24"/>
                                               {lead.layouts[0].testLogoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoRightImageUploadTime).dateTime}</p>}
                                             </div>
                                           )}
                                            {lead.layouts?.[0]?.testBackLogoImage && (
                                             <div>
                                               <p className="font-semibold text-gray-500 mb-2">Back Logo</p>
-                                              <ImagePreview src={lead.layouts[0].testBackLogoImage} alt="Test Back Logo" />
+                                              <ImagePreview src={lead.layouts[0].testBackLogoImage} alt="Test Back Logo" className="w-24 h-24"/>
                                               {lead.layouts[0].testBackLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackLogoImageUploadTime).dateTime}</p>}
                                             </div>
                                           )}
                                           {lead.layouts?.[0]?.testBackDesignImage && (
                                             <div>
                                               <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                              <ImagePreview src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" />
+                                              <ImagePreview src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" className="w-32 h-24"/>
                                               {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}
                                             </div>
                                           )}
@@ -1247,14 +1247,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                           {lead.layouts?.[0]?.sequenceLogo?.map((file, index) => file && (
                                               <div key={index}>
                                                   <p className="font-semibold text-gray-500 mb-2">Sequence Logo {index + 1}</p>
-                                                  <ImagePreview src={file.url} alt={`Sequence Logo ${index + 1}`} />
+                                                  <ImagePreview src={file.url} alt={`Sequence Logo ${index + 1}`} className="w-24 h-24"/>
                                                   {Array.isArray(lead.layouts?.[0]?.sequenceLogoUploadTimes) && lead.layouts?.[0]?.sequenceLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceLogoUploadTimes![index]!).dateTime}</p>}
                                               </div>
                                           ))}
                                           {lead.layouts?.[0]?.sequenceBackDesign?.map((file, index) => file && (
                                               <div key={index}>
                                                   <p className="font-semibold text-gray-500 mb-2">Sequence Back</p>
-                                                  <ImagePreview src={file.url} alt="Sequence Back Design" />
+                                                  <ImagePreview src={file.url} alt="Sequence Back Design" className="w-32 h-24"/>
                                                   {Array.isArray(lead.layouts?.[0]?.sequenceBackDesignUploadTimes) && lead.layouts?.[0]?.sequenceBackDesignUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceBackDesignUploadTimes![index]!).dateTime}</p>}
                                               </div>
                                           ))}
@@ -1269,7 +1269,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                                 layout.layoutImage && (
                                                     <div key={index}>
                                                         {lead.layouts.length > 1 && <p className="font-semibold text-gray-500 mb-2">Layout ${index + 1}</p>}
-                                                        <ImagePreview src={layout.layoutImage} alt={`Layout ${index + 1}`} />
+                                                        <ImagePreview src={layout.layoutImage} alt={`Layout ${index + 1}`} className="w-32 h-24"/>
                                                     </div>
                                                 )
                                             ))}
