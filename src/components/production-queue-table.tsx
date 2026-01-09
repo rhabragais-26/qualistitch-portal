@@ -21,7 +21,8 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
-import { format, formatDateTime, cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { formatDateTime, cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
 import { ChevronDown, Send, FileText } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -254,12 +255,12 @@ export function ProductionQueueTable() {
             description: "The order has been sent to the logistics team.",
         });
     } catch (e: any) {
-        console.error("Error endorsing to logistics:", e);
-        toast({
-            variant: 'destructive',
-            title: "Endorsement Failed",
-            description: e.message || "Could not endorse the order.",
-        });
+      console.error("Error endorsing to logistics:", e);
+      toast({
+        variant: 'destructive',
+        title: "Endorsement Failed",
+        description: e.message || "Could not endorse the order.",
+      });
     }
   }, [firestore, toast]);
   
