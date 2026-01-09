@@ -251,8 +251,8 @@ export function ProductionQueueTable() {
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Date Sent</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Ordered Items</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Production Category</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Sewing</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Embroidery</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Sewing</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -326,19 +326,7 @@ export function ProductionQueueTable() {
                         </TableCell>
                         <TableCell className="text-center align-middle">
                           <Select value={lead.productionType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}>
-                            <SelectTrigger className="w-[120px] text-xs h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Pending">Pending</SelectItem>
-                              <SelectItem value="In-house">In-house</SelectItem>
-                              <SelectItem value="Outsource">Outsource</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="text-center align-middle">
-                          <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}>
-                            <SelectTrigger className="w-[120px] text-xs h-8">
+                            <SelectTrigger className="w-[120px] text-xs h-8 mx-auto">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -353,6 +341,18 @@ export function ProductionQueueTable() {
                             checked={lead.isEmbroideryDone || false}
                             onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
                           />
+                        </TableCell>
+                        <TableCell className="text-center align-middle">
+                          <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}>
+                            <SelectTrigger className="w-[120px] text-xs h-8 mx-auto">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Pending">Pending</SelectItem>
+                              <SelectItem value="In-house">In-house</SelectItem>
+                              <SelectItem value="Outsource">Outsource</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                     </TableRow>
                 )})}
