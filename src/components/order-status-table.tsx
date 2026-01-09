@@ -376,7 +376,7 @@ export function OrderStatusTable() {
                     <TableHead className="text-white font-bold align-middle w-[250px]">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[150px]">Priority Type</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[150px]">Ordered Items</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle w-[500px]">Order Fulfillment Progress</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[400px]">Order Fulfillment Progress</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Overdue Status</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Operational Case</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[120px]">Overall Status</TableHead>
@@ -418,7 +418,7 @@ export function OrderStatusTable() {
                                     </TooltipProvider>
                                   ) : (
                                     <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                                )}
+                                  )}
                                 <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
                                     {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
                                     {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
