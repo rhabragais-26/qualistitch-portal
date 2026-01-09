@@ -429,7 +429,7 @@ export function OrderStatusTable() {
                                 <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                                     {lead.priorityType}
                                 </Badge>
-                                <div className="text-gray-500 text-base font-bold mt-1 whitespace-nowrap">{lead.orderType}</div>
+                                <div className="text-gray-500 text-sm font-bold mt-1 whitespace-nowrap">{lead.orderType}</div>
                                </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
@@ -439,7 +439,7 @@ export function OrderStatusTable() {
                                 </div>
                             </TableCell>
                              <TableCell className="align-middle py-3">
-                                <div className="border rounded-md p-2">
+                                <div className="border rounded-md p-2 mt-1">
                                     <div className="relative pt-4">
                                         <div
                                             className="absolute top-0 px-2 py-1 text-xs text-white font-bold bg-[hsl(var(--chart-1))] rounded-md shadow-lg"
