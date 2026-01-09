@@ -197,7 +197,7 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
     <div
       ref={cardRef}
       className="fixed z-50 w-auto"
-      style={{ left: `${position.x}px`, top: `${position.y}px`, height: `700px` }}
+      style={{ left: `${position.x}px`, top: `${position.y}px`, height: `800px` }}
       onMouseDown={handleMouseDown}
     >
       <Card className="w-full h-full shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
@@ -231,7 +231,7 @@ export function SizeChartDialog({ onClose }: { onClose: () => void }) {
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="p-4 flex justify-center mt-4">
+        <CardFooter className="p-4 flex justify-center">
             <Button 
               onClick={handleSave} 
               disabled={!isDirty} 
