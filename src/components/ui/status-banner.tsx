@@ -27,7 +27,7 @@ export function StatusBanner({
       "relative w-48 h-8 rounded-full border-2 overflow-hidden", 
       borderClassName,
       className
-    )} style={{ borderColor }}>
+    )} style={{ borderColor: borderClassName ? undefined : borderColor }}>
       <div 
         className={cn("absolute inset-0 w-full h-full", backgroundClassName)} 
         style={{ backgroundColor }}

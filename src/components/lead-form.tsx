@@ -601,7 +601,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         text="Repeat Buyer"
                         backgroundClassName="shining-metal from-neutral-800 via-neutral-600 to-neutral-800"
                         textColorClassName="shining-text from-amber-200 via-yellow-400 to-amber-200 font-bold"
-                        borderColor="#B8860B"
+                        borderClassName="shining-metal-border"
                        />
                     </div>
                   )}
