@@ -94,10 +94,9 @@ const getStatusColor = (status?: ProductionType) => {
 
 const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success" | "warning" | "secondary" | "default" } => {
     if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
-    if (!lead.isCutting) return { text: "Pending", variant: "secondary" };
     if (lead.isSewing) return { text: "Done Production", variant: "success" };
     if (lead.isEmbroideryDone) return { text: "Ongoing with Sewer", variant: "warning" };
-    if (lead.productionType && lead.productionType !== 'Pending') return { text: "Ongoing Embroidery", variant: "warning" };
+    if (lead.isCutting && lead.productionType && lead.productionType !== 'Pending') return { text: "Ongoing Embroidery", variant: "warning" };
     return { text: "Pending", variant: "secondary" };
 };
 
@@ -467,7 +466,7 @@ export function ProductionQueueTable() {
                            <Select
                             value={lead.sewerType || 'Pending'}
                             onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
-                            disabled={lead.isSewing || !lead.isCutting}
+                            disabled={lead.isSewing || !lead.isCutting || !lead.isEmbroideryDone}
                            >
                             <SelectTrigger className={cn("w-auto min-w-[120px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType))}>
                               <SelectValue />
@@ -483,7 +482,7 @@ export function ProductionQueueTable() {
                           <Checkbox
                             checked={lead.isSewing || false}
                             onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
-                            disabled={!lead.isCutting}
+                            disabled={!lead.isCutting || !lead.isEmbroideryDone}
                           />
                         </TableCell>
                         <TableCell className="text-center align-middle">
