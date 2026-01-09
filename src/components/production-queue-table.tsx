@@ -97,7 +97,6 @@ const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success
     if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
     if (lead.isDone) return { text: "Done Production", variant: "success" };
     if (lead.isEmbroideryDone) return { text: "Ongoing with Sewer", variant: "warning" };
-    if (!lead.isCutting) return { text: "Pending", variant: "secondary" };
     if (lead.isCutting) return { text: "Ongoing Embroidery", variant: "default" };
     return { text: "Pending", variant: "secondary" };
 };
@@ -510,7 +509,7 @@ export function ProductionQueueTable() {
                                 onClick={() => handleEndorseToLogistics(lead.id)}
                                 disabled={!lead.isDone}
                                 className={cn(
-                                    "h-7 px-1 text-white font-bold text-xs bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
+                                    "h-auto px-1 py-3 text-white font-bold text-xs bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
                                 )}
                             >
                                 <Send className="mr-1.5 h-3.5 w-3.5" />
