@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
@@ -682,14 +681,14 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
           </div>
         </div>
       )}
-      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 gap-6">
-        <div className="space-y-2">
-            <h3 className="font-bold text-lg text-primary">Job Order and Layout</h3>
-            <Button onClick={handleJobOrderPrint} variant="default" size="lg">
-                Check Job Order and Layout
-            </Button>
-        </div>
+      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+                <h3 className="font-bold text-lg text-primary">Job Order and Layout</h3>
+                <Button onClick={handleJobOrderPrint} variant="default" size="lg">
+                    Check Job Order and Layout
+                </Button>
+            </div>
             <div className="space-y-2">
                 <h3 className="font-bold text-lg text-primary">Sequence</h3>
                 <div className="grid grid-cols-2 gap-2">
@@ -701,23 +700,24 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
                     ))}
                 </div>
             </div>
-            
-            <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                    <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
-                    <Button onClick={handleDownloadAll} size="sm" className="text-white font-bold"><Download className="mr-2 h-4 w-4" />Download All</Button>
-                </div>
-                <ul className="space-y-2 text-sm list-inside">
-                    {finalFiles.map((file, index) => (
-                    file && 
-                    <li key={index} className="flex items-center justify-between p-2 bg-white rounded-md border">
-                        <span className="truncate"><strong>{file.type}:</strong> {file.name}</span>
-                        <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-8 w-8 text-primary">
-                            <Download className="h-4 w-4" />
-                        </Button>
-                    </li>
-                    ))}
-                </ul>
+        </div>
+        <div className="space-y-2">
+            <div className="flex justify-between items-center">
+                <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
+                <Button onClick={handleDownloadAll} size="sm" className="text-white font-bold"><Download className="mr-2 h-4 w-4" />Download All</Button>
+            </div>
+            <div className="max-h-48 overflow-y-auto pr-2">
+              <ul className="space-y-2 text-sm list-inside">
+                  {finalFiles.map((file, index) => (
+                  file && 
+                  <li key={index} className="flex items-center justify-between p-2 bg-white rounded-md border">
+                      <span className="truncate"><strong>{file.type}:</strong> {file.name}</span>
+                      <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-8 w-8 text-primary">
+                          <Download className="h-4 w-4" />
+                      </Button>
+                  </li>
+                  ))}
+              </ul>
             </div>
         </div>
       </div>
@@ -728,5 +728,6 @@ ProductionDocuments.displayName = 'ProductionDocuments';
     
 
   
+
 
 
