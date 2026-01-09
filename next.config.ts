@@ -46,8 +46,6 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
-    // This is required to allow cross-origin requests in the development environment.
-    allowedDevOrigins: ["https://*.cloudworkstations.dev"],
   },
 };
 
