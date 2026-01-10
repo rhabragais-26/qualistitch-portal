@@ -282,11 +282,6 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                                <Download className="mr-1 h-3 w-3" /> {file.name}
                             </Button>
                           ))}
-                           {lead.layouts?.[0]?.finalNamesDst?.map((file, i) => file?.url && file?.name && (
-                            <Button key={`dst-name-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
-                               <Download className="mr-1 h-3 w-3" /> {file.name}
-                            </Button>
-                          ))}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -327,5 +322,3 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
 });
 ProgramFilesDatabaseTableMemo.displayName = 'ProgramFilesDatabaseTable';
 export { ProgramFilesDatabaseTableMemo as ProgramFilesDatabaseTable };
-
-    
