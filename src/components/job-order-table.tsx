@@ -61,6 +61,7 @@ type EnrichedLead = Lead & {
 export function JobOrderTable() {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [joNumberSearch, setJoNumberSearch] = React.useState('');
   const [csrFilter, setCsrFilter] = React.useState('All');
   const [hoveredLeadId, setHoveredLeadId] = React.useState<string | null>(null);
   const router = useRouter();
@@ -124,10 +125,18 @@ export function JobOrderTable() {
         : true;
       
       const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
+      
+      const lowercasedJoSearch = joNumberSearch.toLowerCase();
+      const matchesJo = joNumberSearch ? 
+        (lead.joNumber && (
+            formatJoNumber(lead.joNumber).toLowerCase().includes(lowercasedJoSearch) ||
+            lead.joNumber.toString().padStart(5, '0').slice(-5) === lowercasedJoSearch.slice(-5)
+        ))
+        : true;
 
-      return matchesSearch && matchesCsr;
+      return matchesSearch && matchesCsr && matchesJo;
     });
-  }, [processedLeads, searchTerm, csrFilter]);
+  }, [processedLeads, searchTerm, csrFilter, joNumberSearch, formatJoNumber]);
 
   if (isLoading) {
     return (
@@ -165,6 +174,14 @@ export function JobOrderTable() {
                   ))}
                 </SelectContent>
               </Select>
+              <div className="w-full max-w-sm">
+                <Input
+                  placeholder="Search by J.O. No..."
+                  value={joNumberSearch}
+                  onChange={(e) => setJoNumberSearch(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+              </div>
               <div className="w-full max-w-sm">
                 <Input
                   placeholder="Search by customer, company, or contact..."
@@ -267,5 +284,3 @@ export function JobOrderTable() {
     </Card>
   );
 }
-
-  
