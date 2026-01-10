@@ -131,7 +131,7 @@ export function AuditForShipmentTable() {
 
   const auditQueueLeads = useMemo(() => {
     if(!processedLeads) return [];
-    return processedLeads.filter(lead => lead.isSalesAuditRequested && lead.shipmentStatus !== 'Packed');
+    return processedLeads.filter(lead => lead.isSalesAuditRequested);
   }, [processedLeads]);
 
   return (
