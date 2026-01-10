@@ -192,6 +192,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [isCalculatorDragging, setIsCalculatorDragging] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [customerStatus, setCustomerStatus] = useState<'New' | 'Repeat' | null>(null);
+  const [orderCount, setOrderCount] = useState(0);
 
   const citiesAndMunicipalities = useMemo(() => {
     return locations.provinces.flatMap(province =>
@@ -285,17 +286,22 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   useEffect(() => {
     if (!customerNameValue) {
       setCustomerStatus(null);
+      setOrderCount(0);
       return;
     }
-    if (selectedLead) {
-      setCustomerStatus('Repeat');
-      return;
-    }
-    const isExisting = leads?.some(
+    
+    const matchingLeads = leads?.filter(
       (lead) => lead.customerName.toLowerCase() === customerNameValue.toLowerCase()
-    );
-    setCustomerStatus(isExisting ? 'Repeat' : 'New');
-  }, [customerNameValue, selectedLead, leads]);
+    ) || [];
+
+    if (matchingLeads.length > 0) {
+      setCustomerStatus('Repeat');
+      setOrderCount(matchingLeads.length);
+    } else {
+      setCustomerStatus('New');
+      setOrderCount(0);
+    }
+  }, [customerNameValue, leads]);
 
 
   useEffect(() => {
@@ -602,14 +608,21 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                 <CardDescription className="text-gray-600">Fill in the details below to create a record for customer and order.</CardDescription>
                 <div className="h-8">
                   {customerStatus && (
-                    <div className={cn("animate-in fade-in-down")}>
+                    <div className={cn("animate-in fade-in-down flex items-center gap-2")}>
                       {customerStatus === 'Repeat' ? (
+                         <>
                          <StatusBanner
                             text="Repeat Buyer"
                             backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
                             textColorClassName="text-yellow-900 font-bold"
                             borderClassName="border-yellow-500"
                         />
+                        {orderCount > 0 && (
+                          <div className="flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-black text-xs font-bold">
+                            {orderCount}
+                          </div>
+                        )}
+                        </>
                       ) : (
                         <StatusBanner
                           text="New Customer"
