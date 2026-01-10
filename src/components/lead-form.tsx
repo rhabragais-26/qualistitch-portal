@@ -1069,33 +1069,33 @@ function SetCustomerStatusDialog({
                     <RadioGroup value={status} onValueChange={(v) => setStatus(v as 'New' | 'Repeat')}>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="New" id="status-new" />
-                            <Label htmlFor="status-new">New Customer</Label>
+                            <Label htmlFor="status-new" className="text-base">New Customer</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="Repeat" id="status-repeat" />
-                            <Label htmlFor="status-repeat">Repeat Buyer</Label>
+                            <Label htmlFor="status-repeat" className="text-base">Repeat Buyer</Label>
                         </div>
                     </RadioGroup>
                     {status === 'Repeat' && (
-                        <div className="space-y-4 pl-6 animate-in fade-in-50">
+                        <div className="space-y-4 pl-6 pt-2 animate-in fade-in-50">
                             <div className="grid grid-cols-2 gap-4 items-center">
-                                <Label htmlFor="order-count">No of Times Ordered Before</Label>
+                                <Label htmlFor="order-count" className="text-sm text-right">No of Times Ordered Before</Label>
                                 <Input
                                     id="order-count"
                                     type="number"
                                     value={orderCount}
                                     onChange={(e) => setOrderCount(parseInt(e.target.value) || 0)}
-                                    className="w-24"
+                                    className="w-24 text-sm h-9"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4 items-center">
-                                <Label htmlFor="total-quantity">Total Quantity Ordered Before</Label>
+                                <Label htmlFor="total-quantity" className="text-sm text-right">Total Quantity Ordered Before</Label>
                                 <Input
                                     id="total-quantity"
                                     type="number"
                                     value={totalQuantity}
                                     onChange={(e) => setTotalQuantity(parseInt(e.target.value) || 0)}
-                                    className="w-24"
+                                    className="w-24 text-sm h-9"
                                 />
                             </div>
                         </div>
