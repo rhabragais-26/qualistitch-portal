@@ -128,7 +128,7 @@ export function JobOrderTable() {
       
       const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
       
-      const lowercasedJoSearch = joNumberSearch.toLowerCase();
+      const lowercasedJoSearch = (joNumberSearch || '').toLowerCase();
       const matchesJo = joNumberSearch ? 
         (lead.joNumber && (
             formatJoNumber(lead.joNumber).toLowerCase().includes(lowercasedJoSearch) ||
