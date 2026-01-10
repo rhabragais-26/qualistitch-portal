@@ -142,8 +142,8 @@ export function OrderStatusTable() {
     }
     
     const adjustedDateText = lead.adjustedDeliveryDate ? (
-        <div className="text-xs mt-1 text-black">
-            Customer's chosen delivery date: <strong className="text-black">{format(new Date(lead.adjustedDeliveryDate), 'MMM dd, yyyy')}</strong>
+        <div className="text-xs mt-1">
+            <span className="text-black">Customer's chosen delivery date: </span><strong className="text-black">{format(new Date(lead.adjustedDeliveryDate), 'MMM dd, yyyy')}</strong>
         </div>
     ) : null;
 
@@ -157,7 +157,7 @@ export function OrderStatusTable() {
 
   const getProgrammingStatus = useCallback((lead: Lead) => {
     if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
-    if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const };
+    if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "default" as const };
     if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const };
     if (lead.isLogoTesting) return { text: "Done Testing", variant: "warning" as const };
     if (lead.isInitialApproval) return { text: "Initial Program Approved", variant: "default" as const };
