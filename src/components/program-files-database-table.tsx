@@ -182,7 +182,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                       <TableCell className="align-top py-3 text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                       <TableCell className="align-top py-3 text-center">
                         <div className="flex gap-2 justify-center">
-                          {lead.layouts?.[0]?.finalProgrammedLogo?.map((file, i) => file && (
+                          {lead.layouts?.[0]?.finalProgrammedLogo?.map((file, i) => file && file.url && (
                             <TooltipProvider key={`fp-logo-${i}`}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -194,7 +194,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                               </Tooltip>
                             </TooltipProvider>
                           ))}
-                          {lead.layouts?.[0]?.finalProgrammedBackDesign?.map((file, i) => file && (
+                          {lead.layouts?.[0]?.finalProgrammedBackDesign?.map((file, i) => file && file.url && (
                             <TooltipProvider key={`fp-back-${i}`}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -210,7 +210,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                       </TableCell>
                       <TableCell className="align-top py-3 text-center">
                         <div className="flex gap-2 justify-center">
-                          {lead.layouts?.[0]?.sequenceLogo?.map((file, i) => file && (
+                          {lead.layouts?.[0]?.sequenceLogo?.map((file, i) => file && file.url && (
                             <TooltipProvider key={`seq-logo-${i}`}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -222,7 +222,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                               </Tooltip>
                             </TooltipProvider>
                           ))}
-                          {lead.layouts?.[0]?.sequenceBackDesign?.map((file, i) => file && (
+                          {lead.layouts?.[0]?.sequenceBackDesign?.map((file, i) => file && file.url && (
                            <TooltipProvider key={`seq-back-${i}`}>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -238,17 +238,17 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                       </TableCell>
                       <TableCell className="align-top py-3 text-center">
                         <div className="flex flex-col gap-1 items-start">
-                          {lead.layouts?.[0]?.finalLogoDst?.map((file, i) => file && (
+                          {lead.layouts?.[0]?.finalLogoDst?.map((file, i) => file && file.url && (
                             <Button key={`dst-logo-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
                               <Download className="mr-1 h-3 w-3" /> Logo {i+1} (DST)
                             </Button>
                           ))}
-                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, i) => file && (
+                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, i) => file && file.url && (
                             <Button key={`dst-back-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
                                <Download className="mr-1 h-3 w-3" /> Back Design {i+1} (DST)
                             </Button>
                           ))}
-                           {lead.layouts?.[0]?.finalNamesDst?.map((file, i) => file && (
+                           {lead.layouts?.[0]?.finalNamesDst?.map((file, i) => file && file.url && (
                             <Button key={`dst-name-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
                                <Download className="mr-1 h-3 w-3" /> Name {i+1} (DST)
                             </Button>
