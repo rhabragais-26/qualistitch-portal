@@ -199,6 +199,15 @@
           "format": "date-time",
           "description": "Timestamp for when a sales audit was requested."
         },
+        "isSalesAuditComplete": {
+            "type": "boolean",
+            "description": "Indicates if the sales audit for the order has been completed."
+        },
+        "salesAuditCompleteTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp for when the sales audit was completed."
+        },
         "isWaybillPrinted": {
           "type": "boolean",
           "description": "Indicates if the waybill for the order has been printed."

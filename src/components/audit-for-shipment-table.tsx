@@ -23,6 +23,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { Check } from 'lucide-react';
+import { formatDateTime } from '@/lib/utils';
 
 type Order = {
   productType: string;
@@ -38,6 +40,8 @@ type Lead = {
   orders: Order[];
   submissionDateTime: string;
   isSalesAuditRequested?: boolean;
+  isSalesAuditComplete?: boolean;
+  salesAuditCompleteTimestamp?: string;
   isWaybillPrinted?: boolean;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
 }
@@ -81,11 +85,12 @@ export function AuditForShipmentTable() {
     const leadDocRef = doc(firestore, 'leads', lead.id);
     try {
       await updateDoc(leadDocRef, {
-        shipmentStatus: 'Packed',
         isSalesAuditRequested: false, // Remove from audit queue
+        isSalesAuditComplete: true,
+        salesAuditCompleteTimestamp: new Date().toISOString(),
       });
       toast({
-        title: 'Order Packed',
+        title: 'Audit Complete',
         description: `J.O. ${formatJoNumber(lead.joNumber)} is now ready for shipment.`,
       });
     } catch (e: any) {
@@ -93,7 +98,7 @@ export function AuditForShipmentTable() {
       toast({
         variant: "destructive",
         title: "Action Failed",
-        description: e.message || "Could not move the order to packed status.",
+        description: e.message || "Could not complete the audit.",
       });
     }
   };
@@ -189,14 +194,22 @@ export function AuditForShipmentTable() {
                              />
                         </TableCell>
                         <TableCell className="text-center">
-                          <Button 
-                            size="sm" 
-                            className="h-7 text-xs font-bold" 
-                            onClick={() => handleProceedToShipment(lead)}
-                            disabled={!lead.isWaybillPrinted}
-                          >
-                            Proceed to Shipment
-                          </Button>
+                          {lead.isSalesAuditComplete ? (
+                            <div className="flex items-center justify-center text-sm text-green-600 font-semibold">
+                                <Check className="mr-2 h-4 w-4" />
+                                Done Audit
+                                {lead.salesAuditCompleteTimestamp && <div className="text-[10px] text-gray-500 ml-2">({formatDateTime(lead.salesAuditCompleteTimestamp).dateTimeShort})</div>}
+                            </div>
+                          ) : (
+                            <Button 
+                                size="sm" 
+                                className="h-7 text-xs font-bold" 
+                                onClick={() => handleProceedToShipment(lead)}
+                                disabled={!lead.isWaybillPrinted}
+                            >
+                                Proceed to Shipment
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                    )

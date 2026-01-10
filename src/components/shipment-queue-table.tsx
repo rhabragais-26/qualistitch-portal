@@ -55,6 +55,8 @@ type Lead = {
   isEndorsedToLogistics?: boolean;
   isSalesAuditRequested?: boolean;
   salesAuditRequestedTimestamp?: string;
+  isSalesAuditComplete?: boolean;
+  salesAuditCompleteTimestamp?: string;
   isWaybillPrinted?: boolean;
   isQualityApproved?: boolean;
   qualityApprovedTimestamp?: string;
@@ -243,6 +245,9 @@ export function ShipmentQueueTable() {
     if (lead.isSalesAuditRequested) {
       return { text: "On-going Audit", variant: "warning", className: "bg-amber-500 text-white" };
     }
+     if (lead.isSalesAuditComplete) {
+      return { text: "Ready for Shipment", variant: "success", className: "bg-blue-600 text-white" };
+    }
     if (lead.isQualityApproved) {
       return { text: "Approved Quality", variant: "success", className: "bg-green-600 text-white" };
     }
@@ -255,16 +260,16 @@ export function ShipmentQueueTable() {
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
   
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
+        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
+      customerOrderStats[name].totalQuantity += orderQuantity;
     });
   
     const enrichedLeads: EnrichedLead[] = [];
@@ -429,6 +434,11 @@ export function ShipmentQueueTable() {
                                     <span className="text-orange-500 font-bold text-xs">Requested</span>
                                     {lead.salesAuditRequestedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.salesAuditRequestedTimestamp).dateTimeShort}</div>}
                                 </div>
+                           ) : lead.isSalesAuditComplete ? (
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                    <span className="text-blue-600 font-bold text-xs">Ready for Shipment</span>
+                                    {lead.salesAuditCompleteTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.salesAuditCompleteTimestamp).dateTimeShort}</div>}
+                                </div>
                            ) : (
                                 <Button size="sm" className="h-7 text-xs font-bold" onClick={() => handleRequestSalesAudit(lead)} disabled={!lead.isPacked}>
                                     Request Audit from Sales
@@ -453,7 +463,7 @@ export function ShipmentQueueTable() {
                               size="sm"
                               className="h-7 text-xs font-bold"
                               onClick={() => handleShip(lead)}
-                              disabled={!lead.isPacked}
+                              disabled={!lead.isSalesAuditComplete}
                             >
                               Ship Now
                             </Button>
