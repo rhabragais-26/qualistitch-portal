@@ -486,6 +486,7 @@ export function ShipmentQueueTable() {
                         <TableCell className="text-xs">{lead.courier}</TableCell>
                         <TableCell className={cn("text-xs text-center", lead.adjustedDeliveryDate && "font-bold")}>
                            {format(deliveryDate, "MMM dd, yyyy")}
+                           {lead.adjustedDeliveryDate && <div className="text-gray-500 text-[10px]">(Adjusted)</div>}
                            {daysOverdue !== null && daysOverdue > 0 && <div className="text-red-500 font-medium">({daysOverdue} days overdue)</div>}
                         </TableCell>
                         <TableCell className="text-xs text-center">
