@@ -605,9 +605,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <div className="animate-in fade-in-down">
                        <StatusBanner
                         text="Repeat Buyer"
-                        backgroundClassName="shining-metal from-neutral-800 via-neutral-600 to-neutral-800"
-                        textColorClassName="shining-text from-amber-200 via-yellow-400 to-amber-200 font-bold"
-                        borderClassName="shining-black-border"
+                        backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
+                        textColorClassName="text-yellow-900 font-bold"
+                        borderClassName="border-yellow-500"
                        />
                     </div>
                   )}

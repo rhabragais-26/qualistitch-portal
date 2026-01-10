@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -95,11 +96,17 @@ export default {
           '0%': { backgroundPosition: '200% center' },
           '100%': { backgroundPosition: '-200% center' },
         },
+        'glowing-gold': {
+          '0%': { backgroundPosition: '-100% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '-100% 50%' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'shining-metal': 'shining-metal 2s linear infinite',
+        'glowing-gold': 'glowing-gold 3s ease-in-out infinite',
       },
     },
   },
