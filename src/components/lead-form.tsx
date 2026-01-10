@@ -100,7 +100,7 @@ const formSchema = z.object({
   courier: z.string().optional(),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
-  salesRepresentative: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a CSR."}),
+  salesRepresentative: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a SCES."}),
   orders: z.array(orderSchema).min(1, "Please add at least one order."),
 }).refine(data => {
     if (data.mobileNo) return /^\d{4}-\d{3}-\d{4}$/.test(data.mobileNo) || data.mobileNo === '';
@@ -805,9 +805,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-3 pt-2">
                   <FormField control={form.control} name="salesRepresentative" render={({field}) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-black text-xs"><UserCheck className="h-4 w-4 text-primary" />CSR</FormLabel>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><UserCheck className="h-4 w-4 text-primary" />SCES</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select CSR" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select SCES" /></SelectTrigger></FormControl>
                         <SelectContent>{['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                       </Select>
                       <FormMessage />
@@ -1121,5 +1121,3 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
-
-

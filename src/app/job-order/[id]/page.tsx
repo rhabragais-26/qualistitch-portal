@@ -124,7 +124,7 @@ export default function JobOrderPage() {
                 ...layout,
                 id: layout.id || `temp-${index}`, // Ensure layout has an id for sorting
                 namedOrders: (layout.namedOrders || []).sort((a,b) => a.name.localeCompare(b.name))
-            })).sort((a,b) => a.id.localeCompare(b.id)),
+            })).sort((a,b) => (a.id || '').localeCompare(b.id || '')),
         }
     }
     
@@ -483,7 +483,7 @@ export default function JobOrderPage() {
             <div className="space-y-1">
                 <p className="font-bold italic">Prepared by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">{lead.salesRepresentative.toUpperCase()}</p>
-                <p className="text-center font-bold">Customer Service Representative</p>
+                <p className="text-center font-bold">Sales & Customer Engagement Specialist</p>
                 <p className="text-center">(Name & Signature, Date)</p>
             </div>
              <div className="space-y-1">
@@ -568,5 +568,3 @@ export default function JobOrderPage() {
     </div>
   );
 }
-
-    

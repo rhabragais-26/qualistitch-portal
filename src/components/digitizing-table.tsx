@@ -172,7 +172,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([]);
   const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
   const [sequenceLogo, setSequenceLogo] = useState<(FileObject | null)[]>([null]);
-  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([null]);
+  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
   const [finalProgrammedLogo, setFinalProgrammedLogo] = useState<(FileObject | null)[]>([null]);
   const [finalProgrammedBackDesign, setFinalProgrammedBackDesign] = useState<(FileObject | null)[]>([]);
   const [isNamesOnly, setIsNamesOnly] = useState(false);
@@ -1067,7 +1067,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
                     <TableHead className="text-white font-bold align-middle text-center">Customer</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">CSR</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">SCES</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center whitespace-nowrap">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Overdue Status</TableHead>
@@ -1103,19 +1103,19 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                 <span className="font-medium">{lead.customerName}</span>
                                 {isRepeat ? (
                                     <TooltipProvider>
-                                    <Tooltip>
+                                      <Tooltip>
                                         <TooltipTrigger asChild>
-                                        <div className="flex items-center gap-1.5 cursor-pointer">
+                                          <div className="flex items-center gap-1.5 cursor-pointer">
                                             <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                             <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                            {lead.orderNumber}
+                                              {lead.orderNumber}
                                             </span>
-                                        </div>
+                                          </div>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                        <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                          <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
                                         </TooltipContent>
-                                    </Tooltip>
+                                      </Tooltip>
                                     </TooltipProvider>
                                 ) : (
                                     <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>

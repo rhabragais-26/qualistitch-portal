@@ -188,7 +188,7 @@ const EditLeadDialogMemo = React.memo(function EditLeadDialog({ isOpen, onOpenCh
             </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="salesRepresentative">CSR</Label>
+              <Label htmlFor="salesRepresentative">SCES</Label>
               <Select onValueChange={setSalesRepresentative} value={salesRepresentative}>
                 <SelectTrigger id="salesRepresentative"><SelectValue /></SelectTrigger>
                 <SelectContent>{salesRepresentatives.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>

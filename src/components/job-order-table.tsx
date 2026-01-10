@@ -167,10 +167,10 @@ export function JobOrderTable() {
              <div className="flex items-center gap-4">
                <Select value={csrFilter} onValueChange={setCsrFilter}>
                 <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Filter by CSR" />
+                  <SelectValue placeholder="Filter by SCES" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="All">All CSRs</SelectItem>
+                  <SelectItem value="All">All SCES</SelectItem>
                   {salesRepresentatives.map(csr => (
                     <SelectItem key={csr} value={csr}>{csr}</SelectItem>
                   ))}
@@ -205,7 +205,7 @@ export function JobOrderTable() {
                       <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
                       <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
                       <TableHead className="text-white font-bold align-middle">Courier</TableHead>
-                      <TableHead className="text-white font-bold align-middle">CSR</TableHead>
+                      <TableHead className="text-white font-bold align-middle">SCES</TableHead>
                       <TableHead className="text-white font-bold align-middle">Priority</TableHead>
                       <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                       <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
@@ -270,7 +270,7 @@ export function JobOrderTable() {
                                   {isCompleted ? (
                                     <>
                                         <Check className="mr-2 h-4 w-4" />
-                                        J.O. Completed
+                                        J.O. Saved
                                     </>
                                   ) : isJoSaved ? (
                                     hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved'
