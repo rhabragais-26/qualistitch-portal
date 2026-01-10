@@ -267,7 +267,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
 
     // Auto-set repeat buyer status and order count
     const previousOrdersCount = leads?.filter(l => l.customerName.toLowerCase() === lead.customerName.toLowerCase()).length || 0;
-    setManualStatus('Repeat');
+    setCustomerStatus('Repeat');
     setManualOrderCount(previousOrdersCount);
   };
 
@@ -291,27 +291,25 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const provinceValue = watch('province');
 
   useEffect(() => {
-    // Reset manual override and selected lead if the name is changed
-    setManualStatus(null);
-    setManualOrderCount('');
-    setManualTotalQuantity('');
-
     if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
         setSelectedLead(null);
+        setManualStatus(null);
+        setManualOrderCount('');
+        setManualTotalQuantity('');
     }
   }, [customerNameValue, selectedLead]);
 
   useEffect(() => {
+    if (!customerNameValue) {
+      setCustomerStatus(null);
+      return;
+    }
     if (manualStatus === 'Repeat') {
       setCustomerStatus('Repeat');
       return;
     }
     if (manualStatus === 'New') {
       setCustomerStatus('New');
-      return;
-    }
-    if (!customerNameValue) {
-      setCustomerStatus(null);
       return;
     }
     if (selectedLead) {
@@ -323,6 +321,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     );
     setCustomerStatus(isExisting ? 'Repeat' : 'New');
   }, [customerNameValue, selectedLead, leads, manualStatus]);
+
 
   useEffect(() => {
     if (customerNameValue && leads && !selectedLead) {
@@ -635,30 +634,35 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                <div className="flex items-center gap-4 mt-2">
                 <CardDescription className="text-gray-600">Fill in the details below to create a record for customer and order.</CardDescription>
                 <div className="h-8">
-                  {customerStatus === 'Repeat' ? (
-                     <div className="animate-in fade-in-down flex items-center gap-2">
-                        <StatusBanner
-                           text="Repeat Buyer"
-                           backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
-                           textColorClassName="text-yellow-900 font-bold"
-                           borderClassName="border-yellow-500"
-                        />
-                        {manualOrderCount && (
-                          <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                            {manualOrderCount}
-                          </div>
+                  {!isCustomerNameFocused && customerStatus && (
+                     <div 
+                        className={cn("animate-in fade-in-down", customerStatus === 'New' && 'cursor-pointer')}
+                        onClick={() => customerStatus === 'New' && setIsManualStatusDialogOpen(true)}
+                     >
+                        {customerStatus === 'Repeat' ? (
+                            <div className="flex items-center gap-2">
+                               <StatusBanner
+                                  text="Repeat Buyer"
+                                  backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
+                                  textColorClassName="text-yellow-900 font-bold"
+                                  borderClassName="border-yellow-500"
+                               />
+                               {manualOrderCount && (
+                                 <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                   {manualOrderCount}
+                                 </div>
+                               )}
+                           </div>
+                        ) : (
+                          <StatusBanner
+                            text="New Customer"
+                            backgroundColor="#FFFFFF"
+                            textColorClassName="text-black font-bold"
+                            borderClassName="shining-black-border"
+                          />
                         )}
                     </div>
-                  ) : customerStatus === 'New' && !isCustomerNameFocused ? (
-                    <div className="animate-in fade-in-down cursor-pointer" onClick={() => setIsManualStatusDialogOpen(true)}>
-                      <StatusBanner
-                        text="New Customer"
-                        backgroundColor="#FFFFFF"
-                        textColorClassName="text-black font-bold"
-                        borderClassName="shining-black-border"
-                      />
-                    </div>
-                  ) : null}
+                  )}
                 </div>
               </div>
           </div>
