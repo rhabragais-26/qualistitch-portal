@@ -183,8 +183,8 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
                   <TableHead className="text-white font-bold align-middle text-center">Customer Details</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">J.O. No.</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Final Programmed</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center text-xs">J.O. No.</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Final Logo/Back Design</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Sequence</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">EMB Files</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">DST Files</TableHead>
