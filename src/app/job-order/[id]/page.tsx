@@ -2,17 +2,23 @@
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, query } from 'firebase/firestore';
-import { useParams } from 'next/navigation';
+import { collection, doc, query, updateDoc } from 'firebase/firestore';
+import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarIcon, Printer, Save, X } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+
 
 type DesignDetails = {
   left?: boolean;
@@ -30,27 +36,9 @@ type Order = {
   design?: DesignDetails;
 };
 
-type NamedOrder = {
-  name: string;
-  color: string;
-  size: string;
-  quantity: number;
-  backText: string;
-};
-
-type Layout = {
-  layoutImage?: string;
-  dstLogoLeft?: string;
-  dstLogoRight?: string;
-  dstBackLogo?: string;
-  dstBackText?: string;
-  namedOrders?: NamedOrder[];
-};
-
 type Lead = {
   id: string;
   customerName: string;
-  recipientName?: string;
   companyName?: string;
   contactNumber: string;
   landlineNumber?: string;
@@ -64,13 +52,15 @@ type Lead = {
   deliveryDate?: string;
   courier: string;
   joNumber?: number;
-  layouts?: Layout[];
 };
+
+const courierOptions = ['J&T', 'Lalamove', 'LBC', 'Pick-up'];
 
 export default function JobOrderPage() {
   const { id } = useParams();
   const firestore = useFirestore();
-  const [currentPage, setCurrentPage] = useState(1);
+  const { toast } = useToast();
+  const router = useRouter();
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: allLeads, isLoading: areAllLeadsLoading } = useCollection<Lead>(leadsQuery);
@@ -84,6 +74,15 @@ export default function JobOrderPage() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [joNumber, setJoNumber] = useState<string>('');
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  // Helper to compare lead states to check for unsaved changes
+  const isDirty = useMemo(() => {
+    if (!fetchedLead || !lead) return false;
+    // Simple JSON stringify comparison. For more complex objects, a deep-equal library would be better.
+    return JSON.stringify(fetchedLead) !== JSON.stringify({ ...fetchedLead, ...lead, deliveryDate: deliveryDate ? deliveryDate.toISOString().split('T')[0] : fetchedLead.deliveryDate, courier: lead.courier || fetchedLead.courier, joNumber: lead.joNumber || fetchedLead.joNumber });
+  }, [fetchedLead, lead, deliveryDate]);
 
   useEffect(() => {
     if (fetchedLead) {
@@ -92,28 +91,7 @@ export default function JobOrderPage() {
         remarks: order.remarks || '',
         design: order.design || { left: false, right: false, backLogo: false, backText: false }
       }));
-      
-      const initializedLayouts = (fetchedLead.layouts && fetchedLead.layouts.length > 0) 
-        ? fetchedLead.layouts.map(layout => ({
-            ...layout,
-            namedOrders: (layout.namedOrders && layout.namedOrders.length > 0) ? layout.namedOrders : [{ name: '', color: '', size: '', quantity: 0, backText: '' }]
-          }))
-        : [{ 
-            layoutImage: '', 
-            dstLogoLeft: '', 
-            dstLogoRight: '', 
-            dstBackLogo: '', 
-            dstBackText: '', 
-            namedOrders: [{ name: '', color: '', size: '', quantity: 0, backText: '' }] 
-          }];
-
-      setLead({
-        ...fetchedLead,
-        recipientName: fetchedLead.recipientName || fetchedLead.customerName,
-        orders: initializedOrders,
-        courier: fetchedLead.courier || 'Pick-up',
-        layouts: initializedLayouts,
-      });
+      setLead({ ...fetchedLead, orders: initializedOrders, courier: fetchedLead.courier || 'Pick-up' });
 
       if (fetchedLead.deliveryDate) {
         setDeliveryDate(new Date(fetchedLead.deliveryDate));
@@ -130,7 +108,7 @@ export default function JobOrderPage() {
       if (lead.joNumber) {
         setJoNumber(`QSBP-${currentYear}-${lead.joNumber.toString().padStart(5, '0')}`);
       } else {
-        // This part is for display only before saving. The actual number is set on save.
+        // Find max JO number only from leads of the current year
         const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
         const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
         const newJoNum = maxJoNumber + 1;
@@ -139,14 +117,133 @@ export default function JobOrderPage() {
     }
   }, [lead, allLeads]);
 
+  const handlePrint = () => {
+    const printableArea = document.querySelector('.printable-area');
+    if (printableArea) {
+      const printWindow = window.open('', '', 'fullscreen=yes');
+      if (printWindow) {
+        printWindow.document.write('<html><head><title>Print Job Order</title>');
+        // Find all style sheets and link them in the new window
+        Array.from(document.styleSheets).forEach(styleSheet => {
+          if (styleSheet.href) {
+            printWindow.document.write(`<link rel="stylesheet" href="${styleSheet.href}">`);
+          } else {
+            // For inline styles
+            const styleElement = styleSheet.ownerNode;
+            if (styleElement) {
+              printWindow.document.write(`<style>${styleElement.innerHTML}</style>`);
+            }
+          }
+        });
+
+        printWindow.document.write('</head><body>');
+        printWindow.document.write(printableArea.innerHTML);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        
+        // Timeout to allow styles to load before printing
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 500);
+      }
+    }
+  };
+  
+  const handleClose = () => {
+    if (isDirty) {
+      setShowConfirmDialog(true);
+    } else {
+      router.push('/job-order');
+    }
+  };
+  
+  const handleConfirmSave = async () => {
+    await handleSaveChanges();
+    setShowConfirmDialog(false);
+  };
+  
+  const handleConfirmDiscard = () => {
+    setShowConfirmDialog(false);
+    router.push('/job-order');
+  };
+
+  const handleCourierChange = (value: string) => {
+    if (lead) {
+      setLead({ ...lead, courier: value });
+    }
+  };
+
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (lead) {
+      setLead({ ...lead, location: e.target.value });
+    }
+  };
+
+  const handleOrderChange = (index: number, field: keyof Order, value: any) => {
+    if (lead) {
+      const newOrders = [...lead.orders];
+      (newOrders[index] as any)[field] = value;
+      setLead({ ...lead, orders: newOrders });
+    }
+  };
+
+  const handleDesignChange = (index: number, field: keyof DesignDetails, value: boolean) => {
+     if (lead) {
+      const newOrders = [...lead.orders];
+      const currentOrder = newOrders[index];
+      const newDesign = { ...(currentOrder.design || {}), [field]: value };
+      (newOrders[index] as any).design = newDesign;
+      setLead({ ...lead, orders: newOrders });
+    }
+  };
+
+  const handleSaveChanges = async () => {
+    if (!lead || !leadRef || !allLeads) return;
+
+    let newJoNumber: number | undefined = lead.joNumber;
+    
+    if (!newJoNumber) {
+        const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
+        const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
+        newJoNumber = maxJoNumber + 1;
+    }
+    
+    const dataToUpdate = {
+      joNumber: newJoNumber,
+      courier: lead.courier || 'Pick-up',
+      location: lead.location,
+      deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
+      orders: lead.orders.map(o => ({
+        ...o, 
+        remarks: o.remarks || '', 
+        design: o.design || { left: false, right: false, backLogo: false, backText: false }
+      })),
+      lastModified: new Date().toISOString(),
+    };
+
+    try {
+      await updateDoc(leadRef, dataToUpdate);
+      toast({
+        title: 'Job Order Saved!',
+        description: 'Your changes have been saved successfully.',
+      });
+      router.push('/job-order');
+    } catch (e: any) {
+      console.error('Error saving job order:', e);
+      toast({
+        variant: 'destructive',
+        title: 'Uh oh! Something went wrong.',
+        description: e.message || 'Could not save the job order.',
+      });
+    }
+  };
+
   if (isLeadLoading || areAllLeadsLoading || !lead) {
     return (
       <div className="p-10 bg-white">
-        <div className="flex justify-center items-center gap-4 py-4">
-            <Skeleton className="h-9 w-28" />
-            <Skeleton className="h-6 w-20" />
-            <Skeleton className="h-9 w-24" />
-      </div>
+        <Skeleton className="h-10 w-1/4 mb-4" />
+        <Skeleton className="h-6 w-1/2 mb-8" />
         <div className="space-y-4">
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-40 w-full" />
@@ -165,8 +262,7 @@ export default function JobOrderPage() {
   }
 
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-  const totalPages = 1 + (lead.layouts?.length || 0);
-
+  
   const getContactDisplay = () => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
@@ -179,255 +275,248 @@ export default function JobOrderPage() {
 
   return (
     <div className="bg-white text-black min-h-screen">
-      <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md z-50">
-        <div className="container mx-auto max-w-5xl flex justify-center items-center">
-            <div className="flex-1 flex justify-center items-center gap-2 min-w-[300px]">
-                 <Button
-                    variant="outline"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                >
-                    <ChevronLeft className="mr-2 h-4 w-4" />
-                    Previous
-                </Button>
-                <span className="text-sm font-medium text-center whitespace-nowrap w-24">{`Page ${currentPage} of ${totalPages}`}</span>
-                <Button
-                    variant="outline"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                >
-                    Next
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-            </div>
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>You have unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              Do you want to save your changes before closing?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button variant="outline" onClick={handleConfirmDiscard}>Discard</Button>
+            <AlertDialogAction onClick={handleConfirmSave}>Save & Close</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md">
+        <div className="flex justify-end gap-2 container mx-auto max-w-4xl">
+            <Button onClick={handleClose} variant="outline">
+            <X className="mr-2 h-4 w-4" />
+            Close
+            </Button>
+            <Button onClick={handleSaveChanges} className="text-white font-bold">
+            <Save className="mr-2 h-4 w-4" />
+            Save Changes
+            </Button>
+            <Button onClick={handlePrint} className="text-white font-bold" disabled={!lead?.joNumber}>
+            <Printer className="mr-2 h-4 w-4" />
+            Print J.O.
+            </Button>
         </div>
       </header>
-       
-      <div className="pt-20 p-10 mx-auto max-w-4xl printable-area">
-        {/* Page 1 */}
-        <div className={cn(currentPage !== 1 && 'hidden print:block')}>
-            <div className="text-left mb-4">
-                <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{lead.joNumber ? joNumber : 'Not Saved'}</span></p>
-            </div>
-            <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
+      <div className="p-10 mx-auto max-w-4xl printable-area mt-16">
+        <div className="text-left mb-4">
+            <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{lead.joNumber ? joNumber : 'Not Saved'}</span></p>
+        </div>
+        <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
-            <div className="grid grid-cols-2 gap-x-8 text-sm mb-6 border-b border-black pb-4">
-                <div className="space-y-2">
-                    <p><strong>Client Name:</strong> {lead.customerName}</p>
-                    <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
-                    <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
-                     <div className="flex items-center gap-2">
-                        <p><strong>Recipient's Name:</strong> {lead.recipientName}</p>
+        <div className="grid grid-cols-2 gap-x-8 text-sm mb-6 border-b border-black pb-4">
+            <div className="space-y-2">
+                <p><strong>Client Name:</strong> {lead.customerName}</p>
+                <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
+                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
+                <p><strong>Recipient's Name:</strong> {lead.customerName}</p>
+                 <div className="flex items-center gap-2">
+                    <strong className='flex-shrink-0'>Delivery Date:</strong>
+                    <div className='w-full no-print flex items-center gap-1'>
+                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-[240px] justify-start text-left font-normal h-8 text-xs",
+                                    !deliveryDate && "text-muted-foreground"
+                                )}
+                                >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                mode="single"
+                                selected={deliveryDate}
+                                onSelect={(date) => {
+                                    setDeliveryDate(date);
+                                    setIsCalendarOpen(false);
+                                }}
+                                disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                                initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                         {deliveryDate && (
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setDeliveryDate(undefined)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        )}
                     </div>
-                    <div className="flex items-center gap-2">
-                        <strong className='flex-shrink-0'>Delivery Date:</strong>
-                        <p>{deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</p>
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
-                    <p><strong>Type of Order:</strong> {lead.orderType}</p>
-                    <div className="flex items-center gap-2">
-                        <strong className='flex-shrink-0'>Courier:</strong>
-                        <p>{lead.courier}</p>
-                    </div>
-                    <p><strong>Contact No:</strong> {getContactDisplay()}</p>
-                </div>
-                <div className="col-span-2 mt-2 flex items-center gap-2">
-                    <p><strong>Delivery Address:</strong> {lead.location}</p>
+                    <span className="print-only">{deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
                 </div>
             </div>
-
-            <h2 className="text-xl font-bold text-center mb-4">ORDER DETAILS</h2>
-            <table className="w-full border-collapse border border-black text-xs mb-2">
-            <thead>
-                <tr className="bg-gray-200">
-                <th className="border border-black p-0.5" colSpan={3}>Item Description</th>
-                <th className="border border-black p-0.5" rowSpan={2}>Qty</th>
-                <th className="border border-black p-0.5" colSpan={2}>Front Design</th>
-                <th className="border border-black p-0.5" colSpan={2}>Back Design</th>
-                <th className="border border-black p-0.5" rowSpan={2}>Remarks</th>
-                </tr>
-                <tr className="bg-gray-200">
-                <th className="border border-black p-0.5 font-medium">Type of Product</th>
-                <th className="border border-black p-0.5 font-medium">Color</th>
-                <th className="border border-black p-0.5 font-medium">Size</th>
-                <th className="border border-black p-0.5 font-medium w-12">Left</th>
-                <th className="border border-black p-0.5 font-medium w-12">Right</th>
-                <th className="border border-black p-0.5 font-medium w-12">Logo</th>
-                <th className="border border-black p-0.5 font-medium w-12">Text</th>
-                </tr>
-            </thead>
-            <tbody>
-                {lead.orders.map((order, index) => (
-                <tr key={index}>
-                    <td className="border border-black p-0.5">{order.productType}</td>
-                    <td className="border border-black p-0.5">{order.color}</td>
-                    <td className="border border-black p-0.5 text-center">{order.size}</td>
-                    <td className="border border-black p-0.5 text-center">{order.quantity}</td>
-                    <td className="border border-black p-0.5 text-center">
-                        <Checkbox className="mx-auto pointer-events-none" checked={order.design?.left || false} />
-                    </td>
-                    <td className="border border-black p-0.5 text-center">
-                    <Checkbox className="mx-auto pointer-events-none" checked={order.design?.right || false} />
-                    </td>
-                    <td className="border border-black p-0.5 text-center">
-                    <Checkbox className="mx-auto pointer-events-none" checked={order.design?.backLogo || false} />
-                    </td>
-                    <td className="border border-black p-0.5 text-center">
-                    <Checkbox className="mx-auto pointer-events-none" checked={order.design?.backText || false} />
-                    </td>
-                    <td className="border border-black p-0.5">
-                      <p className="text-xs">{order.remarks}</p>
-                    </td>
-                </tr>
-                ))}
-                <tr>
-                    <td colSpan={3} className="text-right font-bold p-0.5">TOTAL</td>
-                    <td className="text-center font-bold p-0.5">{totalQuantity} PCS</td>
-                    <td colSpan={5}></td>
-                </tr>
-            </tbody>
-            </table>
-
-            <div className="text-xs mb-2 pt-2">
-                <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
+             <div className="space-y-2">
+                <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
+                <p><strong>Type of Order:</strong> {lead.orderType}</p>
+                <div className="flex items-center gap-2">
+                    <strong className='flex-shrink-0'>Courier:</strong>
+                    <div className='w-full no-print'>
+                      <Select value={lead.courier || 'Pick-up'} onValueChange={handleCourierChange}>
+                          <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                              {courierOptions.map(opt => (
+                                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                    </div>
+                    <span className="print-only">{lead.courier}</span>
+                </div>
+                <p><strong>Contact No:</strong> {getContactDisplay()}</p>
             </div>
-
-            <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
-                <div className="space-y-1">
-                    <p className="font-bold italic">Prepared by:</p>
-                    <p className="pt-8 border-b border-black text-center font-semibold">{lead.salesRepresentative.toUpperCase()}</p>
-                    <p className="text-center font-bold">Customer Service Representative</p>
-                    <p className="text-center">(Name & Signature, Date)</p>
-                </div>
-                <div className="space-y-1">
-                    <p className="font-bold italic">Noted by:</p>
-                    <p className="pt-8 border-b border-black text-center font-semibold">MYREZA BANAWON</p>
-                    <p className="text-center font-bold">Sales Head</p>
-                    <p className="text-center">(Name & Signature, Date)</p>
-                </div>
-
-                <div className="col-span-2 mt-0">
-                    <p className="font-bold italic">Approved by:</p>
-                </div>
-
-
-                <div className="space-y-1">
-                    <p className="pt-8 border-b border-black"></p>
-                    <p className="text-center font-semibold">Programming</p>
-                    <p className="text-center">(Name & Signature, Date)</p>
-                </div>
-                <div className="space-y-1">
-                    <p className="pt-8 border-b border-black"></p>
-                    <p className="text-center font-semibold">Inventory</p>
-                    <p className="text-center">(Name & Signature, Date)</p>
-                </div>
-                <div className="space-y-1">
-                    <p className="pt-8 border-b border-black"></p>
-                    <p className="text-center font-semibold">Production Line Leader</p>
-                    <p className="text-center">(Name & Signature, Date)</p>
-                </div>
-                <div className="space-y-1">
-                    <p className="pt-8 border-b border-black"></p>
-                    <p className="text-center font-semibold">Production Supervisor</p>
-                    <p className="text-center">(Name & Signature, Date)</p>
-                </div>
-                <div className="space-y-1">
-                    <p className="pt-8 border-b border-black"></p>
-                    <p className="text-center font-semibold">Quality Control</p>
-                    <p className="text-center">(Name & Signature, Date)</p>
-                </div>
-                <div className="space-y-1">
-                    <p className="pt-8 border-b border-black"></p>
-                    <p className="text-center font-semibold">Logistics</p>
-                    <p className="text-center">(Name & Signature, Date)</p>
-                </div>
-                <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
-                    <p className="pt-8 border-b border-black"></p>
-                    <p className="text-center font-semibold">Operations Supervisor</p>
-                    <p className="text-center">(Name & Signature, Date)</p>
-                </div>
+             <div className="col-span-2 mt-2 flex items-center gap-2">
+                <p><strong>Delivery Address:</strong></p>
+                 <Input
+                    value={lead.location}
+                    onChange={handleLocationChange}
+                    className="h-8 text-xs flex-1 no-print"
+                  />
+                  <span className="print-only">{lead.location}</span>
             </div>
         </div>
 
-        {/* Layout Pages */}
-        {lead.layouts?.map((layout, layoutIndex) => (
-            <div key={layoutIndex} className={cn("page-break", currentPage !== 2 + layoutIndex && 'hidden print:block')}>
-                <h1 className="text-2xl font-bold text-center my-6 border-b-4 border-black pb-2">LAYOUT {lead.layouts && lead.layouts.length > 1 ? `(${layoutIndex + 1})` : ''}</h1>
-                
-                {layout.layoutImage && (
-                    <div className="text-center mb-6">
-                        <Image src={layout.layoutImage} alt="Layout" width={800} height={600} className="mx-auto max-h-[500px] w-auto" />
-                    </div>
-                )}
-                
-                <table className="w-full border-collapse border border-black text-sm mb-6 bg-white">
-                  <tbody className='bg-white'>
-                    <tr>
-                      <td className="border border-black p-2 w-1/2">
-                        <p className="font-bold">DST LOGO LEFT:</p>
-                        <p className="text-xs whitespace-pre-wrap min-h-[50px]">{layout.dstLogoLeft}</p>
-                      </td>
-                      <td className="border border-black p-2 w-1/2">
-                        <p className="font-bold">DST BACK LOGO:</p>
-                        <p className="text-xs whitespace-pre-wrap min-h-[50px]">{layout.dstBackLogo}</p>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="border border-black p-2 w-1/2">
-                        <p className="font-bold">DST LOGO RIGHT:</p>
-                        <p className="text-xs whitespace-pre-wrap min-h-[50px]">{layout.dstLogoRight}</p>
-                      </td>
-                      <td className="border border-black p-2 w-1/2">
-                        <p className="font-bold">DST BACK TEXT:</p>
-                        <p className="text-xs whitespace-pre-wrap min-h-[50px]">{layout.dstBackText}</p>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+        <h2 className="text-xl font-bold text-center mb-4">ORDER DETAILS</h2>
+        <table className="w-full border-collapse border border-black text-xs mb-2">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="border border-black p-0.5" colSpan={3}>Item Description</th>
+              <th className="border border-black p-0.5" rowSpan={2}>Qty</th>
+              <th className="border border-black p-0.5" colSpan={2}>Front Design</th>
+              <th className="border border-black p-0.5" colSpan={2}>Back Design</th>
+              <th className="border border-black p-0.5" rowSpan={2}>Remarks</th>
+            </tr>
+            <tr className="bg-gray-200">
+              <th className="border border-black p-0.5 font-medium">Type of Product</th>
+              <th className="border border-black p-0.5 font-medium">Color</th>
+              <th className="border border-black p-0.5 font-medium">Size</th>
+              <th className="border border-black p-0.5 font-medium w-12">Left</th>
+              <th className="border border-black p-0.5 font-medium w-12">Right</th>
+              <th className="border border-black p-0.5 font-medium w-12">Logo</th>
+              <th className="border border-black p-0.5 font-medium w-12">Text</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lead.orders.map((order, index) => (
+              <tr key={index}>
+                <td className="border border-black p-0.5">{order.productType}</td>
+                <td className="border border-black p-0.5">{order.color}</td>
+                <td className="border border-black p-0.5 text-center">{order.size}</td>
+                <td className="border border-black p-0.5 text-center">{order.quantity}</td>
+                <td className="border border-black p-0.5 text-center">
+                    <Checkbox className="mx-auto" checked={order.design?.left || false} onCheckedChange={(checked) => handleDesignChange(index, 'left', !!checked)} />
+                </td>
+                <td className="border border-black p-0.5 text-center">
+                   <Checkbox className="mx-auto" checked={order.design?.right || false} onCheckedChange={(checked) => handleDesignChange(index, 'right', !!checked)} />
+                </td>
+                <td className="border border-black p-0.5 text-center">
+                  <Checkbox className="mx-auto" checked={order.design?.backLogo || false} onCheckedChange={(checked) => handleDesignChange(index, 'backLogo', !!checked)} />
+                </td>
+                <td className="border border-black p-0.5 text-center">
+                  <Checkbox className="mx-auto" checked={order.design?.backText || false} onCheckedChange={(checked) => handleDesignChange(index, 'backText', !!checked)} />
+                </td>
+                <td className="border border-black p-0.5">
+                  <Textarea
+                    value={order.remarks}
+                    onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
+                    className="text-xs no-print p-1 h-[30px]"
+                    placeholder="Add remarks..."
+                  />
+                   <p className="print-only text-xs">{order.remarks}</p>
+                </td>
+              </tr>
+            ))}
+             <tr>
+                <td colSpan={3} className="text-right font-bold p-0.5">TOTAL</td>
+                <td className="text-center font-bold p-0.5">{totalQuantity} PCS</td>
+                <td colSpan={5}></td>
+            </tr>
+          </tbody>
+        </table>
 
-                <h2 className="text-xl font-bold text-center mb-4">Names</h2>
-                <Table className="text-xs">
-                    <TableHeader>
-                        <TableRow className="bg-white hover:bg-white">
-                            <TableHead className="border border-black font-medium text-black text-xs">No.</TableHead>
-                            <TableHead className="border border-black font-medium text-black text-xs">Names</TableHead>
-                            <TableHead className="border border-black font-medium text-black text-xs">Color</TableHead>
-                            <TableHead className="border border-black font-medium text-black text-xs">Sizes</TableHead>
-                            <TableHead className="border border-black font-medium text-black text-xs">Qty</TableHead>
-                            <TableHead className="border border-black font-medium text-black text-xs">BACK TEXT</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {layout.namedOrders?.map((namedOrder, nameIndex) => (
-                            <TableRow key={nameIndex} className="bg-white hover:bg-white">
-                                <TableCell className="border border-black p-0.5 text-center text-xs">{nameIndex + 1}</TableCell>
-                                <TableCell className="border border-black p-0 text-xs">{namedOrder.name}</TableCell>
-                                <TableCell className="border border-black p-0 text-xs">{namedOrder.color}</TableCell>
-                                <TableCell className="border border-black p-0 text-xs">{namedOrder.size}</TableCell>
-                                <TableCell className="border border-black p-0 text-center text-xs">{namedOrder.quantity}</TableCell>
-                                <TableCell className="border border-black p-0 text-xs">{namedOrder.backText}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+        <div className="text-xs mb-2 pt-2">
+            <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
+            <div className="space-y-1">
+                <p className="font-bold italic">Prepared by:</p>
+                <p className="pt-8 border-b border-black text-center font-semibold">{lead.salesRepresentative.toUpperCase()}</p>
+                <p className="text-center font-bold">Customer Service Representative</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
-        ))}
+             <div className="space-y-1">
+                <p className="font-bold italic">Noted by:</p>
+                <p className="pt-8 border-b border-black text-center font-semibold">MYREZA BANAWON</p>
+                <p className="text-center font-bold">Sales Head</p>
+                <p className="text-center">(Name & Signature, Date)</p>
+            </div>
+
+            <div className="col-span-2 mt-0">
+                <p className="font-bold italic">Approved by:</p>
+            </div>
+
+
+            <div className="space-y-1">
+                <p className="pt-8 border-b border-black"></p>
+                <p className="text-center font-semibold">Programming</p>
+                <p className="text-center">(Name & Signature, Date)</p>
+            </div>
+            <div className="space-y-1">
+                <p className="pt-8 border-b border-black"></p>
+                <p className="text-center font-semibold">Inventory</p>
+                <p className="text-center">(Name & Signature, Date)</p>
+            </div>
+            <div className="space-y-1">
+                <p className="pt-8 border-b border-black"></p>
+                <p className="text-center font-semibold">Production Line Leader</p>
+                <p className="text-center">(Name & Signature, Date)</p>
+            </div>
+            <div className="space-y-1">
+                <p className="pt-8 border-b border-black"></p>
+                <p className="text-center font-semibold">Production Supervisor</p>
+                <p className="text-center">(Name & Signature, Date)</p>
+            </div>
+             <div className="space-y-1">
+                <p className="pt-8 border-b border-black"></p>
+                <p className="text-center font-semibold">Quality Control</p>
+                <p className="text-center">(Name & Signature, Date)</p>
+            </div>
+            <div className="space-y-1">
+                <p className="pt-8 border-b border-black"></p>
+                <p className="text-center font-semibold">Logistics</p>
+                <p className="text-center">(Name & Signature, Date)</p>
+            </div>
+             <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
+                <p className="pt-8 border-b border-black"></p>
+                <p className="text-center font-semibold">Operations Supervisor</p>
+                <p className="text-center">(Name & Signature, Date)</p>
+            </div>
+        </div>
 
       </div>
       <style jsx global>{`
         @media print {
           body {
             background-color: #fff !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
           }
           .no-print, header, .no-print * {
             display: none !important;
           }
           .printable-area {
-            margin: 0 !important;
+            margin-top: 0 !important;
             padding: 0 !important;
             max-width: 100% !important;
             color: black !important;
@@ -437,12 +526,6 @@ export default function JobOrderPage() {
           }
           .print-only {
             display: block !important;
-          }
-          .bg-gray-200 {
-            background-color: #e5e7eb !important;
-          }
-          .page-break {
-            page-break-before: always;
           }
           @page {
             size: auto;
@@ -456,3 +539,23 @@ export default function JobOrderPage() {
     </div>
   );
 }
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
