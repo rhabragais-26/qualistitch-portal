@@ -7,6 +7,8 @@ import { useParams } from 'next/navigation';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
+import Image from 'next/image';
+import { useEffect } from 'react';
 
 
 type DesignDetails = {
@@ -25,6 +27,25 @@ type Order = {
   design?: DesignDetails;
 };
 
+type NamedOrder = {
+  id: string;
+  name: string;
+  color: string;
+  size: string;
+  quantity: number;
+  backText: string;
+}
+
+type Layout = {
+  id: string;
+  layoutImage?: string;
+  dstLogoLeft?: string;
+  dstLogoRight?: string;
+  dstBackLogo?: string;
+  dstBackText?: string;
+  namedOrders: NamedOrder[];
+}
+
 type Lead = {
   id: string;
   customerName: string;
@@ -41,6 +62,7 @@ type Lead = {
   deliveryDate?: string;
   courier: string;
   joNumber?: number;
+  layouts?: Layout[];
 };
 
 export default function JobOrderPrintPage() {
@@ -53,6 +75,12 @@ export default function JobOrderPrintPage() {
   );
 
   const { data: lead, isLoading, error } = useDoc<Lead>(leadRef);
+
+  useEffect(() => {
+    if (!isLoading && lead) {
+      setTimeout(() => window.print(), 1000);
+    }
+  }, [isLoading, lead]);
 
   if (isLoading || !lead) {
     return (
@@ -85,10 +113,16 @@ export default function JobOrderPrintPage() {
     }
     return mobile || landline || 'N/A';
   };
+  
+  const layouts = lead.layouts && lead.layouts.length > 0
+    ? lead.layouts
+    : [{ id: 'layout-1', layoutImage: '', dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
+
 
   return (
     <div className="bg-white text-black min-h-screen">
-      <div className="p-10 mx-auto max-w-4xl printable-area">
+      {/* Job Order Form Page */}
+      <div className="p-10 mx-auto max-w-4xl printable-area print-page">
         <div className="text-left mb-4">
             <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{joNumber}</span></p>
         </div>
@@ -231,8 +265,64 @@ export default function JobOrderPrintPage() {
                 <p className="text-center">(Name & Signature, Date)</p>
             </div>
         </div>
-
       </div>
+
+       {/* Layout Pages */}
+      {layouts.map((layout, layoutIndex) => (
+        <div key={layout.id} className="p-10 mx-auto max-w-4xl printable-area print-page">
+          <div className="text-left mb-4">
+              <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{joNumber}</span> - Layout {layoutIndex + 1}</p>
+          </div>
+          
+           {layout.layoutImage && (
+             <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
+                <Image src={layout.layoutImage} alt={`Layout ${layoutIndex + 1}`} layout="fill" objectFit="contain" />
+              </div>
+            )}
+          
+          <h2 className="text-2xl font-bold text-center mb-4">LAYOUT</h2>
+            <table className="w-full border-collapse border border-black mb-6">
+                <tbody>
+                    <tr>
+                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p></td>
+                        <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p></td>
+                    </tr>
+                    <tr>
+                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p></td>
+                        <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
+            <table className="w-full border-collapse border border-black text-xs">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="border border-black p-1">No.</th>
+                  <th className="border border-black p-1">Names</th>
+                  <th className="border border-black p-1">Color</th>
+                  <th className="border border-black p-1">Sizes</th>
+                  <th className="border border-black p-1">Qty</th>
+                  <th className="border border-black p-1">BACK TEXT</th>
+                </tr>
+              </thead>
+              <tbody>
+                {layout.namedOrders.map((order, orderIndex) => (
+                  <tr key={order.id}>
+                    <td className="border border-black p-1 text-center">{orderIndex + 1}</td>
+                    <td className="border border-black p-1">{order.name}</td>
+                    <td className="border border-black p-1">{order.color}</td>
+                    <td className="border border-black p-1">{order.size}</td>
+                    <td className="border border-black p-1 text-center">{order.quantity}</td>
+                    <td className="border border-black p-1">{order.backText}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+        </div>
+      ))}
+
+
       <style jsx global>{`
         @media print {
           body {
@@ -252,6 +342,9 @@ export default function JobOrderPrintPage() {
           .bg-gray-200 {
             background-color: #e5e7eb !important;
           }
+          .print-page {
+            page-break-after: always;
+          }
           @page {
             size: auto;
             margin: 0.5in;
@@ -261,4 +354,3 @@ export default function JobOrderPrintPage() {
     </div>
   );
 }
-
