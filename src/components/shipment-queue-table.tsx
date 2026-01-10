@@ -253,7 +253,7 @@ export function ShipmentQueueTable() {
                         <TableCell className="text-xs">{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className="text-center">
                             {lead.isQualityApproved ? (
-                                <div className="flex items-center justify-center font-bold text-green-600">
+                                <div className="flex items-center justify-center font-bold text-green-600 text-xs">
                                     <Check className="h-4 w-4 mr-1" />
                                     Approved
                                 </div>
@@ -319,5 +319,3 @@ export function ShipmentQueueTable() {
     </>
   );
 }
-
-    
