@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -96,8 +95,8 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
 
   const getProgrammingStatus = useCallback((lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
     if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
-    if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "success" as const };
-    if (lead.isRevision) return { text: "Under Revision", variant: "destructive" as const };
+    if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "default" as const };
+    if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const };
     if (lead.isLogoTesting) return { text: "Done Testing", variant: "warning" as const };
     if (lead.isInitialApproval) return { text: "Initial Program Approved", variant: "default" as const };
     if (lead.isUnderProgramming) return { text: "Done Initial Program", variant: "default" as const };
@@ -132,7 +131,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
     
     const updateData: { [key: string]: any } = { [field]: true };
 
-    if (field === 'isSentToProduction') {
+    if (field === 'isSentToProduction' || field === 'isEndorsedToLogistics') {
       updateData.sentToProductionTimestamp = new Date().toISOString();
     }
 
@@ -218,6 +217,10 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
     const leadsWithJo = processedLeads.filter(lead => lead.joNumber);
     
     return leadsWithJo.filter(lead => {
+      if (lead.orderType === 'Stock (Jacket Only)') {
+          return true; // Always include "Stock (Jacket Only)" in this table
+      }
+
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
@@ -456,8 +459,8 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                           <Button
                                               size="sm"
                                               onClick={() => setLeadToSend(lead)}
-                                              disabled={!lead.isPreparedForProduction && !isStockJacketOnly}
-                                              className={cn("h-7 px-2", (!lead.isPreparedForProduction && !isStockJacketOnly) && "bg-gray-400")}
+                                              disabled={!lead.isPreparedForProduction}
+                                              className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
                                           >
                                               <Send className="mr-2 h-4 w-4" /> 
                                               {isStockJacketOnly ? 'Send to Logistics' : 'Send to Prod'}
