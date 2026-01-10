@@ -248,7 +248,7 @@ export function Header({
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/inventory/item-preparation-for-production')}>
                     <Package className="mr-2" />
-                    Item Preparation for Prod
+                    Item Preparation
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/inventory/summary')}>
                     <Database className="mr-2" />

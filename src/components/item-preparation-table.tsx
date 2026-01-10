@@ -94,6 +94,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
 
   const getProgrammingStatus = useCallback((lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
+    if (lead.orderType === 'Stock (Jacket Only)') return { text: "Skipped", variant: "secondary" };
     if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
     if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "default" as const };
     if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const };
@@ -221,6 +222,10 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
           return true; // Always include "Stock (Jacket Only)" in this table
       }
 
+      if (lead.isPreparedForProduction) {
+        return false; // Exclude if already prepared, unless it's stock jacket
+      }
+
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
@@ -311,9 +316,9 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-black">Item Preparation for Production</CardTitle>
+            <CardTitle className="text-black">Item Preparation</CardTitle>
             <CardDescription className="text-gray-600">
-              Job orders ready for item preparation for production.
+              Job orders ready for item preparation.
             </CardDescription>
           </div>
           <div className="flex items-center gap-4">
@@ -362,7 +367,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                     <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Size</TableHead>
                     <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Qty</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-1 text-xs px-2">Preparation Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center py-1 text-xs px-2">Production Endorsement</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center py-1 text-xs px-2">Endorsement</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
