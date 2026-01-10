@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -26,6 +27,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
+import { Check } from 'lucide-react';
 
 type Order = {
   productType: string;
@@ -44,6 +46,7 @@ type Lead = {
   submissionDateTime: string;
   isEndorsedToLogistics?: boolean;
   isSalesAuditRequested?: boolean;
+  isQualityApproved?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -98,6 +101,7 @@ export function ShipmentQueueTable() {
         const leadDocRef = doc(firestore, 'leads', disapprovingLead.id);
         await updateDoc(leadDocRef, {
             isEndorsedToLogistics: false,
+            isQualityApproved: false,
         });
 
         toast({
@@ -135,6 +139,27 @@ export function ShipmentQueueTable() {
             title: "Request Failed",
             description: e.message || "Could not request sales audit.",
         });
+    }
+  };
+  
+  const handleApproveQuality = async (lead: Lead) => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', lead.id);
+    try {
+      await updateDoc(leadDocRef, {
+        isQualityApproved: true,
+      });
+      toast({
+        title: 'Quality Approved',
+        description: `Order for J.O. ${formatJoNumber(lead.joNumber)} has been approved.`,
+      });
+    } catch (e: any) {
+      console.error("Error approving quality:", e);
+      toast({
+        variant: "destructive",
+        title: "Approval Failed",
+        description: e.message || "Could not approve the quality check.",
+      });
     }
   };
 
@@ -227,13 +252,20 @@ export function ShipmentQueueTable() {
                         </TableCell>
                         <TableCell className="text-xs">{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className="text-center">
-                            <div className="flex gap-2 justify-center">
-                                <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold">Approve</Button>
-                                <Button size="sm" variant="destructive" className="h-7 text-xs font-bold" onClick={() => setDisapprovingLead(lead)}>Disapprove</Button>
-                            </div>
+                            {lead.isQualityApproved ? (
+                                <div className="flex items-center justify-center font-bold text-green-600">
+                                    <Check className="h-4 w-4 mr-1" />
+                                    Approved
+                                </div>
+                            ) : (
+                                <div className="flex gap-2 justify-center">
+                                    <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold" onClick={() => handleApproveQuality(lead)}>Approve</Button>
+                                    <Button size="sm" variant="destructive" className="h-7 text-xs font-bold" onClick={() => setDisapprovingLead(lead)}>Disapprove</Button>
+                                </div>
+                            )}
                         </TableCell>
                         <TableCell className="text-center">
-                           <Button size="sm" className="h-7 text-xs font-bold" onClick={() => handleRequestSalesAudit(lead)} disabled={lead.isSalesAuditRequested}>
+                           <Button size="sm" className="h-7 text-xs font-bold" onClick={() => handleRequestSalesAudit(lead)} disabled={lead.isSalesAuditRequested || !lead.isQualityApproved}>
                               {lead.isSalesAuditRequested ? 'Requested' : 'Request Audit from Sales'}
                           </Button>
                         </TableCell>
@@ -283,3 +315,5 @@ export function ShipmentQueueTable() {
     </>
   );
 }
+
+    
