@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -103,7 +104,6 @@ export function ShipmentQueueTable() {
                 <TableHead className="text-white font-bold text-xs text-center">Quality Check</TableHead>
                 <TableHead className="text-white font-bold text-xs">Courier</TableHead>
                 <TableHead className="text-white font-bold text-xs">Status</TableHead>
-                <TableHead className="text-white font-bold text-xs">Last Updated</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -143,13 +143,12 @@ export function ShipmentQueueTable() {
                         </TableCell>
                         <TableCell className="text-xs">{lead.courier}</TableCell>
                         <TableCell className="text-xs">Pending</TableCell>
-                        <TableCell className="text-xs">{lead.lastModified}</TableCell>
                       </TableRow>
                    )
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground text-xs">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground text-xs">
                     No shipment data available.
                   </TableCell>
                 </TableRow>
