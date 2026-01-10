@@ -5,10 +5,10 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase
 import { collection, doc, query, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Printer, Save, X, Plus, Trash2, ArrowLeft, ArrowRight } from 'lucide-react';
+import { CalendarIcon, Printer, Save, X, Eye } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import Image from 'next/image';
+
 
 type DesignDetails = {
   left?: boolean;
@@ -36,15 +36,6 @@ type Order = {
   design?: DesignDetails;
 };
 
-type NamedOrder = {
-  id: string;
-  name: string;
-  color: string;
-  size: string;
-  quantity: number;
-  backText: string;
-}
-
 type Layout = {
   id: string;
   layoutImage?: string;
@@ -53,6 +44,15 @@ type Layout = {
   dstBackLogo?: string;
   dstBackText?: string;
   namedOrders: NamedOrder[];
+}
+
+type NamedOrder = {
+  id: string;
+  name: string;
+  color: string;
+  size: string;
+  quantity: number;
+  backText: string;
 }
 
 type Lead = {
@@ -96,16 +96,20 @@ export default function JobOrderPage() {
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  
-  const [currentLayoutIndex, setCurrentLayoutIndex] = useState(0);
-  const layoutImageUploadRef = useRef<HTMLInputElement>(null);
 
   // Helper to compare lead states to check for unsaved changes
   const isDirty = useMemo(() => {
     if (!fetchedLead || !lead) return false;
     // Simple JSON stringify comparison. For more complex objects, a deep-equal library would be better.
-    return JSON.stringify(fetchedLead) !== JSON.stringify({ ...fetchedLead, ...lead });
-  }, [fetchedLead, lead]);
+    const cleanLead = JSON.stringify(fetchedLead);
+    const dirtyLead = JSON.stringify({
+        ...fetchedLead,
+        ...lead,
+        joNumber: lead.joNumber,
+        deliveryDate: deliveryDate ? deliveryDate.toISOString().split('T')[0] : (fetchedLead.deliveryDate || null)
+    });
+    return cleanLead !== dirtyLead;
+  }, [fetchedLead, lead, deliveryDate]);
 
   useEffect(() => {
     if (fetchedLead) {
@@ -115,7 +119,9 @@ export default function JobOrderPage() {
         design: order.design || { left: false, right: false, backLogo: false, backText: false }
       }));
       
-      const initializedLayouts = fetchedLead.layouts && fetchedLead.layouts.length > 0 ? fetchedLead.layouts : [{ id: 'layout-1', layoutImage: '', dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
+      const initializedLayouts = fetchedLead.layouts && fetchedLead.layouts.length > 0 
+        ? fetchedLead.layouts 
+        : [{ id: 'layout-1', layoutImage: '', dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
 
       setLead({ ...fetchedLead, orders: initializedOrders, courier: fetchedLead.courier || 'Pick-up', layouts: initializedLayouts });
 
@@ -195,77 +201,6 @@ export default function JobOrderPage() {
       setLead({ ...lead, orders: newOrders });
     }
   };
-  
-  const handleLayoutChange = (layoutIndex: number, field: keyof Layout, value: any) => {
-    if (lead && lead.layouts) {
-      const newLayouts = [...lead.layouts];
-      (newLayouts[layoutIndex] as any)[field] = value;
-      setLead({ ...lead, layouts: newLayouts });
-    }
-  };
-  
-  const handleNamedOrderChange = (layoutIndex: number, orderIndex: number, field: keyof NamedOrder, value: any) => {
-    if (lead && lead.layouts) {
-        const newLayouts = [...lead.layouts];
-        if (newLayouts[layoutIndex] && newLayouts[layoutIndex].namedOrders) {
-            const newNamedOrders = [...newLayouts[layoutIndex].namedOrders];
-            if (newNamedOrders[orderIndex]) {
-                (newNamedOrders[orderIndex] as any)[field] = value;
-                newLayouts[layoutIndex] = { ...newLayouts[layoutIndex], namedOrders: newNamedOrders };
-                setLead({ ...lead, layouts: newLayouts });
-            }
-        }
-    }
-  };
-
-  const addNamedOrder = (layoutIndex: number) => {
-    if (lead && lead.layouts) {
-        const newLayouts = [...lead.layouts];
-        if (newLayouts[layoutIndex]) {
-            const newNamedOrders = [...(newLayouts[layoutIndex].namedOrders || []), { id: `order-${Date.now()}`, name: '', color: '', size: '', quantity: 1, backText: '' }];
-            newLayouts[layoutIndex] = { ...newLayouts[layoutIndex], namedOrders: newNamedOrders };
-            setLead({ ...lead, layouts: newLayouts });
-        }
-    }
-  };
-
-  const removeNamedOrder = (layoutIndex: number, orderIndex: number) => {
-     if (lead && lead.layouts) {
-        const newLayouts = [...lead.layouts];
-        if (newLayouts[layoutIndex] && newLayouts[layoutIndex].namedOrders) {
-            const newNamedOrders = newLayouts[layoutIndex].namedOrders.filter((_, i) => i !== orderIndex);
-            newLayouts[layoutIndex] = { ...newLayouts[layoutIndex], namedOrders: newNamedOrders };
-            setLead({ ...lead, layouts: newLayouts });
-        }
-    }
-  };
-
-  const addLayout = () => {
-    if (lead) {
-      const newLayouts = [...(lead.layouts || []), { id: `layout-${Date.now()}`, layoutImage: '', dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
-      setLead({ ...lead, layouts: newLayouts });
-      setCurrentLayoutIndex(newLayouts.length - 1);
-    }
-  };
-
-  const deleteLayout = (layoutIndex: number) => {
-    if (lead && lead.layouts && lead.layouts.length > 1) {
-      const newLayouts = lead.layouts.filter((_, i) => i !== layoutIndex);
-      setLead({ ...lead, layouts: newLayouts });
-      setCurrentLayoutIndex(Math.max(0, layoutIndex - 1));
-    }
-  };
-
-  const handleLayoutImageUpload = (event: React.ChangeEvent<HTMLInputElement>, layoutIndex: number) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        handleLayoutChange(layoutIndex, 'layoutImage', e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleSaveChanges = async () => {
     if (!lead || !leadRef || !allLeads) return;
@@ -331,8 +266,6 @@ export default function JobOrderPage() {
     }
     return mobile || landline || 'N/A';
   };
-  
-  const currentLayout = lead.layouts?.[currentLayoutIndex];
 
   return (
     <div className="bg-white text-black min-h-screen">
@@ -360,6 +293,10 @@ export default function JobOrderPage() {
             <Button onClick={handleSaveChanges} className="text-white font-bold">
             <Save className="mr-2 h-4 w-4" />
             Save Changes
+            </Button>
+            <Button onClick={() => router.push(`/job-order/${id}/layout`)} variant="outline">
+              <Eye className="mr-2 h-4 w-4" />
+              View Layouts
             </Button>
             <Button onClick={handlePrint} className="text-white font-bold" disabled={!lead?.joNumber}>
             <Printer className="mr-2 h-4 w-4" />
@@ -510,82 +447,7 @@ export default function JobOrderPage() {
         <div className="text-xs mb-2 pt-2">
             <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
         </div>
-
-        <div className="page-break" style={{ pageBreakBefore: 'always' }}></div>
-
-        <div className="flex justify-between items-center mb-4 no-print">
-            <div className="flex gap-2">
-                <Button onClick={addLayout} size="sm"><Plus className="mr-2 h-4 w-4"/>Add Layout</Button>
-                <Button onClick={() => deleteLayout(currentLayoutIndex)} size="sm" variant="destructive" disabled={(lead.layouts?.length ?? 0) <= 1}><Trash2 className="mr-2 h-4 w-4" />Delete Layout</Button>
-            </div>
-            <div className="flex items-center gap-2">
-                <Button onClick={() => setCurrentLayoutIndex(i => Math.max(0, i-1))} disabled={currentLayoutIndex === 0} size="sm"><ArrowLeft className="mr-2 h-4 w-4"/>Previous</Button>
-                <span>Page {currentLayoutIndex + 2} of {(lead.layouts?.length ?? 0) + 1}</span>
-                <Button onClick={() => setCurrentLayoutIndex(i => Math.min((lead.layouts?.length ?? 1)-1, i+1))} disabled={currentLayoutIndex >= (lead.layouts?.length ?? 1)-1} size="sm">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
-            </div>
-        </div>
-
-        {currentLayout && (
-          <div key={currentLayout.id}>
-            <div
-              className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4 cursor-pointer no-print"
-              onClick={() => layoutImageUploadRef.current?.click()}
-            >
-              {currentLayout.layoutImage ? (
-                <Image src={currentLayout.layoutImage} alt={`Layout ${currentLayoutIndex + 1}`} layout="fill" objectFit="contain" />
-              ) : (
-                <span className="text-gray-500">Click to upload layout image</span>
-              )}
-              <input type="file" ref={layoutImageUploadRef} onChange={(e) => handleLayoutImageUpload(e, currentLayoutIndex)} className="hidden" accept="image/*" />
-            </div>
-
-            <h2 className="text-2xl font-bold text-center mb-4">LAYOUT</h2>
-            <table className="w-full border-collapse border border-black mb-6">
-                <tbody>
-                    <tr>
-                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><Textarea value={currentLayout.dstLogoLeft} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstLogoLeft', e.target.value)} className="mt-1" /></td>
-                        <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><Textarea value={currentLayout.dstBackLogo} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstBackLogo', e.target.value)} className="mt-1" /></td>
-                    </tr>
-                    <tr>
-                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><Textarea value={currentLayout.dstLogoRight} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstLogoRight', e.target.value)} className="mt-1" /></td>
-                        <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><Textarea value={currentLayout.dstBackText} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstBackText', e.target.value)} className="mt-1" /></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
-            <table className="w-full border-collapse border border-black text-xs">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border border-black p-1">No.</th>
-                  <th className="border border-black p-1">Names</th>
-                  <th className="border border-black p-1">Color</th>
-                  <th className="border border-black p-1">Sizes</th>
-                  <th className="border border-black p-1">Qty</th>
-                  <th className="border border-black p-1">BACK TEXT</th>
-                  <th className="border border-black p-1 no-print">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentLayout.namedOrders.map((order, orderIndex) => (
-                  <tr key={order.id}>
-                    <td className="border border-black p-1 text-center">{orderIndex + 1}</td>
-                    <td className="border border-black p-1"><Input value={order.name} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'name', e.target.value)} className="h-7 text-xs" /></td>
-                    <td className="border border-black p-1"><Input value={order.color} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'color', e.target.value)} className="h-7 text-xs" /></td>
-                    <td className="border border-black p-1"><Input value={order.size} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'size', e.target.value)} className="h-7 text-xs" /></td>
-                    <td className="border border-black p-1"><Input type="number" value={order.quantity} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'quantity', parseInt(e.target.value) || 0)} className="h-7 text-xs" /></td>
-                    <td className="border border-black p-1"><Input value={order.backText} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'backText', e.target.value)} className="h-7 text-xs" /></td>
-                    <td className="border border-black p-1 text-center no-print">
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeNamedOrder(currentLayoutIndex, orderIndex)}><Trash2 className="h-4 w-4"/></Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <Button onClick={() => addNamedOrder(currentLayoutIndex)} className="mt-2 no-print" size="sm"><Plus className="mr-2 h-4 w-4"/>Add Name</Button>
-          </div>
-        )}
-
+        
         <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-8">
             <div className="space-y-1">
                 <p className="font-bold italic">Prepared by:</p>
@@ -675,3 +537,4 @@ export default function JobOrderPage() {
     </div>
   );
 }
+
