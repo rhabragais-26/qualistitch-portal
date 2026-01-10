@@ -215,13 +215,10 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
   const jobOrders = React.useMemo(() => {
     if (!processedLeads) return [];
     
+    // Show leads with a JO number that haven't been fully endorsed out of this queue.
     const leadsWithJo = processedLeads.filter(lead => lead.joNumber && !lead.isSentToProduction && !lead.isEndorsedToLogistics);
     
     return leadsWithJo.filter(lead => {
-       if (lead.isPreparedForProduction && lead.orderType !== 'Stock (Jacket Only)') {
-        return false;
-      }
-      
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
@@ -421,7 +418,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                               {orderIndex === 0 && (
                                   <TableCell rowSpan={numOrders + 1} className="align-middle py-3 border-b-2 border-black text-center">
                                     <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
-                                    {isStockJacketOnly && <p className="text-xs font-bold mt-1">(Stocks)</p>}
+                                    {isStockJacketOnly && <p className="text-xs font-bold mt-1">Stocks (Jacket Only)</p>}
                                   </TableCell>
                               )}
                             <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
