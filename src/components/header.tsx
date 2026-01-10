@@ -27,7 +27,7 @@ import {
   Cog,
   FileCheck,
   PackageSearch,
-  BookCheck,
+  FolderKanban,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -222,7 +222,7 @@ export function Header({
                     Programming Queue
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/digitizing/program-files-database')}>
-                    <BookCheck className="mr-2" />
+                    <FolderKanban className="mr-2" />
                     Program Files Database
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/digitizing/reports')}>
