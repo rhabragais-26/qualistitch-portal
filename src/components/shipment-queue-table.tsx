@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -28,6 +27,8 @@ import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { Check } from 'lucide-react';
+import { Badge } from './ui/badge';
+import { cn } from '@/lib/utils';
 
 type Order = {
   productType: string;
@@ -47,6 +48,7 @@ type Lead = {
   isSalesAuditRequested?: boolean;
   isWaybillPrinted?: boolean;
   isQualityApproved?: boolean;
+  isRecheckingQuality?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -102,6 +104,7 @@ export function ShipmentQueueTable() {
         await updateDoc(leadDocRef, {
             isEndorsedToLogistics: false,
             isQualityApproved: false,
+            isRecheckingQuality: true,
         });
 
         toast({
@@ -148,6 +151,7 @@ export function ShipmentQueueTable() {
     try {
       await updateDoc(leadDocRef, {
         isQualityApproved: true,
+        isRecheckingQuality: false, // Clear the rechecking flag on approval
       });
       toast({
         title: 'Quality Approved',
@@ -162,6 +166,19 @@ export function ShipmentQueueTable() {
       });
     }
   };
+
+  const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success" } => {
+    if (lead.isSalesAuditRequested) {
+      return { text: "On-going Audit", variant: "warning" };
+    }
+    if (lead.isQualityApproved) {
+      return { text: "Approved Quality", variant: "success" };
+    }
+    if (lead.isRecheckingQuality) {
+        return { text: "Re-checking Quality", variant: "destructive" };
+    }
+    return { text: "Pending", variant: "secondary" };
+  }
 
 
   const processedLeads = useMemo(() => {
@@ -226,6 +243,7 @@ export function ShipmentQueueTable() {
               {shipmentQueueLeads && shipmentQueueLeads.length > 0 ? (
                  shipmentQueueLeads.map(lead => {
                    const isRepeat = lead.orderNumber > 1;
+                   const status = getStatus(lead);
                    return (
                       <TableRow key={lead.id}>
                         <TableCell className="text-xs">
@@ -274,7 +292,9 @@ export function ShipmentQueueTable() {
                            )}
                         </TableCell>
                         <TableCell className="text-xs">{lead.courier}</TableCell>
-                        <TableCell className="text-xs">Pending</TableCell>
+                        <TableCell className="text-xs">
+                          <Badge variant={status.variant}>{status.text}</Badge>
+                        </TableCell>
                       </TableRow>
                    )
                  })
