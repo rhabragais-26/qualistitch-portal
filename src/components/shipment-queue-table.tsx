@@ -33,7 +33,7 @@ import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Input } from './ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
-import { addDays, differenceInDays } from 'date-fns';
+import { addDays, differenceInDays, format } from 'date-fns';
 
 
 type Order = {
@@ -471,7 +471,7 @@ export function ShipmentQueueTable() {
                         </TableCell>
                         <TableCell className="text-xs">{lead.courier}</TableCell>
                         <TableCell className="text-xs text-center">
-                           {formatDateTime(deliveryDate.toISOString()).dateTimeShort}
+                           {format(deliveryDate, "MMM dd, yyyy")}
                            {daysOverdue > 0 && <div className="text-red-500 font-medium">({daysOverdue} days overdue)</div>}
                         </TableCell>
                         <TableCell className="text-xs text-center">
