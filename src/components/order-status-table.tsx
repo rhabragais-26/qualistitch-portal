@@ -68,6 +68,10 @@ type Lead = {
   operationalCase?: OperationalCase;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippedTimestamp?: string;
+  isSalesAuditRequested?: boolean;
+  isQualityApproved?: boolean;
+  isRecheckingQuality?: boolean;
+  isPacked?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -159,6 +163,15 @@ export function OrderStatusTable() {
     return { text: 'Pending', variant: 'secondary' };
   }, []);
 
+  const getShipmentStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success" } => {
+    if (lead.shipmentStatus === 'Shipped') return { text: 'Shipped', variant: 'success' };
+    if (lead.isPacked) return { text: "Already Packed", variant: "success" };
+    if (lead.isSalesAuditRequested) return { text: "On-going Audit", variant: "warning" };
+    if (lead.isQualityApproved) return { text: "Approved Quality", variant: "success" };
+    if (lead.isRecheckingQuality) return { text: "Re-checking Quality", variant: "destructive" };
+    return { text: lead.shipmentStatus || 'Pending', variant: 'secondary' };
+  }
+
   const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
     if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
         return { text: 'COMPLETED', variant: 'success' };
@@ -216,7 +229,7 @@ export function OrderStatusTable() {
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalQuantity += orderQuantity;
+      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
     });
   
     const enrichedLeads: EnrichedLead[] = [];
@@ -388,6 +401,7 @@ export function OrderStatusTable() {
                   const programmingStatus = getProgrammingStatus(lead);
                   const itemPreparationStatus = getItemPreparationStatus(lead);
                   const productionStatus = getProductionStatus(lead);
+                  const shipmentStatus = getShipmentStatus(lead);
                   const overallStatus = getOverallStatus(lead);
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
                   const isCollapsibleOpen = openLeadId === lead.id;
@@ -476,7 +490,7 @@ export function OrderStatusTable() {
                                         </div>
                                         <div className="flex flex-col items-center gap-1">
                                             <p className="font-semibold text-gray-500">Shipment</p>
-                                            <Badge variant="secondary" className="text-center justify-center">{lead.shipmentStatus || 'Pending'}</Badge>
+                                            <Badge variant={shipmentStatus.variant as any} className="text-center justify-center">{shipmentStatus.text}</Badge>
                                         </div>
                                     </div>
                                 </div>
