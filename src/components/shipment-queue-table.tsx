@@ -17,10 +17,15 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
-import { useMemo, useCallback } from 'react';
+import { collection, query, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { useMemo, useCallback, useState } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
 type Order = {
   productType: string;
@@ -37,6 +42,7 @@ type Lead = {
   joNumber?: number;
   orders: Order[];
   submissionDateTime: string;
+  isEndorsedToLogistics?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -48,12 +54,68 @@ export function ShipmentQueueTable() {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads } = useCollection<Lead>(leadsQuery);
+  const { toast } = useToast();
+  const [disapprovingLead, setDisapprovingLead] = useState<Lead | null>(null);
+  const [remarks, setRemarks] = useState('');
 
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   }, []);
+
+  const handleDisapprove = async () => {
+    if (!disapprovingLead || !firestore || !remarks.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Remarks are required',
+        description: 'Please provide a reason for disapproval.',
+      });
+      return;
+    }
+
+    const caseId = uuidv4();
+    const operationalCasesRef = collection(firestore, 'operationalCases');
+    const caseDocRef = doc(operationalCasesRef, caseId);
+    
+    const totalQuantity = disapprovingLead.orders.reduce((sum, item) => sum + item.quantity, 0) || 0;
+
+    const caseData = {
+        id: caseId,
+        joNumber: formatJoNumber(disapprovingLead.joNumber),
+        caseType: 'Quality Errors',
+        remarks,
+        customerName: disapprovingLead.customerName,
+        submissionDateTime: new Date().toISOString(),
+        caseItems: disapprovingLead.orders.map(o => ({...o, id: uuidv4()})),
+        quantity: totalQuantity,
+    };
+
+    try {
+        await setDoc(caseDocRef, caseData);
+        
+        const leadDocRef = doc(firestore, 'leads', disapprovingLead.id);
+        await updateDoc(leadDocRef, {
+            isEndorsedToLogistics: false,
+        });
+
+        toast({
+            title: 'Order Disapproved',
+            description: 'The order has been sent back to production with your remarks.',
+        });
+        setDisapprovingLead(null);
+        setRemarks('');
+
+    } catch (e: any) {
+        console.error("Error creating operational case or updating lead:", e);
+        toast({
+            variant: "destructive",
+            title: "Action Failed",
+            description: e.message || "Could not complete the disapproval process.",
+        });
+    }
+  };
+
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
@@ -86,7 +148,13 @@ export function ShipmentQueueTable() {
     return enrichedLeads;
   }, [leads]);
 
+  const shipmentQueueLeads = useMemo(() => {
+    if(!processedLeads) return [];
+    return processedLeads.filter(lead => lead.isEndorsedToLogistics);
+  }, [processedLeads]);
+
   return (
+    <>
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
         <CardTitle className="text-black">Shipment Queue</CardTitle>
@@ -107,8 +175,8 @@ export function ShipmentQueueTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {processedLeads && processedLeads.length > 0 ? (
-                 processedLeads.map(lead => {
+              {shipmentQueueLeads && shipmentQueueLeads.length > 0 ? (
+                 shipmentQueueLeads.map(lead => {
                    const isRepeat = lead.orderNumber > 1;
                    return (
                       <TableRow key={lead.id}>
@@ -138,7 +206,7 @@ export function ShipmentQueueTable() {
                         <TableCell className="text-center">
                             <div className="flex gap-2 justify-center">
                                 <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold">Approve</Button>
-                                <Button size="sm" variant="destructive" className="h-7 text-xs font-bold">Send Back to Prod</Button>
+                                <Button size="sm" variant="destructive" className="h-7 text-xs font-bold" onClick={() => setDisapprovingLead(lead)}>Disapprove</Button>
                             </div>
                         </TableCell>
                         <TableCell className="text-xs">{lead.courier}</TableCell>
@@ -149,7 +217,7 @@ export function ShipmentQueueTable() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground text-xs">
-                    No shipment data available.
+                    No items in shipment queue.
                   </TableCell>
                 </TableRow>
               )}
@@ -158,5 +226,34 @@ export function ShipmentQueueTable() {
         </div>
       </CardContent>
     </Card>
+     {disapprovingLead && (
+        <Dialog open={!!disapprovingLead} onOpenChange={() => { setDisapprovingLead(null); setRemarks(''); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Disapprove J.O. {formatJoNumber(disapprovingLead.joNumber)}?</DialogTitle>
+            </DialogHeader>
+            <div className="py-4 space-y-2">
+              <Label htmlFor="remarks">Please provide remarks for disapproval:</Label>
+              <Textarea
+                id="remarks"
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="e.g., incorrect embroidery, wrong item size..."
+              />
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button onClick={handleDisapprove} disabled={!remarks.trim()}>
+                Save and Send Back
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }
+
+    
