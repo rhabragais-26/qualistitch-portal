@@ -125,7 +125,7 @@ export default function JobOrderLayoutPage() {
     if (lead && lead.layouts) {
         const newLayouts = [...lead.layouts];
         if (newLayouts[layoutIndex]) {
-            const newNamedOrders = [...(newLayouts[layoutIndex].namedOrders || []), { id: `order-${Date.now()}`, name: '', color: '', size: '', quantity: 1, backText: '' }];
+            const newNamedOrders = [...(newLayouts[layoutIndex].namedOrders || []), { id: `order-${Date.now()}-${Math.random()}`, name: '', color: '', size: '', quantity: 1, backText: '' }];
             newLayouts[layoutIndex] = { ...newLayouts[layoutIndex], namedOrders: newNamedOrders };
             setLead({ ...lead, layouts: newLayouts });
         }
