@@ -1290,3 +1290,5 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
+    
