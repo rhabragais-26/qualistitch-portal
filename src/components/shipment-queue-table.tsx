@@ -40,12 +40,12 @@ type Lead = {
   id: string;
   customerName: string;
   courier: string;
-  lastModified: string;
   joNumber?: number;
   orders: Order[];
   submissionDateTime: string;
   isEndorsedToLogistics?: boolean;
   isSalesAuditRequested?: boolean;
+  isWaybillPrinted?: boolean;
   isQualityApproved?: boolean;
 }
 
@@ -265,9 +265,13 @@ export function ShipmentQueueTable() {
                             )}
                         </TableCell>
                         <TableCell className="text-center">
-                           <Button size="sm" className="h-7 text-xs font-bold" onClick={() => handleRequestSalesAudit(lead)} disabled={lead.isSalesAuditRequested || !lead.isQualityApproved}>
-                              {lead.isSalesAuditRequested ? 'Requested' : 'Request Audit from Sales'}
-                          </Button>
+                           {lead.isSalesAuditRequested ? (
+                                <span className="text-orange-500 font-bold text-xs">Requested</span>
+                           ) : (
+                                <Button size="sm" className="h-7 text-xs font-bold" onClick={() => handleRequestSalesAudit(lead)} disabled={!lead.isQualityApproved}>
+                                    Request Audit from Sales
+                                </Button>
+                           )}
                         </TableCell>
                         <TableCell className="text-xs">{lead.courier}</TableCell>
                         <TableCell className="text-xs">Pending</TableCell>
