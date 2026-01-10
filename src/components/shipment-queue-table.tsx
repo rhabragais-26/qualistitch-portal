@@ -232,11 +232,11 @@ export function ShipmentQueueTable() {
             <TableHeader className="bg-neutral-800">
               <TableRow>
                 <TableHead className="text-white font-bold text-xs">Customer</TableHead>
-                <TableHead className="text-white font-bold text-xs">J.O. No.</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Quality Check</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Sales Audit</TableHead>
                 <TableHead className="text-white font-bold text-xs">Courier</TableHead>
-                <TableHead className="text-white font-bold text-xs">Status</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -268,7 +268,7 @@ export function ShipmentQueueTable() {
                             <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                           )}
                         </TableCell>
-                        <TableCell className="text-xs">{formatJoNumber(lead.joNumber)}</TableCell>
+                        <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className="text-center">
                             {lead.isQualityApproved ? (
                                 <div className="flex items-center justify-center font-bold text-green-600 text-xs">
@@ -292,7 +292,7 @@ export function ShipmentQueueTable() {
                            )}
                         </TableCell>
                         <TableCell className="text-xs">{lead.courier}</TableCell>
-                        <TableCell className="text-xs">
+                        <TableCell className="text-xs text-center">
                           <Badge variant={status.variant}>{status.text}</Badge>
                         </TableCell>
                       </TableRow>
