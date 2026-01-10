@@ -111,11 +111,11 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
 
       const lowercasedFileSearch = fileSearch.toLowerCase();
       const matchesFile = fileSearch ? 
-        (lead.layouts?.[0]?.finalLogoDst?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
-         lead.layouts?.[0]?.finalBackDesignDst?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
-         lead.layouts?.[0]?.finalNamesDst?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
-         lead.layouts?.[0]?.finalLogoEmb?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
-         lead.layouts?.[0]?.finalBackDesignEmb?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedFileSearch)))
+        (lead.layouts?.[0]?.finalLogoDst?.some(f => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
+         lead.layouts?.[0]?.finalBackDesignDst?.some(f => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
+         lead.layouts?.[0]?.finalNamesDst?.some(f => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
+         lead.layouts?.[0]?.finalLogoEmb?.some(f => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
+         lead.layouts?.[0]?.finalBackDesignEmb?.some(f => f?.name && f.name.toLowerCase().includes(lowercasedFileSearch)))
         : true;
 
 
@@ -199,7 +199,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                         <div className="text-xs text-gray-500">{lead.companyName && lead.companyName !== '-' ? lead.companyName : ''}</div>
                         <div className="text-xs text-gray-500">{getContactDisplay(lead)}</div>
                       </TableCell>
-                      <TableCell className="align-middle py-3 text-center">{formatJoNumber(lead.joNumber)}</TableCell>
+                      <TableCell className="align-middle py-3 text-center text-xs">{formatJoNumber(lead.joNumber)}</TableCell>
                       <TableCell className="align-middle py-3 text-center">
                         <div className="flex gap-2 justify-center">
                           {lead.layouts?.[0]?.finalProgrammedLogo?.map((file, i) => file?.url && (
