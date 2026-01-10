@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -18,7 +17,7 @@ import {
 } from '@/components/ui/card';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 type Order = {
@@ -47,6 +46,12 @@ export function ShipmentQueueTable() {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads } = useCollection<Lead>(leadsQuery);
+
+  const formatJoNumber = useCallback((joNumber: number | undefined) => {
+    if (!joNumber) return '';
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+  }, []);
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
@@ -92,11 +97,11 @@ export function ShipmentQueueTable() {
           <Table>
             <TableHeader className="bg-neutral-800">
               <TableRow>
-                <TableHead className="text-white font-bold">J.O. No.</TableHead>
-                <TableHead className="text-white font-bold">Customer</TableHead>
-                <TableHead className="text-white font-bold">Courier</TableHead>
-                <TableHead className="text-white font-bold">Status</TableHead>
-                <TableHead className="text-white font-bold">Last Updated</TableHead>
+                <TableHead className="text-white font-bold text-xs">J.O. No.</TableHead>
+                <TableHead className="text-white font-bold text-xs">Customer</TableHead>
+                <TableHead className="text-white font-bold text-xs">Courier</TableHead>
+                <TableHead className="text-white font-bold text-xs">Status</TableHead>
+                <TableHead className="text-white font-bold text-xs">Last Updated</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -105,8 +110,8 @@ export function ShipmentQueueTable() {
                    const isRepeat = lead.orderNumber > 1;
                    return (
                       <TableRow key={lead.id}>
-                        <TableCell>{lead.joNumber}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-xs">{formatJoNumber(lead.joNumber)}</TableCell>
+                        <TableCell className="text-xs">
                           {lead.customerName}
                           {isRepeat ? (
                             <TooltipProvider>
@@ -128,15 +133,15 @@ export function ShipmentQueueTable() {
                             <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                           )}
                         </TableCell>
-                        <TableCell>{lead.courier}</TableCell>
-                        <TableCell>Pending</TableCell>
-                        <TableCell>{lead.lastModified}</TableCell>
+                        <TableCell className="text-xs">{lead.courier}</TableCell>
+                        <TableCell className="text-xs">Pending</TableCell>
+                        <TableCell className="text-xs">{lead.lastModified}</TableCell>
                       </TableRow>
                    )
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground text-xs">
                     No shipment data available.
                   </TableCell>
                 </TableRow>
