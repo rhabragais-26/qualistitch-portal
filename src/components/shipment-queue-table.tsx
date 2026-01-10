@@ -254,14 +254,14 @@ export function ShipmentQueueTable() {
     if (lead.shipmentStatus === 'Shipped') {
         return { text: "Shipped", variant: "success", className: "bg-green-700 text-white"};
     }
+    if (lead.isSalesAuditComplete) {
+      return { text: "Ready for Shipment", variant: "success", className: "bg-blue-600 text-white" };
+    }
     if (lead.isPacked) {
       return { text: "Already Packed", variant: "success", className: "bg-teal-600 text-white" };
     }
     if (lead.isSalesAuditRequested) {
       return { text: "On-going Audit", variant: "warning", className: "bg-amber-500 text-white" };
-    }
-     if (lead.isSalesAuditComplete) {
-      return { text: "Ready for Shipment", variant: "success", className: "bg-blue-600 text-white" };
     }
     if (lead.isQualityApproved) {
       return { text: "Approved Quality", variant: "success", className: "bg-green-600 text-white" };
@@ -324,7 +324,7 @@ export function ShipmentQueueTable() {
         
         return matchesSearch && matchesJo && matchesShippedFilter;
     });
-  }, [processedLeads, searchTerm, joNumberSearch, excludeShipped]);
+  }, [processedLeads, searchTerm, joNumberSearch, excludeShipped, formatJoNumber]);
 
   return (
     <>
