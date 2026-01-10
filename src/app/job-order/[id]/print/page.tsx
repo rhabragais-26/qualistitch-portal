@@ -6,8 +6,6 @@ import { doc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect } from 'react';
-import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 
 
@@ -56,12 +54,6 @@ export default function JobOrderPrintPage() {
 
   const { data: lead, isLoading, error } = useDoc<Lead>(leadRef);
 
-  useEffect(() => {
-    if (!isLoading && lead) {
-      setTimeout(() => window.print(), 500);
-    }
-  }, [isLoading, lead]);
-  
   if (isLoading || !lead) {
     return (
       <div className="p-10 bg-white">
