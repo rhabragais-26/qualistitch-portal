@@ -409,6 +409,26 @@
                 "description": "Timestamps for sequence back design file uploads.",
                 "items": { "type": ["string", "null"], "format": "date-time" }
               },
+              "finalProgrammedLogo": {
+                "type": "array",
+                "description": "Data URLs for the final programmed logo files.",
+                "items": { "type": ["string", "null"] }
+              },
+              "finalProgrammedLogoUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for final programmed logo file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
+              },
+              "finalProgrammedBackDesign": {
+                "type": "array",
+                "description": "Data URLs for the final programmed back design files.",
+                "items": { "type": ["string", "null"] }
+              },
+              "finalProgrammedBackDesignUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for final programmed back design file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
+              },
               "dstLogoLeft": { "type": "string" },
               "dstLogoRight": { "type": "string" },
               "dstBackLogo": { "type": "string" },

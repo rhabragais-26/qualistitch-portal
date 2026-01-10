@@ -87,6 +87,10 @@ type Layout = {
   sequenceLogoUploadTimes?: (string | null)[];
   sequenceBackDesign?: (FileObject | null)[];
   sequenceBackDesignUploadTimes?: (string | null)[];
+  finalProgrammedLogo?: (FileObject | null)[];
+  finalProgrammedLogoUploadTimes?: (string | null)[];
+  finalProgrammedBackDesign?: (FileObject | null)[];
+  finalProgrammedBackDesignUploadTimes?: (string | null)[];
 };
 
 type Lead = {
@@ -166,6 +170,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
   const [sequenceLogo, setSequenceLogo] = useState<(FileObject | null)[]>([null]);
   const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
+  const [finalProgrammedLogo, setFinalProgrammedLogo] = useState<(FileObject | null)[]>([null]);
+  const [finalProgrammedBackDesign, setFinalProgrammedBackDesign] = useState<(FileObject | null)[]>([]);
+
 
   const finalLogoEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalBackDesignEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -174,6 +181,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const finalNamesDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const sequenceLogoUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const sequenceBackDesignUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const finalProgrammedLogoUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const finalProgrammedBackDesignUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
+
 
   const [reviewConfirmLead, setReviewConfirmLead] = useState<Lead | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
@@ -254,6 +264,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
         setFinalNamesDst(lead?.layouts?.[0]?.finalNamesDst || []);
         setSequenceLogo(lead?.layouts?.[0]?.sequenceLogo?.length ? lead.layouts[0].sequenceLogo : [null]);
         setSequenceBackDesign(lead?.layouts?.[0]?.sequenceBackDesign?.length ? lead.layouts[0].sequenceBackDesign : [null]);
+        setFinalProgrammedLogo(lead?.layouts?.[0]?.finalProgrammedLogo?.length ? lead.layouts[0].finalProgrammedLogo : [null]);
+        setFinalProgrammedBackDesign(lead?.layouts?.[0]?.finalProgrammedBackDesign?.length ? lead.layouts[0].finalProgrammedBackDesign : [null]);
         setIsUploadDialogOpen(true);
       }
       else {
@@ -325,6 +337,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
           sequenceLogoUploadTimes: createTimestampArray(sequenceLogo, existingLayout.sequenceLogo, existingLayout.sequenceLogoUploadTimes),
           sequenceBackDesign,
           sequenceBackDesignUploadTimes: createTimestampArray(sequenceBackDesign, existingLayout.sequenceBackDesign, existingLayout.sequenceBackDesignUploadTimes),
+          finalProgrammedLogo,
+          finalProgrammedLogoUploadTimes: createTimestampArray(finalProgrammedLogo, existingLayout.finalProgrammedLogo, existingLayout.finalProgrammedLogoUploadTimes),
+          finalProgrammedBackDesign,
+          finalProgrammedBackDesignUploadTimes: createTimestampArray(finalProgrammedBackDesign, existingLayout.finalProgrammedBackDesign, existingLayout.finalProgrammedBackDesignUploadTimes),
       };
     }
      else {
@@ -352,6 +368,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
       setFinalNamesDst([]);
       setSequenceLogo([null]);
       setSequenceBackDesign([]);
+      setFinalProgrammedLogo([null]);
+      setFinalProgrammedBackDesign([]);
       setIsUploadDialogOpen(false);
       setUploadLeadId(null);
       setUploadField(null);
@@ -363,7 +381,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
         description: e.message || 'Could not save the images and update status.',
       });
     }
-  }, [uploadLeadId, uploadField, firestore, leads, updateStatus, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign]);
+  }, [uploadLeadId, uploadField, firestore, leads, updateStatus, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign]);
 
   const confirmUncheck = useCallback(() => {
     if (uncheckConfirmation) {
@@ -789,6 +807,45 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                         </div>
                     </div>
                   </div>
+                  <Separator />
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center mb-2">
+                        <Label>Final Programmed Logo</Label>
+                        <Button variant="outline" size="sm" onClick={() => addFile(finalProgrammedLogo, setFinalProgrammedLogo)} className="h-7" disabled={finalProgrammedLogo.length >= 3}>
+                          <PlusCircle className="mr-2 h-4 w-4" /> Add
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        {finalProgrammedLogo.map((file, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-32 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, (idx, val) => { const newFiles = [...finalProgrammedLogo]; newFiles[idx] = val; setFinalProgrammedLogo(newFiles); }, index)} onDoubleClick={() => finalProgrammedLogoUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                                  {file ? (<> <Image src={file.url} alt={`Final Programmed Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> {(<Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); removeFile(finalProgrammedLogo, setFinalProgrammedLogo, index, finalProgrammedLogoUploadRefs); }}> <Trash2 className="h-3 w-3" /> </Button>)} </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
+                                  <input type="file" ref={el => {if(el) finalProgrammedLogoUploadRefs.current[index] = el}} onChange={(e) => handleMultipleFileUpload(e, finalProgrammedLogo, setFinalProgrammedLogo, index)} className="hidden" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center mb-2">
+                            <Label>Final Programmed Back Design</Label>
+                             <Button variant="outline" size="sm" onClick={() => addFile(finalProgrammedBackDesign, setFinalProgrammedBackDesign)} className="h-7" disabled={finalProgrammedBackDesign.length >= 3}>
+                              <PlusCircle className="mr-2 h-4 w-4" /> Add
+                            </Button>
+                        </div>
+                         <div className="space-y-2">
+                            {finalProgrammedBackDesign.map((file, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                                <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-32 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, (idx, val) => { const newFiles = [...finalProgrammedBackDesign]; newFiles[idx] = val; setFinalProgrammedBackDesign(newFiles); }, index)} onDoubleClick={() => finalProgrammedBackDesignUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                                    {file ? (<> <Image src={file.url} alt={`Final Programmed Back Design ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> {(<Button variant="destructive" size="icon" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-6 w-6" onClick={(e) => { e.stopPropagation(); removeFile(finalProgrammedBackDesign, setFinalProgrammedBackDesign, index, finalProgrammedBackDesignUploadRefs); }}> <Trash2 className="h-3 w-3" /> </Button>)} </>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload/Paste file</p></div>)}
+                                    <input type="file" ref={el => {if(el) finalProgrammedBackDesignUploadRefs.current[index] = el}} onChange={(e) => handleMultipleFileUpload(e, finalProgrammedBackDesign, setFinalProgrammedBackDesign, index)} className="hidden" />
+                                </div>
+                            </div>
+                            ))}
+                        </div>
+                    </div>
+                  </div>
                 </div>
             </div>
           </ScrollArea>
@@ -800,7 +857,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
       );
     }
     return null;
-  }, [uploadField, handleImagePaste, handleFileUpload, handleRemoveImage, handleMultipleFileUpload, addFile, removeFile, handleUploadDialogSave, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign]);
+  }, [uploadField, handleImagePaste, handleFileUpload, handleRemoveImage, handleMultipleFileUpload, addFile, removeFile, handleUploadDialogSave, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign]);
 
   const ImagePreview = ({ src, alt, className }: { src: string; alt: string; className?:string;}) => (
     <div className={cn("relative cursor-pointer", className)} onClick={() => setImageInView(src)}>
@@ -884,6 +941,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
             setFinalNamesDst([]);
             setSequenceLogo([null]);
             setSequenceBackDesign([]);
+            setFinalProgrammedLogo([null]);
+            setFinalProgrammedBackDesign([]);
             if (uploadLeadId && uploadField && isUploadDialogOpen) { // Check isUploadDialogOpen to prevent race condition
               const lead = leads?.find(l => l.id === uploadLeadId);
               if (lead) {
