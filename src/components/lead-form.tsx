@@ -608,7 +608,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
   
   const handleManualStatusSave = () => {
-    setManualStatus(manualStatus);
+    setCustomerStatus(manualStatus);
     setIsManualStatusDialogOpen(false);
   }
 
@@ -627,13 +627,18 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                 <CardDescription className="text-gray-600">Fill in the details below to create a record for customer and order.</CardDescription>
                 <div className="h-8">
                   {customerStatus === 'Repeat' ? (
-                    <div className="animate-in fade-in-down">
-                       <StatusBanner
-                        text="Repeat Buyer"
-                        backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
-                        textColorClassName="text-yellow-900 font-bold"
-                        borderClassName="border-yellow-500"
-                       />
+                     <div className="animate-in fade-in-down flex items-center gap-2">
+                        <StatusBanner
+                           text="Repeat Buyer"
+                           backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
+                           textColorClassName="text-yellow-900 font-bold"
+                           borderClassName="border-yellow-500"
+                        />
+                        {manualOrderCount && (
+                          <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                            {manualOrderCount}
+                          </div>
+                        )}
                     </div>
                   ) : customerStatus === 'New' && !isCustomerNameFocused ? (
                     <div className="animate-in fade-in-down cursor-pointer" onClick={() => setIsManualStatusDialogOpen(true)}>
@@ -1020,7 +1025,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     <Dialog open={isManualStatusDialogOpen} onOpenChange={setIsManualStatusDialogOpen}>
         <DialogContent className="sm:max-w-md">
             <DialogHeader>
-                <DialogTitle>Set Customer Status</DialogTitle>
+                <DialogTitle>Set Customer Category</DialogTitle>
                 <DialogDescription>
                     Manually set the customer status if the automatic detection is incorrect.
                 </DialogDescription>
@@ -1040,7 +1045,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                     <div className="space-y-2 pt-4 animate-in fade-in-50">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="order-count">No. of Times Ordered</Label>
+                                <Label htmlFor="order-count">No. of Times Ordered Before</Label>
                                 <Input 
                                     id="order-count" 
                                     type="number" 
@@ -1051,7 +1056,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="total-quantity">Total Quantity Ordered</Label>
+                                <Label htmlFor="total-quantity">Total Quantity Ordered Before</Label>
                                 <Input 
                                     id="total-quantity" 
                                     type="number" 
@@ -1067,7 +1072,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
             </div>
             <DialogFooter>
                  <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                 <Button type="button" onClick={handleManualStatusSave}>Save Status</Button>
+                 <Button type="button" onClick={handleManualStatusSave}>Save</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>
