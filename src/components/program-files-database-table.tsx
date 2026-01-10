@@ -58,7 +58,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
-  const [dstFilenameSearch, setDstFilenameSearch] = useState('');
+  const [fileSearch, setFileSearch] = useState('');
   const [imageInView, setImageInView] = useState<string | null>(null);
 
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
@@ -109,18 +109,20 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
       const joString = formatJoNumber(lead.joNumber);
       const matchesJo = joNumberSearch ? joString.toLowerCase().includes(joNumberSearch.toLowerCase()) : true;
 
-      const lowercasedDstSearch = dstFilenameSearch.toLowerCase();
-      const matchesDstFile = dstFilenameSearch ? 
-        (lead.layouts?.[0]?.finalLogoDst?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedDstSearch)) ||
-         lead.layouts?.[0]?.finalBackDesignDst?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedDstSearch)) ||
-         lead.layouts?.[0]?.finalNamesDst?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedDstSearch)))
+      const lowercasedFileSearch = fileSearch.toLowerCase();
+      const matchesFile = fileSearch ? 
+        (lead.layouts?.[0]?.finalLogoDst?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
+         lead.layouts?.[0]?.finalBackDesignDst?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
+         lead.layouts?.[0]?.finalNamesDst?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
+         lead.layouts?.[0]?.finalLogoEmb?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedFileSearch)) ||
+         lead.layouts?.[0]?.finalBackDesignEmb?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedFileSearch)))
         : true;
 
 
-      return matchesSearch && matchesJo && matchesDstFile;
+      return matchesSearch && matchesJo && matchesFile;
     });
 
-  }, [leads, searchTerm, joNumberSearch, dstFilenameSearch, formatJoNumber]);
+  }, [leads, searchTerm, joNumberSearch, fileSearch, formatJoNumber]);
 
   if (isLoading) {
     return (
@@ -166,9 +168,9 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
               </div>
               <div className="w-full max-w-xs">
                 <Input
-                  placeholder="Search by DST Filename..."
-                  value={dstFilenameSearch}
-                  onChange={(e) => setDstFilenameSearch(e.target.value)}
+                  placeholder="Search by DST/EMB Filename..."
+                  value={fileSearch}
+                  onChange={(e) => setFileSearch(e.target.value)}
                   className="bg-gray-100 text-black placeholder:text-gray-500"
                 />
               </div>
