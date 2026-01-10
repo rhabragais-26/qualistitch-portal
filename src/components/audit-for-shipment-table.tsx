@@ -23,14 +23,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Check, ChevronDown, ChevronUp, CalendarIcon } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn, formatDateTime } from '@/lib/utils';
 import { Input } from './ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Label } from './ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Calendar } from './ui/calendar';
 import { format } from 'date-fns';
 
 type Order = {
@@ -64,8 +62,7 @@ type EnrichedLead = Lead & {
 
 type AdjustmentState = {
     status: 'Yes' | 'No' | 'NotSelected';
-    date?: Date;
-    isCalendarOpen?: boolean;
+    date?: string;
 }
 
 export function AuditForShipmentTable() {
@@ -86,7 +83,7 @@ export function AuditForShipmentTable() {
     setAdjustmentStates(prev => ({
         ...prev,
         [leadId]: {
-            ...prev[leadId] || { status: 'NotSelected', isCalendarOpen: false },
+            ...prev[leadId] || { status: 'NotSelected' },
             ...updates,
         }
     }));
@@ -135,7 +132,7 @@ export function AuditForShipmentTable() {
     }
 
     if(leadAdjustmentState.status === 'Yes' && !leadAdjustmentState.date) {
-        toast({ variant: 'destructive', title: 'Action Required', description: 'Please select an adjusted delivery date.'});
+        toast({ variant: 'destructive', title: 'Action Required', description: 'Please enter an adjusted delivery date.'});
         return;
     }
 
@@ -148,7 +145,8 @@ export function AuditForShipmentTable() {
       };
 
       if (leadAdjustmentState.status === 'Yes' && leadAdjustmentState.date) {
-        updateData.adjustedDeliveryDate = leadAdjustmentState.date.toISOString();
+        // Assuming date is in 'yyyy-MM-dd' from the input, convert to ISO string
+        updateData.adjustedDeliveryDate = new Date(leadAdjustmentState.date).toISOString();
       } else if (leadAdjustmentState.status === 'No') {
         updateData.adjustedDeliveryDate = null;
       }
@@ -259,6 +257,7 @@ export function AuditForShipmentTable() {
                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Waybill Printed</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Delivery Date Adjustment</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Set Adjusted Date of Delivery</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -313,46 +312,29 @@ export function AuditForShipmentTable() {
                              />
                         </TableCell>
                         <TableCell className="text-center">
-                            <div className="flex flex-col items-center gap-2">
-                                <RadioGroup
-                                    value={leadAdjustmentState.status}
-                                    onValueChange={(status: 'Yes' | 'No') => handleAdjustmentStateChange(lead.id, { status })}
-                                    className="flex gap-4"
-                                >
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="Yes" id={`yes-${lead.id}`} />
-                                        <Label htmlFor={`yes-${lead.id}`}>Yes</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="No" id={`no-${lead.id}`} />
-                                        <Label htmlFor={`no-${lead.id}`}>No</Label>
-                                    </div>
-                                </RadioGroup>
-                                {leadAdjustmentState.status === 'Yes' && (
-                                    <Popover
-                                        open={leadAdjustmentState.isCalendarOpen}
-                                        onOpenChange={(isOpen) => handleAdjustmentStateChange(lead.id, { isCalendarOpen: isOpen })}
-                                    >
-                                        <PopoverTrigger asChild>
-                                            <Button
-                                                variant="outline"
-                                                className={cn("w-[240px] justify-start text-left font-normal", !leadAdjustmentState.date && "text-muted-foreground")}
-                                            >
-                                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                                {leadAdjustmentState.date ? format(leadAdjustmentState.date, "PPP") : <span>Pick a date</span>}
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0">
-                                            <Calendar
-                                                mode="single"
-                                                selected={leadAdjustmentState.date}
-                                                onSelect={(date) => handleAdjustmentStateChange(lead.id, { date: date, isCalendarOpen: false })}
-                                                initialFocus
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
-                                )}
-                            </div>
+                          <RadioGroup
+                              value={leadAdjustmentState.status}
+                              onValueChange={(status: 'Yes' | 'No') => handleAdjustmentStateChange(lead.id, { status })}
+                              className="flex gap-4 justify-center"
+                          >
+                              <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="Yes" id={`yes-${lead.id}`} />
+                                  <Label htmlFor={`yes-${lead.id}`}>Yes</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="No" id={`no-${lead.id}`} />
+                                  <Label htmlFor={`no-${lead.id}`}>No</Label>
+                              </div>
+                          </RadioGroup>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Input
+                            type="date"
+                            className="text-xs w-[150px] mx-auto"
+                            value={leadAdjustmentState.date || ''}
+                            onChange={(e) => handleAdjustmentStateChange(lead.id, { date: e.target.value })}
+                            disabled={leadAdjustmentState.status !== 'Yes'}
+                          />
                         </TableCell>
                         <TableCell className="text-center">
                           {lead.isSalesAuditComplete ? (
@@ -377,7 +359,7 @@ export function AuditForShipmentTable() {
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground text-xs">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground text-xs">
                     No items in the audit queue.
                   </TableCell>
                 </TableRow>
