@@ -256,7 +256,7 @@ export function AuditForShipmentTable() {
                 <TableHead className="text-white font-bold text-xs text-center">Customer</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Waybill Printed</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Delivery Date Adjustment</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Customer Asked for Specific Delivery Date</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Set Adjusted Date of Delivery</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Action</TableHead>
               </TableRow>
