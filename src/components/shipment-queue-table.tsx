@@ -68,6 +68,7 @@ type Lead = {
   packedTimestamp?: string;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippedTimestamp?: string;
+  adjustedDeliveryDate?: string | null;
 }
 
 type EnrichedLead = Lead & {
@@ -283,11 +284,11 @@ export function ShipmentQueueTable() {
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
+        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
+      customerOrderStats[name].totalQuantity += orderQuantity;
     });
   
     const enrichedLeads: EnrichedLead[] = [];
@@ -385,7 +386,7 @@ export function ShipmentQueueTable() {
                  shipmentQueueLeads.map(lead => {
                    const isRepeat = lead.orderNumber > 1;
                    const status = getStatus(lead);
-                   const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
+                   const deliveryDate = lead.adjustedDeliveryDate ? new Date(lead.adjustedDeliveryDate) : (lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22));
                    
                    let daysOverdue: number | null = null;
                    if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
@@ -483,7 +484,7 @@ export function ShipmentQueueTable() {
                            )}
                         </TableCell>
                         <TableCell className="text-xs">{lead.courier}</TableCell>
-                        <TableCell className="text-xs text-center">
+                        <TableCell className={cn("text-xs text-center", lead.adjustedDeliveryDate && "font-bold")}>
                            {format(deliveryDate, "MMM dd, yyyy")}
                            {daysOverdue !== null && daysOverdue > 0 && <div className="text-red-500 font-medium">({daysOverdue} days overdue)</div>}
                         </TableCell>

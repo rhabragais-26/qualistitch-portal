@@ -81,6 +81,11 @@
             "format": "date-time",
             "description": "The delivery date for the order."
         },
+        "adjustedDeliveryDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The adjusted delivery date set during the sales audit."
+        },
         "courier": {
             "type": "string",
             "description": "The courier for the order."
