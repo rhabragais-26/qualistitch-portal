@@ -277,7 +277,11 @@ export default function JobOrderLayoutPage() {
               <input type="file" ref={layoutImageUploadRef} onChange={(e) => handleLayoutImageUpload(e, currentLayoutIndex)} className="hidden" accept="image/*" />
             </div>
 
-            <h2 className="text-2xl font-bold text-center mb-4">LAYOUT</h2>
+            <h2 className="text-2xl font-bold text-center mb-4">
+              {lead.layouts && lead.layouts.length > 1
+                ? `LAYOUT #${currentLayoutIndex + 1}`
+                : "LAYOUT"}
+            </h2>
             <table className="w-full border-collapse border border-black mb-6">
                 <tbody>
                     <tr>
