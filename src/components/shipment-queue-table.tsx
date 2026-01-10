@@ -84,6 +84,7 @@ export function ShipmentQueueTable() {
   const { toast } = useToast();
   const [disapprovingLead, setDisapprovingLead] = useState<Lead | null>(null);
   const [packingLead, setPackingLead] = useState<{lead: Lead, isPacking: boolean} | null>(null);
+  const [shippingLead, setShippingLead] = useState<Lead | null>(null);
   const [remarks, setRemarks] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -233,9 +234,9 @@ export function ShipmentQueueTable() {
     }
   }, [firestore, toast]);
 
-  const handleShip = async (lead: Lead) => {
-    if (!firestore) return;
-    const leadDocRef = doc(firestore, 'leads', lead.id);
+  const handleConfirmShip = async () => {
+    if (!shippingLead || !firestore) return;
+    const leadDocRef = doc(firestore, 'leads', shippingLead.id);
     try {
       await updateDoc(leadDocRef, {
         shipmentStatus: 'Shipped',
@@ -243,7 +244,7 @@ export function ShipmentQueueTable() {
       });
       toast({
         title: 'Order Shipped',
-        description: `Order for J.O. ${formatJoNumber(lead.joNumber)} has been marked as shipped.`,
+        description: `Order for J.O. ${formatJoNumber(shippingLead.joNumber)} has been marked as shipped.`,
       });
     } catch (e: any) {
       console.error("Error shipping order:", e);
@@ -252,6 +253,8 @@ export function ShipmentQueueTable() {
         title: "Action Failed",
         description: e.message || "Could not mark the order as shipped.",
       });
+    } finally {
+      setShippingLead(null);
     }
   };
 
@@ -511,7 +514,7 @@ export function ShipmentQueueTable() {
                             <Button
                               size="sm"
                               className="h-7 text-xs font-bold"
-                              onClick={() => handleShip(lead)}
+                              onClick={() => setShippingLead(lead)}
                               disabled={!lead.isSalesAuditComplete}
                             >
                               Ship Now
@@ -573,6 +576,24 @@ export function ShipmentQueueTable() {
               <AlertDialogCancel onClick={() => setPackingLead(null)}>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={() => confirmPackedChange(packingLead.lead, packingLead.isPacking)}>
                 Confirm
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+      {shippingLead && (
+        <AlertDialog open={!!shippingLead} onOpenChange={() => setShippingLead(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Shipment</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to mark the order for J.O. {formatJoNumber(shippingLead.joNumber)} as shipped? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmShip}>
+                Yes, Ship Now
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
