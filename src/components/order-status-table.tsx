@@ -185,9 +185,9 @@ export function OrderStatusTable() {
 
   const getShipmentStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success" } => {
     if (lead.shipmentStatus === 'Shipped') return { text: 'Shipped', variant: 'success' };
-    if (lead.isPacked) return { text: "Already Packed", variant: "success" };
+    if (lead.isPacked) return { text: "Already Packed", variant: "default" };
     if (lead.isSalesAuditRequested) return { text: "On-going Audit", variant: "warning" };
-    if (lead.isQualityApproved) return { text: "Approved Quality", variant: "success" };
+    if (lead.isQualityApproved) return { text: "Approved Quality", variant: "default" };
     if (lead.isRecheckingQuality) return { text: "Re-checking Quality", variant: "destructive" };
     return { text: lead.shipmentStatus || 'Pending', variant: 'secondary' };
   }
