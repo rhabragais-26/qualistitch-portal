@@ -118,36 +118,8 @@ export default function JobOrderPage() {
   }, [lead, allLeads]);
 
   const handlePrint = () => {
-    const printableArea = document.querySelector('.printable-area');
-    if (printableArea) {
-      const printWindow = window.open('', '', 'fullscreen=yes');
-      if (printWindow) {
-        printWindow.document.write('<html><head><title>Print Job Order</title>');
-        // Find all style sheets and link them in the new window
-        Array.from(document.styleSheets).forEach(styleSheet => {
-          if (styleSheet.href) {
-            printWindow.document.write(`<link rel="stylesheet" href="${styleSheet.href}">`);
-          } else {
-            // For inline styles
-            const styleElement = styleSheet.ownerNode;
-            if (styleElement) {
-              printWindow.document.write(`<style>${styleElement.innerHTML}</style>`);
-            }
-          }
-        });
-
-        printWindow.document.write('</head><body>');
-        printWindow.document.write(printableArea.innerHTML);
-        printWindow.document.write('</body></html>');
-        printWindow.document.close();
-        
-        // Timeout to allow styles to load before printing
-        setTimeout(() => {
-          printWindow.print();
-          printWindow.close();
-        }, 500);
-      }
-    }
+    const jobOrderUrl = `/job-order/${id}/print`;
+    window.open(jobOrderUrl, '_blank', 'height=800,width=1200,scrollbars=yes');
   };
   
   const handleClose = () => {
@@ -290,7 +262,7 @@ export default function JobOrderPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md">
+      <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md z-50">
         <div className="flex justify-end gap-2 container mx-auto max-w-4xl">
             <Button onClick={handleClose} variant="outline">
             <X className="mr-2 h-4 w-4" />

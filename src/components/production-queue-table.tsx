@@ -617,14 +617,8 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
   ];
 
   const handleJobOrderPrint = () => {
-    const jobOrderUrl = `/job-order/${lead.id}`;
-    const printWindow = window.open(jobOrderUrl, '_blank', 'height=800,width=1200');
-
-    printWindow?.addEventListener('load', () => {
-      setTimeout(() => {
-        printWindow?.print();
-      }, 500); // Delay to ensure content and styles are loaded
-    });
+    const jobOrderUrl = `/job-order/${lead.id}/print`;
+    window.open(jobOrderUrl, '_blank', 'height=800,width=1200,scrollbars=yes');
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -642,8 +636,15 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
     }
   };
 
+  const hasFilesToDownload = useMemo(() => {
+    const sequenceLogoFiles = lead.layouts?.[0]?.sequenceLogo?.some(s => s?.url);
+    const sequenceBackFiles = lead.layouts?.[0]?.sequenceBackDesign?.some(s => s?.url);
+    return finalFiles.length > 0 || sequenceLogoFiles || sequenceBackFiles;
+  }, [finalFiles, lead.layouts]);
+
   const handleDownloadAll = async () => {
-      try {
+    if (!hasFilesToDownload) return;
+    try {
         const dirHandle = await (window as any).showDirectoryPicker();
         
         const filesToDownload: { name: string; url: string; type: string; }[] = [];
@@ -726,7 +727,7 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
                         ))}
                     </div>
                 </div>
-                <Button onClick={handleDownloadAll} size="sm" className="text-white font-bold mt-2"><Download className="mr-2 h-4 w-4" />Download All</Button>
+                <Button onClick={handleDownloadAll} disabled={!hasFilesToDownload} size="sm" className="text-white font-bold mt-2"><Download className="mr-2 h-4 w-4" />Download All</Button>
             </div>
         </div>
 
