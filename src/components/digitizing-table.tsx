@@ -260,7 +260,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
         setFinalLogoEmb(lead?.layouts?.[0]?.finalLogoEmb?.length ? lead?.layouts?.[0]?.finalLogoEmb : [null]);
         setFinalBackDesignEmb(lead?.layouts?.[0]?.finalBackDesignEmb?.length ? lead?.layouts?.[0]?.finalBackDesignEmb : [null]);
         setFinalLogoDst(lead?.layouts?.[0]?.finalLogoDst?.length ? lead?.layouts?.[0]?.finalLogoDst : [null]);
-        setFinalBackDesignDst(lead?.layouts?.[0]?.finalBackDesignDst?.length ? lead?.layouts?.[0]?.finalBackDesignDst : [null]);
+        setFinalBackDesignDst(lead?.layouts?.[0]?.finalBackDesignDst?.length ? lead.layouts[0].finalBackDesignDst : [null]);
         setFinalNamesDst(lead?.layouts?.[0]?.finalNamesDst || []);
         setSequenceLogo(lead?.layouts?.[0]?.sequenceLogo?.length ? lead.layouts[0].sequenceLogo : [null]);
         setSequenceBackDesign(lead?.layouts?.[0]?.sequenceBackDesign?.length ? lead.layouts[0].sequenceBackDesign : [null]);
@@ -670,12 +670,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
             <div className="space-y-6 py-4">
                <div className="grid grid-cols-2 gap-x-8">
                   <div className="space-y-2">
-                      <div className="flex justify-between items-center mb-2">
-                          <Label>Logo (EMB)</Label>
-                           <Button variant="outline" size="sm" onClick={() => addFile(finalLogoEmb, setFinalLogoEmb)} className="h-7">
-                              <PlusCircle className="mr-2 h-4 w-4" /> Add
-                          </Button>
-                      </div>
+                      <Label>Logo (EMB)</Label>
                       {finalLogoEmb.map((file, index) => (
                           <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoEmbUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
@@ -687,33 +682,29 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                 </Button>)}
                           </div>
                       ))}
+                      <Button variant="outline" size="sm" onClick={() => addFile(finalLogoEmb, setFinalLogoEmb)} className="h-7 mt-2">
+                          <PlusCircle className="mr-2 h-4 w-4" /> Add
+                      </Button>
                   </div>
                   <div className="space-y-2">
-                      <div className="flex justify-between items-center mb-2">
-                        <Label>Back Design (EMB)</Label>
-                        <Button variant="outline" size="sm" onClick={() => addFile(finalBackDesignEmb, setFinalBackDesignEmb)} className="h-7">
-                              <PlusCircle className="mr-2 h-4 w-4" /> Add
-                          </Button>
-                      </div>
-                       {finalBackDesignEmb.map((file, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                              <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignEmbUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                                  {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload .emb</p></div>)}
-                                  <input type="file" accept=".emb" ref={el => {if(el) finalBackDesignEmbUploadRefs.current[index] = el}} onChange={(e) => handleMultipleFileUpload(e, finalBackDesignEmb, setFinalBackDesignEmb, index)} className="hidden" />
-                              </div>
-                               {(file || index > 0) && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalBackDesignEmb, setFinalBackDesignEmb, index, finalBackDesignEmbUploadRefs)}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>)}
-                          </div>
-                        ))}
+                    <Label>Back Design (EMB)</Label>
+                    {finalBackDesignEmb.map((file, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                            <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignEmbUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                                {file ? (<p className="text-xs truncate px-2">{file.name}</p>) : (<div className="text-gray-500 flex flex-col items-center justify-center gap-1"><Upload className="h-4 w-4" /><p className="text-xs">Upload .emb</p></div>)}
+                                <input type="file" accept=".emb" ref={el => {if(el) finalBackDesignEmbUploadRefs.current[index] = el}} onChange={(e) => handleMultipleFileUpload(e, finalBackDesignEmb, setFinalBackDesignEmb, index)} className="hidden" />
+                            </div>
+                              {(file || index > 0) && (<Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removeFile(finalBackDesignEmb, setFinalBackDesignEmb, index, finalBackDesignEmbUploadRefs)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>)}
+                        </div>
+                      ))}
+                      <Button variant="outline" size="sm" onClick={() => addFile(finalBackDesignEmb, setFinalBackDesignEmb)} className="h-7 mt-2">
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add
+                        </Button>
                   </div>
                   <div className="space-y-2">
-                      <div className="flex justify-between items-center mb-2">
-                          <Label>Logo (DST)</Label>
-                          <Button variant="outline" size="sm" onClick={() => addFile(finalLogoDst, setFinalLogoDst)} className="h-7">
-                              <PlusCircle className="mr-2 h-4 w-4" /> Add
-                          </Button>
-                      </div>
+                    <Label>Logo (DST)</Label>
                       {finalLogoDst.map((file, index) => (
                          <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoDstUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
@@ -725,14 +716,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                               </Button>)}
                           </div>
                       ))}
+                      <Button variant="outline" size="sm" onClick={() => addFile(finalLogoDst, setFinalLogoDst)} className="h-7 mt-2">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add
+                      </Button>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center mb-2">
-                        <Label>Back Design (DST)</Label>
-                        <Button variant="outline" size="sm" onClick={() => addFile(finalBackDesignDst, setFinalBackDesignDst)} className="h-7">
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add
-                        </Button>
-                    </div>
+                    <Label>Back Design (DST)</Label>
                        {finalBackDesignDst.map((file, index) => (
                          <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignDstUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
@@ -744,6 +733,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                               </Button>)}
                           </div>
                       ))}
+                       <Button variant="outline" size="sm" onClick={() => addFile(finalBackDesignDst, setFinalBackDesignDst)} className="h-7 mt-2">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add
+                      </Button>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -937,7 +929,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
             setFinalLogoEmb([null]);
             setFinalBackDesignEmb([null]);
             setFinalLogoDst([null]);
-            setFinalBackDesignDst([null]);
+            setFinalBackDesignDst([]);
             setFinalNamesDst([]);
             setSequenceLogo([null]);
             setSequenceBackDesign([]);
@@ -1342,4 +1334,5 @@ DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
 
+    
     
