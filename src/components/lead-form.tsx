@@ -1080,7 +1080,7 @@ function SetCustomerStatusDialog({
                 <DialogHeader>
                     <DialogTitle>Set Customer Category</DialogTitle>
                 </DialogHeader>
-                <div className="py-4 space-y-4">
+                 <div className="py-4 space-y-4 flex flex-col items-center">
                     <RadioGroup value={status} onValueChange={(v) => setStatus(v as 'New' | 'Repeat')} className="flex justify-center gap-8">
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="New" id="status-new" />
@@ -1092,9 +1092,9 @@ function SetCustomerStatusDialog({
                         </div>
                     </RadioGroup>
                     {status === 'Repeat' && (
-                        <div className="space-y-4 pt-4 animate-in fade-in-50 flex flex-col items-center">
+                        <div className="space-y-3 pt-4 animate-in fade-in-50 flex flex-col items-center">
                             <div className="grid grid-cols-2 gap-4 items-center w-full max-w-sm">
-                                <Label htmlFor="order-count" className="text-sm text-right">No of Times Ordered Before</Label>
+                                <Label htmlFor="order-count" className="text-xs text-right">No of Times Ordered Before</Label>
                                 <Input
                                     id="order-count"
                                     type="number"
@@ -1104,7 +1104,7 @@ function SetCustomerStatusDialog({
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4 items-center w-full max-w-sm">
-                                <Label htmlFor="total-quantity" className="text-sm text-right">Total Quantity Ordered Before</Label>
+                                <Label htmlFor="total-quantity" className="text-xs text-right">Total Quantity Ordered Before</Label>
                                 <Input
                                     id="total-quantity"
                                     type="number"
