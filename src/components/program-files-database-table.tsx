@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -21,9 +20,8 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from './ui/skeleton';
 import { Button } from './ui/button';
-import { ChevronDown, Download, FileText, Image as ImageIcon, X } from 'lucide-react';
+import { Download, X } from 'lucide-react';
 import { Input } from './ui/input';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
@@ -57,7 +55,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
-  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
+  const [dstFilenameSearch, setDstFilenameSearch] = useState('');
   const [imageInView, setImageInView] = useState<string | null>(null);
 
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
@@ -108,10 +106,18 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
       const joString = formatJoNumber(lead.joNumber);
       const matchesJo = joNumberSearch ? joString.toLowerCase().includes(joNumberSearch.toLowerCase()) : true;
 
-      return matchesSearch && matchesJo;
+      const lowercasedDstSearch = dstFilenameSearch.toLowerCase();
+      const matchesDstFile = dstFilenameSearch ? 
+        (lead.layouts?.[0]?.finalLogoDst?.some(f => f?.name.toLowerCase().includes(lowercasedDstSearch)) ||
+         lead.layouts?.[0]?.finalBackDesignDst?.some(f => f?.name.toLowerCase().includes(lowercasedDstSearch)) ||
+         lead.layouts?.[0]?.finalNamesDst?.some(f => f?.name.toLowerCase().includes(lowercasedDstSearch)))
+        : true;
+
+
+      return matchesSearch && matchesJo && matchesDstFile;
     });
 
-  }, [leads, searchTerm, joNumberSearch, formatJoNumber]);
+  }, [leads, searchTerm, joNumberSearch, dstFilenameSearch, formatJoNumber]);
 
   if (isLoading) {
     return (
@@ -138,8 +144,8 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                 A repository of all final program files for job orders.
               </CardDescription>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="w-full max-w-lg">
+            <div className="flex items-center gap-2">
+              <div className="w-full max-w-sm">
                 <Input
                   placeholder="Search customer, company or contact..."
                   value={searchTerm}
@@ -155,6 +161,14 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                   className="bg-gray-100 text-black placeholder:text-gray-500"
                 />
               </div>
+              <div className="w-full max-w-xs">
+                <Input
+                  placeholder="Search by DST Filename..."
+                  value={dstFilenameSearch}
+                  onChange={(e) => setDstFilenameSearch(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -163,7 +177,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
             <Table>
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
-                  <TableHead className="text-white font-bold align-middle">Customer Details</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Customer Details</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">J.O. No.</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Final Programmed</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Sequence</TableHead>
@@ -174,15 +188,15 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                 {filteredLeads.length > 0 ? (
                   filteredLeads.map(lead => (
                     <TableRow key={lead.id}>
-                      <TableCell className="align-top py-3">
+                      <TableCell className="align-middle py-3 text-center">
                         <div className="font-bold">{lead.customerName}</div>
                         <div className="text-xs text-gray-500">{lead.companyName && lead.companyName !== '-' ? lead.companyName : ''}</div>
                         <div className="text-xs text-gray-500">{getContactDisplay(lead)}</div>
                       </TableCell>
-                      <TableCell className="align-top py-3 text-center">{formatJoNumber(lead.joNumber)}</TableCell>
-                      <TableCell className="align-top py-3 text-center">
+                      <TableCell className="align-middle py-3 text-center">{formatJoNumber(lead.joNumber)}</TableCell>
+                      <TableCell className="align-middle py-3 text-center">
                         <div className="flex gap-2 justify-center">
-                          {lead.layouts?.[0]?.finalProgrammedLogo?.map((file, i) => file && file.url && (
+                          {lead.layouts?.[0]?.finalProgrammedLogo?.map((file, i) => file?.url && (
                             <TooltipProvider key={`fp-logo-${i}`}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -194,7 +208,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                               </Tooltip>
                             </TooltipProvider>
                           ))}
-                          {lead.layouts?.[0]?.finalProgrammedBackDesign?.map((file, i) => file && file.url && (
+                          {lead.layouts?.[0]?.finalProgrammedBackDesign?.map((file, i) => file?.url && (
                             <TooltipProvider key={`fp-back-${i}`}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -208,9 +222,9 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                           ))}
                         </div>
                       </TableCell>
-                      <TableCell className="align-top py-3 text-center">
+                      <TableCell className="align-middle py-3 text-center">
                         <div className="flex gap-2 justify-center">
-                          {lead.layouts?.[0]?.sequenceLogo?.map((file, i) => file && file.url && (
+                          {lead.layouts?.[0]?.sequenceLogo?.map((file, i) => file?.url && (
                             <TooltipProvider key={`seq-logo-${i}`}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -222,7 +236,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                               </Tooltip>
                             </TooltipProvider>
                           ))}
-                          {lead.layouts?.[0]?.sequenceBackDesign?.map((file, i) => file && file.url && (
+                          {lead.layouts?.[0]?.sequenceBackDesign?.map((file, i) => file?.url && (
                            <TooltipProvider key={`seq-back-${i}`}>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -236,19 +250,19 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                           ))}
                         </div>
                       </TableCell>
-                      <TableCell className="align-top py-3 text-center">
-                        <div className="flex flex-col gap-1 items-start">
-                          {lead.layouts?.[0]?.finalLogoDst?.map((file, i) => file && file.url && (
+                      <TableCell className="align-middle py-3 text-center">
+                        <div className="flex flex-col gap-1 items-start mx-auto w-fit">
+                          {lead.layouts?.[0]?.finalLogoDst?.map((file, i) => file?.url && (
                             <Button key={`dst-logo-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
                               <Download className="mr-1 h-3 w-3" /> Logo {i+1} (DST)
                             </Button>
                           ))}
-                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, i) => file && file.url && (
+                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, i) => file?.url && (
                             <Button key={`dst-back-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
                                <Download className="mr-1 h-3 w-3" /> Back Design {i+1} (DST)
                             </Button>
                           ))}
-                           {lead.layouts?.[0]?.finalNamesDst?.map((file, i) => file && file.url && (
+                           {lead.layouts?.[0]?.finalNamesDst?.map((file, i) => file?.url && (
                             <Button key={`dst-name-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
                                <Download className="mr-1 h-3 w-3" /> Name {i+1} (DST)
                             </Button>
