@@ -124,7 +124,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
     return (
       <div className="space-y-2 p-4">
         {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full bg-gray-200" />
+          <Skeleton key={i} className="h-16 w-full" />
         ))}
       </div>
     );
@@ -253,17 +253,17 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                       </TableCell>
                       <TableCell className="align-middle py-3 text-center">
                         <div className="flex flex-col gap-1 items-start mx-auto w-fit">
-                          {lead.layouts?.[0]?.finalLogoDst?.map((file, i) => file?.url && (
+                          {lead.layouts?.[0]?.finalLogoDst?.map((file, i) => file?.url && file?.name && (
                             <Button key={`dst-logo-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
                               <Download className="mr-1 h-3 w-3" /> Logo {i+1} (DST)
                             </Button>
                           ))}
-                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, i) => file?.url && (
+                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, i) => file?.url && file?.name && (
                             <Button key={`dst-back-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
                                <Download className="mr-1 h-3 w-3" /> Back Design {i+1} (DST)
                             </Button>
                           ))}
-                           {lead.layouts?.[0]?.finalNamesDst?.map((file, i) => file?.url && (
+                           {lead.layouts?.[0]?.finalNamesDst?.map((file, i) => file?.url && file?.name && (
                             <Button key={`dst-name-${i}`} variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => handleDownload(file.url, file.name)}>
                                <Download className="mr-1 h-3 w-3" /> Name {i+1} (DST)
                             </Button>
