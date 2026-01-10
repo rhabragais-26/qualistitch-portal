@@ -85,6 +85,7 @@ type Lead = {
   isPacked?: boolean;
   adjustedDeliveryDate?: string;
   layouts?: Layout[];
+  isEndorsedToLogistics?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -167,7 +168,8 @@ export function OrderStatusTable() {
     };
   }, []);
 
-  const getProgrammingStatus = useCallback((lead: Lead) => {
+  const getProgrammingStatus = useCallback((lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
+    if (lead.orderType === 'Stock (Jacket Only)') return { text: "Skipped", variant: "secondary" };
     if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
     if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "default" as const };
     if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const };
@@ -179,12 +181,16 @@ export function OrderStatusTable() {
   }, []);
 
   const getItemPreparationStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "secondary" } => {
+    if (lead.orderType === 'Stock (Jacket Only)' && lead.isEndorsedToLogistics) {
+      return { text: 'Sent to Logistics', variant: 'success' };
+    }
     if (lead.isSentToProduction) return { text: 'Sent to Production', variant: 'success' };
     if (lead.isPreparedForProduction) return { text: 'Prepared', variant: 'warning' };
     return { text: 'Pending', variant: 'secondary' };
   }, []);
 
   const getProductionStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "destructive" | "secondary" } => {
+    if (lead.orderType === 'Stock (Jacket Only)') return { text: "Skipped", variant: "secondary" };
     if (lead.isDone) return { text: 'Done Production', variant: 'success' };
     if (lead.sewerType && lead.sewerType !== 'Pending') {
       return { text: `Ongoing with Sewer (${lead.sewerType})`, variant: 'warning' };
@@ -216,8 +222,8 @@ export function OrderStatusTable() {
   
   const getProgressValue = useCallback((lead: Lead): number => {
     if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') return 100;
-    if (lead.shipmentStatus === 'Packed') return 95;
-    if (lead.isDone) return 90;
+    if (lead.shipmentStatus === 'Packed' || (lead.orderType === 'Stock (Jacket Only)' && lead.isPacked)) return 95;
+    if (lead.isDone || (lead.orderType === 'Stock (Jacket Only)' && lead.isEndorsedToLogistics)) return lead.orderType === 'Stock (Jacket Only)' ? 30 : 90;
     if (lead.isTrimming) return 85;
     if (lead.sewerType && lead.sewerType !== 'Pending') return 70;
     if (lead.productionType && lead.productionType !== 'Pending') return 50;
