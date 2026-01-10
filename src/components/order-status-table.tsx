@@ -22,7 +22,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
-import { differenceInDays, addDays } from 'date-fns';
+import { differenceInDays, addDays, format } from 'date-fns';
 import { cn, formatDateTime } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -72,6 +72,7 @@ type Lead = {
   isQualityApproved?: boolean;
   isRecheckingQuality?: boolean;
   isPacked?: boolean;
+  adjustedDeliveryDate?: string;
 }
 
 type EnrichedLead = Lead & {
@@ -117,22 +118,41 @@ export function OrderStatusTable() {
   }, [openLeadId]);
 
   const calculateDeadline = useCallback((lead: Lead) => {
-    if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
-        return { text: <><span className="font-bold">Shipped:</span> {formatDateTime(lead.shippedTimestamp).dateTimeShort}</>, isOverdue: false, isUrgent: false, remainingDays: Infinity };
-    }
+    const deadlineDate = lead.adjustedDeliveryDate ? new Date(lead.adjustedDeliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
 
-    const submissionDate = new Date(lead.submissionDateTime);
-    const deadlineDays = lead.priorityType === 'Rush' ? 7 : 22;
-    const deadlineDate = addDays(submissionDate, deadlineDays);
-    const remainingDays = differenceInDays(deadlineDate, new Date());
-    
-    if (remainingDays < 0) {
-      return { text: <><span className="font-bold">{Math.abs(remainingDays)} day(s)</span> overdue</>, isOverdue: true, isUrgent: false, remainingDays };
-    } else if (remainingDays <= 3) {
-      return { text: <><span className="font-bold">{remainingDays} day(s)</span> remaining</>, isOverdue: false, isUrgent: true, remainingDays };
+    let statusText: React.ReactNode;
+    let remainingDays: number;
+    let isOverdue = false;
+    let isUrgent = false;
+
+    if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
+        statusText = <><span className="font-bold">Shipped:</span> {formatDateTime(lead.shippedTimestamp).dateTimeShort}</>;
+        remainingDays = Infinity; // Consider it not "overdue" in the same way
     } else {
-      return { text: <><span className="font-bold">{remainingDays} day(s)</span> remaining</>, isOverdue: false, isUrgent: false, remainingDays };
+        remainingDays = differenceInDays(deadlineDate, new Date());
+        if (remainingDays < 0) {
+            isOverdue = true;
+            statusText = <><span className="font-bold">{Math.abs(remainingDays)} day(s)</span> overdue</>;
+        } else if (remainingDays <= 3) {
+            isUrgent = true;
+            statusText = <><span className="font-bold">{remainingDays} day(s)</span> remaining</>;
+        } else {
+            statusText = <><span className="font-bold">{remainingDays} day(s)</span> remaining</>;
+        }
     }
+    
+    const adjustedDateText = lead.adjustedDeliveryDate ? (
+        <div className="text-xs mt-1">
+            Customer's chosen delivery date: <strong className="text-black">{format(new Date(lead.adjustedDeliveryDate), 'MMM dd, yyyy')}</strong>
+        </div>
+    ) : null;
+
+    return { 
+        text: <>{statusText}{adjustedDateText}</>, 
+        isOverdue, 
+        isUrgent, 
+        remainingDays 
+    };
   }, []);
 
   const getProgrammingStatus = useCallback((lead: Lead) => {
