@@ -69,7 +69,7 @@ export default function JobOrderLayoutPage() {
     if (fetchedLead) {
       const initializedLayouts = fetchedLead.layouts && fetchedLead.layouts.length > 0 
         ? fetchedLead.layouts 
-        : [{ id: 'layout-1', layoutImage: '', dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
+        : [{ id: `layout-${Date.now()}`, layoutImage: '', dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
 
       setLead({ ...fetchedLead, layouts: initializedLayouts });
       
@@ -91,6 +91,7 @@ export default function JobOrderLayoutPage() {
   const handleConfirmSave = async () => {
     await handleSaveChanges();
     setShowConfirmDialog(false);
+    router.push(`/job-order/${id}`);
   };
   
   const handleConfirmDiscard = () => {
@@ -183,7 +184,9 @@ export default function JobOrderLayoutPage() {
         title: 'Layouts Saved!',
         description: 'Your layout changes have been saved successfully.',
       });
-      router.push(`/job-order/${id}`);
+      // Do not navigate away, just mark as not dirty
+      const updatedFetchedLead = { ...fetchedLead, ...dataToUpdate };
+      setLead(updatedFetchedLead as Lead);
     } catch (e: any) {
       console.error('Error saving layouts:', e);
       toast({

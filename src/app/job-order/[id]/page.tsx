@@ -100,15 +100,43 @@ export default function JobOrderPage() {
   // Helper to compare lead states to check for unsaved changes
   const isDirty = useMemo(() => {
     if (!fetchedLead || !lead) return false;
-    // Simple JSON stringify comparison. For more complex objects, a deep-equal library would be better.
-    const cleanLead = JSON.stringify(fetchedLead);
-    const dirtyLead = JSON.stringify({
-        ...fetchedLead,
-        ...lead,
-        joNumber: lead.joNumber,
-        deliveryDate: deliveryDate ? deliveryDate.toISOString().split('T')[0] : (fetchedLead.deliveryDate || null)
+    const originalLead = JSON.stringify(fetchedLead);
+    const currentLead = JSON.stringify({ ...lead, deliveryDate: deliveryDate ? deliveryDate.toISOString() : null });
+    
+    //This is a simplified dirty check. For complex nested objects, a more robust deep comparison library might be better.
+    //We need to normalize parts of the object to avoid false positives.
+    const normalize = (l:Lead) => {
+        return {
+            ...l,
+            deliveryDate: l.deliveryDate ? new Date(l.deliveryDate).toISOString().split('T')[0] : null,
+            orders: l.orders.map(o => ({
+                productType: o.productType,
+                color: o.color,
+                size: o.size,
+                quantity: o.quantity,
+                remarks: o.remarks || '',
+                design: {
+                    left: o.design?.left || false,
+                    right: o.design?.right || false,
+                    backLogo: o.design?.backLogo || false,
+                    backText: o.design?.backText || false,
+                }
+            })).sort((a,b) => a.productType.localeCompare(b.productType)),
+            layouts: (l.layouts || []).map(layout => ({
+                ...layout,
+                namedOrders: (layout.namedOrders || []).sort((a,b) => a.name.localeCompare(b.name))
+            })).sort((a,b) => a.id.localeCompare(b.id)),
+        }
+    }
+    
+    const normalizedFetchedLead = normalize(fetchedLead);
+    const normalizedCurrentLead = normalize({
+        ...lead, 
+        deliveryDate: deliveryDate ? deliveryDate.toISOString() : undefined,
     });
-    return cleanLead !== dirtyLead;
+
+    return JSON.stringify(normalizedFetchedLead) !== JSON.stringify(normalizedCurrentLead);
+
   }, [fetchedLead, lead, deliveryDate]);
 
   useEffect(() => {
@@ -165,6 +193,7 @@ export default function JobOrderPage() {
   const handleConfirmSave = async () => {
     await handleSaveChanges();
     setShowConfirmDialog(false);
+    router.push('/job-order');
   };
   
   const handleConfirmDiscard = () => {
@@ -214,10 +243,10 @@ export default function JobOrderPage() {
     }
     
     const dataToUpdate = {
-      ...lead,
-      joNumber: newJoNumber,
-      deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
-      lastModified: new Date().toISOString(),
+        ...lead,
+        joNumber: newJoNumber,
+        deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
+        lastModified: new Date().toISOString(),
     };
 
     try {
@@ -226,7 +255,10 @@ export default function JobOrderPage() {
         title: 'Job Order Saved!',
         description: 'Your changes have been saved successfully.',
       });
-      router.push('/job-order');
+      // After a successful save, we can treat the current state as not dirty
+      const updatedFetchedLead = { ...fetchedLead, ...dataToUpdate };
+      setLead(updatedFetchedLead as Lead);
+      
     } catch (e: any) {
       console.error('Error saving job order:', e);
       toast({
@@ -537,4 +569,3 @@ export default function JobOrderPage() {
     </div>
   );
 }
-
