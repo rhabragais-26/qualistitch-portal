@@ -142,7 +142,7 @@ export function OrderStatusTable() {
     }
     
     const adjustedDateText = lead.adjustedDeliveryDate ? (
-        <div className="text-xs mt-1">
+        <div className="text-xs mt-1 text-black">
             Customer's chosen delivery date: <strong className="text-black">{format(new Date(lead.adjustedDeliveryDate), 'MMM dd, yyyy')}</strong>
         </div>
     ) : null;
