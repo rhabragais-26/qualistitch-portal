@@ -194,6 +194,11 @@
           "type": "boolean",
           "description": "Indicates if the order has been sent for a sales audit."
         },
+        "salesAuditRequestedTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp for when a sales audit was requested."
+        },
         "isWaybillPrinted": {
           "type": "boolean",
           "description": "Indicates if the waybill for the order has been printed."
@@ -202,9 +207,23 @@
           "type": "boolean",
           "description": "Indicates if the quality check for the order has been approved."
         },
+        "qualityApprovedTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp for when quality was approved."
+        },
         "isRecheckingQuality": {
           "type": "boolean",
           "description": "Indicates if a disapproved order is being re-checked."
+        },
+        "isPacked": {
+          "type": "boolean",
+          "description": "Indicates if the order has been packed for shipment."
+        },
+        "packedTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp for when the order was packed."
         },
         "orders": {
           "type": "array",

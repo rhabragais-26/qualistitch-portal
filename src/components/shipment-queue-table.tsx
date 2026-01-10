@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -28,7 +27,8 @@ import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { Check } from 'lucide-react';
 import { Badge } from './ui/badge';
-import { cn } from '@/lib/utils';
+import { cn, formatDateTime } from '@/lib/utils';
+import { Checkbox } from './ui/checkbox';
 
 type Order = {
   productType: string;
@@ -46,9 +46,15 @@ type Lead = {
   submissionDateTime: string;
   isEndorsedToLogistics?: boolean;
   isSalesAuditRequested?: boolean;
+  salesAuditRequestedTimestamp?: string;
   isWaybillPrinted?: boolean;
   isQualityApproved?: boolean;
+  qualityApprovedTimestamp?: string;
   isRecheckingQuality?: boolean;
+  isPacked?: boolean;
+  packedTimestamp?: string;
+  shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  shippedTimestamp?: string;
 }
 
 type EnrichedLead = Lead & {
@@ -130,6 +136,7 @@ export function ShipmentQueueTable() {
     try {
         await updateDoc(leadDocRef, {
             isSalesAuditRequested: true,
+            salesAuditRequestedTimestamp: new Date().toISOString(),
         });
         toast({
             title: 'Sales Audit Requested',
@@ -151,7 +158,8 @@ export function ShipmentQueueTable() {
     try {
       await updateDoc(leadDocRef, {
         isQualityApproved: true,
-        isRecheckingQuality: false, // Clear the rechecking flag on approval
+        qualityApprovedTimestamp: new Date().toISOString(),
+        isRecheckingQuality: false,
       });
       toast({
         title: 'Quality Approved',
@@ -166,6 +174,47 @@ export function ShipmentQueueTable() {
       });
     }
   };
+
+  const handlePackedChange = async (lead: Lead, checked: boolean) => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', lead.id);
+    try {
+      await updateDoc(leadDocRef, {
+        isPacked: checked,
+        packedTimestamp: checked ? new Date().toISOString() : null,
+      });
+    } catch (e: any) {
+      console.error("Error updating packed status:", e);
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: e.message || "Could not update the packed status.",
+      });
+    }
+  };
+
+  const handleShip = async (lead: Lead) => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', lead.id);
+    try {
+      await updateDoc(leadDocRef, {
+        shipmentStatus: 'Shipped',
+        shippedTimestamp: new Date().toISOString(),
+      });
+      toast({
+        title: 'Order Shipped',
+        description: `Order for J.O. ${formatJoNumber(lead.joNumber)} has been marked as shipped.`,
+      });
+    } catch (e: any) {
+      console.error("Error shipping order:", e);
+      toast({
+        variant: "destructive",
+        title: "Action Failed",
+        description: e.message || "Could not mark the order as shipped.",
+      });
+    }
+  };
+
 
   const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success" } => {
     if (lead.isSalesAuditRequested) {
@@ -234,9 +283,11 @@ export function ShipmentQueueTable() {
                 <TableHead className="text-white font-bold text-xs">Customer</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Quality Check</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Packed</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Sales Audit</TableHead>
                 <TableHead className="text-white font-bold text-xs">Courier</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Status</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Ship</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -271,9 +322,12 @@ export function ShipmentQueueTable() {
                         <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className="text-center">
                             {lead.isQualityApproved ? (
-                                <div className="flex items-center justify-center font-bold text-green-600 text-xs">
-                                    <Check className="h-4 w-4 mr-1" />
-                                    Approved
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                    <div className="flex items-center font-bold text-green-600 text-xs">
+                                        <Check className="h-4 w-4 mr-1" />
+                                        Approved
+                                    </div>
+                                    {lead.qualityApprovedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.qualityApprovedTimestamp).dateTimeShort}</div>}
                                 </div>
                             ) : (
                                 <div className="flex gap-2 justify-center">
@@ -283,8 +337,20 @@ export function ShipmentQueueTable() {
                             )}
                         </TableCell>
                         <TableCell className="text-center">
+                          <div className="flex flex-col items-center justify-center gap-1">
+                            <Checkbox
+                              checked={lead.isPacked}
+                              onCheckedChange={(checked) => handlePackedChange(lead, !!checked)}
+                            />
+                            {lead.isPacked && lead.packedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.packedTimestamp).dateTimeShort}</div>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
                            {lead.isSalesAuditRequested ? (
-                                <span className="text-orange-500 font-bold text-xs">Requested</span>
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                    <span className="text-orange-500 font-bold text-xs">Requested</span>
+                                    {lead.salesAuditRequestedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.salesAuditRequestedTimestamp).dateTimeShort}</div>}
+                                </div>
                            ) : (
                                 <Button size="sm" className="h-7 text-xs font-bold" onClick={() => handleRequestSalesAudit(lead)} disabled={!lead.isQualityApproved}>
                                     Request Audit from Sales
@@ -295,12 +361,32 @@ export function ShipmentQueueTable() {
                         <TableCell className="text-xs text-center">
                           <Badge variant={status.variant}>{status.text}</Badge>
                         </TableCell>
+                        <TableCell className="text-center">
+                          {lead.shipmentStatus === 'Shipped' ? (
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <div className="flex items-center font-bold text-green-600 text-xs">
+                                <Check className="h-4 w-4 mr-1" />
+                                Shipped
+                              </div>
+                              {lead.shippedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.shippedTimestamp).dateTimeShort}</div>}
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs font-bold"
+                              onClick={() => handleShip(lead)}
+                              disabled={!lead.isPacked}
+                            >
+                              Ship
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                    )
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground text-xs">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground text-xs">
                     No items in shipment queue.
                   </TableCell>
                 </TableRow>
