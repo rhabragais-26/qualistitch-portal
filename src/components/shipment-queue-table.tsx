@@ -71,7 +71,6 @@ export function ShipmentQueueTable() {
   const { toast } = useToast();
   const [disapprovingLead, setDisapprovingLead] = useState<Lead | null>(null);
   const [remarks, setRemarks] = useState('');
-  const [leadToReset, setLeadToReset] = useState<Lead | null>(null);
 
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
@@ -218,54 +217,21 @@ export function ShipmentQueueTable() {
     }
   };
 
-  const handleResetLead = async () => {
-    if (!leadToReset || !firestore) return;
-
-    const leadDocRef = doc(firestore, 'leads', leadToReset.id);
-    try {
-      await updateDoc(leadDocRef, {
-        isQualityApproved: false,
-        qualityApprovedTimestamp: null,
-        isSalesAuditRequested: false,
-        salesAuditRequestedTimestamp: null,
-        isPacked: false,
-        packedTimestamp: null,
-        shipmentStatus: 'Pending',
-        shippedTimestamp: null,
-        isRecheckingQuality: false,
-      });
-      toast({
-        title: 'Lead Reset',
-        description: `The status for J.O. ${formatJoNumber(leadToReset.joNumber)} has been reset.`,
-      });
-      setLeadToReset(null);
-    } catch (e: any) {
-      console.error('Error resetting lead:', e);
-      toast({
-        variant: 'destructive',
-        title: 'Reset Failed',
-        description: e.message || 'Could not reset the lead status.',
-      });
-    }
-  };
-
-
-  const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success" } => {
+  const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success", className?: string } => {
     if (lead.isPacked) {
-      return { text: "Already Packed", variant: "success" };
+      return { text: "Already Packed", variant: "success", className: "bg-teal-600 text-white" };
     }
     if (lead.isSalesAuditRequested) {
-      return { text: "On-going Audit", variant: "warning" };
+      return { text: "On-going Audit", variant: "warning", className: "bg-amber-500 text-white" };
     }
     if (lead.isQualityApproved) {
-      return { text: "Approved Quality", variant: "success" };
+      return { text: "Approved Quality", variant: "success", className: "bg-green-600 text-white" };
     }
     if (lead.isRecheckingQuality) {
-        return { text: "Re-checking Quality", variant: "destructive" };
+        return { text: "Re-checking Quality", variant: "destructive", className: "bg-red-600 text-white" };
     }
     return { text: "Pending", variant: "secondary" };
   }
-
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
@@ -376,7 +342,7 @@ export function ShipmentQueueTable() {
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center justify-center gap-1">
                             <Checkbox
-                              checked={lead.isPacked}
+                              checked={!!lead.isPacked}
                               onCheckedChange={(checked) => handlePackedChange(lead, !!checked)}
                               disabled={!lead.isQualityApproved}
                             />
@@ -397,7 +363,7 @@ export function ShipmentQueueTable() {
                         </TableCell>
                         <TableCell className="text-xs">{lead.courier}</TableCell>
                         <TableCell className="text-xs text-center">
-                          <Badge variant={status.variant}>{status.text}</Badge>
+                          <Badge variant={status.variant} className={status.className}>{status.text}</Badge>
                         </TableCell>
                         <TableCell className="text-center">
                           {lead.shipmentStatus === 'Shipped' ? (
@@ -460,24 +426,6 @@ export function ShipmentQueueTable() {
           </DialogContent>
         </Dialog>
       )}
-      {leadToReset && (
-        <AlertDialog open={!!leadToReset} onOpenChange={() => setLeadToReset(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure you want to reset?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will reset the shipment status for J.O. ${formatJoNumber(leadToReset.joNumber)}. This action is for testing and development purposes.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleResetLead}>Reset</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
     </>
   );
 }
-
-    

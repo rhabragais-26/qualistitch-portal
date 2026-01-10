@@ -596,6 +596,3 @@ export function OrderStatusTable() {
     </Card>
   );
 }
-
-    
-    
