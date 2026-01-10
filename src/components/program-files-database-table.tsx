@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -108,9 +109,9 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
 
       const lowercasedDstSearch = dstFilenameSearch.toLowerCase();
       const matchesDstFile = dstFilenameSearch ? 
-        (lead.layouts?.[0]?.finalLogoDst?.some(f => f?.name.toLowerCase().includes(lowercasedDstSearch)) ||
-         lead.layouts?.[0]?.finalBackDesignDst?.some(f => f?.name.toLowerCase().includes(lowercasedDstSearch)) ||
-         lead.layouts?.[0]?.finalNamesDst?.some(f => f?.name.toLowerCase().includes(lowercasedDstSearch)))
+        (lead.layouts?.[0]?.finalLogoDst?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedDstSearch)) ||
+         lead.layouts?.[0]?.finalBackDesignDst?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedDstSearch)) ||
+         lead.layouts?.[0]?.finalNamesDst?.some(f => f && f.name && f.name.toLowerCase().includes(lowercasedDstSearch)))
         : true;
 
 
