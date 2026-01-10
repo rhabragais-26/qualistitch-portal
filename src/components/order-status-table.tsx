@@ -40,6 +40,17 @@ type Order = {
   quantity: number;
 }
 
+type FileObject = {
+  name: string;
+  url: string;
+};
+
+type Layout = {
+  finalProgrammedLogo?: (FileObject | null)[];
+  finalProgrammedBackDesign?: (FileObject | null)[];
+};
+
+
 type ProductionType = "Pending" | "In-house" | "Outsource";
 
 type Lead = {
@@ -73,6 +84,7 @@ type Lead = {
   isRecheckingQuality?: boolean;
   isPacked?: boolean;
   adjustedDeliveryDate?: string;
+  layouts?: Layout[];
 }
 
 type EnrichedLead = Lead & {
@@ -426,7 +438,9 @@ export function OrderStatusTable() {
                   const isCollapsibleOpen = openLeadId === lead.id;
                   const isRepeat = lead.orderNumber > 1;
                   const progress = getProgressValue(lead);
-                  
+                  const finalProgrammedLogo = lead.layouts?.[0]?.finalProgrammedLogo;
+                  const finalProgrammedBackDesign = lead.layouts?.[0]?.finalProgrammedBackDesign;
+
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow className="border-b-2 border-gray-300">
@@ -580,7 +594,7 @@ export function OrderStatusTable() {
                         {isCollapsibleOpen && (
                           <TableRow>
                               <TableCell colSpan={11}>
-                              <div className="p-2 bg-gray-50">
+                              <div className="p-2 bg-gray-50 space-y-4">
                                 <Table>
                                   <TableHeader>
                                     <TableRow>
@@ -601,6 +615,23 @@ export function OrderStatusTable() {
                                     ))}
                                   </TableBody>
                                 </Table>
+                                {(finalProgrammedLogo?.some(f => f?.url) || finalProgrammedBackDesign?.some(f => f?.url)) && (
+                                    <div>
+                                        <h4 className="font-semibold text-black mb-2">Final Programmed Designs</h4>
+                                        <div className="flex gap-2 flex-wrap">
+                                            {finalProgrammedLogo?.map((file, index) => file?.url && (
+                                                <div key={`fp-logo-${index}`} className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
+                                                    <Image src={file.url} alt={`Final Programmed Logo ${index + 1}`} layout="fill" objectFit="contain" />
+                                                </div>
+                                            ))}
+                                            {finalProgrammedBackDesign?.map((file, index) => file?.url && (
+                                                <div key={`fp-back-${index}`} className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
+                                                    <Image src={file.url} alt={`Final Programmed Back Design ${index + 1}`} layout="fill" objectFit="contain" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>
