@@ -28,6 +28,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Check } from 'lucide-react';
 
 const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
@@ -51,6 +52,7 @@ type Lead = {
   orders: Order[];
   joNumber?: number;
   courier?: string;
+  shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
 }
 
 type EnrichedLead = Lead & {
@@ -214,6 +216,7 @@ export function JobOrderTable() {
                     <TableBody>
                     {filteredLeads.map((lead) => {
                       const isJoSaved = !!lead.joNumber;
+                      const isCompleted = lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered';
                       const creationDate = formatDateTime(lead.submissionDateTime);
                       const modifiedDate = formatDateTime(lead.lastModified);
                       const isRepeat = lead.orderNumber > 1;
@@ -257,13 +260,23 @@ export function JobOrderTable() {
                                   size="sm" 
                                   className={cn(
                                     'h-8 px-3 text-white font-bold',
-                                    isJoSaved ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-primary hover:bg-primary/90'
+                                     isCompleted ? 'bg-slate-500' : (isJoSaved ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-primary hover:bg-primary/90')
                                   )}
                                   onClick={() => handleProcessJobOrder(lead)}
                                    onMouseEnter={() => setHoveredLeadId(lead.id)}
                                    onMouseLeave={() => setHoveredLeadId(null)}
+                                   disabled={isCompleted}
                                 >
-                                  {isJoSaved ? (hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved') : 'Process J.O.'}
+                                  {isCompleted ? (
+                                    <>
+                                        <Check className="mr-2 h-4 w-4" />
+                                        J.O. Completed
+                                    </>
+                                  ) : isJoSaved ? (
+                                    hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved'
+                                  ) : (
+                                    'Process J.O.'
+                                  )}
                                 </Button>
                             </TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">
