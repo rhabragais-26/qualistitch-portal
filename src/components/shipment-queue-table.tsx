@@ -33,6 +33,7 @@ import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Input } from './ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { addDays, differenceInDays } from 'date-fns';
 
 
 type Order = {
@@ -52,6 +53,8 @@ type Lead = {
   joNumber?: number;
   orders: Order[];
   submissionDateTime: string;
+  deliveryDate?: string;
+  priorityType: 'Rush' | 'Regular';
   isEndorsedToLogistics?: boolean;
   isSalesAuditRequested?: boolean;
   salesAuditRequestedTimestamp?: string;
@@ -275,16 +278,16 @@ export function ShipmentQueueTable() {
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalQuantity += orderQuantity;
+      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
     });
   
     const enrichedLeads: EnrichedLead[] = [];
@@ -372,6 +375,7 @@ export function ShipmentQueueTable() {
                 <TableHead className="text-white font-bold text-xs text-center">Packed</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Sales Audit</TableHead>
                 <TableHead className="text-white font-bold text-xs">Courier</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Expected Delivery Date</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Status</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Ship Order</TableHead>
               </TableRow>
@@ -381,6 +385,9 @@ export function ShipmentQueueTable() {
                  shipmentQueueLeads.map(lead => {
                    const isRepeat = lead.orderNumber > 1;
                    const status = getStatus(lead);
+                   const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
+                   const daysOverdue = differenceInDays(new Date(), deliveryDate);
+
                    return (
                       <TableRow key={lead.id}>
                         <TableCell className="text-xs">
@@ -463,6 +470,10 @@ export function ShipmentQueueTable() {
                            )}
                         </TableCell>
                         <TableCell className="text-xs">{lead.courier}</TableCell>
+                        <TableCell className="text-xs text-center">
+                           {formatDateTime(deliveryDate.toISOString()).dateTimeShort}
+                           {daysOverdue > 0 && <div className="text-red-500 font-medium">({daysOverdue} days overdue)</div>}
+                        </TableCell>
                         <TableCell className="text-xs text-center">
                           <Badge variant={status.variant} className={status.className}>{status.text}</Badge>
                         </TableCell>
@@ -549,3 +560,4 @@ export function ShipmentQueueTable() {
     </>
   );
 }
+

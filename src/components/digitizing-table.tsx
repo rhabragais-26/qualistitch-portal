@@ -166,7 +166,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const [finalLogoEmb, setFinalLogoEmb] = useState<(FileObject | null)[]>([null]);
   const [finalBackDesignEmb, setFinalBackDesignEmb] = useState<(FileObject | null)[]>([null]);
   const [finalLogoDst, setFinalLogoDst] = useState<(FileObject | null)[]>([null]);
-  const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([null]);
+  const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([]);
   const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
   const [sequenceLogo, setSequenceLogo] = useState<(FileObject | null)[]>([null]);
   const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
@@ -682,7 +682,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                 </Button>)}
                           </div>
                       ))}
-                      <Button variant="outline" size="sm" onClick={() => addFile(finalLogoEmb, setFinalLogoEmb)} className="h-7 mt-2">
+                      <Button variant="outline" size="sm" onClick={() => addFile(finalLogoEmb, setFinalLogoEmb)} className="h-7">
                           <PlusCircle className="mr-2 h-4 w-4" /> Add
                       </Button>
                   </div>
@@ -699,11 +699,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                               </Button>)}
                         </div>
                       ))}
-                      <Button variant="outline" size="sm" onClick={() => addFile(finalBackDesignEmb, setFinalBackDesignEmb)} className="h-7 mt-2">
+                      <Button variant="outline" size="sm" onClick={() => addFile(finalBackDesignEmb, setFinalBackDesignEmb)} className="h-7">
                             <PlusCircle className="mr-2 h-4 w-4" /> Add
                         </Button>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 mt-4">
                     <Label>Logo (DST)</Label>
                       {finalLogoDst.map((file, index) => (
                          <div key={index} className="flex items-center gap-2">
@@ -720,7 +720,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                         <PlusCircle className="mr-2 h-4 w-4" /> Add
                       </Button>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 mt-4">
                     <Label>Back Design (DST)</Label>
                        {finalBackDesignDst.map((file, index) => (
                          <div key={index} className="flex items-center gap-2">
