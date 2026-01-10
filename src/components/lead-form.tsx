@@ -1,3 +1,4 @@
+
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -193,6 +194,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [customerStatus, setCustomerStatus] = useState<'New' | 'Repeat' | null>(null);
   const [orderCount, setOrderCount] = useState(0);
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [manualStatus, setManualStatus] = useState<'New' | 'Repeat' | null>(null);
+  const [manualOrderCount, setManualOrderCount] = useState(0);
+  const [manualTotalQuantity, setManualTotalQuantity] = useState(0);
 
   const citiesAndMunicipalities = useMemo(() => {
     return locations.provinces.flatMap(province =>
@@ -251,7 +256,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     setValue('barangay', lead.barangay ? toTitleCase(lead.barangay) : '', { shouldDirty: true });
     setValue('city', lead.city ? toTitleCase(lead.city) : '', { shouldDirty: true });
     setValue('province', lead.province ? toTitleCase(lead.province) : '', { shouldDirty: true });
-
+    setManualStatus(null);
     setCustomerSuggestions([]);
     setCompanySuggestions([]);
     setCitySuggestions([]);
@@ -280,6 +285,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   useEffect(() => {
     if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
         setSelectedLead(null);
+        setManualStatus(null); // Reset manual status if name changes
     }
   }, [customerNameValue, selectedLead]);
 
@@ -287,9 +293,16 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     if (!customerNameValue) {
       setCustomerStatus(null);
       setOrderCount(0);
+      setManualStatus(null);
       return;
     }
     
+    if (manualStatus === 'Repeat') {
+      setCustomerStatus('Repeat');
+      setOrderCount(manualOrderCount);
+      return;
+    }
+
     const matchingLeads = leads?.filter(
       (lead) => lead.customerName.toLowerCase() === customerNameValue.toLowerCase()
     ) || [];
@@ -301,7 +314,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       setCustomerStatus('New');
       setOrderCount(0);
     }
-  }, [customerNameValue, leads]);
+  }, [customerNameValue, leads, manualStatus, manualOrderCount]);
 
 
   useEffect(() => {
@@ -443,6 +456,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       orders: [],
     });
     setSelectedLead(null);
+    setManualStatus(null);
   }
 
   const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
@@ -592,6 +606,15 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       )
     );
   };
+  
+  const handleSaveStatus = (status: 'New' | 'Repeat', count: number, totalQty: number) => {
+    setManualStatus(status);
+    if (status === 'Repeat') {
+        setManualOrderCount(count);
+        setManualTotalQuantity(totalQty);
+    }
+    setIsStatusDialogOpen(false);
+  };
 
   const concatenatedAddress = [houseStreetValue, barangayValue, cityValue, provinceValue].filter(Boolean).join(', ');
 
@@ -610,27 +633,29 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                   {customerStatus && (
                     <div className={cn("animate-in fade-in-down flex items-center gap-2")}>
                       {customerStatus === 'Repeat' ? (
-                         <>
-                         <StatusBanner
-                            text="Repeat Buyer"
-                            backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
-                            textColorClassName="text-yellow-900 font-bold"
-                            borderClassName="border-yellow-500"
-                        />
-                        {orderCount > 0 && (
+                         <div onClick={() => setIsStatusDialogOpen(true)} className="cursor-pointer">
+                            <StatusBanner
+                                text="Repeat Buyer"
+                                backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
+                                textColorClassName="text-yellow-900 font-bold"
+                                borderClassName="border-yellow-500"
+                            />
+                         </div>
+                      ) : (
+                        <div onClick={() => setIsStatusDialogOpen(true)} className="cursor-pointer">
+                            <StatusBanner
+                            text="New Customer"
+                            backgroundColor="#FFFFFF"
+                            textColorClassName="text-black font-bold"
+                            borderClassName="shining-black-border"
+                            />
+                        </div>
+                      )}
+                       {customerStatus === 'Repeat' && orderCount > 0 && (
                           <div className="flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-black text-xs font-bold">
                             {orderCount}
                           </div>
                         )}
-                        </>
-                      ) : (
-                        <StatusBanner
-                          text="New Customer"
-                          backgroundColor="#FFFFFF"
-                          textColorClassName="text-black font-bold"
-                          borderClassName="shining-black-border"
-                        />
-                      )}
                     </div>
                   )}
                 </div>
@@ -1005,6 +1030,83 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
         </Form>
       </CardContent>
     </Card>
+     <SetCustomerStatusDialog
+        isOpen={isStatusDialogOpen}
+        onClose={() => setIsStatusDialogOpen(false)}
+        currentStatus={customerStatus || 'New'}
+        onSave={handleSaveStatus}
+     />
     </>
   );
 }
+
+function SetCustomerStatusDialog({
+    isOpen,
+    onClose,
+    currentStatus,
+    onSave,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    currentStatus: 'New' | 'Repeat';
+    onSave: (status: 'New' | 'Repeat', count: number, totalQty: number) => void;
+}) {
+    const [status, setStatus] = useState<'New' | 'Repeat'>(currentStatus);
+    const [orderCount, setOrderCount] = useState(0);
+    const [totalQuantity, setTotalQuantity] = useState(0);
+
+    const handleSaveClick = () => {
+        onSave(status, orderCount, totalQuantity);
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Set Customer Category</DialogTitle>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                    <RadioGroup value={status} onValueChange={(v) => setStatus(v as 'New' | 'Repeat')}>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="New" id="status-new" />
+                            <Label htmlFor="status-new">New Customer</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Repeat" id="status-repeat" />
+                            <Label htmlFor="status-repeat">Repeat Buyer</Label>
+                        </div>
+                    </RadioGroup>
+                    {status === 'Repeat' && (
+                        <div className="space-y-4 pl-6 animate-in fade-in-50">
+                            <div className="grid grid-cols-2 gap-4 items-center">
+                                <Label htmlFor="order-count">No of Times Ordered Before</Label>
+                                <Input
+                                    id="order-count"
+                                    type="number"
+                                    value={orderCount}
+                                    onChange={(e) => setOrderCount(parseInt(e.target.value) || 0)}
+                                    className="w-24"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 items-center">
+                                <Label htmlFor="total-quantity">Total Quantity Ordered Before</Label>
+                                <Input
+                                    id="total-quantity"
+                                    type="number"
+                                    value={totalQuantity}
+                                    onChange={(e) => setTotalQuantity(parseInt(e.target.value) || 0)}
+                                    className="w-24"
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                    <Button onClick={handleSaveClick}>Save</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
