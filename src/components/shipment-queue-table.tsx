@@ -43,6 +43,7 @@ type Lead = {
   orders: Order[];
   submissionDateTime: string;
   isEndorsedToLogistics?: boolean;
+  isSalesAuditRequested?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -112,6 +113,27 @@ export function ShipmentQueueTable() {
             variant: "destructive",
             title: "Action Failed",
             description: e.message || "Could not complete the disapproval process.",
+        });
+    }
+  };
+
+  const handleRequestSalesAudit = async (lead: Lead) => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', lead.id);
+    try {
+        await updateDoc(leadDocRef, {
+            isSalesAuditRequested: true,
+        });
+        toast({
+            title: 'Sales Audit Requested',
+            description: `Order for J.O. ${formatJoNumber(lead.joNumber)} has been sent for sales audit.`,
+        });
+    } catch (e: any) {
+        console.error("Error requesting sales audit:", e);
+        toast({
+            variant: "destructive",
+            title: "Request Failed",
+            description: e.message || "Could not request sales audit.",
         });
     }
   };
@@ -211,7 +233,9 @@ export function ShipmentQueueTable() {
                             </div>
                         </TableCell>
                         <TableCell className="text-center">
-                          <Button size="sm" className="h-7 text-xs font-bold">Request Audit from Sales</Button>
+                           <Button size="sm" className="h-7 text-xs font-bold" onClick={() => handleRequestSalesAudit(lead)} disabled={lead.isSalesAuditRequested}>
+                              {lead.isSalesAuditRequested ? 'Requested' : 'Request Audit from Sales'}
+                          </Button>
                         </TableCell>
                         <TableCell className="text-xs">{lead.courier}</TableCell>
                         <TableCell className="text-xs">Pending</TableCell>

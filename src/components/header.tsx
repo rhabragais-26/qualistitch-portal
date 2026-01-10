@@ -25,6 +25,7 @@ import {
   FileText,
   TrendingUp,
   Cog,
+  FileCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -146,7 +147,7 @@ export function Header({
             {isClient && (
               <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/', '/records', '/job-order', '/reports']))}>
+                  <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/', '/records', '/job-order', '/reports', '/sales/audit-for-shipment']))}>
                     <TrendingUp className="mr-2" />
                     Sales
                     <ChevronDown className="ml-2 h-4 w-4" />
@@ -164,6 +165,10 @@ export function Header({
                    <DropdownMenuItem onClick={() => handleNavigation('/job-order')}>
                     <ClipboardList className="mr-2" />
                     Job Order
+                  </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => handleNavigation('/sales/audit-for-shipment')}>
+                    <FileCheck className="mr-2" />
+                    Audit for Shipment
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/reports')}>
                     <LineChart className="mr-2" />
@@ -344,11 +349,11 @@ export function Header({
                 </div>
             </div>
              <div className="grid grid-cols-2 gap-3">
-               <div className="grid gap-1">
+               <div className="grid gap-1 col-span-2">
                 <Label htmlFor="first-name" className="text-xs">First Name</Label>
                 <Input id="first-name" placeholder="Juan" className="text-xs h-9" />
               </div>
-              <div className="grid gap-1">
+              <div className="grid gap-1 col-span-2">
                 <Label htmlFor="last-name" className="text-xs">Last Name</Label>
                 <Input id="last-name" placeholder="Dela Cruz" className="text-xs h-9" />
               </div>
