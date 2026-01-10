@@ -364,10 +364,10 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                       {lead.orders.map((order, orderIndex) => (
                           <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex === 0 ? "border-t-2 border-black" : ""}>
                               {orderIndex === 0 && (
-                                  <TableCell rowSpan={numOrders + 1} className="font-medium text-xs align-top py-3 text-black border-b-2 border-black">
+                                  <TableCell rowSpan={numOrders + 1} className="font-medium text-xs align-middle py-3 text-black border-b-2 border-black text-center">
                                       <Collapsible>
                                           <CollapsibleTrigger asChild>
-                                              <div className="flex items-center cursor-pointer">
+                                              <div className="flex items-center justify-center cursor-pointer">
                                                   <span>{lead.customerName}</span>
                                                   <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
                                               </div>
@@ -381,7 +381,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                           <TooltipProvider>
                                             <Tooltip>
                                               <TooltipTrigger asChild>
-                                                <div className="flex items-center gap-1.5 cursor-pointer mt-1">
+                                                <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
                                                   <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                                   <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
                                                     {lead.orderNumber}
@@ -399,12 +399,12 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                   </TableCell>
                               )}
                               {orderIndex === 0 && (
-                                  <TableCell rowSpan={numOrders + 1} className="text-xs align-top py-3 text-black border-b-2 border-black text-center">
+                                  <TableCell rowSpan={numOrders + 1} className="text-xs align-middle py-3 text-black border-b-2 border-black text-center">
                                     <div>{formatJoNumber(lead.joNumber)}</div>
                                   </TableCell>
                               )}
                               {orderIndex === 0 && (
-                                  <TableCell rowSpan={numOrders + 1} className="align-top py-3 border-b-2 border-black text-center">
+                                  <TableCell rowSpan={numOrders + 1} className="align-middle py-3 border-b-2 border-black text-center">
                                   <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
                                   </TableCell>
                               )}
@@ -478,3 +478,6 @@ export { ItemPreparationTableMemo as ItemPreparationTable };
 
 
 
+
+
+    
