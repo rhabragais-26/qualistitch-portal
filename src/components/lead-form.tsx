@@ -630,7 +630,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                <div className="flex items-center gap-4 mt-2">
                 <CardDescription className="text-gray-600">Fill in the details below to create a record for customer and order.</CardDescription>
                 <div className="h-8">
-                  {customerStatus && (
+                  {customerStatus && customerNameValue && (
                     <div className={cn("animate-in fade-in-down flex items-center gap-2")}>
                       {customerStatus === 'Repeat' ? (
                          <div onClick={() => setIsStatusDialogOpen(true)} className="cursor-pointer">
@@ -679,7 +679,14 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
                         </div>
                         <FormControl>
-                          <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} />
+                          <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} 
+                            onChange={(e) => {
+                                field.onChange(e);
+                                if (manualStatus) {
+                                    setManualStatus(null);
+                                }
+                            }}
+                          />
                         </FormControl>
                         {customerSuggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
@@ -1066,7 +1073,7 @@ function SetCustomerStatusDialog({
                     <DialogTitle>Set Customer Category</DialogTitle>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
-                    <RadioGroup value={status} onValueChange={(v) => setStatus(v as 'New' | 'Repeat')}>
+                    <RadioGroup value={status} onValueChange={(v) => setStatus(v as 'New' | 'Repeat')} className="flex justify-center gap-8">
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="New" id="status-new" />
                             <Label htmlFor="status-new" className="text-base">New Customer</Label>
@@ -1077,8 +1084,8 @@ function SetCustomerStatusDialog({
                         </div>
                     </RadioGroup>
                     {status === 'Repeat' && (
-                        <div className="space-y-4 pl-6 pt-2 animate-in fade-in-50">
-                            <div className="grid grid-cols-2 gap-4 items-center">
+                        <div className="space-y-4 pt-4 animate-in fade-in-50 flex flex-col items-center">
+                            <div className="grid grid-cols-2 gap-4 items-center w-full max-w-sm">
                                 <Label htmlFor="order-count" className="text-sm text-right">No of Times Ordered Before</Label>
                                 <Input
                                     id="order-count"
@@ -1088,7 +1095,7 @@ function SetCustomerStatusDialog({
                                     className="w-24 text-sm h-9"
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4 items-center">
+                            <div className="grid grid-cols-2 gap-4 items-center w-full max-w-sm">
                                 <Label htmlFor="total-quantity" className="text-sm text-right">Total Quantity Ordered Before</Label>
                                 <Input
                                     id="total-quantity"
