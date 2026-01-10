@@ -36,6 +36,7 @@ import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
 type NamedOrder = {
   name: string;
@@ -146,6 +147,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [overdueFilter, setOverdueFilter] = useState('All');
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField; } | null>(null);
+  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
+
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
@@ -528,11 +531,25 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
       return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
     }
   }, []);
+
+  const getContactDisplay = useCallback((lead: Lead) => {
+    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
+    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+
+    if (mobile && landline) {
+      return `${mobile} / ${landline}`;
+    }
+    return mobile || landline || null;
+  }, []);
+
+  const toggleCustomerDetails = useCallback((leadId: string) => {
+    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
+  }, [openCustomerDetails]);
   
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
     // First, group orders and calculate total quantities for each customer
     leads.forEach(lead => {
@@ -542,7 +559,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalQuantity += orderQuantity;
+      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
     });
   
     const enrichedLeads: EnrichedLead[] = [];
@@ -1078,26 +1095,39 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                   <React.Fragment key={lead.id}>
                     <TableRow>
                       <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
-                        {lead.customerName}
-                        {isRepeat ? (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center justify-center gap-1.5 cursor-pointer">
-                                    <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                    <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                      {lead.orderNumber}
-                                    </span>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ) : (
-                            <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                        )}
+                         <div className="flex items-start">
+                            <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
+                                {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </Button>
+                            <div className='flex flex-col'>
+                                <span className="font-medium">{lead.customerName}</span>
+                                {isRepeat ? (
+                                    <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                        <div className="flex items-center gap-1.5 cursor-pointer">
+                                            <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                            <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                            {lead.orderNumber}
+                                            </span>
+                                        </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                        <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    </TooltipProvider>
+                                ) : (
+                                    <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                                )}
+                                {openCustomerDetails === lead.id && (
+                                    <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
+                                    {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                                    {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                       </TableCell>
                       <TableCell className="text-xs align-middle py-3 text-black text-center">{lead.salesRepresentative}</TableCell>
                       <TableCell className="align-middle py-3 text-center">
@@ -1351,6 +1381,3 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
-
-    
-

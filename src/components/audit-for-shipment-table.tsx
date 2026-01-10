@@ -23,8 +23,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Check } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
+import { Input } from './ui/input';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
 type Order = {
   productType: string;
@@ -36,6 +38,9 @@ type Order = {
 type Lead = {
   id: string;
   customerName: string;
+  companyName?: string;
+  contactNumber?: string;
+  landlineNumber?: string;
   joNumber?: number;
   orders: Order[];
   submissionDateTime: string;
@@ -56,6 +61,23 @@ export function AuditForShipmentTable() {
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads } = useCollection<Lead>(leadsQuery);
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [joNumberSearch, setJoNumberSearch] = useState('');
+  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
+
+  const toggleCustomerDetails = useCallback((leadId: string) => {
+    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
+  }, [openCustomerDetails]);
+
+  const getContactDisplay = useCallback((lead: Lead) => {
+    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
+    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+
+    if (mobile && landline) {
+      return `${mobile} / ${landline}`;
+    }
+    return mobile || landline || null;
+  }, []);
 
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
@@ -136,16 +158,54 @@ export function AuditForShipmentTable() {
 
   const auditQueueLeads = useMemo(() => {
     if(!processedLeads) return [];
-    return processedLeads.filter(lead => lead.isSalesAuditRequested);
-  }, [processedLeads]);
+    
+    let filteredLeads = processedLeads.filter(lead => lead.isSalesAuditRequested);
+
+    if (searchTerm) {
+        const lowercasedSearchTerm = searchTerm.toLowerCase();
+        filteredLeads = filteredLeads.filter(lead => 
+            lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
+            (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
+            (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(lowercasedSearchTerm)) ||
+            (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(lowercasedSearchTerm))
+        );
+    }
+    
+    if (joNumberSearch) {
+        const lowercasedJoSearch = joNumberSearch.toLowerCase();
+        filteredLeads = filteredLeads.filter(lead => {
+            if (!lead.joNumber) return false;
+            const fullJoNumber = formatJoNumber(lead.joNumber).toLowerCase();
+            return fullJoNumber.includes(lowercasedJoSearch) || lead.joNumber.toString().padStart(5, '0').slice(-5) === lowercasedJoSearch.slice(-5);
+        });
+    }
+
+    return filteredLeads;
+  }, [processedLeads, searchTerm, joNumberSearch, formatJoNumber]);
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
         <CardTitle className="text-black">Audit for Shipment</CardTitle>
-        <CardDescription className="text-gray-600">
-          Review orders before they are finalized for shipment.
-        </CardDescription>
+        <div className="flex justify-between items-center">
+            <CardDescription className="text-gray-600">
+              Review orders before they are finalized for shipment.
+            </CardDescription>
+            <div className="flex items-center gap-4">
+                <Input
+                    placeholder="Search J.O. No..."
+                    value={joNumberSearch}
+                    onChange={(e) => setJoNumberSearch(e.target.value)}
+                    className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+                <Input
+                    placeholder="Search Customer, Company, Contact..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+            </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="border rounded-md">
@@ -165,26 +225,39 @@ export function AuditForShipmentTable() {
                    return (
                       <TableRow key={lead.id}>
                         <TableCell className="text-xs">
-                          {lead.customerName}
-                          {isRepeat ? (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-1.5 cursor-pointer">
-                                    <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                    <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                      {lead.orderNumber}
-                                    </span>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ) : (
-                            <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                          )}
+                          <div className="flex items-start">
+                            <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
+                              {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </Button>
+                            <div className='flex flex-col'>
+                              <span className="font-medium">{lead.customerName}</span>
+                              {isRepeat ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="flex items-center gap-1.5 cursor-pointer">
+                                        <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                        <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                          {lead.orderNumber}
+                                        </span>
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : (
+                                <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                              )}
+                              {openCustomerDetails === lead.id && (
+                                <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
+                                  {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                                  {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell className="text-xs">{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className="text-center">
