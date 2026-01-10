@@ -285,10 +285,10 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   useEffect(() => {
     if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
         setSelectedLead(null);
-        setManualStatus(null); // Reset manual status if name changes
+        setManualStatus(null);
     }
   }, [customerNameValue, selectedLead]);
-
+  
   useEffect(() => {
     if (!customerNameValue) {
       setCustomerStatus(null);
@@ -296,20 +296,17 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       setManualStatus(null);
       return;
     }
-    
-    if (manualStatus === 'Repeat') {
-      setCustomerStatus('Repeat');
-      setOrderCount(manualOrderCount);
-      return;
-    }
 
     const matchingLeads = leads?.filter(
       (lead) => lead.customerName.toLowerCase() === customerNameValue.toLowerCase()
     ) || [];
+    
+    const dbOrderCount = matchingLeads.length;
+    const totalOrderCount = dbOrderCount + (manualStatus === 'Repeat' ? manualOrderCount : 0);
 
-    if (matchingLeads.length > 0) {
+    if (totalOrderCount > 0) {
       setCustomerStatus('Repeat');
-      setOrderCount(matchingLeads.length);
+      setOrderCount(totalOrderCount);
     } else {
       setCustomerStatus('New');
       setOrderCount(0);
@@ -1124,4 +1121,5 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
+
 
