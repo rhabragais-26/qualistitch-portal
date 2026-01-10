@@ -325,7 +325,6 @@ export function ShipmentQueueTable() {
                 <TableHead className="text-white font-bold text-xs">Courier</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Status</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Ship</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -419,11 +418,6 @@ export function ShipmentQueueTable() {
                               Ship
                             </Button>
                           )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button variant="ghost" size="icon" onClick={() => setLeadToReset(lead)} className="h-8 w-8 text-gray-500 hover:text-gray-700">
-                            <RefreshCcw className="h-4 w-4" />
-                          </Button>
                         </TableCell>
                       </TableRow>
                    )
