@@ -26,6 +26,7 @@ import {
   TrendingUp,
   Cog,
   FileCheck,
+  PackageSearch,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -259,7 +260,7 @@ export function Header({
                 </DropdownMenuTrigger>
                  <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => handleNavigation('/logistics/shipment-queue')}>
-                        <Ship className="mr-2" />
+                        <PackageSearch className="mr-2" />
                         Shipment Queue
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/logistics/summary')}>
