@@ -1,4 +1,3 @@
-
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -193,14 +192,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [isCalculatorDragging, setIsCalculatorDragging] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [customerStatus, setCustomerStatus] = useState<'New' | 'Repeat' | null>(null);
-  const [isCustomerNameFocused, setIsCustomerNameFocused] = useState(false);
-  
-  // State for manual override dialog
-  const [isManualStatusDialogOpen, setIsManualStatusDialogOpen] = useState(false);
-  const [manualStatus, setManualStatus] = useState<'New' | 'Repeat' | null>(null);
-  const [manualOrderCount, setManualOrderCount] = useState<number | string>('');
-  const [manualTotalQuantity, setManualTotalQuantity] = useState<number | string>('');
-
 
   const citiesAndMunicipalities = useMemo(() => {
     return locations.provinces.flatMap(province =>
@@ -264,11 +255,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     setCompanySuggestions([]);
     setCitySuggestions([]);
     setBarangaySuggestions([]);
-
-    // Auto-set repeat buyer status and order count
-    const previousOrdersCount = leads?.filter(l => l.customerName.toLowerCase() === lead.customerName.toLowerCase()).length || 0;
-    setCustomerStatus('Repeat');
-    setManualOrderCount(previousOrdersCount);
   };
 
   const handleCitySuggestionClick = (city: { name: string; province: string }) => {
@@ -293,23 +279,12 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   useEffect(() => {
     if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
         setSelectedLead(null);
-        setManualStatus(null);
-        setManualOrderCount('');
-        setManualTotalQuantity('');
     }
   }, [customerNameValue, selectedLead]);
 
   useEffect(() => {
     if (!customerNameValue) {
       setCustomerStatus(null);
-      return;
-    }
-    if (manualStatus === 'Repeat') {
-      setCustomerStatus('Repeat');
-      return;
-    }
-    if (manualStatus === 'New') {
-      setCustomerStatus('New');
       return;
     }
     if (selectedLead) {
@@ -320,7 +295,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       (lead) => lead.customerName.toLowerCase() === customerNameValue.toLowerCase()
     );
     setCustomerStatus(isExisting ? 'Repeat' : 'New');
-  }, [customerNameValue, selectedLead, leads, manualStatus]);
+  }, [customerNameValue, selectedLead, leads]);
 
 
   useEffect(() => {
@@ -462,9 +437,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       orders: [],
     });
     setSelectedLead(null);
-    setManualStatus(null);
-    setManualOrderCount('');
-    setManualTotalQuantity('');
   }
 
   const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
@@ -614,11 +586,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       )
     );
   };
-  
-  const handleManualStatusSave = () => {
-    setCustomerStatus(manualStatus);
-    setIsManualStatusDialogOpen(false);
-  }
 
   const concatenatedAddress = [houseStreetValue, barangayValue, cityValue, provinceValue].filter(Boolean).join(', ');
 
@@ -634,33 +601,23 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                <div className="flex items-center gap-4 mt-2">
                 <CardDescription className="text-gray-600">Fill in the details below to create a record for customer and order.</CardDescription>
                 <div className="h-8">
-                  {!isCustomerNameFocused && customerStatus && (
-                     <div 
-                        className={cn("animate-in fade-in-down", customerStatus === 'New' && 'cursor-pointer')}
-                        onClick={() => customerStatus === 'New' && setIsManualStatusDialogOpen(true)}
-                     >
-                        {customerStatus === 'Repeat' ? (
-                            <div className="flex items-center gap-2">
-                               <StatusBanner
-                                  text="Repeat Buyer"
-                                  backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
-                                  textColorClassName="text-yellow-900 font-bold"
-                                  borderClassName="border-yellow-500"
-                               />
-                               {manualOrderCount && (
-                                 <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                   {manualOrderCount}
-                                 </div>
-                               )}
-                           </div>
-                        ) : (
-                          <StatusBanner
-                            text="New Customer"
-                            backgroundColor="#FFFFFF"
-                            textColorClassName="text-black font-bold"
-                            borderClassName="shining-black-border"
-                          />
-                        )}
+                  {customerStatus && (
+                    <div className={cn("animate-in fade-in-down")}>
+                      {customerStatus === 'Repeat' ? (
+                         <StatusBanner
+                            text="Repeat Buyer"
+                            backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
+                            textColorClassName="text-yellow-900 font-bold"
+                            borderClassName="border-yellow-500"
+                        />
+                      ) : (
+                        <StatusBanner
+                          text="New Customer"
+                          backgroundColor="#FFFFFF"
+                          textColorClassName="text-black font-bold"
+                          borderClassName="shining-black-border"
+                        />
+                      )}
                     </div>
                   )}
                 </div>
@@ -684,7 +641,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
                         </div>
                         <FormControl>
-                          <Input {...field} autoComplete="off" onFocus={() => setIsCustomerNameFocused(true)} onBlur={() => { field.onBlur(); setIsCustomerNameFocused(false); setTimeout(() => setCustomerSuggestions([]), 150); }} />
+                          <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} />
                         </FormControl>
                         {customerSuggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
@@ -1035,60 +992,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
         </Form>
       </CardContent>
     </Card>
-    <Dialog open={isManualStatusDialogOpen} onOpenChange={setIsManualStatusDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-                <DialogTitle>Set Customer Category</DialogTitle>
-                <DialogDescription>
-                    Manually set the customer status if the automatic detection is incorrect.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-                <RadioGroup onValueChange={(v) => setManualStatus(v as 'New' | 'Repeat' | null)} defaultValue={manualStatus || 'New'}>
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="New" id="status-new" />
-                        <Label htmlFor="status-new">New Customer</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Repeat" id="status-repeat" />
-                        <Label htmlFor="status-repeat">Repeat Buyer</Label>
-                    </div>
-                </RadioGroup>
-                {manualStatus === 'Repeat' && (
-                    <div className="space-y-2 pt-4 animate-in fade-in-50">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="order-count">No. of Times Ordered Before</Label>
-                                <Input 
-                                    id="order-count" 
-                                    type="number" 
-                                    value={manualOrderCount} 
-                                    onChange={(e) => setManualOrderCount(e.target.value)}
-                                    className="mt-1"
-                                    placeholder="e.g., 3"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="total-quantity">Total Quantity Ordered Before</Label>
-                                <Input 
-                                    id="total-quantity" 
-                                    type="number" 
-                                    value={manualTotalQuantity}
-                                    onChange={(e) => setManualTotalQuantity(e.target.value)} 
-                                    className="mt-1"
-                                    placeholder="e.g., 50"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-            <DialogFooter>
-                 <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                 <Button type="button" onClick={handleManualStatusSave}>Save</Button>
-            </DialogFooter>
-        </DialogContent>
-    </Dialog>
     </>
   );
 }
