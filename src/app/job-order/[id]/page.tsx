@@ -100,8 +100,6 @@ export default function JobOrderPage() {
   // Helper to compare lead states to check for unsaved changes
   const isDirty = useMemo(() => {
     if (!fetchedLead || !lead) return false;
-    const originalLead = JSON.stringify(fetchedLead);
-    const currentLead = JSON.stringify({ ...lead, deliveryDate: deliveryDate ? deliveryDate.toISOString() : null });
     
     //This is a simplified dirty check. For complex nested objects, a more robust deep comparison library might be better.
     //We need to normalize parts of the object to avoid false positives.
@@ -122,8 +120,9 @@ export default function JobOrderPage() {
                     backText: o.design?.backText || false,
                 }
             })).sort((a,b) => a.productType.localeCompare(b.productType)),
-            layouts: (l.layouts || []).map(layout => ({
+            layouts: (l.layouts || []).map((layout, index) => ({
                 ...layout,
+                id: layout.id || `temp-${index}`, // Ensure layout has an id for sorting
                 namedOrders: (layout.namedOrders || []).sort((a,b) => a.name.localeCompare(b.name))
             })).sort((a,b) => a.id.localeCompare(b.id)),
         }
@@ -569,3 +568,5 @@ export default function JobOrderPage() {
     </div>
   );
 }
+
+    
