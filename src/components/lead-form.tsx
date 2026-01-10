@@ -77,6 +77,7 @@ import locations from '@/lib/ph-locations.json';
 import { Calculator } from './calculator';
 import { SizeChartDialog } from './size-chart-dialog';
 import { StatusBanner } from '@/components/ui/status-banner';
+import { Label } from './ui/label';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -194,6 +195,13 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [customerStatus, setCustomerStatus] = useState<'New' | 'Repeat' | null>(null);
   const [isCustomerNameFocused, setIsCustomerNameFocused] = useState(false);
   
+  // State for manual override dialog
+  const [isManualStatusDialogOpen, setIsManualStatusDialogOpen] = useState(false);
+  const [manualStatus, setManualStatus] = useState<'New' | 'Repeat' | null>(null);
+  const [manualOrderCount, setManualOrderCount] = useState<number | string>('');
+  const [manualTotalQuantity, setManualTotalQuantity] = useState<number | string>('');
+
+
   const citiesAndMunicipalities = useMemo(() => {
     return locations.provinces.flatMap(province =>
       province.municipalities.map(municipality => ({
@@ -285,6 +293,14 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   }, [customerNameValue, selectedLead]);
 
   useEffect(() => {
+    if (manualStatus === 'Repeat') {
+      setCustomerStatus('Repeat');
+      return;
+    }
+    if (manualStatus === 'New') {
+      setCustomerStatus('New');
+      return;
+    }
     if (!customerNameValue) {
       setCustomerStatus(null);
       return;
@@ -297,7 +313,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       (lead) => lead.customerName.toLowerCase() === customerNameValue.toLowerCase()
     );
     setCustomerStatus(isExisting ? 'Repeat' : 'New');
-  }, [customerNameValue, selectedLead, leads]);
+  }, [customerNameValue, selectedLead, leads, manualStatus]);
 
   useEffect(() => {
     if (customerNameValue && leads && !selectedLead) {
@@ -438,6 +454,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       orders: [],
     });
     setSelectedLead(null);
+    setManualStatus(null);
+    setManualOrderCount('');
+    setManualTotalQuantity('');
   }
 
   const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
@@ -587,6 +606,11 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       )
     );
   };
+  
+  const handleManualStatusSave = () => {
+    setManualStatus(manualStatus);
+    setIsManualStatusDialogOpen(false);
+  }
 
   const concatenatedAddress = [houseStreetValue, barangayValue, cityValue, provinceValue].filter(Boolean).join(', ');
 
@@ -602,7 +626,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                <div className="flex items-center gap-4 mt-2">
                 <CardDescription className="text-gray-600">Fill in the details below to create a record for customer and order.</CardDescription>
                 <div className="h-8">
-                  {customerStatus === 'Repeat' && (
+                  {customerStatus === 'Repeat' ? (
                     <div className="animate-in fade-in-down">
                        <StatusBanner
                         text="Repeat Buyer"
@@ -611,9 +635,8 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         borderClassName="border-yellow-500"
                        />
                     </div>
-                  )}
-                  {customerStatus === 'New' && !isCustomerNameFocused && (
-                    <div className="animate-in fade-in-down">
+                  ) : customerStatus === 'New' && !isCustomerNameFocused ? (
+                    <div className="animate-in fade-in-down cursor-pointer" onClick={() => setIsManualStatusDialogOpen(true)}>
                       <StatusBanner
                         text="New Customer"
                         backgroundColor="#FFFFFF"
@@ -621,7 +644,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                         borderClassName="shining-black-border"
                       />
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
           </div>
@@ -994,6 +1017,60 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
         </Form>
       </CardContent>
     </Card>
+    <Dialog open={isManualStatusDialogOpen} onOpenChange={setIsManualStatusDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Set Customer Status</DialogTitle>
+                <DialogDescription>
+                    Manually set the customer status if the automatic detection is incorrect.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+                <RadioGroup onValueChange={(v) => setManualStatus(v as 'New' | 'Repeat' | null)} defaultValue={manualStatus || 'New'}>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="New" id="status-new" />
+                        <Label htmlFor="status-new">New Customer</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="Repeat" id="status-repeat" />
+                        <Label htmlFor="status-repeat">Repeat Buyer</Label>
+                    </div>
+                </RadioGroup>
+                {manualStatus === 'Repeat' && (
+                    <div className="space-y-2 pt-4 animate-in fade-in-50">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="order-count">No. of Times Ordered</Label>
+                                <Input 
+                                    id="order-count" 
+                                    type="number" 
+                                    value={manualOrderCount} 
+                                    onChange={(e) => setManualOrderCount(e.target.value)}
+                                    className="mt-1"
+                                    placeholder="e.g., 3"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="total-quantity">Total Quantity Ordered</Label>
+                                <Input 
+                                    id="total-quantity" 
+                                    type="number" 
+                                    value={manualTotalQuantity}
+                                    onChange={(e) => setManualTotalQuantity(e.target.value)} 
+                                    className="mt-1"
+                                    placeholder="e.g., 50"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+            <DialogFooter>
+                 <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                 <Button type="button" onClick={handleManualStatusSave}>Save Status</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
     </>
   );
 }
