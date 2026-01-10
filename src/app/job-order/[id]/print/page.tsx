@@ -269,7 +269,7 @@ export default function JobOrderPrintPage() {
 
        {/* Layout Pages */}
       {layouts.map((layout, layoutIndex) => (
-        <div key={layout.id} className="p-10 mx-auto max-w-4xl printable-area print-page">
+        <div key={layout.id || `layout-${layoutIndex}`} className="p-10 mx-auto max-w-4xl printable-area print-page">
           <div className="text-left mb-4">
               <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{joNumber}</span> - Layout {layoutIndex + 1}</p>
           </div>
@@ -308,7 +308,7 @@ export default function JobOrderPrintPage() {
               </thead>
               <tbody>
                 {layout.namedOrders.map((order, orderIndex) => (
-                  <tr key={order.id}>
+                  <tr key={order.id || `named-order-${orderIndex}`}>
                     <td className="border border-black p-1 text-center">{orderIndex + 1}</td>
                     <td className="border border-black p-1">{order.name}</td>
                     <td className="border border-black p-1">{order.color}</td>
