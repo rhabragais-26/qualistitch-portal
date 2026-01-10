@@ -386,7 +386,20 @@ export function ShipmentQueueTable() {
                    const isRepeat = lead.orderNumber > 1;
                    const status = getStatus(lead);
                    const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
-                   const daysOverdue = differenceInDays(new Date(), deliveryDate);
+                   
+                   let daysOverdue: number | null = null;
+                   if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
+                       const shippedDate = new Date(lead.shippedTimestamp);
+                       const overdueDaysAtShipment = differenceInDays(shippedDate, deliveryDate);
+                       if (overdueDaysAtShipment > 0) {
+                           daysOverdue = overdueDaysAtShipment;
+                       }
+                   } else if (lead.shipmentStatus !== 'Shipped') {
+                       const currentOverdueDays = differenceInDays(new Date(), deliveryDate);
+                       if (currentOverdueDays > 0) {
+                           daysOverdue = currentOverdueDays;
+                       }
+                   }
 
                    return (
                       <TableRow key={lead.id}>
@@ -472,7 +485,7 @@ export function ShipmentQueueTable() {
                         <TableCell className="text-xs">{lead.courier}</TableCell>
                         <TableCell className="text-xs text-center">
                            {format(deliveryDate, "MMM dd, yyyy")}
-                           {daysOverdue > 0 && <div className="text-red-500 font-medium">({daysOverdue} days overdue)</div>}
+                           {daysOverdue !== null && daysOverdue > 0 && <div className="text-red-500 font-medium">({daysOverdue} days overdue)</div>}
                         </TableCell>
                         <TableCell className="text-xs text-center">
                           <Badge variant={status.variant} className={status.className}>{status.text}</Badge>
@@ -560,4 +573,3 @@ export function ShipmentQueueTable() {
     </>
   );
 }
-
