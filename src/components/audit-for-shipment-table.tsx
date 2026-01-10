@@ -23,10 +23,15 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Check, ChevronDown, ChevronUp } from 'lucide-react';
-import { formatDateTime } from '@/lib/utils';
+import { Check, ChevronDown, ChevronUp, CalendarIcon } from 'lucide-react';
+import { cn, formatDateTime } from '@/lib/utils';
 import { Input } from './ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Label } from './ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Calendar } from './ui/calendar';
+import { format } from 'date-fns';
 
 type Order = {
   productType: string;
@@ -49,12 +54,19 @@ type Lead = {
   salesAuditCompleteTimestamp?: string;
   isWaybillPrinted?: boolean;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  adjustedDeliveryDate?: string | null;
 }
 
 type EnrichedLead = Lead & {
   orderNumber: number;
   totalCustomerQuantity: number;
 };
+
+type AdjustmentState = {
+    status: 'Yes' | 'No' | 'NotSelected';
+    date?: Date;
+    isCalendarOpen?: boolean;
+}
 
 export function AuditForShipmentTable() {
   const firestore = useFirestore();
@@ -64,10 +76,21 @@ export function AuditForShipmentTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
+  const [adjustmentStates, setAdjustmentStates] = useState<Record<string, AdjustmentState>>({});
 
   const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
   }, [openCustomerDetails]);
+
+  const handleAdjustmentStateChange = useCallback((leadId: string, updates: Partial<AdjustmentState>) => {
+    setAdjustmentStates(prev => ({
+        ...prev,
+        [leadId]: {
+            ...prev[leadId] || { status: 'NotSelected', isCalendarOpen: false },
+            ...updates,
+        }
+    }));
+  }, []);
 
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
@@ -104,13 +127,33 @@ export function AuditForShipmentTable() {
 
   const handleProceedToShipment = async (lead: Lead) => {
     if (!firestore) return;
+
+    const leadAdjustmentState = adjustmentStates[lead.id];
+    if (!leadAdjustmentState || leadAdjustmentState.status === 'NotSelected') {
+        toast({ variant: 'destructive', title: 'Action Required', description: 'Please select an option for Delivery Date Adjustment.'});
+        return;
+    }
+
+    if(leadAdjustmentState.status === 'Yes' && !leadAdjustmentState.date) {
+        toast({ variant: 'destructive', title: 'Action Required', description: 'Please select an adjusted delivery date.'});
+        return;
+    }
+
     const leadDocRef = doc(firestore, 'leads', lead.id);
     try {
-      await updateDoc(leadDocRef, {
+      const updateData: any = {
         isSalesAuditRequested: false, // Remove from audit queue
         isSalesAuditComplete: true,
         salesAuditCompleteTimestamp: new Date().toISOString(),
-      });
+      };
+
+      if (leadAdjustmentState.status === 'Yes' && leadAdjustmentState.date) {
+        updateData.adjustedDeliveryDate = leadAdjustmentState.date.toISOString();
+      } else if (leadAdjustmentState.status === 'No') {
+        updateData.adjustedDeliveryDate = null;
+      }
+
+      await updateDoc(leadDocRef, updateData);
       toast({
         title: 'Audit Complete',
         description: `J.O. ${formatJoNumber(lead.joNumber)} is now ready for shipment.`,
@@ -212,9 +255,10 @@ export function AuditForShipmentTable() {
           <Table>
             <TableHeader className="bg-neutral-800">
               <TableRow>
-                <TableHead className="text-white font-bold text-xs">Customer</TableHead>
-                <TableHead className="text-white font-bold text-xs">J.O. No.</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Customer</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Waybill Printed</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Delivery Date Adjustment</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -222,14 +266,16 @@ export function AuditForShipmentTable() {
               {auditQueueLeads && auditQueueLeads.length > 0 ? (
                  auditQueueLeads.map(lead => {
                    const isRepeat = lead.orderNumber > 1;
+                   const leadAdjustmentState = adjustmentStates[lead.id] || { status: 'NotSelected' };
+                   const isProceedDisabled = !lead.isWaybillPrinted || leadAdjustmentState.status === 'NotSelected' || (leadAdjustmentState.status === 'Yes' && !leadAdjustmentState.date);
                    return (
                       <TableRow key={lead.id}>
-                        <TableCell className="text-xs">
-                          <div className="flex items-start">
+                        <TableCell className="text-xs text-center">
+                          <div className="flex items-center justify-center">
                             <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
                               {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                             </Button>
-                            <div className='flex flex-col'>
+                            <div className='flex flex-col items-center'>
                               <span className="font-medium">{lead.customerName}</span>
                               {isRepeat ? (
                                 <TooltipProvider>
@@ -259,7 +305,7 @@ export function AuditForShipmentTable() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-xs">{formatJoNumber(lead.joNumber)}</TableCell>
+                        <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className="text-center">
                             <Checkbox
                                 checked={lead.isWaybillPrinted}
@@ -267,8 +313,50 @@ export function AuditForShipmentTable() {
                              />
                         </TableCell>
                         <TableCell className="text-center">
+                            <div className="flex flex-col items-center gap-2">
+                                <RadioGroup
+                                    value={leadAdjustmentState.status}
+                                    onValueChange={(status: 'Yes' | 'No') => handleAdjustmentStateChange(lead.id, { status })}
+                                    className="flex gap-4"
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="Yes" id={`yes-${lead.id}`} />
+                                        <Label htmlFor={`yes-${lead.id}`}>Yes</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="No" id={`no-${lead.id}`} />
+                                        <Label htmlFor={`no-${lead.id}`}>No</Label>
+                                    </div>
+                                </RadioGroup>
+                                {leadAdjustmentState.status === 'Yes' && (
+                                    <Popover
+                                        open={leadAdjustmentState.isCalendarOpen}
+                                        onOpenChange={(isOpen) => handleAdjustmentStateChange(lead.id, { isCalendarOpen: isOpen })}
+                                    >
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                className={cn("w-[240px] justify-start text-left font-normal", !leadAdjustmentState.date && "text-muted-foreground")}
+                                            >
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {leadAdjustmentState.date ? format(leadAdjustmentState.date, "PPP") : <span>Pick a date</span>}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0">
+                                            <Calendar
+                                                mode="single"
+                                                selected={leadAdjustmentState.date}
+                                                onSelect={(date) => handleAdjustmentStateChange(lead.id, { date: date, isCalendarOpen: false })}
+                                                initialFocus
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                )}
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-center">
                           {lead.isSalesAuditComplete ? (
-                            <div className="flex items-center justify-center text-sm text-green-600 font-semibold">
+                            <div className="flex flex-col items-center justify-center text-sm text-green-600 font-semibold">
                                 <Check className="mr-2 h-4 w-4" />
                                 Done Audit
                                 {lead.salesAuditCompleteTimestamp && <div className="text-[10px] text-gray-500 ml-2">({formatDateTime(lead.salesAuditCompleteTimestamp).dateTimeShort})</div>}
@@ -278,7 +366,7 @@ export function AuditForShipmentTable() {
                                 size="sm" 
                                 className="h-7 text-xs font-bold" 
                                 onClick={() => handleProceedToShipment(lead)}
-                                disabled={!lead.isWaybillPrinted}
+                                disabled={isProceedDisabled}
                             >
                                 Proceed to Shipment
                             </Button>
@@ -289,7 +377,7 @@ export function AuditForShipmentTable() {
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground text-xs">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground text-xs">
                     No items in the audit queue.
                   </TableCell>
                 </TableRow>
