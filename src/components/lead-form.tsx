@@ -264,6 +264,11 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     setCompanySuggestions([]);
     setCitySuggestions([]);
     setBarangaySuggestions([]);
+
+    // Auto-set repeat buyer status and order count
+    const previousOrdersCount = leads?.filter(l => l.customerName.toLowerCase() === lead.customerName.toLowerCase()).length || 0;
+    setManualStatus('Repeat');
+    setManualOrderCount(previousOrdersCount);
   };
 
   const handleCitySuggestionClick = (city: { name: string; province: string }) => {
@@ -286,9 +291,13 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const provinceValue = watch('province');
 
   useEffect(() => {
+    // Reset manual override and selected lead if the name is changed
+    setManualStatus(null);
+    setManualOrderCount('');
+    setManualTotalQuantity('');
+
     if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
-      setSelectedLead(null);
-      // Do not clear the other fields here, let the user decide.
+        setSelectedLead(null);
     }
   }, [customerNameValue, selectedLead]);
 
