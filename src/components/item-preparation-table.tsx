@@ -215,17 +215,13 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
   const jobOrders = React.useMemo(() => {
     if (!processedLeads) return [];
     
-    const leadsWithJo = processedLeads.filter(lead => lead.joNumber);
+    const leadsWithJo = processedLeads.filter(lead => lead.joNumber && !lead.isSentToProduction && !lead.isEndorsedToLogistics);
     
     return leadsWithJo.filter(lead => {
-      if (lead.orderType === 'Stock (Jacket Only)') {
-          return true; // Always include "Stock (Jacket Only)" in this table
+       if (lead.isPreparedForProduction && lead.orderType !== 'Stock (Jacket Only)') {
+        return false;
       }
-
-      if (lead.isPreparedForProduction) {
-        return false; // Exclude if already prepared, unless it's stock jacket
-      }
-
+      
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
@@ -243,7 +239,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
       const currentStatus = getProgrammingStatus(lead).text;
       const matchesStatus = statusFilter === 'All' || currentStatus === statusFilter;
       
-      return matchesSearch && matchesJo && matchesStatus;
+      return (matchesSearch && matchesJo && matchesStatus);
     });
   }, [processedLeads, searchTerm, joNumberSearch, statusFilter, formatJoNumber, getProgrammingStatus]);
 
@@ -424,7 +420,8 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                               )}
                               {orderIndex === 0 && (
                                   <TableCell rowSpan={numOrders + 1} className="align-middle py-3 border-b-2 border-black text-center">
-                                  <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
+                                    <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
+                                    {isStockJacketOnly && <p className="text-xs font-bold mt-1">(Stocks)</p>}
                                   </TableCell>
                               )}
                             <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
@@ -442,7 +439,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                               size="sm"
                                               onClick={() => handleOpenPreparedDialog(lead)}
                                               className="h-7 px-2"
-                                              disabled={!isStockJacketOnly && programmingStatus.text === 'Pending Initial Program'}
+                                              disabled={!isStockJacketOnly && programmingStatus.text !== 'Final Program Uploaded'}
                                           >
                                               Prepared
                                           </Button>
@@ -492,3 +489,5 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
+    
