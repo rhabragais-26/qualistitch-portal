@@ -26,11 +26,14 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { Check, RefreshCcw } from 'lucide-react';
+import { Check, ChevronDown, RefreshCcw } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { cn, formatDateTime } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { Input } from './ui/input';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+
 
 type Order = {
   productType: string;
@@ -42,6 +45,9 @@ type Order = {
 type Lead = {
   id: string;
   customerName: string;
+  companyName?: string;
+  contactNumber?: string;
+  landlineNumber?: string;
   courier: string;
   joNumber?: number;
   orders: Order[];
@@ -71,11 +77,24 @@ export function ShipmentQueueTable() {
   const { toast } = useToast();
   const [disapprovingLead, setDisapprovingLead] = useState<Lead | null>(null);
   const [remarks, setRemarks] = useState('');
+  const [joNumberSearch, setJoNumberSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [excludeShipped, setExcludeShipped] = useState(false);
 
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+  }, []);
+
+  const getContactDisplay = useCallback((lead: Lead) => {
+    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
+    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+
+    if (mobile && landline) {
+      return `${mobile} / ${landline}`;
+    }
+    return mobile || landline || null;
   }, []);
 
   const handleDisapprove = async () => {
@@ -266,17 +285,61 @@ export function ShipmentQueueTable() {
 
   const shipmentQueueLeads = useMemo(() => {
     if(!processedLeads) return [];
-    return processedLeads.filter(lead => lead.isEndorsedToLogistics);
-  }, [processedLeads]);
+    
+    const endorsed = processedLeads.filter(lead => lead.isEndorsedToLogistics);
+
+    return endorsed.filter(lead => {
+        const lowercasedSearchTerm = searchTerm.toLowerCase();
+        const matchesSearch = searchTerm ?
+            (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
+            (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
+            (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
+            (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
+            : true;
+
+        const joString = formatJoNumber(lead.joNumber);
+        const matchesJo = joNumberSearch ? joString.toLowerCase().includes(joNumberSearch.toLowerCase()) : true;
+
+        const matchesShippedFilter = excludeShipped ? lead.shipmentStatus !== 'Shipped' : true;
+        
+        return matchesSearch && matchesJo && matchesShippedFilter;
+    });
+  }, [processedLeads, searchTerm, joNumberSearch, excludeShipped]);
 
   return (
     <>
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
-        <CardTitle className="text-black">Shipment Queue</CardTitle>
-        <CardDescription className="text-gray-600">
-          Track the status of all shipments.
-        </CardDescription>
+        <div className="flex justify-between items-center">
+            <div>
+                <CardTitle className="text-black">Shipment Queue</CardTitle>
+                <CardDescription className="text-gray-600">
+                Track the status of all shipments.
+                </CardDescription>
+            </div>
+            <div className="flex items-center gap-4">
+                <div className="w-full max-w-lg">
+                  <Input
+                    placeholder="Search customer, company or contact..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-gray-100 text-black placeholder:text-gray-500"
+                  />
+                </div>
+                <div className="w-full max-w-xs">
+                    <Input
+                    placeholder="Search by J.O. No..."
+                    value={joNumberSearch}
+                    onChange={(e) => setJoNumberSearch(e.target.value)}
+                    className="bg-gray-100 text-black placeholder:text-gray-500"
+                    />
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Checkbox id="exclude-shipped" checked={excludeShipped} onCheckedChange={(checked) => setExcludeShipped(!!checked)} />
+                    <Label htmlFor="exclude-shipped" className="text-sm font-medium">Exclude Shipped</Label>
+                </div>
+            </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="border rounded-md">
@@ -301,12 +364,23 @@ export function ShipmentQueueTable() {
                    return (
                       <TableRow key={lead.id}>
                         <TableCell className="text-xs">
-                          {lead.customerName}
+                          <Collapsible>
+                              <CollapsibleTrigger asChild>
+                                  <div className="flex items-center cursor-pointer">
+                                      <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                      <span className="font-bold">{lead.customerName}</span>
+                                  </div>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-[11px] font-normal">
+                                  {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                                  {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                              </CollapsibleContent>
+                          </Collapsible>
                           {isRepeat ? (
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-1.5 cursor-pointer">
+                                  <div className="flex items-center gap-1.5 cursor-pointer ml-5 mt-1">
                                     <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                     <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
                                       {lead.orderNumber}
@@ -319,7 +393,7 @@ export function ShipmentQueueTable() {
                               </Tooltip>
                             </TooltipProvider>
                           ) : (
-                            <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                            <div className="text-xs text-blue-600 font-semibold mt-1 ml-5">New Customer</div>
                           )}
                         </TableCell>
                         <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
