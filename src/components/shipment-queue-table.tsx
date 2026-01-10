@@ -69,6 +69,7 @@ type Lead = {
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippedTimestamp?: string;
   adjustedDeliveryDate?: string | null;
+  orderType?: string;
 }
 
 type EnrichedLead = Lead & {
@@ -437,7 +438,12 @@ export function ShipmentQueueTable() {
                             <div className="text-xs text-blue-600 font-semibold mt-1 ml-5">New Customer</div>
                           )}
                         </TableCell>
-                        <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
+                        <TableCell className="text-xs text-center">
+                          <div>{formatJoNumber(lead.joNumber)}</div>
+                          {lead.orderType === 'Stock (Jacket Only)' && (
+                            <div className="font-bold mt-1">Stocks (Jacket Only)</div>
+                          )}
+                        </TableCell>
                         <TableCell className="text-center">
                             {lead.isQualityApproved ? (
                                 <div className="flex flex-col items-center justify-center gap-1">
