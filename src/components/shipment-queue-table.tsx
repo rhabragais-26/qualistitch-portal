@@ -78,6 +78,7 @@ export function ShipmentQueueTable() {
   const { data: leads } = useCollection<Lead>(leadsQuery);
   const { toast } = useToast();
   const [disapprovingLead, setDisapprovingLead] = useState<Lead | null>(null);
+  const [packingLead, setPackingLead] = useState<Lead | null>(null);
   const [remarks, setRemarks] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -198,7 +199,7 @@ export function ShipmentQueueTable() {
     }
   };
 
-  const handlePackedChange = async (lead: Lead, checked: boolean) => {
+  const confirmPackedChange = useCallback(async (lead: Lead, checked: boolean) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', lead.id);
     try {
@@ -213,8 +214,10 @@ export function ShipmentQueueTable() {
         title: "Update Failed",
         description: e.message || "Could not update the packed status.",
       });
+    } finally {
+        setPackingLead(null);
     }
-  };
+  }, [firestore, toast]);
 
   const handleShip = async (lead: Lead) => {
     if (!firestore) return;
@@ -422,7 +425,13 @@ export function ShipmentQueueTable() {
                           <div className="flex flex-col items-center justify-center gap-1">
                             <Checkbox
                               checked={!!lead.isPacked}
-                              onCheckedChange={(checked) => handlePackedChange(lead, !!checked)}
+                              onCheckedChange={(checked) => {
+                                if(checked) {
+                                  setPackingLead(lead)
+                                } else {
+                                  confirmPackedChange(lead, false)
+                                }
+                              }}
                               disabled={!lead.isQualityApproved}
                             />
                             {lead.isPacked && lead.packedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.packedTimestamp).dateTimeShort}</div>}
@@ -509,6 +518,24 @@ export function ShipmentQueueTable() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+      {packingLead && (
+        <AlertDialog open={!!packingLead} onOpenChange={() => setPackingLead(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Packing</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to mark this order as packed?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setPackingLead(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => confirmPackedChange(packingLead, true)}>
+                Confirm
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </>
   );
