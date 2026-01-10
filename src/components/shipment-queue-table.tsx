@@ -78,7 +78,7 @@ export function ShipmentQueueTable() {
   const { data: leads } = useCollection<Lead>(leadsQuery);
   const { toast } = useToast();
   const [disapprovingLead, setDisapprovingLead] = useState<Lead | null>(null);
-  const [packingLead, setPackingLead] = useState<Lead | null>(null);
+  const [packingLead, setPackingLead] = useState<{lead: Lead, isPacking: boolean} | null>(null);
   const [remarks, setRemarks] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -203,10 +203,19 @@ export function ShipmentQueueTable() {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', lead.id);
     try {
-      await updateDoc(leadDocRef, {
+      const updateData: any = {
         isPacked: checked,
         packedTimestamp: checked ? new Date().toISOString() : null,
-      });
+      };
+
+      if(!checked) {
+        updateData.isSalesAuditRequested = false;
+        updateData.salesAuditRequestedTimestamp = null;
+        updateData.isSalesAuditComplete = false;
+        updateData.salesAuditCompleteTimestamp = null;
+      }
+
+      await updateDoc(leadDocRef, updateData);
     } catch (e: any) {
       console.error("Error updating packed status:", e);
       toast({
@@ -242,6 +251,9 @@ export function ShipmentQueueTable() {
   };
 
   const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success", className?: string } => {
+    if (lead.shipmentStatus === 'Shipped') {
+        return { text: "Shipped", variant: "success", className: "bg-green-700 text-white"};
+    }
     if (lead.isPacked) {
       return { text: "Already Packed", variant: "success", className: "bg-teal-600 text-white" };
     }
@@ -426,11 +438,7 @@ export function ShipmentQueueTable() {
                             <Checkbox
                               checked={!!lead.isPacked}
                               onCheckedChange={(checked) => {
-                                if(checked) {
-                                  setPackingLead(lead)
-                                } else {
-                                  confirmPackedChange(lead, false)
-                                }
+                                setPackingLead({ lead, isPacking: !!checked });
                               }}
                               disabled={!lead.isQualityApproved}
                             />
@@ -523,14 +531,15 @@ export function ShipmentQueueTable() {
         <AlertDialog open={!!packingLead} onOpenChange={() => setPackingLead(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirm Packing</AlertDialogTitle>
+              <AlertDialogTitle>Confirm Action</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to mark this order as packed?
+                Are you sure you want to {packingLead.isPacking ? 'mark this order as packed' : 'un-pack this order'}?
+                {!packingLead.isPacking && " This will also reset the sales audit status."}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setPackingLead(null)}>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => confirmPackedChange(packingLead, true)}>
+              <AlertDialogAction onClick={() => confirmPackedChange(packingLead.lead, packingLead.isPacking)}>
                 Confirm
               </AlertDialogAction>
             </AlertDialogFooter>
