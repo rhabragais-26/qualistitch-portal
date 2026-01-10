@@ -461,10 +461,10 @@ export function RecordsTable() {
             <div className="flex items-center gap-4">
               <Select value={csrFilter} onValueChange={setCsrFilter}>
                 <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Filter by CSR" />
+                  <SelectValue placeholder="Filter by SCES" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="All">All CSRs</SelectItem>
+                  <SelectItem value="All">All SCES</SelectItem>
                   {salesRepresentatives.map(csr => (
                     <SelectItem key={csr} value={csr}>{csr}</SelectItem>
                   ))}
@@ -488,7 +488,7 @@ export function RecordsTable() {
                   <TableRow>
                     <TableHead className="text-white align-middle">Date & Time</TableHead>
                     <TableHead className="text-white align-middle">Customer</TableHead>
-                    <TableHead className="text-white align-middle">CSR</TableHead>
+                    <TableHead className="text-white align-middle">SCES</TableHead>
                     <TableHead className="text-center text-white align-middle">Priority</TableHead>
                     <TableHead className="text-center text-white align-middle">Order Type</TableHead>
                     <TableHead className="text-center text-white align-middle">Courier</TableHead>
@@ -910,7 +910,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="salesRepresentative">CSR</Label>
+              <Label htmlFor="salesRepresentative">SCES</Label>
               <Select onValueChange={setSalesRepresentative} value={salesRepresentative}>
                 <SelectTrigger id="salesRepresentative"><SelectValue /></SelectTrigger>
                 <SelectContent>{salesRepresentatives.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>

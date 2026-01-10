@@ -64,6 +64,7 @@ type Lead = {
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
   joNumber?: number;
+  salesRepresentative: string;
   isUnderProgramming?: boolean;
   isInitialApproval?: boolean;
   isLogoTesting?: boolean;
@@ -424,6 +425,7 @@ export function OrderStatusTable() {
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="text-white font-bold align-middle w-[250px]">Customer</TableHead>
+                    <TableHead className="text-white font-bold align-middle w-[150px] text-center">SCES</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[150px]">Priority Type</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[150px]">Ordered Items</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[400px]">Order Fulfillment Progress</TableHead>
@@ -477,6 +479,7 @@ export function OrderStatusTable() {
                                     {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                 </div>
                             </TableCell>
+                            <TableCell className="text-center align-middle py-3 text-sm">{lead.salesRepresentative}</TableCell>
                             <TableCell className="text-center align-middle py-3">
                                <div className='flex flex-col items-center gap-1'>
                                 <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
