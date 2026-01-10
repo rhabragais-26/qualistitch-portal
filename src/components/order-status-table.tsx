@@ -190,7 +190,6 @@ export function OrderStatusTable() {
     if (lead.sewerType && lead.sewerType !== 'Pending') return 70;
     if (lead.productionType && lead.productionType !== 'Pending') return 50;
     if (lead.isSentToProduction) return 40;
-    if (lead.isPreparedForProduction) return 35;
     if (lead.isFinalProgram) return 30;
     if (lead.isFinalApproval) return 20;
     if (lead.isRevision) return 15;
@@ -220,12 +219,12 @@ export function OrderStatusTable() {
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
@@ -317,7 +316,7 @@ export function OrderStatusTable() {
              <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setImageInView(null)}
+                onClick={()={() => setImageInView(null)}
                 className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
             >
                 <X className="h-6 w-6" />
@@ -597,3 +596,5 @@ export function OrderStatusTable() {
     </Card>
   );
 }
+
+    
