@@ -642,7 +642,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                             />
                          </div>
                       ) : (
-                        <div onClick={() => setIsStatusDialogOpen(true)} className="cursor-pointer">
+                        <div onClick={() => customerStatus === 'New' && setIsStatusDialogOpen(true)} className={customerStatus === 'New' ? 'cursor-pointer' : ''}>
                             <StatusBanner
                             text="New Customer"
                             backgroundColor="#FFFFFF"
@@ -1061,6 +1061,14 @@ function SetCustomerStatusDialog({
     const [status, setStatus] = useState<'New' | 'Repeat'>(currentStatus);
     const [orderCount, setOrderCount] = useState(0);
     const [totalQuantity, setTotalQuantity] = useState(0);
+    
+    useEffect(() => {
+        if (isOpen) {
+            setStatus(currentStatus);
+            setOrderCount(0);
+            setTotalQuantity(0);
+        }
+    }, [isOpen, currentStatus]);
 
     const handleSaveClick = () => {
         onSave(status, orderCount, totalQuantity);
