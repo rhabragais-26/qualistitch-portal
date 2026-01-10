@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from './ui/button';
 import {
   AlertDialog,
@@ -62,12 +62,19 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
+import { Badge } from './ui/badge';
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
   isOperationalCasesPageDirty?: boolean;
   children?: React.ReactNode;
 };
+
+type Lead = {
+  isSalesAuditRequested?: boolean;
+}
 
 export function Header({ 
   isNewOrderPageDirty = false, 
@@ -84,6 +91,18 @@ export function Header({
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+  const firestore = useFirestore();
+  const leadsQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'leads')) : null),
+    [firestore]
+  );
+  const { data: leads } = useCollection<Lead>(leadsQuery);
+
+  const auditQueueCount = useMemo(() => {
+    if (!leads) return 0;
+    return leads.filter(lead => lead.isSalesAuditRequested).length;
+  }, [leads]);
 
   useEffect(() => {
     setIsClient(true);
@@ -167,9 +186,12 @@ export function Header({
                     <ClipboardList className="mr-2" />
                     Job Order
                   </DropdownMenuItem>
-                   <DropdownMenuItem onClick={() => handleNavigation('/sales/audit-for-shipment')}>
+                   <DropdownMenuItem onClick={() => handleNavigation('/sales/audit-for-shipment')} className="relative">
                     <FileCheck className="mr-2" />
                     Audit for Shipment
+                    {auditQueueCount > 0 && (
+                        <Badge variant="destructive" className="absolute -right-2 -top-2 h-5 w-5 justify-center p-0">{auditQueueCount}</Badge>
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/reports')}>
                     <LineChart className="mr-2" />
