@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, updateDoc } from 'firebase/firestore';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Save, X, Plus, Trash2, ArrowLeft, ArrowRight } from 'lucide-react';
@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
+import { v4 as uuidv4 } from 'uuid';
 
 type NamedOrder = {
   id: string;
@@ -125,7 +126,7 @@ export default function JobOrderLayoutPage() {
     if (lead && lead.layouts) {
         const newLayouts = [...lead.layouts];
         if (newLayouts[layoutIndex]) {
-            const newNamedOrders = [...(newLayouts[layoutIndex].namedOrders || []), { id: `order-${Date.now()}-${Math.random()}`, name: '', color: '', size: '', quantity: 1, backText: '' }];
+            const newNamedOrders = [...(newLayouts[layoutIndex].namedOrders || []), { id: uuidv4(), name: '', color: '', size: '', quantity: 1, backText: '' }];
             newLayouts[layoutIndex] = { ...newLayouts[layoutIndex], namedOrders: newNamedOrders };
             setLead({ ...lead, layouts: newLayouts });
         }
@@ -309,7 +310,7 @@ export default function JobOrderLayoutPage() {
                 </tr>
               </thead>
               <tbody>
-                {currentLayout.namedOrders.map((order, orderIndex) => (
+                {(currentLayout.namedOrders || []).map((order, orderIndex) => (
                   <tr key={order.id}>
                     <td className="border border-black p-1 text-center">{orderIndex + 1}</td>
                     <td className="border border-black p-1"><Input value={order.name} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'name', e.target.value)} className="h-7 text-xs" /></td>
