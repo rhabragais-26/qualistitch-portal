@@ -8,6 +8,7 @@ import { X, GripVertical, Upload, Trash2, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 
 const LOCAL_STORAGE_KEY = 'sizeChartData';
 
@@ -41,6 +42,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   const [isDirty, setIsDirty] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<TabValue>('corporateJacket');
+  const [deletingTab, setDeletingTab] = useState<TabValue | null>(null);
 
   useEffect(() => {
     onDraggingChange(isDragging);
@@ -155,6 +157,13 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
     if(fileInputRef.current) fileInputRef.current.value = '';
   }
 
+  const handleConfirmDelete = () => {
+    if (deletingTab) {
+      removeImage(deletingTab);
+      setDeletingTab(null);
+    }
+  };
+
   const handleSave = () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sizeChartData));
     setIsDirty(false);
@@ -181,7 +190,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
             ) : data && data.image ? (
                 <>
                     <Image src={data.image} alt={`${tab} Size Chart`} layout="fill" objectFit="contain" />
-                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeImage(tab)}>
+                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setDeletingTab(tab)}>
                         <Trash2 className="h-4 w-4"/>
                     </Button>
                 </>
@@ -198,54 +207,73 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   }
 
   return (
-    <div
-      ref={cardRef}
-      className={cn("fixed z-50 w-auto", isDragging && "select-none")}
-      style={{ left: `${position.x}px`, top: `${position.y}px`, height: `800px` }}
-      onMouseDown={handleMouseDown}
-    >
-      <Card className="w-full h-full shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
-        <CardHeader 
-            ref={headerRef}
-            className={cn("flex flex-row items-center justify-between p-2 cursor-move", isDragging && "cursor-grabbing")}
-        >
-          <div className="flex items-center">
-            <GripVertical className="h-5 w-5 text-gray-500"/>
-            <span className="text-sm font-medium text-gray-400">Size Chart</span>
-          </div>
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:bg-gray-700 hover:text-white" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        </CardHeader>
-        <CardContent className="p-4 flex-1 flex flex-col">
-          <Tabs defaultValue="corporateJacket" className="w-full h-full flex flex-col" onValueChange={(v) => setActiveTab(v as TabValue)}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="corporateJacket">Corporate Jacket</TabsTrigger>
-              <TabsTrigger value="bomberJacket">Bomber Jacket</TabsTrigger>
-              <TabsTrigger value="poloShirt">Polo Shirt</TabsTrigger>
-            </TabsList>
-            <TabsContent value="corporateJacket" className="flex-1">
-              {renderUploadBox('corporateJacket')}
-            </TabsContent>
-            <TabsContent value="bomberJacket" className="flex-1">
-              {renderUploadBox('bomberJacket')}
-            </TabsContent>
-            <TabsContent value="poloShirt" className="flex-1">
-              {renderUploadBox('poloShirt')}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-        <CardFooter className="p-4 flex justify-center">
-            <Button 
-              onClick={handleSave} 
-              disabled={!isDirty} 
-              className="text-white font-bold disabled:bg-gray-500 disabled:text-gray-300"
-            >
-                <Save className="mr-2 h-4 w-4" />
-                Save Changes
+    <>
+      <div
+        ref={cardRef}
+        className={cn("fixed z-50 w-auto", isDragging && "select-none")}
+        style={{ left: `${position.x}px`, top: `${position.y}px`, height: `800px` }}
+        onMouseDown={handleMouseDown}
+      >
+        <Card className="w-full h-full shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
+          <CardHeader 
+              ref={headerRef}
+              className={cn("flex flex-row items-center justify-between p-2 cursor-move", isDragging && "cursor-grabbing")}
+          >
+            <div className="flex items-center">
+              <GripVertical className="h-5 w-5 text-gray-500"/>
+              <span className="text-sm font-medium text-gray-400">Size Chart</span>
+            </div>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:bg-gray-700 hover:text-white" onClick={onClose}>
+              <X className="h-4 w-4" />
             </Button>
-        </CardFooter>
-      </Card>
-    </div>
+          </CardHeader>
+          <CardContent className="p-4 flex-1 flex flex-col">
+            <Tabs defaultValue="corporateJacket" className="w-full h-full flex flex-col" onValueChange={(v) => setActiveTab(v as TabValue)}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="corporateJacket">Corporate Jacket</TabsTrigger>
+                <TabsTrigger value="bomberJacket">Bomber Jacket</TabsTrigger>
+                <TabsTrigger value="poloShirt">Polo Shirt</TabsTrigger>
+              </TabsList>
+              <TabsContent value="corporateJacket" className="flex-1">
+                {renderUploadBox('corporateJacket')}
+              </TabsContent>
+              <TabsContent value="bomberJacket" className="flex-1">
+                {renderUploadBox('bomberJacket')}
+              </TabsContent>
+              <TabsContent value="poloShirt" className="flex-1">
+                {renderUploadBox('poloShirt')}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+          <CardFooter className="p-4 flex justify-center">
+              <Button 
+                onClick={handleSave} 
+                disabled={!isDirty} 
+                className="text-white font-bold disabled:bg-gray-500 disabled:text-gray-300"
+              >
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Changes
+              </Button>
+          </CardFooter>
+        </Card>
+      </div>
+
+      <AlertDialog open={!!deletingTab} onOpenChange={(open) => !open && setDeletingTab(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the uploaded size chart image.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeletingTab(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
