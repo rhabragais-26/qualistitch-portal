@@ -170,6 +170,7 @@ export function ShipmentQueueTable() {
                 <TableHead className="text-white font-bold text-xs">Customer</TableHead>
                 <TableHead className="text-white font-bold text-xs">J.O. No.</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Quality Check</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Sales Audit</TableHead>
                 <TableHead className="text-white font-bold text-xs">Courier</TableHead>
                 <TableHead className="text-white font-bold text-xs">Status</TableHead>
               </TableRow>
@@ -209,6 +210,9 @@ export function ShipmentQueueTable() {
                                 <Button size="sm" variant="destructive" className="h-7 text-xs font-bold" onClick={() => setDisapprovingLead(lead)}>Disapprove</Button>
                             </div>
                         </TableCell>
+                        <TableCell className="text-center">
+                          <Button size="sm" className="h-7 text-xs font-bold">Request Audit from Sales</Button>
+                        </TableCell>
                         <TableCell className="text-xs">{lead.courier}</TableCell>
                         <TableCell className="text-xs">Pending</TableCell>
                       </TableRow>
@@ -216,7 +220,7 @@ export function ShipmentQueueTable() {
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground text-xs">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground text-xs">
                     No items in shipment queue.
                   </TableCell>
                 </TableRow>
