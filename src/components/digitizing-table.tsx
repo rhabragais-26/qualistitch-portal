@@ -169,9 +169,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([]);
   const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
   const [sequenceLogo, setSequenceLogo] = useState<(FileObject | null)[]>([null]);
-  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
+  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([null]);
   const [finalProgrammedLogo, setFinalProgrammedLogo] = useState<(FileObject | null)[]>([null]);
   const [finalProgrammedBackDesign, setFinalProgrammedBackDesign] = useState<(FileObject | null)[]>([]);
+  const [isNamesOnly, setIsNamesOnly] = useState(false);
 
 
   const finalLogoEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -373,6 +374,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
       setIsUploadDialogOpen(false);
       setUploadLeadId(null);
       setUploadField(null);
+      setIsNamesOnly(false);
     } catch (e: any) {
       console.error('Error saving images or status:', e);
       toast({
@@ -661,12 +663,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
       );
     }
     if (uploadField === 'isFinalProgram') {
-      const isButtonDisabled = !(
+      const isButtonDisabled = isNamesOnly
+        ? !finalNamesDst.some(f => f)
+        : !(
           (finalLogoEmb.some(f => f) || finalBackDesignEmb.some(f => f)) &&
           (finalLogoDst.some(f => f) || finalBackDesignDst.some(f => f)) &&
           (sequenceLogo.some(f => f) || sequenceBackDesign.some(f => f)) &&
           (finalProgrammedLogo.some(f => f) || finalProgrammedBackDesign.some(f => f))
-      );
+        );
 
       return (
          <>
@@ -675,7 +679,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
           </DialogHeader>
            <ScrollArea className="max-h-[70vh] pr-6">
             <div className="space-y-6 py-4">
-               <div className="grid grid-cols-2 gap-x-8">
+              <div className="grid grid-cols-2 gap-x-8">
                   <div className="space-y-2">
                       <Label>Logo (EMB)</Label>
                       {finalLogoEmb.map((file, index) => (
@@ -746,7 +750,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                    <Label>Names (DST)</Label>
+                    <div className='flex items-center gap-4'>
+                        <Label>Names (DST)</Label>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} />
+                            <Label htmlFor="names-only" className="text-xs font-normal">Does the customer wanted names only (No Logo or Back Design) ?</Label>
+                        </div>
+                    </div>
                     <ScrollArea className="h-48 w-full rounded-md border p-4">
                       <div className="grid grid-cols-2 gap-4">
                         {finalNamesDst.map((file, index) => (
@@ -856,7 +866,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
       );
     }
     return null;
-  }, [uploadField, handleImagePaste, handleFileUpload, handleRemoveImage, handleMultipleFileUpload, addFile, removeFile, handleUploadDialogSave, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign]);
+  }, [uploadField, handleImagePaste, handleFileUpload, handleRemoveImage, handleMultipleFileUpload, addFile, removeFile, handleUploadDialogSave, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, isNamesOnly]);
 
   const ImagePreview = ({ src, alt, className }: { src: string; alt: string; className?:string;}) => (
     <div className={cn("relative cursor-pointer", className)} onClick={() => setImageInView(src)}>
@@ -942,6 +952,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
             setSequenceBackDesign([]);
             setFinalProgrammedLogo([null]);
             setFinalProgrammedBackDesign([]);
+            setIsNamesOnly(false);
             if (uploadLeadId && uploadField && isUploadDialogOpen) { // Check isUploadDialogOpen to prevent race condition
               const lead = leads?.find(l => l.id === uploadLeadId);
               if (lead) {
@@ -1342,3 +1353,4 @@ DigitizingTableMemo.displayName = 'DigitizingTable';
 export { DigitizingTableMemo as DigitizingTable };
 
     
+
