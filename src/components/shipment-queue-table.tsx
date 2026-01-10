@@ -19,6 +19,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { useMemo, useCallback } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Button } from './ui/button';
 
 type Order = {
   productType: string;
@@ -97,8 +98,9 @@ export function ShipmentQueueTable() {
           <Table>
             <TableHeader className="bg-neutral-800">
               <TableRow>
-                <TableHead className="text-white font-bold text-xs">J.O. No.</TableHead>
                 <TableHead className="text-white font-bold text-xs">Customer</TableHead>
+                <TableHead className="text-white font-bold text-xs">J.O. No.</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Quality Check</TableHead>
                 <TableHead className="text-white font-bold text-xs">Courier</TableHead>
                 <TableHead className="text-white font-bold text-xs">Status</TableHead>
                 <TableHead className="text-white font-bold text-xs">Last Updated</TableHead>
@@ -110,7 +112,6 @@ export function ShipmentQueueTable() {
                    const isRepeat = lead.orderNumber > 1;
                    return (
                       <TableRow key={lead.id}>
-                        <TableCell className="text-xs">{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className="text-xs">
                           {lead.customerName}
                           {isRepeat ? (
@@ -133,6 +134,13 @@ export function ShipmentQueueTable() {
                             <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                           )}
                         </TableCell>
+                        <TableCell className="text-xs">{formatJoNumber(lead.joNumber)}</TableCell>
+                        <TableCell className="text-center">
+                            <div className="flex gap-2 justify-center">
+                                <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold">Approve</Button>
+                                <Button size="sm" variant="destructive" className="h-7 text-xs font-bold">Send Back to Prod</Button>
+                            </div>
+                        </TableCell>
                         <TableCell className="text-xs">{lead.courier}</TableCell>
                         <TableCell className="text-xs">Pending</TableCell>
                         <TableCell className="text-xs">{lead.lastModified}</TableCell>
@@ -141,7 +149,7 @@ export function ShipmentQueueTable() {
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground text-xs">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground text-xs">
                     No shipment data available.
                   </TableCell>
                 </TableRow>
