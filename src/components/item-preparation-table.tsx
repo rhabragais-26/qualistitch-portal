@@ -50,6 +50,7 @@ type Lead = {
   landlineNumber?: string;
   orders: Order[];
   joNumber?: number;
+  orderType: string;
   submissionDateTime: string;
   isUnderProgramming?: boolean;
   isInitialApproval?: boolean;
@@ -59,6 +60,7 @@ type Lead = {
   isFinalProgram?: boolean;
   isPreparedForProduction?: boolean;
   isSentToProduction?: boolean;
+  isEndorsedToLogistics?: boolean;
   sentToProductionTimestamp?: string;
 }
 
@@ -124,7 +126,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
     setCheckedItems({});
   }, []);
 
-  const handleUpdateStatus = useCallback(async (leadId: string, field: 'isPreparedForProduction' | 'isSentToProduction') => {
+  const handleUpdateStatus = useCallback(async (leadId: string, field: 'isPreparedForProduction' | 'isSentToProduction' | 'isEndorsedToLogistics') => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     
@@ -170,11 +172,18 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
     await handleUpdateStatus(leadToSend.id, 'isSentToProduction');
     setLeadToSend(null);
   }, [leadToSend, handleUpdateStatus]);
+  
+  const handleConfirmSendToLogistics = useCallback(async () => {
+    if (!leadToSend) return;
+    await handleUpdateStatus(leadToSend.id, 'isEndorsedToLogistics');
+    setLeadToSend(null);
+  }, [leadToSend, handleUpdateStatus]);
+
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
@@ -285,12 +294,12 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                   <AlertDialogHeader>
                       <AlertDialogTitle>Confirm Handover</AlertDialogTitle>
                       <AlertDialogDescription>
-                          Are you sure the items for J.O. {formatJoNumber(leadToSend.joNumber)} have been handed over to the production team?
+                          Are you sure the items for J.O. {formatJoNumber(leadToSend.joNumber)} have been handed over to the {leadToSend.orderType === 'Stock (Jacket Only)' ? 'logistics' : 'production'} team?
                       </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleConfirmSendToProd}>Confirm</AlertDialogAction>
+                      <AlertDialogAction onClick={leadToSend.orderType === 'Stock (Jacket Only)' ? handleConfirmSendToLogistics : handleConfirmSendToProd}>Confirm</AlertDialogAction>
                   </AlertDialogFooter>
               </AlertDialogContent>
           </AlertDialog>
@@ -359,6 +368,8 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
                   const numOrders = lead.orders.length;
                   const programmingStatus = getProgrammingStatus(lead);
+                  const isStockJacketOnly = lead.orderType === 'Stock (Jacket Only)';
+
                   return (
                     <React.Fragment key={lead.id}>
                       {lead.orders.map((order, orderIndex) => (
@@ -423,7 +434,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                               size="sm"
                                               onClick={() => handleOpenPreparedDialog(lead)}
                                               className="h-7 px-2"
-                                              disabled={programmingStatus.text === 'Pending Initial Program'}
+                                              disabled={!isStockJacketOnly && programmingStatus.text === 'Pending Initial Program'}
                                           >
                                               Prepared
                                           </Button>
@@ -432,7 +443,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                               )}
                               {orderIndex === 0 && (
                                   <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
-                                      {lead.isSentToProduction ? (
+                                      {lead.isSentToProduction || lead.isEndorsedToLogistics ? (
                                         <div className="flex flex-col items-center gap-1">
                                             <div className="flex items-center text-sm text-green-600 font-semibold">
                                                 <Check className="mr-2 h-4 w-4" /> Sent
@@ -445,10 +456,11 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                           <Button
                                               size="sm"
                                               onClick={() => setLeadToSend(lead)}
-                                              disabled={!lead.isPreparedForProduction}
-                                              className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
+                                              disabled={!lead.isPreparedForProduction && !isStockJacketOnly}
+                                              className={cn("h-7 px-2", (!lead.isPreparedForProduction && !isStockJacketOnly) && "bg-gray-400")}
                                           >
-                                              <Send className="mr-2 h-4 w-4" /> Send to Prod
+                                              <Send className="mr-2 h-4 w-4" /> 
+                                              {isStockJacketOnly ? 'Send to Logistics' : 'Send to Prod'}
                                           </Button>
                                       )}
                                   </TableCell>
@@ -472,12 +484,3 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
-
-
-
-
-
-
-
-
-    

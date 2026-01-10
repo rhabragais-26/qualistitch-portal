@@ -311,11 +311,11 @@ export function ProductionQueueTable() {
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
+        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
+      customerOrderStats[name].totalQuantity += orderQuantity;
     });
   
     const enrichedLeads: EnrichedLead[] = [];
@@ -337,7 +337,7 @@ export function ProductionQueueTable() {
   const productionQueue = useMemo(() => {
     if (!processedLeads) return [];
     
-    const sentToProd = processedLeads.filter(lead => lead.isSentToProduction && !lead.isEndorsedToLogistics);
+    const sentToProd = processedLeads.filter(lead => lead.isSentToProduction && !lead.isEndorsedToLogistics && lead.orderType !== 'Stock (Jacket Only)');
     
     return sentToProd.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -750,27 +750,3 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
   );
 });
 ProductionDocuments.displayName = 'ProductionDocuments';
-    
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
