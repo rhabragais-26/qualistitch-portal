@@ -27,6 +27,7 @@ import {
   Cog,
   FileCheck,
   PackageSearch,
+  BookCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -209,7 +210,7 @@ export function Header({
             {isClient && (
               <DropdownMenu open={openMenu === 'digitizing'} onOpenChange={(isOpen) => handleMenuOpenChange('digitizing', isOpen)}>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports']))}>
+                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports', '/digitizing/program-files-database']))}>
                       <ScanLine className="mr-2" />
                       Digitizing
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -219,6 +220,10 @@ export function Header({
                   <DropdownMenuItem onClick={() => handleNavigation('/digitizing/programming-queue')}>
                     <ClipboardList className="mr-2" />
                     Programming Queue
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/digitizing/program-files-database')}>
+                    <BookCheck className="mr-2" />
+                    Program Files Database
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/digitizing/reports')}>
                     <LineChart className="mr-2" />
