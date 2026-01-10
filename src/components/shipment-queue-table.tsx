@@ -453,7 +453,7 @@ export function ShipmentQueueTable() {
                                 </div>
                            ) : lead.isSalesAuditComplete ? (
                                 <div className="flex flex-col items-center justify-center gap-1">
-                                    <span className="text-blue-600 font-bold text-xs">Ready for Shipment</span>
+                                    <span className="text-blue-600 font-bold text-xs">Done Audit</span>
                                     {lead.salesAuditCompleteTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.salesAuditCompleteTimestamp).dateTimeShort}</div>}
                                 </div>
                            ) : (
