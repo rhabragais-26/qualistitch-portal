@@ -255,9 +255,9 @@ export function AuditForShipmentTable() {
               <TableRow>
                 <TableHead className="text-white font-bold text-xs text-center">Customer</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Waybill Printed</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Customer Asked for Specific Delivery Date</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Set Adjusted Date of Delivery</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Waybill Printed</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -306,12 +306,6 @@ export function AuditForShipmentTable() {
                         </TableCell>
                         <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                         <TableCell className="text-center">
-                            <Checkbox
-                                checked={lead.isWaybillPrinted}
-                                onCheckedChange={(checked) => handleWaybillPrintedChange(lead, !!checked)}
-                             />
-                        </TableCell>
-                        <TableCell className="text-center">
                           <RadioGroup
                               value={leadAdjustmentState.status}
                               onValueChange={(status: 'Yes' | 'No') => handleAdjustmentStateChange(lead.id, { status })}
@@ -335,6 +329,12 @@ export function AuditForShipmentTable() {
                             onChange={(e) => handleAdjustmentStateChange(lead.id, { date: e.target.value })}
                             disabled={leadAdjustmentState.status !== 'Yes'}
                           />
+                        </TableCell>
+                        <TableCell className="text-center">
+                            <Checkbox
+                                checked={lead.isWaybillPrinted}
+                                onCheckedChange={(checked) => handleWaybillPrintedChange(lead, !!checked)}
+                             />
                         </TableCell>
                         <TableCell className="text-center">
                           {lead.isSalesAuditComplete ? (
