@@ -192,6 +192,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   const [isCalculatorDragging, setIsCalculatorDragging] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [customerStatus, setCustomerStatus] = useState<'New' | 'Repeat' | null>(null);
+  const [isCustomerNameFocused, setIsCustomerNameFocused] = useState(false);
   
   const citiesAndMunicipalities = useMemo(() => {
     return locations.provinces.flatMap(province =>
@@ -611,7 +612,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                        />
                     </div>
                   )}
-                  {customerStatus === 'New' && (
+                  {customerStatus === 'New' && !isCustomerNameFocused && (
                     <div className="animate-in fade-in-down">
                       <StatusBanner
                         text="New Customer"
@@ -642,7 +643,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
                         </div>
                         <FormControl>
-                          <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} />
+                          <Input {...field} autoComplete="off" onFocus={() => setIsCustomerNameFocused(true)} onBlur={() => { field.onBlur(); setIsCustomerNameFocused(false); setTimeout(() => setCustomerSuggestions([]), 150); }} />
                         </FormControl>
                         {customerSuggestions.length > 0 && (
                           <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
