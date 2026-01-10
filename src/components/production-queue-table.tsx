@@ -437,160 +437,168 @@ export function ProductionQueueTable() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {productionQueue?.map((lead) => {
-                  const isRepeat = lead.orderNumber > 1;
-                  const deadlineInfo = calculateProductionDeadline(lead);
-                  const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
-                  const productionStatus = getProductionStatusLabel(lead);
-                  return (
-                    <React.Fragment key={lead.id}>
-                        <TableRow>
-                            <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
-                              <Collapsible>
-                                <CollapsibleTrigger asChild>
-                                    <div className="flex items-center justify-center cursor-pointer">
-                                        <span>{lead.customerName}</span>
-                                        <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                    </div>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
-                                    {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
-                                    {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
-                                </CollapsibleContent>
-                              </Collapsible>
-                               {isRepeat ? (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
-                                          <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                          <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                            {lead.orderNumber}
-                                          </span>
-                                        </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                ) : (
-                                  <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                                )}
-                            </TableCell>
-                            <TableCell className="text-xs align-middle py-3 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
-                            <TableCell className="align-middle py-3 text-center">
-                              <div className="flex flex-col items-center gap-1">
-                                <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                                  {lead.priorityType}
-                                </Badge>
-                                 <div className={cn("text-gray-500 text-[10px] whitespace-nowrap", specialOrderTypes.includes(lead.orderType) && "font-bold")}>
-                                  {lead.orderType}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className={cn(
-                              "text-center text-xs align-middle py-3 font-medium",
-                              deadlineInfo.isOverdue && "text-red-500",
-                              deadlineInfo.isUrgent && "text-amber-600",
-                              !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
-                            )}>
-                              {deadlineInfo.text}
-                            </TableCell>
-                            <TableCell className="text-xs align-middle py-3 text-black text-center">
-                              <Button variant="ghost" className="h-7 px-2 flex items-center gap-1 text-black hover:bg-gray-100 hover:text-black" onClick={() => toggleLeadDetails(lead.id)}>
-                                <FileText className="h-4 w-4" />
-                                View Documents
-                                <ChevronDown className={cn("h-4 w-4 transition-transform", openLeadId === lead.id && "rotate-180")} />
-                              </Button>
-                            </TableCell>
-                            <TableCell className="text-center align-middle py-3">
-                               <div className="flex flex-col items-center justify-center gap-1">
-                                <Checkbox
-                                    checked={lead.isCutting || false}
-                                    onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
-                                />
-                                {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
-                               </div>
-                            </TableCell>
-                            <TableCell className="text-center align-middle py-3">
-                              <Select
-                                value={lead.productionType || 'Pending'}
-                                onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
-                                disabled={!lead.isCutting || lead.isEmbroideryDone}
-                              >
-                                <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType))}>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {productionOptions.map(option => (
-                                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell className="text-center align-middle py-3">
-                               <div className="flex flex-col items-center justify-center gap-1">
-                                <Checkbox
-                                    checked={lead.isEmbroideryDone || false}
-                                    onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
-                                    disabled={!lead.isCutting || !lead.productionType || lead.productionType === 'Pending'}
-                                />
-                                {lead.embroideryDoneTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.embroideryDoneTimestamp).dateTimeShort}</div>}
-                               </div>
-                            </TableCell>
-                            <TableCell className="text-center align-middle py-3">
-                               <Select
-                                value={lead.sewerType || 'Pending'}
-                                onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
-                                disabled={!lead.isEmbroideryDone || lead.isSewing}
-                               >
-                                <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType))}>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                   {productionOptions.map(option => (
-                                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell className="text-center align-middle py-3">
-                              <div className="flex flex-col items-center justify-center gap-1">
-                                <Checkbox
-                                  checked={lead.isSewing || false}
-                                  onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
-                                  disabled={!lead.isEmbroideryDone || !lead.sewerType || lead.sewerType === 'Pending'}
-                                />
-                                {lead.sewingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center align-middle py-3">
-                               <Badge variant={productionStatus.variant}>{productionStatus.text}</Badge>
-                            </TableCell>
-                            <TableCell className="text-center align-middle py-3">
-                                 <Button
-                                    size="sm"
-                                    onClick={() => handleEndorseToLogistics(lead.id)}
-                                    disabled={!lead.isDone}
-                                    className={cn(
-                                        "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
-                                    )}
-                                >
-                                    <Send className="h-3.5 w-3.5" />
-                                    <span className='whitespace-normal break-words'>Send to Logistics</span>
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                        {openLeadId === lead.id && (
+                {productionQueue && productionQueue.length > 0 ? (
+                  productionQueue.map((lead) => {
+                    const isRepeat = lead.orderNumber > 1;
+                    const deadlineInfo = calculateProductionDeadline(lead);
+                    const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
+                    const productionStatus = getProductionStatusLabel(lead);
+                    return (
+                      <React.Fragment key={lead.id}>
                           <TableRow>
-                            <TableCell colSpan={12} className="p-0">
-                                <ProductionDocuments lead={lead} />
-                            </TableCell>
+                              <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
+                                <Collapsible>
+                                  <CollapsibleTrigger asChild>
+                                      <div className="flex items-center justify-center cursor-pointer">
+                                          <span>{lead.customerName}</span>
+                                          <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                      </div>
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
+                                      {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
+                                      {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
+                                  </CollapsibleContent>
+                                </Collapsible>
+                                {isRepeat ? (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
+                                            <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                            <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                              {lead.orderNumber}
+                                            </span>
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  ) : (
+                                    <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                                  )}
+                              </TableCell>
+                              <TableCell className="text-xs align-middle py-3 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
+                              <TableCell className="align-middle py-3 text-center">
+                                <div className="flex flex-col items-center gap-1">
+                                  <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                                    {lead.priorityType}
+                                  </Badge>
+                                  <div className={cn("text-gray-500 text-[10px] whitespace-nowrap", specialOrderTypes.includes(lead.orderType) && "font-bold")}>
+                                    {lead.orderType}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className={cn(
+                                "text-center text-xs align-middle py-3 font-medium",
+                                deadlineInfo.isOverdue && "text-red-500",
+                                deadlineInfo.isUrgent && "text-amber-600",
+                                !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
+                              )}>
+                                {deadlineInfo.text}
+                              </TableCell>
+                              <TableCell className="text-xs align-middle py-3 text-black text-center">
+                                <Button variant="ghost" className="h-7 px-2 flex items-center gap-1 text-black hover:bg-gray-100 hover:text-black" onClick={() => toggleLeadDetails(lead.id)}>
+                                  <FileText className="h-4 w-4" />
+                                  View Documents
+                                  <ChevronDown className={cn("h-4 w-4 transition-transform", openLeadId === lead.id && "rotate-180")} />
+                                </Button>
+                              </TableCell>
+                              <TableCell className="text-center align-middle py-3">
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                  <Checkbox
+                                      checked={lead.isCutting || false}
+                                      onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
+                                  />
+                                  {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-center align-middle py-3">
+                                <Select
+                                  value={lead.productionType || 'Pending'}
+                                  onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
+                                  disabled={!lead.isCutting || lead.isEmbroideryDone}
+                                >
+                                  <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType))}>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {productionOptions.map(option => (
+                                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell className="text-center align-middle py-3">
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                  <Checkbox
+                                      checked={lead.isEmbroideryDone || false}
+                                      onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
+                                      disabled={!lead.isCutting || !lead.productionType || lead.productionType === 'Pending'}
+                                  />
+                                  {lead.embroideryDoneTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.embroideryDoneTimestamp).dateTimeShort}</div>}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-center align-middle py-3">
+                                <Select
+                                  value={lead.sewerType || 'Pending'}
+                                  onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
+                                  disabled={!lead.isEmbroideryDone || lead.isSewing}
+                                >
+                                  <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType))}>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {productionOptions.map(option => (
+                                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell className="text-center align-middle py-3">
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                  <Checkbox
+                                    checked={lead.isSewing || false}
+                                    onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
+                                    disabled={!lead.isEmbroideryDone || !lead.sewerType || lead.sewerType === 'Pending'}
+                                  />
+                                  {lead.sewingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-center align-middle py-3">
+                                <Badge variant={productionStatus.variant}>{productionStatus.text}</Badge>
+                              </TableCell>
+                              <TableCell className="text-center align-middle py-3">
+                                  <Button
+                                      size="sm"
+                                      onClick={() => handleEndorseToLogistics(lead.id)}
+                                      disabled={!lead.isDone}
+                                      className={cn(
+                                          "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
+                                      )}
+                                  >
+                                      <Send className="h-3.5 w-3.5" />
+                                      <span className='whitespace-normal break-words'>Send to Logistics</span>
+                                  </Button>
+                              </TableCell>
                           </TableRow>
-                        )}
-                    </React.Fragment>
-                )})}
+                          {openLeadId === lead.id && (
+                            <TableRow>
+                              <TableCell colSpan={12} className="p-0">
+                                  <ProductionDocuments lead={lead} />
+                              </TableCell>
+                            </TableRow>
+                          )}
+                      </React.Fragment>
+                  )})
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={12} className="text-center text-muted-foreground">
+                      No current orders endorsed to production yet.
+                    </TableCell>
+                  </TableRow>
+                )}
                 </TableBody>
             </Table>
           </div>
@@ -760,6 +768,7 @@ ProductionDocuments.displayName = 'ProductionDocuments';
 
 
     
+
 
 
 
