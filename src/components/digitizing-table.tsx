@@ -661,6 +661,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
       );
     }
     if (uploadField === 'isFinalProgram') {
+      const isButtonDisabled = !(
+          (finalLogoEmb.some(f => f) || finalBackDesignEmb.some(f => f)) &&
+          (finalLogoDst.some(f => f) || finalBackDesignDst.some(f => f)) &&
+          (sequenceLogo.some(f => f) || sequenceBackDesign.some(f => f)) &&
+          (finalProgrammedLogo.some(f => f) || finalProgrammedBackDesign.some(f => f))
+      );
+
       return (
          <>
           <DialogHeader>
@@ -843,7 +850,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
           </ScrollArea>
           <DialogFooter className="pt-4">
             <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-            <Button type="button" onClick={handleUploadDialogSave} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white" disabled={finalLogoEmb.every(f => !f) && finalBackDesignEmb.every(f => !f) && finalLogoDst.every(f => !f) && finalBackDesignDst.every(f => !f) && finalNamesDst.every(f => !f) && sequenceLogo.every(f => !f) && sequenceBackDesign.every(f => !f)}>Save and Continue</Button>
+            <Button type="button" onClick={handleUploadDialogSave} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white" disabled={isButtonDisabled}>Save and Continue</Button>
           </DialogFooter>
         </>
       );
@@ -1334,5 +1341,4 @@ DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
 
-    
     
