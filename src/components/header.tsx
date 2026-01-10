@@ -186,12 +186,18 @@ export function Header({
                     <ClipboardList className="mr-2" />
                     Job Order
                   </DropdownMenuItem>
-                   <DropdownMenuItem onClick={() => handleNavigation('/sales/audit-for-shipment')} className="relative">
-                    <FileCheck className="mr-2" />
-                    Audit for Shipment
-                    {auditQueueCount > 0 && (
-                        <Badge variant="destructive" className="absolute -right-2 -top-2 h-5 w-5 justify-center p-0">{auditQueueCount}</Badge>
-                    )}
+                   <DropdownMenuItem onClick={() => handleNavigation('/sales/audit-for-shipment')}>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <FileCheck className="mr-2" />
+                        <span>Audit for Shipment</span>
+                      </div>
+                      {auditQueueCount > 0 && (
+                        <Badge variant="destructive" className="h-4 w-4 shrink-0 justify-center rounded-full p-0 ml-2">
+                          {auditQueueCount}
+                        </Badge>
+                      )}
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleNavigation('/reports')}>
                     <LineChart className="mr-2" />
