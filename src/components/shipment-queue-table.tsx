@@ -230,7 +230,7 @@ export function ShipmentQueueTable() {
         <Dialog open={!!disapprovingLead} onOpenChange={() => { setDisapprovingLead(null); setRemarks(''); }}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Disapprove J.O. {formatJoNumber(disapprovingLead.joNumber)}?</DialogTitle>
+              <DialogTitle>Disapprove Quality for {formatJoNumber(disapprovingLead.joNumber)}</DialogTitle>
             </DialogHeader>
             <div className="py-4 space-y-2">
               <Label htmlFor="remarks">Please provide remarks for disapproval:</Label>
@@ -246,7 +246,7 @@ export function ShipmentQueueTable() {
                 <Button type="button" variant="outline">Cancel</Button>
               </DialogClose>
               <Button onClick={handleDisapprove} disabled={!remarks.trim()}>
-                Save and Send Back
+                Save and Send Back to Prod
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -255,5 +255,3 @@ export function ShipmentQueueTable() {
     </>
   );
 }
-
-    
