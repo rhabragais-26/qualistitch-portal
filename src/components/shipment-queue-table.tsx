@@ -270,12 +270,12 @@ export function ShipmentQueueTable() {
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
@@ -324,7 +324,7 @@ export function ShipmentQueueTable() {
                 <TableHead className="text-white font-bold text-xs text-center">Sales Audit</TableHead>
                 <TableHead className="text-white font-bold text-xs">Courier</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Status</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Ship</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Ship Order</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -415,7 +415,7 @@ export function ShipmentQueueTable() {
                               onClick={() => handleShip(lead)}
                               disabled={!lead.isPacked}
                             >
-                              Ship
+                              Ship Now
                             </Button>
                           )}
                         </TableCell>
@@ -466,7 +466,7 @@ export function ShipmentQueueTable() {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure you want to reset?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will reset the shipment status for J.O. {formatJoNumber(leadToReset.joNumber)}. This action is for testing and development purposes.
+                This will reset the shipment status for J.O. ${formatJoNumber(leadToReset.joNumber)}. This action is for testing and development purposes.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -479,3 +479,5 @@ export function ShipmentQueueTable() {
     </>
   );
 }
+
+    
