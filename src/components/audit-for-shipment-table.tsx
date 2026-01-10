@@ -227,7 +227,6 @@ export function AuditForShipmentTable() {
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
-        <CardTitle className="text-black">Audit for Shipment</CardTitle>
         <div className="flex justify-between items-center">
             <CardDescription className="text-gray-600">
               Review orders before they are finalized for shipment.
@@ -266,7 +265,8 @@ export function AuditForShipmentTable() {
                  auditQueueLeads.map(lead => {
                    const isRepeat = lead.orderNumber > 1;
                    const leadAdjustmentState = adjustmentStates[lead.id] || { status: 'NotSelected' };
-                   const isProceedDisabled = !lead.isWaybillPrinted || leadAdjustmentState.status === 'NotSelected' || (leadAdjustmentState.status === 'Yes' && !leadAdjustmentState.date);
+                   const isWaybillDisabled = leadAdjustmentState.status === 'NotSelected' || (leadAdjustmentState.status === 'Yes' && !leadAdjustmentState.date);
+                   const isProceedDisabled = !lead.isWaybillPrinted || isWaybillDisabled;
                    return (
                       <TableRow key={lead.id}>
                         <TableCell className="text-xs text-center">
@@ -334,6 +334,7 @@ export function AuditForShipmentTable() {
                             <Checkbox
                                 checked={lead.isWaybillPrinted}
                                 onCheckedChange={(checked) => handleWaybillPrintedChange(lead, !!checked)}
+                                disabled={isWaybillDisabled}
                              />
                         </TableCell>
                         <TableCell className="text-center">
