@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -217,6 +218,9 @@ export function ShipmentQueueTable() {
 
 
   const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success" } => {
+    if (lead.isPacked) {
+      return { text: "Already Packed", variant: "success" };
+    }
     if (lead.isSalesAuditRequested) {
       return { text: "On-going Audit", variant: "warning" };
     }
@@ -242,7 +246,7 @@ export function ShipmentQueueTable() {
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalQuantity += orderQuantity;
+      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
     });
   
     const enrichedLeads: EnrichedLead[] = [];
@@ -341,6 +345,7 @@ export function ShipmentQueueTable() {
                             <Checkbox
                               checked={lead.isPacked}
                               onCheckedChange={(checked) => handlePackedChange(lead, !!checked)}
+                              disabled={!lead.isQualityApproved}
                             />
                             {lead.isPacked && lead.packedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.packedTimestamp).dateTimeShort}</div>}
                           </div>
@@ -352,7 +357,7 @@ export function ShipmentQueueTable() {
                                     {lead.salesAuditRequestedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.salesAuditRequestedTimestamp).dateTimeShort}</div>}
                                 </div>
                            ) : (
-                                <Button size="sm" className="h-7 text-xs font-bold" onClick={() => handleRequestSalesAudit(lead)} disabled={!lead.isQualityApproved}>
+                                <Button size="sm" className="h-7 text-xs font-bold" onClick={() => handleRequestSalesAudit(lead)} disabled={!lead.isPacked}>
                                     Request Audit from Sales
                                 </Button>
                            )}
