@@ -162,7 +162,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const [finalLogoEmb, setFinalLogoEmb] = useState<(FileObject | null)[]>([null]);
   const [finalBackDesignEmb, setFinalBackDesignEmb] = useState<(FileObject | null)[]>([null]);
   const [finalLogoDst, setFinalLogoDst] = useState<(FileObject | null)[]>([null]);
-  const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([]);
+  const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([null]);
   const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
   const [sequenceLogo, setSequenceLogo] = useState<(FileObject | null)[]>([null]);
   const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
@@ -250,7 +250,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
         setFinalLogoEmb(lead?.layouts?.[0]?.finalLogoEmb?.length ? lead?.layouts?.[0]?.finalLogoEmb : [null]);
         setFinalBackDesignEmb(lead?.layouts?.[0]?.finalBackDesignEmb?.length ? lead?.layouts?.[0]?.finalBackDesignEmb : [null]);
         setFinalLogoDst(lead?.layouts?.[0]?.finalLogoDst?.length ? lead?.layouts?.[0]?.finalLogoDst : [null]);
-        setFinalBackDesignDst(lead?.layouts?.[0]?.finalBackDesignDst || []);
+        setFinalBackDesignDst(lead?.layouts?.[0]?.finalBackDesignDst?.length ? lead?.layouts?.[0]?.finalBackDesignDst : [null]);
         setFinalNamesDst(lead?.layouts?.[0]?.finalNamesDst || []);
         setSequenceLogo(lead?.layouts?.[0]?.sequenceLogo?.length ? lead.layouts[0].sequenceLogo : [null]);
         setSequenceBackDesign(lead?.layouts?.[0]?.sequenceBackDesign?.length ? lead.layouts[0].sequenceBackDesign : [null]);
@@ -650,15 +650,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
           </DialogHeader>
            <ScrollArea className="max-h-[70vh] pr-6">
             <div className="space-y-6 py-4">
-              <div className="grid grid-cols-2 gap-6">
+               <div className="grid grid-cols-2 gap-x-8">
                   <div className="space-y-2">
                       <div className="flex justify-between items-center mb-2">
                           <Label>Logo (EMB)</Label>
-                           <Button variant="outline" size="sm" onClick={() => addFile(finalLogoEmb, setFinalLogoEmb)} className="h-7" disabled={finalLogoEmb.length >= 3}>
+                           <Button variant="outline" size="sm" onClick={() => addFile(finalLogoEmb, setFinalLogoEmb)} className="h-7">
                               <PlusCircle className="mr-2 h-4 w-4" /> Add
                           </Button>
                       </div>
-                      <div className="space-y-2">
                       {finalLogoEmb.map((file, index) => (
                           <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoEmbUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
@@ -670,16 +669,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                 </Button>)}
                           </div>
                       ))}
-                      </div>
                   </div>
                   <div className="space-y-2">
                       <div className="flex justify-between items-center mb-2">
                         <Label>Back Design (EMB)</Label>
-                        <Button variant="outline" size="sm" onClick={() => addFile(finalBackDesignEmb, setFinalBackDesignEmb)} className="h-7" disabled={finalBackDesignEmb.length >= 3}>
+                        <Button variant="outline" size="sm" onClick={() => addFile(finalBackDesignEmb, setFinalBackDesignEmb)} className="h-7">
                               <PlusCircle className="mr-2 h-4 w-4" /> Add
                           </Button>
                       </div>
-                      <div className="space-y-2">
                        {finalBackDesignEmb.map((file, index) => (
                           <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignEmbUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
@@ -691,16 +688,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                 </Button>)}
                           </div>
                         ))}
-                      </div>
                   </div>
                   <div className="space-y-2">
                       <div className="flex justify-between items-center mb-2">
                           <Label>Logo (DST)</Label>
-                          <Button variant="outline" size="sm" onClick={() => addFile(finalLogoDst, setFinalLogoDst)} className="h-7" disabled={finalLogoDst.length >= 3}>
+                          <Button variant="outline" size="sm" onClick={() => addFile(finalLogoDst, setFinalLogoDst)} className="h-7">
                               <PlusCircle className="mr-2 h-4 w-4" /> Add
                           </Button>
                       </div>
-                      <div className="space-y-2">
                       {finalLogoDst.map((file, index) => (
                          <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalLogoDstUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
@@ -712,16 +707,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                               </Button>)}
                           </div>
                       ))}
-                      </div>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center mb-2">
                         <Label>Back Design (DST)</Label>
-                        <Button variant="outline" size="sm" onClick={() => addFile(finalBackDesignDst, setFinalBackDesignDst)} className="h-7" disabled={finalBackDesignDst.length >= 3}>
+                        <Button variant="outline" size="sm" onClick={() => addFile(finalBackDesignDst, setFinalBackDesignDst)} className="h-7">
                             <PlusCircle className="mr-2 h-4 w-4" /> Add
                         </Button>
                     </div>
-                     <div className="space-y-2">
                        {finalBackDesignDst.map((file, index) => (
                          <div key={index} className="flex items-center gap-2">
                               <div tabIndex={0} className="relative group flex-1 border-2 border-dashed border-gray-400 rounded-lg p-2 text-center h-16 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onDoubleClick={() => finalBackDesignDstUploadRefs.current[index]?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
@@ -733,7 +726,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                               </Button>)}
                           </div>
                       ))}
-                      </div>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -888,7 +880,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
             setFinalLogoEmb([null]);
             setFinalBackDesignEmb([null]);
             setFinalLogoDst([null]);
-            setFinalBackDesignDst([]);
+            setFinalBackDesignDst([null]);
             setFinalNamesDst([]);
             setSequenceLogo([null]);
             setSequenceBackDesign([]);
