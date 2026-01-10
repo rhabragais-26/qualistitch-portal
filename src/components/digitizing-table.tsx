@@ -555,7 +555,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
@@ -1095,11 +1095,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                   <React.Fragment key={lead.id}>
                     <TableRow>
                       <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
-                         <div className="flex items-start">
+                         <div className="flex items-center justify-center">
                             <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
                                 {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                             </Button>
-                            <div className='flex flex-col'>
+                            <div className='flex flex-col items-center'>
                                 <span className="font-medium">{lead.customerName}</span>
                                 {isRepeat ? (
                                     <TooltipProvider>
