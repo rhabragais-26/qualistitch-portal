@@ -145,9 +145,9 @@ export default function JobOrderPrintPage() {
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
                 <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
-                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
             </div>
             <div className="space-y-1">
+                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                 <p><strong>Courier:</strong> {lead.courier}</p>
                 <p><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</p>
             </div>

@@ -410,7 +410,7 @@ export default function JobOrderPage() {
       </header>
       <div className="fixed top-[72px] right-4 no-print z-50 mt-8">
          <div className="flex flex-col items-center gap-2">
-            <Button onClick={handleClose} variant="outline" className="shadow-md">
+            <Button onClick={handleClose} variant="outline" className="shadow-md mt-2">
             <X className="mr-2 h-4 w-4" />
             Close
             </Button>
@@ -451,9 +451,9 @@ export default function JobOrderPage() {
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
                 <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
-                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
             </div>
             <div className="space-y-1">
+                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                  <div className="flex items-center gap-2">
                     <strong className='flex-shrink-0'>Courier:</strong>
                     <div className='w-full no-print'>
