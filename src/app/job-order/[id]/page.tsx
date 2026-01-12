@@ -438,41 +438,13 @@ export default function JobOrderPage() {
                 <p><strong>Recipient's Name:</strong> {lead.customerName}</p>
                 <p><strong>Contact No:</strong> {getContactDisplay()}</p>
                  <div className="flex items-center gap-2">
-                    <strong className='flex-shrink-0'>Delivery Date:</strong>
-                    <div className='w-full no-print flex items-center gap-1'>
-                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                            <PopoverTrigger asChild>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full justify-start text-left font-normal h-8 text-xs",
-                                    !deliveryDate && "text-muted-foreground"
-                                )}
-                                >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                mode="single"
-                                selected={deliveryDate}
-                                onSelect={(date) => {
-                                    setDeliveryDate(date);
-                                    setIsCalendarOpen(false);
-                                }}
-                                disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
-                                initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
-                         {deliveryDate && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setDeliveryDate(undefined)}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        )}
-                    </div>
-                    <span className="print-only">{deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
+                    <strong className='flex-shrink-0'>Delivery Address:</strong>
+                    <Input
+                        value={lead.location}
+                        onChange={handleLocationChange}
+                        className="h-8 text-xs flex-1 no-print"
+                    />
+                    <span className="print-only">{lead.location}</span>
                 </div>
             </div>
              <div className="space-y-1">
@@ -498,15 +470,41 @@ export default function JobOrderPage() {
                     </div>
                     <span className="print-only">{lead.courier}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <strong className='flex-shrink-0'>Delivery Address:</strong>
-                    <Input
-                        value={lead.location}
-                        onChange={handleLocationChange}
-                        className="h-8 text-xs flex-1 no-print"
-                    />
-                    <span className="print-only">{lead.location}</span>
+                <div className='w-full no-print flex items-center gap-1'>
+                    <strong className='flex-shrink-0'>Delivery Date:</strong>
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full justify-start text-left font-normal h-8 text-xs",
+                                !deliveryDate && "text-muted-foreground"
+                            )}
+                            >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                            mode="single"
+                            selected={deliveryDate}
+                            onSelect={(date) => {
+                                setDeliveryDate(date);
+                                setIsCalendarOpen(false);
+                            }}
+                            disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
+                        {deliveryDate && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setDeliveryDate(undefined)}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    )}
                 </div>
+                <span className="print-only"><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
             </div>
         </div>
 

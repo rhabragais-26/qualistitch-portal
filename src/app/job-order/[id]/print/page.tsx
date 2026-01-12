@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -140,7 +139,7 @@ export default function JobOrderPrintPage() {
                 <p><strong>Client Name:</strong> {lead.customerName}</p>
                 <p><strong>Recipient's Name:</strong> {lead.customerName}</p>
                 <p><strong>Contact No:</strong> {getContactDisplay()}</p>
-                <p><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</p>
+                <p><strong>Delivery Address:</strong> {lead.location}</p>
             </div>
             <div className="space-y-1">
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
@@ -150,7 +149,7 @@ export default function JobOrderPrintPage() {
             </div>
             <div className="space-y-1">
                 <p><strong>Courier:</strong> {lead.courier}</p>
-                <p><strong>Delivery Address:</strong> {lead.location}</p>
+                <p><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</p>
             </div>
         </div>
 
