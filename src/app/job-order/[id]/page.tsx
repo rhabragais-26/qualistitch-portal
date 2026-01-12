@@ -4,10 +4,10 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase
 import { collection, doc, query, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Printer, Save, X, ArrowLeft, ArrowRight, Plus, Trash2 } from 'lucide-react';
+import { CalendarIcon, Printer, Save, X, ArrowLeft, ArrowRight, Plus, Trash2, Upload } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
@@ -99,12 +99,11 @@ export default function JobOrderPage() {
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const layoutImageUploadRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const layoutImageUploadRef = useRef<HTMLInputElement>(null);
   
   const totalPages = 1 + (lead?.layouts?.length || 0);
 
-  // Helper to compare lead states to check for unsaved changes
   const isDirty = useMemo(() => {
     if (!fetchedLead || !lead) return false;
     
@@ -342,7 +341,7 @@ export default function JobOrderPage() {
     }
   };
 
-  const handleLayoutImageUpload = (event: React.ChangeEvent<HTMLInputElement>, layoutIndex: number) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, layoutIndex: number) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -352,6 +351,24 @@ export default function JobOrderPage() {
       reader.readAsDataURL(file);
     }
   };
+
+  const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, layoutIndex: number) => {
+    const items = event.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+            const blob = items[i].getAsFile();
+            if (blob) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (e.target?.result) {
+                        handleLayoutChange(layoutIndex, 'layoutImage', e.target.result as string);
+                    }
+                };
+                reader.readAsDataURL(blob);
+            }
+        }
+    }
+  }, [lead]);
 
 
   if (isLeadLoading || areAllLeadsLoading || !lead) {
@@ -643,17 +660,37 @@ export default function JobOrderPage() {
 
         {currentLayout && (
           <div key={currentLayout.id}>
-            <div
-              className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4 cursor-pointer no-print"
-              onClick={() => layoutImageUploadRef.current?.click()}
+             <div
+              tabIndex={0}
+              onPaste={(e) => handleImagePaste(e, currentLayoutIndex)}
+              onDoubleClick={() => layoutImageUploadRef.current?.click()}
+              onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
+              className="relative group w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4 cursor-pointer no-print focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
             >
               {currentLayout.layoutImage ? (
-                <Image src={currentLayout.layoutImage} alt={`Layout ${currentLayoutIndex + 1}`} layout="fill" objectFit="contain" />
+                <>
+                  <Image src={currentLayout.layoutImage} alt={`Layout ${currentLayoutIndex + 1}`} layout="fill" objectFit="contain" />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLayoutChange(currentLayoutIndex, 'layoutImage', '');
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
               ) : (
-                <span className="text-gray-500">Click to upload layout image</span>
+                <div className="text-gray-500 flex flex-col items-center gap-2">
+                  <Upload className="h-12 w-12" />
+                  <span>Double-click to upload or paste image</span>
+                </div>
               )}
-              <input type="file" ref={layoutImageUploadRef} onChange={(e) => handleLayoutImageUpload(e, currentLayoutIndex)} className="hidden" accept="image/*" />
+              <input type="file" ref={layoutImageUploadRef} onChange={(e) => handleFileUpload(e, currentLayoutIndex)} className="hidden" accept="image/*" />
             </div>
+
 
             <h2 className="text-2xl font-bold text-center mb-4">
               {lead.layouts && lead.layouts.length > 1
