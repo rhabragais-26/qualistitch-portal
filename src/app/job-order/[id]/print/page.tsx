@@ -139,7 +139,7 @@ export default function JobOrderPrintPage() {
             <div className="space-y-1">
                 <p><strong>Client Name:</strong> {lead.customerName}</p>
                 <p><strong>Contact No:</strong> {getContactDisplay()}</p>
-                <p><strong>Delivery Address:</strong> {lead.location}</p>
+                <p><strong>Delivery Address:</strong> <span className="whitespace-pre-wrap">{lead.location}</span></p>
             </div>
              <div className="space-y-1">
                 <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>

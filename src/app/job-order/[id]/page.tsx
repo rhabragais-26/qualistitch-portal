@@ -100,6 +100,7 @@ export default function JobOrderPage() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const layoutImageUploadRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const totalPages = 1 + (lead?.layouts?.length || 0);
 
@@ -145,6 +146,13 @@ export default function JobOrderPage() {
     return JSON.stringify(normalizedFetchedLead) !== JSON.stringify(normalizedCurrentLead);
 
   }, [fetchedLead, lead, deliveryDate]);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [lead?.location]);
 
   useEffect(() => {
     if (fetchedLead) {
@@ -437,14 +445,15 @@ export default function JobOrderPage() {
             <div className="space-y-1">
                 <p><strong>Client Name:</strong> {lead.customerName}</p>
                 <p><strong>Contact No:</strong> {getContactDisplay()}</p>
-                <div className="flex items-start gap-2">
-                    <strong className="flex-shrink-0 pt-1.5">Delivery Address:</strong>
+                 <div className="flex flex-col gap-1">
+                    <strong>Delivery Address:</strong>
                     <Textarea
+                        ref={textareaRef}
                         value={lead.location}
                         onChange={handleLocationChange}
-                        className="text-xs no-print p-1 min-h-[40px] flex-1"
+                        className="text-xs no-print p-1 min-h-[40px] flex-1 overflow-hidden resize-none"
                     />
-                    <span className="print-only whitespace-pre-wrap pt-1.5">{lead.location}</span>
+                    <p className="print-only whitespace-pre-wrap">{lead.location}</p>
                 </div>
             </div>
              <div className="space-y-1">
