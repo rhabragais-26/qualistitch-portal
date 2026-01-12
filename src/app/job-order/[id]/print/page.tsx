@@ -134,29 +134,22 @@ export default function JobOrderPrintPage() {
         </div>
         <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
-        <div className="grid grid-cols-2 gap-x-8 text-sm mb-6 border-b border-black pb-4">
+        <div className="grid grid-cols-3 gap-x-8 text-sm mb-6 border-b border-black pb-4">
             <div className="space-y-1">
                 <p><strong>Client Name:</strong> {lead.customerName}</p>
-                <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
-                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                 <p><strong>Recipient's Name:</strong> {lead.customerName}</p>
-                 <div className="flex items-center gap-2">
-                    <strong className='flex-shrink-0'>Delivery Date:</strong>
-                    <span>{deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
-                </div>
-            </div>
-             <div className="space-y-1">
-                <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
-                <p><strong>Type of Order:</strong> {lead.orderType}</p>
-                <div className="flex items-center gap-2">
-                    <strong className='flex-shrink-0'>Courier:</strong>
-                    <span>{lead.courier}</span>
-                </div>
                 <p><strong>Contact No:</strong> {getContactDisplay()}</p>
+                <p><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</p>
             </div>
-             <div className="col-span-2 mt-2 flex items-center gap-2">
-                <p><strong>Delivery Address:</strong></p>
-                  <span>{lead.location}</span>
+            <div className="space-y-1">
+                <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
+                <p><strong>Type of Order:</strong> {lead.orderType}</p>
+                <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
+                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
+            </div>
+            <div className="space-y-1">
+                <p><strong>Courier:</strong> {lead.courier}</p>
+                <p><strong>Delivery Address:</strong> {lead.location}</p>
             </div>
         </div>
 

@@ -432,12 +432,11 @@ export default function JobOrderPage() {
         </div>
         <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
-        <div className="grid grid-cols-2 gap-x-8 text-sm mb-6 border-b border-black pb-4">
+        <div className="grid grid-cols-3 gap-x-8 text-sm mb-6 border-b border-black pb-4">
             <div className="space-y-1">
                 <p><strong>Client Name:</strong> {lead.customerName}</p>
-                <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
-                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                 <p><strong>Recipient's Name:</strong> {lead.customerName}</p>
+                <p><strong>Contact No:</strong> {getContactDisplay()}</p>
                  <div className="flex items-center gap-2">
                     <strong className='flex-shrink-0'>Delivery Date:</strong>
                     <div className='w-full no-print flex items-center gap-1'>
@@ -446,7 +445,7 @@ export default function JobOrderPage() {
                                 <Button
                                 variant={"outline"}
                                 className={cn(
-                                    "w-[240px] justify-start text-left font-normal h-8 text-xs",
+                                    "w-full justify-start text-left font-normal h-8 text-xs",
                                     !deliveryDate && "text-muted-foreground"
                                 )}
                                 >
@@ -477,9 +476,13 @@ export default function JobOrderPage() {
                 </div>
             </div>
              <div className="space-y-1">
-                <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
+                <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
-                <div className="flex items-center gap-2">
+                <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
+                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
+            </div>
+            <div className="space-y-1">
+                 <div className="flex items-center gap-2">
                     <strong className='flex-shrink-0'>Courier:</strong>
                     <div className='w-full no-print'>
                       <Select value={lead.courier || 'Pick-up'} onValueChange={handleCourierChange}>
@@ -495,16 +498,15 @@ export default function JobOrderPage() {
                     </div>
                     <span className="print-only">{lead.courier}</span>
                 </div>
-                <p><strong>Contact No:</strong> {getContactDisplay()}</p>
-            </div>
-             <div className="col-span-2 mt-2 flex items-center gap-2">
-                <p><strong>Delivery Address:</strong></p>
-                 <Input
-                    value={lead.location}
-                    onChange={handleLocationChange}
-                    className="h-8 text-xs flex-1 no-print"
-                  />
-                  <span className="print-only">{lead.location}</span>
+                <div className="flex items-center gap-2">
+                    <strong className='flex-shrink-0'>Delivery Address:</strong>
+                    <Input
+                        value={lead.location}
+                        onChange={handleLocationChange}
+                        className="h-8 text-xs flex-1 no-print"
+                    />
+                    <span className="print-only">{lead.location}</span>
+                </div>
             </div>
         </div>
 
