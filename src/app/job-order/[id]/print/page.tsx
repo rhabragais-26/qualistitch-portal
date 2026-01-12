@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -114,9 +113,16 @@ export default function JobOrderPrintPage() {
     return mobile || landline || 'N/A';
   };
   
-  const layouts = lead.layouts && lead.layouts.length > 0
-    ? lead.layouts
-    : [{ id: 'layout-1', layoutImage: '', dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
+  const hasLayoutContent = (layout: Layout) => {
+    return layout.layoutImage || 
+           layout.dstLogoLeft || 
+           layout.dstLogoRight || 
+           layout.dstBackLogo || 
+           layout.dstBackText || 
+           (layout.namedOrders && layout.namedOrders.length > 0);
+  };
+  
+  const layoutsToPrint = lead.layouts?.filter(hasLayoutContent) || [];
 
 
   return (
@@ -129,7 +135,7 @@ export default function JobOrderPrintPage() {
         <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
         <div className="grid grid-cols-2 gap-x-8 text-sm mb-6 border-b border-black pb-4">
-            <div className="space-y-2">
+            <div className="space-y-1">
                 <p><strong>Client Name:</strong> {lead.customerName}</p>
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
@@ -139,7 +145,7 @@ export default function JobOrderPrintPage() {
                     <span>{deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
                 </div>
             </div>
-             <div className="space-y-2">
+             <div className="space-y-1">
                 <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
                 <div className="flex items-center gap-2">
@@ -268,7 +274,7 @@ export default function JobOrderPrintPage() {
       </div>
 
        {/* Layout Pages */}
-      {layouts.map((layout, layoutIndex) => (
+      {layoutsToPrint.map((layout, layoutIndex) => (
         <div key={layout.id || `layout-${layoutIndex}`} className="p-10 mx-auto max-w-4xl printable-area print-page">
           <div className="text-left mb-4">
               <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{joNumber}</span> - Layout {layoutIndex + 1}</p>
@@ -280,7 +286,9 @@ export default function JobOrderPrintPage() {
               </div>
             )}
           
-          <h2 className="text-2xl font-bold text-center mb-4">LAYOUT</h2>
+          <h2 className="text-2xl font-bold text-center mb-4">
+            {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
+          </h2>
             <table className="w-full border-collapse border border-black mb-6">
                 <tbody>
                     <tr>

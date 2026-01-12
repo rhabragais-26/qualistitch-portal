@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Printer, Save, X, Eye, Plus, Trash2, ArrowLeft, ArrowRight } from 'lucide-react';
+import { CalendarIcon, Printer, Save, X, ArrowLeft, ArrowRight, Plus, Trash2 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useMemo, useState, useRef } from 'react';
@@ -434,7 +433,7 @@ export default function JobOrderPage() {
         <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
         <div className="grid grid-cols-2 gap-x-8 text-sm mb-6 border-b border-black pb-4">
-            <div className="space-y-2">
+            <div className="space-y-1">
                 <p><strong>Client Name:</strong> {lead.customerName}</p>
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
@@ -477,7 +476,7 @@ export default function JobOrderPage() {
                     <span className="print-only">{deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
                 </div>
             </div>
-             <div className="space-y-2">
+             <div className="space-y-1">
                 <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
                 <div className="flex items-center gap-2">
@@ -571,7 +570,7 @@ export default function JobOrderPage() {
             <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
         </div>
         
-        <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-8">
+        <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
             <div className="space-y-1">
                 <p className="font-bold italic">Prepared by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">{lead.salesRepresentative.toUpperCase()}</p>
