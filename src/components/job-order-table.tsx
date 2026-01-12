@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -16,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
@@ -32,6 +31,8 @@ import { Check, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+
 
 const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
@@ -77,6 +78,7 @@ export function JobOrderTable() {
   const [csrFilter, setCsrFilter] = React.useState('All');
   const [hoveredLeadId, setHoveredLeadId] = React.useState<string | null>(null);
   const router = useRouter();
+  const [confirmingPrint, setConfirmingPrint] = useState<Lead | null>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
@@ -125,6 +127,13 @@ export function JobOrderTable() {
         title: "Update Failed",
         description: e.message || "Could not update the printed status.",
       });
+    }
+  };
+
+  const handleConfirmPrint = () => {
+    if (confirmingPrint) {
+      handlePrintedChange(confirmingPrint.id, true);
+      setConfirmingPrint(null);
     }
   };
   
@@ -201,6 +210,21 @@ export function JobOrderTable() {
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
+       <AlertDialog open={!!confirmingPrint} onOpenChange={(open) => !open && setConfirmingPrint(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Print</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to mark this Job Order as printed? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmPrint}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
@@ -313,7 +337,7 @@ export function JobOrderTable() {
                                         J.O. Saved
                                     </>
                                   ) : isJoSaved ? (
-                                    hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved'
+                                    lead.isJoPrinted ? 'Re-Print' : (hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved')
                                   ) : (
                                     'Process J.O.'
                                   )}
@@ -321,9 +345,14 @@ export function JobOrderTable() {
                             </TableCell>
                              <TableCell className="text-center align-middle py-2">
                                 <Checkbox
-                                  checked={lead.isJoPrinted || false}
-                                  onCheckedChange={(checked) => handlePrintedChange(lead.id, !!checked)}
-                                  disabled={!isJoSaved}
+                                    checked={lead.isJoPrinted || false}
+                                    onCheckedChange={(checked) => {
+                                        if (checked && !lead.isJoPrinted) {
+                                            setConfirmingPrint(lead);
+                                        }
+                                    }}
+                                    disabled={!isJoSaved || lead.isJoPrinted}
+                                    className={cn(lead.isJoPrinted && "cursor-default")}
                                 />
                              </TableCell>
                              <TableCell className="text-xs align-middle py-2 text-black">
