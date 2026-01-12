@@ -25,11 +25,13 @@ import { Badge } from './ui/badge';
 import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, doc, updateDoc } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Check, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
+import { Checkbox } from './ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
 
 const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
@@ -52,6 +54,7 @@ type Lead = {
   lastModified: string;
   orders: Order[];
   joNumber?: number;
+  isJoPrinted?: boolean;
   courier?: string;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   isUnderProgramming?: boolean;
@@ -68,6 +71,7 @@ type EnrichedLead = Lead & {
 
 export function JobOrderTable() {
   const firestore = useFirestore();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [joNumberSearch, setJoNumberSearch] = React.useState('');
   const [csrFilter, setCsrFilter] = React.useState('All');
@@ -105,6 +109,21 @@ export function JobOrderTable() {
     if (lead.joNumber) return "Already on Programming Dept.";
     return <span className="text-gray-500">Not yet processed</span>;
   }, []);
+
+  const handlePrintedChange = async (leadId: string, checked: boolean) => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', leadId);
+    try {
+      await updateDoc(leadDocRef, { isJoPrinted: checked });
+    } catch (e: any) {
+      console.error("Error updating printed status:", e);
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: e.message || "Could not update the printed status.",
+      });
+    }
+  };
   
   const processedLeads = useMemo(() => {
     if (!leads) return [];
@@ -224,13 +243,12 @@ export function JobOrderTable() {
                   <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                     <TableRow>
                       <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
-                      <TableHead className="text-white font-bold align-middle">Company Name</TableHead>
                       <TableHead className="text-white font-bold align-middle">Contact No.</TableHead>
-                      <TableHead className="text-white font-bold align-middle">Courier</TableHead>
                       <TableHead className="text-white font-bold align-middle">SCES</TableHead>
                       <TableHead className="text-white font-bold align-middle">Priority</TableHead>
                       <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                       <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
+                      <TableHead className="text-center text-white font-bold align-middle">Printed</TableHead>
                       <TableHead className="text-white font-bold align-middle">Date Created</TableHead>
                       <TableHead className="text-white font-bold align-middle">J.O. Status</TableHead>
                     </TableRow>
@@ -266,9 +284,7 @@ export function JobOrderTable() {
                                     <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                                 )}
                             </TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{getContactDisplay(lead)}</TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
                             <TableCell className="align-middle py-2">
                                <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
@@ -300,6 +316,13 @@ export function JobOrderTable() {
                                   )}
                                 </Button>
                             </TableCell>
+                             <TableCell className="text-center align-middle py-2">
+                                <Checkbox
+                                  checked={lead.isJoPrinted || false}
+                                  onCheckedChange={(checked) => handlePrintedChange(lead.id, !!checked)}
+                                  disabled={!isJoSaved}
+                                />
+                             </TableCell>
                              <TableCell className="text-xs align-middle py-2 text-black">
                               <Collapsible>
                                 <CollapsibleTrigger asChild>
@@ -311,7 +334,7 @@ export function JobOrderTable() {
                                         </div>
                                     </div>
                                 </CollapsibleTrigger>
-                                <CollapsibleContent className="pt-1 pl-5 text-gray-500 text-[11px]">
+                                <CollapsibleContent className="pt-1 pl-5 text-gray-500 text-xs">
                                     <span className='font-bold text-gray-600'>Last Modified:</span>
                                     <div>{modifiedDate.dateTime}</div>
                                     <div>{modifiedDate.dayOfWeek}</div>
@@ -329,3 +352,5 @@ export function JobOrderTable() {
     </Card>
   );
 }
+
+    
