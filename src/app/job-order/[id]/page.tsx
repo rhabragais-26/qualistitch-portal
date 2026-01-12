@@ -409,7 +409,7 @@ export default function JobOrderPage() {
             </div>
         </div>
       </header>
-      <div className="fixed top-[72px] right-4 no-print z-50">
+      <div className="fixed top-[72px] right-4 no-print z-50 mt-8">
          <div className="flex flex-col items-center gap-2">
             <Button onClick={handleClose} variant="outline" className="shadow-md">
             <X className="mr-2 h-4 w-4" />
