@@ -243,6 +243,15 @@ export default function JobOrderPage() {
     }
   };
 
+  const hasLayoutContent = (layout: Layout) => {
+    return layout.layoutImage || 
+           layout.dstLogoLeft || 
+           layout.dstLogoRight || 
+           layout.dstBackLogo || 
+           layout.dstBackText || 
+           (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
+  };
+  
   const handleSaveChanges = async () => {
     if (!lead || !leadRef || !allLeads) return;
 
@@ -253,12 +262,15 @@ export default function JobOrderPage() {
         const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
         newJoNumber = maxJoNumber + 1;
     }
+
+    const layoutsToSave = (lead.layouts || []).filter(hasLayoutContent);
     
     const dataToUpdate = {
         ...lead,
         joNumber: newJoNumber,
         deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
         lastModified: new Date().toISOString(),
+        layouts: layoutsToSave,
     };
 
     try {
