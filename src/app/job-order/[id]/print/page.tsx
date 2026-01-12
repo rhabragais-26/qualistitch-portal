@@ -347,7 +347,7 @@ export default function JobOrderPrintPage() {
             page-break-after: always;
           }
           @page {
-            size: auto;
+            size: legal;
             margin: 0.5in;
           }
         }
