@@ -61,13 +61,12 @@ export function useCollection<T = any>(
   const [data, setData] = useState<StateDataType>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Start loading initially
   const [error, setError] = useState<FirestoreError | Error | null>(null);
-  const { isUserLoading } = useUser(); // Get auth loading state
+  const { user, isUserLoading } = useUser(); // Get auth loading state and user object
 
   useEffect(() => {
-    // Wait until both the query is ready and the user is authenticated.
-    if (!memoizedTargetRefOrQuery || isUserLoading) {
-      // If user is still loading, we should reflect that in our state.
-      if(isUserLoading) {
+    // Wait until query is ready, user isn't loading, AND user object exists.
+    if (!memoizedTargetRefOrQuery || isUserLoading || !user) {
+      if (isUserLoading || !user) {
         setIsLoading(true);
         setData(null);
         setError(null);
@@ -109,7 +108,7 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery, isUserLoading]);
+  }, [memoizedTargetRefOrQuery, isUserLoading, user]);
   
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
     console.warn('The query/reference passed to useCollection was not memoized with useMemoFirebase. This can lead to performance issues.', memoizedTargetRefOrQuery);
