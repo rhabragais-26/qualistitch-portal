@@ -213,7 +213,7 @@ export default function JobOrderPage() {
     }
   };
 
-  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLocationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (lead) {
       setLead({ ...lead, location: e.target.value });
     }
@@ -439,12 +439,12 @@ export default function JobOrderPage() {
                 <p><strong>Contact No:</strong> {getContactDisplay()}</p>
                 <div className="flex items-start gap-2">
                     <strong className="flex-shrink-0 pt-1.5">Delivery Address:</strong>
-                    <Input
+                    <Textarea
                         value={lead.location}
                         onChange={handleLocationChange}
-                        className="h-8 text-xs flex-1 no-print"
+                        className="text-xs no-print p-1 min-h-[40px] flex-1"
                     />
-                    <span className="print-only whitespace-nowrap pt-1.5">{lead.location}</span>
+                    <span className="print-only whitespace-pre-wrap pt-1.5">{lead.location}</span>
                 </div>
             </div>
              <div className="space-y-1">
