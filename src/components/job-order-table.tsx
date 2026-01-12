@@ -112,7 +112,7 @@ export function JobOrderTable() {
     if (lead.isEndorsedToLogistics) return "Already on Logistics";
     if (lead.isSentToProduction) return "Already on Production Dept.";
     if (lead.isPreparedForProduction) return "Already on Inventory";
-    if (lead.isUnderProgramming || lead.joNumber) return "Already on Programming Dept."; // Default if JO is printed
+    if (lead.isUnderProgramming || lead.joNumber) return "Already on Programming Dept.";
     return <span className="text-gray-500">Not yet processed</span>;
   }, []);
 
@@ -325,7 +325,7 @@ export function JobOrderTable() {
                                   size="sm" 
                                   className={cn(
                                     'h-8 px-3 text-white font-bold',
-                                     isCompleted ? 'bg-slate-500' : (isJoSaved ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-primary hover:bg-primary/90')
+                                     isCompleted ? 'bg-slate-500' : (isJoSaved ? (lead.isJoPrinted ? 'bg-blue-900 hover:bg-blue-800' : 'bg-emerald-600 hover:bg-emerald-700') : 'bg-primary hover:bg-primary/90')
                                   )}
                                   onClick={() => handleProcessJobOrder(lead)}
                                    onMouseEnter={() => setHoveredLeadId(lead.id)}
@@ -338,7 +338,7 @@ export function JobOrderTable() {
                                         J.O. Saved
                                     </>
                                   ) : isJoSaved ? (
-                                    lead.isJoPrinted ? 'Re-Print' : (hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved')
+                                    lead.isJoPrinted ? 'Re-Print/Edit' : (hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved')
                                   ) : (
                                     'Process J.O.'
                                   )}
@@ -385,7 +385,3 @@ export function JobOrderTable() {
     </Card>
   );
 }
-
-    
-
-    
