@@ -108,9 +108,10 @@ export default function JobOrderPage() {
     if (!fetchedLead || !lead) return false;
     
     // Normalize function to create a comparable object
-    const normalize = (l:Lead) => {
+    const normalize = (l:Lead | null) => {
+      if (!l) return null;
         // Deep copy and sort arrays to ensure consistent order for comparison
-        const sortedOrders = [...l.orders].sort((a, b) => 
+        const sortedOrders = [...(l.orders || [])].sort((a, b) => 
             `${a.productType}-${a.color}-${a.size}`.localeCompare(`${b.productType}-${b.color}-${b.size}`)
         );
 
@@ -156,9 +157,9 @@ export default function JobOrderPage() {
 
     const normalizedFetchedLead = normalize(fetchedLead);
     const normalizedCurrentLead = normalize({
-        ...lead, 
+        ...(lead || {}), 
         deliveryDate: deliveryDate ? deliveryDate.toISOString() : undefined,
-    });
+    } as Lead);
     
     return JSON.stringify(normalizedFetchedLead) !== JSON.stringify(normalizedCurrentLead);
 
