@@ -353,7 +353,7 @@ export function JobOrderTable() {
                                         }
                                     }}
                                     disabled={!isJoSaved || lead.isJoPrinted}
-                                    className={cn(lead.isJoPrinted && "cursor-default opacity-100")}
+                                    className={cn(lead.isJoPrinted && "cursor-default data-[state=checked]:opacity-100")}
                                 />
                              </TableCell>
                              <TableCell className="text-xs align-middle py-2 text-black">
@@ -385,5 +385,7 @@ export function JobOrderTable() {
     </Card>
   );
 }
+
+    
 
     
