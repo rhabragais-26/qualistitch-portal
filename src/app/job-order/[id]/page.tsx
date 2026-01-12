@@ -403,7 +403,7 @@ export default function JobOrderPage() {
             <div className="flex justify-center items-center w-1/3">
                 <span className="font-semibold">Page {currentPage + 1} of {totalPages}</span>
             </div>
-            <div className="flex justify-end items-center gap-2 w-1/3">
+            <div className="flex justify-end items-center w-1/3">
                 <Button onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p+1))} disabled={currentPage >= totalPages - 1} size="sm">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
             </div>
         </div>
@@ -437,15 +437,6 @@ export default function JobOrderPage() {
                 <p><strong>Client Name:</strong> {lead.customerName}</p>
                 <p><strong>Recipient's Name:</strong> {lead.customerName}</p>
                 <p><strong>Contact No:</strong> {getContactDisplay()}</p>
-                 <div className="flex items-center gap-2">
-                    <strong className='flex-shrink-0'>Delivery Address:</strong>
-                    <Input
-                        value={lead.location}
-                        onChange={handleLocationChange}
-                        className="h-8 text-xs flex-1 no-print"
-                    />
-                    <span className="print-only">{lead.location}</span>
-                </div>
             </div>
              <div className="space-y-1">
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
@@ -498,13 +489,17 @@ export default function JobOrderPage() {
                             />
                         </PopoverContent>
                     </Popover>
-                        {deliveryDate && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setDeliveryDate(undefined)}>
-                            <X className="h-4 w-4" />
-                        </Button>
-                    )}
                 </div>
                 <span className="print-only"><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
+            </div>
+            <div className="col-span-3 mt-1 flex items-center gap-2">
+                <strong className='flex-shrink-0'>Delivery Address:</strong>
+                 <Input
+                    value={lead.location}
+                    onChange={handleLocationChange}
+                    className="h-8 text-xs flex-1 no-print"
+                  />
+                  <span className="print-only whitespace-nowrap">{lead.location}</span>
             </div>
         </div>
 
