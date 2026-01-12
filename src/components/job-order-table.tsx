@@ -102,7 +102,7 @@ export function JobOrderTable() {
     if (lead.isEndorsedToLogistics) return "Already on Logistics";
     if (lead.isSentToProduction) return "Already on Production Dept.";
     if (lead.isPreparedForProduction) return "Already on Inventory";
-    if (lead.isUnderProgramming) return "Already on Programming Dept.";
+    if (lead.joNumber) return "Already on Programming Dept.";
     return <span className="text-gray-500">Not yet processed</span>;
   }, []);
   
