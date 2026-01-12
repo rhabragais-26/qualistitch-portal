@@ -206,7 +206,6 @@ export default function JobOrderPage() {
   const handleConfirmSave = async () => {
     await handleSaveChanges();
     setShowConfirmDialog(false);
-    router.push('/job-order');
   };
   
   const handleConfirmDiscard = () => {
@@ -268,8 +267,7 @@ export default function JobOrderPage() {
         title: 'Job Order Saved!',
         description: 'Your changes have been saved successfully.',
       });
-      const updatedFetchedLead = { ...fetchedLead, ...dataToUpdate };
-      setLead(updatedFetchedLead as Lead);
+      router.push('/job-order');
       
     } catch (e: any) {
       console.error('Error saving job order:', e);
@@ -433,7 +431,7 @@ export default function JobOrderPage() {
                     <X className="mr-2 h-4 w-4" />
                     Close
                 </Button>
-                <Button onClick={handleSaveChanges} className="text-white font-bold shadow-md">
+                <Button onClick={handleSaveChanges} className="text-white font-bold shadow-md" disabled={!isDirty}>
                     <Save className="mr-2 h-4 w-4" />
                     Save Changes
                 </Button>
