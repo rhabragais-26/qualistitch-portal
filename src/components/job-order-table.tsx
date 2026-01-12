@@ -28,7 +28,8 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { Check } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
 
 const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
@@ -53,6 +54,11 @@ type Lead = {
   joNumber?: number;
   courier?: string;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  isUnderProgramming?: boolean;
+  isPreparedForProduction?: boolean;
+  isSentToProduction?: boolean;
+  isEndorsedToLogistics?: boolean;
+  isRecheckingQuality?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -74,6 +80,16 @@ export function JobOrderTable() {
   const handleProcessJobOrder = useCallback((lead: Lead) => {
     router.push(`/job-order/${lead.id}`);
   }, [router]);
+  
+  const getContactDisplay = useCallback((lead: Lead) => {
+    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
+    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+
+    if (mobile && landline) {
+      return `${mobile} / ${landline}`;
+    }
+    return mobile || landline || 'N/A';
+  }, []);
 
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
@@ -81,12 +97,20 @@ export function JobOrderTable() {
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   }, []);
   
+  const getJoStatus = useCallback((lead: Lead) => {
+    if (lead.isRecheckingQuality) return <span className="font-bold text-red-600">Need to Reprint</span>;
+    if (lead.isEndorsedToLogistics) return "Already on Logistics";
+    if (lead.isSentToProduction) return "Already on Production Dept.";
+    if (lead.isPreparedForProduction) return "Already on Inventory";
+    if (lead.isUnderProgramming) return "Already on Programming Dept.";
+    return <span className="text-gray-500">Not yet processed</span>;
+  }, []);
+  
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
     const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
   
-    // First, group orders and calculate total quantities for each customer
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
@@ -99,7 +123,6 @@ export function JobOrderTable() {
   
     const enrichedLeads: EnrichedLead[] = [];
   
-    // Now, create the enriched lead objects with order numbers
     Object.values(customerOrderStats).forEach(({ orders, totalQuantity }) => {
       orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
       orders.forEach((lead, index) => {
@@ -202,15 +225,14 @@ export function JobOrderTable() {
                     <TableRow>
                       <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
                       <TableHead className="text-white font-bold align-middle">Company Name</TableHead>
-                      <TableHead className="text-white font-bold align-middle">Mobile No.</TableHead>
-                      <TableHead className="text-white font-bold align-middle">Landline No.</TableHead>
+                      <TableHead className="text-white font-bold align-middle">Contact No.</TableHead>
                       <TableHead className="text-white font-bold align-middle">Courier</TableHead>
                       <TableHead className="text-white font-bold align-middle">SCES</TableHead>
                       <TableHead className="text-white font-bold align-middle">Priority</TableHead>
                       <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                       <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
                       <TableHead className="text-white font-bold align-middle">Date Created</TableHead>
-                      <TableHead className="text-white font-bold align-middle">Last Updated</TableHead>
+                      <TableHead className="text-white font-bold align-middle">J.O. Status</TableHead>
                     </TableRow>
                   </TableHeader>
                     <TableBody>
@@ -245,8 +267,7 @@ export function JobOrderTable() {
                                 )}
                             </TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{lead.companyName === '-' ? '' : lead.companyName}</TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black">{lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : ''}</TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black">{lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : ''}</TableCell>
+                            <TableCell className="text-xs align-middle py-2 text-black">{getContactDisplay(lead)}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
                             <TableCell className="align-middle py-2">
@@ -279,14 +300,25 @@ export function JobOrderTable() {
                                   )}
                                 </Button>
                             </TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black">
-                              <div>{creationDate.dateTime}</div>
-                              <div className="text-gray-500">{creationDate.dayOfWeek}</div>
+                             <TableCell className="text-xs align-middle py-2 text-black">
+                              <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                    <div className="flex items-center cursor-pointer">
+                                        <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                        <div>
+                                            <div>{creationDate.dateTime}</div>
+                                            <div className="text-gray-500">{creationDate.dayOfWeek}</div>
+                                        </div>
+                                    </div>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="pt-1 pl-5 text-gray-500 text-[11px]">
+                                    <span className='font-bold text-gray-600'>Last Modified:</span>
+                                    <div>{modifiedDate.dateTime}</div>
+                                    <div>{modifiedDate.dayOfWeek}</div>
+                                </CollapsibleContent>
+                              </Collapsible>
                             </TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black">
-                              <div>{modifiedDate.dateTime}</div>
-                              <div className="text-gray-500">{modifiedDate.dayOfWeek}</div>
-                            </TableCell>
+                            <TableCell className="text-xs align-middle py-2 text-black font-medium">{getJoStatus(lead)}</TableCell>
                         </TableRow>
                       );
                     })}
