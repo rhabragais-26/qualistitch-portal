@@ -58,6 +58,7 @@ type Layout = {
 type Lead = {
   id: string;
   customerName: string;
+  recipientName?: string;
   companyName?: string;
   contactNumber: string;
   landlineNumber?: string;
@@ -397,7 +398,7 @@ export default function JobOrderPage() {
       </AlertDialog>
       <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md z-50">
         <div className="flex justify-between items-center container mx-auto max-w-4xl">
-            <div className="flex justify-start items-center gap-2 w-1/3">
+            <div className="flex justify-start items-center w-1/3">
                 <Button onClick={() => setCurrentPage(p => Math.max(0, p-1))} disabled={currentPage === 0} size="sm"><ArrowLeft className="mr-2 h-4 w-4"/>Previous</Button>
             </div>
             <div className="flex justify-center items-center w-1/3">
@@ -435,10 +436,19 @@ export default function JobOrderPage() {
         <div className="grid grid-cols-3 gap-x-8 text-sm mb-6 border-b border-black pb-4">
             <div className="space-y-1">
                 <p><strong>Client Name:</strong> {lead.customerName}</p>
-                <p><strong>Recipient's Name:</strong> {lead.customerName}</p>
                 <p><strong>Contact No:</strong> {getContactDisplay()}</p>
+                <div className="flex items-start gap-2">
+                    <strong className="flex-shrink-0 pt-1.5">Delivery Address:</strong>
+                    <Input
+                        value={lead.location}
+                        onChange={handleLocationChange}
+                        className="h-8 text-xs flex-1 no-print"
+                    />
+                    <span className="print-only whitespace-nowrap pt-1.5">{lead.location}</span>
+                </div>
             </div>
              <div className="space-y-1">
+                <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
                 <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
@@ -491,15 +501,6 @@ export default function JobOrderPage() {
                     </Popover>
                 </div>
                 <span className="print-only"><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
-            </div>
-            <div className="col-span-3 mt-1 flex items-center gap-2">
-                <strong className='flex-shrink-0'>Delivery Address:</strong>
-                 <Input
-                    value={lead.location}
-                    onChange={handleLocationChange}
-                    className="h-8 text-xs flex-1 no-print"
-                  />
-                  <span className="print-only whitespace-nowrap">{lead.location}</span>
             </div>
         </div>
 
@@ -718,7 +719,7 @@ export default function JobOrderPage() {
             color: black !important;
           }
           .print-only {
-            display: block !important;
+            display: inline-block !important;
           }
           .bg-gray-200 {
             background-color: #e5e7eb !important;
@@ -726,8 +727,11 @@ export default function JobOrderPage() {
           .print-page {
             page-break-after: always;
           }
+           .print-page:last-of-type {
+            page-break-after: auto;
+          }
           @page {
-            size: auto;
+            size: legal;
             margin: 0.5in;
           }
         }
