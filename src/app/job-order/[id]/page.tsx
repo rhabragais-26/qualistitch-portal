@@ -82,6 +82,8 @@ export default function JobOrderPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
+  
+  const [currentPage, setCurrentPage] = useState(0);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: allLeads, isLoading: areAllLeadsLoading } = useCollection<Lead>(leadsQuery);
@@ -97,15 +99,14 @@ export default function JobOrderPage() {
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [currentLayoutIndex, setCurrentLayoutIndex] = useState(0);
   const layoutImageUploadRef = useRef<HTMLInputElement>(null);
+  
+  const totalPages = 1 + (lead?.layouts?.length || 0);
 
   // Helper to compare lead states to check for unsaved changes
   const isDirty = useMemo(() => {
     if (!fetchedLead || !lead) return false;
     
-    //This is a simplified dirty check. For complex nested objects, a more robust deep comparison library might be better.
-    //We need to normalize parts of the object to avoid false positives.
     const normalize = (l:Lead) => {
         return {
             ...l,
@@ -124,8 +125,12 @@ export default function JobOrderPage() {
                 }
             })).sort((a,b) => a.productType.localeCompare(b.productType)),
             layouts: (l.layouts || []).map((layout) => ({
-                ...layout,
-                id: layout.id || `temp-${uuidv4()}`, // Ensure layout has an id for sorting
+                id: layout.id || `temp-${uuidv4()}`,
+                layoutImage: layout.layoutImage,
+                dstLogoLeft: layout.dstLogoLeft,
+                dstLogoRight: layout.dstLogoRight,
+                dstBackLogo: layout.dstBackLogo,
+                dstBackText: layout.dstBackText,
                 namedOrders: (layout.namedOrders || []).sort((a,b) => (a.name || '').localeCompare(b.name || ''))
             })).sort((a,b) => (a.id || '').localeCompare(b.id || '')),
         }
@@ -150,7 +155,7 @@ export default function JobOrderPage() {
       }));
       
       const initializedLayouts = fetchedLead.layouts && fetchedLead.layouts.length > 0 
-        ? fetchedLead.layouts.map(l => ({ ...l, namedOrders: l.namedOrders || [] }))
+        ? fetchedLead.layouts.map(l => ({ ...l, namedOrders: l.namedOrders || [], id: l.id || uuidv4() }))
         : [{ id: uuidv4(), layoutImage: '', dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
 
       setLead({ ...fetchedLead, orders: initializedOrders, courier: fetchedLead.courier || 'Pick-up', layouts: initializedLayouts });
@@ -170,7 +175,6 @@ export default function JobOrderPage() {
       if (lead.joNumber) {
         setJoNumber(`QSBP-${currentYear}-${lead.joNumber.toString().padStart(5, '0')}`);
       } else {
-        // Find max JO number only from leads of the current year
         const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
         const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
         const newJoNum = maxJoNumber + 1;
@@ -257,7 +261,6 @@ export default function JobOrderPage() {
         title: 'Job Order Saved!',
         description: 'Your changes have been saved successfully.',
       });
-      // After a successful save, we can treat the current state as not dirty
       const updatedFetchedLead = { ...fetchedLead, ...dataToUpdate };
       setLead(updatedFetchedLead as Lead);
       
@@ -271,7 +274,6 @@ export default function JobOrderPage() {
     }
   };
 
-  // --- Layout Functions ---
   const handleLayoutChange = (layoutIndex: number, field: keyof Layout, value: any) => {
     if (lead && lead.layouts) {
       const newLayouts = [...lead.layouts];
@@ -320,7 +322,7 @@ export default function JobOrderPage() {
     if (lead) {
       const newLayouts = [...(lead.layouts || []), { id: uuidv4(), layoutImage: '', dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
       setLead({ ...lead, layouts: newLayouts });
-      setCurrentLayoutIndex(newLayouts.length - 1);
+      setCurrentPage(newLayouts.length);
     }
   };
 
@@ -328,7 +330,7 @@ export default function JobOrderPage() {
     if (lead && lead.layouts && lead.layouts.length > 1) {
       const newLayouts = lead.layouts.filter((_, i) => i !== layoutIndex);
       setLead({ ...lead, layouts: newLayouts });
-      setCurrentLayoutIndex(Math.max(0, layoutIndex - 1));
+      setCurrentPage(Math.max(0, currentPage - 1));
     }
   };
 
@@ -342,7 +344,6 @@ export default function JobOrderPage() {
       reader.readAsDataURL(file);
     }
   };
-  // --- End Layout Functions ---
 
 
   if (isLeadLoading || areAllLeadsLoading || !lead) {
@@ -375,6 +376,7 @@ export default function JobOrderPage() {
     return mobile || landline || 'N/A';
   };
   
+  const currentLayoutIndex = currentPage - 1;
   const currentLayout = lead.layouts?.[currentLayoutIndex];
 
   return (
@@ -395,22 +397,31 @@ export default function JobOrderPage() {
         </AlertDialogContent>
       </AlertDialog>
       <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md z-50">
-        <div className="flex justify-end gap-2 container mx-auto max-w-4xl">
-            <Button onClick={handleClose} variant="outline">
-            <X className="mr-2 h-4 w-4" />
-            Close
-            </Button>
-            <Button onClick={handleSaveChanges} className="text-white font-bold">
-            <Save className="mr-2 h-4 w-4" />
-            Save Changes
-            </Button>
-            <Button onClick={handlePrint} className="text-white font-bold" disabled={!lead?.joNumber}>
-            <Printer className="mr-2 h-4 w-4" />
-            Print J.O.
-            </Button>
+        <div className="flex justify-between items-center container mx-auto max-w-4xl">
+            <div className="flex gap-2">
+                <Button onClick={() => setCurrentPage(p => Math.max(0, p-1))} disabled={currentPage === 0} size="sm"><ArrowLeft className="mr-2 h-4 w-4"/>Previous</Button>
+                <span>Page {currentPage + 1} of {totalPages}</span>
+                <Button onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p+1))} disabled={currentPage >= totalPages - 1} size="sm">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
+            </div>
+            <div className="flex justify-end gap-2">
+                <Button onClick={handleClose} variant="outline">
+                <X className="mr-2 h-4 w-4" />
+                Close
+                </Button>
+                <Button onClick={handleSaveChanges} className="text-white font-bold">
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+                </Button>
+                <Button onClick={handlePrint} className="text-white font-bold" disabled={!lead?.joNumber}>
+                <Printer className="mr-2 h-4 w-4" />
+                Print J.O.
+                </Button>
+            </div>
         </div>
       </header>
-      <div className="p-10 mx-auto max-w-4xl printable-area mt-16 print-page">
+      
+      {/* Page 1: Job Order Form */}
+      <div className={cn("p-10 mx-auto max-w-4xl printable-area mt-16 print-page", currentPage !== 0 && "hidden")}>
         <div className="text-left mb-4">
             <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{lead.joNumber ? joNumber : 'Not Saved'}</span></p>
         </div>
@@ -611,17 +622,12 @@ export default function JobOrderPage() {
         </div>
       </div>
       
-      {/* Layout Section */}
-      <div className="p-10 mx-auto max-w-4xl printable-area print-page">
+      {/* Layout Pages */}
+      <div className={cn("p-10 mx-auto max-w-4xl printable-area print-page mt-16", currentPage === 0 && "hidden")}>
          <div className="flex justify-between items-center mb-4 no-print">
             <div className="flex gap-2">
                 <Button onClick={addLayout} size="sm"><Plus className="mr-2 h-4 w-4"/>Add Layout</Button>
                 <Button onClick={() => deleteLayout(currentLayoutIndex)} size="sm" variant="destructive" disabled={(lead.layouts?.length ?? 0) <= 1}><Trash2 className="mr-2 h-4 w-4" />Delete Layout</Button>
-            </div>
-            <div className="flex items-center gap-2">
-                <Button onClick={() => setCurrentLayoutIndex(i => Math.max(0, i-1))} disabled={currentLayoutIndex === 0} size="sm"><ArrowLeft className="mr-2 h-4 w-4"/>Previous</Button>
-                <span>Layout {currentLayoutIndex + 1} of {(lead.layouts?.length ?? 0)}</span>
-                <Button onClick={() => setCurrentLayoutIndex(i => Math.min((lead.layouts?.length ?? 1)-1, i+1))} disabled={currentLayoutIndex >= (lead.layouts?.length ?? 1)-1} size="sm">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
             </div>
         </div>
 
@@ -702,6 +708,7 @@ export default function JobOrderPage() {
             display: none !important;
           }
           .printable-area {
+            display: block !important;
             margin-top: 0 !important;
             padding: 1rem !important;
             max-width: 100% !important;
