@@ -398,27 +398,33 @@ export default function JobOrderPage() {
       </AlertDialog>
       <header className="fixed top-0 left-0 right-0 bg-white p-4 no-print shadow-md z-50">
         <div className="flex justify-between items-center container mx-auto max-w-4xl">
-            <div className="flex gap-2">
+            <div className="flex justify-start items-center gap-2 w-1/3">
                 <Button onClick={() => setCurrentPage(p => Math.max(0, p-1))} disabled={currentPage === 0} size="sm"><ArrowLeft className="mr-2 h-4 w-4"/>Previous</Button>
-                <span>Page {currentPage + 1} of {totalPages}</span>
-                <Button onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p+1))} disabled={currentPage >= totalPages - 1} size="sm">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
             </div>
-            <div className="flex justify-end gap-2">
-                <Button onClick={handleClose} variant="outline">
-                <X className="mr-2 h-4 w-4" />
-                Close
-                </Button>
-                <Button onClick={handleSaveChanges} className="text-white font-bold">
-                <Save className="mr-2 h-4 w-4" />
-                Save Changes
-                </Button>
-                <Button onClick={handlePrint} className="text-white font-bold" disabled={!lead?.joNumber}>
-                <Printer className="mr-2 h-4 w-4" />
-                Print J.O.
-                </Button>
+            <div className="flex justify-center items-center w-1/3">
+                <span className="font-semibold">Page {currentPage + 1} of {totalPages}</span>
+            </div>
+            <div className="flex justify-end items-center gap-2 w-1/3">
+                <Button onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p+1))} disabled={currentPage >= totalPages - 1} size="sm">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
             </div>
         </div>
       </header>
+      <div className="fixed top-[72px] right-4 no-print z-50">
+         <div className="flex flex-col items-center gap-2">
+            <Button onClick={handleClose} variant="outline" className="shadow-md">
+            <X className="mr-2 h-4 w-4" />
+            Close
+            </Button>
+            <Button onClick={handleSaveChanges} className="text-white font-bold shadow-md">
+            <Save className="mr-2 h-4 w-4" />
+            Save Changes
+            </Button>
+            <Button onClick={handlePrint} className="text-white font-bold shadow-md" disabled={!lead?.joNumber}>
+            <Printer className="mr-2 h-4 w-4" />
+            Print J.O.
+            </Button>
+         </div>
+      </div>
       
       {/* Page 1: Job Order Form */}
       <div className={cn("p-10 mx-auto max-w-4xl printable-area mt-16 print-page", currentPage !== 0 && "hidden")}>
