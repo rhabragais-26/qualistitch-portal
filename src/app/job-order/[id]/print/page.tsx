@@ -141,14 +141,14 @@ export default function JobOrderPrintPage() {
                 <p><strong>Contact No:</strong> {getContactDisplay()}</p>
                 <p><strong>Delivery Address:</strong> <span className="whitespace-pre-wrap">{lead.location}</span></p>
             </div>
-             <div className="space-y-1">
-                <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
+            <div className="space-y-1">
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
+                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                 <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
             </div>
             <div className="space-y-1">
-                 <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
+                <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
                 <p><strong>Courier:</strong> {lead.courier}</p>
                 <p><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</p>
             </div>
@@ -177,8 +177,8 @@ export default function JobOrderPrintPage() {
           <tbody>
             {lead.orders.map((order, index) => (
               <tr key={index}>
-                <td className="border border-black p-0.5">{order.productType}</td>
-                <td className="border border-black p-0.5">{order.color}</td>
+                <td className="border border-black p-0.5 text-center align-middle">{order.productType}</td>
+                <td className="border border-black p-0.5 text-center align-middle">{order.color}</td>
                 <td className="border border-black p-0.5 text-center">{order.size}</td>
                 <td className="border border-black p-0.5 text-center">{order.quantity}</td>
                 <td className="border border-black p-0.5 text-center">

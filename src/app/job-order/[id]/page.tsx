@@ -445,7 +445,7 @@ export default function JobOrderPage() {
             <div className="space-y-1">
                 <p><strong>Client Name:</strong> {lead.customerName}</p>
                 <p><strong>Contact No:</strong> {getContactDisplay()}</p>
-                 <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1">
                     <strong>Delivery Address:</strong>
                     <Textarea
                         ref={textareaRef}
@@ -456,14 +456,14 @@ export default function JobOrderPage() {
                     <p className="print-only whitespace-pre-wrap">{lead.location}</p>
                 </div>
             </div>
-             <div className="space-y-1">
-                <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
+            <div className="space-y-1">
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
+                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                 <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
             </div>
             <div className="space-y-1">
-                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
+                 <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
                  <div className="flex items-center gap-2">
                     <strong className='flex-shrink-0'>Courier:</strong>
                     <div className='w-full no-print'>
@@ -536,8 +536,8 @@ export default function JobOrderPage() {
           <tbody>
             {lead.orders.map((order, index) => (
               <tr key={index}>
-                <td className="border border-black p-0.5">{order.productType}</td>
-                <td className="border border-black p-0.5">{order.color}</td>
+                <td className="border border-black p-0.5 text-center align-middle">{order.productType}</td>
+                <td className="border border-black p-0.5 text-center align-middle">{order.color}</td>
                 <td className="border border-black p-0.5 text-center">{order.size}</td>
                 <td className="border border-black p-0.5 text-center">{order.quantity}</td>
                 <td className="border border-black p-0.5 text-center">
