@@ -102,11 +102,14 @@ export function JobOrderTable() {
   }, []);
   
   const getJoStatus = useCallback((lead: Lead) => {
+    if (!lead.joNumber || !lead.isJoPrinted) {
+      return <span className="text-gray-500">Not yet processed</span>;
+    }
     if (lead.isRecheckingQuality) return <span className="font-bold text-red-600">Need to Reprint</span>;
     if (lead.isEndorsedToLogistics) return "Already on Logistics";
     if (lead.isSentToProduction) return "Already on Production Dept.";
     if (lead.isPreparedForProduction) return "Already on Inventory";
-    if (lead.joNumber) return "Already on Programming Dept.";
+    if (lead.isUnderProgramming || lead.joNumber) return "Already on Programming Dept."; // Default if JO is printed
     return <span className="text-gray-500">Not yet processed</span>;
   }, []);
 
@@ -352,5 +355,3 @@ export function JobOrderTable() {
     </Card>
   );
 }
-
-    
