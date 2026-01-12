@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -213,7 +214,7 @@ export function JobOrderTable() {
        <AlertDialog open={!!confirmingPrint} onOpenChange={(open) => !open && setConfirmingPrint(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Print</AlertDialogTitle>
+            <AlertDialogTitle>Confirm if J.O. was already printed</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to mark this Job Order as printed? This action cannot be undone.
             </AlertDialogDescription>
@@ -352,7 +353,7 @@ export function JobOrderTable() {
                                         }
                                     }}
                                     disabled={!isJoSaved || lead.isJoPrinted}
-                                    className={cn(lead.isJoPrinted && "cursor-default")}
+                                    className={cn(lead.isJoPrinted && "cursor-default opacity-100")}
                                 />
                              </TableCell>
                              <TableCell className="text-xs align-middle py-2 text-black">
@@ -384,3 +385,5 @@ export function JobOrderTable() {
     </Card>
   );
 }
+
+    
