@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -345,6 +346,9 @@ export default function JobOrderPrintPage() {
           }
           .print-page {
             page-break-after: always;
+          }
+          .print-page:last-of-type {
+            page-break-after: auto;
           }
           @page {
             size: legal;
