@@ -107,11 +107,22 @@ export default function JobOrderPage() {
   const isDirty = useMemo(() => {
     if (!fetchedLead || !lead) return false;
     
+    // Normalize function to create a comparable object
     const normalize = (l:Lead) => {
+        // Deep copy and sort arrays to ensure consistent order for comparison
+        const sortedOrders = [...l.orders].sort((a, b) => 
+            `${a.productType}-${a.color}-${a.size}`.localeCompare(`${b.productType}-${b.color}-${b.size}`)
+        );
+
+        const sortedLayouts = [...(l.layouts || [])].map(layout => ({
+            ...layout,
+            namedOrders: [...(layout.namedOrders || [])].sort((a,b) => (a.name || '').localeCompare(b.name || ''))
+        })).sort((a,b) => (a.id || '').localeCompare(b.id || ''));
+
         return {
             ...l,
-            deliveryDate: l.deliveryDate ? new Date(l.deliveryDate).toISOString().split('T')[0] : null,
-            orders: l.orders.map(o => ({
+            deliveryDate: l.deliveryDate ? new Date(l.deliveryDate).toISOString().split('T')[0] : undefined,
+            orders: sortedOrders.map(o => ({
                 productType: o.productType,
                 color: o.color,
                 size: o.size,
@@ -123,25 +134,32 @@ export default function JobOrderPage() {
                     backLogo: o.design?.backLogo || false,
                     backText: o.design?.backText || false,
                 }
-            })).sort((a,b) => a.productType.localeCompare(b.productType)),
-            layouts: (l.layouts || []).map((layout) => ({
-                id: layout.id || `temp-${uuidv4()}`,
-                layoutImage: layout.layoutImage,
-                dstLogoLeft: layout.dstLogoLeft,
-                dstLogoRight: layout.dstLogoRight,
-                dstBackLogo: layout.dstBackLogo,
-                dstBackText: layout.dstBackText,
-                namedOrders: (layout.namedOrders || []).sort((a,b) => (a.name || '').localeCompare(b.name || ''))
-            })).sort((a,b) => (a.id || '').localeCompare(b.id || '')),
-        }
-    }
-    
+            })),
+            layouts: sortedLayouts.map(layout => ({
+                id: layout.id,
+                layoutImage: layout.layoutImage || '',
+                dstLogoLeft: layout.dstLogoLeft || '',
+                dstLogoRight: layout.dstLogoRight || '',
+                dstBackLogo: layout.dstBackLogo || '',
+                dstBackText: layout.dstBackText || '',
+                namedOrders: (layout.namedOrders || []).map(no => ({
+                    id: no.id,
+                    name: no.name || '',
+                    color: no.color || '',
+                    size: no.size || '',
+                    quantity: no.quantity || 0,
+                    backText: no.backText || ''
+                }))
+            })),
+        };
+    };
+
     const normalizedFetchedLead = normalize(fetchedLead);
     const normalizedCurrentLead = normalize({
         ...lead, 
         deliveryDate: deliveryDate ? deliveryDate.toISOString() : undefined,
     });
-
+    
     return JSON.stringify(normalizedFetchedLead) !== JSON.stringify(normalizedCurrentLead);
 
   }, [fetchedLead, lead, deliveryDate]);
@@ -279,7 +297,7 @@ export default function JobOrderPage() {
         title: 'Job Order Saved!',
         description: 'Your changes have been saved successfully.',
       });
-      router.push('/job-order');
+      // The useDoc hook will refetch the data, causing isDirty to become false
       
     } catch (e: any) {
       console.error('Error saving job order:', e);
@@ -447,7 +465,7 @@ export default function JobOrderPage() {
                     <Save className="mr-2 h-4 w-4" />
                     Save Changes
                 </Button>
-                <Button onClick={handlePrint} className="text-white font-bold shadow-md" disabled={!lead?.joNumber}>
+                <Button onClick={handlePrint} className="text-white font-bold shadow-md" disabled={!lead?.joNumber || isDirty}>
                     <Printer className="mr-2 h-4 w-4" />
                     Print J.O.
                 </Button>
