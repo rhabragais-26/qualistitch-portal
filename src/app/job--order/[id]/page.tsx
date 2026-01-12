@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -312,47 +311,19 @@ export default function JobOrderPage() {
         </div>
         <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
-        <div className="grid grid-cols-2 gap-x-8 text-sm mb-6 border-b border-black pb-4">
-            <div className="space-y-2">
+        <div className="grid grid-cols-3 gap-x-4 text-sm mb-6 border-b border-black pb-4">
+            <div className="space-y-1">
                 <p><strong>Client Name:</strong> {lead.customerName}</p>
-                <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
-                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                 <p><strong>Recipient's Name:</strong> {lead.customerName}</p>
-                 <div className="flex items-center gap-2">
-                    <strong className='flex-shrink-0'>Delivery Date:</strong>
-                    <div className='w-full no-print'>
-                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                            <PopoverTrigger asChild>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-[240px] justify-start text-left font-normal h-8 text-xs",
-                                    !deliveryDate && "text-muted-foreground"
-                                )}
-                                >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                mode="single"
-                                selected={deliveryDate}
-                                onSelect={(date) => {
-                                    setDeliveryDate(date);
-                                    setIsCalendarOpen(false);
-                                }}
-                                initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-                    <span className="print-only">{deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
-                </div>
+                <p><strong>Contact No:</strong> {getContactDisplay()}</p>
             </div>
-             <div className="space-y-2">
-                <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
+             <div className="space-y-1">
+                <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
+                <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
+            </div>
+            <div className="space-y-1">
+                 <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                 <div className="flex items-center gap-2">
                     <strong className='flex-shrink-0'>Courier:</strong>
                     <div className='w-full no-print'>
@@ -369,16 +340,44 @@ export default function JobOrderPage() {
                     </div>
                     <span className="print-only">{lead.courier}</span>
                 </div>
-                <p><strong>Contact No:</strong> {getContactDisplay()}</p>
+                 <div className='w-full no-print flex items-center gap-1'>
+                    <strong className='flex-shrink-0'>Delivery Date:</strong>
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full justify-start text-left font-normal h-8 text-xs",
+                                !deliveryDate && "text-muted-foreground"
+                            )}
+                            >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                            mode="single"
+                            selected={deliveryDate}
+                            onSelect={(date) => {
+                                setDeliveryDate(date);
+                                setIsCalendarOpen(false);
+                            }}
+                            initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
+                </div>
+                <p className="print-only"><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</p>
             </div>
-             <div className="col-span-2 mt-2 flex items-center gap-2">
+            <div className="col-start-2 col-span-2 mt-1 flex items-center gap-2">
                 <p><strong>Delivery Address:</strong></p>
                  <Input
                     value={lead.location}
                     onChange={handleLocationChange}
                     className="h-8 text-xs flex-1 no-print"
                   />
-                  <span className="print-only">{lead.location}</span>
+                  <span className="print-only whitespace-nowrap">{lead.location}</span>
             </div>
         </div>
 

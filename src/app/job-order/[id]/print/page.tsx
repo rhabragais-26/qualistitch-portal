@@ -134,22 +134,24 @@ export default function JobOrderPrintPage() {
         </div>
         <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
-        <div className="grid grid-cols-3 gap-x-8 text-sm mb-6 border-b border-black pb-4">
+        <div className="grid grid-cols-3 gap-x-4 text-sm mb-6 border-b border-black pb-4">
             <div className="space-y-1">
                 <p><strong>Client Name:</strong> {lead.customerName}</p>
                 <p><strong>Recipient's Name:</strong> {lead.customerName}</p>
                 <p><strong>Contact No:</strong> {getContactDisplay()}</p>
-                <p><strong>Delivery Address:</strong> {lead.location}</p>
             </div>
-            <div className="space-y-1">
+             <div className="space-y-1">
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
                 <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
             </div>
             <div className="space-y-1">
-                <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
+                 <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                 <p><strong>Courier:</strong> {lead.courier}</p>
                 <p><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</p>
+            </div>
+            <div className="col-start-2 col-span-2 mt-1">
+                <p><strong>Delivery Address:</strong> {lead.location}</p>
             </div>
         </div>
 
@@ -358,3 +360,4 @@ export default function JobOrderPrintPage() {
     </div>
   );
 }
+
