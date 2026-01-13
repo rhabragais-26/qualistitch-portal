@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
 const formSchema = z
@@ -86,6 +86,9 @@ export function SignupForm() {
         email: values.email,
         role: 'user', // Default role
       });
+      
+      // Sign the user out immediately
+      await signOut(auth);
 
       toast({
         title: 'Account Created!',
