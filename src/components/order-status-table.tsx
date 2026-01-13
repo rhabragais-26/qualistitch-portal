@@ -87,6 +87,9 @@ type Lead = {
   adjustedDeliveryDate?: string;
   layouts?: Layout[];
   isEndorsedToLogistics?: boolean;
+  isCutting?: boolean;
+  isEmbroideryDone?: boolean;
+  isSewing?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -190,15 +193,12 @@ export function OrderStatusTable() {
     return { text: 'Pending', variant: 'secondary' };
   }, []);
 
-  const getProductionStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "destructive" | "secondary" } => {
+  const getProductionStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "secondary" } => {
     if (lead.orderType === 'Stock (Jacket Only)') return { text: "Skipped", variant: "secondary" };
-    if (lead.isDone) return { text: 'Done Production', variant: 'success' };
-    if (lead.sewerType && lead.sewerType !== 'Pending') {
-      return { text: `Ongoing with Sewer (${lead.sewerType})`, variant: 'warning' };
-    }
-    if (lead.productionType && lead.productionType !== 'Pending') {
-      return { text: `Ongoing Production (${lead.productionType})`, variant: 'warning' };
-    }
+    if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
+    if (lead.isSewing) return { text: "Done Production", variant: "success" };
+    if (lead.isEmbroideryDone) return { text: "Endorsed to Sewer", variant: "warning" };
+    if(lead.isCutting) return { text: "Ongoing Embroidery", variant: "warning" };
     return { text: 'Pending', variant: 'secondary' };
   }, []);
 
