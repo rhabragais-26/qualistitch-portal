@@ -326,7 +326,10 @@ const HeaderMemo = React.memo(function Header({
                           {getInitials(userProfile.nickname)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="font-bold">{userProfile.nickname}</span>
+                      <div className="flex flex-col items-start">
+                        <span className="font-bold text-sm leading-none">{userProfile.nickname}</span>
+                        <span className="text-xs text-gray-400 leading-none">({userProfile.position})</span>
+                      </div>
                       <ChevronDown className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
