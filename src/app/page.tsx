@@ -1,12 +1,10 @@
 'use client';
-import { useState } from 'react';
-import { Header } from '@/components/header';
-import { LeadForm } from '@/components/lead-form';
-import { useUser } from '@/firebase';
-import { useRouter } from 'next/navigation';
 
-export default function Home() {
-  const [isFormDirty, setIsFormDirty] = useState(false);
+import { LoginForm } from '@/components/login-form';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
+
+export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
@@ -14,16 +12,14 @@ export default function Home() {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  if (!user || user.isAnonymous) {
-    router.replace('/login');
+  if (user && !user.isAnonymous) {
+    router.replace('/new-order');
     return null;
   }
-
+  
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header isNewOrderPageDirty={isFormDirty}>
-        <LeadForm onDirtyChange={setIsFormDirty} />
-      </Header>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <LoginForm />
     </div>
   );
 }

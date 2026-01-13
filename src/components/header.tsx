@@ -117,7 +117,7 @@ const HeaderMemo = React.memo(function Header({
   }, [pathname]);
 
   const handleNavigation = useCallback((url: string) => {
-    const isDirty = (isNewOrderPageDirty && pathname === '/') || 
+    const isDirty = (isNewOrderPageDirty && pathname === '/new-order') || 
                     (isOperationalCasesPageDirty && pathname === '/inventory/operational-cases');
 
     if (isDirty && pathname !== url) {
@@ -157,7 +157,7 @@ const HeaderMemo = React.memo(function Header({
       <header className="sticky top-0 z-40 w-full border-b bg-black no-print">
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex items-center">
-            <Link href="/" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/'); }}>
+            <Link href="/new-order" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/new-order'); }}>
               <span className={cn("font-bold font-headline flex items-baseline shining-metal from-amber-200 via-yellow-400 to-amber-200 shining-text whitespace-nowrap")}>
                 <span className="text-3xl">Q</span>
                 <span className="text-2xl">UALISTITCH Inc.</span>
@@ -168,14 +168,14 @@ const HeaderMemo = React.memo(function Header({
             {isClient && (
               <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/', '/records', '/job-order', '/reports', '/sales/audit-for-shipment']))}>
+                  <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment']))}>
                     <TrendingUp className="mr-2" />
                     Sales
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleNavigation('/')}>
+                  <DropdownMenuItem onClick={() => handleNavigation('/new-order')}>
                     <PlusSquare className="mr-2" />
                     New Order
                   </DropdownMenuItem>
