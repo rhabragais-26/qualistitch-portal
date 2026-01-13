@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -70,6 +71,9 @@ type Lead = {
   shippedTimestamp?: string;
   adjustedDeliveryDate?: string | null;
   orderType?: string;
+  isJoHardcopyReceived?: boolean;
+  joHardcopyReceivedTimestamp?: string;
+  isJoPrinted?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -89,6 +93,9 @@ export function ShipmentQueueTable() {
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [excludeShipped, setExcludeShipped] = useState(false);
+  const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived' } | null>(null);
+  const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
+
 
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
@@ -257,6 +264,49 @@ export function ShipmentQueueTable() {
       setShippingLead(null);
     }
   };
+  
+    const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
+        const lead = leads?.find((l) => l.id === leadId);
+        if (!lead) return;
+        
+        if (!checked) {
+            setUncheckConfirmation({ leadId, field: 'isJoHardcopyReceived' });
+        } else {
+            setJoReceivedConfirmation(leadId);
+        }
+    }, [leads]);
+    
+    const confirmJoReceived = useCallback(async () => {
+        if (!joReceivedConfirmation || !firestore) return;
+        const leadDocRef = doc(firestore, 'leads', joReceivedConfirmation);
+        try {
+            await updateDoc(leadDocRef, { 
+                isJoHardcopyReceived: true,
+                joHardcopyReceivedTimestamp: new Date().toISOString()
+            });
+        } catch (e: any) {
+            console.error("Error updating J.O. receipt status:", e);
+            toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
+        } finally {
+            setJoReceivedConfirmation(null);
+        }
+    }, [joReceivedConfirmation, firestore, toast]);
+
+    const confirmUncheck = useCallback(async () => {
+        if (!uncheckConfirmation || !firestore) return;
+        const { leadId, field } = uncheckConfirmation;
+        const leadDocRef = doc(firestore, 'leads', leadId);
+        try {
+            const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
+            await updateDoc(leadDocRef, { [field]: false, [timestampField]: null });
+        } catch (e: any) {
+            console.error(`Error unchecking ${field}:`, e);
+            toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
+        } finally {
+            setUncheckConfirmation(null);
+        }
+    }, [uncheckConfirmation, firestore, toast]);
+
 
   const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success", className?: string } => {
     if (lead.shipmentStatus === 'Shipped') {
@@ -376,6 +426,7 @@ export function ShipmentQueueTable() {
               <TableRow>
                 <TableHead className="text-white font-bold text-xs">Customer</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center w-[150px]">Received Printed J.O.?</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Quality Check</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Packed</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Sales Audit</TableHead>
@@ -447,6 +498,16 @@ export function ShipmentQueueTable() {
                             <div className="font-bold mt-1">Stocks (Jacket Only)</div>
                           )}
                         </TableCell>
+                         <TableCell className="text-center align-middle py-2">
+                            <div className="flex flex-col items-center justify-center gap-1">
+                                <Checkbox
+                                checked={lead.isJoHardcopyReceived || false}
+                                onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
+                                disabled={!lead.isJoPrinted}
+                                />
+                                {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
+                            </div>
+                        </TableCell>
                         <TableCell className="text-center">
                             {lead.isQualityApproved ? (
                                 <div className="flex flex-col items-center justify-center gap-1">
@@ -458,8 +519,8 @@ export function ShipmentQueueTable() {
                                 </div>
                             ) : (
                                 <div className="flex gap-2 justify-center">
-                                    <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold" onClick={() => handleApproveQuality(lead)}>Approve</Button>
-                                    <Button size="sm" variant="destructive" className="h-7 text-xs font-bold" onClick={() => setDisapprovingLead(lead)}>Disapprove</Button>
+                                    <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold" onClick={() => handleApproveQuality(lead)} disabled={!lead.isJoHardcopyReceived}>Approve</Button>
+                                    <Button size="sm" variant="destructive" className="h-7 text-xs font-bold" onClick={() => setDisapprovingLead(lead)} disabled={!lead.isJoHardcopyReceived}>Disapprove</Button>
                                 </div>
                             )}
                         </TableCell>
@@ -526,7 +587,7 @@ export function ShipmentQueueTable() {
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground text-xs">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground text-xs">
                     No items in shipment queue.
                   </TableCell>
                 </TableRow>
@@ -599,6 +660,34 @@ export function ShipmentQueueTable() {
           </AlertDialogContent>
         </AlertDialog>
       )}
+        <AlertDialog open={!!joReceivedConfirmation} onOpenChange={setJoReceivedConfirmation}>
+            <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Confirm Receipt</AlertDialogTitle>
+                <AlertDialogDescription>
+                Are you sure that the printed J.O. was received and the J.O. number is correct?
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmJoReceived}>Confirm</AlertDialogAction>
+            </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+         <AlertDialog open={!!uncheckConfirmation} onOpenChange={(open) => !open && setUncheckConfirmation(null)}>
+            <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                Unchecking this box will reset the received status. This action cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmUncheck}>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </>
   );
 }

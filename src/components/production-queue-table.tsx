@@ -109,6 +109,9 @@ type Lead = {
   paymentType: string;
   salesRepresentative: string;
   layouts?: Layout[];
+  isJoHardcopyReceived?: boolean;
+  joHardcopyReceivedTimestamp?: string;
+  isJoPrinted?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -116,8 +119,7 @@ type EnrichedLead = Lead & {
   totalCustomerQuantity: number;
 };
 
-type ProductionSelectField = 'productionType' | 'sewerType';
-type CheckboxField = 'isCutting' | 'isEmbroideryDone' | 'isSewing';
+type CheckboxField = 'isCutting' | 'isEmbroideryDone' | 'isSewing' | 'isJoHardcopyReceived';
 
 const productionOptions: ProductionType[] = ["Pending", "In-house", "Outsource 1", "Outsource 2", "Outsource 3"];
 
@@ -158,6 +160,7 @@ export function ProductionQueueTable() {
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const { toast } = useToast();
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField } | null>(null);
+  const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -190,8 +193,13 @@ export function ProductionQueueTable() {
   }, [firestore, toast]);
   
   const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, value: boolean) => {
-    if (!value) {
+     if (!value) {
         setUncheckConfirmation({ leadId, field });
+        return;
+    }
+    
+    if (field === 'isJoHardcopyReceived') {
+        setJoReceivedConfirmation(leadId);
         return;
     }
     
@@ -256,6 +264,26 @@ export function ProductionQueueTable() {
         setUncheckConfirmation(null);
     }
   }, [uncheckConfirmation, firestore, toast]);
+
+   const confirmJoReceived = useCallback(async () => {
+    if (!joReceivedConfirmation || !firestore) return;
+    const leadDocRef = doc(firestore, 'leads', joReceivedConfirmation);
+    try {
+        await updateDoc(leadDocRef, { 
+            isJoHardcopyReceived: true,
+            joHardcopyReceivedTimestamp: new Date().toISOString()
+        });
+    } catch (e: any) {
+        console.error("Error updating J.O. receipt status:", e);
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: e.message || "Could not update the status.",
+        });
+    } finally {
+        setJoReceivedConfirmation(null);
+    }
+  }, [joReceivedConfirmation, firestore, toast]);
   
   const handleEndorseToLogistics = useCallback(async (leadId: string) => {
     if (!firestore) return;
@@ -389,6 +417,20 @@ export function ProductionQueueTable() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+       <AlertDialog open={!!joReceivedConfirmation} onOpenChange={setJoReceivedConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Receipt</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure that the printed J.O. was received and the J.O. number is correct?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmJoReceived}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
@@ -427,6 +469,7 @@ export function ProductionQueueTable() {
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Overdue Status</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Production Documents</TableHead>
+                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center w-[150px]">Received Printed J.O.?</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Start Production</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Production Category</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Embroidery</TableHead>
@@ -505,11 +548,22 @@ export function ProductionQueueTable() {
                                   <ChevronDown className={cn("h-4 w-4 transition-transform", openLeadId === lead.id && "rotate-180")} />
                                 </Button>
                               </TableCell>
+                               <TableCell className="text-center align-middle py-2">
+                                    <div className="flex flex-col items-center justify-center gap-1">
+                                      <Checkbox
+                                        checked={lead.isJoHardcopyReceived || false}
+                                        onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isJoHardcopyReceived', !!checked)}
+                                        disabled={!lead.isJoPrinted}
+                                      />
+                                      {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
+                                    </div>
+                                </TableCell>
                               <TableCell className="text-center align-middle py-3">
                                 <div className="flex flex-col items-center justify-center gap-1">
                                   <Checkbox
                                       checked={lead.isCutting || false}
                                       onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
+                                      disabled={!lead.isJoHardcopyReceived}
                                   />
                                   {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
                                 </div>
@@ -585,7 +639,7 @@ export function ProductionQueueTable() {
                           </TableRow>
                           {openLeadId === lead.id && (
                             <TableRow>
-                              <TableCell colSpan={12} className="p-0">
+                              <TableCell colSpan={13} className="p-0">
                                   <ProductionDocuments lead={lead} />
                               </TableCell>
                             </TableRow>
@@ -594,7 +648,7 @@ export function ProductionQueueTable() {
                   )})
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={12} className="text-center text-muted-foreground">
+                    <TableCell colSpan={13} className="text-center text-muted-foreground">
                       No current orders endorsed to production yet.
                     </TableCell>
                   </TableRow>
