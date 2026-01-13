@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -320,7 +321,7 @@ const HeaderMemo = React.memo(function Header({
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2 h-10 rounded-md px-3 text-white hover:bg-accent/90">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={userProfile.photoURL || ''} alt={userProfile.nickname} />
+                        <AvatarImage src={userProfile?.photoURL || ''} alt={userProfile.nickname} />
                         <AvatarFallback className="bg-primary text-primary-foreground font-bold">
                           {getInitials(userProfile.nickname)}
                         </AvatarFallback>
@@ -331,8 +332,8 @@ const HeaderMemo = React.memo(function Header({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>
-                      <p>Signed in as</p>
-                      <p className="font-semibold">{user.email}</p>
+                      <p className="font-semibold">{userProfile.nickname}</p>
+                      <p className="text-xs text-muted-foreground">({userProfile.position})</p>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                      <DropdownMenuItem onClick={() => router.push('/profile')}>
@@ -385,3 +386,5 @@ const HeaderMemo = React.memo(function Header({
 HeaderMemo.displayName = 'Header';
 
 export { HeaderMemo as Header };
+
+    
