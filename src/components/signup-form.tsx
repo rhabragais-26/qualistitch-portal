@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -43,6 +44,7 @@ export function SignupForm() {
   const { toast } = useToast();
   const auth = useAuth();
   const firestore = useFirestore();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,8 +89,10 @@ export function SignupForm() {
 
       toast({
         title: 'Account Created!',
-        description: "You've been successfully signed up.",
+        description: "You've been successfully signed up. Please log in.",
       });
+
+      router.push('/');
 
     } catch (e: any) {
       const errorCode = e.code;
@@ -223,7 +227,7 @@ export function SignupForm() {
         </Form>
         <div className="mt-4 text-center text-sm">
           Already have an account?{' '}
-          <Link href="/login" className="underline">
+          <Link href="/" className="underline">
             Sign in
           </Link>
         </div>
