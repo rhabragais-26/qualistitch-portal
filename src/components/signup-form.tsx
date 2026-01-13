@@ -6,8 +6,9 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
@@ -28,6 +29,7 @@ interface SignupFormProps {
 
 export function SignupForm({ onSignupSuccess }: SignupFormProps) {
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -54,7 +56,17 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
         displayName: values.nickname,
       });
 
-      // The onUserCreate flow will handle Firestore document creation.
+      // Create the user profile document in Firestore
+      const userDocRef = doc(firestore, 'users', user.uid);
+      await setDoc(userDocRef, {
+        uid: user.uid,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        nickname: values.nickname,
+        email: user.email,
+        role: 'user', // Assign a default role
+        createdAt: new Date().toISOString(),
+      });
       
       toast({
         title: 'Signup Successful!',

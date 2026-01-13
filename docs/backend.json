@@ -316,8 +316,8 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "email",
+      "password"
     ]
   },
   "firestore": {
