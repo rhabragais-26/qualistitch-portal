@@ -93,18 +93,13 @@ export function SignupForm() {
           lastModified: new Date().toISOString(),
       });
 
-      await sendEmailVerification(user);
-      
-      // Sign the user out immediately after account creation
-      await signOut(auth);
-
       toast({
         title: 'Account Created!',
-        description: "Please check your email to verify your account before logging in.",
+        description: "You have been successfully signed up.",
         duration: 5000,
       });
 
-      router.push('/');
+      router.push('/new-order');
 
     } catch (e: any) {
       const errorCode = e.code;
