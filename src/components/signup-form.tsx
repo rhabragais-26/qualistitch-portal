@@ -111,6 +111,8 @@ export function SignupForm() {
       let errorMessage = 'An unexpected error occurred. Please try again.';
       if (errorCode === 'auth/email-already-in-use') {
         errorMessage = 'This email address is already in use.';
+      } else if (errorCode === 'auth/weak-password') {
+        errorMessage = 'The password is too weak. It must be at least 6 characters long.';
       }
       setError(errorMessage);
     }
