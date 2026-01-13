@@ -49,6 +49,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -80,6 +81,7 @@ const HeaderMemo = React.memo(function Header({
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const firestore = useFirestore();
   const auth = useAuth();
+  const { user, userProfile } = useUser();
 
 
   const leadsQuery = useMemoFirebase(
@@ -148,6 +150,12 @@ const HeaderMemo = React.memo(function Header({
       console.error('Error signing out:', error);
     }
   };
+  
+  const getInitials = (nickname: string) => {
+    if (!nickname) return '';
+    return nickname.charAt(0).toUpperCase();
+  };
+
 
   return (
     <>
@@ -161,7 +169,7 @@ const HeaderMemo = React.memo(function Header({
               </span>
             </Link>
           </div>
-          <nav className="flex items-center gap-2 h-full">
+          <nav className="flex items-center gap-2 h-full flex-1">
             {isClient && (
               <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
                 <DropdownMenuTrigger asChild>
@@ -304,11 +312,39 @@ const HeaderMemo = React.memo(function Header({
               <ListOrdered className="mr-2" />
               Overall Order Status
             </Button>
-             <Button variant="outline" onClick={handleSignOut} className="h-10 rounded-md px-4 font-bold bg-transparent text-white border-white hover:bg-red-600 hover:text-white">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
-            </Button>
           </nav>
+           <div className="ml-auto flex items-center gap-4">
+              {user && userProfile && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center gap-2 h-10 rounded-md px-3 text-white hover:bg-accent/90">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-primary text-primary-foreground font-bold">
+                          {getInitials(userProfile.nickname)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-bold">{userProfile.nickname}</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <p>Signed in as</p>
+                      <p className="font-semibold">{user.email}</p>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                     <DropdownMenuItem onClick={() => router.push('/profile')}>
+                        <User className="mr-2" />
+                        Profile
+                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
         </div>
       </header>
       
