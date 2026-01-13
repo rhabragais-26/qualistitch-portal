@@ -53,7 +53,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth } from '@/firebase';
-import { collection, query, doc } from 'firebase/firestore';
+import { collection, query, doc, getDoc } from 'firebase/firestore';
 import { Badge } from './ui/badge';
 import { signOut } from 'firebase/auth';
 
@@ -80,8 +80,9 @@ const HeaderMemo = React.memo(function Header({
   const [nextUrl, setNextUrl] = useState('');
   const [isClient, setIsClient] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-
+  const [nickname, setNickname] = React.useState<string | null>(null);
   const firestore = useFirestore();
+
   const leadsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'leads')) : null),
     [firestore]
@@ -92,6 +93,17 @@ const HeaderMemo = React.memo(function Header({
     if (!leads) return 0;
     return leads.filter(lead => lead.isSalesAuditRequested).length;
   }, [leads]);
+  
+  React.useEffect(() => {
+    if (user && firestore) {
+      const userDocRef = doc(firestore, 'users', user.uid);
+      getDoc(userDocRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          setNickname(docSnap.data().nickname);
+        }
+      });
+    }
+  }, [user, firestore]);
 
   useEffect(() => {
     setIsClient(true);
@@ -316,7 +328,10 @@ const HeaderMemo = React.memo(function Header({
                             {user?.email?.[0].toUpperCase() ?? 'U'}
                         </AvatarFallback>
                     </Avatar>
-                    <span>{user?.email?.split('@')[0] ?? 'User'}</span>
+                    <div className='flex flex-col items-start'>
+                        <span className='font-bold'>{nickname ?? user?.email?.split('@')[0] ?? 'User'}</span>
+                        <span className='text-xs font-normal'>{isAdmin ? 'Admin' : 'User'}</span>
+                    </div>
                      <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
