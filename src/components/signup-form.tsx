@@ -21,9 +21,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff } from 'lucide-react';
-import { useAuth, useFirestore } from '@/firebase';
+import { useAuth } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
 
 const formSchema = z
   .object({
@@ -44,7 +43,6 @@ type FormValues = z.infer<typeof formSchema>;
 export function SignupForm() {
   const { toast } = useToast();
   const auth = useAuth();
-  const firestore = useFirestore();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -64,34 +62,15 @@ export function SignupForm() {
 
   const { control, handleSubmit, formState: { isSubmitting } } = form;
 
-  const toTitleCase = (str: string) => {
-    if (!str) return '';
-    return str
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  };
-
   async function onSubmit(values: FormValues) {
     setError(null);
-    if (!auth || !firestore) {
+    if (!auth) {
       setError("Services not available. Please try again later.");
       return;
     }
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-
-      const userDocRef = doc(firestore, 'users', user.uid);
-      await setDoc(userDocRef, {
-          uid: user.uid,
-          firstName: toTitleCase(values.firstName),
-          lastName: toTitleCase(values.lastName),
-          nickname: values.nickname,
-          email: values.email,
-          role: 'user', // Default role
-          createdAt: new Date().toISOString(),
-      });
+      // The on-user-create-flow will handle creating the firestore document.
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
 
       toast({
         title: 'Account Created Successfully!',

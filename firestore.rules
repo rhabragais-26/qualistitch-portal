@@ -6,8 +6,8 @@ service cloud.firestore {
     
     // User profile documents
     match /users/{userId} {
-      // Users can create their own profile document (handled by the cloud function now)
-      // This rule is simplified as the server function is the writer.
+      // Allow user creation only if the user is creating their own document.
+      // This is handled by the cloud function.
       allow create: if request.auth != null && request.auth.uid == userId;
 
       // A user can read their own profile. Admins can read any profile.
