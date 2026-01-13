@@ -69,7 +69,7 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from './ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, query } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/firestore-writes';
 import { v4 as uuidv4 } from 'uuid';
@@ -100,7 +100,6 @@ const formSchema = z.object({
   courier: z.string().optional(),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
-  salesRepresentative: z.enum(['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'], {required_error: "You need to select a SCES."}),
   orders: z.array(orderSchema).min(1, "Please add at least one order."),
 }).refine(data => {
     if (data.mobileNo) return /^\d{4}-\d{3}-\d{4}$/.test(data.mobileNo) || data.mobileNo === '';
@@ -182,6 +181,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     productSizes.map(size => ({ size, quantity: 0 }))
   );
   const firestore = useFirestore();
+  const { userProfile } = useUser();
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Lead[]>([]);
   const [companySuggestions, setCompanySuggestions] = useState<Lead[]>([]);
@@ -231,7 +231,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       paymentType: undefined,
       orderType: undefined,
       priorityType: 'Regular',
-      salesRepresentative: undefined,
       orders: [],
     },
   });
@@ -449,7 +448,6 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       paymentType: undefined,
       orderType: undefined,
       priorityType: 'Regular',
-      salesRepresentative: undefined,
       orders: [],
     });
     setSelectedLead(null);
@@ -491,7 +489,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
   };
 
   function onSubmit(values: FormValues) {
-    if (!firestore) return;
+    if (!firestore || !userProfile) return;
     const leadId = uuidv4();
     const leadsRef = collection(firestore, 'leads');
     const leadDocRef = doc(leadsRef, leadId);
@@ -510,7 +508,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       location: [values.houseStreet, values.barangay, values.city, values.province].filter(Boolean).map(toTitleCase).join(', '),
       courier: values.courier || '-',
       paymentType: values.paymentType,
-      salesRepresentative: values.salesRepresentative,
+      salesRepresentative: userProfile.nickname,
       orderType: values.orderType,
       priorityType: values.priorityType,
       productType: values.orders.map(o => o.productType).join(', '),
@@ -803,17 +801,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                 </div>
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-3 pt-2">
-                  <FormField control={form.control} name="salesRepresentative" render={({field}) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-black text-xs"><UserCheck className="h-4 w-4 text-primary" />SCES</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select SCES" /></SelectTrigger></FormControl>
-                        <SelectContent>{['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}/>
-                </div>
+                 </div>
               </div>
 
               <Separator orientation="vertical" className="h-auto"/>
@@ -1121,3 +1109,4 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
+
