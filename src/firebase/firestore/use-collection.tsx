@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Query,
   onSnapshot,
@@ -8,6 +9,7 @@ import {
   FirestoreError,
   QuerySnapshot,
   CollectionReference,
+  getDocs,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -25,6 +27,7 @@ export interface UseCollectionResult<T> {
   data: WithId<T>[] | null; // Document data with ID, or null.
   isLoading: boolean;       // True if loading.
   error: FirestoreError | Error | null; // Error object, or null.
+  refetch: () => Promise<void>;
 }
 
 /* Internal implementation of Query:
@@ -60,6 +63,49 @@ export function useCollection<T = any>(
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
   const { user, isUserLoading } = useUser();
+
+  const fetchData = useCallback(async (ref: CollectionReference<DocumentData> | Query<DocumentData>) => {
+    setIsLoading(true);
+    try {
+      const snapshot = await getDocs(ref);
+      const results: ResultItemType[] = snapshot.docs.map(doc => {
+        const docData = doc.data();
+        if (schema) {
+          const validationResult = schema.safeParse(docData);
+          if (!validationResult.success) {
+            throw new Error(`Validation failed for doc ${doc.id}: ${validationResult.error.message}`);
+          }
+          return { ...(validationResult.data as T), id: doc.id };
+        }
+        return { ...(docData as T), id: doc.id };
+      });
+      setData(results);
+      setError(null);
+    } catch (e: any) {
+      const path: string =
+        ref.type === 'collection'
+          ? (ref as CollectionReference).path
+          : (ref as unknown as InternalQuery)._query.path.canonicalString();
+
+      const contextualError = new FirestorePermissionError({
+        operation: 'list',
+        path,
+      });
+
+      setError(contextualError);
+      setData(null);
+      errorEmitter.emit('permission-error', contextualError);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [schema]);
+
+  const refetch = useCallback(async () => {
+    if (memoizedTargetRefOrQuery) {
+      await fetchData(memoizedTargetRefOrQuery);
+    }
+  }, [memoizedTargetRefOrQuery, fetchData]);
+
 
   useEffect(() => {
     if (!memoizedTargetRefOrQuery || isUserLoading || !user) {
@@ -124,5 +170,5 @@ export function useCollection<T = any>(
     console.warn('The query/reference passed to useCollection was not memoized with useMemoFirebase. This can lead to performance issues.', memoizedTargetRefOrQuery);
   }
   
-  return { data, isLoading, error };
+  return { data, isLoading, error, refetch };
 }

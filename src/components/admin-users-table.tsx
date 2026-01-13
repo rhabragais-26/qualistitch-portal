@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { formatDateTime } from '@/lib/utils';
+import { Button } from './ui/button';
+import { Save } from 'lucide-react';
 
 type UserProfile = {
   uid: string;
@@ -43,32 +45,56 @@ export function AdminUsersTable() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [editedUsers, setEditedUsers] = useState<Record<string, Partial<UserProfile>>>({});
 
   const usersQuery = useMemo(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'users'));
   }, [firestore]);
 
-  const { data: users, isLoading, error } = useCollection<UserProfile>(usersQuery);
+  const { data: users, isLoading, error, refetch } = useCollection<UserProfile>(usersQuery);
 
-  const handleRoleChange = async (uid: string, field: 'role' | 'position', value: string) => {
+  useEffect(() => {
+    if (users) {
+      // Initialize editedUsers with fetched data
+      const initialEdits: Record<string, Partial<UserProfile>> = {};
+      users.forEach(user => {
+        initialEdits[user.uid] = { role: user.role, position: user.position };
+      });
+      setEditedUsers(initialEdits);
+    }
+  }, [users]);
+  
+  const handleFieldChange = (uid: string, field: 'role' | 'position', value: string) => {
+    setEditedUsers(prev => ({
+      ...prev,
+      [uid]: { ...prev[uid], [field]: value }
+    }));
+  };
+
+  const handleSaveChanges = async (uid: string) => {
     if (!firestore) return;
+    const userChanges = editedUsers[uid];
+    if (!userChanges) return;
+
     const userDocRef = doc(firestore, 'users', uid);
     try {
-      await updateDoc(userDocRef, { [field]: value, lastModified: new Date().toISOString() });
+      await updateDoc(userDocRef, { ...userChanges, lastModified: new Date().toISOString() });
       toast({
         title: 'User Updated',
-        description: `User's ${field} has been successfully changed to ${value}.`,
+        description: `User's details have been successfully saved.`,
       });
+      refetch(); // Refetch to show the latest saved state
     } catch (e: any) {
-      console.error(`Error updating ${field}:`, e);
+      console.error('Error updating user:', e);
       toast({
         variant: 'destructive',
         title: 'Update Failed',
-        description: e.message || `Could not update the user's ${field}.`,
+        description: e.message || `Could not update the user's details.`,
       });
     }
   };
+
 
   const filteredUsers = useMemo(() => {
     if (!users) return [];
@@ -110,69 +136,86 @@ export function AdminUsersTable() {
                 <TableHead className="text-white font-bold align-middle">Position</TableHead>
                 <TableHead className="text-white font-bold align-middle">Role</TableHead>
                 <TableHead className="text-white font-bold align-middle text-center">Last Modified</TableHead>
+                <TableHead className="text-white font-bold align-middle text-center">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 [...Array(5)].map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={5}>
+                    <TableCell colSpan={6}>
                       <Skeleton className="h-8 w-full" />
                     </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-destructive">
+                  <TableCell colSpan={6} className="text-center text-destructive">
                     Error loading users: {error.message}
                   </TableCell>
                 </TableRow>
               ) : filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => (
-                  <TableRow key={user.uid}>
-                    <TableCell className="font-medium">{user.nickname} ({`${user.firstName} ${user.lastName}`})</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Select
-                        value={user.position || 'Not Assigned'}
-                        onValueChange={(newPosition: string) => handleRoleChange(user.uid, 'position', newPosition)}
-                      >
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {positions.map(pos => (
-                             <SelectItem key={pos} value={pos}>{pos}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={user.role}
-                        onValueChange={(newRole: 'admin' | 'user') => handleRoleChange(user.uid, 'role', newRole)}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue>
-                             <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>
-                                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                            </Badge>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user">User</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="text-center text-xs">
-                        {user.lastModified ? formatDateTime(user.lastModified).dateTimeShort : '-'}
-                    </TableCell>
-                  </TableRow>
-                ))
+                filteredUsers.map((user) => {
+                  const editedUser = editedUsers[user.uid] || { role: user.role, position: user.position };
+                  const isModified = user.role !== editedUser.role || user.position !== editedUser.position;
+                  
+                  return (
+                    <TableRow key={user.uid}>
+                      <TableCell className="font-medium">{user.nickname} ({`${user.firstName} ${user.lastName}`})</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={editedUser.position || 'Not Assigned'}
+                          onValueChange={(newPosition: string) => handleFieldChange(user.uid, 'position', newPosition)}
+                        >
+                          <SelectTrigger className="w-[200px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {positions.map(pos => (
+                              <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={editedUser.role}
+                          onValueChange={(newRole: 'admin' | 'user') => handleFieldChange(user.uid, 'role', newRole)}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            <SelectValue>
+                              <Badge variant={editedUser.role === 'admin' ? 'destructive' : 'secondary'}>
+                                  {editedUser.role?.charAt(0).toUpperCase() + editedUser.role?.slice(1)}
+                              </Badge>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-center text-xs">
+                          {user.lastModified ? formatDateTime(user.lastModified).dateTimeShort : '-'}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          size="sm"
+                          onClick={() => handleSaveChanges(user.uid)}
+                          disabled={!isModified}
+                          className="h-8"
+                        >
+                          <Save className="mr-2 h-4 w-4" />
+                          Save
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
                     No users found.
                   </TableCell>
                 </TableRow>
