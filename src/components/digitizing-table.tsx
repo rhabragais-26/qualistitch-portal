@@ -105,6 +105,7 @@ type Lead = {
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
   joNumber?: number;
+  isJoPrinted?: boolean;
   isJoHardcopyReceived?: boolean;
   joHardcopyReceivedTimestamp?: string;
   isUnderProgramming?: boolean;
@@ -1132,7 +1133,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                         </TooltipContent>
                                       </Tooltip>
                                     </TooltipProvider>
-                                ) : (
+                                  ) : (
                                     <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                                 )}
                                 {openCustomerDetails === lead.id && (
@@ -1169,6 +1170,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                             <Checkbox
                               checked={lead.isJoHardcopyReceived || false}
                               onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
+                              disabled={!lead.isJoPrinted}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                           </div>

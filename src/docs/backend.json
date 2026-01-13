@@ -98,6 +98,11 @@
           "type": "boolean",
           "description": "Indicates if the job order has been printed."
         },
+        "joPrintedTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp for when 'isJoPrinted' was checked."
+        },
         "isJoHardcopyReceived": {
             "type": "boolean",
             "description": "Indicates if the printed job order has been received by programming."

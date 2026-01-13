@@ -57,6 +57,7 @@ type Lead = {
   orders: Order[];
   joNumber?: number;
   isJoPrinted?: boolean;
+  joPrintedTimestamp?: string;
   courier?: string;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   isUnderProgramming?: boolean;
@@ -112,7 +113,7 @@ export function JobOrderTable() {
     if (lead.isEndorsedToLogistics) return "Already on Logistics";
     if (lead.isSentToProduction) return "Already on Production Dept.";
     if (lead.isPreparedForProduction) return "Already on Inventory";
-    if (lead.isUnderProgramming || lead.joNumber) return "Already on Programming Dept.";
+    if (lead.joNumber) return "Already on Programming Dept.";
     return <span className="text-gray-500">Not yet processed</span>;
   }, []);
 
@@ -120,7 +121,10 @@ export function JobOrderTable() {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
-      await updateDoc(leadDocRef, { isJoPrinted: checked });
+      await updateDoc(leadDocRef, { 
+        isJoPrinted: checked,
+        joPrintedTimestamp: checked ? new Date().toISOString() : null
+      });
     } catch (e: any) {
       console.error("Error updating printed status:", e);
       toast({
@@ -345,16 +349,21 @@ export function JobOrderTable() {
                                 </Button>
                             </TableCell>
                              <TableCell className="text-center align-middle py-2">
-                                <Checkbox
-                                    checked={lead.isJoPrinted || false}
-                                    onCheckedChange={(checked) => {
-                                        if (checked && !lead.isJoPrinted) {
-                                            setConfirmingPrint(lead);
-                                        }
-                                    }}
-                                    disabled={!isJoSaved || lead.isJoPrinted}
-                                    className={cn(lead.isJoPrinted && "cursor-default data-[state=checked]:opacity-100")}
-                                />
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                    <Checkbox
+                                        checked={lead.isJoPrinted || false}
+                                        onCheckedChange={(checked) => {
+                                            if (checked && !lead.isJoPrinted) {
+                                                setConfirmingPrint(lead);
+                                            }
+                                        }}
+                                        disabled={!isJoSaved || lead.isJoPrinted}
+                                        className={cn(lead.isJoPrinted && "cursor-default data-[state=checked]:opacity-100 data-[state=checked]:bg-primary")}
+                                    />
+                                    {lead.isJoPrinted && lead.joPrintedTimestamp && (
+                                        <div className="text-[10px] text-gray-500">{formatDateTime(lead.joPrintedTimestamp).dateTimeShort}</div>
+                                    )}
+                                </div>
                              </TableCell>
                              <TableCell className="text-xs align-middle py-2 text-black">
                               <Collapsible>
