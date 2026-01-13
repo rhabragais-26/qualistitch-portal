@@ -14,7 +14,21 @@ export type UserPosition =
   | 'Page Admin'
   | 'Not Assigned';
 
-type PageGroup = 'sales' | 'digitizing' | 'inventory' | 'production' | 'logistics' | 'admin' | 'profile' | 'order-status';
+export type PageGroup = 'sales' | 'digitizing' | 'inventory' | 'production' | 'logistics' | 'admin' | 'profile' | 'order-status';
+
+export const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
+    { id: 'sales', label: 'Sales', path: '/records' },
+    { id: 'digitizing', label: 'Digitizing', path: '/digitizing/programming-queue' },
+    { id: 'inventory', label: 'Inventory', path: '/inventory/summary' },
+    { id: 'production', label: 'Production', path: '/production/production-queue' },
+    { id: 'logistics', label: 'Logistics', path: '/logistics/shipment-queue' },
+    { id: 'admin', label: 'Admin', path: '/admin/users' },
+    { id: 'profile', label: 'Profile', path: '/profile' },
+];
+
+type UserPermissions = {
+  [key in PageGroup]?: boolean;
+};
 
 const pageGroupMapping: { [key: string]: PageGroup } = {
   '/new-order': 'sales',
@@ -38,7 +52,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/order-status': 'order-status',
 };
 
-const permissions: { [key in UserPosition]?: PageGroup[] } = {
+const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'SCES / Sales Representative': ['sales'],
   'Sales Supervisor': ['sales'],
   'Sales Manager': ['sales'],
@@ -50,25 +64,31 @@ const permissions: { [key in UserPosition]?: PageGroup[] } = {
   'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'admin', 'profile'],
 };
 
-export function hasEditPermission(position: UserPosition | undefined, pathname: string): boolean {
+export function hasEditPermission(position: UserPosition | undefined, pathname: string, customPermissions?: UserPermissions): boolean {
   if (!position) {
     return false;
   }
   
+  const pageGroup = Object.keys(pageGroupMapping).find(path => pathname.startsWith(path));
+  const group = pageGroup ? pageGroupMapping[pageGroup] : undefined;
+  
+  if (group === 'profile') {
+    return true;
+  }
+  
+  if (!group) {
+    return false; 
+  }
+
+  // Check for custom permission first
+  if (customPermissions && customPermissions[group] !== undefined) {
+    return customPermissions[group]!;
+  }
+  
+  // Fallback to default position-based permissions
   if (position === 'Page Admin') {
     return true;
   }
 
-  const pageGroup = Object.keys(pageGroupMapping).find(path => pathname.startsWith(path));
-  const group = pageGroup ? pageGroupMapping[pageGroup] : undefined;
-
-  if (group === 'profile') {
-      return true;
-  }
-  
-  if (!group) {
-    return false; // Default to no permission if page group is not defined
-  }
-
-  return permissions[position]?.includes(group) ?? false;
+  return defaultPermissions[position]?.includes(group) ?? false;
 }

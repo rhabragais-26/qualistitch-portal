@@ -15,7 +15,19 @@
           "photoURL": { "type": "string", "format": "uri", "description": "URL to the user's profile picture." },
           "role": { "type": "string", "description": "The user's role in the system (e.g., 'admin', 'user')." },
           "position": { "type": "string", "description": "The user's job title or position in the company." },
-          "lastModified": { "type": "string", "format": "date-time", "description": "Timestamp for when the profile was last modified." }
+          "lastModified": { "type": "string", "format": "date-time", "description": "Timestamp for when the profile was last modified." },
+          "permissions": {
+            "type": "object",
+            "description": "Custom user permissions for page groups.",
+            "properties": {
+              "sales": { "type": "boolean" },
+              "digitizing": { "type": "boolean" },
+              "inventory": { "type": "boolean" },
+              "production": { "type": "boolean" },
+              "logistics": { "type": "boolean" },
+              "admin": { "type": "boolean" }
+            }
+          }
         },
         "required": ["uid", "firstName", "lastName", "nickname", "email", "role"]
     },

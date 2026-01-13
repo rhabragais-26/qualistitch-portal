@@ -16,9 +16,14 @@ import { Button } from './ui/button';
 import { Save, Trash2, ChevronDown } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
-import { UserPosition, hasEditPermission } from '@/lib/permissions';
+import { UserPosition, hasEditPermission, PageGroup, allPageGroups } from '@/lib/permissions';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
+import { isEqual } from 'lodash';
+
+type UserPermissions = {
+  [key in PageGroup]?: boolean;
+};
 
 type UserProfile = {
   uid: string;
@@ -29,6 +34,7 @@ type UserProfile = {
   role: 'admin' | 'user';
   position: UserPosition;
   lastModified?: string;
+  permissions?: UserPermissions;
 };
 
 const positions: UserPosition[] = [
@@ -47,21 +53,12 @@ const positions: UserPosition[] = [
     'Page Admin'
 ];
 
-type PageGroup = 'sales' | 'digitizing' | 'inventory' | 'production' | 'logistics' | 'admin' | 'profile';
-const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
-    { id: 'sales', label: 'Sales', path: '/records' },
-    { id: 'digitizing', label: 'Digitizing', path: '/digitizing/programming-queue' },
-    { id: 'inventory', label: 'Inventory', path: '/inventory/summary' },
-    { id: 'production', label: 'Production', path: '/production/production-queue' },
-    { id: 'logistics', label: 'Logistics', path: '/logistics/shipment-queue' },
-    { id: 'admin', label: 'Admin', path: '/admin/users' },
-    { id: 'profile', label: 'Profile', path: '/profile' },
-];
-
 export function AdminUsersTable() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [positionFilter, setPositionFilter] = useState('All');
+  const [roleFilter, setRoleFilter] = useState('All');
   const [editedUsers, setEditedUsers] = useState<Record<string, Partial<UserProfile>>>({});
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
 
@@ -74,11 +71,14 @@ export function AdminUsersTable() {
 
   useEffect(() => {
     if (users) {
-      // Initialize editedUsers with fetched data
-      const initialEdits: Record<string, Partial<UserProfile>> = {};
-      users.forEach(user => {
-        initialEdits[user.uid] = { role: user.role, position: user.position };
-      });
+      const initialEdits = users.reduce((acc, user) => {
+        acc[user.uid] = { 
+          role: user.role, 
+          position: user.position,
+          permissions: user.permissions || {} 
+        };
+        return acc;
+      }, {} as Record<string, Partial<UserProfile>>);
       setEditedUsers(initialEdits);
     }
   }, [users]);
@@ -86,8 +86,20 @@ export function AdminUsersTable() {
   const handleFieldChange = (uid: string, field: 'role' | 'position', value: string) => {
     setEditedUsers(prev => ({
       ...prev,
-      [uid]: { ...prev[uid], [field]: value as UserPosition | 'admin' | 'user' }
+      [uid]: { ...prev[uid], [field]: value }
     }));
+  };
+
+  const handlePermissionChange = (uid: string, pageGroup: PageGroup, checked: boolean) => {
+    setEditedUsers(prev => {
+        const userChanges = { ...prev[uid] };
+        const currentPermissions = { ...(userChanges.permissions || {}) };
+        currentPermissions[pageGroup] = checked;
+        return {
+            ...prev,
+            [uid]: { ...userChanges, permissions: currentPermissions }
+        };
+    });
   };
 
   const handleSaveChanges = async (uid: string) => {
@@ -102,7 +114,7 @@ export function AdminUsersTable() {
         title: 'User Updated',
         description: `User's details have been successfully saved.`,
       });
-      refetch(); // Refetch to show the latest saved state
+      refetch(); 
     } catch (e: any) {
       console.error('Error updating user:', e);
       toast({
@@ -139,12 +151,14 @@ export function AdminUsersTable() {
   const filteredUsers = useMemo(() => {
     if (!users) return [];
     return users.filter(user =>
-      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (positionFilter === 'All' || user.position === positionFilter) &&
+      (roleFilter === 'All' || user.role === roleFilter)
     );
-  }, [users, searchTerm]);
+  }, [users, searchTerm, positionFilter, roleFilter]);
 
   return (
     <>
@@ -157,13 +171,28 @@ export function AdminUsersTable() {
                 View and manage user roles and positions.
               </CardDescription>
             </div>
-            <div className="w-full max-w-sm">
-              <Input
-                placeholder="Search by name, nickname, or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-gray-100 text-black placeholder:text-gray-500"
-              />
+             <div className="flex items-center gap-2">
+                 <Select value={positionFilter} onValueChange={setPositionFilter}>
+                    <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by Position" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="All">All Positions</SelectItem>
+                        {positions.map(pos => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger className="w-[120px]"><SelectValue placeholder="Filter by Role" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="All">All Roles</SelectItem>
+                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Input
+                    placeholder="Search by name, nickname, or email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-gray-100 text-black placeholder:text-gray-500 w-80"
+                />
             </div>
           </div>
         </CardHeader>
@@ -199,8 +228,11 @@ export function AdminUsersTable() {
                   </TableRow>
                 ) : filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => {
-                    const editedUser = editedUsers[user.uid] || { role: user.role, position: user.position };
-                    const isModified = user.role !== editedUser.role || user.position !== editedUser.position;
+                    const editedUser = editedUsers[user.uid] || {};
+                    const isModified = 
+                      user.role !== editedUser.role || 
+                      user.position !== editedUser.position ||
+                      !isEqual(user.permissions || {}, editedUser.permissions || {});
 
                     return (
                       <TableRow key={user.uid}>
@@ -209,7 +241,7 @@ export function AdminUsersTable() {
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
                           <Select
-                            value={editedUser.position || 'Not Assigned'}
+                            value={editedUser.position || user.position}
                             onValueChange={(newPosition: string) => handleFieldChange(user.uid, 'position', newPosition)}
                           >
                             <SelectTrigger className="w-[200px]">
@@ -224,13 +256,13 @@ export function AdminUsersTable() {
                         </TableCell>
                         <TableCell>
                           <Select
-                            value={editedUser.role}
+                            value={editedUser.role || user.role}
                             onValueChange={(newRole: 'admin' | 'user') => handleFieldChange(user.uid, 'role', newRole)}
                           >
                             <SelectTrigger className="w-[120px]">
                               <SelectValue>
                                 <Badge variant={editedUser.role === 'admin' ? 'destructive' : 'secondary'}>
-                                    {editedUser.role?.charAt(0).toUpperCase() + editedUser.role?.slice(1)}
+                                    {(editedUser.role || user.role)?.charAt(0).toUpperCase() + (editedUser.role || user.role)?.slice(1)}
                                 </Badge>
                               </SelectValue>
                             </SelectTrigger>
@@ -256,8 +288,8 @@ export function AdminUsersTable() {
                                     <div key={group.id} className="flex items-center space-x-2">
                                       <Checkbox
                                         id={`${user.uid}-${group.id}`}
-                                        checked={hasEditPermission(editedUser.position, group.path)}
-                                        disabled
+                                        checked={hasEditPermission(editedUser.position, group.path, editedUser.permissions)}
+                                        onCheckedChange={(checked) => handlePermissionChange(user.uid, group.id, !!checked)}
                                       />
                                       <Label htmlFor={`${user.uid}-${group.id}`} className="text-xs font-normal">
                                         {group.label}
