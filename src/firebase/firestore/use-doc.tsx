@@ -12,6 +12,7 @@ import {
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useUser } from '../provider';
+import { z, ZodError } from 'zod';
 
 /** Utility type to add an 'id' field to a given type T. */
 type WithId<T> = T & { id: string };
@@ -29,35 +30,40 @@ export interface UseDocResult<T> {
 
 /**
  * React hook to subscribe to a single Firestore document in real-time.
- * Handles nullable references.
+ * Handles nullable references and validates data with a Zod schema.
  * 
- * IMPORTANT! YOU MUST MEMOIZE the inputted memoizedTargetRefOrQuery or BAD THINGS WILL HAPPEN
- * use useMemo to memoize it per React guidence.  Also make sure that it's dependencies are stable
- * references
- *
- *
  * @template T Optional type for document data. Defaults to any.
- * @param {DocumentReference<DocumentData> | null | undefined} docRef -
- * The Firestore DocumentReference. Waits if null/undefined.
- * @returns {UseDocResult<T>} Object with data, isLoading, error.
+ * @param {DocumentReference<DocumentData> | null | undefined} memoizedDocRef -
+ * The Firestore DocumentReference. Waits if null/undefined. MUST BE MEMOIZED.
+ * @param {z.Schema<T>} schema - A Zod schema to validate the document data.
+ * @returns {UseDocResult<T>} Object with data, isLoading, error, refetch.
  */
 export function useDoc<T = any>(
   memoizedDocRef: DocumentReference<DocumentData> | null | undefined,
+  schema?: z.Schema<T>
 ): UseDocResult<T> {
   type StateDataType = WithId<T> | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Start loading initially
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
-  const { isUserLoading } = useUser(); // Get auth loading state
+  const { isUserLoading } = useUser();
 
-  const refetch = useCallback(async () => {
-    if (!memoizedDocRef) return;
+  const fetchData = useCallback(async (ref: DocumentReference<DocumentData>) => {
     setIsLoading(true);
     try {
-      const docSnap = await getDoc(memoizedDocRef);
+      const docSnap = await getDoc(ref);
       if (docSnap.exists()) {
-        setData({ ...(docSnap.data() as T), id: docSnap.id });
+        const docData = docSnap.data();
+        if (schema) {
+          const validationResult = schema.safeParse(docData);
+          if (!validationResult.success) {
+            throw new Error(`Validation failed for doc ${docSnap.id}: ${validationResult.error.message}`);
+          }
+          setData({ ...(validationResult.data as T), id: docSnap.id });
+        } else {
+          setData({ ...(docData as T), id: docSnap.id });
+        }
       } else {
         setData(null);
       }
@@ -67,12 +73,16 @@ export function useDoc<T = any>(
     } finally {
       setIsLoading(false);
     }
-  }, [memoizedDocRef]);
+  }, [schema]);
+
+  const refetch = useCallback(async () => {
+    if (memoizedDocRef) {
+      await fetchData(memoizedDocRef);
+    }
+  }, [memoizedDocRef, fetchData]);
 
   useEffect(() => {
-    // Wait until both the doc ref is ready and the user is authenticated.
     if (!memoizedDocRef || isUserLoading) {
-      // If user is still loading, we should reflect that in our state.
       if (isUserLoading) {
         setIsLoading(true);
         setData(null);
@@ -87,13 +97,27 @@ export function useDoc<T = any>(
     const unsubscribe = onSnapshot(
       memoizedDocRef,
       (snapshot: DocumentSnapshot<DocumentData>) => {
-        if (snapshot.exists()) {
-          setData({ ...(snapshot.data() as T), id: snapshot.id });
-        } else {
-          setData(null);
+        try {
+          if (snapshot.exists()) {
+            const docData = snapshot.data();
+            if (schema) {
+              const validationResult = schema.safeParse(docData);
+              if (!validationResult.success) {
+                throw new Error(`Validation failed for doc ${snapshot.id}: ${validationResult.error.message}`);
+              }
+              setData({ ...(validationResult.data as T), id: snapshot.id });
+            } else {
+              setData({ ...(docData as T), id: snapshot.id });
+            }
+          } else {
+            setData(null);
+          }
+          setError(null);
+        } catch(e: any) {
+          setError(e instanceof Error ? e : new Error('An unknown validation error occurred.'));
+        } finally {
+          setIsLoading(false);
         }
-        setError(null);
-        setIsLoading(false);
       },
       (error: FirestoreError) => {
         const contextualError = new FirestorePermissionError({
@@ -110,7 +134,7 @@ export function useDoc<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedDocRef, isUserLoading]);
+  }, [memoizedDocRef, isUserLoading, schema]);
 
   return { data, isLoading, error, refetch };
 }

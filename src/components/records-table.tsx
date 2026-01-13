@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
@@ -44,6 +45,7 @@ import { collection, query } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { z } from 'zod';
 
 const productTypes = [
   'Executive Jacket 1',
@@ -76,30 +78,32 @@ const orderTypes = ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (J
 const priorityTypes = ['Rush', 'Regular'];
 const courierTypes = ['Lalamove', 'J&T', 'In-house', 'Pick-up'];
 
+const orderSchema = z.object({
+  productType: z.string(),
+  color: z.string(),
+  size: z.string(),
+  quantity: z.number(),
+});
+type Order = z.infer<typeof orderSchema>;
 
-type Order = {
-  productType: string;
-  color: string;
-  size: string;
-  quantity: number;
-}
+const leadSchema = z.object({
+  id: z.string(),
+  customerName: z.string(),
+  companyName: z.string().optional(),
+  contactNumber: z.string(),
+  landlineNumber: z.string().optional(),
+  location: z.string(),
+  salesRepresentative: z.string(),
+  priorityType: z.string(),
+  paymentType: z.string(),
+  orderType: z.string(),
+  courier: z.string(),
+  orders: z.array(orderSchema),
+  submissionDateTime: z.string(),
+  lastModified: z.string(),
+});
 
-type Lead = {
-  id: string;
-  customerName: string;
-  companyName?: string;
-  contactNumber: string;
-  landlineNumber?: string;
-  location: string;
-  salesRepresentative: string;
-  priorityType: string;
-  paymentType: string;
-  orderType: string;
-  courier: string;
-  orders: Order[];
-  submissionDateTime: string;
-  lastModified: string;
-}
+type Lead = z.infer<typeof leadSchema>;
 
 type EnrichedLead = Lead & {
   orderNumber: number;
@@ -119,7 +123,7 @@ export function RecordsTable() {
   const { toast } = useToast();
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, leadSchema);
 
   // State for editing a lead
   const [isEditLeadDialogOpen, setIsEditLeadDialogOpen] = useState(false);

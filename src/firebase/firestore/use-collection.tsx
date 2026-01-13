@@ -12,6 +12,7 @@ import {
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useUser } from '../provider';
+import { z, ZodError } from 'zod';
 
 /** Utility type to add an 'id' field to a given type T. */
 export type WithId<T> = T & { id: string };
@@ -40,31 +41,27 @@ export interface InternalQuery extends Query<DocumentData> {
 
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
- * Handles nullable references/queries.
+ * Handles nullable references/queries and validates data with a Zod schema.
  * 
- *
- * IMPORTANT! YOU MUST MEMOIZE the inputted memoizedTargetRefOrQuery or BAD THINGS WILL HAPPEN
- * use useMemo to memoize it per React guidence.  Also make sure that it's dependencies are stable
- * references
- *  
  * @template T Optional type for document data. Defaults to any.
- * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} targetRefOrQuery -
- * The Firestore CollectionReference or Query. Waits if null/undefined.
+ * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} memoizedTargetRefOrQuery -
+ * The Firestore CollectionReference or Query. Waits if null/undefined. MUST BE MEMOIZED.
+ * @param {z.Schema<T>} schema - A Zod schema to validate the document data.
  * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
  */
 export function useCollection<T = any>(
     memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & {__memo?: boolean})  | null | undefined,
+    schema?: z.Schema<T>
 ): UseCollectionResult<T> {
   type ResultItemType = WithId<T>;
   type StateDataType = ResultItemType[] | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Start loading initially
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
-  const { user, isUserLoading } = useUser(); // Get auth loading state and user object
+  const { user, isUserLoading } = useUser();
 
   useEffect(() => {
-    // Wait until query is ready, user isn't loading, AND user object exists.
     if (!memoizedTargetRefOrQuery || isUserLoading || !user) {
       if (isUserLoading || !user) {
         setIsLoading(true);
@@ -80,13 +77,26 @@ export function useCollection<T = any>(
     const unsubscribe = onSnapshot(
       memoizedTargetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
-        const results: ResultItemType[] = [];
-        for (const doc of snapshot.docs) {
-          results.push({ ...(doc.data() as T), id: doc.id });
+        try {
+          const results: ResultItemType[] = snapshot.docs.map(doc => {
+            const docData = doc.data();
+            if (schema) {
+              const validationResult = schema.safeParse(docData);
+              if (!validationResult.success) {
+                // Throw a detailed error for a specific document
+                throw new Error(`Validation failed for doc ${doc.id}: ${validationResult.error.message}`);
+              }
+              return { ...(validationResult.data as T), id: doc.id };
+            }
+            return { ...(docData as T), id: doc.id };
+          });
+          setData(results);
+          setError(null);
+        } catch (e: any) {
+          setError(e instanceof Error ? e : new Error('An unknown validation error occurred.'));
+        } finally {
+          setIsLoading(false);
         }
-        setData(results);
-        setError(null);
-        setIsLoading(false);
       },
       (error: FirestoreError) => {
         const path: string =
@@ -108,7 +118,7 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery, isUserLoading, user]);
+  }, [memoizedTargetRefOrQuery, isUserLoading, user, schema]);
   
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
     console.warn('The query/reference passed to useCollection was not memoized with useMemoFirebase. This can lead to performance issues.', memoizedTargetRefOrQuery);
