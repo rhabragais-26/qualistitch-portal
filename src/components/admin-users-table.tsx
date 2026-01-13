@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,7 +13,9 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { formatDateTime } from '@/lib/utils';
 import { Button } from './ui/button';
-import { Save } from 'lucide-react';
+import { Save, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+
 
 type UserProfile = {
   uid: string;
@@ -47,6 +49,7 @@ export function AdminUsersTable() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [editedUsers, setEditedUsers] = useState<Record<string, Partial<UserProfile>>>({});
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
 
   const usersQuery = useMemo(() => {
     if (!firestore) return null;
@@ -96,6 +99,28 @@ export function AdminUsersTable() {
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (!userToDelete || !firestore) return;
+    const userDocRef = doc(firestore, 'users', userToDelete.uid);
+    try {
+        await deleteDoc(userDocRef);
+        toast({
+            title: 'User Deleted',
+            description: `The user ${userToDelete.nickname} has been deleted.`,
+        });
+        refetch();
+    } catch (e: any) {
+        console.error('Error deleting user:', e);
+        toast({
+            variant: 'destructive',
+            title: 'Deletion Failed',
+            description: e.message || 'Could not delete the user.',
+        });
+    } finally {
+        setUserToDelete(null);
+    }
+  };
+
 
   const filteredUsers = useMemo(() => {
     if (!users) return [];
@@ -108,126 +133,152 @@ export function AdminUsersTable() {
   }, [users, searchTerm]);
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="text-black">User Management</CardTitle>
-            <CardDescription className="text-gray-600">
-              View and manage user roles and positions.
-            </CardDescription>
+    <>
+      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-black">User Management</CardTitle>
+              <CardDescription className="text-gray-600">
+                View and manage user roles and positions.
+              </CardDescription>
+            </div>
+            <div className="w-full max-w-sm">
+              <Input
+                placeholder="Search by name, nickname, or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-gray-100 text-black placeholder:text-gray-500"
+              />
+            </div>
           </div>
-          <div className="w-full max-w-sm">
-            <Input
-              placeholder="Search by name, nickname, or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-gray-100 text-black placeholder:text-gray-500"
-            />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-auto">
-        <div className="border rounded-md h-full">
-          <Table>
-            <TableHeader className="bg-neutral-800 sticky top-0 z-10">
-              <TableRow>
-                <TableHead className="text-white font-bold align-middle">Nickname</TableHead>
-                <TableHead className="text-white font-bold align-middle">Full Name</TableHead>
-                <TableHead className="text-white font-bold align-middle">Email</TableHead>
-                <TableHead className="text-white font-bold align-middle">Position</TableHead>
-                <TableHead className="text-white font-bold align-middle">Role</TableHead>
-                <TableHead className="text-white font-bold align-middle text-center">Last Modified</TableHead>
-                <TableHead className="text-white font-bold align-middle text-center">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                [...Array(5)].map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell colSpan={7}>
-                      <Skeleton className="h-8 w-full" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : error ? (
+        </CardHeader>
+        <CardContent className="flex-1 overflow-auto">
+          <div className="border rounded-md h-full">
+            <Table>
+              <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-destructive">
-                    Error loading users: {error.message}
-                  </TableCell>
+                  <TableHead className="text-white font-bold align-middle">Nickname</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Full Name</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Email</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Position</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Role</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Last Modified</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Action</TableHead>
                 </TableRow>
-              ) : filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => {
-                  const editedUser = editedUsers[user.uid] || { role: user.role, position: user.position };
-                  const isModified = user.role !== editedUser.role || user.position !== editedUser.position;
-                  
-                  return (
-                    <TableRow key={user.uid}>
-                      <TableCell className="font-medium">{user.nickname}</TableCell>
-                      <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={editedUser.position || 'Not Assigned'}
-                          onValueChange={(newPosition: string) => handleFieldChange(user.uid, 'position', newPosition)}
-                        >
-                          <SelectTrigger className="w-[200px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {positions.map(pos => (
-                              <SelectItem key={pos} value={pos}>{pos}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={editedUser.role}
-                          onValueChange={(newRole: 'admin' | 'user') => handleFieldChange(user.uid, 'role', newRole)}
-                        >
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue>
-                              <Badge variant={editedUser.role === 'admin' ? 'destructive' : 'secondary'}>
-                                  {editedUser.role?.charAt(0).toUpperCase() + editedUser.role?.slice(1)}
-                              </Badge>
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="user">User</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-center text-xs">
-                          {user.lastModified ? formatDateTime(user.lastModified).dateTimeShort : '-'}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Button
-                          size="sm"
-                          onClick={() => handleSaveChanges(user.uid)}
-                          disabled={!isModified}
-                          className="h-8"
-                        >
-                          <Save className="mr-2 h-4 w-4" />
-                          Save
-                        </Button>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell colSpan={7}>
+                        <Skeleton className="h-8 w-full" />
                       </TableCell>
                     </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
-                    No users found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+                  ))
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-destructive">
+                      Error loading users: {error.message}
+                    </TableCell>
+                  </TableRow>
+                ) : filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => {
+                    const editedUser = editedUsers[user.uid] || { role: user.role, position: user.position };
+                    const isModified = user.role !== editedUser.role || user.position !== editedUser.position;
+                    
+                    return (
+                      <TableRow key={user.uid}>
+                        <TableCell className="font-medium">{user.nickname}</TableCell>
+                        <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          <Select
+                            value={editedUser.position || 'Not Assigned'}
+                            onValueChange={(newPosition: string) => handleFieldChange(user.uid, 'position', newPosition)}
+                          >
+                            <SelectTrigger className="w-[200px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {positions.map(pos => (
+                                <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={editedUser.role}
+                            onValueChange={(newRole: 'admin' | 'user') => handleFieldChange(user.uid, 'role', newRole)}
+                          >
+                            <SelectTrigger className="w-[120px]">
+                              <SelectValue>
+                                <Badge variant={editedUser.role === 'admin' ? 'destructive' : 'secondary'}>
+                                    {editedUser.role?.charAt(0).toUpperCase() + editedUser.role?.slice(1)}
+                                </Badge>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">User</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-center text-xs">
+                            {user.lastModified ? formatDateTime(user.lastModified).dateTimeShort : '-'}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveChanges(user.uid)}
+                            disabled={!isModified}
+                            className="h-8"
+                          >
+                            <Save className="mr-2 h-4 w-4" />
+                            Save
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 ml-1 text-destructive hover:bg-destructive/10"
+                            onClick={() => setUserToDelete(user)}
+                           >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                      No users found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+       {userToDelete && (
+        <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the user account for{' '}
+                <strong>{userToDelete.nickname}</strong>.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </>
   );
 }
-

@@ -7,7 +7,7 @@ service cloud.firestore {
     // User profile documents
     match /users/{userId} {
       // Admins can perform any action on any user document.
-      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow read, list, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
       
       // Users can create their own profile.
       allow create: if request.auth != null && request.auth.uid == userId;
