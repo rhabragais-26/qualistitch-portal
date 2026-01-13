@@ -325,11 +325,11 @@ const HeaderMemo = React.memo(function Header({
                   <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-accent/90 hover:text-white">
                     <Avatar className="h-8 w-8">
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                            {user?.email?.[0].toUpperCase() ?? 'U'}
+                            {nickname?.[0].toUpperCase() ?? 'U'}
                         </AvatarFallback>
                     </Avatar>
                     <div className='flex flex-col items-start'>
-                        <span className='font-bold'>{nickname ?? user?.email?.split('@')[0] ?? 'User'}</span>
+                        <span className='font-bold'>{nickname ?? 'User'}</span>
                         <span className='text-xs font-normal'>{isAdmin ? 'Admin' : 'User'}</span>
                     </div>
                      <ChevronDown className="h-4 w-4" />
