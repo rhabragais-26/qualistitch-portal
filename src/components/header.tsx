@@ -53,7 +53,7 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback } from './ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth } from '@/firebase';
 import { collection, query, doc, getDoc } from 'firebase/firestore';
 import { Badge } from './ui/badge';
@@ -320,6 +320,7 @@ const HeaderMemo = React.memo(function Header({
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2 h-10 rounded-md px-3 text-white hover:bg-accent/90">
                       <Avatar className="h-8 w-8">
+                        <AvatarImage src={userProfile.photoURL || ''} alt={userProfile.nickname} />
                         <AvatarFallback className="bg-primary text-primary-foreground font-bold">
                           {getInitials(userProfile.nickname)}
                         </AvatarFallback>

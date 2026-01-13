@@ -15,6 +15,7 @@ interface UserProfile {
   email: string;
   role: 'user' | 'admin';
   position: string;
+  photoURL?: string;
 }
 
 interface UserAuthState {
