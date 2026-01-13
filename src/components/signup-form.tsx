@@ -108,6 +108,8 @@ export function SignupForm() {
         errorMessage = 'This email address is already in use.';
       } else if (errorCode === 'auth/weak-password') {
         errorMessage = 'The password is too weak. It must be at least 6 characters long.';
+      } else if (errorCode === 'permission-denied') {
+        errorMessage = 'Failed to save user profile. Please try again.';
       }
       setError(errorMessage);
     }
