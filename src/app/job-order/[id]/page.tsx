@@ -106,64 +106,54 @@ export default function JobOrderPage() {
 
   const isDirty = useMemo(() => {
     if (!fetchedLead || !lead) return false;
-    
-    // Normalize function to create a comparable object
-    const normalize = (l:Lead | null) => {
-      if (!l) return null;
-        // Deep copy and sort arrays to ensure consistent order for comparison
-        const sortedOrders = [...(l.orders || [])].sort((a, b) => 
-            `${a.productType}-${a.color}-${a.size}`.localeCompare(`${b.productType}-${b.color}-${b.size}`)
-        );
 
-        const sortedLayouts = [...(l.layouts || [])].map(layout => ({
-            ...layout,
-            namedOrders: [...(layout.namedOrders || [])].sort((a,b) => (a.name || '').localeCompare(b.name || ''))
-        })).sort((a,b) => (a.id || '').localeCompare(b.id || ''));
+    // Create a simplified, consistently ordered version of the lead data for comparison
+    const normalize = (l: Lead, date?: Date) => {
+      const deliveryDateStr = date 
+        ? date.toISOString().split('T')[0]
+        : (l.deliveryDate ? new Date(l.deliveryDate).toISOString().split('T')[0] : null);
 
-        return {
-            ...l,
-            deliveryDate: l.deliveryDate ? new Date(l.deliveryDate).toISOString().split('T')[0] : undefined,
-            orders: sortedOrders.map(o => ({
-                productType: o.productType,
-                color: o.color,
-                size: o.size,
-                quantity: o.quantity,
-                remarks: o.remarks || '',
-                design: {
-                    left: o.design?.left || false,
-                    right: o.design?.right || false,
-                    backLogo: o.design?.backLogo || false,
-                    backText: o.design?.backText || false,
-                }
-            })),
-            layouts: sortedLayouts.map(layout => ({
-                id: layout.id,
-                layoutImage: layout.layoutImage || '',
-                dstLogoLeft: layout.dstLogoLeft || '',
-                dstLogoRight: layout.dstLogoRight || '',
-                dstBackLogo: layout.dstBackLogo || '',
-                dstBackText: layout.dstBackText || '',
-                namedOrders: (layout.namedOrders || []).map(no => ({
-                    id: no.id,
-                    name: no.name || '',
-                    color: no.color || '',
-                    size: no.size || '',
-                    quantity: no.quantity || 0,
-                    backText: no.backText || ''
-                }))
-            })),
-        };
+      return {
+        ...l,
+        deliveryDate: deliveryDateStr,
+        orders: (l.orders || []).map(o => ({
+          productType: o.productType,
+          color: o.color,
+          size: o.size,
+          quantity: o.quantity,
+          remarks: o.remarks || '',
+          design: {
+            left: o.design?.left || false,
+            right: o.design?.right || false,
+            backLogo: o.design?.backLogo || false,
+            backText: o.design?.backText || false,
+          }
+        })).sort((a, b) => a.productType.localeCompare(b.productType) || a.color.localeCompare(b.color) || a.size.localeCompare(b.size)),
+        layouts: (l.layouts || []).map(layout => ({
+            id: layout.id,
+            layoutImage: layout.layoutImage || '',
+            dstLogoLeft: layout.dstLogoLeft || '',
+            dstLogoRight: layout.dstLogoRight || '',
+            dstBackLogo: layout.dstBackLogo || '',
+            dstBackText: layout.dstBackText || '',
+            namedOrders: (layout.namedOrders || []).map(no => ({
+                id: no.id,
+                name: no.name || '',
+                color: no.color || '',
+                size: no.size || '',
+                quantity: no.quantity || 0,
+                backText: no.backText || ''
+            })).sort((a,b) => a.id.localeCompare(b.id)),
+        })).sort((a,b) => a.id.localeCompare(b.id)),
+      };
     };
 
-    const normalizedFetchedLead = normalize(fetchedLead);
-    const normalizedCurrentLead = normalize({
-        ...(lead || {}), 
-        deliveryDate: deliveryDate ? deliveryDate.toISOString() : undefined,
-    } as Lead);
+    const originalState = JSON.stringify(normalize(fetchedLead, fetchedLead.deliveryDate ? new Date(fetchedLead.deliveryDate) : undefined));
+    const currentState = JSON.stringify(normalize(lead, deliveryDate));
     
-    return JSON.stringify(normalizedFetchedLead) !== JSON.stringify(normalizedCurrentLead);
-
+    return originalState !== currentState;
   }, [fetchedLead, lead, deliveryDate]);
+
 
   useEffect(() => {
     if (textareaRef.current) {
