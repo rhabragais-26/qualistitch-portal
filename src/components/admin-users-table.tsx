@@ -16,7 +16,9 @@ import { Button } from './ui/button';
 import { Save, Trash2, ChevronDown } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
-import { UserPosition } from '@/lib/permissions';
+import { UserPosition, hasEditPermission } from '@/lib/permissions';
+import { Checkbox } from './ui/checkbox';
+import { Label } from './ui/label';
 
 type UserProfile = {
   uid: string;
@@ -46,22 +48,15 @@ const positions: UserPosition[] = [
 ];
 
 type PageGroup = 'sales' | 'digitizing' | 'inventory' | 'production' | 'logistics' | 'admin' | 'profile';
-
-const positionPermissions: { [key in UserPosition]?: PageGroup[] } = {
-  'SCES / Sales Representative': ['sales'],
-  'Sales Supervisor': ['sales'],
-  'Sales Manager': ['sales'],
-  'Inventory Officer': ['inventory'],
-  'Production Line Leader': ['production'],
-  'Production Head': ['production'],
-  'Logistics Officer': ['logistics'],
-  'Operations Manager': ['inventory', 'production', 'logistics'],
-  'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'admin', 'profile'],
-  'CEO': [],
-  'HR': [],
-  'Finance': [],
-  'Not Assigned': [],
-};
+const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
+    { id: 'sales', label: 'Sales', path: '/records' },
+    { id: 'digitizing', label: 'Digitizing', path: '/digitizing/programming-queue' },
+    { id: 'inventory', label: 'Inventory', path: '/inventory/summary' },
+    { id: 'production', label: 'Production', path: '/production/production-queue' },
+    { id: 'logistics', label: 'Logistics', path: '/logistics/shipment-queue' },
+    { id: 'admin', label: 'Admin', path: '/admin/users' },
+    { id: 'profile', label: 'Profile', path: '/profile' },
+];
 
 export function AdminUsersTable() {
   const firestore = useFirestore();
@@ -206,7 +201,6 @@ export function AdminUsersTable() {
                   filteredUsers.map((user) => {
                     const editedUser = editedUsers[user.uid] || { role: user.role, position: user.position };
                     const isModified = user.role !== editedUser.role || user.position !== editedUser.position;
-                    const permissions = positionPermissions[editedUser.position] || [];
 
                     return (
                       <TableRow key={user.uid}>
@@ -256,18 +250,21 @@ export function AdminUsersTable() {
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                                <div className="p-2 mt-1 border rounded-md bg-gray-50 text-xs">
-                                  {editedUser.role === 'admin' || editedUser.position === 'Page Admin' ? (
-                                    <p className="font-semibold text-blue-600">Full access to all pages.</p>
-                                  ) : permissions.length > 0 ? (
-                                    <>
-                                      <p className="font-semibold">Can edit:</p>
-                                      <ul className="list-disc pl-5">
-                                        {permissions.map((p, i) => <li key={i} className="capitalize">{p}</li>)}
-                                      </ul>
-                                    </>
-                                  ) : (
-                                    <p className="text-gray-500">Read-only access.</p>
-                                  )}
+                                <p className="font-semibold mb-2">Can Edit:</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {allPageGroups.map(group => (
+                                    <div key={group.id} className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id={`${user.uid}-${group.id}`}
+                                        checked={hasEditPermission(editedUser.position, group.path)}
+                                        disabled
+                                      />
+                                      <Label htmlFor={`${user.uid}-${group.id}`} className="text-xs font-normal">
+                                        {group.label}
+                                      </Label>
+                                    </div>
+                                  ))}
+                                </div>
                                </div>
                             </CollapsibleContent>
                            </Collapsible>
@@ -329,5 +326,3 @@ export function AdminUsersTable() {
     </>
   );
 }
-
-    
