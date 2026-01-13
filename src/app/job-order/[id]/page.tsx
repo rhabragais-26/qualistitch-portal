@@ -213,9 +213,7 @@ export default function JobOrderPage() {
   };
   
   const handleConfirmSave = async () => {
-    await handleSaveChanges(false); // Save without navigating
-    setShowConfirmDialog(false);
-    router.push('/job-order'); // Navigate after state is confirmed saved
+    await handleSaveChanges(true); // Save and navigate
   };
   
   const handleConfirmDiscard = () => {
@@ -262,7 +260,7 @@ export default function JobOrderPage() {
            (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
   };
   
-  const handleSaveChanges = async (navigateOnSuccess = true) => {
+  const handleSaveChanges = async (navigateOnSuccess = false) => {
     if (!lead || !leadRef || !allLeads) return;
 
     let newJoNumber: number | undefined = lead.joNumber;
@@ -456,7 +454,7 @@ export default function JobOrderPage() {
                     <X className="mr-2 h-4 w-4" />
                     Close
                 </Button>
-                <Button onClick={() => handleSaveChanges()} className="text-white font-bold shadow-md" disabled={!isDirty}>
+                <Button onClick={() => handleSaveChanges(false)} className="text-white font-bold shadow-md" disabled={!isDirty}>
                     <Save className="mr-2 h-4 w-4" />
                     Save Changes
                 </Button>
