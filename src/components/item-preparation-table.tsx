@@ -94,7 +94,6 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
   const [leadToSend, setLeadToSend] = useState<Lead | null>(null);
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived'; } | null>(null);
-  const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
 
 
   const getProgrammingStatus = useCallback((lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
@@ -166,18 +165,10 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
     if (!checked && isCurrentlyChecked) {
       setUncheckConfirmation({ leadId, field: 'isJoHardcopyReceived' });
     } else if (checked && !isCurrentlyChecked) {
-      setJoReceivedConfirmation(leadId);
+      handleUpdateStatus(leadId, 'isJoHardcopyReceived', true);
     }
-  }, [leads]);
+  }, [leads, handleUpdateStatus]);
   
-  const confirmJoReceived = useCallback(() => {
-    if (joReceivedConfirmation) {
-      handleUpdateStatus(joReceivedConfirmation, 'isJoHardcopyReceived', true);
-      setJoReceivedConfirmation(null);
-    }
-  }, [joReceivedConfirmation, handleUpdateStatus]);
-
-
   const confirmUncheck = useCallback(() => {
     if (uncheckConfirmation) {
       handleUpdateStatus(uncheckConfirmation.leadId, uncheckConfirmation.field, false);
@@ -357,20 +348,6 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
         </AlertDialogContent>
       </AlertDialog>
       
-       <AlertDialog open={!!joReceivedConfirmation} onOpenChange={setJoReceivedConfirmation}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Receipt</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure that the printed J.O. was received and the J.O. number is correct?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmJoReceived}>Confirm</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <CardHeader>
         <div className="flex justify-between items-center">
