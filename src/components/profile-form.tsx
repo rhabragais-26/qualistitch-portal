@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -124,8 +125,10 @@ export function ProfileForm() {
     setIsSaving(true);
 
     try {
+        const { dirtyFields } = form.formState;
+
         // Update Firestore profile data if there are changes
-        const profileDataChanged = form.formState.dirtyFields.firstName || form.formState.dirtyFields.lastName || form.formState.dirtyFields.nickname || form.formState.dirtyFields.phoneNumber || form.formState.dirtyFields.photoURL;
+        const profileDataChanged = dirtyFields.firstName || dirtyFields.lastName || dirtyFields.nickname || dirtyFields.phoneNumber || dirtyFields.photoURL;
 
         if(profileDataChanged) {
             const userDocRef = doc(firestore, 'users', user.uid);
@@ -154,6 +157,7 @@ export function ProfileForm() {
             });
         }
         
+        // Reset form to its new state, clearing dirty fields
         form.reset(values);
 
     } catch (error: any) {
