@@ -14,6 +14,7 @@ interface UserProfile {
   lastName: string;
   email: string;
   role: 'user' | 'admin';
+  position: string;
 }
 
 interface UserAuthState {
@@ -60,6 +61,13 @@ export interface UserHookResult {
 
 // React Context
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
+
+interface FirebaseProviderProps {
+    children: ReactNode;
+    firebaseApp: FirebaseApp;
+    firestore: Firestore;
+    auth: Auth;
+}
 
 /**
  * FirebaseProvider manages and provides Firebase services and user authentication state.

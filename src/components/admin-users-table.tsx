@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -12,7 +13,6 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { formatDateTime } from '@/lib/utils';
 
-
 type UserProfile = {
   uid: string;
   firstName: string;
@@ -20,8 +20,24 @@ type UserProfile = {
   nickname: string;
   email: string;
   role: 'admin' | 'user';
+  position: string;
   lastModified?: string;
 };
+
+const positions = [
+    'Not Assigned',
+    'SCES / Sales Representative',
+    'Sales Supervisor',
+    'Sales Manager',
+    'Inventory Officer',
+    'Production Line Leader',
+    'Production Head',
+    'Logistics Officer',
+    'Operations Manager',
+    'HR',
+    'Finance',
+    'Admin'
+];
 
 export function AdminUsersTable() {
   const firestore = useFirestore();
@@ -35,21 +51,21 @@ export function AdminUsersTable() {
 
   const { data: users, isLoading, error } = useCollection<UserProfile>(usersQuery);
 
-  const handleRoleChange = async (uid: string, newRole: 'admin' | 'user') => {
+  const handleRoleChange = async (uid: string, field: 'role' | 'position', value: string) => {
     if (!firestore) return;
     const userDocRef = doc(firestore, 'users', uid);
     try {
-      await updateDoc(userDocRef, { role: newRole, lastModified: new Date().toISOString() });
+      await updateDoc(userDocRef, { [field]: value, lastModified: new Date().toISOString() });
       toast({
-        title: 'Role Updated',
-        description: `User role has been successfully changed to ${newRole}.`,
+        title: 'User Updated',
+        description: `User's ${field} has been successfully changed to ${value}.`,
       });
     } catch (e: any) {
-      console.error('Error updating role:', e);
+      console.error(`Error updating ${field}:`, e);
       toast({
         variant: 'destructive',
         title: 'Update Failed',
-        description: e.message || "Could not update the user's role.",
+        description: e.message || `Could not update the user's ${field}.`,
       });
     }
   };
@@ -71,7 +87,7 @@ export function AdminUsersTable() {
           <div>
             <CardTitle className="text-black">User Management</CardTitle>
             <CardDescription className="text-gray-600">
-              View and manage user roles.
+              View and manage user roles and positions.
             </CardDescription>
           </div>
           <div className="w-full max-w-sm">
@@ -90,8 +106,8 @@ export function AdminUsersTable() {
             <TableHeader className="bg-neutral-800 sticky top-0 z-10">
               <TableRow>
                 <TableHead className="text-white font-bold align-middle">Name</TableHead>
-                <TableHead className="text-white font-bold align-middle">Nickname</TableHead>
                 <TableHead className="text-white font-bold align-middle">Email</TableHead>
+                <TableHead className="text-white font-bold align-middle">Position</TableHead>
                 <TableHead className="text-white font-bold align-middle">Role</TableHead>
                 <TableHead className="text-white font-bold align-middle text-center">Last Modified</TableHead>
               </TableRow>
@@ -114,13 +130,27 @@ export function AdminUsersTable() {
               ) : filteredUsers.length > 0 ? (
                 filteredUsers.map((user) => (
                   <TableRow key={user.uid}>
-                    <TableCell className="font-medium">{`${user.firstName} ${user.lastName}`}</TableCell>
-                    <TableCell>{user.nickname}</TableCell>
+                    <TableCell className="font-medium">{user.nickname} ({`${user.firstName} ${user.lastName}`})</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <Select
+                        value={user.position || 'Not Assigned'}
+                        onValueChange={(newPosition: string) => handleRoleChange(user.uid, 'position', newPosition)}
+                      >
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {positions.map(pos => (
+                             <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Select
                         value={user.role}
-                        onValueChange={(newRole: 'admin' | 'user') => handleRoleChange(user.uid, newRole)}
+                        onValueChange={(newRole: 'admin' | 'user') => handleRoleChange(user.uid, 'role', newRole)}
                       >
                         <SelectTrigger className="w-[120px]">
                           <SelectValue>

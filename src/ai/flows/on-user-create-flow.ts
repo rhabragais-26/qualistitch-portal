@@ -33,6 +33,7 @@ export const createuserprofile = onUserCreate(async (event) => {
       lastName,
       nickname: displayName || '', // Use displayName as a fallback for nickname
       role: 'user', // Assign a default role
+      position: 'Not Assigned', // Assign a default position
       createdAt: new Date().toISOString(),
     });
     console.log(`Successfully created profile for user: ${uid}`);

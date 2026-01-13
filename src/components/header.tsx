@@ -28,6 +28,7 @@ import {
   PackageSearch,
   FolderKanban,
   Shield,
+  UserCog,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -81,7 +82,7 @@ const HeaderMemo = React.memo(function Header({
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const firestore = useFirestore();
   const auth = useAuth();
-  const { user, userProfile } = useUser();
+  const { user, userProfile, isAdmin } = useUser();
 
 
   const leadsQuery = useMemoFirebase(
@@ -337,6 +338,12 @@ const HeaderMemo = React.memo(function Header({
                         <User className="mr-2" />
                         Profile
                      </DropdownMenuItem>
+                     {isAdmin && (
+                        <DropdownMenuItem onClick={() => router.push('/admin/users')}>
+                            <UserCog className="mr-2" />
+                            Admin Setting
+                        </DropdownMenuItem>
+                     )}
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2" />
                       Sign Out
