@@ -93,7 +93,7 @@ export default function JobOrderPage() {
     [firestore, id]
   );
 
-  const { data: fetchedLead, isLoading: isLeadLoading, error } = useDoc<Lead>(leadRef);
+  const { data: fetchedLead, isLoading: isLeadLoading, error, refetch: refetchLead } = useDoc<Lead>(leadRef);
   const [lead, setLead] = useState<Lead | null>(null);
   const [joNumber, setJoNumber] = useState<string>('');
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
@@ -298,7 +298,7 @@ export default function JobOrderPage() {
         title: 'Job Order Saved!',
         description: 'Your changes have been saved successfully.',
       });
-      // The useDoc hook will refetch the data, causing isDirty to become false
+      refetchLead(); // This will refetch the data and `isDirty` will become false
       
     } catch (e: any) {
       console.error('Error saving job order:', e);
