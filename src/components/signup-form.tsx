@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -78,9 +79,19 @@ export function SignupForm() {
       return;
     }
     try {
-      // The on-user-create-flow will handle creating the firestore document.
-      // We are just creating the auth user here.
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      const userDocRef = doc(firestore, 'users', user.uid);
+      await setDoc(userDocRef, {
+          uid: user.uid,
+          firstName: toTitleCase(values.firstName),
+          lastName: toTitleCase(values.lastName),
+          nickname: values.nickname,
+          email: values.email,
+          role: 'user', // Default role
+          createdAt: new Date().toISOString(),
+      });
 
       toast({
         title: 'Account Created Successfully!',

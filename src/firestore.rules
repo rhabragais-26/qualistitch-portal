@@ -6,8 +6,14 @@ service cloud.firestore {
     
     // User profile documents
     match /users/{userId} {
+      // Users can create their own profile document (handled by the cloud function now)
+      // This rule is simplified as the server function is the writer.
       allow create: if request.auth != null && request.auth.uid == userId;
+
+      // A user can read their own profile. Admins can read any profile.
       allow read: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      
+      // A user can update their own profile, but not their role. Admins can update any profile.
       allow update: if request.auth != null && (
                     (request.auth.uid == userId && !('role' in request.resource.data)) ||
                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'

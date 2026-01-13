@@ -337,15 +337,19 @@ const HeaderMemo = React.memo(function Header({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onSelect={() => handleNavigation('/profile')}>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                    </DropdownMenuItem>
                     {isAdmin && (
                         <>
                             <DropdownMenuItem onSelect={() => handleNavigation('/admin/users')}>
                                 <Shield className="mr-2 h-4 w-4" />
                                 <span>Admin Settings</span>
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
                         </>
                     )}
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={handleSignOut}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Sign Out</span>
@@ -385,5 +389,3 @@ const HeaderMemo = React.memo(function Header({
 HeaderMemo.displayName = 'Header';
 
 export { HeaderMemo as Header };
-
-    
