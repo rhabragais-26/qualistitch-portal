@@ -54,11 +54,20 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
 
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
+    if (!firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Signup Failed',
+        description: 'Database service is not available.',
+      });
+      setIsLoading(false);
+      return;
+    }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      if (user && firestore) {
+      if (user) {
         // Create a document in the 'users' collection
         await setDoc(doc(firestore, 'users', user.uid), {
           uid: user.uid,
