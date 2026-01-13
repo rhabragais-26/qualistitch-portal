@@ -1239,6 +1239,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                               checked={lead.isRevision || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isRevision', !!checked)}
                               disabled={!lead.isLogoTesting || lead.isFinalApproval}
+                              className={cn(lead.isFinalApproval && "disabled:opacity-100")}
                             />
                             {lead.revisionTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.revisionTimestamp).dateTimeShort}</div>}
                           </div>
