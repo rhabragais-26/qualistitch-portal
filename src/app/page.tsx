@@ -20,7 +20,8 @@ export default function AuthPage() {
     }
   }, [user, isUserLoading, router]);
 
-  // While checking user state, show a loading message
+  // While checking user state, or if the user is already logged in, show a loading message.
+  // This prevents the login form from flashing before the redirect happens.
   if (isUserLoading || (user && !user.isAnonymous)) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
