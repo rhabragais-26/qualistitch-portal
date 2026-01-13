@@ -524,7 +524,6 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                       <TableRow className="border-b-2 border-black bg-gray-50">
                           <TableCell colSpan={3} className="py-1 px-2 text-xs font-bold text-right">Total Quantity</TableCell>
                           <TableCell className="py-1 px-2 text-xs text-center font-bold">{totalQuantity}</TableCell>
-                          <TableCell colSpan={2}></TableCell>
                       </TableRow>
                     </React.Fragment>
                 )})}
