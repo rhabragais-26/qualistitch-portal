@@ -56,7 +56,6 @@ import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth } from '
 import { collection, query } from 'firebase/firestore';
 import { Badge } from './ui/badge';
 import { signOut } from 'firebase/auth';
-import { AccountSettingsDialog } from './account-settings-dialog';
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
@@ -78,7 +77,6 @@ const HeaderMemo = React.memo(function Header({
   const auth = useAuth();
   const { user } = useUser();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
   const [nextUrl, setNextUrl] = useState('');
   const [isClient, setIsClient] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -323,11 +321,6 @@ const HeaderMemo = React.memo(function Header({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onSelect={() => setIsAccountSettingsOpen(true)}>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Account Settings</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={handleSignOut}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Sign Out</span>
@@ -360,12 +353,6 @@ const HeaderMemo = React.memo(function Header({
         </AlertDialogContent>
       </AlertDialog>
 
-      {isAccountSettingsOpen && (
-        <AccountSettingsDialog
-          isOpen={isAccountSettingsOpen}
-          onOpenChange={setIsAccountSettingsOpen}
-        />
-      )}
     </>
   );
 });
