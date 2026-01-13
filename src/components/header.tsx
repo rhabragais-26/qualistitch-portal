@@ -320,11 +320,6 @@ const HeaderMemo = React.memo(function Header({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onSelect={() => handleNavigation('/account-settings')}>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Account Settings</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={handleSignOut}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Sign Out</span>
