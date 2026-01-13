@@ -152,7 +152,7 @@ const HeaderMemo = React.memo(function Header({
     }
   };
   
-  const getInitials = (nickname: string) => {
+  const getInitials = (nickname: string | undefined) => {
     if (!nickname) return '';
     return nickname.charAt(0).toUpperCase();
   };
