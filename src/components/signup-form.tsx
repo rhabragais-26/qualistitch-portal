@@ -112,6 +112,7 @@ export function SignupForm() {
         errorMessage = 'Failed to save user profile. Please check permissions and try again.';
       }
       setError(errorMessage);
+      console.error("Signup Error: ", e);
     }
   }
 
