@@ -5,13 +5,11 @@ service cloud.firestore {
     
     // User profile documents
     match /users/{userId} {
-      // Admins can read the full list of users and update any user's role
-      allow list, get: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' 
-                      && request.resource.data.keys().hasOnly(['role']);
-
-      // Users can get and update their own profile data
-      allow get, update: if request.auth != null && request.auth.uid == userId;
+      // Anyone can read any user profile
+      allow read: if request.auth != null;
+      
+      // A user can update their own profile
+      allow update: if request.auth != null && request.auth.uid == userId;
     }
     
     match /leads/{leadId} {
