@@ -597,7 +597,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const filteredLeads = React.useMemo(() => {
     if (!processedLeads) return [];
     
-    const leadsWithJo = processedLeads.filter(lead => lead.joNumber && !lead.isDigitizingArchived);
+    const leadsWithJo = processedLeads.filter(lead => 
+        lead.joNumber && 
+        !lead.isDigitizingArchived &&
+        lead.orderType !== 'Stock (Jacket Only)'
+    );
 
     const filtered = leadsWithJo.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
