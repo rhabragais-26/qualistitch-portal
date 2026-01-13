@@ -50,23 +50,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Badge } from './ui/badge';
 import { signOut } from 'firebase/auth';
+import { AccountSettingsDialog } from './account-settings-dialog';
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
@@ -91,9 +81,6 @@ const HeaderMemo = React.memo(function Header({
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
   const [nextUrl, setNextUrl] = useState('');
   const [isClient, setIsClient] = useState(false);
-  const [showExistingPassword, setShowExistingPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const firestore = useFirestore();
@@ -114,8 +101,10 @@ const HeaderMemo = React.memo(function Header({
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
-      router.push('/');
+      if(auth) {
+        await signOut(auth);
+        router.push('/');
+      }
     } catch (error) {
       console.error("Error signing out: ", error);
     }
@@ -371,85 +360,12 @@ const HeaderMemo = React.memo(function Header({
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={isAccountSettingsOpen} onOpenChange={setIsAccountSettingsOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Account Settings</DialogTitle>
-            <DialogDescription>
-              Update your profile information and password.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3 py-4 text-sm">
-            <div className="flex items-center gap-4">
-               <div className="relative h-24 w-24 rounded-md bg-muted flex items-center justify-center text-muted-foreground">
-                    <span className="text-3xl">R</span>
-                </div>
-                <div className="flex-1 space-y-1">
-                     <Label htmlFor="profile-picture" className="text-xs">Profile Picture</Label>
-                    <div className="flex items-center gap-2">
-                        <Button asChild variant="outline" size="sm" className="text-xs">
-                            <label htmlFor="profile-picture-upload" className="cursor-pointer">
-                                Choose File
-                            </label>
-                        </Button>
-                        <Input id="profile-picture-upload" type="file" className="hidden" />
-                    </div>
-                </div>
-            </div>
-             <div className="grid grid-cols-2 gap-3">
-               <div className="grid gap-1 col-span-2">
-                <Label htmlFor="first-name" className="text-xs">First Name</Label>
-                <Input id="first-name" placeholder="Juan" className="text-xs h-9" />
-              </div>
-              <div className="grid gap-1 col-span-2">
-                <Label htmlFor="last-name" className="text-xs">Last Name</Label>
-                <Input id="last-name" placeholder="Dela Cruz" className="text-xs h-9" />
-              </div>
-            </div>
-            <div className="grid gap-1">
-              <Label htmlFor="nickname" className="text-xs">Nickname</Label>
-              <Input id="nickname" defaultValue="Rha" className="text-xs h-9" />
-            </div>
-             <div className="grid grid-cols-5 gap-3">
-              <div className="grid gap-1 col-span-2">
-                <Label htmlFor="phone" className="text-xs">Phone Number</Label>
-                <Input id="phone" type="tel" placeholder="e.g., 0912-345-6789" className="text-xs h-9" />
-              </div>
-              <div className="grid gap-1 col-span-3">
-                <Label htmlFor="email" className="text-xs">Email</Label>
-                <Input id="email" type="email" placeholder="e.g., rha@example.com" className="text-xs h-9" />
-              </div>
-            </div>
-            <div className="grid gap-1 relative">
-                <Label htmlFor="existing-password"  className="text-xs">Existing Password</Label>
-                <Input id="existing-password" type={showExistingPassword ? 'text' : 'password'} className="text-xs h-9 pr-10" />
-                <Button variant="ghost" size="icon" className="absolute right-1 bottom-1 h-7 w-7 text-gray-500" onClick={() => setShowExistingPassword(p => !p)}>
-                    {showExistingPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-            </div>
-            <div className="grid gap-1 relative">
-                <Label htmlFor="new-password"  className="text-xs">New Password</Label>
-                <Input id="new-password" type={showNewPassword ? 'text' : 'password'} className="text-xs h-9 pr-10" />
-                <Button variant="ghost" size="icon" className="absolute right-1 bottom-1 h-7 w-7 text-gray-500" onClick={() => setShowNewPassword(p => !p)}>
-                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-            </div>
-            <div className="grid gap-1 relative">
-                <Label htmlFor="confirm-new-password"  className="text-xs">Confirm New Password</Label>
-                <Input id="confirm-new-password" type={showConfirmNewPassword ? 'text' : 'password'} className="text-xs h-9 pr-10" />
-                <Button variant="ghost" size="icon" className="absolute right-1 bottom-1 h-7 w-7 text-gray-500" onClick={() => setShowConfirmNewPassword(p => !p)}>
-                    {showConfirmNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button type="submit" className="text-white font-bold">Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {isAccountSettingsOpen && (
+        <AccountSettingsDialog
+          isOpen={isAccountSettingsOpen}
+          onOpenChange={setIsAccountSettingsOpen}
+        />
+      )}
     </>
   );
 });
@@ -457,5 +373,3 @@ const HeaderMemo = React.memo(function Header({
 HeaderMemo.displayName = 'Header';
 
 export { HeaderMemo as Header };
-
-    
