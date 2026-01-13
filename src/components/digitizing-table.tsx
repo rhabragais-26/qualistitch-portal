@@ -105,6 +105,8 @@ type Lead = {
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
   joNumber?: number;
+  isJoHardcopyReceived?: boolean;
+  joHardcopyReceivedTimestamp?: string;
   isUnderProgramming?: boolean;
   isInitialApproval?: boolean;
   isLogoTesting?: boolean;
@@ -129,7 +131,7 @@ type EnrichedLead = Lead & {
   totalCustomerQuantity: number;
 };
 
-type CheckboxField = keyof Pick<Lead, 'isUnderProgramming' | 'isInitialApproval' | 'isLogoTesting' | 'isRevision' | 'isFinalApproval' | 'isFinalProgram'>;
+type CheckboxField = 'isUnderProgramming' | 'isInitialApproval' | 'isLogoTesting' | 'isRevision' | 'isFinalApproval' | 'isFinalProgram';
 
 type FileUploadChecklistItem = {
   label: string;
@@ -146,7 +148,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [overdueFilter, setOverdueFilter] = useState('All');
-  const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField; } | null>(null);
+  const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField | 'isJoHardcopyReceived'; } | null>(null);
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
 
@@ -192,7 +194,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const [reviewConfirmLead, setReviewConfirmLead] = useState<Lead | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
   
-  const updateStatus = useCallback(async (leadId: string, field: CheckboxField, value: boolean, showToast: boolean = true) => {
+  const updateStatus = useCallback(async (leadId: string, field: CheckboxField | 'isJoHardcopyReceived', value: boolean, showToast: boolean = true) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     const now = new Date().toISOString();
@@ -205,7 +207,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
         lastModified: now,
     };
 
-    if (!value) {
+    if (!value && field !== 'isJoHardcopyReceived') {
         const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
         const currentIndex = sequence.indexOf(field);
         if (currentIndex > -1) {
@@ -275,6 +277,18 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
       else {
         updateStatus(leadId, field, true);
       }
+    }
+  }, [leads, updateStatus]);
+
+  const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
+    const lead = leads?.find((l) => l.id === leadId);
+    if (!lead) return;
+    const isCurrentlyChecked = lead.isJoHardcopyReceived || false;
+
+    if (!checked && isCurrentlyChecked) {
+      setUncheckConfirmation({ leadId, field: 'isJoHardcopyReceived' });
+    } else if (checked && !isCurrentlyChecked) {
+      updateStatus(leadId, 'isJoHardcopyReceived', true);
     }
   }, [leads, updateStatus]);
 
@@ -565,13 +579,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
     const enrichedLeads: EnrichedLead[] = [];
   
     // Now, create the enriched lead objects with order numbers
-    Object.values(customerOrderStats).forEach(({ orders, totalQuantity }) => {
+    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
       orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
       orders.forEach((lead, index) => {
         enrichedLeads.push({
           ...lead,
           orderNumber: index + 1,
-          totalCustomerQuantity: totalQuantity,
+          totalCustomerQuantity: totalCustomerQuantity,
         });
       });
     });
@@ -582,7 +596,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const filteredLeads = React.useMemo(() => {
     if (!processedLeads) return [];
     
-    const leadsWithJo = processedLeads.filter(lead => lead.joNumber && !lead.isPreparedForProduction && !lead.isDigitizingArchived && lead.orderType !== 'Stock (Jacket Only)');
+    const leadsWithJo = processedLeads.filter(lead => lead.joNumber && !lead.isDigitizingArchived);
 
     const filtered = leadsWithJo.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -1071,6 +1085,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                     <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center whitespace-nowrap">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Overdue Status</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Received Printed J.O.?</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Initial Program</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Initial Approval</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Tested</span></TableHead>
@@ -1152,8 +1167,18 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                         <TableCell className="text-center align-middle p-2">
                           <div className="flex flex-col items-center justify-start h-full gap-1">
                             <Checkbox
+                              checked={lead.isJoHardcopyReceived || false}
+                              onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
+                            />
+                            {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center align-middle p-2">
+                          <div className="flex flex-col items-center justify-start h-full gap-1">
+                            <Checkbox
                               checked={lead.isUnderProgramming || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isUnderProgramming', !!checked)}
+                              disabled={!lead.isJoHardcopyReceived}
                             />
                             {lead.underProgrammingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.underProgrammingTimestamp).dateTimeShort}</div>}
                           </div>
@@ -1246,7 +1271,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={13} className="p-4 border-t-2 border-gray-300">
+                        <TableCell colSpan={14} className="p-4 border-t-2 border-gray-300">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {hasInitialImages && (
                                     <Card className="bg-white">
