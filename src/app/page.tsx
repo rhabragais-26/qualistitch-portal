@@ -10,12 +10,12 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isUserLoading && user && !user.isAnonymous) {
+    if (!isUserLoading && user && !user.isAnonymous && user.emailVerified) {
       router.replace('/new-order');
     }
   }, [isUserLoading, user, router]);
 
-  if (isUserLoading || (user && !user.isAnonymous)) {
+  if (isUserLoading || (user && !user.isAnonymous && user.emailVerified)) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   

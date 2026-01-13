@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase';
-import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
 const formSchema = z
@@ -77,6 +77,8 @@ export function SignupForm() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
+      await sendEmailVerification(user);
+
       // Create user document in Firestore
       if(firestore) {
         await setDoc(doc(firestore, 'users', user.uid), {
@@ -94,7 +96,8 @@ export function SignupForm() {
 
       toast({
         title: 'Account Created!',
-        description: "You've been successfully signed up. Please log in.",
+        description: "Please check your email to verify your account before logging in.",
+        duration: 5000,
       });
 
       router.push('/');

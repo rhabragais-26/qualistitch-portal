@@ -48,7 +48,14 @@ export function LoginForm() {
   async function onSubmit(values: FormValues) {
     setError(null);
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      
+      if (!userCredential.user.emailVerified) {
+        setError('Please verify your email address before logging in. Check your inbox for the verification link.');
+        await auth.signOut(); // Ensure user is not partially logged in
+        return;
+      }
+
       toast({
         title: 'Login Successful!',
         description: 'Welcome back!',
