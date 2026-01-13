@@ -32,7 +32,6 @@ import { Label } from './ui/label';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
-import { addDays } from 'date-fns';
 
 type Order = {
   productType: string;
@@ -57,6 +56,8 @@ type Lead = {
   isRevision?: boolean;
   isFinalApproval?: boolean;
   isFinalProgram?: boolean;
+  isJoHardcopyReceived?: boolean;
+  joHardcopyReceivedTimestamp?: string;
   isPreparedForProduction?: boolean;
   isSentToProduction?: boolean;
   isEndorsedToLogistics?: boolean;
@@ -92,6 +93,8 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
   const [confirmingLead, setConfirmingLead] = useState<Lead | null>(null);
   const [leadToSend, setLeadToSend] = useState<Lead | null>(null);
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
+  const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived'; } | null>(null);
+
 
   const getProgrammingStatus = useCallback((lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
     if (lead.orderType === 'Stock (Jacket Only)') return { text: "Skipped", variant: "secondary" };
@@ -126,13 +129,15 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
     setCheckedItems({});
   }, []);
 
-  const handleUpdateStatus = useCallback(async (leadId: string, field: 'isPreparedForProduction' | 'isSentToProduction' | 'isEndorsedToLogistics') => {
+  const handleUpdateStatus = useCallback(async (leadId: string, field: 'isPreparedForProduction' | 'isSentToProduction' | 'isEndorsedToLogistics' | 'isJoHardcopyReceived', value: boolean) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     
-    const updateData: { [key: string]: any } = { [field]: true };
+    const updateData: { [key: string]: any } = { [field]: value };
 
-    if (field === 'isSentToProduction' || field === 'isEndorsedToLogistics') {
+    if (field === 'isJoHardcopyReceived') {
+        updateData.joHardcopyReceivedTimestamp = value ? new Date().toISOString() : null;
+    } else if (field === 'isSentToProduction' || field === 'isEndorsedToLogistics') {
       updateData.sentToProductionTimestamp = new Date().toISOString();
     }
 
@@ -140,7 +145,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
         await updateDoc(leadDocRef, updateData);
         toast({
             title: "Status Updated",
-            description: "The production status has been updated successfully.",
+            description: "The status has been updated successfully.",
         });
     } catch (e: any) {
         console.error(`Error updating ${field}:`, e);
@@ -151,10 +156,30 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
         });
     }
   }, [firestore, toast]);
+  
+  const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
+    const lead = leads?.find((l) => l.id === leadId);
+    if (!lead) return;
+    const isCurrentlyChecked = lead.isJoHardcopyReceived || false;
+
+    if (!checked && isCurrentlyChecked) {
+      setUncheckConfirmation({ leadId, field: 'isJoHardcopyReceived' });
+    } else if (checked && !isCurrentlyChecked) {
+      handleUpdateStatus(leadId, 'isJoHardcopyReceived', true);
+    }
+  }, [leads, handleUpdateStatus]);
+
+  const confirmUncheck = useCallback(() => {
+    if (uncheckConfirmation) {
+      handleUpdateStatus(uncheckConfirmation.leadId, uncheckConfirmation.field, false);
+      setUncheckConfirmation(null);
+    }
+  }, [uncheckConfirmation, handleUpdateStatus]);
+
 
   const handleConfirmPrepared = useCallback(async () => {
     if (!confirmingLead) return;
-    await handleUpdateStatus(confirmingLead.id, 'isPreparedForProduction');
+    await handleUpdateStatus(confirmingLead.id, 'isPreparedForProduction', true);
     setConfirmingLead(null);
   }, [confirmingLead, handleUpdateStatus]);
   
@@ -169,13 +194,13 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
 
   const handleConfirmSendToProd = useCallback(async () => {
     if (!leadToSend) return;
-    await handleUpdateStatus(leadToSend.id, 'isSentToProduction');
+    await handleUpdateStatus(leadToSend.id, 'isSentToProduction', true);
     setLeadToSend(null);
   }, [leadToSend, handleUpdateStatus]);
   
   const handleConfirmSendToLogistics = useCallback(async () => {
     if (!leadToSend) return;
-    await handleUpdateStatus(leadToSend.id, 'isEndorsedToLogistics');
+    await handleUpdateStatus(leadToSend.id, 'isEndorsedToLogistics', true);
     setLeadToSend(null);
   }, [leadToSend, handleUpdateStatus]);
 
@@ -305,6 +330,20 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
               </AlertDialogContent>
           </AlertDialog>
       )}
+       <AlertDialog open={!!uncheckConfirmation} onOpenChange={(open) => !open && setUncheckConfirmation(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Unchecking this box will reset the received status. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmUncheck}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <CardHeader>
         <div className="flex justify-between items-center">
@@ -355,6 +394,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                     <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Programming Status</TableHead>
+                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center w-[150px]">Received Printed J.O.?</TableHead>
                     <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">Product Type</TableHead>
                     <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">Color</TableHead>
                     <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Size</TableHead>
@@ -421,6 +461,17 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                     {isStockJacketOnly && <p className="text-xs font-bold mt-1">Stocks (Jacket Only)</p>}
                                   </TableCell>
                               )}
+                              {orderIndex === 0 && (
+                                 <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
+                                    <div className="flex flex-col items-center justify-center gap-1">
+                                      <Checkbox
+                                        checked={lead.isJoHardcopyReceived || false}
+                                        onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
+                                      />
+                                      {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
+                                    </div>
+                                </TableCell>
+                              )}
                             <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
                               <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
                               <TableCell className="py-1 px-2 text-xs text-black text-center">{order.size}</TableCell>
@@ -458,7 +509,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                           <Button
                                               size="sm"
                                               onClick={() => setLeadToSend(lead)}
-                                              disabled={!lead.isPreparedForProduction}
+                                              disabled={!lead.isPreparedForProduction || !lead.isJoHardcopyReceived}
                                               className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
                                           >
                                               <Send className="mr-2 h-4 w-4" /> 
@@ -471,7 +522,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                       ))}
                       {/* Total Row */}
                       <TableRow className="border-b-2 border-black bg-gray-50">
-                          <TableCell colSpan={3} className="py-1 px-2 text-xs font-bold text-right">Total Quantity</TableCell>
+                          <TableCell colSpan={4} className="py-1 px-2 text-xs font-bold text-right">Total Quantity</TableCell>
                           <TableCell className="py-1 px-2 text-xs text-center font-bold">{totalQuantity}</TableCell>
                       </TableRow>
                     </React.Fragment>
@@ -486,5 +537,3 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
-
-    
