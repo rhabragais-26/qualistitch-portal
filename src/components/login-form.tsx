@@ -47,6 +47,10 @@ export function LoginForm() {
 
   async function onSubmit(values: FormValues) {
     setError(null);
+    if (!auth) {
+      setError("Authentication service is not available. Please try again later.");
+      return;
+    }
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       

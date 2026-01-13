@@ -73,6 +73,10 @@ export function SignupForm() {
 
   async function onSubmit(values: FormValues) {
     setError(null);
+    if (!auth || !firestore) {
+      setError("Services not available. Please try again later.");
+      return;
+    }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
@@ -80,16 +84,14 @@ export function SignupForm() {
       await sendEmailVerification(user);
 
       // Create user document in Firestore
-      if(firestore) {
-        await setDoc(doc(firestore, 'users', user.uid), {
-            uid: user.uid,
-            firstName: toTitleCase(values.firstName),
-            lastName: toTitleCase(values.lastName),
-            nickname: values.nickname,
-            email: values.email,
-            role: 'user', // Default role
-        });
-      }
+      await setDoc(doc(firestore, 'users', user.uid), {
+          uid: user.uid,
+          firstName: toTitleCase(values.firstName),
+          lastName: toTitleCase(values.lastName),
+          nickname: values.nickname,
+          email: values.email,
+          role: 'user', // Default role
+      });
       
       // Sign the user out immediately after account creation
       await signOut(auth);
