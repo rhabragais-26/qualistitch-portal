@@ -898,7 +898,7 @@ function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
             </div>
           </div>
           <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="location">Address</Label>
               <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
