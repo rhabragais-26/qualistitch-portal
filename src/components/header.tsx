@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -75,8 +74,6 @@ const HeaderMemo = React.memo(function Header({
 }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const auth = useAuth();
-  const { user, isAdmin } = useUser();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [nextUrl, setNextUrl] = useState('');
   const [isClient, setIsClient] = useState(false);
@@ -98,17 +95,6 @@ const HeaderMemo = React.memo(function Header({
     setIsClient(true);
   }, []);
 
-  const handleSignOut = async () => {
-    try {
-      if(auth) {
-        await signOut(auth);
-        router.push('/');
-      }
-    } catch (error) {
-      console.error("Error signing out: ", error);
-    }
-  };
-  
   const getActiveMenuClass = useCallback((paths: string[]) => {
     const isActive = paths.some(path => pathname === path || (path !== '/' && pathname.startsWith(path)));
     return isActive
@@ -308,42 +294,6 @@ const HeaderMemo = React.memo(function Header({
               Overall Order Status
             </Button>
           </nav>
-           <div className="flex items-center gap-4 ml-auto">
-             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-accent/90 hover:text-white">
-                    <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                            U
-                        </AvatarFallback>
-                    </Avatar>
-                    <div className='flex flex-col items-start'>
-                        <span className='font-bold'>User</span>
-                    </div>
-                     <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onSelect={() => handleNavigation('/profile')}>
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
-                    </DropdownMenuItem>
-                    {isAdmin && (
-                        <>
-                            <DropdownMenuItem onSelect={() => handleNavigation('/admin/users')}>
-                                <Shield className="mr-2 h-4 w-4" />
-                                <span>Admin Settings</span>
-                            </DropdownMenuItem>
-                        </>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={handleSignOut}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Sign Out</span>
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </div>
       </header>
       
