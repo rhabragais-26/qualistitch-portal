@@ -89,9 +89,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           initiateAnonymousSignIn(auth);
         }
         
-        // TODO: This should be replaced with a proper role management system
-        // For now, we will hardcode the admin user
-        const isAdmin = firebaseUser?.uid === 'pqAYxu41z8OKlCt94C2Ao3pEYvy2';
+        // A simple isAdmin check can be done here if needed, e.g., based on UID
+        const isAdmin = false; // Resetting to default, no admin logic
 
         setUserAuthState({ user: firebaseUser, isAdmin, isUserLoading: false, userError: null });
       },

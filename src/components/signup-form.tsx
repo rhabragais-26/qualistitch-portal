@@ -21,8 +21,9 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 const formSchema = z
   .object({
@@ -43,6 +44,7 @@ type FormValues = z.infer<typeof formSchema>;
 export function SignupForm() {
   const { toast } = useToast();
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -64,13 +66,24 @@ export function SignupForm() {
 
   async function onSubmit(values: FormValues) {
     setError(null);
-    if (!auth) {
+    if (!auth || !firestore) {
       setError("Services not available. Please try again later.");
       return;
     }
     try {
-      // The on-user-create-flow will handle creating the firestore document.
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      // Create a document in the 'users' collection
+      await setDoc(doc(firestore, "users", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        nickname: values.nickname,
+        role: 'user', // Default role
+        createdAt: new Date().toISOString(),
+      });
 
       toast({
         title: 'Account Created Successfully!',
