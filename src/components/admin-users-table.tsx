@@ -162,7 +162,7 @@ export function AdminUsersTable() {
                   <TableHead className="text-white font-bold align-middle">Full Name</TableHead>
                   <TableHead className="text-white font-bold align-middle">Email</TableHead>
                   <TableHead className="text-white font-bold align-middle">Position</TableHead>
-                  <TableHead className="text-white font-bold align-middle">Role</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Page Role</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Last Modified</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Action</TableHead>
                 </TableRow>
