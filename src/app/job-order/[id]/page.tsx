@@ -287,7 +287,7 @@ export default function JobOrderPage() {
         title: 'Job Order Saved!',
         description: 'Your changes have been saved successfully.',
       });
-      refetchLead(); 
+      await refetchLead(); 
        if (navigateOnSuccess) {
           router.push('/job-order');
       }
