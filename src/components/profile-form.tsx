@@ -197,7 +197,7 @@ export function ProfileForm() {
   return (
     <Card className="w-full max-w-2xl shadow-xl">
       <CardHeader>
-        <CardTitle>My Profile</CardTitle>
+        <CardTitle>{userProfile?.nickname}'s Profile</CardTitle>
         <CardDescription>Manage your personal information and password.</CardDescription>
       </CardHeader>
       <CardContent>
