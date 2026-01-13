@@ -6,14 +6,13 @@ service cloud.firestore {
     
     // User profile documents
     match /users/{userId} {
-      // Allow users to create their own profile document, but not for others.
+      // Admins can perform any action on any user document.
+      allow read, list, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      
+      // Users can create their own profile.
       allow create: if request.auth != null && request.auth.uid == userId;
-      // Allow users to read their own profile. Admins can read any profile.
-      allow read: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
-      // Allow users to update their own profile.
-      allow update: if request.auth != null && request.auth.uid == userId;
-      // Only admins can delete user profiles.
-      allow delete: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // Users can read and update their own profile.
+      allow read, update: if request.auth != null && request.auth.uid == userId;
     }
     
     match /leads/{leadId} {
