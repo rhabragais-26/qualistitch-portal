@@ -326,7 +326,7 @@ const HeaderMemo = React.memo(function Header({
                           {getInitials(userProfile.nickname)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex flex-col items-start">
+                      <div className="flex flex-col items-center justify-center">
                         <span className="font-bold text-sm leading-none">{userProfile.nickname}</span>
                         <span className="text-xs text-gray-400 leading-none">({userProfile.position})</span>
                       </div>
@@ -334,12 +334,7 @@ const HeaderMemo = React.memo(function Header({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>
-                      <p className='text-xs'>Signed in as:</p>
-                      <p className="font-semibold">{userProfile.nickname} ({userProfile.position})</p>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                     <DropdownMenuItem onClick={() => router.push('/profile')}>
+                    <DropdownMenuItem onClick={() => router.push('/profile')}>
                         <User className="mr-2" />
                         Profile
                      </DropdownMenuItem>
@@ -349,6 +344,7 @@ const HeaderMemo = React.memo(function Header({
                             Admin Setting
                         </DropdownMenuItem>
                      )}
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2" />
                       Sign Out
