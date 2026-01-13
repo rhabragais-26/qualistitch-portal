@@ -85,10 +85,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => { // Auth state determined
-        if (!firebaseUser) {
-          initiateAnonymousSignIn(auth);
-        }
-        
         // A simple isAdmin check can be done here if needed, e.g., based on UID
         const isAdmin = false; // Resetting to default, no admin logic
 

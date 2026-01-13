@@ -15,14 +15,14 @@ export default function AuthPage() {
 
   useEffect(() => {
     // If user is loaded and is not anonymous, redirect to new-order
-    if (!isUserLoading && user && !user.isAnonymous) {
+    if (!isUserLoading && user) {
       router.replace('/new-order');
     }
   }, [user, isUserLoading, router]);
 
   // While checking user state, or if the user is already logged in, show a loading message.
   // This prevents the login form from flashing before the redirect happens.
-  if (isUserLoading || (user && !user.isAnonymous)) {
+  if (isUserLoading || user) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
