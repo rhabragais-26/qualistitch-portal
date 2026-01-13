@@ -85,13 +85,13 @@ export function SignupForm() {
       // 2. Create the user profile document in Firestore
       const userDocRef = doc(firestore, 'users', user.uid);
       await setDoc(userDocRef, {
-          uid: user.uid,
-          firstName: toTitleCase(values.firstName),
-          lastName: toTitleCase(values.lastName),
-          nickname: values.nickname,
-          email: values.email,
-          role: 'user', // Default role for new sign-ups
-          lastModified: new Date().toISOString(),
+        uid: user.uid,
+        firstName: toTitleCase(values.firstName),
+        lastName: toTitleCase(values.lastName),
+        nickname: values.nickname,
+        email: values.email,
+        role: 'user', // Default role for new sign-ups
+        lastModified: new Date().toISOString(),
       });
 
       toast({
@@ -99,14 +99,14 @@ export function SignupForm() {
         description: "Welcome! You have been successfully signed up.",
         duration: 5000,
       });
-
+      
       router.push('/new-order');
 
     } catch (e: any) {
       const errorCode = e.code;
       let errorMessage = 'An unexpected error occurred. Please try again.';
       if (errorCode === 'auth/email-already-in-use') {
-        errorMessage = 'This email address is already in use.';
+        errorMessage = 'This email address is already in use by another account.';
       } else if (errorCode === 'auth/weak-password') {
         errorMessage = 'The password is too weak. It must be at least 6 characters long.';
       } else if (errorCode === 'permission-denied') {

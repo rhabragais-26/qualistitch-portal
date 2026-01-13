@@ -6,15 +6,8 @@ service cloud.firestore {
     
     // User profile documents
     match /users/{userId} {
-      // Allow a new user to create their own profile document, but only if the
-      // 'uid' field in the new document matches their own auth uid.
-      // This is a secure way to allow profile creation on the client-side.
-      allow create: if request.auth != null && request.auth.uid == userId && request.resource.data.uid == request.auth.uid;
-
-      // A user can read their own profile. Admins can read any profile.
+      allow create: if request.auth != null && request.auth.uid == userId;
       allow read: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
-      
-      // A user can update their own profile, but cannot change their role. Admins can update any profile.
       allow update: if request.auth != null && (
                     (request.auth.uid == userId && !('role' in request.resource.data)) ||
                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
