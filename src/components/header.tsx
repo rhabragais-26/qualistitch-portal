@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from './ui/button';
 import {
   AlertDialog,
@@ -77,7 +77,7 @@ type Lead = {
   isSalesAuditRequested?: boolean;
 }
 
-export function Header({ 
+const HeaderMemo = React.memo(function Header({ 
   isNewOrderPageDirty = false, 
   isOperationalCasesPageDirty = false,
   children 
@@ -438,4 +438,8 @@ export function Header({
       </Dialog>
     </>
   );
-}
+});
+
+HeaderMemo.displayName = 'Header';
+
+export { HeaderMemo as Header };
