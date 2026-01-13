@@ -213,8 +213,9 @@ export default function JobOrderPage() {
   };
   
   const handleConfirmSave = async () => {
-    await handleSaveChanges();
+    await handleSaveChanges(false); // Save without navigating
     setShowConfirmDialog(false);
+    router.push('/job-order'); // Navigate after state is confirmed saved
   };
   
   const handleConfirmDiscard = () => {
@@ -261,7 +262,7 @@ export default function JobOrderPage() {
            (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
   };
   
-  const handleSaveChanges = async () => {
+  const handleSaveChanges = async (navigateOnSuccess = true) => {
     if (!lead || !leadRef || !allLeads) return;
 
     let newJoNumber: number | undefined = lead.joNumber;
@@ -288,7 +289,10 @@ export default function JobOrderPage() {
         title: 'Job Order Saved!',
         description: 'Your changes have been saved successfully.',
       });
-      refetchLead(); // This will refetch the data and `isDirty` will become false
+      refetchLead(); 
+       if (navigateOnSuccess) {
+          router.push('/job-order');
+      }
       
     } catch (e: any) {
       console.error('Error saving job order:', e);
@@ -452,7 +456,7 @@ export default function JobOrderPage() {
                     <X className="mr-2 h-4 w-4" />
                     Close
                 </Button>
-                <Button onClick={handleSaveChanges} className="text-white font-bold shadow-md" disabled={!isDirty}>
+                <Button onClick={() => handleSaveChanges()} className="text-white font-bold shadow-md" disabled={!isDirty}>
                     <Save className="mr-2 h-4 w-4" />
                     Save Changes
                 </Button>

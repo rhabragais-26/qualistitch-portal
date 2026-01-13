@@ -120,7 +120,7 @@ export default function JobOrderPrintPage() {
            layout.dstLogoRight || 
            layout.dstBackLogo || 
            layout.dstBackText || 
-           (layout.namedOrders && layout.namedOrders.length > 0);
+           (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
   };
   
   const layoutsToPrint = lead.layouts?.filter(hasLayoutContent) || [];
