@@ -81,8 +81,6 @@ export function SignupForm() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      await sendEmailVerification(user);
-
       // Create user document in Firestore
       await setDoc(doc(firestore, 'users', user.uid), {
           uid: user.uid,
@@ -91,7 +89,10 @@ export function SignupForm() {
           nickname: values.nickname,
           email: values.email,
           role: 'user', // Default role
+          lastModified: new Date().toISOString(),
       });
+
+      await sendEmailVerification(user);
       
       // Sign the user out immediately after account creation
       await signOut(auth);
