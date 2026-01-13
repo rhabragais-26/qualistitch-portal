@@ -23,11 +23,30 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Camera, Eye, EyeOff } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { UserPosition } from '@/lib/permissions';
+
+const positions: UserPosition[] = [
+    'Not Assigned',
+    'CEO',
+    'SCES / Sales Representative',
+    'Sales Supervisor',
+    'Sales Manager',
+    'Inventory Officer',
+    'Production Line Leader',
+    'Production Head',
+    'Logistics Officer',
+    'Operations Manager',
+    'HR',
+    'Finance',
+    'Page Admin'
+];
 
 const formSchema = z.object({
   firstName: z.string().min(1, 'First name is required.'),
   lastName: z.string().min(1, 'Last name is required.'),
   nickname: z.string().min(1, 'Nickname is required.'),
+  position: z.string().min(1, 'Position is required.'),
   phoneNumber: z.string().optional(),
   photoURL: z.string().optional(),
   currentPassword: z.string().optional(),
@@ -58,7 +77,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function ProfileForm() {
-  const { user, userProfile, isUserLoading } = useUser();
+  const { user, userProfile, isUserLoading, isAdmin } = useUser();
   const firestore = useFirestore();
   const auth = useAuth();
   const { toast } = useToast();
@@ -74,6 +93,7 @@ export function ProfileForm() {
       firstName: '',
       lastName: '',
       nickname: '',
+      position: 'Not Assigned',
       phoneNumber: '',
       photoURL: '',
       currentPassword: '',
@@ -88,6 +108,7 @@ export function ProfileForm() {
         firstName: userProfile.firstName || '',
         lastName: userProfile.lastName || '',
         nickname: userProfile.nickname || '',
+        position: userProfile.position || 'Not Assigned',
         phoneNumber: userProfile.phoneNumber || '',
         photoURL: userProfile.photoURL || '',
         currentPassword: '',
@@ -127,17 +148,18 @@ export function ProfileForm() {
     try {
         const { dirtyFields } = form.formState;
 
-        // Update Firestore profile data if there are changes
-        const profileDataChanged = dirtyFields.firstName || dirtyFields.lastName || dirtyFields.nickname || dirtyFields.phoneNumber || dirtyFields.photoURL;
+        const profileDataToUpdate: Partial<FormValues> = {};
+        if (dirtyFields.firstName) profileDataToUpdate.firstName = values.firstName;
+        if (dirtyFields.lastName) profileDataToUpdate.lastName = values.lastName;
+        if (dirtyFields.nickname) profileDataToUpdate.nickname = values.nickname;
+        if (dirtyFields.position) profileDataToUpdate.position = values.position;
+        if (dirtyFields.phoneNumber) profileDataToUpdate.phoneNumber = values.phoneNumber;
+        if (dirtyFields.photoURL) profileDataToUpdate.photoURL = values.photoURL;
 
-        if(profileDataChanged) {
+        if (Object.keys(profileDataToUpdate).length > 0) {
             const userDocRef = doc(firestore, 'users', user.uid);
             await updateDoc(userDocRef, {
-                firstName: values.firstName,
-                lastName: values.lastName,
-                nickname: values.nickname,
-                phoneNumber: values.phoneNumber,
-                photoURL: values.photoURL,
+                ...profileDataToUpdate,
                 lastModified: new Date().toISOString(),
             });
              toast({
@@ -157,7 +179,6 @@ export function ProfileForm() {
             });
         }
         
-        // Reset form to its new state, clearing dirty fields
         form.reset(values);
 
     } catch (error: any) {
@@ -222,7 +243,6 @@ export function ProfileForm() {
                 className="hidden"
                 accept="image/png, image/jpeg, image/gif"
               />
-              <span className="text-lg font-semibold text-center">{userProfile?.position || 'Not Assigned'}</span>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -241,27 +261,27 @@ export function ProfileForm() {
                 />
                 <FormField
                 control={form.control}
-                name="nickname"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Nickname</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Your nickname" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <FormField
-                control={form.control}
                 name="lastName"
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Last Name</FormLabel>
                     <FormControl>
                         <Input placeholder="Dela Cruz" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="nickname"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Nickname</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Your nickname" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -274,19 +294,41 @@ export function ProfileForm() {
                     </FormControl>
                 </FormItem>
             </div>
-            <FormField
-              control={form.control}
-              name="phoneNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Your phone number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="position"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Position</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={!isAdmin}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {positions.map(pos => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Your phone number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
 
             <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-lg font-medium">Change Password</h3>
