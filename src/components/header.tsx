@@ -63,9 +63,10 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Badge } from './ui/badge';
+import { signOut } from 'firebase/auth';
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
@@ -84,6 +85,8 @@ const HeaderMemo = React.memo(function Header({
 }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const auth = useAuth();
+  const { user } = useUser();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
   const [nextUrl, setNextUrl] = useState('');
@@ -108,6 +111,15 @@ const HeaderMemo = React.memo(function Header({
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
   
   const getActiveMenuClass = useCallback((paths: string[]) => {
     const isActive = paths.some(path => pathname === path || (path !== '/' && pathname.startsWith(path)));
@@ -313,9 +325,11 @@ const HeaderMemo = React.memo(function Header({
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-accent/90 hover:text-white">
                     <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-primary text-primary-foreground">R</AvatarFallback>
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                            {user?.email?.[0].toUpperCase() ?? 'U'}
+                        </AvatarFallback>
                     </Avatar>
-                    <span>Rha</span>
+                    <span>{user?.email?.split('@')[0] ?? 'User'}</span>
                      <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -325,7 +339,7 @@ const HeaderMemo = React.memo(function Header({
                         <span>Account Settings</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onSelect={handleSignOut}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Sign Out</span>
                     </DropdownMenuItem>
@@ -443,3 +457,5 @@ const HeaderMemo = React.memo(function Header({
 HeaderMemo.displayName = 'Header';
 
 export { HeaderMemo as Header };
+
+    
