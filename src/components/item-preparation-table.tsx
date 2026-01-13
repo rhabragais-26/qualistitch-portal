@@ -94,6 +94,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
   const [leadToSend, setLeadToSend] = useState<Lead | null>(null);
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived'; } | null>(null);
+  const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
 
 
   const getProgrammingStatus = useCallback((lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
@@ -165,9 +166,9 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
     if (!checked && isCurrentlyChecked) {
       setUncheckConfirmation({ leadId, field: 'isJoHardcopyReceived' });
     } else if (checked && !isCurrentlyChecked) {
-      handleUpdateStatus(leadId, 'isJoHardcopyReceived', true);
+      setJoReceivedConfirmation(leadId);
     }
-  }, [leads, handleUpdateStatus]);
+  }, [leads]);
   
   const confirmUncheck = useCallback(() => {
     if (uncheckConfirmation) {
@@ -175,6 +176,13 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
       setUncheckConfirmation(null);
     }
   }, [uncheckConfirmation, handleUpdateStatus]);
+
+  const confirmJoReceived = useCallback(() => {
+    if (joReceivedConfirmation) {
+      handleUpdateStatus(joReceivedConfirmation, 'isJoHardcopyReceived', true);
+      setJoReceivedConfirmation(null);
+    }
+  }, [joReceivedConfirmation, handleUpdateStatus]);
 
 
   const handleConfirmPrepared = useCallback(async () => {
@@ -241,9 +249,10 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
     if (!processedLeads) return [];
     
     const leadsInQueue = processedLeads.filter(lead => 
-        lead.joNumber && 
+        (lead.joNumber && 
         !lead.isSentToProduction && 
-        !lead.isEndorsedToLogistics
+        !lead.isEndorsedToLogistics) || 
+        (lead.orderType === 'Stock (Jacket Only)' && lead.joNumber && !lead.isEndorsedToLogistics)
     );
     
     return leadsInQueue.filter(lead => {
@@ -347,6 +356,20 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+       <AlertDialog open={!!joReceivedConfirmation} onOpenChange={setJoReceivedConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Receipt</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure that the printed J.O. was received and the J.O. number is correct?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmJoReceived}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
 
       <CardHeader>
@@ -414,6 +437,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                   const numOrders = lead.orders.length;
                   const programmingStatus = getProgrammingStatus(lead);
                   const isStockJacketOnly = lead.orderType === 'Stock (Jacket Only)';
+                  const leadFromQueue = leads?.find(l => l.id === lead.id);
 
                   return (
                     <React.Fragment key={lead.id}>
@@ -471,6 +495,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                                       <Checkbox
                                         checked={lead.isJoHardcopyReceived || false}
                                         onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
+                                        disabled={!leadFromQueue?.isJoPrinted}
                                       />
                                       {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                                     </div>
