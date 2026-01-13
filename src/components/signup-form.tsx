@@ -6,8 +6,9 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { useAuth, useFirestore } from '@/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
@@ -28,6 +29,7 @@ interface SignupFormProps {
 
 export function SignupForm({ onSignupSuccess }: SignupFormProps) {
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -46,8 +48,27 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
     try {
-      // Create user with Firebase Auth. The on-user-create-flow will handle profile creation.
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      // Update the user's profile in Firebase Auth
+      await updateProfile(user, {
+        displayName: values.nickname,
+      });
+
+      // Create the user profile document in Firestore
+      if (firestore) {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        await setDoc(userDocRef, {
+          uid: user.uid,
+          firstName: values.firstName,
+          lastName: values.lastName,
+          nickname: values.nickname,
+          email: values.email,
+          role: 'user', // Assign a default role
+          createdAt: new Date().toISOString(),
+        });
+      }
 
       toast({
         title: 'Signup Successful!',
