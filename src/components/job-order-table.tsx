@@ -108,14 +108,14 @@ export function JobOrderTable() {
   
   const getJoStatus = useCallback((lead: Lead) => {
     if (!lead.joNumber || !lead.isJoPrinted) {
-      return <span className="text-gray-500">Not yet processed</span>;
+      return <span className="text-gray-500">Not yet endorsed</span>;
     }
     if (lead.isRecheckingQuality) return <span className="font-bold text-red-600">Need to Reprint</span>;
     if (lead.isEndorsedToLogistics) return "Already on Logistics";
     if (lead.isSentToProduction) return "Already on Production Dept.";
     if (lead.isPreparedForProduction) return "Already on Inventory";
     if (lead.isJoHardcopyReceived) return "Already on Programming Dept.";
-    return <span className="text-gray-500">Not yet processed</span>;
+    return <span className="text-gray-500">Not yet endorsed</span>;
   }, []);
 
   const handlePrintedChange = async (leadId: string, checked: boolean) => {
@@ -315,7 +315,7 @@ export function JobOrderTable() {
                                     </TooltipProvider>
                                   ) : (
                                     <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                                )}
+                                  )}
                             </TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{getContactDisplay(lead)}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
