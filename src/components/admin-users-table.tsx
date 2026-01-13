@@ -131,7 +131,8 @@ export function AdminUsersTable() {
           <Table>
             <TableHeader className="bg-neutral-800 sticky top-0 z-10">
               <TableRow>
-                <TableHead className="text-white font-bold align-middle">Name</TableHead>
+                <TableHead className="text-white font-bold align-middle">Nickname</TableHead>
+                <TableHead className="text-white font-bold align-middle">Full Name</TableHead>
                 <TableHead className="text-white font-bold align-middle">Email</TableHead>
                 <TableHead className="text-white font-bold align-middle">Position</TableHead>
                 <TableHead className="text-white font-bold align-middle">Role</TableHead>
@@ -143,14 +144,14 @@ export function AdminUsersTable() {
               {isLoading ? (
                 [...Array(5)].map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={6}>
+                    <TableCell colSpan={7}>
                       <Skeleton className="h-8 w-full" />
                     </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-destructive">
+                  <TableCell colSpan={7} className="text-center text-destructive">
                     Error loading users: {error.message}
                   </TableCell>
                 </TableRow>
@@ -161,7 +162,8 @@ export function AdminUsersTable() {
                   
                   return (
                     <TableRow key={user.uid}>
-                      <TableCell className="font-medium">{user.nickname} ({`${user.firstName} ${user.lastName}`})</TableCell>
+                      <TableCell className="font-medium">{user.nickname}</TableCell>
+                      <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
                         <Select
@@ -215,7 +217,7 @@ export function AdminUsersTable() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
                     No users found.
                   </TableCell>
                 </TableRow>
