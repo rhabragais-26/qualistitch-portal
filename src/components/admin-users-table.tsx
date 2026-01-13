@@ -201,12 +201,12 @@ export function AdminUsersTable() {
             <Table>
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
-                  <TableHead className="text-white font-bold align-middle">Nickname</TableHead>
-                  <TableHead className="text-white font-bold align-middle">Full Name</TableHead>
-                  <TableHead className="text-white font-bold align-middle">Email</TableHead>
-                  <TableHead className="text-white font-bold align-middle">Position</TableHead>
-                  <TableHead className="text-white font-bold align-middle">Page Role</TableHead>
-                  <TableHead className="text-white font-bold align-middle">Permission</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Nickname</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Full Name</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Email</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Position</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Page Role</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Permission</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Last Modified</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Action</TableHead>
                 </TableRow>
@@ -236,10 +236,10 @@ export function AdminUsersTable() {
 
                     return (
                       <TableRow key={user.uid}>
-                        <TableCell className="font-medium">{user.nickname}</TableCell>
-                        <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>
+                        <TableCell className="font-medium align-middle text-center">{user.nickname}</TableCell>
+                        <TableCell className="align-middle text-center">{`${user.firstName} ${user.lastName}`}</TableCell>
+                        <TableCell className="align-middle text-center">{user.email}</TableCell>
+                        <TableCell className="align-middle text-center">
                           <Select
                             value={editedUser.position || user.position}
                             onValueChange={(newPosition: string) => handleFieldChange(user.uid, 'position', newPosition)}
@@ -254,7 +254,7 @@ export function AdminUsersTable() {
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="align-middle text-center">
                           <Select
                             value={editedUser.role || user.role}
                             onValueChange={(newRole: 'admin' | 'user') => handleFieldChange(user.uid, 'role', newRole)}
@@ -272,7 +272,7 @@ export function AdminUsersTable() {
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="align-middle text-center">
                            <Collapsible>
                             <CollapsibleTrigger asChild>
                               <Button variant="ghost" size="sm" className="flex items-center gap-1 text-xs">
@@ -301,10 +301,10 @@ export function AdminUsersTable() {
                             </CollapsibleContent>
                            </Collapsible>
                         </TableCell>
-                        <TableCell className="text-center text-xs">
+                        <TableCell className="text-center text-xs align-middle">
                             {user.lastModified ? formatDateTime(user.lastModified).dateTimeShort : '-'}
                         </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="text-center align-middle">
                           <Button
                             size="sm"
                             onClick={() => handleSaveChanges(user.uid)}

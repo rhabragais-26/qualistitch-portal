@@ -23,7 +23,6 @@ export const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
     { id: 'production', label: 'Production', path: '/production/production-queue' },
     { id: 'logistics', label: 'Logistics', path: '/logistics/shipment-queue' },
     { id: 'admin', label: 'Admin', path: '/admin/users' },
-    { id: 'profile', label: 'Profile', path: '/profile' },
 ];
 
 type UserPermissions = {
