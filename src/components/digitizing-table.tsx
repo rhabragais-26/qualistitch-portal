@@ -505,6 +505,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
         const leadDocRef = doc(firestore, 'leads', reviewConfirmLead.id);
         await updateDoc(leadDocRef, { 
           isPreparedForProduction: true,
+          isDigitizingArchived: true,
+          digitizingArchivedTimestamp: new Date().toISOString(),
         });
         toast({
             title: "Project Sent to Production",
@@ -608,7 +610,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
     const leadsWithJo = processedLeads.filter(lead => 
         lead.joNumber && 
         !lead.isDigitizingArchived &&
-        !lead.isPreparedForProduction &&
         lead.orderType !== 'Stock (Jacket Only)'
     );
 
