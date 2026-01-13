@@ -9,7 +9,7 @@ service cloud.firestore {
       // Allow user creation only if the user is creating their own document.
       allow create: if request.auth != null && request.auth.uid == userId;
 
-      // A user can read their own profile. Admins can read any profile.
+      // A user can read or update their own profile.
       allow read, update: if request.auth != null && request.auth.uid == userId;
     }
     

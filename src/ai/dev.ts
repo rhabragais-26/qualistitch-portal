@@ -1,3 +1,2 @@
-// Flows will be imported for their side effects in this file.
-import './flows/generate-report-flow';
-import './flows/generate-digitizing-report-flow';
+// This file is intentionally left blank for client-side development.
+// Server-side flows should not be imported here to avoid bundling server code on the client.
