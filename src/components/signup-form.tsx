@@ -29,7 +29,6 @@ interface SignupFormProps {
 
 export function SignupForm({ onSignupSuccess }: SignupFormProps) {
   const auth = useAuth();
-  const firestore = useFirestore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -56,20 +55,8 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
         displayName: values.nickname,
       });
 
-      // Create the user profile document in Firestore
-      if (firestore) {
-        const userDocRef = doc(firestore, 'users', user.uid);
-        await setDoc(userDocRef, {
-          uid: user.uid,
-          firstName: values.firstName,
-          lastName: values.lastName,
-          nickname: values.nickname,
-          email: values.email,
-          role: 'user', // Assign a default role
-          createdAt: new Date().toISOString(),
-        });
-      }
-
+      // The onUserCreate flow will handle Firestore document creation.
+      
       toast({
         title: 'Signup Successful!',
         description: 'Your account has been created. Please log in.',
