@@ -109,7 +109,7 @@ export function SignupForm() {
       } else if (errorCode === 'auth/weak-password') {
         errorMessage = 'The password is too weak. It must be at least 6 characters long.';
       } else if (errorCode === 'permission-denied') {
-        errorMessage = 'Failed to save user profile. Please try again.';
+        errorMessage = 'Failed to save user profile. Please check permissions and try again.';
       }
       setError(errorMessage);
     }
