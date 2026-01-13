@@ -1,9 +1,13 @@
+
 'use client';
 
 import { Header } from '@/components/header';
 import { OperationalCasesForm } from '@/components/operational-cases-form';
 import { RecordedCasesList } from '@/components/recorded-cases-list';
 import { useState } from 'react';
+import { useUser } from '@/firebase';
+import { usePathname } from 'next/navigation';
+import { hasEditPermission } from '@/lib/permissions';
 
 type OperationalCase = {
   id: string;
@@ -23,8 +27,12 @@ type OperationalCase = {
 export default function OperationalCasesPage() {
   const [editingCase, setEditingCase] = useState<OperationalCase | null>(null);
   const [isFormDirty, setIsFormDirty] = useState(false);
+  const { userProfile } = useUser();
+  const pathname = usePathname();
+  const canEdit = hasEditPermission(userProfile?.position as any, pathname);
 
   const handleEdit = (caseItem: OperationalCase) => {
+    if (!canEdit) return;
     setEditingCase(caseItem);
     // Scroll to the form for better UX on mobile
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -49,10 +57,11 @@ export default function OperationalCasesPage() {
                       onCancelEdit={handleCancelEdit}
                       onSaveComplete={handleSaveComplete}
                       onDirtyChange={setIsFormDirty}
+                      isReadOnly={!canEdit}
                    />
               </div>
               <div className="lg:col-span-3">
-                  <RecordedCasesList onEdit={handleEdit} />
+                  <RecordedCasesList onEdit={handleEdit} isReadOnly={!canEdit} />
               </div>
           </div>
         </main>

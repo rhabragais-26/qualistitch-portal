@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, query, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 import { v4 as uuidv4 } from 'uuid';
+import { hasEditPermission } from '@/lib/permissions';
 
 type DesignDetails = {
   left?: boolean;
@@ -82,6 +84,9 @@ export default function JobOrderPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
+  const { userProfile } = useUser();
+  const pathname = router.pathname;
+  const canEdit = hasEditPermission(userProfile?.position as any, `/job-order`);
   
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -449,20 +454,22 @@ export default function JobOrderPage() {
                 <span className="font-semibold text-sm">Page {currentPage + 1} of {totalPages}</span>
                 <Button onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p+1))} disabled={currentPage >= totalPages - 1} size="sm">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
             </div>
-            <div className="flex items-center gap-2">
-                <Button onClick={handleClose} variant="outline" className="shadow-md">
-                    <X className="mr-2 h-4 w-4" />
-                    Close
-                </Button>
-                <Button onClick={() => handleSaveChanges(false)} className="text-white font-bold shadow-md" disabled={!isDirty}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
-                </Button>
-                <Button onClick={handlePrint} className="text-white font-bold shadow-md" disabled={!lead?.joNumber || isDirty}>
-                    <Printer className="mr-2 h-4 w-4" />
-                    Print J.O.
-                </Button>
-            </div>
+            {canEdit && (
+              <div className="flex items-center gap-2">
+                  <Button onClick={handleClose} variant="outline" className="shadow-md">
+                      <X className="mr-2 h-4 w-4" />
+                      Close
+                  </Button>
+                  <Button onClick={() => handleSaveChanges(false)} className="text-white font-bold shadow-md" disabled={!isDirty}>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Changes
+                  </Button>
+                  <Button onClick={handlePrint} className="text-white font-bold shadow-md" disabled={!lead?.joNumber || isDirty}>
+                      <Printer className="mr-2 h-4 w-4" />
+                      Print J.O.
+                  </Button>
+              </div>
+            )}
         </div>
       </header>
       
@@ -484,6 +491,7 @@ export default function JobOrderPage() {
                         value={lead.location}
                         onChange={handleLocationChange}
                         className="text-xs no-print p-1 min-h-[40px] flex-1 overflow-hidden resize-none"
+                        readOnly={!canEdit}
                     />
                     <p className="print-only whitespace-pre-wrap">{lead.location}</p>
                 </div>
@@ -499,7 +507,7 @@ export default function JobOrderPage() {
                  <div className="flex items-center gap-2">
                     <strong className='flex-shrink-0'>Courier:</strong>
                     <div className='w-full no-print'>
-                      <Select value={lead.courier || 'Pick-up'} onValueChange={handleCourierChange}>
+                      <Select value={lead.courier || 'Pick-up'} onValueChange={handleCourierChange} disabled={!canEdit}>
                           <SelectTrigger className="h-8 text-xs">
                               <SelectValue />
                           </SelectTrigger>
@@ -522,6 +530,7 @@ export default function JobOrderPage() {
                                 "w-full justify-start text-left font-normal h-8 text-xs",
                                 !deliveryDate && "text-muted-foreground"
                             )}
+                            disabled={!canEdit}
                             >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : <span>Pick a date</span>}
@@ -573,16 +582,16 @@ export default function JobOrderPage() {
                 <td className="border border-black p-0.5 text-center">{order.size}</td>
                 <td className="border border-black p-0.5 text-center">{order.quantity}</td>
                 <td className="border border-black p-0.5 text-center">
-                    <Checkbox className="mx-auto" checked={order.design?.left || false} onCheckedChange={(checked) => handleDesignChange(index, 'left', !!checked)} />
+                    <Checkbox className="mx-auto" checked={order.design?.left || false} onCheckedChange={(checked) => handleDesignChange(index, 'left', !!checked)} disabled={!canEdit} />
                 </td>
                 <td className="border border-black p-0.5 text-center">
-                   <Checkbox className="mx-auto" checked={order.design?.right || false} onCheckedChange={(checked) => handleDesignChange(index, 'right', !!checked)} />
+                   <Checkbox className="mx-auto" checked={order.design?.right || false} onCheckedChange={(checked) => handleDesignChange(index, 'right', !!checked)} disabled={!canEdit} />
                 </td>
                 <td className="border border-black p-0.5 text-center">
-                  <Checkbox className="mx-auto" checked={order.design?.backLogo || false} onCheckedChange={(checked) => handleDesignChange(index, 'backLogo', !!checked)} />
+                  <Checkbox className="mx-auto" checked={order.design?.backLogo || false} onCheckedChange={(checked) => handleDesignChange(index, 'backLogo', !!checked)} disabled={!canEdit} />
                 </td>
                 <td className="border border-black p-0.5 text-center">
-                  <Checkbox className="mx-auto" checked={order.design?.backText || false} onCheckedChange={(checked) => handleDesignChange(index, 'backText', !!checked)} />
+                  <Checkbox className="mx-auto" checked={order.design?.backText || false} onCheckedChange={(checked) => handleDesignChange(index, 'backText', !!checked)} disabled={!canEdit} />
                 </td>
                 <td className="border border-black p-0.5">
                   <Textarea
@@ -590,6 +599,7 @@ export default function JobOrderPage() {
                     onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
                     className="text-xs no-print p-1 h-[30px]"
                     placeholder="Add remarks..."
+                    readOnly={!canEdit}
                   />
                    <p className="print-only text-xs">{order.remarks}</p>
                 </td>
@@ -666,44 +676,48 @@ export default function JobOrderPage() {
       
       {/* Layout Pages */}
       <div className={cn("p-10 mx-auto max-w-4xl printable-area print-page mt-16", currentPage === 0 && "hidden")}>
-         <div className="flex justify-between items-center mb-4 no-print">
-            <div className="flex gap-2">
-                <Button onClick={addLayout} size="sm"><Plus className="mr-2 h-4 w-4"/>Add Layout</Button>
-                <Button onClick={() => deleteLayout(currentLayoutIndex)} size="sm" variant="destructive" disabled={(lead.layouts?.length ?? 0) <= 1}><Trash2 className="mr-2 h-4 w-4" />Delete Layout</Button>
+         {canEdit && (
+            <div className="flex justify-between items-center mb-4 no-print">
+              <div className="flex gap-2">
+                  <Button onClick={addLayout} size="sm"><Plus className="mr-2 h-4 w-4"/>Add Layout</Button>
+                  <Button onClick={() => deleteLayout(currentLayoutIndex)} size="sm" variant="destructive" disabled={(lead.layouts?.length ?? 0) <= 1}><Trash2 className="mr-2 h-4 w-4" />Delete Layout</Button>
+              </div>
             </div>
-        </div>
+         )}
 
         {currentLayout && (
           <div key={currentLayout.id}>
              <div
               tabIndex={0}
-              onPaste={(e) => handleImagePaste(e, currentLayoutIndex)}
-              onDoubleClick={() => layoutImageUploadRef.current?.click()}
+              onPaste={(e) => canEdit && handleImagePaste(e, currentLayoutIndex)}
+              onDoubleClick={() => canEdit && layoutImageUploadRef.current?.click()}
               onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
-              className="relative group w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4 cursor-pointer no-print focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
+              className={cn("relative group w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4 no-print focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none", canEdit && "cursor-pointer")}
             >
               {currentLayout.layoutImage ? (
                 <>
                   <Image src={currentLayout.layoutImage} alt={`Layout ${currentLayoutIndex + 1}`} layout="fill" objectFit="contain" />
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLayoutChange(currentLayoutIndex, 'layoutImage', '');
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {canEdit && (
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLayoutChange(currentLayoutIndex, 'layoutImage', '');
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </>
               ) : (
                 <div className="text-gray-500 flex flex-col items-center gap-2">
                   <Upload className="h-12 w-12" />
-                  <span>Double-click to upload or paste image</span>
+                  <span>{canEdit ? "Double-click to upload or paste image" : "No layout image"}</span>
                 </div>
               )}
-              <input type="file" ref={layoutImageUploadRef} onChange={(e) => handleFileUpload(e, currentLayoutIndex)} className="hidden" accept="image/*" />
+              <input type="file" ref={layoutImageUploadRef} onChange={(e) => handleFileUpload(e, currentLayoutIndex)} className="hidden" accept="image/*" disabled={!canEdit}/>
             </div>
 
 
@@ -715,12 +729,12 @@ export default function JobOrderPage() {
             <table className="w-full border-collapse border border-black mb-6">
                 <tbody>
                     <tr>
-                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><Textarea value={currentLayout.dstLogoLeft} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstLogoLeft', e.target.value)} className="mt-1 no-print" /><p className="print-only whitespace-pre-wrap">{currentLayout.dstLogoLeft}</p></td>
-                        <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><Textarea value={currentLayout.dstBackLogo} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstBackLogo', e.target.value)} className="mt-1 no-print" /><p className="print-only whitespace-pre-wrap">{currentLayout.dstBackLogo}</p></td>
+                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><Textarea value={currentLayout.dstLogoLeft} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstLogoLeft', e.target.value)} className="mt-1 no-print" readOnly={!canEdit} /><p className="print-only whitespace-pre-wrap">{currentLayout.dstLogoLeft}</p></td>
+                        <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><Textarea value={currentLayout.dstBackLogo} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstBackLogo', e.target.value)} className="mt-1 no-print" readOnly={!canEdit} /><p className="print-only whitespace-pre-wrap">{currentLayout.dstBackLogo}</p></td>
                     </tr>
                     <tr>
-                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><Textarea value={currentLayout.dstLogoRight} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstLogoRight', e.target.value)} className="mt-1 no-print" /><p className="print-only whitespace-pre-wrap">{currentLayout.dstLogoRight}</p></td>
-                        <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><Textarea value={currentLayout.dstBackText} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstBackText', e.target.value)} className="mt-1 no-print" /><p className="print-only whitespace-pre-wrap">{currentLayout.dstBackText}</p></td>
+                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><Textarea value={currentLayout.dstLogoRight} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstLogoRight', e.target.value)} className="mt-1 no-print" readOnly={!canEdit} /><p className="print-only whitespace-pre-wrap">{currentLayout.dstLogoRight}</p></td>
+                        <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><Textarea value={currentLayout.dstBackText} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstBackText', e.target.value)} className="mt-1 no-print" readOnly={!canEdit} /><p className="print-only whitespace-pre-wrap">{currentLayout.dstBackText}</p></td>
                     </tr>
                 </tbody>
             </table>
@@ -735,26 +749,28 @@ export default function JobOrderPage() {
                   <th className="border border-black p-1">Sizes</th>
                   <th className="border border-black p-1">Qty</th>
                   <th className="border border-black p-1">BACK TEXT</th>
-                  <th className="border border-black p-1 no-print">Action</th>
+                  {canEdit && <th className="border border-black p-1 no-print">Action</th>}
                 </tr>
               </thead>
               <tbody>
                 {(currentLayout.namedOrders || []).map((order, orderIndex) => (
                   <tr key={order.id}>
                     <td className="border border-black p-1 text-center">{orderIndex + 1}</td>
-                    <td className="border border-black p-1"><Input value={order.name} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'name', e.target.value)} className="h-7 text-xs no-print" /><span className="print-only">{order.name}</span></td>
-                    <td className="border border-black p-1"><Input value={order.color} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'color', e.target.value)} className="h-7 text-xs no-print" /><span className="print-only">{order.color}</span></td>
-                    <td className="border border-black p-1"><Input value={order.size} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'size', e.target.value)} className="h-7 text-xs no-print" /><span className="print-only">{order.size}</span></td>
-                    <td className="border border-black p-1"><Input type="number" value={order.quantity} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'quantity', parseInt(e.target.value) || 0)} className="h-7 text-xs no-print" /><span className="print-only">{order.quantity}</span></td>
-                    <td className="border border-black p-1"><Input value={order.backText} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'backText', e.target.value)} className="h-7 text-xs no-print" /><span className="print-only">{order.backText}</span></td>
-                    <td className="border border-black p-1 text-center no-print">
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeNamedOrder(currentLayoutIndex, orderIndex)}><Trash2 className="h-4 w-4"/></Button>
-                    </td>
+                    <td className="border border-black p-1"><Input value={order.name} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'name', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.name}</span></td>
+                    <td className="border border-black p-1"><Input value={order.color} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'color', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.color}</span></td>
+                    <td className="border border-black p-1"><Input value={order.size} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'size', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.size}</span></td>
+                    <td className="border border-black p-1"><Input type="number" value={order.quantity} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'quantity', parseInt(e.target.value) || 0)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.quantity}</span></td>
+                    <td className="border border-black p-1"><Input value={order.backText} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'backText', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.backText}</span></td>
+                    {canEdit && (
+                        <td className="border border-black p-1 text-center no-print">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeNamedOrder(currentLayoutIndex, orderIndex)}><Trash2 className="h-4 w-4"/></Button>
+                        </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
-            <Button onClick={() => addNamedOrder(currentLayoutIndex)} className="mt-2 no-print" size="sm"><Plus className="mr-2 h-4 w-4"/>Add Name</Button>
+            {canEdit && <Button onClick={() => addNamedOrder(currentLayoutIndex)} className="mt-2 no-print" size="sm"><Plus className="mr-2 h-4 w-4"/>Add Name</Button>}
           </div>
         )}
       </div>

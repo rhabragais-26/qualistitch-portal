@@ -1,12 +1,15 @@
+
 'use client';
 
 import { Header } from '@/components/header';
 import { AddItemForm } from '@/components/add-item-form';
 import { StagedItemsList } from '@/components/staged-items-list';
 import { useState } from 'react';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { usePathname } from 'next/navigation';
+import { hasEditPermission } from '@/lib/permissions';
 
 export type StagedItem = {
   id: string; // A temporary client-side ID
@@ -20,6 +23,10 @@ export default function AddItemsPage() {
   const [stagedItems, setStagedItems] = useState<StagedItem[]>([]);
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { userProfile } = useUser();
+  const pathname = usePathname();
+  const canEdit = hasEditPermission(userProfile?.position as any, pathname);
+
 
   const handleAddItem = (item: Omit<StagedItem, 'id'>) => {
     setStagedItems((prevItems) => [
@@ -89,7 +96,7 @@ export default function AddItemsPage() {
       <main className="flex-1 w-full p-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full items-start">
           <div className="lg:col-span-1 flex justify-end">
-            <AddItemForm onAddItem={handleAddItem} />
+            <AddItemForm onAddItem={handleAddItem} isReadOnly={!canEdit} />
           </div>
           <div className="lg:col-span-1 flex justify-start">
             <StagedItemsList
@@ -97,6 +104,7 @@ export default function AddItemsPage() {
               onUpdateItem={handleUpdateItem}
               onRemoveItem={handleRemoveItem}
               onSaveAll={handleSaveAll}
+              isReadOnly={!canEdit}
             />
           </div>
         </div>
