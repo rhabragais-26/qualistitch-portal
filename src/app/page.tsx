@@ -1,3 +1,4 @@
+
 'use client';
 
 import { LoginForm } from '@/components/login-form';
@@ -9,7 +10,7 @@ export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
-  const isUserAuthenticated = !isUserLoading && user && !user.isAnonymous && user.emailVerified;
+  const isUserAuthenticated = !isUserLoading && user && !user.isAnonymous;
 
   useEffect(() => {
     if (isUserAuthenticated) {
