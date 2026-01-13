@@ -78,21 +78,9 @@ export function SignupForm() {
       return;
     }
     try {
-      // 1. Create the user in Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-
-      // 2. Create the user profile document in Firestore
-      const userDocRef = doc(firestore, 'users', user.uid);
-      await setDoc(userDocRef, {
-        uid: user.uid,
-        firstName: toTitleCase(values.firstName),
-        lastName: toTitleCase(values.lastName),
-        nickname: values.nickname,
-        email: values.email,
-        role: 'user', // Default role for new sign-ups
-        lastModified: new Date().toISOString(),
-      });
+      // The on-user-create-flow will handle creating the firestore document.
+      // We are just creating the auth user here.
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
 
       toast({
         title: 'Account Created Successfully!',
@@ -109,8 +97,6 @@ export function SignupForm() {
         errorMessage = 'This email address is already in use by another account.';
       } else if (errorCode === 'auth/weak-password') {
         errorMessage = 'The password is too weak. It must be at least 6 characters long.';
-      } else if (errorCode === 'permission-denied') {
-        errorMessage = 'Failed to save user profile due to a permissions error. Please contact support.';
       }
       setError(errorMessage);
       console.error("Signup Error: ", e);
