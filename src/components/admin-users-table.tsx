@@ -39,7 +39,7 @@ export function AdminUsersTable() {
     if (!firestore) return;
     const userDocRef = doc(firestore, 'users', uid);
     try {
-      await updateDoc(userDocRef, { role: newRole });
+      await updateDoc(userDocRef, { role: newRole, lastModified: new Date().toISOString() });
       toast({
         title: 'Role Updated',
         description: `User role has been successfully changed to ${newRole}.`,

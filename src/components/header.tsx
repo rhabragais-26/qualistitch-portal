@@ -27,6 +27,7 @@ import {
   FileCheck,
   PackageSearch,
   FolderKanban,
+  Shield,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -52,7 +53,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, doc } from 'firebase/firestore';
 import { Badge } from './ui/badge';
 import { signOut } from 'firebase/auth';
 
@@ -74,7 +75,7 @@ const HeaderMemo = React.memo(function Header({
   const router = useRouter();
   const pathname = usePathname();
   const auth = useAuth();
-  const { user } = useUser();
+  const { user, isAdmin } = useUser();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [nextUrl, setNextUrl] = useState('');
   const [isClient, setIsClient] = useState(false);
@@ -320,6 +321,15 @@ const HeaderMemo = React.memo(function Header({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
+                    {isAdmin && (
+                        <>
+                            <DropdownMenuItem onSelect={() => handleNavigation('/admin/users')}>
+                                <Shield className="mr-2 h-4 w-4" />
+                                <span>Admin Settings</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                        </>
+                    )}
                     <DropdownMenuItem onSelect={handleSignOut}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Sign Out</span>
