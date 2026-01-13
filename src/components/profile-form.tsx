@@ -13,14 +13,15 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useAuth } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Camera } from 'lucide-react';
+import { Camera, Eye, EyeOff } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 
 const formSchema = z.object({
   firstName: z.string().min(1, 'First name is required.'),
@@ -28,16 +29,43 @@ const formSchema = z.object({
   nickname: z.string().min(1, 'Nickname is required.'),
   phoneNumber: z.string().optional(),
   photoURL: z.string().optional(),
+  currentPassword: z.string().optional(),
+  newPassword: z.string().optional(),
+  confirmPassword: z.string().optional(),
+}).refine(data => {
+    if (data.newPassword || data.confirmPassword) {
+        return !!data.currentPassword;
+    }
+    return true;
+}, {
+    message: "Current password is required to change your password.",
+    path: ["currentPassword"],
+}).refine(data => {
+    if(data.newPassword) {
+        return data.newPassword.length >= 6;
+    }
+    return true;
+}, {
+    message: "New password must be at least 6 characters.",
+    path: ["newPassword"],
+}).refine(data => data.newPassword === data.confirmPassword, {
+  message: "New passwords don't match.",
+  path: ["confirmPassword"],
 });
+
 
 type FormValues = z.infer<typeof formSchema>;
 
 export function ProfileForm() {
   const { user, userProfile, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const auth = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -47,6 +75,9 @@ export function ProfileForm() {
       nickname: '',
       phoneNumber: '',
       photoURL: '',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
     },
   });
 
@@ -58,6 +89,9 @@ export function ProfileForm() {
         nickname: userProfile.nickname || '',
         phoneNumber: userProfile.phoneNumber || '',
         photoURL: userProfile.photoURL || '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
       });
     }
   }, [userProfile, form]);
@@ -88,16 +122,40 @@ export function ProfileForm() {
       return;
     }
     setIsSaving(true);
-    const userDocRef = doc(firestore, 'users', user.uid);
+
     try {
-      await updateDoc(userDocRef, {
-        ...values,
-        lastModified: new Date().toISOString(),
-      });
-      toast({
-        title: 'Profile Updated',
-        description: 'Your profile details have been saved successfully.',
-      });
+        // Update Firestore profile data if there are changes
+        const profileDataChanged = form.formState.dirtyFields.firstName || form.formState.dirtyFields.lastName || form.formState.dirtyFields.nickname || form.formState.dirtyFields.phoneNumber || form.formState.dirtyFields.photoURL;
+
+        if(profileDataChanged) {
+            const userDocRef = doc(firestore, 'users', user.uid);
+            await updateDoc(userDocRef, {
+                firstName: values.firstName,
+                lastName: values.lastName,
+                nickname: values.nickname,
+                phoneNumber: values.phoneNumber,
+                photoURL: values.photoURL,
+                lastModified: new Date().toISOString(),
+            });
+             toast({
+                title: 'Profile Updated',
+                description: 'Your profile details have been saved successfully.',
+            });
+        }
+
+        // Handle password change
+        if (values.newPassword && values.currentPassword) {
+            const credential = EmailAuthProvider.credential(user.email!, values.currentPassword);
+            await reauthenticateWithCredential(user, credential);
+            await updatePassword(user, values.newPassword);
+            toast({
+                title: 'Password Updated',
+                description: 'Your password has been changed successfully.',
+            });
+        }
+        
+        form.reset(values);
+
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -136,7 +194,7 @@ export function ProfileForm() {
     <Card className="w-full max-w-2xl shadow-xl">
       <CardHeader>
         <CardTitle>My Profile</CardTitle>
-        <CardDescription>Manage your personal information and profile picture.</CardDescription>
+        <CardDescription>Manage your personal information and password.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -162,19 +220,7 @@ export function ProfileForm() {
               />
               <span className="text-lg font-semibold text-center">{userProfile?.position || 'Not Assigned'}</span>
             </div>
-             <FormField
-              control={form.control}
-              name="nickname"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nickname</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Your nickname" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                <FormField
                 control={form.control}
@@ -191,6 +237,21 @@ export function ProfileForm() {
                 />
                 <FormField
                 control={form.control}
+                name="nickname"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Nickname</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Your nickname" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <FormField
+                control={form.control}
                 name="lastName"
                 render={({ field }) => (
                     <FormItem>
@@ -202,13 +263,13 @@ export function ProfileForm() {
                     </FormItem>
                 )}
                 />
+                <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                        <Input readOnly value={user?.email || ''} className="bg-muted" />
+                    </FormControl>
+                </FormItem>
             </div>
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input readOnly value={user?.email || ''} className="bg-muted" />
-              </FormControl>
-            </FormItem>
             <FormField
               control={form.control}
               name="phoneNumber"
@@ -222,6 +283,67 @@ export function ProfileForm() {
                 </FormItem>
               )}
             />
+
+            <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-lg font-medium">Change Password</h3>
+                <FormField
+                    control={form.control}
+                    name="currentPassword"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Current Password</FormLabel>
+                         <div className="relative">
+                            <FormControl>
+                                <Input type={showCurrentPassword ? "text" : "password"} {...field} />
+                            </FormControl>
+                            <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowCurrentPassword(prev => !prev)}>
+                                {showCurrentPassword ? <EyeOff /> : <Eye />}
+                            </Button>
+                        </div>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <FormField
+                        control={form.control}
+                        name="newPassword"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>New Password</FormLabel>
+                             <div className="relative">
+                                <FormControl>
+                                    <Input type={showNewPassword ? "text" : "password"} {...field} />
+                                </FormControl>
+                                <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowNewPassword(prev => !prev)}>
+                                    {showNewPassword ? <EyeOff /> : <Eye />}
+                                </Button>
+                            </div>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Confirm New Password</FormLabel>
+                             <div className="relative">
+                                <FormControl>
+                                    <Input type={showConfirmPassword ? "text" : "password"} {...field} />
+                                </FormControl>
+                                <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowConfirmPassword(prev => !prev)}>
+                                    {showConfirmPassword ? <EyeOff /> : <Eye />}
+                                </Button>
+                            </div>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+            </div>
+
             <div className="flex justify-end">
                 <Button type="submit" disabled={isSaving || !form.formState.isDirty}>
                 {isSaving ? 'Saving...' : 'Save Changes'}
