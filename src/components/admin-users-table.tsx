@@ -13,9 +13,10 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { formatDateTime } from '@/lib/utils';
 import { Button } from './ui/button';
-import { Save, Trash2 } from 'lucide-react';
+import { Save, Trash2, ChevronDown } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
+import { UserPosition } from '@/lib/permissions';
 
 type UserProfile = {
   uid: string;
@@ -24,11 +25,11 @@ type UserProfile = {
   nickname: string;
   email: string;
   role: 'admin' | 'user';
-  position: string;
+  position: UserPosition;
   lastModified?: string;
 };
 
-const positions = [
+const positions: UserPosition[] = [
     'Not Assigned',
     'CEO',
     'SCES / Sales Representative',
@@ -43,6 +44,24 @@ const positions = [
     'Finance',
     'Page Admin'
 ];
+
+type PageGroup = 'sales' | 'digitizing' | 'inventory' | 'production' | 'logistics' | 'admin' | 'profile';
+
+const positionPermissions: { [key in UserPosition]?: PageGroup[] } = {
+  'SCES / Sales Representative': ['sales'],
+  'Sales Supervisor': ['sales'],
+  'Sales Manager': ['sales'],
+  'Inventory Officer': ['inventory'],
+  'Production Line Leader': ['production'],
+  'Production Head': ['production'],
+  'Logistics Officer': ['logistics'],
+  'Operations Manager': ['inventory', 'production', 'logistics'],
+  'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'admin', 'profile'],
+  'CEO': [],
+  'HR': [],
+  'Finance': [],
+  'Not Assigned': [],
+};
 
 export function AdminUsersTable() {
   const firestore = useFirestore();
@@ -72,7 +91,7 @@ export function AdminUsersTable() {
   const handleFieldChange = (uid: string, field: 'role' | 'position', value: string) => {
     setEditedUsers(prev => ({
       ...prev,
-      [uid]: { ...prev[uid], [field]: value }
+      [uid]: { ...prev[uid], [field]: value as UserPosition | 'admin' | 'user' }
     }));
   };
 
@@ -163,6 +182,7 @@ export function AdminUsersTable() {
                   <TableHead className="text-white font-bold align-middle">Email</TableHead>
                   <TableHead className="text-white font-bold align-middle">Position</TableHead>
                   <TableHead className="text-white font-bold align-middle">Page Role</TableHead>
+                  <TableHead className="text-white font-bold align-middle">Permission</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Last Modified</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Action</TableHead>
                 </TableRow>
@@ -171,14 +191,14 @@ export function AdminUsersTable() {
                 {isLoading ? (
                   [...Array(5)].map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell colSpan={7}>
+                      <TableCell colSpan={8}>
                         <Skeleton className="h-8 w-full" />
                       </TableCell>
                     </TableRow>
                   ))
                 ) : error ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-destructive">
+                    <TableCell colSpan={8} className="text-center text-destructive">
                       Error loading users: {error.message}
                     </TableCell>
                   </TableRow>
@@ -186,7 +206,8 @@ export function AdminUsersTable() {
                   filteredUsers.map((user) => {
                     const editedUser = editedUsers[user.uid] || { role: user.role, position: user.position };
                     const isModified = user.role !== editedUser.role || user.position !== editedUser.position;
-                    
+                    const permissions = positionPermissions[editedUser.position] || [];
+
                     return (
                       <TableRow key={user.uid}>
                         <TableCell className="font-medium">{user.nickname}</TableCell>
@@ -225,6 +246,32 @@ export function AdminUsersTable() {
                             </SelectContent>
                           </Select>
                         </TableCell>
+                        <TableCell>
+                           <Collapsible>
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="sm" className="flex items-center gap-1 text-xs">
+                                View Permissions
+                                <ChevronDown className="h-4 w-4" />
+                              </Button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                               <div className="p-2 mt-1 border rounded-md bg-gray-50 text-xs">
+                                  {editedUser.role === 'admin' || editedUser.position === 'Page Admin' ? (
+                                    <p className="font-semibold text-blue-600">Full access to all pages.</p>
+                                  ) : permissions.length > 0 ? (
+                                    <>
+                                      <p className="font-semibold">Can edit:</p>
+                                      <ul className="list-disc pl-5">
+                                        {permissions.map((p, i) => <li key={i} className="capitalize">{p}</li>)}
+                                      </ul>
+                                    </>
+                                  ) : (
+                                    <p className="text-gray-500">Read-only access.</p>
+                                  )}
+                               </div>
+                            </CollapsibleContent>
+                           </Collapsible>
+                        </TableCell>
                         <TableCell className="text-center text-xs">
                             {user.lastModified ? formatDateTime(user.lastModified).dateTimeShort : '-'}
                         </TableCell>
@@ -252,7 +299,7 @@ export function AdminUsersTable() {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                       No users found.
                     </TableCell>
                   </TableRow>
@@ -282,3 +329,5 @@ export function AdminUsersTable() {
     </>
   );
 }
+
+    
