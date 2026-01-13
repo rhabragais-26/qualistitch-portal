@@ -151,6 +151,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const [overdueFilter, setOverdueFilter] = useState('All');
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField | 'isJoHardcopyReceived'; } | null>(null);
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
+  const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -289,9 +290,16 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
     if (!checked && isCurrentlyChecked) {
       setUncheckConfirmation({ leadId, field: 'isJoHardcopyReceived' });
     } else if (checked && !isCurrentlyChecked) {
-      updateStatus(leadId, 'isJoHardcopyReceived', true);
+      setJoReceivedConfirmation(leadId);
     }
-  }, [leads, updateStatus]);
+  }, [leads]);
+  
+  const confirmJoReceived = useCallback(() => {
+    if (joReceivedConfirmation) {
+      updateStatus(joReceivedConfirmation, 'isJoHardcopyReceived', true);
+      setJoReceivedConfirmation(null);
+    }
+  }, [joReceivedConfirmation, updateStatus]);
 
   const handleUploadDialogSave = useCallback(async () => {
     if (!uploadLeadId || !uploadField || !firestore || !leads) return;
@@ -937,6 +945,20 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmUncheck} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white">Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+       <AlertDialog open={!!joReceivedConfirmation} onOpenChange={setJoReceivedConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Receipt</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure that the printed J.O. was received and the J.O. number is correct?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmJoReceived}>Confirm</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

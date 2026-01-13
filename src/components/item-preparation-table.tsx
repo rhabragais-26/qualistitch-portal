@@ -94,6 +94,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
   const [leadToSend, setLeadToSend] = useState<Lead | null>(null);
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived'; } | null>(null);
+  const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
 
 
   const getProgrammingStatus = useCallback((lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
@@ -165,9 +166,17 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
     if (!checked && isCurrentlyChecked) {
       setUncheckConfirmation({ leadId, field: 'isJoHardcopyReceived' });
     } else if (checked && !isCurrentlyChecked) {
-      handleUpdateStatus(leadId, 'isJoHardcopyReceived', true);
+      setJoReceivedConfirmation(leadId);
     }
-  }, [leads, handleUpdateStatus]);
+  }, [leads]);
+  
+  const confirmJoReceived = useCallback(() => {
+    if (joReceivedConfirmation) {
+      handleUpdateStatus(joReceivedConfirmation, 'isJoHardcopyReceived', true);
+      setJoReceivedConfirmation(null);
+    }
+  }, [joReceivedConfirmation, handleUpdateStatus]);
+
 
   const confirmUncheck = useCallback(() => {
     if (uncheckConfirmation) {
@@ -341,6 +350,21 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmUncheck}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+       <AlertDialog open={!!joReceivedConfirmation} onOpenChange={setJoReceivedConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Receipt</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure that the printed J.O. was received and the J.O. number is correct?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmJoReceived}>Confirm</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
