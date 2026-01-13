@@ -79,23 +79,25 @@ export function SignupForm() {
       return;
     }
     try {
+      // 1. Create the user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      // Create user document in Firestore
-      await setDoc(doc(firestore, 'users', user.uid), {
+      // 2. Create the user profile document in Firestore
+      const userDocRef = doc(firestore, 'users', user.uid);
+      await setDoc(userDocRef, {
           uid: user.uid,
           firstName: toTitleCase(values.firstName),
           lastName: toTitleCase(values.lastName),
           nickname: values.nickname,
           email: values.email,
-          role: 'user', // Default role
+          role: 'user', // Default role for new sign-ups
           lastModified: new Date().toISOString(),
       });
 
       toast({
-        title: 'Account Created!',
-        description: "You have been successfully signed up.",
+        title: 'Account Created Successfully!',
+        description: "Welcome! You have been successfully signed up.",
         duration: 5000,
       });
 
@@ -109,7 +111,7 @@ export function SignupForm() {
       } else if (errorCode === 'auth/weak-password') {
         errorMessage = 'The password is too weak. It must be at least 6 characters long.';
       } else if (errorCode === 'permission-denied') {
-        errorMessage = 'Failed to save user profile. Please check permissions and try again.';
+        errorMessage = 'Failed to save user profile due to a permissions error. Please contact support.';
       }
       setError(errorMessage);
       console.error("Signup Error: ", e);
