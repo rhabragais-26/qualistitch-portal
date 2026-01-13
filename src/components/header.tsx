@@ -81,7 +81,6 @@ const HeaderMemo = React.memo(function Header({
   const [nextUrl, setNextUrl] = useState('');
   const [isClient, setIsClient] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const [nickname, setNickname] = React.useState<string | null>(null);
   const firestore = useFirestore();
 
   const leadsQuery = useMemoFirebase(
@@ -94,17 +93,6 @@ const HeaderMemo = React.memo(function Header({
     if (!leads) return 0;
     return leads.filter(lead => lead.isSalesAuditRequested).length;
   }, [leads]);
-  
-  React.useEffect(() => {
-    if (user && firestore) {
-      const userDocRef = doc(firestore, 'users', user.uid);
-      getDoc(userDocRef).then((docSnap) => {
-        if (docSnap.exists()) {
-          setNickname(docSnap.data().nickname);
-        }
-      });
-    }
-  }, [user, firestore]);
 
   useEffect(() => {
     setIsClient(true);
