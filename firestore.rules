@@ -10,13 +10,7 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId;
 
       // A user can read their own profile. Admins can read any profile.
-      allow read: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
-      
-      // A user can update their own profile, but not their role. Admins can update any profile.
-      allow update: if request.auth != null && (
-                    (request.auth.uid == userId && !('role' in request.resource.data)) ||
-                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-                  );
+      allow read, update: if request.auth != null && request.auth.uid == userId;
     }
     
     match /leads/{leadId} {
