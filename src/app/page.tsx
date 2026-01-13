@@ -2,9 +2,22 @@
 import { useState } from 'react';
 import { Header } from '@/components/header';
 import { LeadForm } from '@/components/lead-form';
+import { useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [isFormDirty, setIsFormDirty] = useState(false);
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+
+  if (isUserLoading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!user || user.isAnonymous) {
+    router.replace('/login');
+    return null;
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
