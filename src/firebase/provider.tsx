@@ -17,6 +17,7 @@ interface FirebaseProviderProps {
 // Internal state for user authentication
 interface UserAuthState {
   user: User | null;
+  isAdmin: boolean;
   isUserLoading: boolean;
   userError: Error | null;
 }
@@ -29,6 +30,7 @@ export interface FirebaseContextState {
   auth: Auth | null; // The Auth service instance
   // User authentication state
   user: User | null;
+  isAdmin: boolean;
   isUserLoading: boolean; // True during initial auth check
   userError: Error | null; // Error from auth listener
 }
@@ -39,6 +41,7 @@ export interface FirebaseServicesAndUser {
   firestore: Firestore;
   auth: Auth;
   user: User | null;
+  isAdmin: boolean;
   isUserLoading: boolean;
   userError: Error | null;
 }
@@ -46,6 +49,7 @@ export interface FirebaseServicesAndUser {
 // Return type for useUser() - specific to user auth state
 export interface UserHookResult { // Renamed from UserAuthHookResult for consistency if desired, or keep as UserAuthHookResult
   user: User | null;
+  isAdmin: boolean;
   isUserLoading: boolean;
   userError: Error | null;
 }
@@ -64,6 +68,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 }) => {
   const [userAuthState, setUserAuthState] = useState<UserAuthState>({
     user: null,
+    isAdmin: false,
     isUserLoading: true, // Start loading until first auth event
     userError: null,
   });
@@ -71,11 +76,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
     if (!auth) { // If no Auth service instance, cannot determine user state
-      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
+      setUserAuthState({ user: null, isAdmin: false, isUserLoading: false, userError: new Error("Auth service not provided.") });
       return;
     }
 
-    setUserAuthState({ user: null, isUserLoading: true, userError: null }); // Reset on auth instance change
+    setUserAuthState({ user: null, isAdmin: false, isUserLoading: true, userError: null }); // Reset on auth instance change
 
     const unsubscribe = onAuthStateChanged(
       auth,
@@ -83,11 +88,16 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         if (!firebaseUser) {
           initiateAnonymousSignIn(auth);
         }
-        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+        
+        // TODO: This should be replaced with a proper role management system
+        // For now, we will hardcode the admin user
+        const isAdmin = firebaseUser?.uid === 'pqAYxu41z8OKlCt94C2Ao3pEYvy2';
+
+        setUserAuthState({ user: firebaseUser, isAdmin, isUserLoading: false, userError: null });
       },
       (error) => { // Auth listener error
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
-        setUserAuthState({ user: null, isUserLoading: false, userError: error });
+        setUserAuthState({ user: null, isAdmin: false, isUserLoading: false, userError: error });
       }
     );
     return () => unsubscribe(); // Cleanup
@@ -102,6 +112,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       firestore: servicesAvailable ? firestore : null,
       auth: servicesAvailable ? auth : null,
       user: userAuthState.user,
+      isAdmin: userAuthState.isAdmin,
       isUserLoading: userAuthState.isUserLoading,
       userError: userAuthState.userError,
     };
@@ -135,6 +146,7 @@ export const useFirebase = (): FirebaseServicesAndUser => {
     firestore: context.firestore,
     auth: context.auth,
     user: context.user,
+    isAdmin: context.isAdmin,
     isUserLoading: context.isUserLoading,
     userError: context.userError,
   };
@@ -175,6 +187,6 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
  * @returns {UserHookResult} Object with user, isUserLoading, userError.
  */
 export const useUser = (): UserHookResult => { // Renamed from useAuthUser
-  const { user, isUserLoading, userError } = useFirebase(); // Leverages the main hook
-  return { user, isUserLoading, userError };
+  const { user, isAdmin, isUserLoading, userError } = useFirebase(); // Leverages the main hook
+  return { user, isAdmin, isUserLoading, userError };
 };
