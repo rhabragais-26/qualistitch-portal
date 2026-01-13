@@ -28,6 +28,7 @@ type UserProfile = {
 
 const positions = [
     'Not Assigned',
+    'CEO',
     'SCES / Sales Representative',
     'Sales Supervisor',
     'Sales Manager',
@@ -38,7 +39,7 @@ const positions = [
     'Operations Manager',
     'HR',
     'Finance',
-    'Admin'
+    'Page Admin'
 ];
 
 export function AdminUsersTable() {
@@ -229,3 +230,4 @@ export function AdminUsersTable() {
     </Card>
   );
 }
+
