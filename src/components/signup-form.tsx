@@ -48,23 +48,23 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
     try {
+      // 1. Create user with Email and Password
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
-
+      
       // Update the user's profile in Firebase Auth
       await updateProfile(user, {
         displayName: values.nickname,
       });
 
-      // Create the user profile document in Firestore
-      const userDocRef = doc(firestore, 'users', user.uid);
-      await setDoc(userDocRef, {
+      // 2. Save additional user details to Firestore
+      await setDoc(doc(firestore, 'users', user.uid), {
         uid: user.uid,
         firstName: values.firstName,
         lastName: values.lastName,
         nickname: values.nickname,
         email: user.email,
-        role: 'user', // Assign a default role
+        role: 'user',
         createdAt: new Date().toISOString(),
       });
       
