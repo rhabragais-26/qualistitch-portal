@@ -608,6 +608,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
     const leadsWithJo = processedLeads.filter(lead => 
         lead.joNumber && 
         !lead.isDigitizingArchived &&
+        !lead.isPreparedForProduction &&
         lead.orderType !== 'Stock (Jacket Only)'
     );
 
