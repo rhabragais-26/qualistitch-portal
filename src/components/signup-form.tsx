@@ -78,16 +78,18 @@ export function SignupForm() {
       const user = userCredential.user;
 
       // Create user document in Firestore
-      await setDoc(doc(firestore, 'users', user.uid), {
-        uid: user.uid,
-        firstName: toTitleCase(values.firstName),
-        lastName: toTitleCase(values.lastName),
-        nickname: values.nickname,
-        email: values.email,
-        role: 'user', // Default role
-      });
+      if(firestore) {
+        await setDoc(doc(firestore, 'users', user.uid), {
+            uid: user.uid,
+            firstName: toTitleCase(values.firstName),
+            lastName: toTitleCase(values.lastName),
+            nickname: values.nickname,
+            email: values.email,
+            role: 'user', // Default role
+        });
+      }
       
-      // Sign the user out immediately
+      // Sign the user out immediately after account creation
       await signOut(auth);
 
       toast({
