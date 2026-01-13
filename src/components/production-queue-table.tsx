@@ -173,7 +173,7 @@ export function ProductionQueueTable() {
     return mobile || landline || null;
   }, []);
 
-  const handleStatusChange = useCallback(async (leadId: string, field: ProductionSelectField, value: string) => {
+  const handleStatusChange = useCallback(async (leadId: string, field: "productionType" | "sewerType", value: string) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
@@ -542,9 +542,9 @@ export function ProductionQueueTable() {
                                 {deadlineInfo.text}
                               </TableCell>
                               <TableCell className="text-xs align-middle py-3 text-black text-center">
-                                <Button variant="ghost" className="h-7 px-2 flex items-center gap-1 text-black hover:bg-gray-100 hover:text-black" onClick={() => toggleLeadDetails(lead.id)}>
+                                <Button variant="ghost" className="h-auto py-1 px-2 flex items-center gap-1 text-black hover:bg-gray-100 hover:text-black" onClick={() => toggleLeadDetails(lead.id)}>
                                   <FileText className="h-4 w-4" />
-                                  View Documents
+                                  <span className="whitespace-normal break-words leading-tight">View Documents</span>
                                   <ChevronDown className={cn("h-4 w-4 transition-transform", openLeadId === lead.id && "rotate-180")} />
                                 </Button>
                               </TableCell>
