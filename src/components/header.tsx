@@ -79,6 +79,8 @@ const HeaderMemo = React.memo(function Header({
   const [isClient, setIsClient] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const firestore = useFirestore();
+  const auth = useAuth();
+
 
   const leadsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'leads')) : null),
@@ -135,6 +137,15 @@ const HeaderMemo = React.memo(function Header({
       if (openMenu === menuName) {
         setOpenMenu(null);
       }
+    }
+  };
+  
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
     }
   };
 
@@ -292,6 +303,10 @@ const HeaderMemo = React.memo(function Header({
             <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/order-status']))}>
               <ListOrdered className="mr-2" />
               Overall Order Status
+            </Button>
+             <Button variant="outline" onClick={handleSignOut} className="h-10 rounded-md px-4 font-bold bg-transparent text-white border-white hover:bg-red-600 hover:text-white">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
             </Button>
           </nav>
         </div>
