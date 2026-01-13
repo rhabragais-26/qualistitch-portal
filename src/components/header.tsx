@@ -332,8 +332,8 @@ const HeaderMemo = React.memo(function Header({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>
-                      <p className="font-semibold">{userProfile.nickname}</p>
-                      <p className="text-xs text-muted-foreground">({userProfile.position})</p>
+                      <p className='text-xs'>Signed in as:</p>
+                      <p className="font-semibold">{userProfile.nickname} ({userProfile.position})</p>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                      <DropdownMenuItem onClick={() => router.push('/profile')}>
