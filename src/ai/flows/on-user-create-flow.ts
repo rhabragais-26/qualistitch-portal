@@ -20,7 +20,9 @@ export const onUserCreateFlow = ai.defineFlow(
   {
     name: 'onUserCreateFlow',
     trigger: {
-      onUserCreate: true,
+      firebase: {
+        onUserCreate: true,
+      },
     },
   },
   async (user) => {
