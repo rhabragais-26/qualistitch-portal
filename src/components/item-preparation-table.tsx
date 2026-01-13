@@ -249,10 +249,13 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
   const jobOrders = React.useMemo(() => {
     if (!processedLeads) return [];
     
-    // Show leads with a JO number that haven't been fully endorsed out of this queue.
-    const leadsWithJo = processedLeads.filter(lead => lead.joNumber && !lead.isSentToProduction && !lead.isEndorsedToLogistics);
+    const leadsInQueue = processedLeads.filter(lead => 
+        lead.joNumber && 
+        !lead.isSentToProduction && 
+        !lead.isEndorsedToLogistics
+    );
     
-    return leadsWithJo.filter(lead => {
+    return leadsInQueue.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
@@ -308,7 +311,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                     onCheckedChange={(checked) => handleCheckboxChange(index, !!checked)}
                   />
                    <Label htmlFor={`item-${index}`} className="text-sm font-normal flex-1 cursor-pointer">
-                     <span className="font-bold text-teal-700">{order.quantity}x</span> ( Color: <span className="font-bold text-teal-700">{order.color}</span> | Size: <span className="font-bold text-teal-700">{order.size}</span> )
+                     <span className="font-bold text-teal-700">{order.quantity}x</span> {order.productType} ( Color: <span className="font-bold text-teal-700">{order.color}</span> | Size: <span className="font-bold text-teal-700">{order.size}</span> )
                   </Label>
                 </div>
               ))}
