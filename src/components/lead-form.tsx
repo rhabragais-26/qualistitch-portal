@@ -1,4 +1,3 @@
-
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -75,8 +74,6 @@ import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebas
 import { collection, doc, query, setDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import locations from '@/lib/ph-locations.json';
-import { Calculator } from './calculator';
-import { SizeChartDialog } from './size-chart-dialog';
 import { StatusBanner } from '@/components/ui/status-banner';
 import { Label } from './ui/label';
 
@@ -193,10 +190,6 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
   const [companySuggestions, setCompanySuggestions] = useState<Lead[]>([]);
   const [citySuggestions, setCitySuggestions] = useState<{ name: string; province: string, type: string }[]>([]);
   const [barangaySuggestions, setBarangaySuggestions] = useState<string[]>([]);
-  const [showCalculator, setShowCalculator] = useState(false);
-  const [showSizeChart, setShowSizeChart] = useState(false);
-  const [isSizeChartDragging, setIsSizeChartDragging] = useState(false);
-  const [isCalculatorDragging, setIsCalculatorDragging] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [customerStatus, setCustomerStatus] = useState<'New' | 'Repeat' | null>(null);
   const [orderCount, setOrderCount] = useState(0);
@@ -648,9 +641,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
 
   return (
     <>
-    {showCalculator && <Calculator onClose={() => setShowCalculator(false)} onDraggingChange={setIsCalculatorDragging} />}
-    {showSizeChart && <SizeChartDialog onClose={() => setShowSizeChart(false)} onDraggingChange={setIsSizeChartDragging} />}
-    <Card className={cn("w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black", (isSizeChartDragging || isCalculatorDragging) && 'select-none')}>
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader className="space-y-0">
         <div className="flex justify-between items-start">
           <div className="flex-1">
@@ -1021,17 +1012,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
               </div>
             </div>
 
-            <div className="flex justify-between pt-4 col-span-full">
-              <div className="flex gap-4">
-                 <Button type="button" variant="outline" onClick={() => setShowCalculator(true)}>
-                  <CalculatorIcon className="mr-2 h-4 w-4" />
-                  Show Calculator
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setShowSizeChart(true)}>
-                  <Ruler className="mr-2 h-4 w-4" />
-                  Check Size Chart
-                </Button>
-              </div>
+            <div className="flex justify-end pt-4 col-span-full">
               <div className="flex gap-4">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -1289,5 +1270,3 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
-
-    
