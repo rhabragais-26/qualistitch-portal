@@ -195,8 +195,8 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
   const [barangaySuggestions, setBarangaySuggestions] = useState<string[]>([]);
   const [showCalculator, setShowCalculator] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
-  const [isSizeChartDragging, setIsSizeChartDragging] = useState(false);
-  const [isCalculatorDragging, setIsCalculatorDragging] = useState(false);
+  const [isSizeChartDragging, setIsSizeChartDragging] = useState(isSizeChartDragging);
+  const [isCalculatorDragging, setIsCalculatorDragging] = useState(isCalculatorDragging);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [customerStatus, setCustomerStatus] = useState<'New' | 'Repeat' | null>(null);
   const [orderCount, setOrderCount] = useState(0);
@@ -651,7 +651,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
     {showCalculator && <Calculator onClose={() => setShowCalculator(false)} onDraggingChange={setIsCalculatorDragging} />}
     {showSizeChart && <SizeChartDialog onClose={() => setShowSizeChart(false)} onDraggingChange={setIsSizeChartDragging} />}
     <Card className={cn("w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black", (isSizeChartDragging || isCalculatorDragging) && 'select-none')}>
-      <CardHeader>
+      <CardHeader className="space-y-0">
         <div className="flex justify-between items-start">
           <div className="flex-1">
               <CardTitle className="font-headline text-2xl">Create New Order</CardTitle>
@@ -970,26 +970,26 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-black">Product</TableHead>
-                      <TableHead className="text-black">Color</TableHead>
-                      <TableHead className="text-black">Size</TableHead>
-                      <TableHead className="text-black text-center">Qty</TableHead>
-                      <TableHead className="text-right text-black pr-8">Action</TableHead>
+                      <TableHead className="py-2 px-4 text-black">Product</TableHead>
+                      <TableHead className="py-2 px-4 text-black">Color</TableHead>
+                      <TableHead className="py-2 px-4 text-black">Size</TableHead>
+                      <TableHead className="py-2 px-4 text-black text-center">Qty</TableHead>
+                      <TableHead className="py-2 px-4 text-right text-black pr-8">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {stagedOrders.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">No orders added yet.</TableCell>
+                        <TableCell colSpan={5} className="py-4 px-4 text-center text-muted-foreground">No orders added yet.</TableCell>
                       </TableRow>
                     ) : (
                       stagedOrders.map((order, index) => (
                         <TableRow key={index}>
-                          <TableCell className="text-black">{order.productType}</TableCell>
-                          <TableCell className="text-black">{order.color}</TableCell>
-                          <TableCell className="text-black">{order.size}</TableCell>
-                          <TableCell className="text-black text-center">{order.quantity}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="py-2 px-4 text-black">{order.productType}</TableCell>
+                          <TableCell className="py-2 px-4 text-black">{order.color}</TableCell>
+                          <TableCell className="py-2 px-4 text-black">{order.size}</TableCell>
+                          <TableCell className="py-2 px-4 text-black text-center">{order.quantity}</TableCell>
+                          <TableCell className="py-2 px-4 text-right">
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleEditOrder(order, index)}>
                                 <Edit className="h-4 w-4" />
                             </Button>
@@ -1289,3 +1289,5 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
+    
