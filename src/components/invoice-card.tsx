@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Order } from './lead-form';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
-import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice } from '@/lib/pricing';
+import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, getTierLabel } from '@/lib/pricing';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose, DialogFooter, DialogTrigger } from './ui/dialog';
 import { Label } from './ui/label';
