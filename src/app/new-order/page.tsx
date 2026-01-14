@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
@@ -76,15 +77,15 @@ export default function NewOrderPage() {
                 </div>
                 <div className="xl:col-span-2 space-y-4">
                      <div className="flex justify-center gap-4">
-                        <Button type="button" variant="outline" onClick={() => setShowCalculator(true)}>
+                        <Button type="button" variant="outline" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowCalculator(true)}>
                             <CalculatorIcon className="mr-2 h-4 w-4" />
                             Show Calculator
                         </Button>
-                        <Button type="button" variant="outline" onClick={() => setShowSizeChart(true)}>
+                        <Button type="button" variant="outline" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowSizeChart(true)}>
                             <Ruler className="mr-2 h-4 w-4" />
                             Check Size Chart
                         </Button>
-                        <Button type="button" variant="outline" onClick={() => setShowItemPrices(true)}>
+                        <Button type="button" variant="outline" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowItemPrices(true)}>
                             <Tag className="mr-2 h-4 w-4" />
                             Check Item Prices
                         </Button>
