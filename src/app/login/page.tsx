@@ -14,9 +14,9 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState('login');
 
   useEffect(() => {
-    // If user is loaded and is not anonymous, redirect to home
+    // If user is loaded and is not anonymous, redirect to new-order
     if (!isUserLoading && user) {
-      router.replace('/home');
+      router.replace('/new-order');
     }
   }, [user, isUserLoading, router]);
 
