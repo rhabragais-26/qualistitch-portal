@@ -795,25 +795,6 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                     </FormItem>
                   )}/>
                 </div>
-                 <FormField
-                    control={form.control}
-                    name="isInternational"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 mt-4">
-                            <FormControl>
-                                <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                                <FormLabel className="text-xs">
-                                Is this order for delivery outside the Philippines? (Check the box to add a custom address.)
-                                </FormLabel>
-                            </div>
-                        </FormItem>
-                    )}
-                 />
               </div>
 
               {/* Address Info */}
@@ -904,6 +885,25 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                         </FormItem>
                     </>
                  )}
+                 <FormField
+                    control={form.control}
+                    name="isInternational"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                            <FormControl>
+                                <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel className="text-xs">
+                                Is this order for delivery outside the Philippines? (Check the box to add a custom address.)
+                                </FormLabel>
+                            </div>
+                        </FormItem>
+                    )}
+                 />
               </div>
             </div>
 
@@ -1330,4 +1330,5 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
 }
 
     
+
 
