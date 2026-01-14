@@ -7,7 +7,7 @@ import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { Order } from '@/components/lead-form';
 import { Button } from '@/components/ui/button';
-import { CalculatorIcon, Ruler } from 'lucide-react';
+import { CalculatorIcon, Ruler, Tag } from 'lucide-react';
 import { Calculator } from '@/components/calculator';
 import { SizeChartDialog } from '@/components/size-chart-dialog';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { ItemPricesDialog } from '@/components/item-prices-dialog';
 
 export default function NewOrderPage() {
   const [isFormDirty, setIsFormDirty] = useState(false);
@@ -31,8 +32,10 @@ export default function NewOrderPage() {
 
   const [showCalculator, setShowCalculator] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
+  const [showItemPrices, setShowItemPrices] = useState(false);
   const [isCalculatorDragging, setIsCalculatorDragging] = useState(false);
   const [isSizeChartDragging, setIsSizeChartDragging] = useState(false);
+  const [isItemPricesDragging, setIsItemPricesDragging] = useState(false);
 
   const [resetFormTrigger, setResetFormTrigger] = useState(0);
 
@@ -55,9 +58,10 @@ export default function NewOrderPage() {
     <div className="flex flex-col min-h-screen">
       {showCalculator && <Calculator onClose={() => setShowCalculator(false)} onDraggingChange={setIsCalculatorDragging} />}
       {showSizeChart && <SizeChartDialog onClose={() => setShowSizeChart(false)} onDraggingChange={setIsSizeChartDragging} />}
+      {showItemPrices && <ItemPricesDialog onClose={() => setShowItemPrices(false)} onDraggingChange={setIsItemPricesDragging} />}
 
       <Header isNewOrderPageDirty={isFormDirty}>
-        <main className={cn("flex-1 w-full p-4 sm:p-6 lg:p-8", (isCalculatorDragging || isSizeChartDragging) && "select-none")}>
+        <main className={cn("flex-1 w-full p-4 sm:p-6 lg:p-8", (isCalculatorDragging || isSizeChartDragging || isItemPricesDragging) && "select-none")}>
             <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start">
                 <div className="xl:col-span-3">
                     <LeadForm 
@@ -76,6 +80,10 @@ export default function NewOrderPage() {
                         <Button type="button" variant="outline" onClick={() => setShowSizeChart(true)}>
                             <Ruler className="mr-2 h-4 w-4" />
                             Check Size Chart
+                        </Button>
+                        <Button type="button" variant="outline" onClick={() => setShowItemPrices(true)}>
+                            <Tag className="mr-2 h-4 w-4" />
+                            Check Item Prices
                         </Button>
                     </div>
                     <InvoiceCard orders={stagedOrders} />
