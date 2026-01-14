@@ -87,6 +87,7 @@ const orderSchema = z.object({
   color: z.string().min(1, "Color cannot be empty."),
   size: z.string().min(1, "Size cannot be empty."),
   quantity: z.number().min(1, "Quantity must be at least 1."),
+  embroidery: z.enum(['logo', 'logoAndText']),
 });
 
 export type Order = z.infer<typeof orderSchema>;
@@ -199,6 +200,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
   const [sizeQuantities, setSizeQuantities] = useState(
     productSizes.map(size => ({ size, quantity: 0 }))
   );
+  const [newOrderEmbroidery, setNewOrderEmbroidery] = useState<'logo' | 'logoAndText'>('logo');
   const firestore = useFirestore();
   const { userProfile } = useUser();
   const [editingOrder, setEditingOrder] = useState<{order: Order, index: number} | null>(null);
@@ -610,7 +612,8 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
             productType: newOrderProductType,
             color: color,
             size: isProductPatches ? 'N/A' : item.size,
-            quantity: item.quantity
+            quantity: item.quantity,
+            embroidery: newOrderEmbroidery,
           });
           ordersAddedCount++;
         }
@@ -1007,6 +1010,13 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                           <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
                         </Select>
                       </div>
+                      <div className="space-y-2">
+                        <Label>Embroidery Option:</Label>
+                        <RadioGroup onValueChange={(v) => setNewOrderEmbroidery(v as 'logo' | 'logoAndText')} value={newOrderEmbroidery} className="flex pt-2">
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="logo" id="emb-logo" /><Label htmlFor="emb-logo">Logo Only</Label></div>
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="logoAndText" id="emb-logoAndText" /><Label htmlFor="emb-logoAndText">Logo + Back Text</Label></div>
+                        </RadioGroup>
+                      </div>
                       <div className="space-y-4">
                         {!isPatches && <Label>Size Quantities</Label>}
                         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
@@ -1232,7 +1242,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
   const handleSave = () => {
     const numQuantity = typeof quantity === 'string' ? parseInt(quantity, 10) : quantity;
     if (productType && color && size && numQuantity > 0) {
-      onSave({ productType, color, size, quantity: numQuantity });
+      onSave({ ...order, productType, color, size, quantity: numQuantity });
     }
   };
 
@@ -1336,3 +1346,5 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
+    
