@@ -43,7 +43,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
       const isClientOwned = order.productType === 'Client Owned';
       const productGroup = getProductGroup(order.productType);
       
-      if (!productGroup && !isClientOwned) return acc;
+      if (!productGroup && !isClientOwned && order.productType !== 'Patches') return acc;
 
       const groupKey = `${order.productType}-${order.embroidery}`;
       if (!acc[groupKey]) {
@@ -64,7 +64,9 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
     let total = 0;
     Object.entries(groupedOrders).forEach(([groupKey, group]) => {
       const isClientOwned = group.productType === 'Client Owned';
-      const unitPrice = getUnitPrice(group.productType, group.totalQuantity, group.embroidery);
+      const isPatches = group.productType === 'Patches';
+      const patchPrice = isPatches ? group.orders[0]?.pricePerPatch || 0 : 0;
+      const unitPrice = getUnitPrice(group.productType, group.totalQuantity, group.embroidery, patchPrice);
       const { logoFee, backTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery, isClientOwned);
 
       let subtotal = group.totalQuantity * unitPrice;
@@ -132,8 +134,10 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
             <div className="space-y-6">
               {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
                 const isClientOwned = groupData.productType === 'Client Owned';
+                const isPatches = groupData.productType === 'Patches';
                 const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery);
-                const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery);
+                const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
+                const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery, patchPrice);
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
@@ -160,7 +164,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                     <div className="flex justify-between items-center mb-2">
                         <h3 className="font-bold text-lg text-primary">
                             {groupData.productType}
-                            <span className="text-sm font-normal text-muted-foreground ml-2">({groupData.embroidery === 'logo' ? 'Logo Only' : groupData.embroidery === 'name' ? 'Name Only' : 'Logo + Back Text'})</span>
+                            {!isPatches && <span className="text-sm font-normal text-muted-foreground ml-2">({groupData.embroidery === 'logo' ? 'Logo Only' : groupData.embroidery === 'name' ? 'Name Only' : 'Logo + Back Text'})</span>}
                         </h3>
                         <AddOnsDialog groupKey={groupKey} addOns={addOns} setAddOns={setAddOns} totalQuantity={groupData.totalQuantity} />
                     </div>

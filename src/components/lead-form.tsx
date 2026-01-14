@@ -89,6 +89,7 @@ const orderSchema = z.object({
   size: z.string().min(1, "Size cannot be empty."),
   quantity: z.number().min(1, "Quantity must be at least 1."),
   embroidery: z.enum(['logo', 'logoAndText', 'name']),
+  pricePerPatch: z.number().optional(),
 });
 
 export type Order = z.infer<typeof orderSchema>;
@@ -219,6 +220,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
   const [manualTotalQuantity, setManualTotalQuantity] = useState(0);
 
   const [singleQuantity, setSingleQuantity] = useState(0);
+  const [pricePerPatch, setPricePerPatch] = useState(0);
 
   const citiesAndMunicipalities = useMemo(() => {
     return locations.provinces.flatMap(province =>
@@ -611,13 +613,17 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
     
     if (showSingleQuantity) {
       if (singleQuantity > 0) {
-        newOrders.push({
+        const orderToAdd: Order = {
           productType: newOrderProductType,
           color: isClientOwned ? newOrderColor : 'N/A',
           size: 'N/A',
           quantity: singleQuantity,
           embroidery: newOrderEmbroidery,
-        });
+        };
+        if (isPatches) {
+          orderToAdd.pricePerPatch = pricePerPatch > 0 ? pricePerPatch : undefined;
+        }
+        newOrders.push(orderToAdd);
       }
     } else {
       sizeQuantities.forEach(item => {
@@ -641,6 +647,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
         });
         setSizeQuantities(productSizes.map(size => ({ size, quantity: 0 })));
         setSingleQuantity(0);
+        setPricePerPatch(0);
     } else {
         toast({
             variant: 'destructive',
@@ -1034,7 +1041,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                             )}
                         </div>
                       )}
-                      {!isClientOwned && (
+                      {!isPatches && !isClientOwned && (
                           <div className="flex items-center gap-4">
                             <Label>Embroidery Option:</Label>
                             <RadioGroup onValueChange={(v) => setNewOrderEmbroidery(v as 'logo' | 'logoAndText' | 'name')} value={newOrderEmbroidery} className="flex">
@@ -1044,6 +1051,17 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                             </RadioGroup>
                           </div>
                       )}
+                       {isPatches && (
+                        <div className="flex items-center gap-2">
+                            <Label>Price per Patch:</Label>
+                            <Input 
+                                type="number" 
+                                value={pricePerPatch} 
+                                onChange={(e) => setPricePerPatch(parseFloat(e.target.value) || 0)} 
+                                placeholder="Enter price"
+                            />
+                        </div>
+                       )}
                       <div className="space-y-4">
                          {showSingleQuantity ? (
                             <div className="flex items-center justify-center gap-4 pt-4">

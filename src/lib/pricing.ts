@@ -119,11 +119,14 @@ const addOnPricing: {
 };
 
 export const getProductGroup = (productType: string): ProductGroup | null => {
+  if (productType === 'Patches') return null; // Patches do not belong to a group for tier pricing
   return productGroupMapping[productType] || null;
 };
 
-export const getUnitPrice = (productType: string, quantity: number, embroidery: EmbroideryOption): number => {
+export const getUnitPrice = (productType: string, quantity: number, embroidery: EmbroideryOption, patchPrice: number = 0): number => {
   if (productType === 'Client Owned') return 0;
+  if (productType === 'Patches') return patchPrice;
+
   const group = getProductGroup(productType);
   if (!group) return 0;
   
@@ -143,12 +146,8 @@ export const getAddOnPrice = (addOnType: AddOnType, quantity: number): number =>
 
 
 export const getTierLabel = (productType: string, quantity: number, embroidery: EmbroideryOption): string => {
-  if (productType === 'Client Owned') {
-      const tier = Object.values(pricingTiers)[0].logo.tiers.find(t => quantity >= t.min && quantity <= t.max);
-      if (!tier) return 'Custom';
-      if (tier.max === Infinity) return `${tier.min} pcs & above`;
-      if (tier.min === tier.max) return `${tier.min} pc(s)`;
-      return `${tier.min}–${tier.max} pcs`;
+  if (productType === 'Client Owned' || productType === 'Patches') {
+      return 'N/A';
   }
   
   const group = getProductGroup(productType);
