@@ -104,10 +104,13 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                 
                 return (
                   <div key={groupKey}>
-                    <h3 className="font-bold text-lg mb-2 text-primary">
-                        {groupData.productType}
-                        <span className="text-sm font-normal text-muted-foreground ml-2">({groupData.embroidery === 'logo' ? 'Logo Only' : 'Logo + Back Text'})</span>
-                    </h3>
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-bold text-lg text-primary">
+                            {groupData.productType}
+                            <span className="text-sm font-normal text-muted-foreground ml-2">({groupData.embroidery === 'logo' ? 'Logo Only' : 'Logo + Back Text'})</span>
+                        </h3>
+                        <AddOnsDialog groupKey={groupKey} addOns={addOns} setAddOns={setAddOns} totalQuantity={groupData.totalQuantity} />
+                    </div>
                     <div className="border rounded-md">
                       <Table>
                         <TableHeader>
@@ -160,10 +163,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                         </TableBody>
                         <ShadTableFooter>
                             <TableRow>
-                                <TableCell colSpan={3} className="py-1 px-3">
-                                    <AddOnsDialog groupKey={groupKey} addOns={addOns} setAddOns={setAddOns} totalQuantity={groupData.totalQuantity} />
-                                </TableCell>
-                                <TableCell className="py-1 px-3 text-right font-bold text-black">Subtotal</TableCell>
+                                <TableCell colSpan={4} className="py-1 px-3 text-right font-bold text-black">Subtotal</TableCell>
                                 <TableCell className="py-1 px-3 text-right font-bold text-black">{formatCurrency(subtotal)}</TableCell>
                             </TableRow>
                         </ShadTableFooter>
@@ -211,7 +211,10 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-7 px-2 bg-gray-700 text-white hover:bg-gray-600 font-bold">Add Ons</Button>
+        <Button variant="outline" size="sm" className="h-7 px-2 bg-gray-700 text-white hover:bg-gray-600 font-bold">
+            <Plus className="mr-1 h-4 w-4" />
+            Add Ons
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
