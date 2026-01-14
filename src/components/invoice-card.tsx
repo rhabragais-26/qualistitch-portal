@@ -211,7 +211,7 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm">Add Ons</Button>
+        <Button variant="outline" size="sm" className="bg-yellow-400 text-black hover:bg-yellow-500 font-bold">Add Ons</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
