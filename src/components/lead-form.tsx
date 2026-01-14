@@ -799,7 +799,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                     control={form.control}
                     name="isInternational"
                     render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 mt-4">
                             <FormControl>
                                 <Checkbox
                                 checked={field.value}
@@ -899,7 +899,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                         <FormItem>
                             <FormLabel className="flex items-center gap-2 text-black text-xs">Complete Address</FormLabel>
                             <FormControl>
-                            <Input readOnly value={concatenatedAddress} className="h-10 text-xs bg-muted" />
+                            <Input readOnly value={concatenatedAddress} className="h-14 text-xs bg-muted" />
                             </FormControl>
                         </FormItem>
                     </>
