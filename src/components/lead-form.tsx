@@ -1,4 +1,3 @@
-
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -87,6 +86,8 @@ const orderSchema = z.object({
   quantity: z.number().min(1, "Quantity must be at least 1."),
 });
 
+export type Order = z.infer<typeof orderSchema>;
+
 const formSchema = z.object({
   customerName: z.string().min(1, {message: 'Customer name is required'}),
   companyName: z.string().optional(),
@@ -167,9 +168,11 @@ const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6X
 
 type LeadFormProps = {
   onDirtyChange: (isDirty: boolean) => void;
+  stagedOrders: Order[];
+  setStagedOrders: React.Dispatch<React.SetStateAction<Order[]>>;
 };
 
-export function LeadForm({ onDirtyChange }: LeadFormProps) {
+export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadFormProps) {
   const {toast} = useToast();
   const [dateString, setDateString] = useState('');
   const [timeString, setTimeString] = useState('');
@@ -401,6 +404,11 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     name: "orders"
   });
 
+  // Update form's orders whenever stagedOrders changes
+  useEffect(() => {
+    setValue('orders', stagedOrders);
+  }, [stagedOrders, setValue]);
+
   const orderType = watch('orderType');
 
   useEffect(() => {
@@ -450,6 +458,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
       priorityType: 'Regular',
       orders: [],
     });
+    setStagedOrders([]);
     setSelectedLead(null);
     setManualStatus(null);
   }
@@ -536,7 +545,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     );
     const stock = itemInInventory ? itemInInventory.stock : 0;
     
-    const alreadyOrderedQty = fields.reduce((sum, existingOrder) => {
+    const alreadyOrderedQty = stagedOrders.reduce((sum, existingOrder) => {
         if (existingOrder.productType === order.productType &&
             existingOrder.color === order.color &&
             existingOrder.size === order.size) {
@@ -552,11 +561,12 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     const isProductPatches = newOrderProductType === 'Patches';
     const color = isProductPatches ? 'N/A' : newOrderColor;
     let ordersAddedCount = 0;
+    const newOrders: Order[] = [];
 
     if (newOrderProductType && color) {
       sizeQuantities.forEach(item => {
         if (item.quantity > 0) {
-          append({
+          newOrders.push({
             productType: newOrderProductType,
             color: color,
             size: isProductPatches ? 'N/A' : item.size,
@@ -566,8 +576,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
         }
       });
     }
-
+    
     if (ordersAddedCount > 0) {
+        setStagedOrders(prev => [...prev, ...newOrders]);
         toast({
             title: `${ordersAddedCount} Order(s) Added!`,
             description: `The orders have been added to the list.`,
@@ -617,7 +628,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
     <>
     {showCalculator && <Calculator onClose={() => setShowCalculator(false)} onDraggingChange={setIsCalculatorDragging} />}
     {showSizeChart && <SizeChartDialog onClose={() => setShowSizeChart(false)} onDraggingChange={setIsSizeChartDragging} />}
-    <Card className={cn("w-full mx-auto shadow-xl animate-in fade-in-50 duration-500 bg-white text-black max-w-6xl", (isSizeChartDragging || isCalculatorDragging) && 'select-none')}>
+    <Card className={cn("w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black", (isSizeChartDragging || isCalculatorDragging) && 'select-none')}>
       <CardHeader>
         <div className="flex justify-between items-start">
           <div className="flex-1">
@@ -666,7 +677,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
             <div className="flex gap-4">
               {/* Left Column */}
-              <div className="w-1/2 flex flex-col gap-y-3">
+              <div className="w-full flex flex-col gap-y-3">
                  <div className="grid grid-cols-2 gap-x-2">
                     <FormField control={form.control} name="customerName" render={({field}) => (
                       <FormItem className="relative">
@@ -800,15 +811,7 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                       </FormItem>
                 </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-3 pt-2">
-                 </div>
-              </div>
-
-              <Separator orientation="vertical" className="h-auto"/>
-              
-              {/* Right Column */}
-              <div className="w-1/2 flex flex-col gap-y-3">
-                <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-x-2 gap-y-3 pt-2">
                     <FormField control={form.control} name="orderType" render={({field}) => (
                         <FormItem>
                         <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
@@ -866,125 +869,9 @@ export function LeadForm({ onDirtyChange }: LeadFormProps) {
                           <FormMessage />
                       </FormItem>
                     )}/>
-                </div>
-
-                <div className="pt-2">
-                  <FormLabel className="text-black">Orders</FormLabel>
-                  <div className="space-y-2 mt-2">
-                    <div className="border rounded-md">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="py-2 text-black text-xs">Product</TableHead>
-                            <TableHead className="py-2 text-black text-xs">Color</TableHead>
-                            <TableHead className="py-2 text-black text-xs">Size</TableHead>
-                            <TableHead className="py-2 text-black text-center text-xs">Qty</TableHead>
-                            <TableHead className="py-2 text-black text-center text-xs">Stock</TableHead>
-                            <TableHead className="text-right py-2 text-black text-xs">Action</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {fields.map((field, index) => {
-                            const remaining = getRemainingStock(field);
-                            return (
-                              <TableRow key={field.id}>
-                                <TableCell className="py-2 text-black text-xs">{field.productType}</TableCell>
-                                <TableCell className="py-2 text-black text-xs">{field.color}</TableCell>
-                                <TableCell className="py-2 text-black text-xs">{field.size}</TableCell>
-                                <TableCell className="py-1 text-black text-xs">
-                                  <div className="flex items-center justify-center gap-1">
-                                    <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => update(index, { ...field, quantity: Math.max(1, field.quantity - 1) })}>
-                                        <Minus className="h-3 w-3" />
-                                    </Button>
-                                    <span className="w-8 text-center">{field.quantity}</span>
-                                    <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => update(index, { ...field, quantity: field.quantity + 1 })}>
-                                        <Plus className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                                <TableCell className={cn("py-2 text-center font-medium text-xs", typeof remaining === 'number' && remaining < 0 ? 'text-red-500' : 'text-black')}>
-                                  {typeof remaining === 'number' ? remaining : 'N/A'}
-                                </TableCell>
-                                <TableCell className="text-right py-2">
-                                  <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive h-8 w-8">
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
-                    <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button type="button" variant="outline" onClick={() => setIsOrderDialogOpen(true)}>
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Add Order
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-lg">
-                        <DialogHeader>
-                          <DialogTitle>Add Order Details</DialogTitle>
-                          <DialogDescription>Select product details to add</DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                          <div className="space-y-2">
-                            <FormLabel>Product Type:</FormLabel>
-                            <Select onValueChange={setNewOrderProductType} value={newOrderProductType}>
-                              <SelectTrigger><SelectValue placeholder="Select a Product Type" /></SelectTrigger>
-                              <SelectContent>{productTypes.map((type) => (<SelectItem key={type} value={type}>{type}</SelectItem>))}</SelectContent>
-                            </Select>
-                          </div>
-                          <div className='flex items-center gap-2'>
-                            <FormLabel>Color:</FormLabel>
-                            <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={isPatches}>
-                              <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
-                              <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
-                            </Select>
-                          </div>
-                           <div className="space-y-4">
-                            {!isPatches && <FormLabel>Size Quantities</FormLabel>}
-                             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-                                {sizeQuantities.map((item, index) => (
-                                    <div key={item.size} className="flex items-center justify-start gap-4">
-                                        {!isPatches && <FormLabel className="text-sm font-bold w-12">{item.size}</FormLabel>}
-                                        <div className={cn("flex items-center gap-2", isPatches && "w-full justify-center")}>
-                                            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, -1)}>
-                                                <Minus className="h-4 w-4" />
-                                            </Button>
-                                            <Input
-                                                type="text"
-                                                value={item.quantity}
-                                                onChange={(e) => handleSizeQuantityInputChange(index, e.target.value)}
-                                                onBlur={(e) => { if (e.target.value === '') handleSizeQuantityInputChange(index, '0')}}
-                                                className="w-14 text-center"
-                                            />
-                                            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, 1)}>
-                                                <Plus className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                             </div>
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
-                           <Button 
-                            type="button" 
-                            onClick={handleAddOrder} 
-                            disabled={!newOrderProductType || (!isPatches && !newOrderColor) || sizeQuantities.every(sq => sq.quantity === 0)}
-                          >
-                            Add
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                  <FormField control={form.control} name="orders" render={({ field }) => (<FormItem><FormMessage /></FormItem>)} />
-                </div>
+                 </div>
               </div>
+
             </div>
             <div className="flex justify-between pt-4 col-span-full">
               <div className="flex gap-4">
@@ -1109,4 +996,3 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
-
