@@ -852,7 +852,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                             <FormControl>
                                 <Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 150)} autoComplete="off" />
                             </FormControl>
-                            {barangayValue &amp;&amp; barangaySuggestions.length > 0 &amp;&amp; !selectedLead &amp;&amp; (
+                            {barangayValue && barangaySuggestions.length > 0 && !selectedLead && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {barangaySuggestions.map((barangay, index) => (
@@ -872,7 +872,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                             <FormControl>
                                 <Input {...field} onBlur={() => setTimeout(() => setCitySuggestions([]), 150)} autoComplete="off" />
                             </FormControl>
-                            {cityValue &amp;&amp; citySuggestions.length > 0 &amp;&amp; !selectedLead &amp;&amp; (
+                            {cityValue && citySuggestions.length > 0 && !selectedLead && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {citySuggestions.map((city, index) => (
@@ -884,7 +884,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                                 </CardContent>
                                 </Card>
                             )}
-                            {cityValue &amp;&amp; citySuggestions.length === 0 &amp;&amp; !citiesAndMunicipalities.some(c => c.name.toLowerCase() === cityValue.toLowerCase()) &amp;&amp; <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"><CardContent className='p-2'><p className='text-muted-foreground'>No results found</p></CardContent></Card>}
+                            {cityValue && citySuggestions.length === 0 && !citiesAndMunicipalities.some(c => c.name.toLowerCase() === cityValue.toLowerCase()) && <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"><CardContent className='p-2'><p className='text-muted-foreground'>No results found</p></CardContent></Card>}
                             <FormMessage />
                             </FormItem>
                         )}/>
@@ -915,7 +915,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                   <FormItem>
                   <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value || ''}>
-                      <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value &amp;&amp; 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
+                      <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
                       <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                   </Select>
                   <FormMessage />
@@ -925,7 +925,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                   <FormItem>
                   <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><CreditCard className="h-4 w-4 text-primary" />Payment Type</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value || ''}>
-                      <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value &amp;&amp; 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
+                      <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
                       <SelectContent>{['Partially Paid', 'Fully Paid', 'COD'].map((option) => (<SelectItem key={option} value={option}>{option === 'COD' ? 'COD (Cash on Delivery)' : option}</SelectItem>))}</SelectContent>
                   </Select>
                   <FormMessage />
@@ -962,8 +962,8 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                 <FormItem>
                     <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value &amp;&amp; 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
-                    <SelectContent>{['Lalamove', 'J&amp;T', 'In-house', 'Pick-up'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                    <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
+                    <SelectContent>{['Lalamove', 'J&T', 'In-house', 'Pick-up'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                     </Select>
                     <FormMessage />
                 </FormItem>
@@ -1000,12 +1000,12 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                         </Select>
                       </div>
                       <div className="space-y-4">
-                        {!isPatches &amp;&amp; <Label>Size Quantities</Label>}
+                        {!isPatches && <Label>Size Quantities</Label>}
                         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                           {sizeQuantities.map((item, index) => (
                             <div key={item.size} className="flex items-center justify-start gap-4">
-                              {!isPatches &amp;&amp; <Label className="text-sm font-bold w-12">{item.size}</Label>}
-                              <div className={cn("flex items-center gap-2", isPatches &amp;&amp; "w-full justify-center")}>
+                              {!isPatches && <Label className="text-sm font-bold w-12">{item.size}</Label>}
+                              <div className={cn("flex items-center gap-2", isPatches && "w-full justify-center")}>
                                 <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, -1)}>
                                   <Minus className="h-4 w-4" />
                                 </Button>
@@ -1030,7 +1030,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                       <Button
                         type="button"
                         onClick={handleAddOrder}
-                        disabled={!newOrderProductType || (!isPatches &amp;&amp; !newOrderColor) || sizeQuantities.every(sq => sq.quantity === 0)}
+                        disabled={!newOrderProductType || (!isPatches && !newOrderColor) || sizeQuantities.every(sq => sq.quantity === 0)}
                       >
                         Add
                       </Button>
@@ -1102,7 +1102,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
         currentStatus={customerStatus || 'New'}
         onSave={handleSaveStatus}
      />
-    {editingOrder &amp;&amp; (
+    {editingOrder && (
         <EditOrderDialog 
         isOpen={!!editingOrder}
         onOpenChange={() => setEditingOrder(null)}
@@ -1126,7 +1126,7 @@ function SetCustomerStatusDialog({
     currentStatus: 'New' | 'Repeat';
     onSave: (status: 'New' | 'Repeat', count: number, totalQty: number) => void;
 }) {
-    const [status, setStatus] = useState&lt;'New' | 'Repeat'&gt;(currentStatus);
+    const [status, setStatus] = useState<'New' | 'Repeat'>(currentStatus);
     const [orderCount, setOrderCount] = useState(0);
     const [totalQuantity, setTotalQuantity] = useState(0);
     
@@ -1159,7 +1159,7 @@ function SetCustomerStatusDialog({
                             <Label htmlFor="status-repeat" className="text-base">Repeat Buyer</Label>
                         </div>
                     </RadioGroup>
-                    {status === 'Repeat' &amp;&amp; (
+                    {status === 'Repeat' && (
                         <div className="space-y-3 pt-4 animate-in fade-in-50 flex flex-col items-center">
                             <div className="grid grid-cols-2 gap-4 items-center w-full max-w-sm">
                                 <Label htmlFor="order-count" className="text-xs text-right">No of Times Ordered Before</Label>
@@ -1203,7 +1203,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
   const [productType, setProductType] = useState(order.productType);
   const [color, setColor] = useState(order.color);
   const [size, setSize] = useState(order.size);
-  const [quantity, setQuantity] = useState&lt;number | string&gt;(order.quantity);
+  const [quantity, setQuantity] = useState<number | string>(order.quantity);
 
   const isPolo = productType.includes('Polo Shirt');
   const availableColors = isPolo ? poloShirtColors : jacketColors;
@@ -1223,7 +1223,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
 
   const handleSave = () => {
     const numQuantity = typeof quantity === 'string' ? parseInt(quantity, 10) : quantity;
-    if (productType &amp;&amp; color &amp;&amp; size &amp;&amp; numQuantity > 0) {
+    if (productType && color && size && numQuantity > 0) {
       onSave({ productType, color, size, quantity: numQuantity });
     }
   };
@@ -1320,7 +1320,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
               Close
             </Button>
           </DialogClose>
-          <Button type="button" onClick={handleSave} disabled={!productType || !color || !size || quantity === 0 || Number(quantity) &lt; 1} className="text-white font-bold">
+          <Button type="button" onClick={handleSave} disabled={!productType || !color || !size || quantity === 0 || Number(quantity) < 1} className="text-white font-bold">
             Save Changes
           </Button>
         </DialogFooter>
