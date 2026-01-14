@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -13,24 +14,24 @@ import Autoplay from "embla-carousel-autoplay"
 import React from "react";
 
 const images = [
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%201.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%202.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%203.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%204.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%205.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%206.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%207.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%208.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%209.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2010.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2011.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2012.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2013.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2014.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2015.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2016.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2017.jpg",
-  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2018.jpg",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%201.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%202.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%203.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%204.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%205.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%206.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%207.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%208.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%209.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2010.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2011.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2012.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2013.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2014.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2015.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2016.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2017.png",
+  "https://storage.googleapis.com/studio-399912310-23c48.appspot.com/Company%20Profile/Page%2018.png",
 ];
 
 export default function HomePage() {
