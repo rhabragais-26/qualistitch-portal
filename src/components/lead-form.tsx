@@ -696,203 +696,206 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
-            <div className="flex gap-4">
-              {/* Left Column */}
-              <div className="w-full flex flex-col gap-y-3">
-                 <div className="grid grid-cols-2 gap-x-2">
-                    <FormField control={form.control} name="customerName" render={({field}) => (
-                      <FormItem className="relative">
-                        <div className="flex items-center gap-2">
-                          <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
-                        </div>
-                        <FormControl>
-                          <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} 
-                            onChange={(e) => {
-                                field.onChange(e);
-                                if (manualStatus) {
-                                    setManualStatus(null);
-                                }
-                            }}
-                          />
-                        </FormControl>
-                        {customerSuggestions.length > 0 && (
-                          <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                            <CardContent className="p-2 max-h-40 overflow-y-auto">
-                              {customerSuggestions.map((lead) => (
-                                <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
-                                  {toTitleCase(lead.customerName)}
-                                </div>
-                              ))}
-                            </CardContent>
-                          </Card>
-                        )}
-                        <FormMessage />
-                      </FormItem>
-                    )}/>
-                    <FormField control={form.control} name="mobileNo" render={({field}) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-black text-xs"><Phone className="h-4 w-4 text-primary" />Mobile No. (Optional)</FormLabel>
-                        <FormControl><Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}/>
-                    <FormField control={form.control} name="companyName" render={({field}) => (
-                      <FormItem className="relative pt-2">
-                        <FormLabel className="flex items-center gap-2 text-black text-xs"><Building className="h-4 w-4 text-primary" />Company Name (Optional)</FormLabel>
-                        <FormControl>
-                          <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCompanySuggestions([]), 150)} />
-                        </FormControl>
-                        {companySuggestions.length > 0 && (
-                          <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                            <CardContent className="p-2 max-h-40 overflow-y-auto">
-                              {companySuggestions.map((lead) => (
-                                <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
-                                  {lead.companyName ? toTitleCase(lead.companyName) : ''}
-                                </div>
-                              ))}
-                            </CardContent>
-                          </Card>
-                        )}
-                        <FormMessage />
-                      </FormItem>
-                    )}/>
-                    <FormField control={form.control} name="landlineNo" render={({field}) => (
-                      <FormItem className="pt-2">
-                        <FormLabel className="flex items-center gap-2 text-black text-xs"><PhoneForwarded className="h-4 w-4 text-primary" />Landline No. (Optional)</FormLabel>
-                        <FormControl><Input type="tel" {...field} onChange={(e) => handleLandlineNoChange(e, field)} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}/>
-                </div>
-                
-                <div className='pt-2 flex flex-col gap-y-3'>
-                      <FormField control={form.control} name="houseStreet" render={({field}) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}/>
-                      <div className="grid grid-cols-2 gap-x-2">
-                           <FormField control={form.control} name="barangay" render={({field}) => (
-                            <FormItem className="relative">
-                              <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
-                              <FormControl>
-                                <Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 150)} autoComplete="off" />
-                              </FormControl>
-                              {barangayValue && barangaySuggestions.length > 0 && !selectedLead && (
-                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                                  <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                    {barangaySuggestions.map((barangay, index) => (
-                                      <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleBarangaySuggestionClick(barangay)}>
-                                        {barangay}
-                                      </div>
-                                    ))}
-                                  </CardContent>
-                                </Card>
-                              )}
-                              <FormMessage />
-                            </FormItem>
-                          )}/>
-                          <FormField control={form.control} name="city" render={({field}) => (
-                            <FormItem className="relative">
-                              <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
-                              <FormControl>
-                                <Input {...field} onBlur={() => setTimeout(() => setCitySuggestions([]), 150)} autoComplete="off" />
-                              </FormControl>
-                              {cityValue && citySuggestions.length > 0 && !selectedLead && (
-                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                                <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                    {citySuggestions.map((city, index) => (
-                                    <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCitySuggestionClick(city)}>
-                                        <p className="font-semibold">{city.name} <span className="font-normal text-gray-500">({city.type})</span></p>
-                                        <p className="text-xs text-gray-500">{city.province}</p>
-                                    </div>
-                                    ))}
-                                </CardContent>
-                                </Card>
-                              )}
-                              {cityValue && citySuggestions.length === 0 && !citiesAndMunicipalities.some(c => c.name.toLowerCase() === cityValue.toLowerCase()) && <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"><CardContent className='p-2'><p className='text-muted-foreground'>No results found</p></CardContent></Card>}
-                              <FormMessage />
-                            </FormItem>
-                          )}/>
-                      </div>
-                      <FormField control={form.control} name="province" render={({field}) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
-                          <FormControl><Input {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}/>
-                      <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-black text-xs">Complete Address</FormLabel>
-                          <FormControl>
-                            <Input readOnly value={concatenatedAddress} className="h-20 text-xs bg-muted" />
-                          </FormControl>
-                      </FormItem>
-                </div>
-
-                 <div className="grid grid-cols-2 md:grid-cols-4 gap-x-2 gap-y-3 pt-2">
-                    <FormField control={form.control} name="orderType" render={({field}) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
-                            <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
-                            <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}/>
-                    <FormField control={form.control} name="paymentType" render={({field}) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><CreditCard className="h-4 w-4 text-primary" />Payment Type</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
-                            <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
-                            <SelectContent>{['Partially Paid', 'Fully Paid', 'COD'].map((option) => (<SelectItem key={option} value={option}>{option === 'COD' ? 'COD (Cash on Delivery)' : option}</SelectItem>))}</SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}/>
-                    <FormField
-                    control={form.control}
-                    name="priorityType"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">
-                            <AlertTriangle className="h-4 w-4 text-primary" />
-                            Priority Type
-                        </FormLabel>
-                        <FormControl>
-                            <RadioGroup
-                            onValueChange={field.onChange}
-                            value={field.value}
-                            className="flex items-center space-x-4 pt-2 pl-8"
-                            disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
-                            >
-                            {['Rush', 'Regular'].map((option) => (
-                                <FormItem key={option} className="flex items-center space-x-2 space-y-0">
-                                <FormControl><RadioGroupItem value={option} /></FormControl>
-                                <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
-                                </FormItem>
-                            ))}
-                            </RadioGroup>
-                        </FormControl>
-                        </FormItem>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+              
+              {/* Customer and Contact Info */}
+              <div className="space-y-3">
+                <FormField control={form.control} name="customerName" render={({field}) => (
+                  <FormItem className="relative">
+                    <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} 
+                        onChange={(e) => {
+                            field.onChange(e);
+                            if (manualStatus) {
+                                setManualStatus(null);
+                            }
+                        }}
+                      />
+                    </FormControl>
+                    {customerSuggestions.length > 0 && (
+                      <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                        <CardContent className="p-2 max-h-40 overflow-y-auto">
+                          {customerSuggestions.map((lead) => (
+                            <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
+                              {toTitleCase(lead.customerName)}
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
                     )}
-                    />
-                    <FormField control={form.control} name="courier" render={({field}) => (
-                      <FormItem>
-                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value || ''}>
-                          <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
-                          <SelectContent>{['Lalamove', 'J&T', 'In-house', 'Pick-up'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
-                          </Select>
-                          <FormMessage />
-                      </FormItem>
-                    )}/>
-                 </div>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+                <FormField control={form.control} name="companyName" render={({field}) => (
+                  <FormItem className="relative">
+                    <FormLabel className="flex items-center gap-2 text-black text-xs"><Building className="h-4 w-4 text-primary" />Company Name (Optional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCompanySuggestions([]), 150)} />
+                    </FormControl>
+                    {companySuggestions.length > 0 && (
+                      <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                        <CardContent className="p-2 max-h-40 overflow-y-auto">
+                          {companySuggestions.map((lead) => (
+                            <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
+                              {lead.companyName ? toTitleCase(lead.companyName) : ''}
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+                <div className="grid grid-cols-2 gap-x-4">
+                  <FormField control={form.control} name="mobileNo" render={({field}) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><Phone className="h-4 w-4 text-primary" />Mobile No. (Optional)</FormLabel>
+                      <FormControl><Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}/>
+                  <FormField control={form.control} name="landlineNo" render={({field}) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs"><PhoneForwarded className="h-4 w-4 text-primary" />Landline No. (Optional)</FormLabel>
+                      <FormControl><Input type="tel" {...field} onChange={(e) => handleLandlineNoChange(e, field)} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}/>
+                </div>
               </div>
+
+              {/* Address Info */}
+              <div className="space-y-3">
+                 <FormField control={form.control} name="houseStreet" render={({field}) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+                <div className="grid grid-cols-2 gap-x-4">
+                  <FormField control={form.control} name="barangay" render={({field}) => (
+                    <FormItem className="relative">
+                      <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
+                      <FormControl>
+                        <Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 150)} autoComplete="off" />
+                      </FormControl>
+                      {barangayValue && barangaySuggestions.length > 0 && !selectedLead && (
+                        <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                          <CardContent className="p-2 max-h-40 overflow-y-auto">
+                            {barangaySuggestions.map((barangay, index) => (
+                              <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleBarangaySuggestionClick(barangay)}>
+                                {barangay}
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}/>
+                  <FormField control={form.control} name="city" render={({field}) => (
+                    <FormItem className="relative">
+                      <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
+                      <FormControl>
+                        <Input {...field} onBlur={() => setTimeout(() => setCitySuggestions([]), 150)} autoComplete="off" />
+                      </FormControl>
+                      {cityValue && citySuggestions.length > 0 && !selectedLead && (
+                        <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                        <CardContent className="p-2 max-h-40 overflow-y-auto">
+                            {citySuggestions.map((city, index) => (
+                            <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCitySuggestionClick(city)}>
+                                <p className="font-semibold">{city.name} <span className="font-normal text-gray-500">({city.type})</span></p>
+                                <p className="text-xs text-gray-500">{city.province}</p>
+                            </div>
+                            ))}
+                        </CardContent>
+                        </Card>
+                      )}
+                      {cityValue && citySuggestions.length === 0 && !citiesAndMunicipalities.some(c => c.name.toLowerCase() === cityValue.toLowerCase()) && <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"><CardContent className='p-2'><p className='text-muted-foreground'>No results found</p></CardContent></Card>}
+                      <FormMessage />
+                    </FormItem>
+                  )}/>
+                </div>
+                 <FormField control={form.control} name="province" render={({field}) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+                <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-black text-xs">Complete Address</FormLabel>
+                    <FormControl>
+                      <Input readOnly value={concatenatedAddress} className="h-10 text-xs bg-muted" />
+                    </FormControl>
+                </FormItem>
+              </div>
+            </div>
+
+            <Separator className="my-4" />
+            
+            {/* Order Details */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-4">
+              <FormField control={form.control} name="orderType" render={({field}) => (
+                  <FormItem>
+                  <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
+                      <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                  </Select>
+                  <FormMessage />
+                  </FormItem>
+              )}/>
+              <FormField control={form.control} name="paymentType" render={({field}) => (
+                  <FormItem>
+                  <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><CreditCard className="h-4 w-4 text-primary" />Payment Type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
+                      <SelectContent>{['Partially Paid', 'Fully Paid', 'COD'].map((option) => (<SelectItem key={option} value={option}>{option === 'COD' ? 'COD (Cash on Delivery)' : option}</SelectItem>))}</SelectContent>
+                  </Select>
+                  <FormMessage />
+                  </FormItem>
+              )}/>
+              <FormField
+              control={form.control}
+              name="priorityType"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">
+                      <AlertTriangle className="h-4 w-4 text-primary" />
+                      Priority Type
+                  </FormLabel>
+                  <FormControl>
+                      <RadioGroup
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      className="flex items-center space-x-4 pt-2"
+                      disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
+                      >
+                      {['Rush', 'Regular'].map((option) => (
+                          <FormItem key={option} className="flex items-center space-x-2 space-y-0">
+                          <FormControl><RadioGroupItem value={option} /></FormControl>
+                          <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
+                          </FormItem>
+                      ))}
+                      </RadioGroup>
+                  </FormControl>
+                  </FormItem>
+              )}
+              />
+              <FormField control={form.control} name="courier" render={({field}) => (
+                <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
+                    <SelectContent>{['Lalamove', 'J&T', 'In-house', 'Pick-up'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+              )}/>
             </div>
 
             <Separator className="my-4" />
