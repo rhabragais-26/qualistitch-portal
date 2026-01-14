@@ -40,19 +40,19 @@ export default function HomePage() {
 
   return (
     <Header>
-      <div className="flex-1 flex justify-center items-center p-4 sm:p-6 lg:p-8">
+      <div className="flex-1 flex justify-center items-stretch p-4 sm:p-6 lg:p-8">
         <Carousel
           plugins={[plugin.current]}
           className="w-full max-w-4xl"
           onMouseEnter={plugin.current.stop}
           onMouseLeave={plugin.current.reset}
         >
-          <CarouselContent>
+          <CarouselContent className="h-full">
             {images.map((src, index) => (
-              <CarouselItem key={index}>
-                <div className="p-1">
-                  <Card>
-                    <CardContent className="flex aspect-[16/9] items-center justify-center p-6 relative">
+              <CarouselItem key={index} className="h-full">
+                <div className="p-1 h-full">
+                  <Card className="h-full">
+                    <CardContent className="flex h-full items-center justify-center p-6 relative">
                       <Image 
                         src={src} 
                         alt={`Company Profile Picture ${index + 1}`}
