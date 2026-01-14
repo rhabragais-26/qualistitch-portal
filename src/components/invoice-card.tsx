@@ -81,7 +81,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[calc(100vh-22rem)]">
+        <ScrollArea className="h-[calc(100vh-22rem)] pr-4">
           {Object.keys(groupedOrders).length === 0 ? (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               Add orders to see the price summary.
