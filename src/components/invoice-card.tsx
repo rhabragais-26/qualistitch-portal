@@ -20,6 +20,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 type InvoiceCardProps = {
   orders: Order[];
+  orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services';
 };
 
 const formatCurrency = (value: number) => {
@@ -33,7 +34,7 @@ type AddOns = {
   programFeeBackText: number;
 };
 
-export function InvoiceCard({ orders }: InvoiceCardProps) {
+export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
   
   const [addOns, setAddOns] = useState<Record<string, AddOns>>({});
   const [removingAddOn, setRemovingAddOn] = useState<{ groupKey: string; addOnType: keyof AddOns; } | null>(null);
@@ -67,7 +68,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
       const isPatches = group.productType === 'Patches';
       const patchPrice = isPatches ? group.orders[0]?.pricePerPatch || 0 : 0;
       const unitPrice = getUnitPrice(group.productType, group.totalQuantity, group.embroidery, patchPrice);
-      const { logoFee, backTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery, isClientOwned);
+      const { logoFee, backTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery, isClientOwned, orderType);
 
       let subtotal = group.totalQuantity * unitPrice;
 
@@ -91,14 +92,12 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
           subtotal += groupAddOns.programFeeBackText * getAddOnPrice('programFeeBackText', itemTotalQuantity);
       }
       
-      if (isClientOwned || (group.totalQuantity > 0 && group.totalQuantity <=3)) {
-          subtotal += logoFee + backTextFee;
-      }
+      subtotal += logoFee + backTextFee;
       
       total += subtotal;
     });
     return total;
-  }, [groupedOrders, addOns]);
+  }, [groupedOrders, addOns, orderType]);
 
   const handleConfirmRemoveAddOn = () => {
     if (!removingAddOn) return;
@@ -138,7 +137,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                 const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery);
                 const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
                 const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery, patchPrice);
-                const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned);
+                const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned, orderType);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
                 const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0 };
@@ -155,9 +154,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                 const programFeeBackTextTotal = groupAddOns.programFeeBackText * programFeeBackTextPrice;
 
                 let subtotal = itemsSubtotal + backLogoTotal + namesTotal + programFeeLogoTotal + programFeeBackTextTotal;
-                if (isClientOwned || (groupData.totalQuantity > 0 && groupData.totalQuantity <=3)) {
-                  subtotal += logoFee + backTextFee;
-                }
+                subtotal += logoFee + backTextFee;
                 
                 return (
                   <div key={groupKey}>
@@ -356,7 +353,7 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
         <DialogHeader>
           <DialogTitle>Add Ons</DialogTitle>
           <DialogDescription>
-             Specify quantities for additional logos or names.
+             Specify quantities for additional logos, names or patches.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 py-4 flex flex-col items-center">

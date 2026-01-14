@@ -168,8 +168,14 @@ export const getTierLabel = (productType: string, quantity: number, embroidery: 
   return `${tier.min}–${tier.max} pcs`;
 };
 
-export const getProgrammingFees = (quantity: number, embroidery: EmbroideryOption, isClientOwned: boolean = false): { logoFee: number; backTextFee: number } => {
-  if (embroidery === 'name') {
+export const getProgrammingFees = (
+  quantity: number,
+  embroidery: EmbroideryOption,
+  isClientOwned: boolean = false,
+  orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services'
+): { logoFee: number; backTextFee: number } => {
+  const specialOrderTypes = ["Services", "MTO", "Stock (Jacket Only)"];
+  if (embroidery === 'name' || (orderType && specialOrderTypes.includes(orderType))) {
     return { logoFee: 0, backTextFee: 0 };
   }
 
