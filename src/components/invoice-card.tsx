@@ -30,7 +30,6 @@ type AddOns = {
   backLogo: number;
   names: number;
   patches: number;
-  patchPrice: number;
 };
 
 export function InvoiceCard({ orders }: InvoiceCardProps) {
@@ -70,7 +69,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
       let subtotal = group.totalQuantity * unitPrice;
 
       
-      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, patches: 0, patchPrice: 0 };
+      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, patches: 0 };
 
       const itemTotalQuantity = group.totalQuantity;
 
@@ -83,7 +82,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
           subtotal += groupAddOns.names * namesPrice;
       }
       if (groupAddOns.patches > 0) {
-        const patchesPrice = groupAddOns.patchPrice || getAddOnPrice('patches', itemTotalQuantity);
+        const patchesPrice = getAddOnPrice('patches', itemTotalQuantity);
         subtotal += groupAddOns.patches * patchesPrice;
       }
       
@@ -101,12 +100,9 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
     const { groupKey, addOnType } = removingAddOn;
     setAddOns(prev => {
       const newGroupAddOns = {
-        ...(prev[groupKey] || { backLogo: 0, names: 0, patches: 0, patchPrice: 0 }),
+        ...(prev[groupKey] || { backLogo: 0, names: 0, patches: 0 }),
         [addOnType]: 0,
       };
-      if (addOnType === 'patches') {
-        newGroupAddOns.patchPrice = 0;
-      }
       return {
         ...prev,
         [groupKey]: newGroupAddOns,
@@ -138,12 +134,12 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
-                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, patches: 0, patchPrice: 0 };
+                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, patches: 0 };
                 const itemTotalQuantity = groupData.totalQuantity;
 
                 const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity);
                 const namesPrice = getAddOnPrice('names', itemTotalQuantity);
-                const patchesPrice = groupAddOns.patchPrice || getAddOnPrice('patches', itemTotalQuantity);
+                const patchesPrice = getAddOnPrice('patches', itemTotalQuantity);
 
                 const backLogoTotal = groupAddOns.backLogo * backLogoPrice;
                 const namesTotal = groupAddOns.names * namesPrice;
@@ -297,7 +293,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
 
 function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey: string, addOns: Record<string, AddOns>, setAddOns: React.Dispatch<React.SetStateAction<Record<string, AddOns>>>, totalQuantity: number }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [localAddOns, setLocalAddOns] = useState(addOns[groupKey] || { backLogo: 0, names: 0, patches: 0, patchPrice: 0 });
+  const [localAddOns, setLocalAddOns] = useState(addOns[groupKey] || { backLogo: 0, names: 0, patches: 0 });
 
   const handleSave = () => {
     setAddOns(prev => ({ ...prev, [groupKey]: localAddOns }));
@@ -350,12 +346,6 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
                     <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('patches', -1)}><Minus className="h-4 w-4" /></Button>
                     <Input id="patches" type="text" value={localAddOns.patches} onChange={(e) => handleInputChange('patches', e.target.value)} className="w-16 text-center" />
                     <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('patches', 1)}><Plus className="h-4 w-4" /></Button>
-                </div>
-            </div>
-            <div className="flex items-center justify-between w-full max-w-sm">
-                <Label htmlFor="patchPrice" className="text-base">Price per unit</Label>
-                 <div className="flex items-center gap-2">
-                    <Input id="patchPrice" type="text" value={localAddOns.patchPrice || ''} onChange={(e) => handleInputChange('patchPrice', e.target.value)} className="w-24 text-center" placeholder="Auto" />
                 </div>
             </div>
         </div>
