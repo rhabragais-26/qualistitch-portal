@@ -42,6 +42,8 @@ import {
   Minus,
   CalculatorIcon,
   Ruler,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import {RadioGroup, RadioGroupItem} from './ui/radio-group';
 import { cn } from '@/lib/utils';
@@ -69,8 +71,7 @@ import {
 import { Separator } from './ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, doc, query } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/firestore-writes';
+import { collection, doc, query, setDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import locations from '@/lib/ph-locations.json';
 import { Calculator } from './calculator';
@@ -185,6 +186,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
   );
   const firestore = useFirestore();
   const { userProfile } = useUser();
+  const [editingOrder, setEditingOrder] = useState<{order: Order, index: number} | null>(null);
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Lead[]>([]);
   const [companySuggestions, setCompanySuggestions] = useState<Lead[]>([]);
@@ -526,7 +528,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
       lastModified: now,
     };
 
-    setDocumentNonBlocking(leadDocRef, submissionData, { merge: false });
+    setDoc(leadDocRef, submissionData);
 
     toast({
       title: 'Lead Submitted!',
@@ -623,6 +625,25 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
   };
 
   const concatenatedAddress = [houseStreetValue, barangayValue, cityValue, provinceValue].filter(Boolean).join(', ');
+
+  const handleEditOrder = (order: Order, index: number) => {
+    setEditingOrder({order, index});
+  }
+
+  const handleUpdateOrder = (updatedOrder: Order) => {
+    if (editingOrder) {
+      const updatedOrders = [...stagedOrders];
+      updatedOrders[editingOrder.index] = updatedOrder;
+      setStagedOrders(updatedOrders);
+      setEditingOrder(null);
+    }
+  };
+
+  const handleDeleteOrder = (index: number) => {
+    const updatedOrders = [...stagedOrders];
+    updatedOrders.splice(index, 1);
+    setStagedOrders(updatedOrders);
+  };
 
   return (
     <>
@@ -871,8 +892,131 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
                     )}/>
                  </div>
               </div>
-
             </div>
+
+            <Separator className="my-4" />
+
+            <div className="col-span-full">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-medium text-black">Orders</h3>
+                <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button type="button" variant="outline"><PlusCircle className="mr-2 h-4 w-4" />Add Order</Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle>Add Order Details</DialogTitle>
+                      <DialogDescription>Select product details to add</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="space-y-2">
+                        <Label>Product Type:</Label>
+                        <Select onValueChange={setNewOrderProductType} value={newOrderProductType}>
+                          <SelectTrigger><SelectValue placeholder="Select a Product Type" /></SelectTrigger>
+                          <SelectContent>{productTypes.map((type) => (<SelectItem key={type} value={type}>{type}</SelectItem>))}</SelectContent>
+                        </Select>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <Label>Color:</Label>
+                        <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={isPatches}>
+                          <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
+                          <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-4">
+                        {!isPatches && <Label>Size Quantities</Label>}
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                          {sizeQuantities.map((item, index) => (
+                            <div key={item.size} className="flex items-center justify-start gap-4">
+                              {!isPatches && <Label className="text-sm font-bold w-12">{item.size}</Label>}
+                              <div className={cn("flex items-center gap-2", isPatches && "w-full justify-center")}>
+                                <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, -1)}>
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                <Input
+                                  type="text"
+                                  value={item.quantity}
+                                  onChange={(e) => handleSizeQuantityInputChange(index, e.target.value)}
+                                  onBlur={(e) => { if (e.target.value === '') handleSizeQuantityInputChange(index, '0') }}
+                                  className="w-14 text-center"
+                                />
+                                <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, 1)}>
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
+                      <Button
+                        type="button"
+                        onClick={handleAddOrder}
+                        disabled={!newOrderProductType || (!isPatches && !newOrderColor) || sizeQuantities.every(sq => sq.quantity === 0)}
+                      >
+                        Add
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <div className="mt-2 border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-black">Product</TableHead>
+                      <TableHead className="text-black">Color</TableHead>
+                      <TableHead className="text-black">Size</TableHead>
+                      <TableHead className="text-black text-center">Qty</TableHead>
+                      <TableHead className="text-right text-black pr-8">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stagedOrders.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground">No orders added yet.</TableCell>
+                      </TableRow>
+                    ) : (
+                      stagedOrders.map((order, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="text-black">{order.productType}</TableCell>
+                          <TableCell className="text-black">{order.color}</TableCell>
+                          <TableCell className="text-black">{order.size}</TableCell>
+                          <TableCell className="text-black text-center">{order.quantity}</TableCell>
+                          <TableCell className="text-right">
+                             <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleEditOrder(order, index)}>
+                                <Edit className="h-4 w-4" />
+                            </Button>
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the ordered item.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteOrder(index)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
             <div className="flex justify-between pt-4 col-span-full">
               <div className="flex gap-4">
                  <Button type="button" variant="outline" onClick={() => setShowCalculator(true)}>
@@ -915,6 +1059,15 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
         currentStatus={customerStatus || 'New'}
         onSave={handleSaveStatus}
      />
+    {editingOrder && (
+        <EditOrderDialog 
+        isOpen={!!editingOrder}
+        onOpenChange={() => setEditingOrder(null)}
+        order={editingOrder.order}
+        onSave={handleUpdateOrder}
+        onClose={() => setEditingOrder(null)}
+        />
+    )}
     </>
   );
 }
@@ -995,4 +1148,140 @@ function SetCustomerStatusDialog({
             </DialogContent>
         </Dialog>
     );
+}
+
+function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  order: Order;
+  onSave: (updatedOrder: Order) => void;
+  onClose: () => void;
+}) {
+  const [productType, setProductType] = useState(order.productType);
+  const [color, setColor] = useState(order.color);
+  const [size, setSize] = useState(order.size);
+  const [quantity, setQuantity] = useState<number | string>(order.quantity);
+
+  const isPolo = productType.includes('Polo Shirt');
+  const availableColors = isPolo ? poloShirtColors : jacketColors;
+
+  React.useEffect(() => {
+    setProductType(order.productType);
+    setColor(order.color);
+    setSize(order.size);
+    setQuantity(order.quantity);
+  }, [order]);
+  
+  useEffect(() => {
+    if (!availableColors.includes(color)) {
+        setColor('');
+    }
+  }, [productType, availableColors, color]);
+
+  const handleSave = () => {
+    const numQuantity = typeof quantity === 'string' ? parseInt(quantity, 10) : quantity;
+    if (productType && color && size && numQuantity > 0) {
+      onSave({ productType, color, size, quantity: numQuantity });
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) onClose();
+      onOpenChange(open);
+    }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit Order</DialogTitle>
+          <DialogDescription>
+            Update the details for the selected order.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="edit-product-type">Product Type:</Label>
+            <Select onValueChange={setProductType} value={productType}>
+              <SelectTrigger id="edit-product-type">
+                <SelectValue placeholder="Select a Product Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {productTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className='grid grid-cols-2 gap-4'>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="edit-color" className='text-sm'>Color:</Label>              <Select onValueChange={setColor} value={color} disabled={productType === 'Patches'}>
+                <SelectTrigger id="edit-color">
+                  <SelectValue placeholder="Select a Color" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableColors.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="edit-size" className='text-sm'>Size:</Label>
+              <Select onValueChange={setSize} value={size} disabled={productType === 'Patches'}>
+                <SelectTrigger id="edit-size" className="w-[100px]">
+                  <SelectValue placeholder="Size" />
+                </SelectTrigger>
+                <SelectContent>
+                  {productSizes.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 justify-center">
+            <Label htmlFor="edit-quantity">Quantity:</Label>
+            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setQuantity(q => Math.max(1, (typeof q === 'string' ? parseInt(q, 10) || 0 : q) - 1))}>
+              <Minus className="h-4 w-4" />
+            </Button>
+            <Input
+              id="edit-quantity"
+              type="text"
+              value={quantity}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^[0-9\b]+$/.test(value)) {
+                  setQuantity(value === '' ? '' : parseInt(value, 10));
+                }
+              }}
+              onBlur={(e) => {
+                if (e.target.value === '') {
+                  setQuantity(1);
+                }
+              }}
+              className="w-16 text-center"
+            />
+            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setQuantity(q => (typeof q === 'string' ? parseInt(q, 10) || 0 : q) + 1)}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Close
+            </Button>
+          </DialogClose>
+          <Button type="button" onClick={handleSave} disabled={!productType || !color || !size || quantity === 0 || Number(quantity) < 1} className="text-white font-bold">
+            Save Changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
