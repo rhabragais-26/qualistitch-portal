@@ -23,7 +23,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
       const productGroup = getProductGroup(order.productType);
       if (!productGroup) return acc;
       
-      const groupKey = `${productGroup}-${order.embroidery}`;
+      const groupKey = `${order.productType}-${order.embroidery}`;
       if (!acc[groupKey]) {
         acc[groupKey] = {
           productType: order.productType,
@@ -80,21 +80,19 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="text-black">Item</TableHead>
+                            <TableHead className="text-black">Description</TableHead>
                             <TableHead className="text-black text-right">Unit Price</TableHead>
                             <TableHead className="text-black text-right">Quantity</TableHead>
                             <TableHead className="text-black text-right">Total</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {groupData.orders.map((order, index) => (
-                            <TableRow key={index}>
-                              <TableCell className="text-black text-xs">{order.color} - {order.size}</TableCell>
-                              <TableCell className="text-black text-xs text-right">{formatCurrency(unitPrice)}</TableCell>
-                              <TableCell className="text-black text-xs text-right">{order.quantity}</TableCell>
-                              <TableCell className="text-black text-xs text-right">{formatCurrency(order.quantity * unitPrice)}</TableCell>
+                            <TableRow>
+                                <TableCell className="text-black text-xs font-medium">Total Items</TableCell>
+                                <TableCell className="text-black text-xs text-right">{formatCurrency(unitPrice)}</TableCell>
+                                <TableCell className="text-black text-xs text-right">{groupData.totalQuantity}</TableCell>
+                                <TableCell className="text-black text-xs text-right">{formatCurrency(itemsSubtotal)}</TableCell>
                             </TableRow>
-                          ))}
                           {logoFee > 0 && (
                             <TableRow>
                                 <TableCell colSpan={3} className="text-black text-xs text-right">One-time Logo Programming Fee</TableCell>
@@ -137,5 +135,3 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
     </Card>
   );
 }
-
-    
