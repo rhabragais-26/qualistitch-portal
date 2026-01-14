@@ -1,3 +1,4 @@
+
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -654,7 +655,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
         <div className="flex justify-between items-start">
           <div className="flex-1">
               <CardTitle className="font-headline text-2xl">Create New Order</CardTitle>
-               <div className="flex items-center gap-4 mt-2">
+               <div className="flex items-center gap-4">
                 <CardDescription className="text-gray-600">Fill in the details below to create a record for customer and order.</CardDescription>
                 <div className="h-8">
                   {customerStatus && customerNameValue && (
