@@ -110,9 +110,8 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent className="p-4 flex-1">
+        <CardContent className="p-4 flex-1 overflow-hidden">
             <ScrollArea className="h-full pr-4">
-            <h3 className="font-bold text-lg mb-2 text-amber-300">Jacket Prices</h3>
             <Table>
                 <TableHeader>
                     <TableRow className="border-b-gray-600">
