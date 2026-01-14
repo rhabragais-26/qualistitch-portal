@@ -72,7 +72,7 @@ export default function NewOrderPage() {
                     />
                 </div>
                 <div className="xl:col-span-2 space-y-4">
-                     <div className="flex justify-end gap-4">
+                     <div className="flex justify-center gap-4">
                         <Button type="button" variant="outline" onClick={() => setShowCalculator(true)}>
                             <CalculatorIcon className="mr-2 h-4 w-4" />
                             Show Calculator
