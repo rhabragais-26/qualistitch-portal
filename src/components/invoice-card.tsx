@@ -91,7 +91,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
         subtotal += groupAddOns.stitchesQuantity * stitchesPrice;
       }
       
-      if (isClientOwned || (quantity > 0 && quantity <=3)) {
+      if (isClientOwned || (group.totalQuantity > 0 && group.totalQuantity <=3)) {
           subtotal += logoFee + backTextFee;
       }
       
