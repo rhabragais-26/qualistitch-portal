@@ -2,7 +2,7 @@
 
 export type ProductGroup = 'GroupA' | 'GroupB' | 'GroupC';
 export type EmbroideryOption = 'logo' | 'logoAndText' | 'name';
-export type AddOnType = 'backLogo' | 'names' | 'patches';
+export type AddOnType = 'backLogo' | 'names';
 
 const productGroupMapping: { [key: string]: ProductGroup } = {
   'Executive Jacket 1': 'GroupA',
@@ -108,12 +108,6 @@ const addOnPricing: {
     tiers: [
       { min: 1, max: 10, price: 100 },
       { min: 11, max: Infinity, price: 50 },
-    ],
-  },
-  patches: {
-    tiers: [
-      { min: 1, max: 10, price: 150 },
-      { min: 11, max: Infinity, price: 100 },
     ],
   },
 };

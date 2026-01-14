@@ -29,7 +29,6 @@ const formatCurrency = (value: number) => {
 type AddOns = {
   backLogo: number;
   names: number;
-  patches: number;
 };
 
 export function InvoiceCard({ orders }: InvoiceCardProps) {
@@ -69,7 +68,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
       let subtotal = group.totalQuantity * unitPrice;
 
       
-      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, patches: 0 };
+      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0 };
 
       const itemTotalQuantity = group.totalQuantity;
 
@@ -80,10 +79,6 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
       if (groupAddOns.names > 0) {
           const namesPrice = getAddOnPrice('names', itemTotalQuantity);
           subtotal += groupAddOns.names * namesPrice;
-      }
-       if (groupAddOns.patches > 0) {
-          const patchesPrice = getAddOnPrice('patches', itemTotalQuantity);
-          subtotal += groupAddOns.patches * patchesPrice;
       }
       
       if (isClientOwned || (group.totalQuantity > 0 && group.totalQuantity <=3)) {
@@ -100,7 +95,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
     const { groupKey, addOnType } = removingAddOn;
     setAddOns(prev => {
       const newGroupAddOns = {
-        ...(prev[groupKey] || { backLogo: 0, names: 0, patches: 0 }),
+        ...(prev[groupKey] || { backLogo: 0, names: 0 }),
         [addOnType]: 0,
       };
       return {
@@ -134,18 +129,16 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
-                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, patches: 0 };
+                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0 };
                 const itemTotalQuantity = groupData.totalQuantity;
 
                 const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity);
                 const namesPrice = getAddOnPrice('names', itemTotalQuantity);
-                const patchesPrice = getAddOnPrice('patches', itemTotalQuantity);
 
                 const backLogoTotal = groupAddOns.backLogo * backLogoPrice;
                 const namesTotal = groupAddOns.names * namesPrice;
-                const patchesTotal = groupAddOns.patches * patchesPrice;
 
-                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + patchesTotal;
+                let subtotal = itemsSubtotal + backLogoTotal + namesTotal;
                 if (isClientOwned || (groupData.totalQuantity > 0 && groupData.totalQuantity <=3)) {
                   subtotal += logoFee + backTextFee;
                 }
@@ -214,24 +207,6 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                                 </TableCell>
                             </TableRow>
                            )}
-                           {groupAddOns.patches > 0 && (
-                            <TableRow className="group">
-                                <TableCell className="py-2 px-3 text-xs text-black align-middle">
-                                     <div className="flex items-center gap-2">
-                                        <span>Add On: Patches</span>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'patches' })}>
-                                            <X className="h-3 w-3" />
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(patchesPrice)}</TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.patches}</TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
-                                     {formatCurrency(patchesTotal)}
-                                </TableCell>
-                            </TableRow>
-                           )}
                           {logoFee > 0 && (
                             <TableRow>
                                 <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">One-time Logo Programming Fee</TableCell>
@@ -276,7 +251,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the "{removingAddOn?.addOnType === 'backLogo' ? 'Back Logo' : removingAddOn?.addOnType === 'names' ? 'Names' : 'Patches'}" add-on from this group.
+              This will remove the "{removingAddOn?.addOnType === 'backLogo' ? 'Back Logo' : 'Names'}" add-on from this group.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -293,7 +268,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
 
 function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey: string, addOns: Record<string, AddOns>, setAddOns: React.Dispatch<React.SetStateAction<Record<string, AddOns>>>, totalQuantity: number }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [localAddOns, setLocalAddOns] = useState(addOns[groupKey] || { backLogo: 0, names: 0, patches: 0 });
+  const [localAddOns, setLocalAddOns] = useState(addOns[groupKey] || { backLogo: 0, names: 0 });
 
   const handleSave = () => {
     setAddOns(prev => ({ ...prev, [groupKey]: localAddOns }));
@@ -320,7 +295,7 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
         <DialogHeader>
           <DialogTitle>Add Ons</DialogTitle>
           <DialogDescription>
-            Specify quantities for additional logos, names or patches.
+            Specify quantities for additional logos or names.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 py-4 flex flex-col items-center">
@@ -338,14 +313,6 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
                     <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('names', -1)}><Minus className="h-4 w-4" /></Button>
                     <Input id="names" type="text" value={localAddOns.names} onChange={(e) => handleInputChange('names', e.target.value)} className="w-16 text-center" />
                     <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('names', 1)}><Plus className="h-4 w-4" /></Button>
-                </div>
-            </div>
-             <div className="flex items-center justify-between w-full max-w-sm">
-                <Label htmlFor="patches" className="text-base">Patches</Label>
-                 <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('patches', -1)}><Minus className="h-4 w-4" /></Button>
-                    <Input id="patches" type="text" value={localAddOns.patches} onChange={(e) => handleInputChange('patches', e.target.value)} className="w-16 text-center" />
-                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('patches', 1)}><Plus className="h-4 w-4" /></Button>
                 </div>
             </div>
         </div>
