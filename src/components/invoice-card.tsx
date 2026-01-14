@@ -7,10 +7,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Order } from './lead-form';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
-import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getTierLabel } from '@/lib/pricing';
+import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getTierLabel, getAddOnPrice, AddOnType } from '@/lib/pricing';
 import { Button } from './ui/button';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose, DialogFooter } from './ui/dialog';
 import { Label } from './ui/label';
+import { Input } from './ui/input';
+import { Minus, Plus } from 'lucide-react';
 
 type InvoiceCardProps = {
   orders: Order[];
@@ -20,8 +22,15 @@ const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
 };
 
+type AddOns = {
+  backLogo: number;
+  names: number;
+};
+
 export function InvoiceCard({ orders }: InvoiceCardProps) {
   
+  const [addOns, setAddOns] = useState<Record<string, AddOns>>({});
+
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
       const productGroup = getProductGroup(order.productType);
@@ -44,23 +53,31 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
 
   const grandTotal = useMemo(() => {
     let total = 0;
-    Object.values(groupedOrders).forEach(group => {
+    Object.entries(groupedOrders).forEach(([groupKey, group]) => {
       const unitPrice = getUnitPrice(group.productType, group.totalQuantity, group.embroidery);
       const { logoFee, backTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery);
-      const subtotal = group.totalQuantity * unitPrice + logoFee + backTextFee;
+      let subtotal = group.totalQuantity * unitPrice + logoFee + backTextFee;
+      
+      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0 };
+      if (groupAddOns.backLogo > 0) {
+          const backLogoPrice = getAddOnPrice('backLogo', group.totalQuantity);
+          subtotal += groupAddOns.backLogo * backLogoPrice;
+      }
+      if (groupAddOns.names > 0) {
+          const namesPrice = getAddOnPrice('names', group.totalQuantity);
+          subtotal += groupAddOns.names * namesPrice;
+      }
+      
       total += subtotal;
     });
     return total;
-  }, [groupedOrders]);
+  }, [groupedOrders, addOns]);
 
   return (
     <Card className="shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
       <CardHeader>
         <div className="flex justify-between items-center">
             <CardTitle className="font-headline text-xl">Pricing Summary</CardTitle>
-            <div className="flex flex-col items-end gap-2">
-                 <Button variant="outline" size="sm">Add Ons</Button>
-            </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -76,7 +93,14 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                 const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery);
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
-                const subtotal = itemsSubtotal + logoFee + backTextFee;
+                
+                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0 };
+                const backLogoPrice = getAddOnPrice('backLogo', groupData.totalQuantity);
+                const namesPrice = getAddOnPrice('names', groupData.totalQuantity);
+                const backLogoTotal = groupAddOns.backLogo * backLogoPrice;
+                const namesTotal = groupAddOns.names * namesPrice;
+
+                const subtotal = itemsSubtotal + logoFee + backTextFee + backLogoTotal + namesTotal;
                 
                 return (
                   <div key={groupKey}>
@@ -103,6 +127,24 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupData.totalQuantity}</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(itemsSubtotal)}</TableCell>
                             </TableRow>
+                           {groupAddOns.backLogo > 0 && (
+                            <TableRow>
+                                <TableCell className="py-2 px-3 text-xs text-black align-middle">Add On: Back Logo</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{tierLabel}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(backLogoPrice)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.backLogo}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(backLogoTotal)}</TableCell>
+                            </TableRow>
+                           )}
+                           {groupAddOns.names > 0 && (
+                            <TableRow>
+                                <TableCell className="py-2 px-3 text-xs text-black align-middle">Add On: Names</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{tierLabel}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(namesPrice)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.names}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(namesTotal)}</TableCell>
+                            </TableRow>
+                           )}
                           {logoFee > 0 && (
                             <TableRow>
                                 <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">One-time Logo Programming Fee</TableCell>
@@ -118,7 +160,10 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                         </TableBody>
                         <ShadTableFooter>
                             <TableRow>
-                                <TableCell colSpan={4} className="py-2 px-3 text-right font-bold text-black">Subtotal</TableCell>
+                                <TableCell colSpan={3}>
+                                    <AddOnsDialog groupKey={groupKey} addOns={addOns} setAddOns={setAddOns} totalQuantity={groupData.totalQuantity} />
+                                </TableCell>
+                                <TableCell className="py-2 px-3 text-right font-bold text-black">Subtotal</TableCell>
                                 <TableCell className="py-2 px-3 text-right font-bold text-black">{formatCurrency(subtotal)}</TableCell>
                             </TableRow>
                         </ShadTableFooter>
@@ -143,5 +188,61 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
         </CardFooter>
       )}
     </Card>
+  );
+}
+
+function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey: string, addOns: Record<string, AddOns>, setAddOns: React.Dispatch<React.SetStateAction<Record<string, AddOns>>>, totalQuantity: number }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [localAddOns, setLocalAddOns] = useState(addOns[groupKey] || { backLogo: 0, names: 0 });
+
+  const handleSave = () => {
+    setAddOns(prev => ({ ...prev, [groupKey]: localAddOns }));
+    setIsOpen(false);
+  };
+  
+  const handleQuantityChange = (type: keyof AddOns, change: number) => {
+    setLocalAddOns(prev => ({...prev, [type]: Math.max(0, prev[type] + change)}));
+  }
+
+  const handleInputChange = (type: keyof AddOns, value: string) => {
+    setLocalAddOns(prev => ({...prev, [type]: value === '' ? 0 : parseInt(value, 10) || 0}));
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">Add Ons</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Ons</DialogTitle>
+          <DialogDescription>
+            Specify quantities for additional logos or names. Prices are based on the main product's quantity tier ({totalQuantity} pcs).
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+            <div className="flex items-center justify-between">
+                <Label htmlFor="backLogo" className="text-base">Back Logo</Label>
+                <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('backLogo', -1)}><Minus className="h-4 w-4" /></Button>
+                    <Input id="backLogo" type="text" value={localAddOns.backLogo} onChange={(e) => handleInputChange('backLogo', e.target.value)} className="w-16 text-center" />
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('backLogo', 1)}><Plus className="h-4 w-4" /></Button>
+                </div>
+            </div>
+            <div className="flex items-center justify-between">
+                <Label htmlFor="names" className="text-base">Names</Label>
+                 <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('names', -1)}><Minus className="h-4 w-4" /></Button>
+                    <Input id="names" type="text" value={localAddOns.names} onChange={(e) => handleInputChange('names', e.target.value)} className="w-16 text-center" />
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('names', 1)}><Plus className="h-4 w-4" /></Button>
+                </div>
+            </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={handleSave}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

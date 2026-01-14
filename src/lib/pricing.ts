@@ -1,6 +1,7 @@
 
 export type ProductGroup = 'GroupA' | 'GroupB' | 'GroupC';
 export type EmbroideryOption = 'logo' | 'logoAndText';
+export type AddOnType = 'backLogo' | 'names';
 
 const productGroupMapping: { [key: string]: ProductGroup } = {
   'Executive Jacket 1': 'GroupA',
@@ -92,6 +93,24 @@ const pricingTiers: {
   },
 };
 
+const addOnPricing: {
+  [key in AddOnType]: { tiers: { min: number; max: number; price: number }[] };
+} = {
+  backLogo: {
+    tiers: [
+      { min: 1, max: 3, price: 200 },
+      { min: 4, max: 10, price: 100 },
+      { min: 11, max: Infinity, price: 50 },
+    ],
+  },
+  names: {
+    tiers: [
+      { min: 1, max: 10, price: 100 },
+      { min: 11, max: Infinity, price: 50 },
+    ],
+  },
+};
+
 export const getProductGroup = (productType: string): ProductGroup | null => {
   return productGroupMapping[productType] || null;
 };
@@ -105,6 +124,13 @@ export const getUnitPrice = (productType: string, quantity: number, embroidery: 
 
   return tier ? tier.price : 0;
 };
+
+export const getAddOnPrice = (addOnType: AddOnType, quantity: number): number => {
+  const pricing = addOnPricing[addOnType];
+  const tier = pricing.tiers.find(t => quantity >= t.min && quantity <= t.max);
+  return tier ? tier.price : 0;
+};
+
 
 export const getTierLabel = (productType: string, quantity: number, embroidery: EmbroideryOption): string => {
   const group = getProductGroup(productType);
