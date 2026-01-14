@@ -95,28 +95,28 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                         <TableHeader>
                           <TableRow>
                             <TableHead className="text-black py-2 px-3">Description</TableHead>
-                            <TableHead className="text-black text-right py-2 px-3">Unit Price</TableHead>
-                            <TableHead className="text-black text-right py-2 px-3">Quantity</TableHead>
+                            <TableHead className="text-black text-center py-2 px-3">Unit Price</TableHead>
+                            <TableHead className="text-black text-center py-2 px-3">Quantity</TableHead>
                             <TableHead className="text-black text-right py-2 px-3">Total</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                             <TableRow>
-                                <TableCell className="text-black text-xs font-medium py-2 px-3">Total Items</TableCell>
-                                <TableCell className="text-black text-xs text-right py-2 px-3">{formatCurrency(unitPrice)}</TableCell>
-                                <TableCell className="text-black text-xs text-right py-2 px-3">{groupData.totalQuantity}</TableCell>
-                                <TableCell className="text-black text-xs text-right py-2 px-3">{formatCurrency(itemsSubtotal)}</TableCell>
+                                <TableCell className="text-black text-xs font-medium py-2 px-3 align-middle">Total Items</TableCell>
+                                <TableCell className="text-black text-xs text-center py-2 px-3 align-middle">{formatCurrency(unitPrice)}</TableCell>
+                                <TableCell className="text-black text-xs text-center py-2 px-3 align-middle">{groupData.totalQuantity}</TableCell>
+                                <TableCell className="text-black text-xs text-right py-2 px-3 align-middle">{formatCurrency(itemsSubtotal)}</TableCell>
                             </TableRow>
                           {logoFee > 0 && (
                             <TableRow>
-                                <TableCell colSpan={3} className="text-black text-xs text-right py-2 px-3">One-time Logo Programming Fee</TableCell>
-                                <TableCell className="text-black text-xs text-right py-2 px-3">{formatCurrency(logoFee)}</TableCell>
+                                <TableCell colSpan={3} className="text-black text-xs text-right py-2 px-3 align-middle">One-time Logo Programming Fee</TableCell>
+                                <TableCell className="text-black text-xs text-right py-2 px-3 align-middle">{formatCurrency(logoFee)}</TableCell>
                             </TableRow>
                           )}
                           {backTextFee > 0 && (
                              <TableRow>
-                                <TableCell colSpan={3} className="text-black text-xs text-right py-2 px-3">One-time Back Text Programming Fee</TableCell>
-                                <TableCell className="text-black text-xs text-right py-2 px-3">{formatCurrency(backTextFee)}</TableCell>
+                                <TableCell colSpan={3} className="text-black text-xs text-right py-2 px-3 align-middle">One-time Back Text Programming Fee</TableCell>
+                                <TableCell className="text-black text-xs text-right py-2 px-3 align-middle">{formatCurrency(backTextFee)}</TableCell>
                             </TableRow>
                           )}
                         </TableBody>
