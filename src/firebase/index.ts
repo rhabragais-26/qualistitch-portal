@@ -11,7 +11,7 @@ export function initializeFirebase() {
   const app = isInitialized ? getApp() : initializeApp(firebaseConfig);
   const auth = getAuth(app);
   // Ensure that we get a new Firestore instance only if one doesn't already exist.
-  const firestore = initializeFirestore(app, {});
+  const firestore = isInitialized ? getFirestore(app) : initializeFirestore(app, {});
 
 
   // NOTE: Emulator connections have been removed to resolve connectivity issues
