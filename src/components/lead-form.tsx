@@ -77,6 +77,8 @@ import { v4 as uuidv4 } from 'uuid';
 import locations from '@/lib/ph-locations.json';
 import { StatusBanner } from '@/components/ui/status-banner';
 import { Label } from './ui/label';
+import { Checkbox } from './ui/checkbox';
+import { Textarea } from './ui/textarea';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -93,10 +95,12 @@ const formSchema = z.object({
   companyName: z.string().optional(),
   mobileNo: z.string().optional(),
   landlineNo: z.string().optional(),
-  houseStreet: z.string().min(1, {message: 'House/Street is required.'}),
-  barangay: z.string().min(1, {message: 'Barangay is required.'}),
-  city: z.string().min(1, {message: 'City/Municipality is required.'}),
-  province: z.string().min(1, {message: 'Province is required.'}),
+  isInternational: z.boolean().default(false),
+  houseStreet: z.string().optional(),
+  barangay: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  internationalAddress: z.string().optional(),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   courier: z.string().optional(),
   paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
@@ -114,6 +118,14 @@ const formSchema = z.object({
 }, {
     message: "Landline number must be in 00-0000-0000 format.",
     path: ["landlineNo"],
+}).refine(data => {
+    if (data.isInternational) {
+        return !!data.internationalAddress && data.internationalAddress.length > 0;
+    }
+    return !!data.houseStreet && !!data.barangay && !!data.city && !!data.province;
+}, {
+    message: "A complete address is required.",
+    path: ["internationalAddress"], 
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -224,10 +236,12 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
       companyName: '',
       mobileNo: '',
       landlineNo: '',
+      isInternational: false,
       houseStreet: '',
       barangay: '',
       city: '',
       province: '',
+      internationalAddress: '',
       courier: undefined,
       paymentType: undefined,
       orderType: undefined,
@@ -245,10 +259,12 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
             companyName: '',
             mobileNo: '',
             landlineNo: '',
+            isInternational: false,
             houseStreet: '',
             barangay: '',
             city: '',
             province: '',
+            internationalAddress: '',
             courier: undefined,
             paymentType: undefined,
             orderType: undefined,
@@ -303,6 +319,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
   const barangayValue = watch('barangay');
   const cityValue = watch('city');
   const provinceValue = watch('province');
+  const isInternational = watch('isInternational');
 
   useEffect(() => {
     if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
@@ -509,11 +526,11 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
       companyName: values.companyName ? toTitleCase(values.companyName) : '-',
       contactNumber: values.mobileNo || '-',
       landlineNumber: values.landlineNo || '-',
-      houseStreet: toTitleCase(values.houseStreet),
-      barangay: toTitleCase(values.barangay),
-      city: toTitleCase(values.city),
-      province: toTitleCase(values.province),
-      location: [values.houseStreet, values.barangay, values.city, values.province].filter(Boolean).map(toTitleCase).join(', '),
+      houseStreet: values.isInternational ? '' : toTitleCase(values.houseStreet || ''),
+      barangay: values.isInternational ? '' : toTitleCase(values.barangay || ''),
+      city: values.isInternational ? '' : toTitleCase(values.city || ''),
+      province: values.isInternational ? '' : toTitleCase(values.province || ''),
+      location: values.isInternational ? values.internationalAddress : [values.houseStreet, values.barangay, values.city, values.province].filter(Boolean).map(toTitleCase).join(', '),
       courier: values.courier || '-',
       paymentType: values.paymentType,
       salesRepresentative: userProfile.nickname,
@@ -539,10 +556,12 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
         companyName: '',
         mobileNo: '',
         landlineNo: '',
+        isInternational: false,
         houseStreet: '',
         barangay: '',
         city: '',
         province: '',
+        internationalAddress: '',
         courier: undefined,
         paymentType: undefined,
         orderType: undefined,
@@ -663,7 +682,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
   return (
     <>
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
-      <CardHeader className='pb-2'>
+      <CardHeader className='space-y-0 pb-2'>
         <div className="flex justify-between items-start">
           <div className="flex-1 space-y-0">
               <CardTitle className="font-headline text-2xl">Create New Order</CardTitle>
@@ -776,74 +795,115 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                     </FormItem>
                   )}/>
                 </div>
+                 <FormField
+                    control={form.control}
+                    name="isInternational"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                            <FormControl>
+                                <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                                <FormLabel className="text-xs">
+                                Is this order for delivery outside the Philippines? (Check the box to add a custom address.)
+                                </FormLabel>
+                            </div>
+                        </FormItem>
+                    )}
+                 />
               </div>
 
               {/* Address Info */}
               <div className="space-y-3">
-                 <FormField control={form.control} name="houseStreet" render={({field}) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}/>
-                <div className="grid grid-cols-2 gap-x-4">
-                  <FormField control={form.control} name="barangay" render={({field}) => (
-                    <FormItem className="relative">
-                      <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
-                      <FormControl>
-                        <Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 150)} autoComplete="off" />
-                      </FormControl>
-                      {barangayValue && barangaySuggestions.length > 0 && !selectedLead && (
-                        <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                          <CardContent className="p-2 max-h-40 overflow-y-auto">
-                            {barangaySuggestions.map((barangay, index) => (
-                              <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleBarangaySuggestionClick(barangay)}>
-                                {barangay}
-                              </div>
-                            ))}
-                          </CardContent>
-                        </Card>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}/>
-                  <FormField control={form.control} name="city" render={({field}) => (
-                    <FormItem className="relative">
-                      <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
-                      <FormControl>
-                        <Input {...field} onBlur={() => setTimeout(() => setCitySuggestions([]), 150)} autoComplete="off" />
-                      </FormControl>
-                      {cityValue && citySuggestions.length > 0 && !selectedLead && (
-                        <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                        <CardContent className="p-2 max-h-40 overflow-y-auto">
-                            {citySuggestions.map((city, index) => (
-                            <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCitySuggestionClick(city)}>
-                                <p className="font-semibold">{city.name} <span className="font-normal text-gray-500">({city.type})</span></p>
-                                <p className="text-xs text-gray-500">{city.province}</p>
-                            </div>
-                            ))}
-                        </CardContent>
-                        </Card>
-                      )}
-                      {cityValue && citySuggestions.length === 0 && !citiesAndMunicipalities.some(c => c.name.toLowerCase() === cityValue.toLowerCase()) && <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"><CardContent className='p-2'><p className='text-muted-foreground'>No results found</p></CardContent></Card>}
-                      <FormMessage />
-                    </FormItem>
-                  )}/>
-                </div>
-                 <FormField control={form.control} name="province" render={({field}) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}/>
-                <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-black text-xs">Complete Address</FormLabel>
-                    <FormControl>
-                      <Input readOnly value={concatenatedAddress} className="h-10 text-xs bg-muted" />
-                    </FormControl>
-                </FormItem>
+                 {isInternational ? (
+                    <FormField
+                        control={form.control}
+                        name="internationalAddress"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />International Address</FormLabel>
+                                <FormControl>
+                                    <Textarea
+                                        placeholder="Enter the full international address"
+                                        className="resize-y min-h-[120px]"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                 ) : (
+                    <>
+                        <FormField control={form.control} name="houseStreet" render={({field}) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street & Others</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}/>
+                        <div className="grid grid-cols-2 gap-x-4">
+                        <FormField control={form.control} name="barangay" render={({field}) => (
+                            <FormItem className="relative">
+                            <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
+                            <FormControl>
+                                <Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 150)} autoComplete="off" />
+                            </FormControl>
+                            {barangayValue && barangaySuggestions.length > 0 && !selectedLead && (
+                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                                <CardContent className="p-2 max-h-40 overflow-y-auto">
+                                    {barangaySuggestions.map((barangay, index) => (
+                                    <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleBarangaySuggestionClick(barangay)}>
+                                        {barangay}
+                                    </div>
+                                    ))}
+                                </CardContent>
+                                </Card>
+                            )}
+                            <FormMessage />
+                            </FormItem>
+                        )}/>
+                        <FormField control={form.control} name="city" render={({field}) => (
+                            <FormItem className="relative">
+                            <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
+                            <FormControl>
+                                <Input {...field} onBlur={() => setTimeout(() => setCitySuggestions([]), 150)} autoComplete="off" />
+                            </FormControl>
+                            {cityValue && citySuggestions.length > 0 && !selectedLead && (
+                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                                <CardContent className="p-2 max-h-40 overflow-y-auto">
+                                    {citySuggestions.map((city, index) => (
+                                    <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCitySuggestionClick(city)}>
+                                        <p className="font-semibold">{city.name} <span className="font-normal text-gray-500">({city.type})</span></p>
+                                        <p className="text-xs text-gray-500">{city.province}</p>
+                                    </div>
+                                    ))}
+                                </CardContent>
+                                </Card>
+                            )}
+                            {cityValue && citySuggestions.length === 0 && !citiesAndMunicipalities.some(c => c.name.toLowerCase() === cityValue.toLowerCase()) && <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"><CardContent className='p-2'><p className='text-muted-foreground'>No results found</p></CardContent></Card>}
+                            <FormMessage />
+                            </FormItem>
+                        )}/>
+                        </div>
+                        <FormField control={form.control} name="province" render={({field}) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}/>
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2 text-black text-xs">Complete Address</FormLabel>
+                            <FormControl>
+                            <Input readOnly value={concatenatedAddress} className="h-10 text-xs bg-muted" />
+                            </FormControl>
+                        </FormItem>
+                    </>
+                 )}
               </div>
             </div>
 
@@ -1268,4 +1328,3 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
-
