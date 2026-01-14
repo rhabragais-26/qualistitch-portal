@@ -33,9 +33,12 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
 
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
+      const isClientOwned = order.productType === 'Client Owned';
       const productGroup = getProductGroup(order.productType);
-      if (!productGroup) return acc;
       
+      // Allow 'Client Owned' products to be processed even without a product group for pricing.
+      if (!productGroup && !isClientOwned) return acc;
+
       const groupKey = `${order.productType}-${order.embroidery}`;
       if (!acc[groupKey]) {
         acc[groupKey] = {
@@ -54,7 +57,8 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
   const grandTotal = useMemo(() => {
     let total = 0;
     Object.entries(groupedOrders).forEach(([groupKey, group]) => {
-      const unitPrice = getUnitPrice(group.productType, group.totalQuantity, group.embroidery);
+      const isClientOwned = group.productType === 'Client Owned';
+      const unitPrice = isClientOwned ? 0 : getUnitPrice(group.productType, group.totalQuantity, group.embroidery);
       const { logoFee, backTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery);
       let subtotal = group.totalQuantity * unitPrice + logoFee + backTextFee;
       
@@ -89,8 +93,9 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
           ) : (
             <div className="space-y-6">
               {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
-                const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery);
-                const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery);
+                const isClientOwned = groupData.productType === 'Client Owned';
+                const unitPrice = isClientOwned ? 0 : getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery);
+                const tierLabel = isClientOwned ? 'N/A' : getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery);
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
