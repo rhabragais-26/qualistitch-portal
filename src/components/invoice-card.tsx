@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Order } from './lead-form';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
-import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption } from '@/lib/pricing';
+import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getTierLabel } from '@/lib/pricing';
 import { Button } from './ui/button';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Label } from './ui/label';
@@ -83,6 +83,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
             <div className="space-y-6">
               {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
                 const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroideryOption);
+                const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, embroideryOption);
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, embroideryOption);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 const subtotal = itemsSubtotal + logoFee + backTextFee;
@@ -94,7 +95,8 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="text-black py-2 px-3">Description</TableHead>
+                            <TableHead className="text-black py-2 px-3">Details</TableHead>
+                            <TableHead className="text-black text-center py-2 px-3">Category</TableHead>
                             <TableHead className="text-black text-center py-2 px-3">Unit Price</TableHead>
                             <TableHead className="text-black text-center py-2 px-3">Quantity</TableHead>
                             <TableHead className="text-black text-right py-2 px-3">Total</TableHead>
@@ -102,27 +104,28 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                         </TableHeader>
                         <TableBody>
                             <TableRow>
-                                <TableCell className="text-black text-xs font-medium py-2 px-3 align-middle">Total Items</TableCell>
+                                <TableCell className="text-black text-xs font-medium py-2 px-3 align-middle">Items Ordered</TableCell>
+                                <TableCell className="text-black text-xs text-center py-2 px-3 align-middle">{tierLabel}</TableCell>
                                 <TableCell className="text-black text-xs text-center py-2 px-3 align-middle">{formatCurrency(unitPrice)}</TableCell>
                                 <TableCell className="text-black text-xs text-center py-2 px-3 align-middle">{groupData.totalQuantity}</TableCell>
                                 <TableCell className="text-black text-xs text-right py-2 px-3 align-middle">{formatCurrency(itemsSubtotal)}</TableCell>
                             </TableRow>
                           {logoFee > 0 && (
                             <TableRow>
-                                <TableCell colSpan={3} className="text-black text-xs text-right py-2 px-3 align-middle">One-time Logo Programming Fee</TableCell>
+                                <TableCell colSpan={4} className="text-black text-xs text-right py-2 px-3 align-middle">One-time Logo Programming Fee</TableCell>
                                 <TableCell className="text-black text-xs text-right py-2 px-3 align-middle">{formatCurrency(logoFee)}</TableCell>
                             </TableRow>
                           )}
                           {backTextFee > 0 && (
                              <TableRow>
-                                <TableCell colSpan={3} className="text-black text-xs text-right py-2 px-3 align-middle">One-time Back Text Programming Fee</TableCell>
+                                <TableCell colSpan={4} className="text-black text-xs text-right py-2 px-3 align-middle">One-time Back Text Programming Fee</TableCell>
                                 <TableCell className="text-black text-xs text-right py-2 px-3 align-middle">{formatCurrency(backTextFee)}</TableCell>
                             </TableRow>
                           )}
                         </TableBody>
                         <ShadTableFooter>
                             <TableRow>
-                                <TableCell colSpan={3} className="text-right font-bold text-black py-2 px-3">Subtotal</TableCell>
+                                <TableCell colSpan={4} className="text-right font-bold text-black py-2 px-3">Subtotal</TableCell>
                                 <TableCell className="text-right font-bold text-black py-2 px-3">{formatCurrency(subtotal)}</TableCell>
                             </TableRow>
                         </ShadTableFooter>

@@ -106,6 +106,24 @@ export const getUnitPrice = (productType: string, quantity: number, embroidery: 
   return tier ? tier.price : 0;
 };
 
+export const getTierLabel = (productType: string, quantity: number, embroidery: EmbroideryOption): string => {
+  const group = getProductGroup(productType);
+  if (!group) return '';
+
+  const pricing = pricingTiers[group][embroidery];
+  const tier = pricing.tiers.find(t => quantity >= t.min && quantity <= t.max);
+
+  if (!tier) return '';
+
+  if (tier.max === Infinity) {
+    return `${tier.min} pcs & above`;
+  }
+  if (tier.min === tier.max) {
+      return `${tier.min} pc(s)`;
+  }
+  return `${tier.min}–${tier.max} pcs`;
+};
+
 export const getProgrammingFees = (quantity: number, embroidery: EmbroideryOption): { logoFee: number; backTextFee: number } => {
   if (quantity >= 1 && quantity <= 3) {
     const logoFee = 500;
@@ -114,5 +132,3 @@ export const getProgrammingFees = (quantity: number, embroidery: EmbroideryOptio
   }
   return { logoFee: 0, backTextFee: 0 };
 };
-
-    
