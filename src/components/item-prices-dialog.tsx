@@ -112,12 +112,13 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
         </CardHeader>
         <CardContent className="p-4 flex-1 overflow-hidden">
             <ScrollArea className="h-full pr-4">
+             <h3 className="font-bold text-lg mb-2 text-amber-300">Item Prices</h3>
             <Table>
                 <TableHeader>
                     <TableRow className="border-b-gray-600">
-                        <TableHead className="text-white">Product Type</TableHead>
-                        <TableHead className="text-white">Embroidery</TableHead>
-                        {quantityTiers.map(tier => <TableHead key={tier} className="text-white text-center">{tier === 1000 ? '1k+' : `${tier}+`}</TableHead>)}
+                        <TableHead className="text-yellow-300">Product Type</TableHead>
+                        <TableHead className="text-yellow-300">Embroidery</TableHead>
+                        {quantityTiers.map(tier => <TableHead key={tier} className="text-yellow-300 text-center">{tier === 1000 ? '1k+' : `${tier}+`}</TableHead>)}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -141,8 +142,8 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
              <Table>
                 <TableHeader>
                     <TableRow className="border-b-gray-600">
-                        <TableHead className="text-white">Add On Type</TableHead>
-                        {addOnTiers.map(tier => <TableHead key={tier} className="text-white text-center">{tier}+ pcs</TableHead>)}
+                        <TableHead className="text-yellow-300">Add On Type</TableHead>
+                        {addOnTiers.map(tier => <TableHead key={tier} className="text-yellow-300 text-center">{tier}+ pcs</TableHead>)}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
