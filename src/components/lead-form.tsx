@@ -87,7 +87,7 @@ const orderSchema = z.object({
   color: z.string().min(1, "Color cannot be empty."),
   size: z.string().min(1, "Size cannot be empty."),
   quantity: z.number().min(1, "Quantity must be at least 1."),
-  embroidery: z.enum(['logo', 'logoAndText']),
+  embroidery: z.enum(['logo', 'logoAndText', 'name']),
 });
 
 export type Order = z.infer<typeof orderSchema>;
@@ -200,7 +200,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
   const [sizeQuantities, setSizeQuantities] = useState(
     productSizes.map(size => ({ size, quantity: 0 }))
   );
-  const [newOrderEmbroidery, setNewOrderEmbroidery] = useState<'logo' | 'logoAndText'>('logo');
+  const [newOrderEmbroidery, setNewOrderEmbroidery] = useState<'logo' | 'logoAndText' | 'name'>('logo');
   const firestore = useFirestore();
   const { userProfile } = useUser();
   const [editingOrder, setEditingOrder] = useState<{order: Order, index: number} | null>(null);
@@ -1012,9 +1012,10 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                       </div>
                       <div className="flex items-center gap-4">
                         <Label>Embroidery Option:</Label>
-                        <RadioGroup onValueChange={(v) => setNewOrderEmbroidery(v as 'logo' | 'logoAndText')} value={newOrderEmbroidery} className="flex">
+                        <RadioGroup onValueChange={(v) => setNewOrderEmbroidery(v as 'logo' | 'logoAndText' | 'name')} value={newOrderEmbroidery} className="flex">
                             <div className="flex items-center space-x-2"><RadioGroupItem value="logo" id="emb-logo" /><Label htmlFor="emb-logo">Logo Only</Label></div>
                             <div className="flex items-center space-x-2"><RadioGroupItem value="logoAndText" id="emb-logoAndText" /><Label htmlFor="emb-logoAndText">Logo + Back Text</Label></div>
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="name" id="emb-name" /><Label htmlFor="emb-name">Name Only</Label></div>
                         </RadioGroup>
                       </div>
                       <div className="space-y-4">

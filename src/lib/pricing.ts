@@ -1,7 +1,7 @@
 
 
 export type ProductGroup = 'GroupA' | 'GroupB' | 'GroupC';
-export type EmbroideryOption = 'logo' | 'logoAndText';
+export type EmbroideryOption = 'logo' | 'logoAndText' | 'name';
 export type AddOnType = 'backLogo' | 'names' | 'patches';
 
 const productGroupMapping: { [key: string]: ProductGroup } = {
@@ -15,7 +15,7 @@ const productGroupMapping: { [key: string]: ProductGroup } = {
 
 const pricingTiers: {
   [key in ProductGroup]: {
-    [key in EmbroideryOption]: {
+    [key in 'logo' | 'logoAndText']: {
       tiers: { min: number; max: number; price: number }[];
     };
   };
@@ -126,8 +126,10 @@ export const getUnitPrice = (productType: string, quantity: number, embroidery: 
   if (productType === 'Client Owned') return 0;
   const group = getProductGroup(productType);
   if (!group) return 0;
+  
+  const embroideryForPricing = embroidery === 'name' ? 'logo' : embroidery;
 
-  const pricing = pricingTiers[group][embroidery];
+  const pricing = pricingTiers[group][embroideryForPricing];
   const tier = pricing.tiers.find(t => quantity >= t.min && quantity <= t.max);
 
   return tier ? tier.price : 0;
@@ -152,7 +154,8 @@ export const getTierLabel = (productType: string, quantity: number, embroidery: 
   const group = getProductGroup(productType);
   if (!group) return '';
 
-  const pricing = pricingTiers[group][embroidery];
+  const embroideryForPricing = embroidery === 'name' ? 'logo' : embroidery;
+  const pricing = pricingTiers[group][embroideryForPricing];
   const tier = pricing.tiers.find(t => quantity >= t.min && quantity <= t.max);
 
   if (!tier) return '';
@@ -167,6 +170,10 @@ export const getTierLabel = (productType: string, quantity: number, embroidery: 
 };
 
 export const getProgrammingFees = (quantity: number, embroidery: EmbroideryOption, isClientOwned: boolean = false): { logoFee: number; backTextFee: number } => {
+  if (embroidery === 'name') {
+    return { logoFee: 0, backTextFee: 0 };
+  }
+
   if (isClientOwned) {
     const logoFee = 500;
     const backTextFee = embroidery === 'logoAndText' ? 300 : 0;
