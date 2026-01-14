@@ -60,7 +60,12 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
       const isClientOwned = group.productType === 'Client Owned';
       const unitPrice = isClientOwned ? 0 : getUnitPrice(group.productType, group.totalQuantity, group.embroidery);
       const { logoFee, backTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery);
-      let subtotal = group.totalQuantity * unitPrice + logoFee + backTextFee;
+
+      let subtotal = group.totalQuantity * unitPrice;
+
+      if (isClientOwned) {
+        subtotal += logoFee + backTextFee;
+      }
       
       const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0 };
       if (groupAddOns.backLogo > 0) {
@@ -70,6 +75,10 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
       if (groupAddOns.names > 0) {
           const namesPrice = getAddOnPrice('names', group.totalQuantity);
           subtotal += groupAddOns.names * namesPrice;
+      }
+      
+      if (!isClientOwned) {
+          subtotal += logoFee + backTextFee;
       }
       
       total += subtotal;
@@ -105,7 +114,10 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                 const backLogoTotal = groupAddOns.backLogo * backLogoPrice;
                 const namesTotal = groupAddOns.names * namesPrice;
 
-                const subtotal = itemsSubtotal + logoFee + backTextFee + backLogoTotal + namesTotal;
+                let subtotal = itemsSubtotal + backLogoTotal + namesTotal;
+                if (!isClientOwned || (isClientOwned && (logoFee > 0 || backTextFee > 0))) {
+                  subtotal += logoFee + backTextFee;
+                }
                 
                 return (
                   <div key={groupKey}>
