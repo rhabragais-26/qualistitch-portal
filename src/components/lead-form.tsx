@@ -1,3 +1,4 @@
+
 "use client";
 
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -642,7 +643,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
   return (
     <>
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
-      <CardHeader className="space-y-0">
+      <CardHeader>
         <div className="flex justify-between items-start">
           <div className="flex-1">
               <CardTitle className="font-headline text-2xl">Create New Order</CardTitle>
@@ -828,7 +829,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
 
             <Separator className="my-4" />
             
-            {/* Order Details */}
+            <h3 className="font-headline text-xl mt-4">Order Details</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-4">
               <FormField control={form.control} name="orderType" render={({field}) => (
                   <FormItem>
@@ -1270,3 +1271,4 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
