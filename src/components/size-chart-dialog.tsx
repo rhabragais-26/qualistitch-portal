@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { isEqual } from 'lodash';
@@ -41,7 +41,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const { toast } = useToast();
-  const { isAdmin } = useUser();
+  const { user, isAdmin, isUserLoading: isAuthLoading } = useUser();
   
   const firestore = useFirestore();
   const sizeChartRef = useMemoFirebase(() => firestore ? doc(firestore, 'sizeCharts', 'default') : null, [firestore]);
@@ -193,22 +193,34 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   };
 
   const handleSave = async () => {
-    if (!sizeChartRef || !isAdmin) return;
-    try {
-        await setDoc(sizeChartRef, sizeChartData, { merge: true });
+    if (!sizeChartRef) return;
+    if (!isAdmin) {
+      const permissionError = new FirestorePermissionError({
+        path: sizeChartRef.path,
+        operation: 'write',
+        requestResourceData: sizeChartData,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      return;
+    }
+
+    setDoc(sizeChartRef, sizeChartData, { merge: true })
+      .then(() => {
         toast({
-            title: 'Success',
-            description: 'Size charts have been saved successfully.',
+          title: 'Success',
+          description: 'Size charts have been saved successfully.',
         });
         setIsDirty(false);
-    } catch (e: any) {
-        toast({
-            variant: 'destructive',
-            title: 'Error Saving',
-            description: e.message || 'Could not save the size charts.',
+      })
+      .catch((error) => {
+        const permissionError = new FirestorePermissionError({
+          path: sizeChartRef.path,
+          operation: 'write',
+          requestResourceData: sizeChartData,
         });
-    }
-  }
+        errorEmitter.emit('permission-error', permissionError);
+      });
+  };
   
   const renderUploadBox = (tab: TabValue) => {
     const data = sizeChartData[tab];
@@ -251,7 +263,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
     );
   }
 
-  if (isLoading) {
+  if (isLoading || isAuthLoading) {
     return (
          <div
             className={cn("fixed z-50")}
@@ -348,3 +360,5 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
     </>
   );
 }
+
+    
