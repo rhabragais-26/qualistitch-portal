@@ -59,13 +59,10 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
     Object.entries(groupedOrders).forEach(([groupKey, group]) => {
       const isClientOwned = group.productType === 'Client Owned';
       const unitPrice = isClientOwned ? 0 : getUnitPrice(group.productType, group.totalQuantity, group.embroidery);
-      const { logoFee, backTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery);
+      const { logoFee, backTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery, isClientOwned);
 
       let subtotal = group.totalQuantity * unitPrice;
 
-      if (isClientOwned) {
-        subtotal += logoFee + backTextFee;
-      }
       
       const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0 };
       if (groupAddOns.backLogo > 0) {
@@ -77,7 +74,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
           subtotal += groupAddOns.names * namesPrice;
       }
       
-      if (!isClientOwned) {
+      if (!isClientOwned || (isClientOwned && (logoFee > 0 || backTextFee > 0))) {
           subtotal += logoFee + backTextFee;
       }
       
@@ -105,7 +102,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                 const isClientOwned = groupData.productType === 'Client Owned';
                 const unitPrice = isClientOwned ? 0 : getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery);
                 const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery);
-                const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery);
+                const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
                 const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0 };

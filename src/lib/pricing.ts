@@ -159,7 +159,13 @@ export const getTierLabel = (productType: string, quantity: number, embroidery: 
   return `${tier.min}–${tier.max} pcs`;
 };
 
-export const getProgrammingFees = (quantity: number, embroidery: EmbroideryOption): { logoFee: number; backTextFee: number } => {
+export const getProgrammingFees = (quantity: number, embroidery: EmbroideryOption, isClientOwned: boolean = false): { logoFee: number; backTextFee: number } => {
+  if (isClientOwned) {
+    const logoFee = 500;
+    const backTextFee = embroidery === 'logoAndText' ? 300 : 0;
+    return { logoFee, backTextFee };
+  }
+  
   if (quantity >= 1 && quantity <= 3) {
     const logoFee = 500;
     const backTextFee = embroidery === 'logoAndText' ? 300 : 0;
