@@ -702,7 +702,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
               
               {/* Customer and Contact Info */}
               <div className="space-y-3 pt-4">
-                 <div className="flex justify-center items-center h-8 mb-2">
+                 <div className="flex justify-center items-center h-8 mb-4">
                   {customerStatus && customerNameValue && (
                     <div className={cn("animate-in fade-in-down flex items-center gap-2")}>
                       {customerStatus === 'Repeat' ? (
@@ -733,7 +733,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                   )}
                 </div>
                 <FormField control={form.control} name="customerName" render={({field}) => (
-                  <FormItem className="relative">
+                  <FormItem className="relative mt-2">
                     <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
                     <FormControl>
                       <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} 
@@ -1330,11 +1330,3 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
-
-    
-
-
-
-
-
-
