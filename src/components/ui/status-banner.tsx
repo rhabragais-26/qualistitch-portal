@@ -1,4 +1,3 @@
-
 'use client';
 
 import { cn } from "@/lib/utils";
@@ -24,7 +23,7 @@ export function StatusBanner({
 }: StatusBannerProps) {
   return (
     <div className={cn(
-      "relative w-48 h-8 rounded-full border-2 overflow-hidden", 
+      "relative w-44 h-8 rounded-full border-2 overflow-hidden", 
       borderClassName,
       className
     )} style={{ borderColor: borderClassName ? undefined : borderColor }}>
