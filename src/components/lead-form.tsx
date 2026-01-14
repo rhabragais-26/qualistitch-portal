@@ -701,7 +701,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               
               {/* Customer and Contact Info */}
-              <div className="space-y-3">
+              <div className="space-y-3 pt-8">
                  <div className="flex justify-center items-center h-8 mb-2">
                   {customerStatus && customerNameValue && (
                     <div className={cn("animate-in fade-in-down flex items-center gap-2")}>
@@ -1332,6 +1332,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
 }
 
     
+
 
 
 
