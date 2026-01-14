@@ -3,13 +3,17 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
-import { Card, CardContent, CardHeader } from './ui/card';
-import { X, GripVertical } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardFooter } from './ui/card';
+import { X, GripVertical, Upload, Trash2, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { getProductGroup, getUnitPrice, EmbroideryOption, getAddOnPrice, AddOnType } from '@/lib/pricing';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
+
 
 const productTypes = [
     'Executive Jacket 1', 'Executive Jacket v2 (with lines)', 'Turtle Neck Jacket',
@@ -95,9 +99,8 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
       ref={cardRef}
       className={cn("fixed z-50", isDragging && "select-none")}
       style={{ left: `${position.x}px`, top: `${position.y}px` }}
-      onMouseDown={handleMouseDown}
     >
-      <Card className="w-[850px] h-[650px] shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
+      <Card className="w-[850px] h-[650px] shadow-2xl bg-gray-700 text-white border-gray-600 flex flex-col">
         <CardHeader 
             ref={headerRef}
             className={cn("flex flex-row items-center justify-between p-2 cursor-move", isDragging && "cursor-grabbing")}
