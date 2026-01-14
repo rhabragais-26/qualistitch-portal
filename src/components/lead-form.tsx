@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react"
@@ -476,18 +477,18 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
   useEffect(() => {
     if (isPatches) {
       setNewOrderColor('N/A');
-    } else if (!availableColors.includes(newOrderColor)) {
+    } else if (!isClientOwned && !availableColors.includes(newOrderColor)) {
       setNewOrderColor('');
     }
-  }, [newOrderProductType, isPatches, availableColors, newOrderColor]);
+  }, [newOrderProductType, isPatches, availableColors, newOrderColor, isClientOwned]);
   
   useEffect(() => {
-     if (isPatches) {
-      setSizeQuantities(productSizes.map(size => ({ size: 'N/A', quantity: 0 })));
+     if (isPatches || isClientOwned) {
+      setSizeQuantities([{ size: 'N/A', quantity: 0 }]);
     } else {
       setSizeQuantities(productSizes.map(size => ({ size, quantity: 0 })));
     }
-  }, [isPatches]);
+  }, [isPatches, isClientOwned]);
 
   const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
     const rawValue = e.target.value.replace(/\D/g, '');
@@ -612,7 +613,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
       if (singleQuantity > 0) {
         newOrders.push({
           productType: newOrderProductType,
-          color: isPatches ? 'N/A' : newOrderColor || 'N/A',
+          color: isClientOwned ? newOrderColor : 'N/A',
           size: 'N/A',
           quantity: singleQuantity,
           embroidery: newOrderEmbroidery,
@@ -1019,20 +1020,30 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                       {!isPatches && (
                         <div className='flex items-center gap-2'>
                           <Label>Color:</Label>
-                          <Select onValueChange={setNewOrderColor} value={newOrderColor}>
-                            <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
-                            <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
-                          </Select>
+                           {isClientOwned ? (
+                                <Input 
+                                    placeholder="Enter color" 
+                                    value={newOrderColor} 
+                                    onChange={(e) => setNewOrderColor(e.target.value)}
+                                />
+                            ) : (
+                                <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={isPatches}>
+                                <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
+                                <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
+                                </Select>
+                            )}
                         </div>
                       )}
-                      <div className="flex items-center gap-4">
-                        <Label>Embroidery Option:</Label>
-                        <RadioGroup onValueChange={(v) => setNewOrderEmbroidery(v as 'logo' | 'logoAndText' | 'name')} value={newOrderEmbroidery} className="flex">
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="logo" id="emb-logo" /><Label htmlFor="emb-logo">Logo Only</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="logoAndText" id="emb-logoAndText" /><Label htmlFor="emb-logoAndText">Logo + Back Text</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="name" id="emb-name" /><Label htmlFor="emb-name">Name Only</Label></div>
-                        </RadioGroup>
-                      </div>
+                      {!isClientOwned && (
+                          <div className="flex items-center gap-4">
+                            <Label>Embroidery Option:</Label>
+                            <RadioGroup onValueChange={(v) => setNewOrderEmbroidery(v as 'logo' | 'logoAndText' | 'name')} value={newOrderEmbroidery} className="flex">
+                                <div className="flex items-center space-x-2"><RadioGroupItem value="logo" id="emb-logo" /><Label htmlFor="emb-logo">Logo Only</Label></div>
+                                <div className="flex items-center space-x-2"><RadioGroupItem value="logoAndText" id="emb-logoAndText" /><Label htmlFor="emb-logoAndText">Logo + Back Text</Label></div>
+                                <div className="flex items-center space-x-2"><RadioGroupItem value="name" id="emb-name" /><Label htmlFor="emb-name">Name Only</Label></div>
+                            </RadioGroup>
+                          </div>
+                      )}
                       <div className="space-y-4">
                          {showSingleQuantity ? (
                             <div className="flex items-center justify-center gap-4 pt-4">
@@ -1086,7 +1097,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                       <Button
                         type="button"
                         onClick={handleAddOrder}
-                        disabled={!newOrderProductType || (!isPatches && !newOrderColor)}
+                        disabled={!newOrderProductType || (!isPatches && !newOrderColor) || (showSingleQuantity ? singleQuantity === 0 : sizeQuantities.every(sq => sq.quantity === 0))}
                       >
                         Add
                       </Button>
@@ -1384,5 +1395,7 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
+    
 
     
