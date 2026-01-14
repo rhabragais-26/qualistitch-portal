@@ -12,7 +12,8 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose, DialogFooter, DialogTrigger } from './ui/dialog';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, Plus, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type InvoiceCardProps = {
   orders: Order[];
@@ -36,7 +37,6 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
       const isClientOwned = order.productType === 'Client Owned';
       const productGroup = getProductGroup(order.productType);
       
-      // Allow 'Client Owned' products to be processed even without a product group for pricing.
       if (!productGroup && !isClientOwned) return acc;
 
       const groupKey = `${order.productType}-${order.embroidery}`;
@@ -83,6 +83,16 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
     return total;
   }, [groupedOrders, addOns]);
 
+  const handleRemoveAddOn = (groupKey: string, addOnType: keyof AddOns) => {
+    setAddOns(prev => ({
+        ...prev,
+        [groupKey]: {
+            ...(prev[groupKey] || { backLogo: 0, names: 0 }),
+            [addOnType]: 0
+        }
+    }));
+  };
+
   return (
     <Card className="shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
       <CardHeader>
@@ -100,8 +110,8 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
             <div className="space-y-6">
               {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
                 const isClientOwned = groupData.productType === 'Client Owned';
-                const unitPrice = isClientOwned ? 0 : getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery);
                 const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery);
+                const unitPrice = isClientOwned ? 0 : getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery);
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
@@ -145,21 +155,35 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                                 <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(itemsSubtotal)}</TableCell>
                             </TableRow>
                            {groupAddOns.backLogo > 0 && (
-                            <TableRow>
+                            <TableRow className="group relative">
                                 <TableCell className="py-2 px-3 text-xs text-black align-middle">Add On: Back Logo</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(backLogoPrice)}</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.backLogo}</TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(backLogoTotal)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <span>{formatCurrency(backLogoTotal)}</span>
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveAddOn(groupKey, 'backLogo')}>
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                </TableCell>
                             </TableRow>
                            )}
                            {groupAddOns.names > 0 && (
-                            <TableRow>
+                            <TableRow className="group relative">
                                 <TableCell className="py-2 px-3 text-xs text-black align-middle">Add On: Names</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(namesPrice)}</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.names}</TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(namesTotal)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
+                                     <div className="flex items-center justify-end gap-2">
+                                        <span>{formatCurrency(namesTotal)}</span>
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveAddOn(groupKey, 'names')}>
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                </TableCell>
                             </TableRow>
                            )}
                           {logoFee > 0 && (
