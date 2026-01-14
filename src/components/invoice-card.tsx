@@ -324,7 +324,7 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
         <DialogHeader>
           <DialogTitle>Add Ons</DialogTitle>
           <DialogDescription>
-            Specify quantities for additional logos or names. Prices are based on the main product's quantity tier ({totalQuantity} pcs).
+            Specify quantities for additional logos, names or patches.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 py-4 flex flex-col items-center">
