@@ -95,7 +95,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
               {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
                 const isClientOwned = groupData.productType === 'Client Owned';
                 const unitPrice = isClientOwned ? 0 : getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery);
-                const tierLabel = isClientOwned ? 'N/A' : getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery);
+                const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery);
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 

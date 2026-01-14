@@ -116,6 +116,7 @@ export const getProductGroup = (productType: string): ProductGroup | null => {
 };
 
 export const getUnitPrice = (productType: string, quantity: number, embroidery: EmbroideryOption): number => {
+  if (productType === 'Client Owned') return 0;
   const group = getProductGroup(productType);
   if (!group) return 0;
 
@@ -133,6 +134,14 @@ export const getAddOnPrice = (addOnType: AddOnType, quantity: number): number =>
 
 
 export const getTierLabel = (productType: string, quantity: number, embroidery: EmbroideryOption): string => {
+  if (productType === 'Client Owned') {
+      const tier = pricingTiers.GroupA.logo.tiers.find(t => quantity >= t.min && quantity <= t.max);
+      if (!tier) return '';
+      if (tier.max === Infinity) return `${tier.min} pcs & above`;
+      if (tier.min === tier.max) return `${tier.min} pc(s)`;
+      return `${tier.min}–${tier.max} pcs`;
+  }
+
   const group = getProductGroup(productType);
   if (!group) return '';
 
