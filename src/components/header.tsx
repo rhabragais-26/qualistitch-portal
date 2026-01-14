@@ -173,12 +173,6 @@ const HeaderMemo = React.memo(function Header({
           </div>
           <nav className="flex items-center gap-2 h-full flex-1">
             {isClient && (
-              <Button variant="ghost" onClick={() => handleNavigation('/home')} className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/home']))}>
-                <Home className="mr-2" />
-                Home
-              </Button>
-            )}
-            {isClient && (
               <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment']))}>
