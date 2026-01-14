@@ -688,7 +688,21 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
               <CardTitle className="font-headline text-2xl">Create New Order</CardTitle>
                <div className="flex items-center gap-4">
                 <CardDescription className="text-gray-600">Fill in the details below to create a record for customer and order.</CardDescription>
-                <div className="h-8">
+              </div>
+          </div>
+          <div className="text-base text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
+            <div>{dateString} - {dayOfWeek} | <span className="blinking-time">{timeString}</span></div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form id="lead-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+              
+              {/* Customer and Contact Info */}
+              <div className="space-y-3">
+                 <div className="flex justify-center items-center h-8 mb-2">
                   {customerStatus && customerNameValue && (
                     <div className={cn("animate-in fade-in-down flex items-center gap-2")}>
                       {customerStatus === 'Repeat' ? (
@@ -718,20 +732,6 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                     </div>
                   )}
                 </div>
-              </div>
-          </div>
-          <div className="text-base text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
-            <div>{dateString} - {dayOfWeek} | <span className="blinking-time">{timeString}</span></div>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form id="lead-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-              
-              {/* Customer and Contact Info */}
-              <div className="space-y-3">
                 <FormField control={form.control} name="customerName" render={({field}) => (
                   <FormItem className="relative">
                     <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
@@ -885,25 +885,27 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                         </FormItem>
                     </>
                  )}
-                 <FormField
-                    control={form.control}
-                    name="isInternational"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                            <FormControl>
-                                <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                                <FormLabel className="text-xs">
-                                Is this order for delivery outside the Philippines? (Check the box to add a custom address.)
-                                </FormLabel>
-                            </div>
-                        </FormItem>
-                    )}
-                 />
+                 <div className='mt-4'>
+                    <FormField
+                        control={form.control}
+                        name="isInternational"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                <FormControl>
+                                    <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                    <FormLabel className="text-xs">
+                                    Is this order for delivery outside the Philippines? (Check the box to add a custom address.)
+                                    </FormLabel>
+                                </div>
+                            </FormItem>
+                        )}
+                    />
+                </div>
               </div>
             </div>
 
@@ -1330,5 +1332,6 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
 }
 
     
+
 
 
