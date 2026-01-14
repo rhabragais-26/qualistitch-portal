@@ -195,8 +195,8 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
   const [barangaySuggestions, setBarangaySuggestions] = useState<string[]>([]);
   const [showCalculator, setShowCalculator] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
-  const [isSizeChartDragging, setIsSizeChartDragging] = useState(isSizeChartDragging);
-  const [isCalculatorDragging, setIsCalculatorDragging] = useState(isCalculatorDragging);
+  const [isSizeChartDragging, setIsSizeChartDragging] = useState(false);
+  const [isCalculatorDragging, setIsCalculatorDragging] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [customerStatus, setCustomerStatus] = useState<'New' | 'Repeat' | null>(null);
   const [orderCount, setOrderCount] = useState(0);
