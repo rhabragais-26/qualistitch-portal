@@ -28,6 +28,9 @@ const formatCurrency = (value: number) => {
 type AddOns = {
   backLogo: number;
   names: number;
+  patches: number;
+  stitches: number;
+  stitchesQuantity: number;
 };
 
 export function InvoiceCard({ orders }: InvoiceCardProps) {
@@ -61,23 +64,34 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
     let total = 0;
     Object.entries(groupedOrders).forEach(([groupKey, group]) => {
       const isClientOwned = group.productType === 'Client Owned';
-      const unitPrice = isClientOwned ? 0 : getUnitPrice(group.productType, group.totalQuantity, group.embroidery);
+      const unitPrice = getUnitPrice(group.productType, group.totalQuantity, group.embroidery);
       const { logoFee, backTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery, isClientOwned);
 
       let subtotal = group.totalQuantity * unitPrice;
 
       
-      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0 };
+      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, patches: 0, stitches: 0, stitchesQuantity: 0 };
+
+      const itemTotalQuantity = group.totalQuantity;
+
       if (groupAddOns.backLogo > 0) {
-          const backLogoPrice = getAddOnPrice('backLogo', group.totalQuantity);
+          const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity);
           subtotal += groupAddOns.backLogo * backLogoPrice;
       }
       if (groupAddOns.names > 0) {
-          const namesPrice = getAddOnPrice('names', group.totalQuantity);
+          const namesPrice = getAddOnPrice('names', itemTotalQuantity);
           subtotal += groupAddOns.names * namesPrice;
       }
+      if (groupAddOns.patches > 0) {
+        const patchesPrice = getAddOnPrice('patches', itemTotalQuantity);
+        subtotal += groupAddOns.patches * patchesPrice;
+      }
+      if (groupAddOns.stitches > 0 && groupAddOns.stitchesQuantity > 0) {
+        const stitchesPrice = getAddOnPrice('stitches', groupAddOns.stitches);
+        subtotal += groupAddOns.stitchesQuantity * stitchesPrice;
+      }
       
-      if (!isClientOwned || (isClientOwned && (logoFee > 0 || backTextFee > 0))) {
+      if (isClientOwned || (quantity > 0 && quantity <=3)) {
           subtotal += logoFee + backTextFee;
       }
       
@@ -89,13 +103,19 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
   const handleConfirmRemoveAddOn = () => {
     if (!removingAddOn) return;
     const { groupKey, addOnType } = removingAddOn;
-    setAddOns(prev => ({
+    setAddOns(prev => {
+      const newGroupAddOns = {
+        ...(prev[groupKey] || { backLogo: 0, names: 0, patches: 0, stitches: 0, stitchesQuantity: 0 }),
+        [addOnType]: 0,
+      };
+      if (addOnType === 'stitches') {
+        newGroupAddOns.stitchesQuantity = 0;
+      }
+      return {
         ...prev,
-        [groupKey]: {
-            ...(prev[groupKey] || { backLogo: 0, names: 0 }),
-            [addOnType]: 0
-        }
-    }));
+        [groupKey]: newGroupAddOns,
+      }
+    });
     setRemovingAddOn(null);
   };
 
@@ -118,18 +138,25 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
               {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
                 const isClientOwned = groupData.productType === 'Client Owned';
                 const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery);
-                const unitPrice = isClientOwned ? 0 : getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery);
+                const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery);
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
-                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0 };
-                const backLogoPrice = getAddOnPrice('backLogo', groupData.totalQuantity);
-                const namesPrice = getAddOnPrice('names', groupData.totalQuantity);
+                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, patches: 0, stitches: 0, stitchesQuantity: 0 };
+                const itemTotalQuantity = groupData.totalQuantity;
+
+                const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity);
+                const namesPrice = getAddOnPrice('names', itemTotalQuantity);
+                const patchesPrice = getAddOnPrice('patches', itemTotalQuantity);
+                const stitchesPrice = getAddOnPrice('stitches', groupAddOns.stitches);
+
                 const backLogoTotal = groupAddOns.backLogo * backLogoPrice;
                 const namesTotal = groupAddOns.names * namesPrice;
+                const patchesTotal = groupAddOns.patches * patchesPrice;
+                const stitchesTotal = groupAddOns.stitchesQuantity * stitchesPrice;
 
-                let subtotal = itemsSubtotal + backLogoTotal + namesTotal;
-                if (!isClientOwned || (isClientOwned && (logoFee > 0 || backTextFee > 0))) {
+                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + patchesTotal + stitchesTotal;
+                if (isClientOwned || (groupData.totalQuantity > 0 && groupData.totalQuantity <=3)) {
                   subtotal += logoFee + backTextFee;
                 }
                 
@@ -197,6 +224,42 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                                 </TableCell>
                             </TableRow>
                            )}
+                            {groupAddOns.patches > 0 && (
+                                <TableRow className="group relative">
+                                    <TableCell className="py-2 px-3 text-xs text-black align-middle">
+                                        <div className="flex items-center gap-2">
+                                            <span>Add On: Patches</span>
+                                            <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'patches' })}>
+                                                <X className="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
+                                    <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(patchesPrice)}</TableCell>
+                                    <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.patches}</TableCell>
+                                    <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
+                                        {formatCurrency(patchesTotal)}
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                            {groupAddOns.stitches > 0 && groupAddOns.stitchesQuantity > 0 && (
+                                <TableRow className="group relative">
+                                    <TableCell className="py-2 px-3 text-xs text-black align-middle">
+                                        <div className="flex items-center gap-2">
+                                            <span>Add On: Stitches ({groupAddOns.stitches})</span>
+                                             <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'stitches' })}>
+                                                <X className="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
+                                    <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(stitchesPrice)}</TableCell>
+                                    <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.stitchesQuantity}</TableCell>
+                                    <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
+                                        {formatCurrency(stitchesTotal)}
+                                    </TableCell>
+                                </TableRow>
+                            )}
                           {logoFee > 0 && (
                             <TableRow>
                                 <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">One-time Logo Programming Fee</TableCell>
@@ -258,7 +321,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
 
 function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey: string, addOns: Record<string, AddOns>, setAddOns: React.Dispatch<React.SetStateAction<Record<string, AddOns>>>, totalQuantity: number }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [localAddOns, setLocalAddOns] = useState(addOns[groupKey] || { backLogo: 0, names: 0 });
+  const [localAddOns, setLocalAddOns] = useState(addOns[groupKey] || { backLogo: 0, names: 0, patches: 0, stitches: 0, stitchesQuantity: 0 });
 
   const handleSave = () => {
     setAddOns(prev => ({ ...prev, [groupKey]: localAddOns }));
@@ -266,7 +329,7 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   };
   
   const handleQuantityChange = (type: keyof AddOns, change: number) => {
-    setLocalAddOns(prev => ({...prev, [type]: Math.max(0, prev[type] + change)}));
+    setLocalAddOns(prev => ({...prev, [type]: Math.max(0, (prev[type] || 0) + change)}));
   }
 
   const handleInputChange = (type: keyof AddOns, value: string) => {
@@ -288,8 +351,8 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
             Specify quantities for additional logos or names. Prices are based on the main product's quantity tier ({totalQuantity} pcs).
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-            <div className="flex items-center justify-between">
+        <div className="space-y-6 py-4 flex flex-col items-center">
+            <div className="flex items-center justify-between w-full max-w-sm">
                 <Label htmlFor="backLogo" className="text-base">Back Logo</Label>
                 <div className="flex items-center gap-2">
                     <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('backLogo', -1)}><Minus className="h-4 w-4" /></Button>
@@ -297,12 +360,31 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
                     <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('backLogo', 1)}><Plus className="h-4 w-4" /></Button>
                 </div>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between w-full max-w-sm">
                 <Label htmlFor="names" className="text-base">Names</Label>
                  <div className="flex items-center gap-2">
                     <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('names', -1)}><Minus className="h-4 w-4" /></Button>
                     <Input id="names" type="text" value={localAddOns.names} onChange={(e) => handleInputChange('names', e.target.value)} className="w-16 text-center" />
                     <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('names', 1)}><Plus className="h-4 w-4" /></Button>
+                </div>
+            </div>
+             <div className="flex items-center justify-between w-full max-w-sm">
+                <Label htmlFor="patches" className="text-base">Patches</Label>
+                 <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('patches', -1)}><Minus className="h-4 w-4" /></Button>
+                    <Input id="patches" type="text" value={localAddOns.patches} onChange={(e) => handleInputChange('patches', e.target.value)} className="w-16 text-center" />
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('patches', 1)}><Plus className="h-4 w-4" /></Button>
+                </div>
+            </div>
+             <div className="flex items-center justify-between w-full max-w-sm">
+                <div className="flex flex-col">
+                    <Label htmlFor="stitches" className="text-base">No. of stitches per design</Label>
+                    <Input id="stitches" type="text" value={localAddOns.stitches} onChange={(e) => handleInputChange('stitches', e.target.value)} className="w-32 text-center mt-1" />
+                </div>
+                 <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('stitchesQuantity', -1)}><Minus className="h-4 w-4" /></Button>
+                    <Input id="stitchesQuantity" type="text" value={localAddOns.stitchesQuantity} onChange={(e) => handleInputChange('stitchesQuantity', e.target.value)} className="w-16 text-center" placeholder="Qty" />
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('stitchesQuantity', 1)}><Plus className="h-4 w-4" /></Button>
                 </div>
             </div>
         </div>

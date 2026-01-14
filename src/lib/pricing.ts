@@ -1,7 +1,7 @@
 
 export type ProductGroup = 'GroupA' | 'GroupB' | 'GroupC';
 export type EmbroideryOption = 'logo' | 'logoAndText';
-export type AddOnType = 'backLogo' | 'names';
+export type AddOnType = 'backLogo' | 'names' | 'patches' | 'stitches';
 
 const productGroupMapping: { [key: string]: ProductGroup } = {
   'Executive Jacket 1': 'GroupA',
@@ -109,6 +109,19 @@ const addOnPricing: {
       { min: 11, max: Infinity, price: 50 },
     ],
   },
+  patches: {
+    tiers: [
+      { min: 1, max: 10, price: 150 },
+      { min: 11, max: Infinity, price: 100 },
+    ],
+  },
+  stitches: {
+    tiers: [
+      { min: 1, max: 5000, price: 50 },
+      { min: 5001, max: 10000, price: 100 },
+      { min: 10001, max: Infinity, price: 150 },
+    ],
+  }
 };
 
 export const getProductGroup = (productType: string): ProductGroup | null => {
@@ -134,14 +147,6 @@ export const getAddOnPrice = (addOnType: AddOnType, quantity: number): number =>
 
 
 export const getTierLabel = (productType: string, quantity: number, embroidery: EmbroideryOption): string => {
-  if (productType === 'Client Owned') {
-      const tier = pricingTiers.GroupA.logo.tiers.find(t => quantity >= t.min && quantity <= t.max);
-      if (!tier) return '';
-      if (tier.max === Infinity) return `${tier.min} pcs & above`;
-      if (tier.min === tier.max) return `${tier.min} pc(s)`;
-      return `${tier.min}–${tier.max} pcs`;
-  }
-
   const group = getProductGroup(productType);
   if (!group) return '';
 
