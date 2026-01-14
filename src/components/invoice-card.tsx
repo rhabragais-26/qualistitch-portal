@@ -156,33 +156,37 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                             </TableRow>
                            {groupAddOns.backLogo > 0 && (
                             <TableRow className="group relative">
-                                <TableCell className="py-2 px-3 text-xs text-black align-middle">Add On: Back Logo</TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(backLogoPrice)}</TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.backLogo}</TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <span>{formatCurrency(backLogoTotal)}</span>
+                                <TableCell className="py-2 px-3 text-xs text-black align-middle">
+                                    <div className="flex items-center gap-2">
+                                        <span>Add On: Back Logo</span>
                                         <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveAddOn(groupKey, 'backLogo')}>
                                             <X className="h-3 w-3" />
                                         </Button>
                                     </div>
                                 </TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(backLogoPrice)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.backLogo}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
+                                    {formatCurrency(backLogoTotal)}
+                                </TableCell>
                             </TableRow>
                            )}
                            {groupAddOns.names > 0 && (
                             <TableRow className="group relative">
-                                <TableCell className="py-2 px-3 text-xs text-black align-middle">Add On: Names</TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(namesPrice)}</TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.names}</TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
-                                     <div className="flex items-center justify-end gap-2">
-                                        <span>{formatCurrency(namesTotal)}</span>
+                                <TableCell className="py-2 px-3 text-xs text-black align-middle">
+                                     <div className="flex items-center gap-2">
+                                        <span>Add On: Names</span>
                                         <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveAddOn(groupKey, 'names')}>
                                             <X className="h-3 w-3" />
                                         </Button>
                                     </div>
+                                </TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(namesPrice)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.names}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
+                                     {formatCurrency(namesTotal)}
                                 </TableCell>
                             </TableRow>
                            )}
