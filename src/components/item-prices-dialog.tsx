@@ -3,7 +3,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardFooter } from './ui/card';
+import { Card, CardContent, CardHeader } from './ui/card';
 import { X, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getProductGroup, getUnitPrice, EmbroideryOption, getAddOnPrice, AddOnType } from '@/lib/pricing';
@@ -112,7 +112,7 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
         </CardHeader>
         <CardContent className="p-4 flex-1 overflow-hidden">
             <ScrollArea className="h-full pr-4">
-             <h3 className="font-bold text-lg mb-2 text-amber-300">Item Prices</h3>
+             <h3 className="font-bold text-lg mb-2 text-orange-400">Item Prices</h3>
             <Table>
                 <TableHeader>
                     <TableRow className="border-b-gray-600">
@@ -138,7 +138,7 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
                 </TableBody>
             </Table>
             <Separator className="my-6 bg-gray-600"/>
-             <h3 className="font-bold text-lg mb-2 text-amber-300">Add On Prices</h3>
+             <h3 className="font-bold text-lg mb-2 text-orange-400">Add On Prices</h3>
              <Table>
                 <TableHeader>
                     <TableRow className="border-b-gray-600">
