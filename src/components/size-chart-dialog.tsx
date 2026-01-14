@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardFooter } from './ui/card';
 import { X, GripVertical, Upload, Trash2, Save } from 'lucide-react';
@@ -9,8 +8,10 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-
-const LOCAL_STORAGE_KEY = 'sizeChartData';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { isEqual } from 'lodash';
 
 type SizeChartInfo = {
   image: string | null;
@@ -18,6 +19,7 @@ type SizeChartInfo = {
 };
 
 type SizeChartData = {
+  id?: string;
   corporateJacket: SizeChartInfo;
   bomberJacket: SizeChartInfo;
   poloShirt: SizeChartInfo;
@@ -29,7 +31,7 @@ const initialSizeChartData: SizeChartData = {
   poloShirt: { image: null, uploadTime: null },
 };
 
-type TabValue = keyof SizeChartData;
+type TabValue = keyof Omit<SizeChartData, 'id'>;
 
 export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => void; onDraggingChange: (isDragging: boolean) => void; }) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -37,12 +39,42 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
+  const { toast } = useToast();
   
+  const firestore = useFirestore();
+  const sizeChartRef = useMemoFirebase(() => firestore ? doc(firestore, 'sizeCharts', 'default') : null, [firestore]);
+  const { data: fetchedData, isLoading } = useDoc<SizeChartData>(sizeChartRef);
+
   const [sizeChartData, setSizeChartData] = useState<SizeChartData>(initialSizeChartData);
   const [isDirty, setIsDirty] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState<TabValue>('corporateJacket');
   const [deletingTab, setDeletingTab] = useState<TabValue | null>(null);
+
+  useEffect(() => {
+    if (fetchedData) {
+      const dataToSet = {
+        corporateJacket: fetchedData.corporateJacket || { image: null, uploadTime: null },
+        bomberJacket: fetchedData.bomberJacket || { image: null, uploadTime: null },
+        poloShirt: fetchedData.poloShirt || { image: null, uploadTime: null },
+      };
+      setSizeChartData(dataToSet);
+    }
+  }, [fetchedData]);
+
+  useEffect(() => {
+    if (fetchedData) {
+        const hasChanges = !isEqual(sizeChartData, {
+            corporateJacket: fetchedData.corporateJacket || { image: null, uploadTime: null },
+            bomberJacket: fetchedData.bomberJacket || { image: null, uploadTime: null },
+            poloShirt: fetchedData.poloShirt || { image: null, uploadTime: null },
+        });
+        setIsDirty(hasChanges);
+    } else {
+        const hasChanges = !isEqual(sizeChartData, initialSizeChartData);
+        setIsDirty(hasChanges);
+    }
+  }, [sizeChartData, fetchedData]);
+
 
   useEffect(() => {
     onDraggingChange(isDragging);
@@ -54,20 +86,13 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
         onClose();
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
-
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [onClose]);
 
   useEffect(() => {
-    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedData) {
-        setSizeChartData(JSON.parse(savedData));
-    }
-
     if (cardRef.current) {
         const { offsetWidth, offsetHeight } = cardRef.current;
         const centerX = window.innerWidth / 2 - offsetWidth / 2;
@@ -127,7 +152,6 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
           uploadTime: new Date().toISOString()
         }
       }));
-      setIsDirty(true);
     };
     reader.readAsDataURL(file);
   }
@@ -153,7 +177,6 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
       ...prev,
       [tab]: { image: null, uploadTime: null }
     }));
-    setIsDirty(true);
     if(fileInputRef.current) fileInputRef.current.value = '';
   }
 
@@ -164,9 +187,22 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
     }
   };
 
-  const handleSave = () => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(sizeChartData));
-    setIsDirty(false);
+  const handleSave = async () => {
+    if (!sizeChartRef) return;
+    try {
+        await setDoc(sizeChartRef, sizeChartData, { merge: true });
+        toast({
+            title: 'Success',
+            description: 'Size charts have been saved successfully.',
+        });
+        setIsDirty(false);
+    } catch (e: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Error Saving',
+            description: e.message || 'Could not save the size charts.',
+        });
+    }
   }
   
   const renderUploadBox = (tab: TabValue) => {
@@ -206,6 +242,30 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
     );
   }
 
+  if (isLoading) {
+    return (
+         <div
+            className={cn("fixed z-50")}
+            style={{ left: `${position.x}px`, top: `${position.y}px` }}
+         >
+             <Card className="w-[650px] h-[800px] shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
+                <CardHeader className="p-2">
+                     <div className="h-8 w-full bg-gray-700 rounded-md"></div>
+                </CardHeader>
+                <CardContent className="p-4 flex-1">
+                    <div className="space-y-4">
+                        <div className="h-10 bg-gray-700 rounded-md"></div>
+                        <div className="h-[600px] bg-gray-700 rounded-md"></div>
+                    </div>
+                </CardContent>
+                <CardFooter className="p-4 flex justify-center">
+                    <div className="h-10 w-32 bg-gray-700 rounded-md"></div>
+                </CardFooter>
+            </Card>
+        </div>
+    )
+  }
+
   return (
     <>
       <div
@@ -214,7 +274,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
         style={{ left: `${position.x}px`, top: `${position.y}px`, height: `800px` }}
         onMouseDown={handleMouseDown}
       >
-        <Card className="w-full h-full shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
+        <Card className="w-[650px] h-full shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
           <CardHeader 
               ref={headerRef}
               className={cn("flex flex-row items-center justify-between p-2 cursor-move", isDragging && "cursor-grabbing")}
@@ -228,19 +288,19 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
             </Button>
           </CardHeader>
           <CardContent className="p-4 flex-1 flex flex-col">
-            <Tabs defaultValue="corporateJacket" className="w-full h-full flex flex-col" onValueChange={(v) => setActiveTab(v as TabValue)}>
+            <Tabs defaultValue="corporateJacket" className="w-full h-full flex flex-col">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="corporateJacket">Corporate Jacket</TabsTrigger>
                 <TabsTrigger value="bomberJacket">Bomber Jacket</TabsTrigger>
                 <TabsTrigger value="poloShirt">Polo Shirt</TabsTrigger>
               </TabsList>
-              <TabsContent value="corporateJacket" className="flex-1">
+              <TabsContent value="corporateJacket" className="flex-1 mt-4">
                 {renderUploadBox('corporateJacket')}
               </TabsContent>
-              <TabsContent value="bomberJacket" className="flex-1">
+              <TabsContent value="bomberJacket" className="flex-1 mt-4">
                 {renderUploadBox('bomberJacket')}
               </TabsContent>
-              <TabsContent value="poloShirt" className="flex-1">
+              <TabsContent value="poloShirt" className="flex-1 mt-4">
                 {renderUploadBox('poloShirt')}
               </TabsContent>
             </Tabs>

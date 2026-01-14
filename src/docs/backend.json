@@ -32,6 +32,36 @@
         },
         "required": ["uid", "firstName", "lastName", "nickname", "email", "role", "position"]
     },
+    "SizeChart": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SizeChart",
+      "type": "object",
+      "description": "Stores image URLs and upload times for various size charts.",
+      "properties": {
+        "id": { "type": "string" },
+        "corporateJacket": {
+          "type": "object",
+          "properties": {
+            "image": { "type": ["string", "null"] },
+            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
+          }
+        },
+        "bomberJacket": {
+          "type": "object",
+          "properties": {
+            "image": { "type": ["string", "null"] },
+            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
+          }
+        },
+        "poloShirt": {
+          "type": "object",
+          "properties": {
+            "image": { "type": ["string", "null"] },
+            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
+          }
+        }
+      }
+    },
     "Lead": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Lead",
@@ -611,6 +641,20 @@
             {
               "name": "userId",
               "description": "Unique identifier for the user document, same as Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/sizeCharts/{chartId}",
+        "definition": {
+          "entityName": "SizeChart",
+          "schema": { "$ref": "#/backend/entities/SizeChart" },
+          "description": "Stores size chart images for different product types. A single document with a known ID 'default' is used.",
+          "params": [
+            {
+              "name": "chartId",
+              "description": "The document ID for the size charts, which should be 'default'."
             }
           ]
         }
