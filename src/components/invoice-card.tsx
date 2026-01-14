@@ -29,6 +29,8 @@ const formatCurrency = (value: number) => {
 type AddOns = {
   backLogo: number;
   names: number;
+  programFeeLogo: number;
+  programFeeBackText: number;
 };
 
 export function InvoiceCard({ orders }: InvoiceCardProps) {
@@ -68,7 +70,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
       let subtotal = group.totalQuantity * unitPrice;
 
       
-      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0 };
+      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0 };
 
       const itemTotalQuantity = group.totalQuantity;
 
@@ -79,6 +81,12 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
       if (groupAddOns.names > 0) {
           const namesPrice = getAddOnPrice('names', itemTotalQuantity);
           subtotal += groupAddOns.names * namesPrice;
+      }
+      if (groupAddOns.programFeeLogo > 0) {
+        subtotal += groupAddOns.programFeeLogo * getAddOnPrice('programFeeLogo', itemTotalQuantity);
+      }
+      if (groupAddOns.programFeeBackText > 0) {
+          subtotal += groupAddOns.programFeeBackText * getAddOnPrice('programFeeBackText', itemTotalQuantity);
       }
       
       if (isClientOwned || (group.totalQuantity > 0 && group.totalQuantity <=3)) {
@@ -95,7 +103,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
     const { groupKey, addOnType } = removingAddOn;
     setAddOns(prev => {
       const newGroupAddOns = {
-        ...(prev[groupKey] || { backLogo: 0, names: 0 }),
+        ...(prev[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0 }),
         [addOnType]: 0,
       };
       return {
@@ -129,16 +137,20 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
-                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0 };
+                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0 };
                 const itemTotalQuantity = groupData.totalQuantity;
 
                 const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity);
                 const namesPrice = getAddOnPrice('names', itemTotalQuantity);
+                const programFeeLogoPrice = getAddOnPrice('programFeeLogo', itemTotalQuantity);
+                const programFeeBackTextPrice = getAddOnPrice('programFeeBackText', itemTotalQuantity);
 
                 const backLogoTotal = groupAddOns.backLogo * backLogoPrice;
                 const namesTotal = groupAddOns.names * namesPrice;
+                const programFeeLogoTotal = groupAddOns.programFeeLogo * programFeeLogoPrice;
+                const programFeeBackTextTotal = groupAddOns.programFeeBackText * programFeeBackTextPrice;
 
-                let subtotal = itemsSubtotal + backLogoTotal + namesTotal;
+                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + programFeeLogoTotal + programFeeBackTextTotal;
                 if (isClientOwned || (groupData.totalQuantity > 0 && groupData.totalQuantity <=3)) {
                   subtotal += logoFee + backTextFee;
                 }
@@ -207,6 +219,42 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                                 </TableCell>
                             </TableRow>
                            )}
+                            {groupAddOns.programFeeLogo > 0 && (
+                            <TableRow className="group">
+                                <TableCell className="py-2 px-3 text-xs text-black align-middle">
+                                    <div className="flex items-center gap-2">
+                                        <span>Add On: Program Fee (Logo)</span>
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'programFeeLogo' })}>
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(programFeeLogoPrice)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.programFeeLogo}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
+                                    {formatCurrency(programFeeLogoTotal)}
+                                </TableCell>
+                            </TableRow>
+                           )}
+                            {groupAddOns.programFeeBackText > 0 && (
+                            <TableRow className="group">
+                                <TableCell className="py-2 px-3 text-xs text-black align-middle">
+                                    <div className="flex items-center gap-2">
+                                        <span>Add On: Program Fee (Back Text)</span>
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'programFeeBackText' })}>
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(programFeeBackTextPrice)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.programFeeBackText}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
+                                    {formatCurrency(programFeeBackTextTotal)}
+                                </TableCell>
+                            </TableRow>
+                           )}
                           {logoFee > 0 && (
                             <TableRow>
                                 <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">One-time Logo Programming Fee</TableCell>
@@ -251,7 +299,11 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the "{removingAddOn?.addOnType === 'backLogo' ? 'Back Logo' : 'Names'}" add-on from this group.
+              This will remove the "{
+                removingAddOn?.addOnType === 'backLogo' ? 'Back Logo' : 
+                removingAddOn?.addOnType === 'names' ? 'Names' :
+                removingAddOn?.addOnType === 'programFeeLogo' ? 'Program Fee (Logo)' : 'Program Fee (Back Text)'
+              }" add-on from this group.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -268,7 +320,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
 
 function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey: string, addOns: Record<string, AddOns>, setAddOns: React.Dispatch<React.SetStateAction<Record<string, AddOns>>>, totalQuantity: number }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [localAddOns, setLocalAddOns] = useState(addOns[groupKey] || { backLogo: 0, names: 0 });
+  const [localAddOns, setLocalAddOns] = useState(addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0 });
 
   const handleSave = () => {
     setAddOns(prev => ({ ...prev, [groupKey]: localAddOns }));
@@ -284,7 +336,12 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if(open) {
+        setLocalAddOns(addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0 });
+      }
+      setIsOpen(open);
+    }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-7 px-2 bg-gray-700 text-white hover:bg-gray-600 font-bold">
             <Plus className="mr-1 h-4 w-4" />
@@ -295,7 +352,7 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
         <DialogHeader>
           <DialogTitle>Add Ons</DialogTitle>
           <DialogDescription>
-            Specify quantities for additional logos or names.
+             Specify quantities for additional logos or names.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 py-4 flex flex-col items-center">
@@ -313,6 +370,22 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
                     <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('names', -1)}><Minus className="h-4 w-4" /></Button>
                     <Input id="names" type="text" value={localAddOns.names} onChange={(e) => handleInputChange('names', e.target.value)} className="w-16 text-center" />
                     <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('names', 1)}><Plus className="h-4 w-4" /></Button>
+                </div>
+            </div>
+            <div className="flex items-center justify-between w-full max-w-sm">
+                <Label htmlFor="programFeeLogo" className="text-base">Program Fee (Logo)</Label>
+                <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeLogo', -1)}><Minus className="h-4 w-4" /></Button>
+                    <Input id="programFeeLogo" type="text" value={localAddOns.programFeeLogo} onChange={(e) => handleInputChange('programFeeLogo', e.target.value)} className="w-16 text-center" />
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeLogo', 1)}><Plus className="h-4 w-4" /></Button>
+                </div>
+            </div>
+             <div className="flex items-center justify-between w-full max-w-sm">
+                <Label htmlFor="programFeeBackText" className="text-base">Program Fee (Back Text)</Label>
+                <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeBackText', -1)}><Minus className="h-4 w-4" /></Button>
+                    <Input id="programFeeBackText" type="text" value={localAddOns.programFeeBackText} onChange={(e) => handleInputChange('programFeeBackText', e.target.value)} className="w-16 text-center" />
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeBackText', 1)}><Plus className="h-4 w-4" /></Button>
                 </div>
             </div>
         </div>
