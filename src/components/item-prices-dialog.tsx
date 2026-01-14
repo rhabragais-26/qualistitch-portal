@@ -3,7 +3,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
-import { Card, CardContent, CardHeader } from './ui/card';
+import { Card, CardContent, CardHeader, CardFooter } from './ui/card';
 import { X, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getProductGroup, getUnitPrice, EmbroideryOption, getAddOnPrice, AddOnType } from '@/lib/pricing';
@@ -97,7 +97,7 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
       style={{ left: `${position.x}px`, top: `${position.y}px` }}
       onMouseDown={handleMouseDown}
     >
-      <Card className="w-[850px] h-[650px] shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
+      <Card className="w-[850px] h-[650px] shadow-2xl bg-gray-900 text-white border-gray-700 flex flex-col">
         <CardHeader 
             ref={headerRef}
             className={cn("flex flex-row items-center justify-between p-2 cursor-move", isDragging && "cursor-grabbing")}
