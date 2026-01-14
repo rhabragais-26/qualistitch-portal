@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -126,17 +125,17 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
                 </TableHeader>
                 <TableBody>
                     {productTypes.map(product => (
-                        <React.Fragment key={product}>
-                            <TableRow className="border-b-gray-700">
-                                <TableCell rowSpan={2} className="font-bold align-middle">{product}</TableCell>
+                        <tbody className="group" key={product}>
+                            <TableRow className="border-b-gray-700 hover:bg-gray-600/50">
+                                <TableCell rowSpan={2} className="font-bold align-middle group-hover:bg-gray-600/50">{product}</TableCell>
                                 <TableCell>Logo Only</TableCell>
                                 {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logo')}</TableCell>)}
                             </TableRow>
-                             <TableRow className="border-b-gray-600">
+                             <TableRow className="border-b-gray-600 hover:bg-gray-600/50">
                                 <TableCell>Logo + Back Text</TableCell>
                                 {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logoAndText')}</TableCell>)}
                             </TableRow>
-                        </React.Fragment>
+                        </tbody>
                     ))}
                 </TableBody>
             </Table>
