@@ -863,7 +863,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
                       <RadioGroup
                       onValueChange={field.onChange}
                       value={field.value}
-                      className="flex items-center space-x-4 pt-2"
+                      className="flex items-center justify-center space-x-4 pt-2"
                       disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
                       >
                       {['Rush', 'Regular'].map((option) => (
