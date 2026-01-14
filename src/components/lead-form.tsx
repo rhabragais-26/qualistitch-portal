@@ -927,7 +927,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                   <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value || ''}>
                       <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
-                      <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                      <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                   </Select>
                   <FormMessage />
                   </FormItem>
@@ -1346,6 +1346,8 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
+    
 
     
 
