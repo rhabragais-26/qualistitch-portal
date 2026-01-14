@@ -377,14 +377,9 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
                 </div>
             </div>
              <div className="flex items-center justify-between w-full max-w-sm">
-                <div className="flex flex-col">
-                    <Label htmlFor="stitches" className="text-base">No. of stitches per design</Label>
-                    <Input id="stitches" type="text" value={localAddOns.stitches} onChange={(e) => handleInputChange('stitches', e.target.value)} className="w-32 text-center mt-1" />
-                </div>
-                 <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('stitchesQuantity', -1)}><Minus className="h-4 w-4" /></Button>
-                    <Input id="stitchesQuantity" type="text" value={localAddOns.stitchesQuantity} onChange={(e) => handleInputChange('stitchesQuantity', e.target.value)} className="w-16 text-center" placeholder="Qty" />
-                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('stitchesQuantity', 1)}><Plus className="h-4 w-4" /></Button>
+                <Label htmlFor="stitches" className="text-base">No. of stitches per design</Label>
+                <div className="flex items-center gap-2">
+                    <Input id="stitches" type="text" value={localAddOns.stitches} onChange={(e) => handleInputChange('stitches', e.target.value)} className="w-24 text-center" placeholder="e.g. 5,000" />
                 </div>
             </div>
         </div>
