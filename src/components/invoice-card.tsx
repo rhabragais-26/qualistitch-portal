@@ -21,17 +21,17 @@ const formatCurrency = (value: number) => {
 };
 
 export function InvoiceCard({ orders }: InvoiceCardProps) {
-  const [embroideryOption, setEmbroideryOption] = useState<EmbroideryOption>('logo');
-
+  
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
       const productGroup = getProductGroup(order.productType);
       if (!productGroup) return acc;
       
-      const groupKey = `${order.productType}`;
+      const groupKey = `${order.productType}-${order.embroidery}`;
       if (!acc[groupKey]) {
         acc[groupKey] = {
           productType: order.productType,
+          embroidery: order.embroidery,
           orders: [],
           totalQuantity: 0,
         };
@@ -39,19 +39,19 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
       acc[groupKey].orders.push(order);
       acc[groupKey].totalQuantity += order.quantity;
       return acc;
-    }, {} as Record<string, { productType: string; orders: Order[], totalQuantity: number }>);
+    }, {} as Record<string, { productType: string; embroidery: EmbroideryOption; orders: Order[], totalQuantity: number }>);
   }, [orders]);
 
   const grandTotal = useMemo(() => {
     let total = 0;
     Object.values(groupedOrders).forEach(group => {
-      const unitPrice = getUnitPrice(group.productType, group.totalQuantity, embroideryOption);
-      const { logoFee, backTextFee } = getProgrammingFees(group.totalQuantity, embroideryOption);
+      const unitPrice = getUnitPrice(group.productType, group.totalQuantity, group.embroidery);
+      const { logoFee, backTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery);
       const subtotal = group.totalQuantity * unitPrice + logoFee + backTextFee;
       total += subtotal;
     });
     return total;
-  }, [groupedOrders, embroideryOption]);
+  }, [groupedOrders]);
 
   return (
     <Card className="shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
@@ -59,16 +59,6 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
         <div className="flex justify-between items-center">
             <CardTitle className="font-headline text-xl">Pricing Summary</CardTitle>
             <div className="flex flex-col items-end gap-2">
-                <RadioGroup value={embroideryOption} onValueChange={(v) => setEmbroideryOption(v as EmbroideryOption)} className="flex gap-4">
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="logo" id="r1" />
-                        <Label htmlFor="r1" className="text-sm">with Logo</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="logoAndText" id="r2" />
-                        <Label htmlFor="r2" className="text-sm">with Logo and Back Text</Label>
-                    </div>
-                </RadioGroup>
                  <Button variant="outline" size="sm">Add Ons</Button>
             </div>
         </div>
@@ -82,51 +72,54 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
           ) : (
             <div className="space-y-6">
               {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
-                const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroideryOption);
-                const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, embroideryOption);
-                const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, embroideryOption);
+                const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery);
+                const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery);
+                const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 const subtotal = itemsSubtotal + logoFee + backTextFee;
                 
                 return (
                   <div key={groupKey}>
-                    <h3 className="font-bold text-lg mb-2 text-primary">{groupData.productType}</h3>
+                    <h3 className="font-bold text-lg mb-2 text-primary">
+                        {groupData.productType}
+                        <span className="text-sm font-normal text-muted-foreground ml-2">({groupData.embroidery === 'logo' ? 'Logo Only' : 'Logo + Back Text'})</span>
+                    </h3>
                     <div className="border rounded-md">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="text-black py-2 px-3">Details</TableHead>
-                            <TableHead className="text-black text-center py-2 px-3">Category</TableHead>
-                            <TableHead className="text-black text-center py-2 px-3">Unit Price</TableHead>
-                            <TableHead className="text-black text-center py-2 px-3">Quantity</TableHead>
-                            <TableHead className="text-black text-right py-2 px-3">Total</TableHead>
+                            <TableHead className="py-2 px-3 text-black">Details</TableHead>
+                            <TableHead className="py-2 px-3 text-black text-center">Category</TableHead>
+                            <TableHead className="py-2 px-3 text-black text-center">Unit Price</TableHead>
+                            <TableHead className="py-2 px-3 text-black text-center">Quantity</TableHead>
+                            <TableHead className="py-2 px-3 text-right text-black">Total</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                             <TableRow>
-                                <TableCell className="text-black text-xs font-medium py-2 px-3 align-middle">Items Ordered</TableCell>
-                                <TableCell className="text-black text-xs text-center py-2 px-3 align-middle">{tierLabel}</TableCell>
-                                <TableCell className="text-black text-xs text-center py-2 px-3 align-middle">{formatCurrency(unitPrice)}</TableCell>
-                                <TableCell className="text-black text-xs text-center py-2 px-3 align-middle">{groupData.totalQuantity}</TableCell>
-                                <TableCell className="text-black text-xs text-right py-2 px-3 align-middle">{formatCurrency(itemsSubtotal)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs font-medium text-black align-middle">Items Ordered</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{tierLabel}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(unitPrice)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupData.totalQuantity}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(itemsSubtotal)}</TableCell>
                             </TableRow>
                           {logoFee > 0 && (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-black text-xs text-right py-2 px-3 align-middle">One-time Logo Programming Fee</TableCell>
-                                <TableCell className="text-black text-xs text-right py-2 px-3 align-middle">{formatCurrency(logoFee)}</TableCell>
+                                <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">One-time Logo Programming Fee</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(logoFee)}</TableCell>
                             </TableRow>
                           )}
                           {backTextFee > 0 && (
                              <TableRow>
-                                <TableCell colSpan={4} className="text-black text-xs text-right py-2 px-3 align-middle">One-time Back Text Programming Fee</TableCell>
-                                <TableCell className="text-black text-xs text-right py-2 px-3 align-middle">{formatCurrency(backTextFee)}</TableCell>
+                                <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">One-time Back Text Programming Fee</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(backTextFee)}</TableCell>
                             </TableRow>
                           )}
                         </TableBody>
                         <ShadTableFooter>
                             <TableRow>
-                                <TableCell colSpan={4} className="text-right font-bold text-black py-2 px-3">Subtotal</TableCell>
-                                <TableCell className="text-right font-bold text-black py-2 px-3">{formatCurrency(subtotal)}</TableCell>
+                                <TableCell colSpan={4} className="py-2 px-3 text-right font-bold text-black">Subtotal</TableCell>
+                                <TableCell className="py-2 px-3 text-right font-bold text-black">{formatCurrency(subtotal)}</TableCell>
                             </TableRow>
                         </ShadTableFooter>
                       </Table>
