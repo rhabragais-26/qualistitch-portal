@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -8,7 +9,7 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { isEqual } from 'lodash';
@@ -40,6 +41,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const { toast } = useToast();
+  const { isAdmin } = useUser();
   
   const firestore = useFirestore();
   const sizeChartRef = useMemoFirebase(() => firestore ? doc(firestore, 'sizeCharts', 'default') : null, [firestore]);
@@ -143,6 +145,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const handleImageUpload = (file: File, tab: TabValue) => {
+    if (!isAdmin) return;
     const reader = new FileReader();
     reader.onload = (e) => {
       setSizeChartData(prev => ({
@@ -163,6 +166,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   };
 
   const onPaste = (e: React.ClipboardEvent<HTMLDivElement>, tab: TabValue) => {
+    if (!isAdmin) return;
     const items = e.clipboardData.items;
     for (const item of items) {
         if (item.type.indexOf('image') !== -1) {
@@ -173,6 +177,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   };
 
   const removeImage = (tab: TabValue) => {
+    if (!isAdmin) return;
     setSizeChartData(prev => ({
       ...prev,
       [tab]: { image: null, uploadTime: null }
@@ -188,7 +193,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   };
 
   const handleSave = async () => {
-    if (!sizeChartRef) return;
+    if (!sizeChartRef || !isAdmin) return;
     try {
         await setDoc(sizeChartRef, sizeChartData, { merge: true });
         toast({
@@ -207,31 +212,35 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   
   const renderUploadBox = (tab: TabValue) => {
     const data = sizeChartData[tab];
+    const canEdit = isAdmin;
     return (
       <div onPaste={(e) => onPaste(e, tab)} className="h-full flex flex-col">
         <div
             tabIndex={0}
             className={cn(
-                "relative group flex-1 rounded-lg flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-700/50 min-w-[600px]",
+                "relative group flex-1 rounded-lg flex flex-col items-center justify-center text-gray-400",
+                canEdit && "cursor-pointer hover:bg-gray-700/50",
                 data && !data.image && "border-2 border-dashed border-gray-600 p-4"
             )}
-            onDoubleClick={() => fileInputRef.current?.click()}
+            onDoubleClick={() => canEdit && fileInputRef.current?.click()}
             onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
         >
             {data && !data.image ? (
                 <>
                     <Upload className="h-10 w-10 mb-2" />
-                    <p>Double-click to upload or paste image</p>
+                    <p>{canEdit ? "Double-click to upload or paste image" : "No image available"}</p>
                 </>
             ) : data && data.image ? (
                 <>
                     <Image src={data.image} alt={`${tab} Size Chart`} layout="fill" objectFit="contain" />
-                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setDeletingTab(tab)}>
-                        <Trash2 className="h-4 w-4"/>
-                    </Button>
+                    {canEdit && (
+                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setDeletingTab(tab)}>
+                            <Trash2 className="h-4 w-4"/>
+                        </Button>
+                    )}
                 </>
             ) : null}
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFileChange(e, tab)}/>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFileChange(e, tab)} disabled={!canEdit} />
         </div>
         {data && data.uploadTime && (
             <p className="text-xs text-center text-gray-500 mt-2">
@@ -305,16 +314,18 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
               </TabsContent>
             </Tabs>
           </CardContent>
-          <CardFooter className="p-4 flex justify-center">
-              <Button 
-                onClick={handleSave} 
-                disabled={!isDirty} 
-                className="text-white font-bold disabled:bg-gray-500 disabled:text-gray-300"
-              >
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Changes
-              </Button>
-          </CardFooter>
+          {isAdmin && (
+            <CardFooter className="p-4 flex justify-center">
+                <Button 
+                  onClick={handleSave} 
+                  disabled={!isDirty} 
+                  className="text-white font-bold disabled:bg-gray-500 disabled:text-gray-300"
+                >
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                </Button>
+            </CardFooter>
+          )}
         </Card>
       </div>
 
