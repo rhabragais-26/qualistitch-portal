@@ -227,7 +227,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
   }, []);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads } = useCollection<Lead>(leads);
+  const { data: leads } = useCollection<Lead>(leadsQuery);
 
   const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
   const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery);
