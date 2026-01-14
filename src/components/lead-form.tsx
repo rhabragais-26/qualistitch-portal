@@ -178,6 +178,8 @@ const poloShirtColors = [
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
+const courierOptions = ['Lalamove', 'J&T', 'In-house', 'Pick-up', 'DHL', 'FedEx'];
+
 type LeadFormProps = {
   onDirtyChange: (isDirty: boolean) => void;
   stagedOrders: Order[];
@@ -712,6 +714,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                                 backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
                                 textColorClassName="text-yellow-900 font-bold"
                                 borderClassName="border-yellow-500"
+                                className='w-36'
                             />
                          </div>
                       ) : (
@@ -721,6 +724,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                             backgroundColor="#FFFFFF"
                             textColorClassName="text-black font-bold"
                             borderClassName="shining-black-border"
+                            className='w-36'
                             />
                         </div>
                       )}
@@ -769,7 +773,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                       <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                         <CardContent className="p-2 max-h-40 overflow-y-auto">
                           {companySuggestions.map((lead) => (
-                            <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
+                            <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={()={() => handleSuggestionClick(lead)}>
                               {lead.companyName ? toTitleCase(lead.companyName) : ''}
                             </div>
                           ))}
@@ -965,7 +969,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                     <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ''}>
                     <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
-                    <SelectContent>{['Lalamove', 'J&T', 'In-house', 'Pick-up'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                    <SelectContent>{courierOptions.map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                     </Select>
                     <FormMessage />
                 </FormItem>
@@ -1330,3 +1334,4 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
