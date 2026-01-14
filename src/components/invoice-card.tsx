@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo } from 'react';
@@ -35,7 +36,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
         <ScrollArea className="h-[calc(100vh-20rem)]">
           {Object.keys(groupedOrders).length === 0 ? (
             <div className="flex items-center justify-center h-full text-muted-foreground">
-              Add orders to see the invoice summary.
+              Add orders to see the price summary.
             </div>
           ) : (
             <div className="space-y-6">
