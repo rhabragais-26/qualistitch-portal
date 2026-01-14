@@ -160,11 +160,11 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                         </TableBody>
                         <ShadTableFooter>
                             <TableRow>
-                                <TableCell colSpan={3}>
+                                <TableCell colSpan={3} className="py-1 px-3">
                                     <AddOnsDialog groupKey={groupKey} addOns={addOns} setAddOns={setAddOns} totalQuantity={groupData.totalQuantity} />
                                 </TableCell>
-                                <TableCell className="py-2 px-3 text-right font-bold text-black">Subtotal</TableCell>
-                                <TableCell className="py-2 px-3 text-right font-bold text-black">{formatCurrency(subtotal)}</TableCell>
+                                <TableCell className="py-1 px-3 text-right font-bold text-black">Subtotal</TableCell>
+                                <TableCell className="py-1 px-3 text-right font-bold text-black">{formatCurrency(subtotal)}</TableCell>
                             </TableRow>
                         </ShadTableFooter>
                       </Table>
@@ -211,7 +211,7 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="bg-gray-700 text-white hover:bg-gray-600 font-bold">Add Ons</Button>
+        <Button variant="outline" size="sm" className="h-7 px-2 bg-gray-700 text-white hover:bg-gray-600 font-bold">Add Ons</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
