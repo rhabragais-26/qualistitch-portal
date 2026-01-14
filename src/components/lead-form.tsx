@@ -1010,9 +1010,9 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                           <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex items-center gap-4">
                         <Label>Embroidery Option:</Label>
-                        <RadioGroup onValueChange={(v) => setNewOrderEmbroidery(v as 'logo' | 'logoAndText')} value={newOrderEmbroidery} className="flex pt-2">
+                        <RadioGroup onValueChange={(v) => setNewOrderEmbroidery(v as 'logo' | 'logoAndText')} value={newOrderEmbroidery} className="flex">
                             <div className="flex items-center space-x-2"><RadioGroupItem value="logo" id="emb-logo" /><Label htmlFor="emb-logo">Logo Only</Label></div>
                             <div className="flex items-center space-x-2"><RadioGroupItem value="logoAndText" id="emb-logoAndText" /><Label htmlFor="emb-logoAndText">Logo + Back Text</Label></div>
                         </RadioGroup>
@@ -1346,9 +1346,3 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
-
-    
-
-    
-
-    
