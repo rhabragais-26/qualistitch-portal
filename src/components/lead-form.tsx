@@ -227,13 +227,14 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
   }, []);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads } = useCollection<Lead>(leadsQuery);
+  const { data: leads } = useCollection<Lead>(leads);
 
   const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
   const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onSubmit',
     defaultValues: {
       customerName: '',
       companyName: '',
