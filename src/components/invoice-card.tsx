@@ -32,6 +32,7 @@ type AddOns = {
   names: number;
   programFeeLogo: number;
   programFeeBackText: number;
+  rushFee: number;
 };
 
 export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
@@ -73,7 +74,7 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
       let subtotal = group.totalQuantity * unitPrice;
 
       
-      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0 };
+      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0 };
 
       const itemTotalQuantity = group.totalQuantity;
 
@@ -91,6 +92,9 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
       if (groupAddOns.programFeeBackText > 0) {
           subtotal += groupAddOns.programFeeBackText * getAddOnPrice('programFeeBackText', itemTotalQuantity);
       }
+      if (groupAddOns.rushFee > 0) {
+        subtotal += groupAddOns.rushFee;
+      }
       
       subtotal += logoFee + backTextFee;
       
@@ -104,7 +108,7 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
     const { groupKey, addOnType } = removingAddOn;
     setAddOns(prev => {
       const newGroupAddOns = {
-        ...(prev[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0 }),
+        ...(prev[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0 }),
         [addOnType]: 0,
       };
       return {
@@ -140,7 +144,7 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned, orderType);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
-                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0 };
+                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0 };
                 const itemTotalQuantity = groupData.totalQuantity;
 
                 const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity);
@@ -153,7 +157,7 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                 const programFeeLogoTotal = groupAddOns.programFeeLogo * programFeeLogoPrice;
                 const programFeeBackTextTotal = groupAddOns.programFeeBackText * programFeeBackTextPrice;
 
-                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + programFeeLogoTotal + programFeeBackTextTotal;
+                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + programFeeLogoTotal + programFeeBackTextTotal + groupAddOns.rushFee;
                 subtotal += logoFee + backTextFee;
                 
                 return (
@@ -256,6 +260,22 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                                 </TableCell>
                             </TableRow>
                            )}
+                           {groupAddOns.rushFee > 0 && (
+                            <TableRow className="group">
+                                <TableCell className="py-2 px-3 text-xs text-black align-middle">
+                                    <div className="flex items-center gap-2">
+                                        <span>Add On: Rush Fee</span>
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'rushFee' })}>
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle" colSpan={3}></TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
+                                    {formatCurrency(groupAddOns.rushFee)}
+                                </TableCell>
+                            </TableRow>
+                           )}
                           {logoFee > 0 && (
                             <TableRow>
                                 <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">One-time Logo Programming Fee</TableCell>
@@ -303,7 +323,8 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
               This will remove the "{
                 removingAddOn?.addOnType === 'backLogo' ? 'Back Logo' : 
                 removingAddOn?.addOnType === 'names' ? 'Names' :
-                removingAddOn?.addOnType === 'programFeeLogo' ? 'Program Fee (Logo)' : 'Program Fee (Back Text)'
+                removingAddOn?.addOnType === 'programFeeLogo' ? 'Program Fee (Logo)' : 
+                removingAddOn?.addOnType === 'programFeeBackText' ? 'Program Fee (Back Text)' : 'Rush Fee'
               }" add-on from this group.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -321,7 +342,8 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
 
 function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey: string, addOns: Record<string, AddOns>, setAddOns: React.Dispatch<React.SetStateAction<Record<string, AddOns>>>, totalQuantity: number }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [localAddOns, setLocalAddOns] = useState(addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0 });
+  const [localAddOns, setLocalAddOns] = useState(addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0 });
+  const [rushFeeInput, setRushFeeInput] = useState('');
 
   const handleSave = () => {
     setAddOns(prev => ({ ...prev, [groupKey]: localAddOns }));
@@ -336,10 +358,37 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
     setLocalAddOns(prev => ({...prev, [type]: value === '' ? 0 : parseInt(value, 10) || 0}));
   }
 
+  const handleRushFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const numericValue = parseFloat(rawValue.replace(/[^0-9.]/g, ''));
+
+    if (!isNaN(numericValue)) {
+        setLocalAddOns(prev => ({ ...prev, rushFee: numericValue }));
+        setRushFeeInput(new Intl.NumberFormat('en-PH').format(numericValue));
+    } else {
+        setLocalAddOns(prev => ({ ...prev, rushFee: 0 }));
+        setRushFeeInput('');
+    }
+  };
+
+  const handleRushFeeBlur = () => {
+      if (rushFeeInput) {
+          setRushFeeInput(formatCurrency(localAddOns.rushFee).replace('₱', ''));
+      }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+        const currentAddOns = addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0 };
+        setLocalAddOns(currentAddOns);
+        setRushFeeInput(currentAddOns.rushFee > 0 ? formatCurrency(currentAddOns.rushFee).replace('₱', '') : '');
+    }
+  }, [isOpen, addOns, groupKey]);
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-      if(open) {
-        setLocalAddOns(addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0 });
+      if(!open) {
+        setLocalAddOns(addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0 });
       }
       setIsOpen(open);
     }}>
@@ -387,6 +436,13 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
                     <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeBackText', -1)}><Minus className="h-4 w-4" /></Button>
                     <Input id="programFeeBackText" type="text" value={localAddOns.programFeeBackText} onChange={(e) => handleInputChange('programFeeBackText', e.target.value)} className="w-16 text-center" />
                     <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeBackText', 1)}><Plus className="h-4 w-4" /></Button>
+                </div>
+            </div>
+             <div className="flex items-center justify-between w-full max-w-sm">
+                <Label htmlFor="rushFee" className="text-base">Rush Fee</Label>
+                <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₱</span>
+                    <Input id="rushFee" type="text" value={rushFeeInput} onChange={handleRushFeeChange} onBlur={handleRushFeeBlur} className="w-40 text-right pr-3 pl-8" />
                 </div>
             </div>
         </div>
