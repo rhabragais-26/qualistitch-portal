@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -97,7 +96,7 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
       style={{ left: `${position.x}px`, top: `${position.y}px` }}
       onMouseDown={handleMouseDown}
     >
-      <Card className="w-[850px] h-[650px] shadow-2xl bg-gray-900 text-white border-gray-700 flex flex-col">
+      <Card className="w-[850px] h-[650px] shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
         <CardHeader 
             ref={headerRef}
             className={cn("flex flex-row items-center justify-between p-2 cursor-move", isDragging && "cursor-grabbing")}
@@ -112,7 +111,7 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
         </CardHeader>
         <CardContent className="p-4 flex-1 overflow-hidden">
             <ScrollArea className="h-full pr-4">
-             <h3 className="font-bold text-lg mb-2 text-orange-400">Item Prices</h3>
+             <h3 className="font-bold text-lg mb-2 text-orange-400 text-center">Item Prices</h3>
             <Table>
                 <TableHeader>
                     <TableRow className="border-b-gray-600">
@@ -138,7 +137,7 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
                 </TableBody>
             </Table>
             <Separator className="my-6 bg-gray-600"/>
-             <h3 className="font-bold text-lg mb-2 text-orange-400">Add On Prices</h3>
+             <h3 className="font-bold text-lg mb-2 text-orange-400 text-center">Add On Prices</h3>
              <Table>
                 <TableHeader>
                     <TableRow className="border-b-gray-600">
