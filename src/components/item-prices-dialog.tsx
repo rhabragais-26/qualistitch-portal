@@ -115,7 +115,7 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
         </CardHeader>
         <CardContent className="p-4 flex-1 overflow-hidden">
             <ScrollArea className="h-full pr-4">
-             <h3 className="font-bold text-lg mb-2 text-white uppercase text-center">Item Prices</h3>
+             <h3 className="font-bold text-lg mb-2 text-white uppercase text-center bg-black">Item Prices</h3>
             <Table>
                 <TableHeader>
                     <TableRow className="border-b-gray-600">
@@ -141,7 +141,7 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
                 </TableBody>
             </Table>
             <Separator className="my-6 bg-gray-600"/>
-             <h3 className="font-bold text-lg mb-2 text-white uppercase text-center">Add On Prices</h3>
+             <h3 className="font-bold text-lg mb-2 text-white uppercase text-center bg-black">Add On Prices</h3>
              <Table>
                 <TableHeader>
                     <TableRow className="border-b-gray-600">
