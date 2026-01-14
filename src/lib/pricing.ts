@@ -175,7 +175,11 @@ export const getProgrammingFees = (
   orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services'
 ): { logoFee: number; backTextFee: number } => {
   const specialOrderTypes = ["Services", "MTO", "Stock (Jacket Only)"];
-  if (embroidery === 'name' || (orderType && specialOrderTypes.includes(orderType))) {
+  if (orderType && specialOrderTypes.includes(orderType)) {
+    return { logoFee: 0, backTextFee: 0 };
+  }
+  
+  if (embroidery === 'name') {
     return { logoFee: 0, backTextFee: 0 };
   }
 
