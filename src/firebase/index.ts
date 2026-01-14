@@ -2,23 +2,41 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, initializeFirestore } from 'firebase/firestore'
+import { Auth, getAuth } from 'firebase/auth';
+import { Firestore, getFirestore } from 'firebase/firestore';
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
+// Global cache for Firebase services
+let firebaseServices: { firebaseApp: FirebaseApp; auth: Auth; firestore: Firestore; } | null = null;
+
+/**
+ * Initializes and/or retrieves the singleton instances of Firebase services.
+ * This function ensures that Firebase is initialized only once, even if called
+ * multiple times, which is crucial for preventing errors in environments with
+ * hot-reloading, like Next.js.
+ */
 export function initializeFirebase() {
+  // If the services have already been initialized, return the cached instances immediately.
+  if (firebaseServices) {
+    return firebaseServices;
+  }
+
+  // Check if a Firebase app has already been initialized.
   const isInitialized = getApps().length > 0;
   const app = isInitialized ? getApp() : initializeApp(firebaseConfig);
+  
+  // Get the Auth and Firestore instances.
   const auth = getAuth(app);
-  // Ensure that we get a new Firestore instance only if one doesn't already exist.
-  const firestore = isInitialized ? getFirestore(app) : initializeFirestore(app, {});
+  const firestore = getFirestore(app);
 
+  // Cache the initialized services.
+  firebaseServices = { firebaseApp: app, auth, firestore };
 
   // NOTE: Emulator connections have been removed to resolve connectivity issues
   // in the development environment. The app will connect to production services.
 
-  return { firebaseApp: app, auth, firestore };
+  return firebaseServices;
 }
+
 
 export function getSdks(firebaseApp: FirebaseApp) {
   return {
