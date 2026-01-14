@@ -29,7 +29,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
   return (
     <Card className="shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
       <CardHeader>
-        <CardTitle className="font-headline text-xl">Invoice</CardTitle>
+        <CardTitle className="font-headline text-xl">Pricing Summary</CardTitle>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[calc(100vh-20rem)]">
