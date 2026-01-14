@@ -14,6 +14,8 @@ import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Minus, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+
 
 type InvoiceCardProps = {
   orders: Order[];
@@ -31,6 +33,7 @@ type AddOns = {
 export function InvoiceCard({ orders }: InvoiceCardProps) {
   
   const [addOns, setAddOns] = useState<Record<string, AddOns>>({});
+  const [removingAddOn, setRemovingAddOn] = useState<{ groupKey: string; addOnType: keyof AddOns; } | null>(null);
 
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
@@ -83,7 +86,9 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
     return total;
   }, [groupedOrders, addOns]);
 
-  const handleRemoveAddOn = (groupKey: string, addOnType: keyof AddOns) => {
+  const handleConfirmRemoveAddOn = () => {
+    if (!removingAddOn) return;
+    const { groupKey, addOnType } = removingAddOn;
     setAddOns(prev => ({
         ...prev,
         [groupKey]: {
@@ -91,7 +96,9 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
             [addOnType]: 0
         }
     }));
+    setRemovingAddOn(null);
   };
+
 
   return (
     <Card className="shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
@@ -159,7 +166,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                                 <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                     <div className="flex items-center gap-2">
                                         <span>Add On: Back Logo</span>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveAddOn(groupKey, 'backLogo')}>
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'backLogo' })}>
                                             <X className="h-3 w-3" />
                                         </Button>
                                     </div>
@@ -177,7 +184,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                                 <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                      <div className="flex items-center gap-2">
                                         <span>Add On: Names</span>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveAddOn(groupKey, 'names')}>
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'names' })}>
                                             <X className="h-3 w-3" />
                                         </Button>
                                     </div>
@@ -229,6 +236,22 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
             </div>
         </CardFooter>
       )}
+       <AlertDialog open={!!removingAddOn} onOpenChange={(open) => !open && setRemovingAddOn(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the "{removingAddOn?.addOnType === 'backLogo' ? 'Back Logo' : 'Names'}" add-on from this group.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRemoveAddOn} className="bg-destructive hover:bg-destructive/90">
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
@@ -291,3 +314,5 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
     </Dialog>
   );
 }
+
+    
