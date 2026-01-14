@@ -170,9 +170,10 @@ type LeadFormProps = {
   onDirtyChange: (isDirty: boolean) => void;
   stagedOrders: Order[];
   setStagedOrders: React.Dispatch<React.SetStateAction<Order[]>>;
+  resetFormTrigger: number;
 };
 
-export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadFormProps) {
+export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFormTrigger }: LeadFormProps) {
   const {toast} = useToast();
   const [dateString, setDateString] = useState('');
   const [timeString, setTimeString] = useState('');
@@ -236,6 +237,28 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
   });
   
   const { control, handleSubmit, reset, watch, setValue, formState: { isDirty } } = form;
+  
+  useEffect(() => {
+    if (resetFormTrigger > 0) {
+        reset({
+            customerName: '',
+            companyName: '',
+            mobileNo: '',
+            landlineNo: '',
+            houseStreet: '',
+            barangay: '',
+            city: '',
+            province: '',
+            courier: undefined,
+            paymentType: undefined,
+            orderType: undefined,
+            priorityType: 'Regular',
+            orders: [],
+        });
+        setSelectedLead(null);
+        setManualStatus(null);
+    }
+  }, [resetFormTrigger, reset]);
 
   const toTitleCase = (str: string) => {
     if (!str) return '';
@@ -439,27 +462,6 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
     }
   }, [isPatches]);
 
-  const handleReset = () => {
-    reset({
-      customerName: '',
-      companyName: '',
-      mobileNo: '',
-      landlineNo: '',
-      houseStreet: '',
-      barangay: '',
-      city: '',
-      province: '',
-      courier: undefined,
-      paymentType: undefined,
-      orderType: undefined,
-      priorityType: 'Regular',
-      orders: [],
-    });
-    setStagedOrders([]);
-    setSelectedLead(null);
-    setManualStatus(null);
-  }
-
   const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
     const rawValue = e.target.value.replace(/\D/g, '');
     if (rawValue.length <= 11) {
@@ -529,8 +531,26 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
       title: 'Lead Submitted!',
       description: 'The new lead for ' + toTitleCase(values.customerName) + ' has been successfully recorded.',
     });
-
-    handleReset();
+    
+    // Trigger reset from parent
+    setStagedOrders([]);
+    reset({
+        customerName: '',
+        companyName: '',
+        mobileNo: '',
+        landlineNo: '',
+        houseStreet: '',
+        barangay: '',
+        city: '',
+        province: '',
+        courier: undefined,
+        paymentType: undefined,
+        orderType: undefined,
+        priorityType: 'Regular',
+        orders: [],
+    });
+    setSelectedLead(null);
+    setManualStatus(null);
   }
   
   const getRemainingStock = (order: z.infer<typeof orderSchema>) => {
@@ -643,9 +663,9 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
   return (
     <>
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
-      <CardHeader>
+      <CardHeader className='pb-2'>
         <div className="flex justify-between items-start">
-          <div className="flex-1">
+          <div className="flex-1 space-y-0">
               <CardTitle className="font-headline text-2xl">Create New Order</CardTitle>
                <div className="flex items-center gap-4">
                 <CardDescription className="text-gray-600">Fill in the details below to create a record for customer and order.</CardDescription>
@@ -688,7 +708,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form id="lead-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               
               {/* Customer and Contact Info */}
@@ -1010,29 +1030,6 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders }: LeadF
                     )}
                   </TableBody>
                 </Table>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-4 col-span-full">
-              <div className="flex gap-4">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button type="button" variant="outline">Reset</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>This action will clear all the fields in the form.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleReset}>Continue</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-                <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
-                  Submit
-                </Button>
               </div>
             </div>
           </form>

@@ -11,6 +11,16 @@ import { CalculatorIcon, Ruler } from 'lucide-react';
 import { Calculator } from '@/components/calculator';
 import { SizeChartDialog } from '@/components/size-chart-dialog';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function NewOrderPage() {
   const [isFormDirty, setIsFormDirty] = useState(false);
@@ -23,6 +33,8 @@ export default function NewOrderPage() {
   const [isCalculatorDragging, setIsCalculatorDragging] = useState(false);
   const [isSizeChartDragging, setIsSizeChartDragging] = useState(false);
 
+  const [resetFormTrigger, setResetFormTrigger] = useState(0);
+
   useEffect(() => {
     if (!isUserLoading && (!user || user.isAnonymous)) {
       router.replace('/');
@@ -31,6 +43,11 @@ export default function NewOrderPage() {
 
   if (isUserLoading || !user || user.isAnonymous) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+  
+  const handleResetClick = () => {
+    setResetFormTrigger(prev => prev + 1);
+    setStagedOrders([]);
   }
 
   return (
@@ -46,6 +63,7 @@ export default function NewOrderPage() {
                         onDirtyChange={setIsFormDirty} 
                         stagedOrders={stagedOrders}
                         setStagedOrders={setStagedOrders}
+                        resetFormTrigger={resetFormTrigger}
                     />
                 </div>
                 <div className="xl:col-span-2 space-y-4">
@@ -60,6 +78,28 @@ export default function NewOrderPage() {
                         </Button>
                     </div>
                     <InvoiceCard orders={stagedOrders} />
+                    <div className="flex justify-end pt-4 col-span-full">
+                        <div className="flex gap-4">
+                            <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button type="button" variant="outline">Reset</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>This action will clear all the fields in the form.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleResetClick}>Continue</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                            </AlertDialog>
+                            <Button type="submit" form="lead-form" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
+                                Submit
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
