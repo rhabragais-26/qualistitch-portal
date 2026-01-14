@@ -1,15 +1,15 @@
 
 'use client';
 
-import * as React from 'react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader } from './ui/card';
 import { X, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getProductGroup, getUnitPrice, EmbroideryOption } from '@/lib/pricing';
+import { getProductGroup, getUnitPrice, EmbroideryOption, getAddOnPrice, AddOnType } from '@/lib/pricing';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { ScrollArea } from './ui/scroll-area';
+import { Separator } from './ui/separator';
 
 const productTypes = [
     'Executive Jacket 1', 'Executive Jacket v2 (with lines)', 'Turtle Neck Jacket',
@@ -17,6 +17,7 @@ const productTypes = [
 ];
 
 const quantityTiers = [1, 4, 11, 51, 201, 301, 1000];
+const addOnTiers = [1, 4, 11];
 
 export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () => void; onDraggingChange: (isDragging: boolean) => void; }) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -96,38 +97,39 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
       style={{ left: `${position.x}px`, top: `${position.y}px` }}
       onMouseDown={handleMouseDown}
     >
-      <Card className="w-[800px] h-[600px] shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
+      <Card className="w-[850px] h-[650px] shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
         <CardHeader 
             ref={headerRef}
             className={cn("flex flex-row items-center justify-between p-2 cursor-move", isDragging && "cursor-grabbing")}
         >
           <div className="flex items-center">
             <GripVertical className="h-5 w-5 text-gray-500"/>
-            <span className="text-sm font-medium text-gray-400">Item Prices</span>
+            <span className="text-sm font-medium text-gray-400">Item & Add On Prices</span>
           </div>
           <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:bg-gray-700 hover:text-white" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
         <CardContent className="p-4 flex-1">
-            <ScrollArea className="h-full">
+            <ScrollArea className="h-full pr-4">
+            <h3 className="font-bold text-lg mb-2 text-amber-300">Jacket Prices</h3>
             <Table>
                 <TableHeader>
-                    <TableRow>
+                    <TableRow className="border-b-gray-600">
                         <TableHead className="text-white">Product Type</TableHead>
                         <TableHead className="text-white">Embroidery</TableHead>
-                        {quantityTiers.map(tier => <TableHead key={tier} className="text-white text-center">{tier}+</TableHead>)}
+                        {quantityTiers.map(tier => <TableHead key={tier} className="text-white text-center">{tier === 1000 ? '1k+' : `${tier}+`}</TableHead>)}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {productTypes.map(product => (
                         <React.Fragment key={product}>
-                            <TableRow>
+                            <TableRow className="border-b-gray-700">
                                 <TableCell rowSpan={2} className="font-bold align-middle">{product}</TableCell>
                                 <TableCell>Logo Only</TableCell>
                                 {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logo')}</TableCell>)}
                             </TableRow>
-                             <TableRow>
+                             <TableRow className="border-b-gray-600">
                                 <TableCell>Logo + Back Text</TableCell>
                                 {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logoAndText')}</TableCell>)}
                             </TableRow>
@@ -135,6 +137,26 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
                     ))}
                 </TableBody>
             </Table>
+            <Separator className="my-6 bg-gray-600"/>
+             <h3 className="font-bold text-lg mb-2 text-amber-300">Add On Prices</h3>
+             <Table>
+                <TableHeader>
+                    <TableRow className="border-b-gray-600">
+                        <TableHead className="text-white">Add On Type</TableHead>
+                        {addOnTiers.map(tier => <TableHead key={tier} className="text-white text-center">{tier}+ pcs</TableHead>)}
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    <TableRow className="border-b-gray-700">
+                        <TableCell className="font-bold">Back Logo</TableCell>
+                        {addOnTiers.map(tier => <TableCell key={tier} className="text-center">{getAddOnPrice('backLogo', tier)}</TableCell>)}
+                    </TableRow>
+                    <TableRow className="border-b-gray-600">
+                        <TableCell className="font-bold">Names</TableCell>
+                        {addOnTiers.map(tier => <TableCell key={tier} className="text-center">{getAddOnPrice('names', tier)}</TableCell>)}
+                    </TableRow>
+                </TableBody>
+             </Table>
             </ScrollArea>
         </CardContent>
       </Card>
