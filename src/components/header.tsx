@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -30,6 +29,7 @@ import {
   FolderKanban,
   Shield,
   UserCog,
+  Home,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -164,7 +164,7 @@ const HeaderMemo = React.memo(function Header({
       <header className="sticky top-0 z-40 w-full border-b bg-black no-print">
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex items-center">
-            <Link href="/new-order" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/new-order'); }}>
+            <Link href="/home" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/home'); }}>
               <span className={cn("font-bold font-headline flex items-baseline shining-metal from-amber-200 via-yellow-400 to-amber-200 shining-text whitespace-nowrap")}>
                 <span className="text-3xl">Q</span>
                 <span className="text-2xl">UALISTITCH Inc.</span>
@@ -172,6 +172,12 @@ const HeaderMemo = React.memo(function Header({
             </Link>
           </div>
           <nav className="flex items-center gap-2 h-full flex-1">
+            {isClient && (
+              <Button variant="ghost" onClick={() => handleNavigation('/home')} className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/home']))}>
+                <Home className="mr-2" />
+                Home
+              </Button>
+            )}
             {isClient && (
               <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
                 <DropdownMenuTrigger asChild>
@@ -385,5 +391,3 @@ const HeaderMemo = React.memo(function Header({
 HeaderMemo.displayName = 'Header';
 
 export { HeaderMemo as Header };
-
-    
