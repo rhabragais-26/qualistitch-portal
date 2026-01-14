@@ -80,36 +80,36 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="text-black">Description</TableHead>
-                            <TableHead className="text-black text-right">Unit Price</TableHead>
-                            <TableHead className="text-black text-right">Quantity</TableHead>
-                            <TableHead className="text-black text-right">Total</TableHead>
+                            <TableHead className="text-black py-2 px-3">Description</TableHead>
+                            <TableHead className="text-black text-right py-2 px-3">Unit Price</TableHead>
+                            <TableHead className="text-black text-right py-2 px-3">Quantity</TableHead>
+                            <TableHead className="text-black text-right py-2 px-3">Total</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                             <TableRow>
-                                <TableCell className="text-black text-xs font-medium">Total Items</TableCell>
-                                <TableCell className="text-black text-xs text-right">{formatCurrency(unitPrice)}</TableCell>
-                                <TableCell className="text-black text-xs text-right">{groupData.totalQuantity}</TableCell>
-                                <TableCell className="text-black text-xs text-right">{formatCurrency(itemsSubtotal)}</TableCell>
+                                <TableCell className="text-black text-xs font-medium py-2 px-3">Total Items</TableCell>
+                                <TableCell className="text-black text-xs text-right py-2 px-3">{formatCurrency(unitPrice)}</TableCell>
+                                <TableCell className="text-black text-xs text-right py-2 px-3">{groupData.totalQuantity}</TableCell>
+                                <TableCell className="text-black text-xs text-right py-2 px-3">{formatCurrency(itemsSubtotal)}</TableCell>
                             </TableRow>
                           {logoFee > 0 && (
                             <TableRow>
-                                <TableCell colSpan={3} className="text-black text-xs text-right">One-time Logo Programming Fee</TableCell>
-                                <TableCell className="text-black text-xs text-right">{formatCurrency(logoFee)}</TableCell>
+                                <TableCell colSpan={3} className="text-black text-xs text-right py-2 px-3">One-time Logo Programming Fee</TableCell>
+                                <TableCell className="text-black text-xs text-right py-2 px-3">{formatCurrency(logoFee)}</TableCell>
                             </TableRow>
                           )}
                           {backTextFee > 0 && (
                              <TableRow>
-                                <TableCell colSpan={3} className="text-black text-xs text-right">One-time Back Text Programming Fee</TableCell>
-                                <TableCell className="text-black text-xs text-right">{formatCurrency(backTextFee)}</TableCell>
+                                <TableCell colSpan={3} className="text-black text-xs text-right py-2 px-3">One-time Back Text Programming Fee</TableCell>
+                                <TableCell className="text-black text-xs text-right py-2 px-3">{formatCurrency(backTextFee)}</TableCell>
                             </TableRow>
                           )}
                         </TableBody>
                         <ShadTableFooter>
                             <TableRow>
-                                <TableCell colSpan={3} className="text-right font-bold text-black">Subtotal</TableCell>
-                                <TableCell className="text-right font-bold text-black">{formatCurrency(subtotal)}</TableCell>
+                                <TableCell colSpan={3} className="text-right font-bold text-black py-2 px-3">Subtotal</TableCell>
+                                <TableCell className="text-right font-bold text-black py-2 px-3">{formatCurrency(subtotal)}</TableCell>
                             </TableRow>
                         </ShadTableFooter>
                       </Table>
