@@ -799,7 +799,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                     control={form.control}
                     name="isInternational"
                     render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 shadow-sm">
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                             <FormControl>
                                 <Checkbox
                                 checked={field.value}
