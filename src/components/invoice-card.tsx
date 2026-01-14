@@ -130,7 +130,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                            {groupAddOns.backLogo > 0 && (
                             <TableRow>
                                 <TableCell className="py-2 px-3 text-xs text-black align-middle">Add On: Back Logo</TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{tierLabel}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(backLogoPrice)}</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.backLogo}</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(backLogoTotal)}</TableCell>
@@ -139,7 +139,7 @@ export function InvoiceCard({ orders }: InvoiceCardProps) {
                            {groupAddOns.names > 0 && (
                             <TableRow>
                                 <TableCell className="py-2 px-3 text-xs text-black align-middle">Add On: Names</TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{tierLabel}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(namesPrice)}</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.names}</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(namesTotal)}</TableCell>
