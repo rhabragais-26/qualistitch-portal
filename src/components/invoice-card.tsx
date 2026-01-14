@@ -7,11 +7,11 @@ import { Order } from './lead-form';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 
-type QuotationCardProps = {
+type InvoiceCardProps = {
   orders: Order[];
 };
 
-export function QuotationCard({ orders }: QuotationCardProps) {
+export function InvoiceCard({ orders }: InvoiceCardProps) {
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
       if (!acc[order.productType]) {
@@ -29,13 +29,13 @@ export function QuotationCard({ orders }: QuotationCardProps) {
   return (
     <Card className="shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
       <CardHeader>
-        <CardTitle className="font-headline text-xl">Quotation</CardTitle>
+        <CardTitle className="font-headline text-xl">Invoice</CardTitle>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[calc(100vh-20rem)]">
           {Object.keys(groupedOrders).length === 0 ? (
             <div className="flex items-center justify-center h-full text-muted-foreground">
-              Add orders to see the quotation summary.
+              Add orders to see the invoice summary.
             </div>
           ) : (
             <div className="space-y-6">

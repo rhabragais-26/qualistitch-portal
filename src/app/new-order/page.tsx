@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
 import { LeadForm } from '@/components/lead-form';
-import { QuotationCard } from '@/components/quotation-card';
+import { InvoiceCard } from '@/components/invoice-card';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { Order } from '@/components/lead-form';
@@ -36,7 +36,7 @@ export default function NewOrderPage() {
                     />
                 </div>
                 <div className="xl:col-span-2">
-                    <QuotationCard orders={stagedOrders} />
+                    <InvoiceCard orders={stagedOrders} />
                 </div>
             </div>
         </main>
