@@ -615,7 +615,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
       if (singleQuantity > 0) {
         const orderToAdd: Order = {
           productType: newOrderProductType,
-          color: isClientOwned ? newOrderColor : 'N/A',
+          color: newOrderColor || 'N/A',
           size: 'N/A',
           quantity: singleQuantity,
           embroidery: newOrderEmbroidery,
@@ -630,7 +630,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
         if (item.quantity > 0) {
           newOrders.push({
             productType: newOrderProductType,
-            color: newOrderColor,
+            color: newOrderColor || 'N/A',
             size: item.size,
             quantity: item.quantity,
             embroidery: newOrderEmbroidery,
@@ -1041,7 +1041,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                             )}
                         </div>
                       )}
-                      {!isPatches && !isClientOwned && (
+                      {!isClientOwned && !isPatches && (
                           <div className="flex items-center gap-4">
                             <Label>Embroidery Option:</Label>
                             <RadioGroup onValueChange={(v) => setNewOrderEmbroidery(v as 'logo' | 'logoAndText' | 'name')} value={newOrderEmbroidery} className="flex">
@@ -1115,7 +1115,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                       <Button
                         type="button"
                         onClick={handleAddOrder}
-                        disabled={!newOrderProductType || (!isPatches && !newOrderColor) || (showSingleQuantity ? singleQuantity === 0 : sizeQuantities.every(sq => sq.quantity === 0))}
+                        disabled={!newOrderProductType || (showSingleQuantity ? singleQuantity === 0 : sizeQuantities.every(sq => sq.quantity === 0))}
                       >
                         Add
                       </Button>
