@@ -217,6 +217,8 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
   const [manualOrderCount, setManualOrderCount] = useState(0);
   const [manualTotalQuantity, setManualTotalQuantity] = useState(0);
 
+  const [singleQuantity, setSingleQuantity] = useState(0);
+
   const citiesAndMunicipalities = useMemo(() => {
     return locations.provinces.flatMap(province =>
       province.municipalities.map(municipality => ({
@@ -466,6 +468,8 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
 
   const isPolo = newOrderProductType.includes('Polo Shirt');
   const isPatches = newOrderProductType === 'Patches';
+  const isClientOwned = newOrderProductType === 'Client Owned';
+  const showSingleQuantity = isPatches || isClientOwned;
   const availableColors = isPolo ? poloShirtColors : jacketColors;
 
 
@@ -600,38 +604,47 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
   };
   
   const handleAddOrder = () => {
-    const isProductPatches = newOrderProductType === 'Patches';
-    const color = isProductPatches ? 'N/A' : newOrderColor;
-    let ordersAddedCount = 0;
+    if (!newOrderProductType) return;
+    
     const newOrders: Order[] = [];
-
-    if (newOrderProductType && color) {
+    
+    if (showSingleQuantity) {
+      if (singleQuantity > 0) {
+        newOrders.push({
+          productType: newOrderProductType,
+          color: isPatches ? 'N/A' : newOrderColor || 'N/A',
+          size: 'N/A',
+          quantity: singleQuantity,
+          embroidery: newOrderEmbroidery,
+        });
+      }
+    } else {
       sizeQuantities.forEach(item => {
         if (item.quantity > 0) {
           newOrders.push({
             productType: newOrderProductType,
-            color: color,
-            size: isProductPatches ? 'N/A' : item.size,
+            color: newOrderColor,
+            size: item.size,
             quantity: item.quantity,
             embroidery: newOrderEmbroidery,
           });
-          ordersAddedCount++;
         }
       });
     }
-    
-    if (ordersAddedCount > 0) {
+
+    if (newOrders.length > 0) {
         setStagedOrders(prev => [...prev, ...newOrders]);
         toast({
-            title: `${ordersAddedCount} Order(s) Added!`,
+            title: `${newOrders.length} Order(s) Added!`,
             description: `The orders have been added to the list.`,
         });
         setSizeQuantities(productSizes.map(size => ({ size, quantity: 0 })));
+        setSingleQuantity(0);
     } else {
         toast({
             variant: 'destructive',
             title: 'No Orders to Add',
-            description: 'Please enter a quantity for at least one size.',
+            description: 'Please enter a quantity.',
         });
     }
   };
@@ -1003,13 +1016,15 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                           <SelectContent>{productTypes.map((type) => (<SelectItem key={type} value={type}>{type}</SelectItem>))}</SelectContent>
                         </Select>
                       </div>
-                      <div className='flex items-center gap-2'>
-                        <Label>Color:</Label>
-                        <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={isPatches}>
-                          <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
-                          <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
-                        </Select>
-                      </div>
+                      {!isPatches && (
+                        <div className='flex items-center gap-2'>
+                          <Label>Color:</Label>
+                          <Select onValueChange={setNewOrderColor} value={newOrderColor}>
+                            <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
+                            <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
+                          </Select>
+                        </div>
+                      )}
                       <div className="flex items-center gap-4">
                         <Label>Embroidery Option:</Label>
                         <RadioGroup onValueChange={(v) => setNewOrderEmbroidery(v as 'logo' | 'logoAndText' | 'name')} value={newOrderEmbroidery} className="flex">
@@ -1019,29 +1034,51 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                         </RadioGroup>
                       </div>
                       <div className="space-y-4">
-                        {!isPatches && <Label>Size Quantities</Label>}
-                        <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-                          {sizeQuantities.map((item, index) => (
-                            <div key={item.size} className="flex items-center justify-start gap-4">
-                              {!isPatches && <Label className="text-sm font-bold w-12">{item.size}</Label>}
-                              <div className={cn("flex items-center gap-2", isPatches && "w-full justify-center")}>
-                                <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, -1)}>
-                                  <Minus className="h-4 w-4" />
-                                </Button>
-                                <Input
-                                  type="text"
-                                  value={item.quantity}
-                                  onChange={(e) => handleSizeQuantityInputChange(index, e.target.value)}
-                                  onBlur={(e) => { if (e.target.value === '') handleSizeQuantityInputChange(index, '0') }}
-                                  className="w-14 text-center"
-                                />
-                                <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, 1)}>
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
+                         {showSingleQuantity ? (
+                            <div className="flex items-center justify-center gap-4 pt-4">
+                                <Label className="text-sm font-bold">Quantity</Label>
+                                <div className="flex items-center gap-2">
+                                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setSingleQuantity(q => Math.max(0, q - 1))}>
+                                        <Minus className="h-4 w-4" />
+                                    </Button>
+                                    <Input
+                                        type="text"
+                                        value={singleQuantity}
+                                        onChange={(e) => setSingleQuantity(parseInt(e.target.value, 10) || 0)}
+                                        className="w-16 text-center"
+                                    />
+                                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setSingleQuantity(q => q + 1)}>
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
-                          ))}
-                        </div>
+                        ) : (
+                            <>
+                               <Label>Size Quantities</Label>
+                               <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                                    {sizeQuantities.map((item, index) => (
+                                    <div key={item.size} className="flex items-center justify-start gap-4">
+                                        <Label className="text-sm font-bold w-12">{item.size}</Label>
+                                        <div className="flex items-center gap-2">
+                                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, -1)}>
+                                            <Minus className="h-4 w-4" />
+                                        </Button>
+                                        <Input
+                                            type="text"
+                                            value={item.quantity}
+                                            onChange={(e) => handleSizeQuantityInputChange(index, e.target.value)}
+                                            onBlur={(e) => { if (e.target.value === '') handleSizeQuantityInputChange(index, '0')}}
+                                            className="w-14 text-center"
+                                        />
+                                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, 1)}>
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                        </div>
+                                    </div>
+                                    ))}
+                               </div>
+                            </>
+                         )}
                       </div>
                     </div>
                     <DialogFooter>
@@ -1049,7 +1086,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                       <Button
                         type="button"
                         onClick={handleAddOrder}
-                        disabled={!newOrderProductType || (!isPatches && !newOrderColor) || sizeQuantities.every(sq => sq.quantity === 0)}
+                        disabled={!newOrderProductType || (!isPatches && !newOrderColor)}
                       >
                         Add
                       </Button>
@@ -1347,3 +1384,5 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
+
+    
