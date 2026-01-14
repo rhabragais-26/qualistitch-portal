@@ -773,7 +773,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                       <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                         <CardContent className="p-2 max-h-40 overflow-y-auto">
                           {companySuggestions.map((lead) => (
-                            <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={()={() => handleSuggestionClick(lead)}>
+                            <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
                               {lead.companyName ? toTitleCase(lead.companyName) : ''}
                             </div>
                           ))}
