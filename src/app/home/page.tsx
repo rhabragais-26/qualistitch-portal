@@ -40,7 +40,7 @@ export default function HomePage() {
 
   return (
     <Header>
-      <div className="flex justify-center items-center p-4 sm:p-6 lg:p-8">
+      <div className="flex-1 flex justify-center items-center p-4 sm:p-6 lg:p-8">
         <Carousel
           plugins={[plugin.current]}
           className="w-full max-w-4xl"
@@ -56,8 +56,8 @@ export default function HomePage() {
                       <Image 
                         src={src} 
                         alt={`Company Profile Picture ${index + 1}`}
-                        layout="fill"
-                        objectFit="contain"
+                        fill
+                        style={{objectFit: "contain"}}
                       />
                     </CardContent>
                   </Card>
