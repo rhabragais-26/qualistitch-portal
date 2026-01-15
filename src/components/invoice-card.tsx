@@ -198,10 +198,12 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                 return (
                   <div key={groupKey}>
                     <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-bold text-lg text-primary">
-                            {groupData.productType}
-                            {!isPatches && <span className="text-sm font-normal text-muted-foreground ml-2">({groupData.embroidery === 'logo' ? 'Logo Only' : groupData.embroidery === 'name' ? 'Name Only' : 'Logo + Back Text'})</span>}
-                        </h3>
+                        <div>
+                            <h3 className="font-bold text-lg text-primary leading-tight">
+                                {groupData.productType}
+                            </h3>
+                            {!isPatches && <span className="text-sm font-normal text-muted-foreground">({groupData.embroidery === 'logo' ? 'Logo Only' : groupData.embroidery === 'logoAndText' ? 'Logo + Back Text' : 'Name Only'})</span>}
+                        </div>
                         <div className="flex gap-2">
                             <DiscountDialog groupKey={groupKey} discounts={discounts} setDiscounts={setDiscounts} />
                             <AddOnsDialog groupKey={groupKey} addOns={addOns} setAddOns={setAddOns} totalQuantity={groupData.totalQuantity} />
@@ -447,8 +449,7 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
     }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-7 px-2 bg-gray-700 text-white hover:bg-gray-600 font-bold">
-            <Plus className="h-4 w-4" />
-            Add Ons
+            <Plus/>Add Ons
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -547,8 +548,7 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
     }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-7 px-2 bg-teal-600 text-white hover:bg-teal-500 font-bold">
-            <Plus className="h-4 w-4" />
-            Discount
+            <Plus/>Discount
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -581,9 +581,8 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
                 value={inputValue}
                 onChange={handleValueChange}
                 className={cn(
-                    "w-full text-right",
+                    "w-full text-right pr-8",
                     localDiscount.type === 'fixed' && 'pl-8 pr-3',
-                    localDiscount.type === 'percentage' && 'pr-8'
                 )}
               />
               {localDiscount.type === 'percentage' && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>}
