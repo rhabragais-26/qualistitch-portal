@@ -52,6 +52,13 @@
             "image": { "type": ["string", "null"] },
             "uploadTime": { "type": ["string", "null"], "format": "date-time" }
           }
+        },
+        "corporateJacket": {
+          "type": "object",
+          "properties": {
+            "image": { "type": ["string", "null"] },
+            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
+          }
         }
       }
     },

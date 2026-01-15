@@ -13,8 +13,8 @@ import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { isEqual } from 'lodash';
-import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 import { Skeleton } from './ui/skeleton';
 
 type SizeChartInfo = {
@@ -26,11 +26,13 @@ type SizeChartData = {
   id?: string;
   bomberJacket: SizeChartInfo;
   poloShirt: SizeChartInfo;
+  corporateJacket: SizeChartInfo;
 };
 
 const initialSizeChartData: SizeChartData = {
   bomberJacket: { image: null, uploadTime: null },
   poloShirt: { image: null, uploadTime: null },
+  corporateJacket: { image: null, uploadTime: null },
 };
 
 type TabValue = keyof Omit<SizeChartData, 'id'>;
@@ -53,12 +55,14 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   
   const bomberJacketInputRef = useRef<HTMLInputElement>(null);
   const poloShirtInputRef = useRef<HTMLInputElement>(null);
+  const corporateJacketInputRef = useRef<HTMLInputElement>(null);
 
   const [deletingTab, setDeletingTab] = useState<TabValue | null>(null);
 
   const fileInputRefs: Record<TabValue, React.RefObject<HTMLInputElement>> = {
     bomberJacket: bomberJacketInputRef,
     poloShirt: poloShirtInputRef,
+    corporateJacket: corporateJacketInputRef,
   };
 
 
@@ -67,21 +71,24 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
       const dataToSet = {
         bomberJacket: fetchedData.bomberJacket || { image: null, uploadTime: null },
         poloShirt: fetchedData.poloShirt || { image: null, uploadTime: null },
+        corporateJacket: fetchedData.corporateJacket || { image: null, uploadTime: null },
       };
       setSizeChartData(dataToSet);
     }
   }, [fetchedData]);
 
   useEffect(() => {
+    if (isLoading) return;
     const initialCompareState = fetchedData 
       ? {
           bomberJacket: fetchedData.bomberJacket || { image: null, uploadTime: null },
           poloShirt: fetchedData.poloShirt || { image: null, uploadTime: null },
+          corporateJacket: fetchedData.corporateJacket || { image: null, uploadTime: null },
         } 
       : initialSizeChartData;
 
     setIsDirty(!isEqual(sizeChartData, initialCompareState));
-  }, [sizeChartData, fetchedData]);
+  }, [sizeChartData, fetchedData, isLoading]);
 
 
   useEffect(() => {
@@ -201,16 +208,8 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
 
   const handleSave = async () => {
     if (!sizeChartRef) return;
-    if (!isAdmin) {
-      toast({
-          variant: "destructive",
-          title: "Permission Denied",
-          description: "You do not have permission to save changes.",
-      });
-      return;
-    }
-
-    setDoc(sizeChartRef, { ...fetchedData, ...sizeChartData }, { merge: true })
+    
+    setDoc(sizeChartRef, { ...sizeChartData, id: 'default' }, { merge: true })
       .then(() => {
         toast({
           title: 'Success',
@@ -318,15 +317,19 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
           </CardHeader>
           <CardContent className="p-4 flex-1 flex flex-col">
             <Tabs defaultValue="bomberJacket" className="w-full h-full flex flex-col">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="bomberJacket">Bomber Jacket</TabsTrigger>
                 <TabsTrigger value="poloShirt">Polo Shirt</TabsTrigger>
+                <TabsTrigger value="corporateJacket">Corporate Jacket</TabsTrigger>
               </TabsList>
               <TabsContent value="bomberJacket" className="flex-1 mt-4">
                 {renderUploadBox('bomberJacket')}
               </TabsContent>
               <TabsContent value="poloShirt" className="flex-1 mt-4">
                 {renderUploadBox('poloShirt')}
+              </TabsContent>
+              <TabsContent value="corporateJacket" className="flex-1 mt-4">
+                {renderUploadBox('corporateJacket')}
               </TabsContent>
             </Tabs>
           </CardContent>
