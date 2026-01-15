@@ -548,7 +548,7 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-7 px-2 bg-teal-600 text-white hover:bg-teal-500 font-bold">
             <Plus className="h-4 w-4" />
-            Add Discount
+            Discount
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -583,7 +583,7 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
                 className={cn(
                     "w-full text-right",
                     localDiscount.type === 'fixed' && 'pl-8 pr-3',
-                    localDiscount.type === 'percentage' && 'pr-8 pl-3'
+                    localDiscount.type === 'percentage' && 'pr-8'
                 )}
               />
               {localDiscount.type === 'percentage' && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>}
