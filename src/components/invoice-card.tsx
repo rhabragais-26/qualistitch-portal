@@ -367,16 +367,14 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                             <TableRow className="group">
                                <TableCell colSpan={4} className="py-1 px-3 text-right font-medium text-destructive">
                                   <div className="flex justify-end items-center gap-2">
-                                    <div className="flex flex-col items-end">
-                                      <span>Discount ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})</span>
-                                      {groupDiscount.reason && (
-                                        <span className="text-xs text-gray-500">({groupDiscount.reason})</span>
-                                      )}
-                                    </div>
+                                    <span>Discount ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})</span>
                                     <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveDiscount(groupKey)}>
                                       <X className="h-3 w-3" />
                                     </Button>
                                   </div>
+                                   {groupDiscount.reason && (
+                                    <span className="text-xs text-gray-500 block text-right pr-7">({groupDiscount.reason})</span>
+                                  )}
                                </TableCell>
                               <TableCell className="py-1 px-3 text-right font-medium text-destructive">
                                 -{formatCurrency(discountAmount)}
@@ -406,15 +404,25 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                  <div className="mt-4 space-y-2">
                     <div className="flex justify-between items-center text-lg">
                       <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} />
-                      <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
+                      <div className="text-right">
+                        <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
+                      </div>
                     </div>
                      {totalPaid > 0 && (
                        <>
-                         <div className="flex justify-end items-center text-sm">
-                          <span className="text-muted-foreground mr-2">Total Paid:</span>
-                          <span className="font-medium">{formatCurrency(totalPaid)}</span>
-                        </div>
-                        <div className="flex justify-end items-center text-lg">
+                        {Object.values(payments).flat().map((payment, index) => (
+                            <div key={index} className="flex justify-end items-center text-sm">
+                                <div className="text-right">
+                                    <span className="text-muted-foreground mr-2">
+                                        Paid ({payment.type === 'down' ? 'Down Payment' : 'Full Payment'}):
+                                    </span>
+                                    <span className="font-medium">{formatCurrency(payment.amount)}</span>
+                                    <p className="text-xs text-muted-foreground italic">via {payment.mode}</p>
+                                </div>
+                            </div>
+                        ))}
+
+                        <div className="flex justify-end items-center text-lg mt-2">
                             <span className="font-bold text-black mr-2">Balance:</span>
                             <span className="font-bold text-destructive">{formatCurrency(balance)}</span>
                         </div>
@@ -456,16 +464,69 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   const [rushFeeInput, setRushFeeInput] = useState('');
   const [shippingFeeInput, setShippingFeeInput] = useState('');
 
+  const cardRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (isOpen && cardRef.current) {
+      const { offsetWidth, offsetHeight } = cardRef.current;
+      const centerX = window.innerWidth / 2 - offsetWidth / 2;
+      const centerY = window.innerHeight / 2 - offsetHeight / 2;
+      setPosition({ x: centerX, y: centerY });
+    }
+  }, [isOpen]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (headerRef.current?.contains(e.target as Node)) {
+        setIsDragging(true);
+        dragStartPos.current = {
+            x: e.clientX - position.x,
+            y: e.clientY - position.y,
+        };
+    }
+  }, [position.x, position.y]);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isDragging) {
+      setPosition({
+        x: e.clientX - dragStartPos.current.x,
+        y: e.clientY - dragStartPos.current.y,
+      });
+    }
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
+
   const handleSave = () => {
     setAddOns(prev => ({ ...prev, [groupKey]: localAddOns }));
     setIsOpen(false);
   };
   
-  const handleQuantityChange = (type: keyof AddOns, change: number) => {
+  const handleQuantityChange = (type: keyof Omit<AddOns, 'rushFee' | 'shippingFee'>, change: number) => {
     setLocalAddOns(prev => ({...prev, [type]: Math.max(0, (prev[type] || 0) + change)}));
   }
 
-  const handleInputChange = (type: keyof AddOns, value: string) => {
+  const handleInputChange = (type: keyof Omit<AddOns, 'rushFee' | 'shippingFee'>, value: string) => {
     setLocalAddOns(prev => ({...prev, [type]: value === '' ? 0 : parseInt(value, 10) || 0}));
   }
   
@@ -523,43 +584,51 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
             <Plus/>Add Ons
         </Button>
       </DialogTrigger>
-       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add Ons</DialogTitle>
+       <DialogContent className="sm:max-w-md p-0" ref={cardRef} style={{ left: `${position.x}px`, top: `${position.y}px`, transform: 'none', position: 'fixed' }}>
+        <div onMouseDown={handleMouseDown} ref={headerRef} className={cn("flex items-center justify-between p-2 cursor-move", isDragging && "cursor-grabbing")}>
+            <div className="flex items-center">
+                <GripVertical className="h-5 w-5 text-gray-500"/>
+                <DialogTitle>Add Ons</DialogTitle>
+            </div>
+            <DialogClose asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7"><X className="h-4 w-4" /></Button>
+            </DialogClose>
+        </div>
+        <div className="px-6 pb-6">
           <DialogDescription>
             Specify quantities for additional logos, names or patches.
           </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4 flex flex-col items-center">
-            {addOnFields.map(field => (
-                <div key={field.id} className="flex items-center justify-between w-full max-w-sm">
-                    <Label htmlFor={field.id} className="text-sm">{field.label}</Label>
-                    <div className="flex items-center gap-2">
-                        <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => handleQuantityChange(field.id, -1)}><Minus className="h-4 w-4" /></Button>
-                        <Input id={field.id} type="text" value={localAddOns[field.id]} onChange={(e) => handleInputChange(field.id, e.target.value)} className="w-14 h-7 text-center" />
-                        <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => handleQuantityChange(field.id, 1)}><Plus className="h-4 w-4" /></Button>
+        
+            <div className="space-y-3 py-4 flex flex-col items-center">
+                {addOnFields.map(field => (
+                    <div key={field.id} className="flex items-center justify-between w-full max-w-sm">
+                        <Label htmlFor={field.id} className="text-xs">{field.label}</Label>
+                        <div className="flex items-center gap-2">
+                            <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleQuantityChange(field.id, -1)}><Minus className="h-3 w-3" /></Button>
+                            <Input id={field.id} type="text" value={localAddOns[field.id]} onChange={(e) => handleInputChange(field.id, e.target.value)} className="w-12 h-6 text-center text-xs" />
+                            <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleQuantityChange(field.id, 1)}><Plus className="h-3 w-3" /></Button>
+                        </div>
+                    </div>
+                ))}
+                <div className="flex items-center justify-between w-full max-w-sm">
+                    <Label htmlFor="rushFee" className="text-xs">Rush Fee</Label>
+                    <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">₱</span>
+                        <Input id="rushFee" type="text" value={rushFeeInput} onChange={(e) => handleCurrencyInputChange(e, setRushFeeInput, 'rushFee')} onBlur={() => handleCurrencyBlur(rushFeeInput, setRushFeeInput, localAddOns.rushFee)} className="w-28 h-6 text-right pr-2 pl-6 text-xs" />
                     </div>
                 </div>
-            ))}
-            <div className="flex items-center justify-between w-full max-w-sm">
-                <Label htmlFor="rushFee" className="text-sm">Rush Fee</Label>
-                <div className="relative">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">₱</span>
-                    <Input id="rushFee" type="text" value={rushFeeInput} onChange={(e) => handleCurrencyInputChange(e, setRushFeeInput, 'rushFee')} onBlur={() => handleCurrencyBlur(rushFeeInput, setRushFeeInput, localAddOns.rushFee)} className="w-32 h-7 text-right pr-2 pl-6" />
+                <div className="flex items-center justify-between w-full max-w-sm">
+                    <Label htmlFor="shippingFee" className="text-xs">Shipping Fee</Label>
+                    <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">₱</span>
+                        <Input id="shippingFee" type="text" value={shippingFeeInput} onChange={(e) => handleCurrencyInputChange(e, setShippingFeeInput, 'shippingFee')} onBlur={() => handleCurrencyBlur(shippingFeeInput, setShippingFeeInput, localAddOns.shippingFee)} className="w-28 h-6 text-right pr-2 pl-6 text-xs" />
+                    </div>
                 </div>
             </div>
-             <div className="flex items-center justify-between w-full max-w-sm">
-                <Label htmlFor="shippingFee" className="text-sm">Shipping Fee</Label>
-                <div className="relative">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">₱</span>
-                    <Input id="shippingFee" type="text" value={shippingFeeInput} onChange={(e) => handleCurrencyInputChange(e, setShippingFeeInput, 'shippingFee')} onBlur={() => handleCurrencyBlur(shippingFeeInput, setShippingFeeInput, localAddOns.shippingFee)} className="w-32 h-7 text-right pr-2 pl-6" />
-                </div>
-            </div>
+            <DialogFooter className="sm:justify-end">
+                <Button onClick={handleSave}>Save</Button>
+            </DialogFooter>
         </div>
-        <DialogFooter>
-          <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-          <Button onClick={handleSave}>Save</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
