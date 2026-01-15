@@ -408,7 +408,7 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                        </>
                     )}
                  </div>
-                 <div className="flex justify-end mt-4">
+                 <div className="flex justify-start mt-4">
                     <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} />
                  </div>
             </div>
@@ -450,14 +450,21 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
 
+   useEffect(() => {
+    if (isOpen) {
+        const centerX = window.innerWidth / 2 - 256; // 256 is half of width 512px
+        const centerY = window.innerHeight / 2 - 260; // approx half-height
+        setPosition({ x: centerX, y: centerY });
+    }
+  }, [isOpen]);
+
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    // Check if the dialog content itself is being dragged, not an input inside it
-    if (e.target === e.currentTarget || headerRef.current?.contains(e.target as Node)) {
-      setIsDragging(true);
-      dragStartPos.current = {
-        x: e.clientX - position.x,
-        y: e.clientY - position.y,
-      };
+    if (headerRef.current?.contains(e.target as Node)) {
+        setIsDragging(true);
+        dragStartPos.current = {
+            x: e.clientX - position.x,
+            y: e.clientY - position.y,
+        };
     }
   }, [position.x, position.y]);
 
@@ -543,7 +550,7 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
       </DialogTrigger>
        <DialogContent 
         ref={cardRef}
-        className={cn("fixed z-50 p-0", isDragging && 'select-none user-select-none')}
+        className={cn("sm:max-w-md fixed z-50 p-0", isDragging && 'select-none user-select-none')}
         style={{ left: `${position.x}px`, top: `${position.y}px` }}
         onMouseDown={handleMouseDown}
         >
@@ -825,4 +832,5 @@ function AddPaymentDialog({ grandTotal, setPayments }: { grandTotal: number; set
     </Dialog>
   );
 }
+
 
