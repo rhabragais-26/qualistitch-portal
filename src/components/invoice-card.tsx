@@ -330,19 +330,19 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                           )}
                           {groupDiscount && (
                             <TableRow className="group">
-                              <TableCell colSpan={4} className="py-1 px-3 text-right font-medium text-destructive">
-                                <div className="flex flex-col items-end">
-                                    <div className="flex items-center gap-2">
-                                        <span>Discount ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})</span>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveDiscount(groupKey)}>
-                                            <X className="h-3 w-3" />
-                                        </Button>
-                                    </div>
-                                    {groupDiscount.reason && (
+                               <TableCell colSpan={4} className="py-1 px-3 text-right font-medium text-destructive">
+                                 <div className="flex justify-end items-center gap-2">
+                                    <div className="flex flex-col items-end">
+                                      <span>Discount ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})</span>
+                                      {groupDiscount.reason && (
                                         <span className="text-xs text-gray-500">({groupDiscount.reason})</span>
-                                    )}
-                                </div>
-                              </TableCell>
+                                      )}
+                                    </div>
+                                    <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveDiscount(groupKey)}>
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                               </TableCell>
                               <TableCell className="py-1 px-3 text-right font-medium text-destructive">
                                 -{formatCurrency(discountAmount)}
                               </TableCell>
