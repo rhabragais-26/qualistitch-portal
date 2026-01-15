@@ -85,7 +85,6 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
       
       const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0 };
       const groupDiscount = discounts[groupKey];
-
       const itemTotalQuantity = group.totalQuantity;
 
       if (groupAddOns.backLogo > 0) {
@@ -199,11 +198,11 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                 return (
                   <div key={groupKey}>
                     <div className="flex justify-between items-center mb-2">
-                        <div>
+                        <div className="flex flex-col">
                             <h3 className="font-bold text-lg text-primary leading-tight">
                                 {groupData.productType}
                             </h3>
-                            {!isPatches && <span className="text-sm font-normal text-muted-foreground">({groupData.embroidery === 'logo' ? 'Logo Only' : groupData.embroidery === 'logoAndText' ? 'Logo + Back Text' : 'Name Only'})</span>}
+                            <span className="text-sm font-normal text-muted-foreground">({groupData.embroidery === 'logo' ? 'Logo Only' : groupData.embroidery === 'logoAndText' ? 'Logo + Back Text' : 'Name Only'})</span>
                         </div>
                         <div className="flex gap-2">
                             <DiscountDialog groupKey={groupKey} discounts={discounts} setDiscounts={setDiscounts} />
@@ -592,7 +591,7 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="discount-reason">What is the discount for?</Label>
+            <Label htmlFor="discount-reason">What is the discount for? (Optional)</Label>
             <Input
               id="discount-reason"
               value={reason}
@@ -603,7 +602,7 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
         </div>
         <DialogFooter>
           <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-          <Button onClick={handleSave}>Save Discount</Button>
+          <Button onClick={handleSave} disabled={localDiscount.value <= 0}>Save Discount</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
