@@ -17,6 +17,7 @@ import { Minus, Plus, X, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 
 type InvoiceCardProps = {
@@ -331,7 +332,7 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                           {groupDiscount && (
                             <TableRow className="group">
                                <TableCell colSpan={4} className="py-1 px-3 text-right font-medium text-destructive">
-                                 <div className="flex justify-end items-center gap-2">
+                                  <div className="flex justify-end items-center gap-2">
                                     <div className="flex flex-col items-end">
                                       <span>Discount ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})</span>
                                       {groupDiscount.reason && (
@@ -577,7 +578,7 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
 
 function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: string, discounts: Record<string, Discount>, setDiscounts: React.Dispatch<React.SetStateAction<Record<string, Discount>>> }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [localDiscount, setLocalDiscount] = useState<Discount>(discounts[groupKey] || { type: 'percentage', value: 0 });
+  const [localDiscount, setLocalDiscount] = useState<Discount>(discounts[groupKey] || { type: 'percentage', value: 0, reason: '' });
   const [inputValue, setInputValue] = useState('');
   const [reason, setReason] = useState('');
 
@@ -759,4 +760,5 @@ function AddPaymentDialog() {
     </Dialog>
   );
 }
+
 
