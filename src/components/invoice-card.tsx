@@ -384,13 +384,6 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
             <div className="w-full pt-4">
                 <Separator />
                  <div className="mt-4 space-y-2">
-                    {Object.values(payments).flat().map((payment, index) => (
-                      <div key={index} className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground">{payment.type === 'full' ? 'Full Payment' : 'Down Payment'} ({payment.mode}):</span>
-                        <span className="font-medium">{formatCurrency(payment.amount)}</span>
-                      </div>
-                    ))}
-                    {totalPaid > 0 && <Separator/>}
                     <div className="flex justify-end items-center text-lg">
                       <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
                     </div>
@@ -658,7 +651,7 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
     }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-7 px-2 bg-teal-600 text-white hover:bg-teal-500 font-bold">
-            <Plus/>Discount
+            +Discount
         </Button>
       </DialogTrigger>
       <DialogContent>
