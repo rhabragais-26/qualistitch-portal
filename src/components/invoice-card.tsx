@@ -442,11 +442,12 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
 
-   useEffect(() => {
-    if (isOpen) {
-        const centerX = window.innerWidth / 2 - 256; // 256 is half of width 512px
-        const centerY = window.innerHeight / 2 - 260; // approx half-height
-        setPosition({ x: centerX, y: centerY });
+  useEffect(() => {
+    if (isOpen && cardRef.current) {
+      const { offsetWidth, offsetHeight } = cardRef.current;
+      const centerX = window.innerWidth / 2 - offsetWidth / 2;
+      const centerY = window.innerHeight / 2 - offsetHeight / 2;
+      setPosition({ x: centerX, y: centerY });
     }
   }, [isOpen]);
 
