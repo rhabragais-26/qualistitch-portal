@@ -546,8 +546,9 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
       setIsOpen(open);
     }}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-7 px-2 bg-blue-600 text-white hover:bg-blue-500 font-bold">
-            Discount
+        <Button variant="outline" size="sm" className="h-7 px-2 bg-teal-600 text-white hover:bg-teal-500 font-bold">
+            <Plus className="mr-1 h-4 w-4" />
+            Add Discount
         </Button>
       </DialogTrigger>
       <DialogContent>
