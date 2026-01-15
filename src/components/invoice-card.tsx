@@ -16,6 +16,7 @@ import { Input } from './ui/input';
 import { Minus, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 
 
 type InvoiceCardProps = {
@@ -35,14 +36,21 @@ type AddOns = {
   rushFee: number;
 };
 
+type Discount = {
+  type: 'percentage' | 'fixed';
+  value: number;
+};
+
 export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
   
   const [addOns, setAddOns] = useState<Record<string, AddOns>>({});
+  const [discounts, setDiscounts] = useState<Record<string, Discount>>({});
   const [removingAddOn, setRemovingAddOn] = useState<{ groupKey: string; addOnType: keyof AddOns; } | null>(null);
 
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
       const isClientOwned = order.productType === 'Client Owned';
+      const isPatches = order.productType === 'Patches';
       const productGroup = getProductGroup(order.productType);
       
       if (!productGroup && !isClientOwned && order.productType !== 'Patches') return acc;
@@ -75,6 +83,7 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
 
       
       const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0 };
+      const groupDiscount = discounts[groupKey];
 
       const itemTotalQuantity = group.totalQuantity;
 
@@ -97,11 +106,19 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
       }
       
       subtotal += logoFee + backTextFee;
+
+      if (groupDiscount) {
+        if (groupDiscount.type === 'percentage') {
+          subtotal *= (1 - groupDiscount.value / 100);
+        } else {
+          subtotal -= groupDiscount.value;
+        }
+      }
       
       total += subtotal;
     });
     return total;
-  }, [groupedOrders, addOns, orderType]);
+  }, [groupedOrders, addOns, discounts, orderType]);
 
   const handleConfirmRemoveAddOn = () => {
     if (!removingAddOn) return;
@@ -118,6 +135,14 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
     });
     setRemovingAddOn(null);
   };
+  
+  const handleRemoveDiscount = (groupKey: string) => {
+    setDiscounts(prev => {
+      const newDiscounts = { ...prev };
+      delete newDiscounts[groupKey];
+      return newDiscounts;
+    });
+  }
 
 
   return (
@@ -145,6 +170,7 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
                 const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0 };
+                const groupDiscount = discounts[groupKey];
                 const itemTotalQuantity = groupData.totalQuantity;
 
                 const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity);
@@ -157,8 +183,17 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                 const programFeeLogoTotal = groupAddOns.programFeeLogo * programFeeLogoPrice;
                 const programFeeBackTextTotal = groupAddOns.programFeeBackText * programFeeBackTextPrice;
 
-                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + programFeeLogoTotal + programFeeBackTextTotal + groupAddOns.rushFee;
-                subtotal += logoFee + backTextFee;
+                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + programFeeLogoTotal + programFeeBackTextTotal + groupAddOns.rushFee + logoFee + backTextFee;
+
+                let discountAmount = 0;
+                if(groupDiscount) {
+                    if(groupDiscount.type === 'percentage') {
+                        discountAmount = subtotal * (groupDiscount.value / 100);
+                    } else {
+                        discountAmount = groupDiscount.value;
+                    }
+                    subtotal -= discountAmount;
+                }
                 
                 return (
                   <div key={groupKey}>
@@ -167,7 +202,10 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                             {groupData.productType}
                             {!isPatches && <span className="text-sm font-normal text-muted-foreground ml-2">({groupData.embroidery === 'logo' ? 'Logo Only' : groupData.embroidery === 'name' ? 'Name Only' : 'Logo + Back Text'})</span>}
                         </h3>
-                        <AddOnsDialog groupKey={groupKey} addOns={addOns} setAddOns={setAddOns} totalQuantity={groupData.totalQuantity} />
+                        <div className="flex gap-2">
+                            <DiscountDialog groupKey={groupKey} discounts={discounts} setDiscounts={setDiscounts} />
+                            <AddOnsDialog groupKey={groupKey} addOns={addOns} setAddOns={setAddOns} totalQuantity={groupData.totalQuantity} />
+                        </div>
                     </div>
                     <div className="border rounded-md">
                       <Table>
@@ -286,6 +324,21 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                              <TableRow>
                                 <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">One-time Back Text Programming Fee</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(backTextFee)}</TableCell>
+                            </TableRow>
+                          )}
+                          {groupDiscount && (
+                            <TableRow className="group">
+                              <TableCell colSpan={4} className="py-1 px-3 text-right font-medium text-destructive">
+                                 <div className="flex items-center justify-end gap-2">
+                                     <span>Discount ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})</span>
+                                     <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveDiscount(groupKey)}>
+                                         <X className="h-3 w-3" />
+                                     </Button>
+                                 </div>
+                              </TableCell>
+                              <TableCell className="py-1 px-3 text-right font-medium text-destructive">
+                                -{formatCurrency(discountAmount)}
+                              </TableCell>
                             </TableRow>
                           )}
                         </TableBody>
@@ -449,6 +502,92 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
         <DialogFooter>
           <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
           <Button onClick={handleSave}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: string, discounts: Record<string, Discount>, setDiscounts: React.Dispatch<React.SetStateAction<Record<string, Discount>>> }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [localDiscount, setLocalDiscount] = useState<Discount>(discounts[groupKey] || { type: 'percentage', value: 0 });
+  const [inputValue, setInputValue] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+        const currentDiscount = discounts[groupKey] || { type: 'percentage', value: 0 };
+        setLocalDiscount(currentDiscount);
+        setInputValue(currentDiscount.value > 0 ? currentDiscount.value.toString() : '');
+    }
+  }, [isOpen, discounts, groupKey]);
+  
+  const handleSave = () => {
+    setDiscounts(prev => ({ ...prev, [groupKey]: localDiscount }));
+    setIsOpen(false);
+  };
+
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const numericValue = parseFloat(rawValue.replace(/[^0-9.]/g, ''));
+    if (!isNaN(numericValue)) {
+      setLocalDiscount(prev => ({ ...prev, value: numericValue }));
+      setInputValue(rawValue);
+    } else {
+      setLocalDiscount(prev => ({ ...prev, value: 0 }));
+      setInputValue('');
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if(!open) {
+        setLocalDiscount(discounts[groupKey] || { type: 'percentage', value: 0 });
+      }
+      setIsOpen(open);
+    }}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-7 px-2 bg-blue-600 text-white hover:bg-blue-500 font-bold">
+            Discount
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Discount</DialogTitle>
+          <DialogDescription>
+             Apply a discount to this order group.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <RadioGroup 
+            value={localDiscount.type} 
+            onValueChange={(type: 'percentage' | 'fixed') => setLocalDiscount(prev => ({ ...prev, type }))} 
+            className="flex justify-center gap-4"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="percentage" id="percentage" />
+              <Label htmlFor="percentage">Percentage (%)</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="fixed" id="fixed" />
+              <Label htmlFor="fixed">Fixed Amount (₱)</Label>
+            </div>
+          </RadioGroup>
+          <div className="flex justify-center">
+             <div className="relative w-48">
+              {localDiscount.type === 'fixed' && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₱</span>}
+              <Input
+                type="text"
+                value={inputValue}
+                onChange={handleValueChange}
+                className={cn("w-full text-right pr-3", localDiscount.type === 'fixed' && 'pl-8')}
+              />
+              {localDiscount.type === 'percentage' && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>}
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={handleSave}>Save Discount</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
