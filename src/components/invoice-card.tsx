@@ -384,14 +384,14 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
             <div className="w-full pt-4">
                 <Separator />
                  <div className="mt-4 space-y-2">
-                    {Object.entries(payments).flat().map(([_, payment], index) => (
+                    {Object.values(payments).flat().map((payment, index) => (
                       <div key={index} className="flex justify-between items-center text-sm">
                         <span className="text-muted-foreground">{payment.type === 'full' ? 'Full Payment' : 'Down Payment'} ({payment.mode}):</span>
                         <span className="font-medium">{formatCurrency(payment.amount)}</span>
                       </div>
                     ))}
                     {totalPaid > 0 && <Separator/>}
-                    <div className="flex justify-between items-center text-lg">
+                    <div className="flex justify-end items-center text-lg">
                       <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
                     </div>
                      {totalPaid > 0 && (
@@ -834,3 +834,6 @@ function AddPaymentDialog({ grandTotal, setPayments }: { grandTotal: number; set
 
 
 
+
+
+    
