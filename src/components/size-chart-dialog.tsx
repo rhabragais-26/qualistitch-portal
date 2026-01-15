@@ -13,7 +13,8 @@ import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { isEqual } from 'lodash';
-import { errorEmitter, FirestorePermissionError } from '@/firebase/errors';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 import { Skeleton } from './ui/skeleton';
 
 type SizeChartInfo = {
