@@ -392,8 +392,7 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                     ))}
                     {totalPaid > 0 && <Separator/>}
                     <div className="flex justify-between items-center text-lg">
-                      <span className="font-bold text-black">Grand Total:</span>
-                      <span className="font-bold text-primary">{formatCurrency(grandTotal)}</span>
+                      <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
                     </div>
                      {totalPaid > 0 && (
                        <>
@@ -832,5 +831,6 @@ function AddPaymentDialog({ grandTotal, setPayments }: { grandTotal: number; set
     </Dialog>
   );
 }
+
 
 
