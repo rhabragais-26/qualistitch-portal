@@ -1,6 +1,6 @@
 
 
-export type ProductGroup = 'GroupA' | 'GroupB' | 'GroupC';
+export type ProductGroup = 'GroupA' | 'GroupB' | 'GroupC' | 'GroupD';
 export type EmbroideryOption = 'logo' | 'logoAndText' | 'name';
 export type AddOnType = 'backLogo' | 'names' | 'programFeeLogo' | 'programFeeBackText' | 'rushFee';
 
@@ -11,6 +11,8 @@ const productGroupMapping: { [key: string]: ProductGroup } = {
   'Reversible v1': 'GroupB',
   'Reversible v2': 'GroupB',
   'Corporate Jacket': 'GroupC',
+  'Polo Shirt (Coolpass)': 'GroupD',
+  'Polo Shirt (Cotton Blend)': 'GroupD',
 };
 
 const pricingTiers: {
@@ -89,6 +91,30 @@ const pricingTiers: {
         { min: 201, max: 300, price: 999 },
         { min: 301, max: 999, price: 849 },
         { min: 1000, max: Infinity, price: 899 },
+      ],
+    },
+  },
+  GroupD: {
+    logo: {
+      tiers: [
+        { min: 1, max: 3, price: 999 },
+        { min: 4, max: 10, price: 899 },
+        { min: 11, max: 50, price: 799 },
+        { min: 51, max: 200, price: 749 },
+        { min: 201, max: 300, price: 699 },
+        { min: 301, max: 999, price: 649 },
+        { min: 1000, max: Infinity, price: 599 },
+      ],
+    },
+    logoAndText: {
+      tiers: [
+        { min: 1, max: 3, price: 1099 },
+        { min: 4, max: 10, price: 999 },
+        { min: 11, max: 50, price: 899 },
+        { min: 51, max: 200, price: 849 },
+        { min: 201, max: 300, price: 799 },
+        { min: 301, max: 999, price: 749 },
+        { min: 1000, max: Infinity, price: 699 },
       ],
     },
   },

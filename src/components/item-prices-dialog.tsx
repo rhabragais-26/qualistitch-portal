@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -16,7 +17,7 @@ import { Separator } from './ui/separator';
 
 const productTypes = [
     'Executive Jacket 1', 'Executive Jacket v2 (with lines)', 'Turtle Neck Jacket',
-    'Reversible v1', 'Reversible v2', 'Corporate Jacket'
+    'Reversible v1', 'Reversible v2', 'Corporate Jacket', 'Polo Shirt (Coolpass)', 'Polo Shirt (Cotton Blend)'
 ];
 
 const quantityTiers = [1, 4, 11, 51, 201, 301, 1000];
