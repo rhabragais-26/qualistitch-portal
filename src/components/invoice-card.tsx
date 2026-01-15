@@ -39,6 +39,7 @@ type AddOns = {
 type Discount = {
   type: 'percentage' | 'fixed';
   value: number;
+  reason?: string;
 };
 
 export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
@@ -513,17 +514,19 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
   const [isOpen, setIsOpen] = useState(false);
   const [localDiscount, setLocalDiscount] = useState<Discount>(discounts[groupKey] || { type: 'percentage', value: 0 });
   const [inputValue, setInputValue] = useState('');
+  const [reason, setReason] = useState('');
 
   useEffect(() => {
     if (isOpen) {
-        const currentDiscount = discounts[groupKey] || { type: 'percentage', value: 0 };
+        const currentDiscount = discounts[groupKey] || { type: 'percentage', value: 0, reason: '' };
         setLocalDiscount(currentDiscount);
         setInputValue(currentDiscount.value > 0 ? currentDiscount.value.toString() : '');
+        setReason(currentDiscount.reason || '');
     }
   }, [isOpen, discounts, groupKey]);
   
   const handleSave = () => {
-    setDiscounts(prev => ({ ...prev, [groupKey]: localDiscount }));
+    setDiscounts(prev => ({ ...prev, [groupKey]: { ...localDiscount, reason } }));
     setIsOpen(false);
   };
 
@@ -542,7 +545,7 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       if(!open) {
-        setLocalDiscount(discounts[groupKey] || { type: 'percentage', value: 0 });
+        setLocalDiscount(discounts[groupKey] || { type: 'percentage', value: 0, reason: '' });
       }
       setIsOpen(open);
     }}>
@@ -581,12 +584,21 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
                 value={inputValue}
                 onChange={handleValueChange}
                 className={cn(
-                    "w-full text-right pr-8",
-                    localDiscount.type === 'fixed' && 'pl-8 pr-3',
+                    "w-full text-right",
+                    localDiscount.type === 'fixed' ? 'pl-8 pr-3' : 'pr-8'
                 )}
               />
               {localDiscount.type === 'percentage' && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>}
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="discount-reason">What is the discount for?</Label>
+            <Input
+              id="discount-reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g., Senior Citizen, PWD, Special Promo"
+            />
           </div>
         </div>
         <DialogFooter>
