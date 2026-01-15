@@ -4,16 +4,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardFooter } from './ui/card';
-import { X, GripVertical, Upload, Trash2, Save } from 'lucide-react';
+import { X, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { getProductGroup, getUnitPrice, EmbroideryOption, getAddOnPrice, AddOnType } from '@/lib/pricing';
+import { getUnitPrice } from '@/lib/pricing';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { ScrollArea } from './ui/scroll-area';
-import { Separator } from './ui/separator';
-
+import { getAddOnPrice } from '@/lib/pricing';
 
 const productTypes = [
     'Executive Jacket 1', 'Executive Jacket v2 (with lines)', 'Turtle Neck Jacket',
@@ -45,16 +41,9 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
   }, [onClose]);
 
   useEffect(() => {
-    if (cardRef.current) {
-        const { offsetWidth, offsetHeight } = cardRef.current;
-        const centerX = window.innerWidth / 2 - offsetWidth / 2;
-        const centerY = window.innerHeight / 2 - offsetHeight / 2;
-        setPosition({ x: centerX, y: centerY });
-    } else {
-        const centerX = window.innerWidth / 2 - 400; // approx half-width
-        const centerY = window.innerHeight / 2 - 300; // approx half-height
-        setPosition({ x: centerX, y: centerY });
-    }
+    const centerX = window.innerWidth / 2 - 425; // approx half-width
+    const centerY = window.innerHeight / 2 - 325; // approx half-height
+    setPosition({ x: centerX, y: centerY });
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -99,6 +88,7 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
       ref={cardRef}
       className={cn("fixed z-50", isDragging && "select-none")}
       style={{ left: `${position.x}px`, top: `${position.y}px` }}
+      onMouseDown={handleMouseDown}
     >
       <Card className="w-[850px] h-[650px] shadow-2xl bg-gray-700 text-white border-gray-600 flex flex-col">
         <CardHeader 
@@ -140,8 +130,7 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
                     ))}
                 </TableBody>
             </Table>
-            <Separator className="my-6 bg-gray-600"/>
-             <h3 className="font-bold text-lg mb-2 text-white uppercase text-center bg-black">Add On Prices</h3>
+             <h3 className="font-bold text-lg mt-6 mb-2 text-white uppercase text-center bg-black">Add On Prices</h3>
              <Table>
                 <TableHeader>
                     <TableRow className="border-b-gray-600">
