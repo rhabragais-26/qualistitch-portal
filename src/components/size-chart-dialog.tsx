@@ -9,10 +9,12 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { useFirestore, useDoc, useMemoFirebase, useUser, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { isEqual } from 'lodash';
+import { errorEmitter, FirestorePermissionError } from '@/firebase/errors';
+import { Skeleton } from './ui/skeleton';
 
 type SizeChartInfo = {
   image: string | null;
@@ -21,13 +23,11 @@ type SizeChartInfo = {
 
 type SizeChartData = {
   id?: string;
-  corporateJacket: SizeChartInfo;
   bomberJacket: SizeChartInfo;
   poloShirt: SizeChartInfo;
 };
 
 const initialSizeChartData: SizeChartData = {
-  corporateJacket: { image: null, uploadTime: null },
   bomberJacket: { image: null, uploadTime: null },
   poloShirt: { image: null, uploadTime: null },
 };
@@ -49,13 +49,21 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
 
   const [sizeChartData, setSizeChartData] = useState<SizeChartData>(initialSizeChartData);
   const [isDirty, setIsDirty] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const bomberJacketInputRef = useRef<HTMLInputElement>(null);
+  const poloShirtInputRef = useRef<HTMLInputElement>(null);
+
   const [deletingTab, setDeletingTab] = useState<TabValue | null>(null);
+
+  const fileInputRefs: Record<TabValue, React.RefObject<HTMLInputElement>> = {
+    bomberJacket: bomberJacketInputRef,
+    poloShirt: poloShirtInputRef,
+  };
+
 
   useEffect(() => {
     if (fetchedData) {
       const dataToSet = {
-        corporateJacket: fetchedData.corporateJacket || { image: null, uploadTime: null },
         bomberJacket: fetchedData.bomberJacket || { image: null, uploadTime: null },
         poloShirt: fetchedData.poloShirt || { image: null, uploadTime: null },
       };
@@ -64,17 +72,14 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   }, [fetchedData]);
 
   useEffect(() => {
-    if (fetchedData) {
-        const hasChanges = !isEqual(sizeChartData, {
-            corporateJacket: fetchedData.corporateJacket || { image: null, uploadTime: null },
-            bomberJacket: fetchedData.bomberJacket || { image: null, uploadTime: null },
-            poloShirt: fetchedData.poloShirt || { image: null, uploadTime: null },
-        });
-        setIsDirty(hasChanges);
-    } else {
-        const hasChanges = !isEqual(sizeChartData, initialSizeChartData);
-        setIsDirty(hasChanges);
-    }
+    const initialCompareState = fetchedData 
+      ? {
+          bomberJacket: fetchedData.bomberJacket || { image: null, uploadTime: null },
+          poloShirt: fetchedData.poloShirt || { image: null, uploadTime: null },
+        } 
+      : initialSizeChartData;
+
+    setIsDirty(!isEqual(sizeChartData, initialCompareState));
   }, [sizeChartData, fetchedData]);
 
 
@@ -182,7 +187,8 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
       ...prev,
       [tab]: { image: null, uploadTime: null }
     }));
-    if(fileInputRef.current) fileInputRef.current.value = '';
+    const fileInput = fileInputRefs[tab].current;
+    if (fileInput) fileInput.value = '';
   }
 
   const handleConfirmDelete = () => {
@@ -195,16 +201,15 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   const handleSave = async () => {
     if (!sizeChartRef) return;
     if (!isAdmin) {
-      const permissionError = new FirestorePermissionError({
-        path: sizeChartRef.path,
-        operation: 'write',
-        requestResourceData: sizeChartData,
+      toast({
+          variant: "destructive",
+          title: "Permission Denied",
+          description: "You do not have permission to save changes.",
       });
-      errorEmitter.emit('permission-error', permissionError);
       return;
     }
 
-    setDoc(sizeChartRef, sizeChartData, { merge: true })
+    setDoc(sizeChartRef, { ...fetchedData, ...sizeChartData }, { merge: true })
       .then(() => {
         toast({
           title: 'Success',
@@ -225,6 +230,8 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   const renderUploadBox = (tab: TabValue) => {
     const data = sizeChartData[tab];
     const canEdit = isAdmin;
+    const fileInputRef = fileInputRefs[tab];
+
     return (
       <div onPaste={(e) => onPaste(e, tab)} className="h-full flex flex-col">
         <div
@@ -309,15 +316,11 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
             </Button>
           </CardHeader>
           <CardContent className="p-4 flex-1 flex flex-col">
-            <Tabs defaultValue="corporateJacket" className="w-full h-full flex flex-col">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="corporateJacket">Corporate Jacket</TabsTrigger>
+            <Tabs defaultValue="bomberJacket" className="w-full h-full flex flex-col">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="bomberJacket">Bomber Jacket</TabsTrigger>
                 <TabsTrigger value="poloShirt">Polo Shirt</TabsTrigger>
               </TabsList>
-              <TabsContent value="corporateJacket" className="flex-1 mt-4">
-                {renderUploadBox('corporateJacket')}
-              </TabsContent>
               <TabsContent value="bomberJacket" className="flex-1 mt-4">
                 {renderUploadBox('bomberJacket')}
               </TabsContent>
@@ -360,5 +363,3 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
     </>
   );
 }
-
-    

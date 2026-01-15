@@ -39,13 +39,6 @@
       "description": "Stores image URLs and upload times for various size charts.",
       "properties": {
         "id": { "type": "string" },
-        "corporateJacket": {
-          "type": "object",
-          "properties": {
-            "image": { "type": ["string", "null"] },
-            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
-          }
-        },
         "bomberJacket": {
           "type": "object",
           "properties": {
