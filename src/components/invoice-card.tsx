@@ -436,59 +436,6 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   const [localAddOns, setLocalAddOns] = useState(addOns[groupKey] || { backLogo: 0, names: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0 });
   const [rushFeeInput, setRushFeeInput] = useState('');
 
-  const cardRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartPos = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (isOpen && cardRef.current) {
-      const { offsetWidth, offsetHeight } = cardRef.current;
-      const centerX = window.innerWidth / 2 - offsetWidth / 2;
-      const centerY = window.innerHeight / 2 - offsetHeight / 2;
-      setPosition({ x: centerX, y: centerY });
-    }
-  }, [isOpen]);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (headerRef.current?.contains(e.target as Node)) {
-        setIsDragging(true);
-        dragStartPos.current = {
-            x: e.clientX - position.x,
-            y: e.clientY - position.y,
-        };
-    }
-  }, [position.x, position.y]);
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (isDragging) {
-      setPosition({
-        x: e.clientX - dragStartPos.current.x,
-        y: e.clientY - dragStartPos.current.y,
-      });
-    }
-  }, [isDragging]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    } else {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    }
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
-
-
   const handleSave = () => {
     setAddOns(prev => ({ ...prev, [groupKey]: localAddOns }));
     setIsOpen(false);
@@ -541,71 +488,58 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
             <Plus/>Add Ons
         </Button>
       </DialogTrigger>
-       <DialogContent 
-        ref={cardRef}
-        className={cn("sm:max-w-md fixed z-50 p-0", isDragging && 'select-none user-select-none')}
-        style={{ left: `${position.x}px`, top: `${position.y}px` }}
-        onMouseDown={handleMouseDown}
-        >
-          <div ref={headerRef} className={cn("flex items-center justify-between p-2 cursor-move rounded-t-lg bg-slate-100", isDragging && "cursor-grabbing")}>
-            <div className="flex items-center">
-              <GripVertical className="h-5 w-5 text-gray-500"/>
-              <DialogTitle>Add Ons</DialogTitle>
-            </div>
-            <DialogClose asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7"><X className="h-4 w-4" /></Button>
-            </DialogClose>
-          </div>
-          <div className='p-6'>
-            <DialogDescription>
-              Specify quantities for additional logos, names or patches.
-            </DialogDescription>
-            <div className="space-y-6 py-4 flex flex-col items-center">
-                <div className="flex items-center justify-between w-full max-w-sm">
-                    <Label htmlFor="backLogo" className="text-base">Back Logo</Label>
-                    <div className="flex items-center gap-2">
-                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('backLogo', -1)}><Minus className="h-4 w-4" /></Button>
-                        <Input id="backLogo" type="text" value={localAddOns.backLogo} onChange={(e) => handleInputChange('backLogo', e.target.value)} className="w-16 text-center" />
-                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('backLogo', 1)}><Plus className="h-4 w-4" /></Button>
-                    </div>
-                </div>
-                <div className="flex items-center justify-between w-full max-w-sm">
-                    <Label htmlFor="names" className="text-base">Names</Label>
-                    <div className="flex items-center gap-2">
-                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('names', -1)}><Minus className="h-4 w-4" /></Button>
-                        <Input id="names" type="text" value={localAddOns.names} onChange={(e) => handleInputChange('names', e.target.value)} className="w-16 text-center" />
-                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('names', 1)}><Plus className="h-4 w-4" /></Button>
-                    </div>
-                </div>
-                <div className="flex items-center justify-between w-full max-w-sm">
-                    <Label htmlFor="programFeeLogo" className="text-base">Program Fee (Logo)</Label>
-                    <div className="flex items-center gap-2">
-                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeLogo', -1)}><Minus className="h-4 w-4" /></Button>
-                        <Input id="programFeeLogo" type="text" value={localAddOns.programFeeLogo} onChange={(e) => handleInputChange('programFeeLogo', e.target.value)} className="w-16 text-center" />
-                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeLogo', 1)}><Plus className="h-4 w-4" /></Button>
-                    </div>
-                </div>
-                <div className="flex items-center justify-between w-full max-w-sm">
-                    <Label htmlFor="programFeeBackText" className="text-base">Program Fee (Back Text)</Label>
-                    <div className="flex items-center gap-2">
-                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeBackText', -1)}><Minus className="h-4 w-4" /></Button>
-                        <Input id="programFeeBackText" type="text" value={localAddOns.programFeeBackText} onChange={(e) => handleInputChange('programFeeBackText', e.target.value)} className="w-16 text-center" />
-                        <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeBackText', 1)}><Plus className="h-4 w-4" /></Button>
-                    </div>
-                </div>
-                <div className="flex items-center justify-between w-full max-w-sm">
-                    <Label htmlFor="rushFee" className="text-base">Rush Fee</Label>
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₱</span>
-                        <Input id="rushFee" type="text" value={rushFeeInput} onChange={handleRushFeeChange} onBlur={handleRushFeeBlur} className="w-40 text-right pr-3 pl-8" />
-                    </div>
+       <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add Ons</DialogTitle>
+          <DialogDescription>
+            Specify quantities for additional logos, names or patches.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-6 py-4 flex flex-col items-center">
+            <div className="flex items-center justify-between w-full max-w-sm">
+                <Label htmlFor="backLogo" className="text-base">Back Logo</Label>
+                <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('backLogo', -1)}><Minus className="h-4 w-4" /></Button>
+                    <Input id="backLogo" type="text" value={localAddOns.backLogo} onChange={(e) => handleInputChange('backLogo', e.target.value)} className="w-16 text-center" />
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('backLogo', 1)}><Plus className="h-4 w-4" /></Button>
                 </div>
             </div>
-            <DialogFooter>
-              <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-              <Button onClick={handleSave}>Save</Button>
-            </DialogFooter>
-          </div>
+            <div className="flex items-center justify-between w-full max-w-sm">
+                <Label htmlFor="names" className="text-base">Names</Label>
+                <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('names', -1)}><Minus className="h-4 w-4" /></Button>
+                    <Input id="names" type="text" value={localAddOns.names} onChange={(e) => handleInputChange('names', e.target.value)} className="w-16 text-center" />
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('names', 1)}><Plus className="h-4 w-4" /></Button>
+                </div>
+            </div>
+            <div className="flex items-center justify-between w-full max-w-sm">
+                <Label htmlFor="programFeeLogo" className="text-base">Program Fee (Logo)</Label>
+                <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeLogo', -1)}><Minus className="h-4 w-4" /></Button>
+                    <Input id="programFeeLogo" type="text" value={localAddOns.programFeeLogo} onChange={(e) => handleInputChange('programFeeLogo', e.target.value)} className="w-16 text-center" />
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeLogo', 1)}><Plus className="h-4 w-4" /></Button>
+                </div>
+            </div>
+            <div className="flex items-center justify-between w-full max-w-sm">
+                <Label htmlFor="programFeeBackText" className="text-base">Program Fee (Back Text)</Label>
+                <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeBackText', -1)}><Minus className="h-4 w-4" /></Button>
+                    <Input id="programFeeBackText" type="text" value={localAddOns.programFeeBackText} onChange={(e) => handleInputChange('programFeeBackText', e.target.value)} className="w-16 text-center" />
+                    <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange('programFeeBackText', 1)}><Plus className="h-4 w-4" /></Button>
+                </div>
+            </div>
+            <div className="flex items-center justify-between w-full max-w-sm">
+                <Label htmlFor="rushFee" className="text-base">Rush Fee</Label>
+                <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₱</span>
+                    <Input id="rushFee" type="text" value={rushFeeInput} onChange={handleRushFeeChange} onBlur={handleRushFeeBlur} className="w-40 text-right pr-3 pl-8" />
+                </div>
+            </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={handleSave}>Save</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
