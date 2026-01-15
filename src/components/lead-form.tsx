@@ -221,6 +221,29 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
 
   const [singleQuantity, setSingleQuantity] = useState(0);
   const [pricePerPatch, setPricePerPatch] = useState(0);
+  const [formattedPrice, setFormattedPrice] = useState('');
+  
+  const formatCurrency = (value: number) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/[^\d.]/g, '');
+    const numericValue = parseFloat(rawValue);
+
+    if (!isNaN(numericValue)) {
+      setPricePerPatch(numericValue);
+      setFormattedPrice(rawValue);
+    } else {
+      setPricePerPatch(0);
+      setFormattedPrice('');
+    }
+  };
+
+  const handlePriceBlur = () => {
+    if (pricePerPatch > 0) {
+      setFormattedPrice(formatCurrency(pricePerPatch).replace('₱', ''));
+    }
+  };
+
 
   const citiesAndMunicipalities = useMemo(() => {
     return locations.provinces.flatMap(province =>
@@ -648,6 +671,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
         setSizeQuantities(productSizes.map(size => ({ size, quantity: 0 })));
         setSingleQuantity(0);
         setPricePerPatch(0);
+        setFormattedPrice('');
     } else {
         toast({
             variant: 'destructive',
@@ -1053,15 +1077,20 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                       )}
                        {isPatches && (
                         <div className="flex items-center gap-2">
-                            <Label>Price per Patch:</Label>
-                            <Input 
-                                type="number" 
-                                value={pricePerPatch} 
-                                onChange={(e) => setPricePerPatch(parseFloat(e.target.value) || 0)} 
-                                placeholder="Enter price"
+                          <Label className="whitespace-nowrap">Price per Patch:</Label>
+                          <div className="relative w-full">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₱</span>
+                            <Input
+                              type="text"
+                              value={formattedPrice}
+                              onChange={handlePriceChange}
+                              onBlur={handlePriceBlur}
+                              placeholder="Enter price"
+                              className="pl-7"
                             />
+                          </div>
                         </div>
-                       )}
+                      )}
                       <div className="space-y-4">
                          {showSingleQuantity ? (
                             <div className="flex items-center justify-center gap-4 pt-4">
@@ -1413,7 +1442,3 @@ function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
     </Dialog>
   );
 }
-
-    
-
-    
