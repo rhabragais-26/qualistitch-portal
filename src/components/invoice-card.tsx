@@ -447,7 +447,7 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
     }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-7 px-2 bg-gray-700 text-white hover:bg-gray-600 font-bold">
-            <Plus className="mr-1 h-4 w-4" />
+            <Plus className="h-4 w-4" />
             Add Ons
         </Button>
       </DialogTrigger>
@@ -547,7 +547,7 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
     }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-7 px-2 bg-teal-600 text-white hover:bg-teal-500 font-bold">
-            <Plus className="mr-1 h-4 w-4" />
+            <Plus className="h-4 w-4" />
             Add Discount
         </Button>
       </DialogTrigger>
