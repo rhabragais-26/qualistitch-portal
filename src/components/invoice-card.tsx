@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
@@ -367,13 +366,13 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                             <TableRow className="group">
                                <TableCell colSpan={4} className="py-1 px-3 text-right font-medium text-destructive">
                                   <div className="flex justify-end items-center gap-2">
-                                    <span>Discount ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})</span>
                                     <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveDiscount(groupKey)}>
                                       <X className="h-3 w-3" />
                                     </Button>
+                                    <span>Discount ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})</span>
                                   </div>
                                    {groupDiscount.reason && (
-                                    <span className="text-xs text-gray-500 block text-right">(Waiving of shipping fee)</span>
+                                    <span className="text-xs text-gray-500 block text-right">({groupDiscount.reason})</span>
                                   )}
                                </TableCell>
                               <TableCell className="py-1 px-3 text-right font-medium text-destructive">
@@ -405,17 +404,20 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                     <div className="flex justify-between items-center text-lg">
                       <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} />
                       <div className="text-right">
-                        <span className="font-bold text-black">Grand Total:{formatCurrency(grandTotal)}</span>
+                        <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
                       </div>
                     </div>
                      {totalPaid > 0 && (
                        <>
-                        <div className="flex justify-end items-center text-sm">
-                            <div className="text-right">
-                                <span className="text-muted-foreground mr-2">Total Paid:</span>
-                                <span className="font-medium">{formatCurrency(totalPaid)}</span>
-                            </div>
-                        </div>
+                        {Object.values(payments).flat().map((payment, index) => (
+                          <div key={index} className="flex justify-between items-center text-sm">
+                              <p className="text-xs text-muted-foreground italic pl-2">via {payment.mode}</p>
+                              <div className="text-right">
+                                  <span className="text-muted-foreground mr-2">{payment.type === 'full' ? 'Full Payment:' : 'Down Payment:'}</span>
+                                  <span className="font-medium">{formatCurrency(payment.amount)}</span>
+                              </div>
+                          </div>
+                        ))}
 
                         <div className="flex justify-end items-center text-lg mt-2">
                             <span className="font-bold text-black">Balance:</span>
@@ -466,11 +468,10 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   const dragStartPos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    if (isOpen && cardRef.current) {
-      const { offsetWidth, offsetHeight } = cardRef.current;
-      const centerX = window.innerWidth / 2 - offsetWidth / 2;
-      const centerY = window.innerHeight / 2 - offsetHeight / 2;
-      setPosition({ x: centerX, y: centerY });
+    if (isOpen) {
+        const centerX = window.innerWidth / 2 - 208; // sm:max-w-md is 26rem = 416px, half is 208
+        const centerY = window.innerHeight / 2 - 250; // approximate half height
+        setPosition({ x: centerX, y: centerY });
     }
   }, [isOpen]);
 
