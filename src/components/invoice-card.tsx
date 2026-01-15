@@ -368,9 +368,12 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
          <CardFooter>
             <div className="w-full pt-4">
                 <Separator />
-                <div className="flex justify-end items-center mt-4">
-                    <span className="text-xl font-bold text-black mr-4">Grand Total:</span>
-                    <span className="text-2xl font-bold text-primary">{formatCurrency(grandTotal)}</span>
+                 <div className="flex justify-between items-center mt-4">
+                    <AddPaymentDialog />
+                    <div className="flex items-center">
+                        <span className="text-xl font-bold text-black mr-4">Grand Total:</span>
+                        <span className="text-2xl font-bold text-primary">{formatCurrency(grandTotal)}</span>
+                    </div>
                 </div>
             </div>
         </CardFooter>
@@ -671,3 +674,89 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
     </Dialog>
   );
 }
+
+function AddPaymentDialog() {
+  const [paymentType, setPaymentType] = useState<'full' | 'down'>('full');
+  const [amount, setAmount] = useState(0);
+  const [formattedAmount, setFormattedAmount] = useState('');
+  const [paymentMode, setPaymentMode] = useState('');
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/[^\d]/g, '');
+    const numericValue = parseInt(rawValue, 10);
+
+    if (!isNaN(numericValue)) {
+      setAmount(numericValue);
+      setFormattedAmount(new Intl.NumberFormat('en-PH').format(numericValue));
+    } else {
+      setAmount(0);
+      setFormattedAmount('');
+    }
+  };
+  
+  const handleSave = () => {
+    // Logic to save payment details will go here
+    console.log({ paymentType, amount, paymentMode });
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">Add Payment</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Payment</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <RadioGroup value={paymentType} onValueChange={(v: 'full' | 'down') => setPaymentType(v)} className="flex justify-center gap-4">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="full" id="full" />
+              <Label htmlFor="full">Full Payment</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="down" id="down" />
+              <Label htmlFor="down">Down Payment</Label>
+            </div>
+          </RadioGroup>
+
+          <div className="space-y-2">
+            <Label>Amount</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₱</span>
+              <Input
+                type="text"
+                value={formattedAmount}
+                onChange={handleAmountChange}
+                className="pl-8"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Mode of Payment</Label>
+            <Select onValueChange={setPaymentMode} value={paymentMode}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select mode of payment" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Gcash">Gcash</SelectItem>
+                <SelectItem value="Paymaya">Paymaya</SelectItem>
+                <SelectItem value="Bank Transfer to BDO">Bank Transfer to BDO</SelectItem>
+                <SelectItem value="Bank Transfer to BPI">Bank Transfer to BPI</SelectItem>
+                <SelectItem value="Bank Transfer to ChinaBank">Bank Transfer to ChinaBank</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button onClick={handleSave}>Save Payment</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
