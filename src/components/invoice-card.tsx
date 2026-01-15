@@ -373,7 +373,7 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                                     </Button>
                                   </div>
                                    {groupDiscount.reason && (
-                                    <span className="text-xs text-gray-500 block text-right pr-7">({groupDiscount.reason})</span>
+                                    <span className="text-xs text-gray-500 block text-right">(Waiving of shipping fee)</span>
                                   )}
                                </TableCell>
                               <TableCell className="py-1 px-3 text-right font-medium text-destructive">
@@ -405,7 +405,7 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                     <div className="flex justify-between items-center text-lg">
                       <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} />
                       <div className="text-right">
-                        <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
+                        <span className="font-bold text-black">Grand Total:{formatCurrency(grandTotal)}</span>
                       </div>
                     </div>
                      {totalPaid > 0 && (
@@ -417,14 +417,14 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                                         Paid ({payment.type === 'down' ? 'Down Payment' : 'Full Payment'}):
                                     </span>
                                     <span className="font-medium">{formatCurrency(payment.amount)}</span>
-                                    <p className="text-xs text-muted-foreground italic">via {payment.mode}</p>
+                                    <p className="text-xs text-muted-foreground italic text-left">via {payment.mode}</p>
                                 </div>
                             </div>
                         ))}
 
                         <div className="flex justify-end items-center text-lg mt-2">
-                            <span className="font-bold text-black mr-2">Balance:</span>
-                            <span className="font-bold text-destructive">{formatCurrency(balance)}</span>
+                            <span className="font-bold text-black">Balance:</span>
+                            <span className="font-bold text-destructive ml-2">{formatCurrency(balance)}</span>
                         </div>
                        </>
                     )}
@@ -471,10 +471,9 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   const dragStartPos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    if (isOpen && cardRef.current) {
-      const { offsetWidth, offsetHeight } = cardRef.current;
-      const centerX = window.innerWidth / 2 - offsetWidth / 2;
-      const centerY = window.innerHeight / 2 - offsetHeight / 2;
+    if (isOpen) {
+      const centerX = window.innerWidth / 2 - (cardRef.current?.offsetWidth || 0) / 2;
+      const centerY = window.innerHeight / 2 - (cardRef.current?.offsetHeight || 0) / 2;
       setPosition({ x: centerX, y: centerY });
     }
   }, [isOpen]);
@@ -584,7 +583,7 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
             <Plus/>Add Ons
         </Button>
       </DialogTrigger>
-       <DialogContent className="sm:max-w-md p-0" ref={cardRef} style={{ left: `${position.x}px`, top: `${position.y}px`, transform: 'none', position: 'fixed' }}>
+       <DialogContent className="sm:max-w-md p-0" ref={cardRef} style={{ transform: 'none', position: 'fixed' }}>
         <div onMouseDown={handleMouseDown} ref={headerRef} className={cn("flex items-center justify-between p-2 cursor-move", isDragging && "cursor-grabbing")}>
             <div className="flex items-center">
                 <GripVertical className="h-5 w-5 text-gray-500"/>
