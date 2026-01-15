@@ -403,24 +403,19 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                 <Separator />
                  <div className="mt-4 space-y-2">
                     <div className="flex justify-between items-center text-lg">
-                      <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} />
+                      <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} />
                       <div className="text-right">
                         <span className="font-bold text-black">Grand Total:{formatCurrency(grandTotal)}</span>
                       </div>
                     </div>
                      {totalPaid > 0 && (
                        <>
-                        {Object.values(payments).flat().map((payment, index) => (
-                            <div key={index} className="flex justify-end items-center text-sm">
-                                <div className="text-right">
-                                    <span className="text-muted-foreground mr-2">
-                                        Paid ({payment.type === 'down' ? 'Down Payment' : 'Full Payment'}):
-                                    </span>
-                                    <span className="font-medium">{formatCurrency(payment.amount)}</span>
-                                    <p className="text-xs text-muted-foreground italic text-left">via {payment.mode}</p>
-                                </div>
+                        <div className="flex justify-end items-center text-sm">
+                            <div className="text-right">
+                                <span className="text-muted-foreground mr-2">Total Paid:</span>
+                                <span className="font-medium">{formatCurrency(totalPaid)}</span>
                             </div>
-                        ))}
+                        </div>
 
                         <div className="flex justify-end items-center text-lg mt-2">
                             <span className="font-bold text-black">Balance:</span>
@@ -471,9 +466,10 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   const dragStartPos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    if (isOpen) {
-      const centerX = window.innerWidth / 2 - (cardRef.current?.offsetWidth || 0) / 2;
-      const centerY = window.innerHeight / 2 - (cardRef.current?.offsetHeight || 0) / 2;
+    if (isOpen && cardRef.current) {
+      const { offsetWidth, offsetHeight } = cardRef.current;
+      const centerX = window.innerWidth / 2 - offsetWidth / 2;
+      const centerY = window.innerHeight / 2 - offsetHeight / 2;
       setPosition({ x: centerX, y: centerY });
     }
   }, [isOpen]);
@@ -583,7 +579,7 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
             <Plus/>Add Ons
         </Button>
       </DialogTrigger>
-       <DialogContent className="sm:max-w-md p-0" ref={cardRef} style={{ transform: 'none', position: 'fixed' }}>
+       <DialogContent className="sm:max-w-md p-0" ref={cardRef} style={{ transform: 'none', position: 'fixed', top: position.y, left: position.x }}>
         <div onMouseDown={handleMouseDown} ref={headerRef} className={cn("flex items-center justify-between p-2 cursor-move", isDragging && "cursor-grabbing")}>
             <div className="flex items-center">
                 <GripVertical className="h-5 w-5 text-gray-500"/>
@@ -733,7 +729,7 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
   );
 }
 
-function AddPaymentDialog({ grandTotal, setPayments }: { grandTotal: number; setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>> }) {
+function AddPaymentDialog({ grandTotal, setPayments, payments }: { grandTotal: number; setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>>, payments: Record<string, Payment[]> }) {
   const [paymentType, setPaymentType] = useState<'down' | 'full'>('down');
   const [amount, setAmount] = useState(0);
   const [formattedAmount, setFormattedAmount] = useState('');
@@ -741,26 +737,34 @@ function AddPaymentDialog({ grandTotal, setPayments }: { grandTotal: number; set
   const [isOpen, setIsOpen] = useState(false);
   const isSaveDisabled = amount <= 0 || !paymentMode;
 
+  const hasPayments = useMemo(() => Object.keys(payments).length > 0, [payments]);
+  const firstPayment = useMemo(() => hasPayments ? Object.values(payments)[0][0] : null, [hasPayments, payments]);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (hasPayments && firstPayment) {
+        setPaymentType(firstPayment.type);
+        setAmount(firstPayment.amount);
+        setFormattedAmount(new Intl.NumberFormat('en-PH').format(firstPayment.amount));
+        setPaymentMode(firstPayment.mode);
+      } else {
+        setPaymentType('down');
+        setAmount(0);
+        setFormattedAmount('');
+        setPaymentMode('');
+      }
+    }
+  }, [isOpen, hasPayments, firstPayment]);
 
   useEffect(() => {
     if (paymentType === 'full') {
       setAmount(grandTotal);
       setFormattedAmount(new Intl.NumberFormat('en-PH').format(grandTotal));
-    } else if (isOpen) { // Reset only when dialog is open and type changes to 'down'
+    } else if (isOpen && !hasPayments) { 
       setAmount(0);
       setFormattedAmount('');
     }
-  }, [paymentType, grandTotal, isOpen]);
-  
-  useEffect(() => {
-    // Reset state when dialog opens
-    if (isOpen) {
-      setPaymentType('down');
-      setAmount(0);
-      setFormattedAmount('');
-      setPaymentMode('');
-    }
-  }, [isOpen]);
+  }, [paymentType, grandTotal, isOpen, hasPayments]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/[^\d.]/g, ''); // Allow dots for decimals
@@ -781,19 +785,19 @@ function AddPaymentDialog({ grandTotal, setPayments }: { grandTotal: number; set
         amount: amount,
         mode: paymentMode,
     };
-    const paymentKey = new Date().toISOString(); // Simple unique key for this payment
-    setPayments(prev => ({...prev, [paymentKey]: [newPayment]}));
+    const paymentKey = hasPayments ? Object.keys(payments)[0] : new Date().toISOString(); 
+    setPayments({[paymentKey]: [newPayment]});
     setIsOpen(false);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Add Payment</Button>
+        <Button variant="outline">{hasPayments ? 'Edit Payment' : 'Add Payment'}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Payment</DialogTitle>
+          <DialogTitle>{hasPayments ? 'Edit Payment' : 'Add Payment'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <RadioGroup value={paymentType} onValueChange={(v: 'full' | 'down') => setPaymentType(v)} className="flex justify-center gap-4">
