@@ -43,11 +43,19 @@ type Discount = {
   reason?: string;
 };
 
+type Payment = {
+  type: 'down' | 'full';
+  amount: number;
+  mode: string;
+};
+
+
 export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
   
   const [addOns, setAddOns] = useState<Record<string, AddOns>>({});
   const [discounts, setDiscounts] = useState<Record<string, Discount>>({});
   const [removingAddOn, setRemovingAddOn] = useState<{ groupKey: string; addOnType: keyof AddOns; } | null>(null);
+  const [payments, setPayments] = useState<Record<string, Payment[]>>({});
 
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
@@ -120,6 +128,12 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
     });
     return total;
   }, [groupedOrders, addOns, discounts, orderType]);
+  
+  const totalPaid = useMemo(() => {
+    return Object.values(payments).flat().reduce((sum, payment) => sum + payment.amount, 0);
+  }, [payments]);
+
+  const balance = grandTotal - totalPaid;
 
   const handleConfirmRemoveAddOn = () => {
     if (!removingAddOn) return;
@@ -369,13 +383,34 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
          <CardFooter>
             <div className="w-full pt-4">
                 <Separator />
-                 <div className="flex justify-between items-center mt-4">
-                    <AddPaymentDialog grandTotal={grandTotal} />
-                    <div className="flex items-center">
-                        <span className="text-xl font-bold text-black mr-4">Grand Total:</span>
-                        <span className="text-2xl font-bold text-primary">{formatCurrency(grandTotal)}</span>
+                 <div className="mt-4 space-y-2">
+                    {Object.entries(payments).flat().map(([_, payment], index) => (
+                      <div key={index} className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">{payment.type === 'full' ? 'Full Payment' : 'Down Payment'} ({payment.mode}):</span>
+                        <span className="font-medium">{formatCurrency(payment.amount)}</span>
+                      </div>
+                    ))}
+                    {totalPaid > 0 && <Separator/>}
+                    <div className="flex justify-between items-center text-lg">
+                      <span className="font-bold text-black">Grand Total:</span>
+                      <span className="font-bold text-primary">{formatCurrency(grandTotal)}</span>
                     </div>
-                </div>
+                     {totalPaid > 0 && (
+                       <>
+                         <div className="flex justify-between items-center text-sm">
+                          <span className="text-muted-foreground">Total Paid:</span>
+                          <span className="font-medium">{formatCurrency(totalPaid)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-lg">
+                            <span className="font-bold text-black">Balance:</span>
+                            <span className="font-bold text-destructive">{formatCurrency(balance)}</span>
+                        </div>
+                       </>
+                    )}
+                 </div>
+                 <div className="flex justify-end mt-4">
+                    <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} />
+                 </div>
             </div>
         </CardFooter>
       )}
@@ -676,26 +711,38 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
   );
 }
 
-function AddPaymentDialog({ grandTotal }: { grandTotal: number }) {
+function AddPaymentDialog({ grandTotal, setPayments }: { grandTotal: number; setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>> }) {
   const [paymentType, setPaymentType] = useState<'down' | 'full'>('down');
   const [amount, setAmount] = useState(0);
   const [formattedAmount, setFormattedAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const isSaveDisabled = amount <= 0 || !paymentMode;
+
 
   useEffect(() => {
     if (paymentType === 'full') {
       setAmount(grandTotal);
       setFormattedAmount(new Intl.NumberFormat('en-PH').format(grandTotal));
-    } else {
-      // Optionally clear or set a default down payment when switching to 'down'
+    } else if (isOpen) { // Reset only when dialog is open and type changes to 'down'
       setAmount(0);
       setFormattedAmount('');
     }
-  }, [paymentType, grandTotal]);
+  }, [paymentType, grandTotal, isOpen]);
+  
+  useEffect(() => {
+    // Reset state when dialog opens
+    if (isOpen) {
+      setPaymentType('down');
+      setAmount(0);
+      setFormattedAmount('');
+      setPaymentMode('');
+    }
+  }, [isOpen]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/[^\d]/g, '');
-    const numericValue = parseInt(rawValue, 10);
+    const rawValue = e.target.value.replace(/[^\d.]/g, ''); // Allow dots for decimals
+    const numericValue = parseFloat(rawValue);
 
     if (!isNaN(numericValue)) {
       setAmount(numericValue);
@@ -707,12 +754,18 @@ function AddPaymentDialog({ grandTotal }: { grandTotal: number }) {
   };
   
   const handleSave = () => {
-    // Logic to save payment details will go here
-    console.log({ paymentType, amount, paymentMode });
-  }
+    const newPayment: Payment = {
+        type: paymentType,
+        amount: amount,
+        mode: paymentMode,
+    };
+    const paymentKey = new Date().toISOString(); // Simple unique key for this payment
+    setPayments(prev => ({...prev, [paymentKey]: [newPayment]}));
+    setIsOpen(false);
+  };
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">Add Payment</Button>
       </DialogTrigger>
@@ -766,12 +819,10 @@ function AddPaymentDialog({ grandTotal }: { grandTotal: number }) {
           <DialogClose asChild>
             <Button type="button" variant="outline">Cancel</Button>
           </DialogClose>
-          <Button onClick={handleSave}>Save Payment</Button>
+          <Button onClick={handleSave} disabled={isSaveDisabled}>Save Payment</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-
 
