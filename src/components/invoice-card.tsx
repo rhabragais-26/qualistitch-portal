@@ -370,7 +370,7 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
             <div className="w-full pt-4">
                 <Separator />
                  <div className="flex justify-between items-center mt-4">
-                    <AddPaymentDialog />
+                    <AddPaymentDialog grandTotal={grandTotal} />
                     <div className="flex items-center">
                         <span className="text-xl font-bold text-black mr-4">Grand Total:</span>
                         <span className="text-2xl font-bold text-primary">{formatCurrency(grandTotal)}</span>
@@ -676,11 +676,22 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
   );
 }
 
-function AddPaymentDialog() {
-  const [paymentType, setPaymentType] = useState<'full' | 'down'>('full');
+function AddPaymentDialog({ grandTotal }: { grandTotal: number }) {
+  const [paymentType, setPaymentType] = useState<'down' | 'full'>('down');
   const [amount, setAmount] = useState(0);
   const [formattedAmount, setFormattedAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('');
+
+  useEffect(() => {
+    if (paymentType === 'full') {
+      setAmount(grandTotal);
+      setFormattedAmount(new Intl.NumberFormat('en-PH').format(grandTotal));
+    } else {
+      // Optionally clear or set a default down payment when switching to 'down'
+      setAmount(0);
+      setFormattedAmount('');
+    }
+  }, [paymentType, grandTotal]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/[^\d]/g, '');
@@ -712,12 +723,12 @@ function AddPaymentDialog() {
         <div className="space-y-4 py-4">
           <RadioGroup value={paymentType} onValueChange={(v: 'full' | 'down') => setPaymentType(v)} className="flex justify-center gap-4">
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="full" id="full" />
-              <Label htmlFor="full">Full Payment</Label>
-            </div>
-            <div className="flex items-center space-x-2">
               <RadioGroupItem value="down" id="down" />
               <Label htmlFor="down">Down Payment</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="full" id="full" />
+              <Label htmlFor="full">Full Payment</Label>
             </div>
           </RadioGroup>
 
@@ -731,6 +742,7 @@ function AddPaymentDialog() {
                 onChange={handleAmountChange}
                 className="pl-8"
                 placeholder="0.00"
+                readOnly={paymentType === 'full'}
               />
             </div>
           </div>
@@ -760,5 +772,6 @@ function AddPaymentDialog() {
     </Dialog>
   );
 }
+
 
 
