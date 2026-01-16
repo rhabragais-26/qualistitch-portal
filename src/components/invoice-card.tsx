@@ -51,6 +51,129 @@ type Payment = {
   mode: string;
 };
 
+function AddOnsDialog({
+  groupKey,
+  addOns,
+  setAddOns,
+}: {
+  groupKey: string;
+  addOns: Record<string, AddOns>;
+  setAddOns: React.Dispatch<React.SetStateAction<Record<string, AddOns>>>;
+  totalQuantity: number;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const currentAddOns = addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 };
+  const [localAddOns, setLocalAddOns] = useState<AddOns>(currentAddOns);
+
+  useEffect(() => {
+    if (isOpen) {
+      setLocalAddOns(addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 });
+    }
+  }, [isOpen, addOns, groupKey]);
+
+  const handleSave = () => {
+    setAddOns(prev => ({ ...prev, [groupKey]: localAddOns }));
+    setIsOpen(false);
+  };
+
+  const handleNumericChange = (field: keyof AddOns, value: string) => {
+    const numericValue = parseInt(value, 10);
+    setLocalAddOns(prev => ({
+        ...prev,
+        [field]: isNaN(numericValue) ? 0 : numericValue
+    }));
+  };
+
+  const handleCurrencyChange = (field: keyof AddOns, value: string) => {
+    const sanitizedValue = value.replace(/[^0-9]/g, '');
+    const numericValue = parseInt(sanitizedValue, 10);
+     setLocalAddOns(prev => ({
+        ...prev,
+        [field]: isNaN(numericValue) ? 0 : numericValue
+    }));
+  }
+
+  const isSaveDisabled = Object.values(localAddOns).every(val => val === 0);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-7 px-2 bg-blue-500 text-white hover:bg-blue-600 font-bold">
+          <Plus className="mr-1 h-3 w-3" />
+          Add Ons
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add Ons</DialogTitle>
+          <DialogDescription>
+            Specify quantities for additional logos, names, or fees.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="backLogo" className="text-base">Back Logo</Label>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleNumericChange('backLogo', String(Math.max(0, localAddOns.backLogo - 1)))}><Minus className="h-4 w-4" /></Button>
+              <Input id="backLogo" type="number" value={localAddOns.backLogo} onChange={(e) => handleNumericChange('backLogo', e.target.value)} className="w-16 text-center" />
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleNumericChange('backLogo', String(localAddOns.backLogo + 1))}><Plus className="h-4 w-4" /></Button>
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="names" className="text-base">Names</Label>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleNumericChange('names', String(Math.max(0, localAddOns.names - 1)))}><Minus className="h-4 w-4" /></Button>
+              <Input id="names" type="number" value={localAddOns.names} onChange={(e) => handleNumericChange('names', e.target.value)} className="w-16 text-center" />
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleNumericChange('names', String(localAddOns.names + 1))}><Plus className="h-4 w-4" /></Button>
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="plusSize" className="text-base">Plus Size</Label>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleNumericChange('plusSize', String(Math.max(0, localAddOns.plusSize - 1)))}><Minus className="h-4 w-4" /></Button>
+              <Input id="plusSize" type="number" value={localAddOns.plusSize} onChange={(e) => handleNumericChange('plusSize', e.target.value)} className="w-16 text-center" />
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleNumericChange('plusSize', String(localAddOns.plusSize + 1))}><Plus className="h-4 w-4" /></Button>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="programFeeLogo" className="text-base">Program Fee (Logo)</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+              <Input id="programFeeLogo" value={localAddOns.programFeeLogo || ''} onChange={(e) => handleCurrencyChange('programFeeLogo', e.target.value)} className="w-32 pl-7" placeholder="0" />
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="programFeeBackText" className="text-base">Program Fee (Back Text)</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+              <Input id="programFeeBackText" value={localAddOns.programFeeBackText || ''} onChange={(e) => handleCurrencyChange('programFeeBackText', e.target.value)} className="w-32 pl-7" placeholder="0" />
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="rushFee" className="text-base">Rush Fee</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+              <Input id="rushFee" value={localAddOns.rushFee || ''} onChange={(e) => handleCurrencyChange('rushFee', e.target.value)} className="w-32 pl-7" placeholder="0" />
+            </div>
+          </div>
+           <div className="flex items-center justify-between">
+            <Label htmlFor="shippingFee" className="text-base">Shipping Fee</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+              <Input id="shippingFee" value={localAddOns.shippingFee || ''} onChange={(e) => handleCurrencyChange('shippingFee', e.target.value)} className="w-32 pl-7" placeholder="0" />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
+          <Button onClick={handleSave} disabled={isSaveDisabled}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
   
@@ -685,8 +808,3 @@ function AddPaymentDialog({ grandTotal, setPayments, payments }: { grandTotal: n
   );
 }
 
-
-
-
-
-    
