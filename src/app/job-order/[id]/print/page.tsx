@@ -1,7 +1,7 @@
 'use client';
 
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, doc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -65,6 +65,13 @@ type Lead = {
   layouts?: Layout[];
 };
 
+type UserProfileInfo = {
+  uid: string;
+  firstName: string;
+  lastName: string;
+  nickname: string;
+};
+
 export default function JobOrderPrintPage() {
   const { id } = useParams();
   const firestore = useFirestore();
@@ -73,14 +80,19 @@ export default function JobOrderPrintPage() {
     () => (firestore && id ? doc(firestore, 'leads', id as string) : null),
     [firestore, id]
   );
+  const { data: lead, isLoading: isLeadLoading, error } = useDoc<Lead>(leadRef);
+  
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
+  const { data: users, isLoading: areUsersLoading } = useCollection<UserProfileInfo>(usersQuery);
 
-  const { data: lead, isLoading, error } = useDoc<Lead>(leadRef);
 
   useEffect(() => {
-    if (!isLoading && lead) {
+    if (!isLeadLoading && !areUsersLoading && lead) {
       setTimeout(() => window.print(), 1000);
     }
-  }, [isLoading, lead]);
+  }, [isLeadLoading, areUsersLoading, lead]);
+  
+  const isLoading = isLeadLoading || areUsersLoading;
 
   if (isLoading || !lead) {
     return (
@@ -99,6 +111,9 @@ export default function JobOrderPrintPage() {
   if (error) {
     return <div className="text-red-500 p-10">Error loading lead: {error.message}</div>;
   }
+  
+  const scesProfile = users?.find(u => u.nickname === lead.salesRepresentative);
+  const scesFullName = scesProfile ? `${scesProfile.firstName} ${scesProfile.lastName}`.toUpperCase() : lead.salesRepresentative.toUpperCase();
 
   const joNumber = lead.joNumber ? `QSBP-${new Date().getFullYear().toString().slice(-2)}-${lead.joNumber.toString().padStart(5, '0')}` : 'Not Saved';
   const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
@@ -213,15 +228,15 @@ export default function JobOrderPrintPage() {
         <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
             <div className="space-y-1">
                 <p className="font-bold italic">Prepared by:</p>
-                <p className="pt-8 border-b border-black text-center font-semibold">{lead.salesRepresentative.toUpperCase()}</p>
-                <p className="text-center font-bold">Sales & Customer Engagement Specialist</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
+                <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
              <div className="space-y-1">
                 <p className="font-bold italic">Noted by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">MYREZA BANAWON</p>
                 <p className="text-center font-bold">Sales Head</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
 
             <div className="col-span-2 mt-0">
@@ -232,37 +247,37 @@ export default function JobOrderPrintPage() {
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Programming</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Inventory</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Production Line Leader</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Production Supervisor</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
              <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Quality Control</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Logistics</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
              <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Operations Supervisor</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
         </div>
       </div>

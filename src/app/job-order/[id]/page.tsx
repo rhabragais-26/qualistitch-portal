@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -79,6 +78,14 @@ type Lead = {
 
 const courierOptions = ['J&T', 'Lalamove', 'LBC', 'Pick-up'];
 
+type UserProfileInfo = {
+  uid: string;
+  firstName: string;
+  lastName: string;
+  nickname: string;
+};
+
+
 export default function JobOrderPage() {
   const { id } = useParams();
   const firestore = useFirestore();
@@ -92,6 +99,9 @@ export default function JobOrderPage() {
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: allLeads, isLoading: areAllLeadsLoading } = useCollection<Lead>(leadsQuery);
+  
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
+  const { data: users, isLoading: areUsersLoading } = useCollection<UserProfileInfo>(usersQuery);
 
   const leadRef = useMemoFirebase(
     () => (firestore && id ? doc(firestore, 'leads', id as string) : null),
@@ -397,7 +407,7 @@ export default function JobOrderPage() {
   }, [lead]);
 
 
-  if (isLeadLoading || areAllLeadsLoading || !lead) {
+  if (isLeadLoading || areAllLeadsLoading || !lead || areUsersLoading) {
     return (
       <div className="p-10 bg-white">
         <Skeleton className="h-10 w-1/4 mb-4" />
@@ -414,6 +424,9 @@ export default function JobOrderPage() {
   if (error) {
     return <div className="text-red-500 p-10">Error loading lead: {error.message}</div>;
   }
+  
+  const scesProfile = users?.find(u => u.nickname === lead.salesRepresentative);
+  const scesFullName = scesProfile ? `${scesProfile.firstName} ${scesProfile.lastName}`.toUpperCase() : lead.salesRepresentative.toUpperCase();
 
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
   
@@ -443,7 +456,7 @@ export default function JobOrderPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <Button variant="outline" onClick={handleConfirmDiscard}>Discard</Button>
-            <AlertDialogAction onClick={handleConfirmSave}>Save & Close</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmSave}>Save &amp; Close</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -454,7 +467,7 @@ export default function JobOrderPage() {
                 <span className="font-semibold text-sm">Page {currentPage + 1} of {totalPages}</span>
                 <Button onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p+1))} disabled={currentPage >= totalPages - 1} size="sm">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
             </div>
-            {canEdit && (
+            {canEdit ? (
               <div className="flex items-center gap-2">
                   <Button onClick={handleClose} variant="outline" className="shadow-md">
                       <X className="mr-2 h-4 w-4" />
@@ -463,6 +476,17 @@ export default function JobOrderPage() {
                   <Button onClick={() => handleSaveChanges(false)} className="text-white font-bold shadow-md" disabled={!isDirty}>
                       <Save className="mr-2 h-4 w-4" />
                       Save Changes
+                  </Button>
+                  <Button onClick={handlePrint} className="text-white font-bold shadow-md">
+                      <Printer className="mr-2 h-4 w-4" />
+                      Print J.O.
+                  </Button>
+              </div>
+            ): (
+              <div className="flex items-center gap-2">
+                  <Button onClick={handleClose} variant="outline" className="shadow-md">
+                      <X className="mr-2 h-4 w-4" />
+                      Close
                   </Button>
                   <Button onClick={handlePrint} className="text-white font-bold shadow-md">
                       <Printer className="mr-2 h-4 w-4" />
@@ -620,15 +644,15 @@ export default function JobOrderPage() {
         <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
             <div className="space-y-1">
                 <p className="font-bold italic">Prepared by:</p>
-                <p className="pt-8 border-b border-black text-center font-semibold">{lead.salesRepresentative.toUpperCase()}</p>
-                <p className="text-center font-bold">Sales & Customer Engagement Specialist</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
+                <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
              <div className="space-y-1">
                 <p className="font-bold italic">Noted by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">MYREZA BANAWON</p>
                 <p className="text-center font-bold">Sales Head</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
 
             <div className="col-span-2 mt-0">
@@ -639,37 +663,37 @@ export default function JobOrderPage() {
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Programming</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Inventory</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Production Line Leader</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Production Supervisor</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
              <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Quality Control</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Logistics</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
              <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Operations Supervisor</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
         </div>
       </div>
