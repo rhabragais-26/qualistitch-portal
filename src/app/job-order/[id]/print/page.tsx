@@ -63,6 +63,7 @@ type Lead = {
   courier: string;
   joNumber?: number;
   layouts?: Layout[];
+  publiclyPrintable?: boolean;
 };
 
 type UserProfileInfo = {
@@ -91,6 +92,8 @@ export default function JobOrderPrintPage() {
         if(usersSnapshot.exists()){
              const scesProfile = usersSnapshot.data() as UserProfileInfo;
              setScesFullName(scesProfile ? `${scesProfile.firstName} ${scesProfile.lastName}`.toUpperCase() : lead.salesRepresentative.toUpperCase());
+        } else {
+            setScesFullName(lead.salesRepresentative.toUpperCase());
         }
       }
     };
@@ -337,23 +340,23 @@ export default function JobOrderPrintPage() {
             <table className="w-full border-collapse border border-black text-xs">
               <thead>
                 <tr className="bg-gray-200">
-                  <th className="border border-black p-1">No.</th>
-                  <th className="border border-black p-1">Names</th>
-                  <th className="border border-black p-1">Color</th>
-                  <th className="border border-black p-1">Sizes</th>
-                  <th className="border border-black p-1">Qty</th>
-                  <th className="border border-black p-1">BACK TEXT</th>
+                  <th className="border border-black p-1 text-center align-middle">No.</th>
+                  <th className="border border-black p-1 text-center align-middle">Names</th>
+                  <th className="border border-black p-1 text-center align-middle">Color</th>
+                  <th className="border border-black p-1 text-center align-middle">Sizes</th>
+                  <th className="border border-black p-1 text-center align-middle">Qty</th>
+                  <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
                 </tr>
               </thead>
               <tbody>
                 {layout.namedOrders.map((order, orderIndex) => (
                   <tr key={order.id || `named-order-${orderIndex}`}>
-                    <td className="border border-black p-1 text-center">{orderIndex + 1}</td>
-                    <td className="border border-black p-1">{order.name}</td>
-                    <td className="border border-black p-1">{order.color}</td>
-                    <td className="border border-black p-1">{order.size}</td>
-                    <td className="border border-black p-1 text-center">{order.quantity}</td>
-                    <td className="border border-black p-1">{order.backText}</td>
+                    <td className="border border-black p-1 text-center align-middle">{orderIndex + 1}</td>
+                    <td className="border border-black p-1 text-center align-middle">{order.name}</td>
+                    <td className="border border-black p-1 text-center align-middle">{order.color}</td>
+                    <td className="border border-black p-1 text-center align-middle">{order.size}</td>
+                    <td className="border border-black p-1 text-center align-middle">{order.quantity}</td>
+                    <td className="border border-black p-1 text-center align-middle">{order.backText}</td>
                   </tr>
                 ))}
               </tbody>

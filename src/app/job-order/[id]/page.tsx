@@ -6,7 +6,7 @@
     import { collection, doc, query, updateDoc, getDoc } from 'firebase/firestore';
     import { useParams, useRouter, usePathname } from 'next/navigation';
     import { Button } from '@/components/ui/button';
-    import { Printer, Save, X, ArrowLeft, ArrowRight, Plus, Trash2, Upload } from 'lucide-react';
+    import { Printer, Save, X, ArrowLeft, ArrowRight, Plus, Trash2, Upload, CalendarIcon } from 'lucide-react';
     import { format, addDays } from 'date-fns';
     import { Skeleton } from '@/components/ui/skeleton';
     import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
@@ -20,6 +20,8 @@
     import Image from 'next/image';
     import { v4 as uuidv4 } from 'uuid';
     import { hasEditPermission } from '@/lib/permissions';
+    import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+    import { Calendar } from '@/components/ui/calendar';
 
     type DesignDetails = {
       left?: boolean;
@@ -74,6 +76,7 @@
       courier: string;
       joNumber?: number;
       layouts?: Layout[];
+      publiclyPrintable?: boolean;
     };
 
     const courierOptions = ['J&T', 'Lalamove', 'LBC', 'Pick-up'];
@@ -111,7 +114,7 @@
       const { data: fetchedLead, isLoading: isLeadLoading, error, refetch: refetchLead } = useDoc<Lead>(leadRef);
       const [lead, setLead] = useState<Lead | null>(null);
       const [joNumber, setJoNumber] = useState<string>('');
-      const [deliveryDateString, setDeliveryDateString] = useState('');
+      const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
       const [showConfirmDialog, setShowConfirmDialog] = useState(false);
       const textareaRef = useRef<HTMLTextAreaElement>(null);
       const layoutImageUploadRef = useRef<HTMLInputElement>(null);
@@ -157,19 +160,18 @@
           };
         };
 
-        let originalDeliveryDateString = '';
-        if (fetchedLead.deliveryDate) {
-            originalDeliveryDateString = format(new Date(fetchedLead.deliveryDate), 'MMMM dd, yyyy');
-        } else {
-            const calculatedDate = addDays(new Date(fetchedLead.submissionDateTime), fetchedLead.priorityType === 'Rush' ? 7 : 22);
-            originalDeliveryDateString = format(calculatedDate, 'MMMM dd, yyyy');
-        }
-        
-        const originalState = JSON.stringify({ ...normalize(fetchedLead), deliveryDateString: originalDeliveryDateString });
-        const currentState = JSON.stringify({ ...normalize(lead), deliveryDateString });
-        
+        const originalState = JSON.stringify({
+            ...normalize(fetchedLead),
+            deliveryDate: fetchedLead.deliveryDate ? new Date(fetchedLead.deliveryDate).toISOString() : undefined
+        });
+
+        const currentState = JSON.stringify({
+            ...normalize(lead),
+            deliveryDate: deliveryDate ? deliveryDate.toISOString() : undefined
+        });
+
         return originalState !== currentState;
-      }, [fetchedLead, lead, deliveryDateString]);
+      }, [fetchedLead, lead, deliveryDate]);
 
       useEffect(() => {
         if (textareaRef.current) {
@@ -198,7 +200,7 @@
           } else {
             initialDate = addDays(new Date(fetchedLead.submissionDateTime), fetchedLead.priorityType === 'Rush' ? 7 : 22);
           }
-          setDeliveryDateString(format(initialDate, 'MMMM dd, yyyy'));
+          setDeliveryDate(initialDate);
         }
       }, [fetchedLead]);
 
@@ -308,20 +310,6 @@
       const handleSaveChanges = async (navigateOnSuccess = false) => {
         if (!lead || !leadRef || !allLeads) return;
 
-        let parsedDate: Date | null = null;
-        if (deliveryDateString) {
-            const date = new Date(deliveryDateString);
-            if (isNaN(date.getTime())) {
-                toast({
-                    variant: "destructive",
-                    title: "Invalid Date Format",
-                    description: "Please use a valid date format, e.g., 'February 08, 2026'.",
-                });
-                return;
-            }
-            parsedDate = date;
-        }
-
         let newJoNumber: number | undefined = lead.joNumber;
         
         if (!newJoNumber) {
@@ -335,9 +323,10 @@
         const dataToUpdate = {
             ...lead,
             joNumber: newJoNumber,
-            deliveryDate: parsedDate ? parsedDate.toISOString() : null,
+            deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
             lastModified: new Date().toISOString(),
             layouts: layoutsToSave,
+            publiclyPrintable: true,
         };
 
         try {
@@ -576,7 +565,7 @@
                         <Input
                             value={lead.recipientName || ''}
                             onChange={handleRecipientNameChange}
-                            className="h-8 text-xs no-print placeholder:text-foreground"
+                            className="h-8 text-xs no-print placeholder:text-foreground/80"
                             readOnly={!canEdit}
                             placeholder={lead.customerName}
                         />
@@ -600,14 +589,30 @@
                     </div>
                     <div className="flex items-center gap-2">
                         <strong className='flex-shrink-0'>Delivery Date:</strong>
-                         <Input
-                            value={deliveryDateString}
-                            onChange={(e) => setDeliveryDateString(e.target.value)}
-                            readOnly={!canEdit}
-                            className="h-8 text-xs no-print"
-                            placeholder="Month Day, Year"
-                        />
-                        <span className="print-only">{deliveryDateString}</span>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full justify-start text-left font-normal h-8 text-xs",
+                                    !deliveryDate && "text-muted-foreground"
+                                )}
+                                disabled={!canEdit}
+                                >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                mode="single"
+                                selected={deliveryDate}
+                                onSelect={setDeliveryDate}
+                                initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        <span className="print-only">{deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : 'N/A'}</span>
                     </div>
                 </div>
             </div>
@@ -794,26 +799,26 @@
             <table className="w-full border-collapse border border-black text-xs">
               <thead>
                 <tr className="bg-gray-200">
-                  <th className="border border-black p-1">No.</th>
-                  <th className="border border-black p-1">Names</th>
-                  <th className="border border-black p-1">Color</th>
-                  <th className="border border-black p-1">Sizes</th>
-                  <th className="border border-black p-1">Qty</th>
-                  <th className="border border-black p-1">BACK TEXT</th>
-                  {canEdit && <th className="border border-black p-1 no-print">Action</th>}
+                  <th className="border border-black p-1 text-center align-middle">No.</th>
+                  <th className="border border-black p-1 text-center align-middle">Names</th>
+                  <th className="border border-black p-1 text-center align-middle">Color</th>
+                  <th className="border border-black p-1 text-center align-middle">Sizes</th>
+                  <th className="border border-black p-1 text-center align-middle">Qty</th>
+                  <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
+                  {canEdit && <th className="border border-black p-1 no-print text-center align-middle">Action</th>}
                 </tr>
               </thead>
               <tbody>
                 {(currentLayout.namedOrders || []).map((order, orderIndex) => (
                   <tr key={order.id}>
-                    <td className="border border-black p-1 text-center">{orderIndex + 1}</td>
-                    <td className="border border-black p-1"><Input value={order.name} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'name', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.name}</span></td>
-                    <td className="border border-black p-1"><Input value={order.color} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'color', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.color}</span></td>
-                    <td className="border border-black p-1"><Input value={order.size} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'size', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.size}</span></td>
-                    <td className="border border-black p-1"><Input type="number" value={order.quantity} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'quantity', parseInt(e.target.value) || 0)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.quantity}</span></td>
-                    <td className="border border-black p-1"><Input value={order.backText} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'backText', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.backText}</span></td>
+                    <td className="border border-black p-1 text-center align-middle">{orderIndex + 1}</td>
+                    <td className="border border-black p-1 text-center align-middle"><Input value={order.name} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'name', e.target.value)} className="h-7 text-xs no-print text-center" readOnly={!canEdit} /><span className="print-only">{order.name}</span></td>
+                    <td className="border border-black p-1 text-center align-middle"><Input value={order.color} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'color', e.target.value)} className="h-7 text-xs no-print text-center" readOnly={!canEdit} /><span className="print-only">{order.color}</span></td>
+                    <td className="border border-black p-1 text-center align-middle"><Input value={order.size} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'size', e.target.value)} className="h-7 text-xs no-print text-center" readOnly={!canEdit} /><span className="print-only">{order.size}</span></td>
+                    <td className="border border-black p-1 text-center align-middle"><Input type="number" value={order.quantity} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'quantity', parseInt(e.target.value) || 0)} className="h-7 text-xs no-print text-center" readOnly={!canEdit} /><span className="print-only">{order.quantity}</span></td>
+                    <td className="border border-black p-1 text-center align-middle"><Input value={order.backText} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'backText', e.target.value)} className="h-7 text-xs no-print text-center" readOnly={!canEdit} /><span className="print-only">{order.backText}</span></td>
                     {canEdit && (
-                        <td className="border border-black p-1 text-center no-print">
+                        <td className="border border-black p-1 text-center align-middle no-print">
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeNamedOrder(currentLayoutIndex, orderIndex)}><Trash2 className="h-4 w-4"/></Button>
                         </td>
                     )}
