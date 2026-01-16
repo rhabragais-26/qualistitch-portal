@@ -607,6 +607,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
       orders: values.orders,
       submissionDateTime: now,
       lastModified: now,
+      publiclyPrintable: true,
     };
 
     setDocumentNonBlocking(leadDocRef, submissionData, {});

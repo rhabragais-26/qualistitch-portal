@@ -1,6 +1,67 @@
 
 {
   "entities": {
+    "UserProfile": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "UserProfile",
+        "type": "object",
+        "description": "Represents a user's profile in the application.",
+        "properties": {
+          "uid": { "type": "string", "description": "The unique ID of the user, matching the Firebase Auth UID." },
+          "firstName": { "type": "string", "description": "The user's first name." },
+          "lastName": { "type": "string", "description": "The user's last name." },
+          "nickname": { "type": "string", "description": "The user's nickname." },
+          "email": { "type": "string", "format": "email", "description": "The user's email address." },
+          "phoneNumber": { "type": "string", "description": "The user's phone number." },
+          "photoURL": { "type": "string", "format": "uri", "description": "URL to the user's profile picture." },
+          "role": { "type": "string", "description": "The user's role in the system (e.g., 'admin', 'user')." },
+          "position": { "type": "string", "description": "The user's job title or position in the company." },
+          "lastModified": { "type": "string", "format": "date-time", "description": "Timestamp for when the profile was last modified." },
+          "permissions": {
+            "type": "object",
+            "description": "Custom user permissions for page groups.",
+            "properties": {
+              "sales": { "type": "boolean" },
+              "digitizing": { "type": "boolean" },
+              "inventory": { "type": "boolean" },
+              "production": { "type": "boolean" },
+              "logistics": { "type": "boolean" },
+              "admin": { "type": "boolean" }
+            }
+          }
+        },
+        "required": ["uid", "firstName", "lastName", "nickname", "email", "role", "position"]
+    },
+    "SizeChart": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SizeChart",
+      "type": "object",
+      "description": "Stores image URLs and upload times for various size charts.",
+      "properties": {
+        "id": { "type": "string" },
+        "bomberJacket": {
+          "type": "object",
+          "properties": {
+            "image": { "type": ["string", "null"] },
+            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
+          }
+        },
+        "poloShirt": {
+          "type": "object",
+          "properties": {
+            "image": { "type": ["string", "null"] },
+            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
+          }
+        },
+        "corporateJacket": {
+          "type": "object",
+          "properties": {
+            "image": { "type": ["string", "null"] },
+            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
+          }
+        }
+      }
+    },
     "Lead": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Lead",
@@ -27,9 +88,29 @@
           "type": "string",
           "description": "Contact number for the lead."
         },
+        "landlineNumber": {
+          "type": "string",
+          "description": "Landline number for the lead."
+        },
         "location": {
           "type": "string",
-          "description": "Location of the lead."
+          "description": "The full, concatenated address for the lead."
+        },
+        "houseStreet": {
+          "type": "string",
+          "description": "House number, street name, and other specific location details."
+        },
+        "barangay": {
+          "type": "string",
+          "description": "Barangay of the lead."
+        },
+        "city": {
+          "type": "string",
+          "description": "City of the lead."
+        },
+        "province": {
+          "type": "string",
+          "description": "Province of the lead."
         },
         "paymentType": {
           "type": "string",
@@ -61,6 +142,11 @@
             "format": "date-time",
             "description": "The delivery date for the order."
         },
+        "adjustedDeliveryDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The adjusted delivery date set during the sales audit."
+        },
         "courier": {
             "type": "string",
             "description": "The courier for the order."
@@ -69,29 +155,172 @@
           "type": "number",
           "description": "The job order number for the lead."
         },
+        "publiclyPrintable": {
+          "type": "boolean",
+          "description": "Indicates if a job order can be printed without authentication."
+        },
+        "isJoPrinted": {
+          "type": "boolean",
+          "description": "Indicates if the job order has been printed."
+        },
+        "joPrintedTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp for when 'isJoPrinted' was checked."
+        },
+        "isJoHardcopyReceived": {
+            "type": "boolean",
+            "description": "Indicates if the printed job order has been received by programming."
+        },
+        "joHardcopyReceivedTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp for when 'isJoHardcopyReceived' was checked."
+        },
         "isUnderProgramming": {
           "type": "boolean",
           "description": "Indicates if the job order is currently under programming."
+        },
+        "underProgrammingTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp for when 'isUnderProgramming' was checked."
         },
         "isInitialApproval": {
           "type": "boolean",
           "description": "Indicates if the job order has received initial approval."
         },
+        "initialApprovalTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp for when 'isInitialApproval' was checked."
+        },
         "isLogoTesting": {
             "type": "boolean",
             "description": "Indicates if the logo for the job order is currently being tested."
+        },
+        "logoTestingTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp for when 'isLogoTesting' was checked."
         },
         "isRevision": {
           "type": "boolean",
           "description": "Indicates if the job order requires revision."
         },
+        "revisionTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp for when 'isRevision' was checked."
+        },
         "isFinalApproval": {
           "type": "boolean",
           "description": "Indicates if the job order has received final approval."
         },
+        "finalApprovalTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp for when 'isFinalApproval' was checked."
+        },
         "isFinalProgram": {
           "type": "boolean",
           "description": "Indicates if the job order has its final program."
+        },
+        "finalProgramTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp for when 'isFinalProgram' was checked."
+        },
+        "isPreparedForProduction": {
+          "type": "boolean",
+          "description": "Indicates if the order has been prepared for production."
+        },
+        "isSentToProduction": {
+          "type": "boolean",
+          "description": "Indicates if the order has been sent to production."
+        },
+        "sentToProductionTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time when the order was sent to production."
+        },
+        "isCutting": { "type": "boolean", "description": "Indicates if the order is in the cutting stage." },
+        "cuttingTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when 'isCutting' was checked." },
+        "productionType": { "type": "string", "enum": ["Pending", "In-house", "Outsource 1", "Outsource 2", "Outsource 3"], "description": "Indicates if production (cutting) is In-house or Outsourced." },
+        "sewerType": { "type": "string", "enum": ["Pending", "In-house", "Outsource 1", "Outsource 2", "Outsource 3"], "description": "Indicates if sewing is In-house or Outsourced." },
+        "isSewing": { "type": "boolean", "description": "Indicates if the order is in the sewing stage." },
+        "sewingTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when 'isSewing' was checked." },
+        "isTrimming": { "type": "boolean", "description": "Indicates if the order is in the trimming stage." },
+        "isDone": { "type": "boolean", "description": "Indicates if the order is completely done." },
+        "doneProductionTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the production is marked as done." },
+        "isEndorsedToLogistics": { "type": "boolean", "description": "Indicates if the order has been endorsed to logistics." },
+        "isDigitizingArchived": {
+          "type": "boolean",
+          "description": "Indicates if the lead is archived and should be hidden from the digitizing queue."
+        },
+        "digitizingArchivedTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp for when the digitizing process was archived."
+        },
+        "shipmentStatus": {
+          "type": "string",
+          "enum": ["Pending", "Packed", "Shipped", "Delivered", "Cancelled"],
+          "description": "The shipment status of the order."
+        },
+        "shippedTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp for when the order was shipped."
+        },
+        "isEmbroideryDone": {
+            "type": "boolean",
+            "description": "Indicates if the embroidery for the order is done."
+        },
+        "embroideryDoneTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when 'isEmbroideryDone' was checked." },
+        "isSalesAuditRequested": {
+          "type": "boolean",
+          "description": "Indicates if the order has been sent for a sales audit."
+        },
+        "salesAuditRequestedTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp for when a sales audit was requested."
+        },
+        "isSalesAuditComplete": {
+            "type": "boolean",
+            "description": "Indicates if the sales audit for the order has been completed."
+        },
+        "salesAuditCompleteTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp for when the sales audit was completed."
+        },
+        "isWaybillPrinted": {
+          "type": "boolean",
+          "description": "Indicates if the waybill for the order has been printed."
+        },
+        "isQualityApproved": {
+          "type": "boolean",
+          "description": "Indicates if the quality check for the order has been approved."
+        },
+        "qualityApprovedTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp for when quality was approved."
+        },
+        "isRecheckingQuality": {
+          "type": "boolean",
+          "description": "Indicates if a disapproved order is being re-checked."
+        },
+        "isPacked": {
+          "type": "boolean",
+          "description": "Indicates if the order has been packed for shipment."
+        },
+        "packedTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp for when the order was packed."
         },
         "orders": {
           "type": "array",
@@ -144,6 +373,15 @@
                 "format": "date-time",
                 "description": "Timestamp for Initial Program right logo upload."
               },
+              "backLogoImage": {
+                "type": ["string", "null"],
+                "description": "Data URL of the uploaded back logo image for Initial Program."
+              },
+              "backLogoImageUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for Initial Program back logo upload."
+              },
               "backDesignImage": {
                 "type": ["string", "null"],
                 "description": "Data URL of the uploaded back design image for Initial Program."
@@ -171,6 +409,15 @@
                 "format": "date-time",
                 "description": "Timestamp for Test right logo upload."
               },
+              "testBackLogoImage": {
+                "type": ["string", "null"],
+                "description": "Data URL of the uploaded back logo image for Test."
+              },
+              "testBackLogoImageUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for Test back logo upload."
+              },
               "testBackDesignImage": {
                 "type": ["string", "null"],
                 "description": "Data URL of the uploaded back design image for Test."
@@ -191,13 +438,14 @@
                 "items": { "type": ["string", "null"], "format": "date-time" }
               },
               "finalBackDesignEmb": {
-                "type": ["string", "null"],
-                "description": "Data URL for the final back design EMB file."
+                "type": "array",
+                "description": "Data URLs for the final back design EMB files.",
+                "items": { "type": ["string", "null"] }
               },
-              "finalBackDesignEmbUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for final back design EMB file upload."
+              "finalBackDesignEmbUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for final back design EMB file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
               },
               "finalLogoDst": {
                  "type": "array",
@@ -210,13 +458,14 @@
                 "items": { "type": ["string", "null"], "format": "date-time" }
               },
               "finalBackDesignDst": {
-                "type": ["string", "null"],
-                "description": "Data URL for the final back design DST file."
+                "type": "array",
+                "description": "Data URLs for the final back design DST files.",
+                "items": { "type": ["string", "null"] }
               },
-              "finalBackDesignDstUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for final back design DST file upload."
+              "finalBackDesignDstUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for final back design DST file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
               },
                "finalNamesDst": {
                 "type": "array",
@@ -239,13 +488,34 @@
                 "items": { "type": ["string", "null"], "format": "date-time" }
               },
               "sequenceBackDesign": {
-                "type": ["string", "null"],
-                "description": "Data URL for the sequence back design file."
+                "type": "array",
+                "description": "Data URLs for the sequence back design files.",
+                "items": { "type": ["string", "null"] }
               },
-              "sequenceBackDesignUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for sequence back design file upload."
+              "sequenceBackDesignUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for sequence back design file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
+              },
+              "finalProgrammedLogo": {
+                "type": "array",
+                "description": "Data URLs for the final programmed logo files.",
+                "items": { "type": ["string", "null"] }
+              },
+              "finalProgrammedLogoUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for final programmed logo file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
+              },
+              "finalProgrammedBackDesign": {
+                "type": "array",
+                "description": "Data URLs for the final programmed back design files.",
+                "items": { "type": ["string", "null"] }
+              },
+              "finalProgrammedBackDesignUploadTimes": {
+                "type": "array",
+                "description": "Timestamps for final programmed back design file uploads.",
+                "items": { "type": ["string", "null"], "format": "date-time" }
               },
               "dstLogoLeft": { "type": "string" },
               "dstLogoRight": { "type": "string" },
@@ -275,6 +545,10 @@
         "companyName",
         "contactNumber",
         "location",
+        "houseStreet",
+        "barangay",
+        "city",
+        "province",
         "paymentType",
         "salesRepresentative",
         "orderType",
@@ -312,16 +586,83 @@
         }
       },
       "required": ["id", "productType", "color", "size", "stock"]
+    },
+    "OperationalCase": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OperationalCase",
+      "type": "object",
+      "description": "Represents an operational case like RTS, quality error, or replacement.",
+      "properties": {
+        "id": { "type": "string" },
+        "joNumber": { "type": "string" },
+        "caseType": { "type": "string", "enum": ["Return to Sender (RTS)", "Quality Errors", "Replacement"] },
+        "remarks": { "type": "string", "description": "Initial remarks for the case. Can be appended with reopening remarks." },
+        "image": { "type": "string", "description": "Data URL of the uploaded image." },
+        "submissionDateTime": { "type": "string", "format": "date-time" },
+        "customerName": { "type": "string" },
+        "companyName": { "type": "string" },
+        "contactNumber": { "type": "string" },
+        "landlineNumber": { "type": "string" },
+        "quantity": { "type": "number", "description": "Total number of items involved in the case, derived from caseItems." },
+        "caseItems": {
+            "type": "array",
+            "description": "An array of items related to the case.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string" },
+                    "productType": { "type": "string" },
+                    "color": { "type": "string" },
+                    "size": { "type": "string" },
+                    "quantity": { "type": "number" }
+                },
+                "required": ["id", "productType", "color", "size", "quantity"]
+            }
+        },
+        "isArchived": { "type": "boolean", "description": "Indicates if the case is resolved and archived." },
+        "isDeleted": { "type": "boolean", "description": "Indicates if the case is soft-deleted." }
+      },
+      "required": ["id", "joNumber", "caseType", "remarks", "submissionDateTime", "caseItems"]
     }
   },
   "auth": {
     "providers": [
-      "email",
-      "password"
+      "password",
+      "anonymous"
     ]
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user document, same as Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/sizeCharts/{chartId}",
+        "definition": {
+          "entityName": "SizeChart",
+          "schema": { "$ref": "#/backend/entities/SizeChart" },
+          "description": "Stores size chart images for different product types. A single document with a known ID 'default' is used.",
+          "params": [
+            {
+              "name": "chartId",
+              "description": "The document ID for the size charts, which should be 'default'."
+            }
+          ]
+        }
+      },
       {
         "path": "/leads/{leadId}",
         "definition": {
@@ -350,6 +691,22 @@
             {
               "name": "itemId",
               "description": "Unique identifier for the inventory item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/operationalCases/{caseId}",
+        "definition": {
+          "entityName": "OperationalCase",
+          "schema": {
+            "$ref": "#/backend/entities/OperationalCase"
+          },
+          "description": "Stores operational cases.",
+          "params": [
+            {
+              "name": "caseId",
+              "description": "Unique identifier for the operational case."
             }
           ]
         }
