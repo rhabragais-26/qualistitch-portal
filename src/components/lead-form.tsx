@@ -73,8 +73,8 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from './ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, doc, query, setDoc } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser, setDocumentNonBlocking } from '@/firebase';
+import { collection, doc, query } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import locations from '@/lib/ph-locations.json';
 import { StatusBanner } from '@/components/ui/status-banner';
@@ -122,15 +122,46 @@ const formSchema = z.object({
 }, {
     message: "Landline number must be in 00-0000-0000 format.",
     path: ["landlineNo"],
-}).refine(data => {
+}).superRefine((data, ctx) => {
     if (data.isInternational) {
-        return !!data.internationalAddress && data.internationalAddress.length > 0;
+      if (!data.internationalAddress || data.internationalAddress.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['internationalAddress'],
+          message: 'International address is required.',
+        });
+      }
+    } else {
+      if (!data.houseStreet || data.houseStreet.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['houseStreet'],
+          message: 'House/Street is required.',
+        });
+      }
+      if (!data.barangay || data.barangay.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['barangay'],
+          message: 'Barangay is required.',
+        });
+      }
+      if (!data.city || data.city.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['city'],
+          message: 'City/Municipality is required.',
+        });
+      }
+      if (!data.province || data.province.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['province'],
+          message: 'Province is required.',
+        });
+      }
     }
-    return !!data.houseStreet && !!data.barangay && !!data.city && !!data.province;
-}, {
-    message: "A complete address is required.",
-    path: ["internationalAddress"], 
-});
+  });
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -578,7 +609,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
       lastModified: now,
     };
 
-    setDoc(leadDocRef, submissionData);
+    setDocumentNonBlocking(leadDocRef, submissionData, {});
 
     toast({
       title: 'Lead Submitted!',
