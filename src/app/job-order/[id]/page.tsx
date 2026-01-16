@@ -6,7 +6,7 @@
     import { collection, doc, query, updateDoc, getDoc } from 'firebase/firestore';
     import { useParams, useRouter, usePathname } from 'next/navigation';
     import { Button } from '@/components/ui/button';
-    import { Printer, Save, X, ArrowLeft, ArrowRight, Plus, Trash2, Upload, CalendarIcon } from 'lucide-react';
+    import { Printer, Save, X, ArrowLeft, ArrowRight, Plus, Trash2, Upload } from 'lucide-react';
     import { format, addDays } from 'date-fns';
     import { Skeleton } from '@/components/ui/skeleton';
     import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
@@ -20,8 +20,6 @@
     import Image from 'next/image';
     import { v4 as uuidv4 } from 'uuid';
     import { hasEditPermission } from '@/lib/permissions';
-    import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-    import { Calendar } from '@/components/ui/calendar';
 
     type DesignDetails = {
       left?: boolean;
@@ -585,33 +583,8 @@
                     </div>
                     <div className="flex items-center gap-2">
                         <strong className='flex-shrink-0'>Delivery Date:</strong>
-                        <div className='w-full no-print'>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                            "w-full justify-start text-left font-normal h-8 text-xs",
-                                            !deliveryDate && "text-muted-foreground"
-                                        )}
-                                        disabled={!canEdit}
-                                    >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : <span>Pick a date</span>}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                        mode="single"
-                                        selected={deliveryDate}
-                                        onSelect={setDeliveryDate}
-                                        initialFocus
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                        </div>
+                        <span className="text-sm font-medium">{deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : 'N/A'}</span>
                     </div>
-                    <span className="print-only"><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
                 </div>
             </div>
 
