@@ -470,6 +470,8 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   const [rushFeeInput, setRushFeeInput] = useState('');
   const [shippingFeeInput, setShippingFeeInput] = useState('');
 
+  const isSaveDisabled = Object.values(localAddOns).every(val => val === 0);
+
   const handleSave = () => {
     setAddOns(prev => ({ ...prev, [groupKey]: localAddOns }));
     setIsOpen(false);
@@ -484,28 +486,33 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
   }
   
   const handleCurrencyInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>, 
-    setter: React.Dispatch<React.SetStateAction<string>>, 
-    addOnType: 'rushFee' | 'shippingFee' | 'programFeeLogo' | 'programFeeBackText'
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
+    addOnType: 'programFeeLogo' | 'programFeeBackText' | 'rushFee' | 'shippingFee'
   ) => {
     const rawValue = e.target.value;
-    setter(rawValue);
-    const numericValue = parseFloat(rawValue.replace(/[^0-9.]/g, ''));
+    const sanitizedValue = rawValue.replace(/[^0-9.]/g, '');
+    const parts = sanitizedValue.split('.');
+    const finalValue = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join('')}` : sanitizedValue;
+
+    setter(finalValue);
+
+    const numericValue = parseFloat(finalValue);
     if (!isNaN(numericValue)) {
-        setLocalAddOns(prev => ({ ...prev, [addOnType]: numericValue }));
+      setLocalAddOns(prev => ({ ...prev, [addOnType]: numericValue }));
     } else {
-        setLocalAddOns(prev => ({ ...prev, [addOnType]: 0 }));
+      setLocalAddOns(prev => ({ ...prev, [addOnType]: 0 }));
     }
   };
 
   const handleCurrencyBlur = (
-      value: string, 
-      setter: React.Dispatch<React.SetStateAction<string>>, 
-      numericValue: number
+    value: string,
+    setter: React.Dispatch<React.SetStateAction<string>>
   ) => {
-      if (value) {
-          setter(new Intl.NumberFormat('en-PH').format(numericValue));
-      }
+    const numericValue = parseFloat(value);
+    if (!isNaN(numericValue) && numericValue > 0) {
+      setter(new Intl.NumberFormat('en-PH').format(numericValue));
+    }
   };
 
 
@@ -560,34 +567,34 @@ function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey
                  <div className="flex items-center justify-between w-full max-w-sm">
                     <Label htmlFor="programFeeLogo" className="text-sm">Program Fee (Logo)</Label>
                     <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₱</span>
-                        <Input id="programFeeLogo" type="text" value={programFeeLogoInput} onChange={(e) => handleCurrencyInputChange(e, setProgramFeeLogoInput, 'programFeeLogo')} onBlur={() => handleCurrencyBlur(programFeeLogoInput, setProgramFeeLogoInput, localAddOns.programFeeLogo)} className="w-32 h-8 text-right pr-2 pl-7 text-sm" />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground text-sm">₱</span>
+                        <Input id="programFeeLogo" type="text" value={programFeeLogoInput} onChange={(e) => handleCurrencyInputChange(e, setProgramFeeLogoInput, 'programFeeLogo')} onBlur={() => handleCurrencyBlur(programFeeLogoInput, setProgramFeeLogoInput)} className="w-32 h-8 text-right pr-2 pl-7 text-sm" />
                     </div>
                 </div>
                 <div className="flex items-center justify-between w-full max-w-sm">
                     <Label htmlFor="programFeeBackText" className="text-sm">Program Fee (Back Text)</Label>
                     <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₱</span>
-                        <Input id="programFeeBackText" type="text" value={programFeeBackTextInput} onChange={(e) => handleCurrencyInputChange(e, setProgramFeeBackTextInput, 'programFeeBackText')} onBlur={() => handleCurrencyBlur(programFeeBackTextInput, setProgramFeeBackTextInput, localAddOns.programFeeBackText)} className="w-32 h-8 text-right pr-2 pl-7 text-sm" />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground text-sm">₱</span>
+                        <Input id="programFeeBackText" type="text" value={programFeeBackTextInput} onChange={(e) => handleCurrencyInputChange(e, setProgramFeeBackTextInput, 'programFeeBackText')} onBlur={() => handleCurrencyBlur(programFeeBackTextInput, setProgramFeeBackTextInput)} className="w-32 h-8 text-right pr-2 pl-7 text-sm" />
                     </div>
                 </div>
                 <div className="flex items-center justify-between w-full max-w-sm">
                     <Label htmlFor="rushFee" className="text-sm">Rush Fee</Label>
                     <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₱</span>
-                        <Input id="rushFee" type="text" value={rushFeeInput} onChange={(e) => handleCurrencyInputChange(e, setRushFeeInput, 'rushFee')} onBlur={() => handleCurrencyBlur(rushFeeInput, setRushFeeInput, localAddOns.rushFee)} className="w-32 h-8 text-right pr-2 pl-7 text-sm" />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground text-sm">₱</span>
+                        <Input id="rushFee" type="text" value={rushFeeInput} onChange={(e) => handleCurrencyInputChange(e, setRushFeeInput, 'rushFee')} onBlur={() => handleCurrencyBlur(rushFeeInput, setRushFeeInput)} className="w-32 h-8 text-right pr-2 pl-7 text-sm" />
                     </div>
                 </div>
                 <div className="flex items-center justify-between w-full max-w-sm">
                     <Label htmlFor="shippingFee" className="text-sm">Shipping Fee</Label>
                     <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₱</span>
-                        <Input id="shippingFee" type="text" value={shippingFeeInput} onChange={(e) => handleCurrencyInputChange(e, setShippingFeeInput, 'shippingFee')} onBlur={() => handleCurrencyBlur(shippingFeeInput, setShippingFeeInput, localAddOns.shippingFee)} className="w-32 h-8 text-right pr-2 pl-7 text-sm" />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground text-sm">₱</span>
+                        <Input id="shippingFee" type="text" value={shippingFeeInput} onChange={(e) => handleCurrencyInputChange(e, setShippingFeeInput, 'shippingFee')} onBlur={() => handleCurrencyBlur(shippingFeeInput, setShippingFeeInput)} className="w-32 h-8 text-right pr-2 pl-7 text-sm" />
                     </div>
                 </div>
             </div>
             <DialogFooter className="sm:justify-end">
-                <Button onClick={handleSave}>Save</Button>
+                <Button onClick={handleSave} disabled={isSaveDisabled}>Save</Button>
             </DialogFooter>
       </DialogContent>
     </Dialog>
