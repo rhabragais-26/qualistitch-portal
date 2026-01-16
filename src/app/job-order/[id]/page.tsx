@@ -130,6 +130,7 @@ export default function JobOrderPage() {
 
       return {
         ...l,
+        recipientName: l.recipientName || '',
         deliveryDate: deliveryDateStr,
         orders: (l.orders || []).map(o => ({
           productType: o.productType,
@@ -239,6 +240,12 @@ export default function JobOrderPage() {
   const handleCourierChange = (value: string) => {
     if (lead) {
       setLead({ ...lead, courier: value });
+    }
+  };
+  
+  const handleRecipientNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (lead) {
+      setLead({ ...lead, recipientName: e.target.value });
     }
   };
 
@@ -524,10 +531,20 @@ export default function JobOrderPage() {
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
                 <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
-                <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
+                <p><strong>SCES Name:</strong> {scesFullName}</p>
             </div>
             <div className="space-y-1">
-                 <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
+                 <div className="flex items-center gap-2">
+                    <strong className='flex-shrink-0'>Recipient's Name:</strong>
+                    <Input
+                        value={lead.recipientName || ''}
+                        onChange={handleRecipientNameChange}
+                        className="h-8 text-xs no-print"
+                        readOnly={!canEdit}
+                        placeholder={lead.customerName}
+                    />
+                    <span className="print-only">{lead.recipientName || lead.customerName}</span>
+                </div>
                  <div className="flex items-center gap-2">
                     <strong className='flex-shrink-0'>Courier:</strong>
                     <div className='w-full no-print'>
