@@ -1,7 +1,7 @@
 'use client';
 
-import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, doc } from 'firebase/firestore';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -65,13 +65,6 @@ type Lead = {
   layouts?: Layout[];
 };
 
-type UserProfileInfo = {
-  uid: string;
-  firstName: string;
-  lastName: string;
-  nickname: string;
-};
-
 export default function JobOrderPrintPage() {
   const { id } = useParams();
   const firestore = useFirestore();
@@ -81,20 +74,14 @@ export default function JobOrderPrintPage() {
     [firestore, id]
   );
   const { data: lead, isLoading: isLeadLoading, error } = useDoc<Lead>(leadRef);
-  
-  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
-  const { data: users, isLoading: areUsersLoading } = useCollection<UserProfileInfo>(usersQuery);
-
 
   useEffect(() => {
-    if (!isLeadLoading && !areUsersLoading && lead) {
+    if (!isLeadLoading && lead) {
       setTimeout(() => window.print(), 1000);
     }
-  }, [isLeadLoading, areUsersLoading, lead]);
+  }, [isLeadLoading, lead]);
   
-  const isLoading = isLeadLoading || areUsersLoading;
-
-  if (isLoading || !lead) {
+  if (isLeadLoading || !lead) {
     return (
       <div className="p-10 bg-white">
         <Skeleton className="h-10 w-1/4 mb-4" />
@@ -112,8 +99,7 @@ export default function JobOrderPrintPage() {
     return <div className="text-red-500 p-10">Error loading lead: {error.message}</div>;
   }
   
-  const scesProfile = users?.find(u => u.nickname === lead.salesRepresentative);
-  const scesFullName = scesProfile ? `${scesProfile.firstName} ${scesProfile.lastName}`.toUpperCase() : lead.salesRepresentative.toUpperCase();
+  const scesFullName = lead.salesRepresentative.toUpperCase();
 
   const joNumber = lead.joNumber ? `QSBP-${new Date().getFullYear().toString().slice(-2)}-${lead.joNumber.toString().padStart(5, '0')}` : 'Not Saved';
   const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
