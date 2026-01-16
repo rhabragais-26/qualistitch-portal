@@ -459,6 +459,7 @@
       }
       
       const scesProfile = users?.find(u => u.nickname === lead.salesRepresentative);
+      const scesNickname = scesProfile ? scesProfile.nickname : lead.salesRepresentative;
       const scesFullName = scesProfile ? `${scesProfile.firstName} ${scesProfile.lastName}`.toUpperCase() : lead.salesRepresentative.toUpperCase();
 
       const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
@@ -557,7 +558,7 @@
                     <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                     <p><strong>Type of Order:</strong> {lead.orderType}</p>
                     <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
-                    <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
+                    <p><strong>SCES Name:</strong> {scesNickname}</p>
                 </div>
                 <div className="space-y-1">
                      <div className="flex items-center gap-2">
@@ -608,6 +609,9 @@
                                 mode="single"
                                 selected={deliveryDate}
                                 onSelect={setDeliveryDate}
+                                captionLayout="dropdown-buttons"
+                                fromYear={new Date().getFullYear() - 10}
+                                toYear={new Date().getFullYear() + 10}
                                 initialFocus
                                 />
                             </PopoverContent>
