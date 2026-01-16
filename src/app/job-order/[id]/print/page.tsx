@@ -160,7 +160,7 @@ export default function JobOrderPrintPage() {
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
                 <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
-                <p><strong>SCES Name:</strong> {scesFullName}</p>
+                <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
             </div>
             <div className="space-y-1">
                 <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
