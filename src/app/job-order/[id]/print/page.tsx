@@ -1,6 +1,6 @@
 'use client';
 
-import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import { format, addDays } from 'date-fns';
@@ -66,39 +66,44 @@ type Lead = {
   publiclyPrintable?: boolean;
 };
 
-type UserProfileInfo = {
-  uid: string;
-  firstName: string;
-  lastName: string;
-  nickname: string;
-};
-
 export default function JobOrderPrintPage() {
   const { id } = useParams();
   const firestore = useFirestore();
-  const [scesFullName, setScesFullName] = useState('');
-
-  const leadRef = useMemoFirebase(
-    () => (firestore && id ? doc(firestore, 'leads', id as string) : null),
-    [firestore, id]
-  );
-  const { data: lead, isLoading: isLeadLoading, error } = useDoc<Lead>(leadRef);
+  const [lead, setLead] = useState<Lead | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const fetchScesName = async () => {
-      if (lead && firestore) {
-        // Since we can't use hooks conditionally, we fetch users collection data inside here
-        const usersSnapshot = await getDoc(doc(firestore, "users", lead.salesRepresentative));
-        if(usersSnapshot.exists()){
-             const scesProfile = usersSnapshot.data() as UserProfileInfo;
-             setScesFullName(scesProfile ? `${scesProfile.firstName} ${scesProfile.lastName}`.toUpperCase() : lead.salesRepresentative.toUpperCase());
-        } else {
-            setScesFullName(lead.salesRepresentative.toUpperCase());
-        }
-      }
+    if (!firestore || !id) {
+        setIsLoading(false);
+        setError(new Error("Firestore or ID not available."));
+        return;
     };
-    fetchScesName();
-  }, [lead, firestore]);
+
+    const fetchLead = async () => {
+        const leadDocRef = doc(firestore, 'leads', id as string);
+        try {
+            const docSnap = await getDoc(leadDocRef);
+            if (docSnap.exists()) {
+                setLead({ id: docSnap.id, ...docSnap.data() } as Lead);
+            } else {
+                setError(new Error('Job order not found.'));
+            }
+        } catch (err) {
+            console.error("Error fetching job order for print:", err);
+            if (err instanceof Error) {
+                setError(err);
+            } else {
+                setError(new Error('An unknown error occurred during fetch.'));
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    fetchLead();
+
+  }, [firestore, id]);
 
   useEffect(() => {
     // Function to handle the afterprint event
@@ -107,7 +112,7 @@ export default function JobOrderPrintPage() {
       window.close();
     };
 
-    if (!isLeadLoading && lead) {
+    if (!isLoading && lead) {
       // Add the event listener for 'afterprint'
       window.addEventListener('afterprint', handleAfterPrint);
 
@@ -120,9 +125,9 @@ export default function JobOrderPrintPage() {
     return () => {
       window.removeEventListener('afterprint', handleAfterPrint);
     };
-  }, [isLeadLoading, lead]); // Dependencies remain the same
+  }, [isLoading, lead]);
   
-  if (isLeadLoading || !lead) {
+  if (isLoading || !lead) {
     return (
       <div className="p-10 bg-white">
         <Skeleton className="h-10 w-1/4 mb-4" />
@@ -141,7 +146,7 @@ export default function JobOrderPrintPage() {
   }
   
   const joNumber = lead.joNumber ? `QSBP-${new Date().getFullYear().toString().slice(-2)}-${lead.joNumber.toString().padStart(5, '0')}` : 'Not Saved';
-  const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
+  const deliveryDate = lead.deliveryDate ? format(new Date(lead.deliveryDate), "MMMM dd, yyyy") : format(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22), "MMMM dd, yyyy");
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
 
   const getContactDisplay = () => {
@@ -190,7 +195,7 @@ export default function JobOrderPrintPage() {
             <div className="space-y-1">
                 <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
                 <p><strong>Courier:</strong> {lead.courier}</p>
-                <p><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</p>
+                <p><strong>Delivery Date:</strong> {deliveryDate || 'N/A'}</p>
             </div>
         </div>
 
@@ -253,15 +258,15 @@ export default function JobOrderPrintPage() {
         <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
             <div className="space-y-1">
                 <p className="font-bold italic">Prepared by:</p>
-                <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName || lead.salesRepresentative}</p>
+                <p className="pt-8 border-b border-black text-center font-semibold">{lead.salesRepresentative.toUpperCase()}</p>
                 <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
              <div className="space-y-1">
                 <p className="font-bold italic">Noted by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">MYREZA BANAWON</p>
                 <p className="text-center font-bold">Sales Head</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
 
             <div className="col-span-2 mt-0">
@@ -272,37 +277,37 @@ export default function JobOrderPrintPage() {
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Programming</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Inventory</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Production Line Leader</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Production Supervisor</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
              <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Quality Control</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Logistics</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
              <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Operations Supervisor</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
+                <p className="text-center">(Name & Signature, Date)</p>
             </div>
         </div>
       </div>
