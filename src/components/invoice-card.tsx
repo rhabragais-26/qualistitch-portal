@@ -13,7 +13,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose, DialogFooter, DialogTrigger } from './ui/dialog';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
-import { Minus, Plus, X, GripVertical } from 'lucide-react';
+import { Minus, Plus, X, GripVertical, TicketPercent } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
@@ -461,146 +461,6 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
   );
 }
 
-function AddOnsDialog({ groupKey, addOns, setAddOns, totalQuantity }: { groupKey: string, addOns: Record<string, AddOns>, setAddOns: React.Dispatch<React.SetStateAction<Record<string, AddOns>>>, totalQuantity: number }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [localAddOns, setLocalAddOns] = useState(addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 });
-  
-  const [programFeeLogoInput, setProgramFeeLogoInput] = useState('');
-  const [programFeeBackTextInput, setProgramFeeBackTextInput] = useState('');
-  const [rushFeeInput, setRushFeeInput] = useState('');
-  const [shippingFeeInput, setShippingFeeInput] = useState('');
-
-  const isSaveDisabled = Object.values(localAddOns).every(val => val === 0);
-
-  const handleSave = () => {
-    setAddOns(prev => ({ ...prev, [groupKey]: localAddOns }));
-    setIsOpen(false);
-  };
-  
-  const handleQuantityChange = (type: 'backLogo' | 'names' | 'plusSize', change: number) => {
-    setLocalAddOns(prev => ({...prev, [type]: Math.max(0, (prev[type] || 0) + change)}));
-  }
-
-  const handleInputChange = (type: 'backLogo' | 'names' | 'plusSize', value: string) => {
-    setLocalAddOns(prev => ({...prev, [type]: value === '' ? 0 : parseInt(value, 10) || 0}));
-  }
-  
-  const handleCurrencyInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<string>>,
-    addOnType: 'programFeeLogo' | 'programFeeBackText' | 'rushFee' | 'shippingFee'
-  ) => {
-    const rawValue = e.target.value;
-    const sanitizedValue = rawValue.replace(/[^0-9.]/g, '');
-    const parts = sanitizedValue.split('.');
-    const finalValue = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join('')}` : sanitizedValue;
-
-    setter(finalValue);
-
-    const numericValue = parseFloat(finalValue);
-    if (!isNaN(numericValue)) {
-      setLocalAddOns(prev => ({ ...prev, [addOnType]: numericValue }));
-    } else {
-      setLocalAddOns(prev => ({ ...prev, [addOnType]: 0 }));
-    }
-  };
-
-  const handleCurrencyBlur = (
-    value: string,
-    setter: React.Dispatch<React.SetStateAction<string>>
-  ) => {
-    const numericValue = parseFloat(value);
-    if (!isNaN(numericValue) && numericValue > 0) {
-      setter(new Intl.NumberFormat('en-PH').format(numericValue));
-    }
-  };
-
-
-  useEffect(() => {
-    if (isOpen) {
-        const currentAddOns = addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 };
-        setLocalAddOns(currentAddOns);
-        setProgramFeeLogoInput(currentAddOns.programFeeLogo > 0 ? new Intl.NumberFormat('en-PH').format(currentAddOns.programFeeLogo) : '');
-        setProgramFeeBackTextInput(currentAddOns.programFeeBackText > 0 ? new Intl.NumberFormat('en-PH').format(currentAddOns.programFeeBackText) : '');
-        setRushFeeInput(currentAddOns.rushFee > 0 ? new Intl.NumberFormat('en-PH').format(currentAddOns.rushFee) : '');
-        setShippingFeeInput(currentAddOns.shippingFee > 0 ? new Intl.NumberFormat('en-PH').format(currentAddOns.shippingFee) : '');
-    }
-  }, [isOpen, addOns, groupKey]);
-
-  const addOnFields: { id: 'backLogo' | 'names' | 'plusSize', label: string }[] = [
-    { id: 'backLogo', label: 'Back Logo' },
-    { id: 'names', label: 'Names' },
-    { id: 'plusSize', label: 'Plus Size' },
-  ];
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if(!open) {
-        setLocalAddOns(addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 });
-      }
-      setIsOpen(open);
-    }}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-7 px-2 bg-gray-700 text-white hover:bg-gray-600 font-bold">
-            <Plus/>Add Ons
-        </Button>
-      </DialogTrigger>
-       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add Ons</DialogTitle>
-          <DialogDescription>
-            Specify quantities for additional logos, names or patches.
-          </DialogDescription>
-        </DialogHeader>
-        
-            <div className="space-y-4 py-4 flex flex-col items-center">
-                {addOnFields.map(field => (
-                    <div key={field.id} className="flex items-center justify-between w-full max-w-sm">
-                        <Label htmlFor={field.id} className="text-sm">{field.label}</Label>
-                        <div className="flex items-center gap-2">
-                            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange(field.id, -1)}><Minus className="h-4 w-4" /></Button>
-                            <Input id={field.id} type="text" value={localAddOns[field.id]} onChange={(e) => handleInputChange(field.id, e.target.value)} className="w-16 h-8 text-center text-sm" />
-                            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleQuantityChange(field.id, 1)}><Plus className="h-4 w-4" /></Button>
-                        </div>
-                    </div>
-                ))}
-                 <div className="flex items-center justify-between w-full max-w-sm">
-                    <Label htmlFor="programFeeLogo" className="text-sm">Program Fee (Logo)</Label>
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground text-sm">₱</span>
-                        <Input id="programFeeLogo" type="text" value={programFeeLogoInput} onChange={(e) => handleCurrencyInputChange(e, setProgramFeeLogoInput, 'programFeeLogo')} onBlur={() => handleCurrencyBlur(programFeeLogoInput, setProgramFeeLogoInput)} className="w-32 h-8 text-right pr-2 pl-7 text-sm" />
-                    </div>
-                </div>
-                <div className="flex items-center justify-between w-full max-w-sm">
-                    <Label htmlFor="programFeeBackText" className="text-sm">Program Fee (Back Text)</Label>
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground text-sm">₱</span>
-                        <Input id="programFeeBackText" type="text" value={programFeeBackTextInput} onChange={(e) => handleCurrencyInputChange(e, setProgramFeeBackTextInput, 'programFeeBackText')} onBlur={() => handleCurrencyBlur(programFeeBackTextInput, setProgramFeeBackTextInput)} className="w-32 h-8 text-right pr-2 pl-7 text-sm" />
-                    </div>
-                </div>
-                <div className="flex items-center justify-between w-full max-w-sm">
-                    <Label htmlFor="rushFee" className="text-sm">Rush Fee</Label>
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground text-sm">₱</span>
-                        <Input id="rushFee" type="text" value={rushFeeInput} onChange={(e) => handleCurrencyInputChange(e, setRushFeeInput, 'rushFee')} onBlur={() => handleCurrencyBlur(rushFeeInput, setRushFeeInput)} className="w-32 h-8 text-right pr-2 pl-7 text-sm" />
-                    </div>
-                </div>
-                <div className="flex items-center justify-between w-full max-w-sm">
-                    <Label htmlFor="shippingFee" className="text-sm">Shipping Fee</Label>
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground text-sm">₱</span>
-                        <Input id="shippingFee" type="text" value={shippingFeeInput} onChange={(e) => handleCurrencyInputChange(e, setShippingFeeInput, 'shippingFee')} onBlur={() => handleCurrencyBlur(shippingFeeInput, setShippingFeeInput)} className="w-32 h-8 text-right pr-2 pl-7 text-sm" />
-                    </div>
-                </div>
-            </div>
-            <DialogFooter className="sm:justify-end">
-                <Button onClick={handleSave} disabled={isSaveDisabled}>Save</Button>
-            </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: string, discounts: Record<string, Discount>, setDiscounts: React.Dispatch<React.SetStateAction<Record<string, Discount>>> }) {
   const [isOpen, setIsOpen] = useState(false);
   const [localDiscount, setLocalDiscount] = useState<Discount>(discounts[groupKey] || { type: 'percentage', value: 0, reason: '' });
@@ -641,8 +501,9 @@ function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: strin
       setIsOpen(open);
     }}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-7 px-2 bg-teal-600 text-white hover:bg-teal-500 font-bold">
-            +Discount
+        <Button variant="outline" size="sm" className="h-7 px-2 bg-amber-500 text-white hover:bg-amber-600 font-bold">
+            <TicketPercent className="mr-1 h-3 w-3" />
+            Discount
         </Button>
       </DialogTrigger>
       <DialogContent>
