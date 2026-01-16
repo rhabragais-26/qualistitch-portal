@@ -6,7 +6,7 @@
     import { collection, doc, query, updateDoc, getDoc } from 'firebase/firestore';
     import { useParams, useRouter, usePathname } from 'next/navigation';
     import { Button } from '@/components/ui/button';
-    import { Printer, Save, X, ArrowLeft, ArrowRight, Plus, Trash2, Upload } from 'lucide-react';
+    import { Printer, Save, X, ArrowLeft, ArrowRight, Plus, Trash2, Upload, CalendarIcon } from 'lucide-react';
     import { format, addDays } from 'date-fns';
     import { Skeleton } from '@/components/ui/skeleton';
     import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
@@ -20,6 +20,8 @@
     import Image from 'next/image';
     import { v4 as uuidv4 } from 'uuid';
     import { hasEditPermission } from '@/lib/permissions';
+    import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+    import { Calendar } from '@/components/ui/calendar';
 
     type DesignDetails = {
       left?: boolean;
@@ -112,7 +114,6 @@
       const [lead, setLead] = useState<Lead | null>(null);
       const [joNumber, setJoNumber] = useState<string>('');
       const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
-      const [deliveryDateInput, setDeliveryDateInput] = useState('');
       const [showConfirmDialog, setShowConfirmDialog] = useState(false);
       const textareaRef = useRef<HTMLTextAreaElement>(null);
       const layoutImageUploadRef = useRef<HTMLInputElement>(null);
@@ -169,48 +170,6 @@
         
         return originalState !== currentState;
       }, [fetchedLead, lead, deliveryDate]);
-
-      useEffect(() => {
-        if (deliveryDate) {
-            setDeliveryDateInput(format(deliveryDate, 'MM/dd/yyyy'));
-        } else {
-            setDeliveryDateInput('');
-        }
-      }, [deliveryDate]);
-
-      const handleDateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setDeliveryDateInput(e.target.value);
-      };
-
-      const handleDateInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-          const dateValue = e.target.value;
-          if (dateValue === '') {
-              setDeliveryDate(undefined);
-              return;
-          }
-          
-          if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateValue)) {
-              const date = new Date(dateValue);
-              if (!isNaN(date.getTime())) {
-                  setDeliveryDate(date);
-              } else {
-                  toast({
-                      variant: "destructive",
-                      title: "Invalid Date",
-                      description: "Please enter a valid date.",
-                  });
-                  setDeliveryDateInput(deliveryDate ? format(deliveryDate, 'MM/dd/yyyy') : '');
-              }
-          } else {
-              toast({
-                  variant: "destructive",
-                  title: "Invalid Date Format",
-                  description: "Please use MM/DD/YYYY format.",
-              });
-              setDeliveryDateInput(deliveryDate ? format(deliveryDate, 'MM/dd/yyyy') : '');
-          }
-      };
-
 
       useEffect(() => {
         if (textareaRef.current) {
@@ -624,18 +583,35 @@
                         </div>
                         <span className="print-only">{lead.courier}</span>
                     </div>
-                    <div className='w-full no-print flex items-center gap-1'>
+                    <div className="flex items-center gap-2">
                         <strong className='flex-shrink-0'>Delivery Date:</strong>
-                        <Input
-                            value={deliveryDateInput}
-                            onChange={handleDateInputChange}
-                            onBlur={handleDateInputBlur}
-                            placeholder="MM/DD/YYYY"
-                            className="h-8 text-xs"
-                            readOnly={!canEdit}
-                        />
+                        <div className='w-full no-print'>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full justify-start text-left font-normal h-8 text-xs",
+                                            !deliveryDate && "text-muted-foreground"
+                                        )}
+                                        disabled={!canEdit}
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                        mode="single"
+                                        selected={deliveryDate}
+                                        onSelect={setDeliveryDate}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
                     </div>
-                    <span className="print-only"><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MM/dd/yyyy') : 'N/A'}</span>
+                    <span className="print-only"><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
                 </div>
             </div>
 
