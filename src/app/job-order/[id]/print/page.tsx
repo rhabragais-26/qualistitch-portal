@@ -165,7 +165,7 @@ export default function JobOrderPrintPage() {
             <div className="space-y-1">
                 <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
                 <p><strong>Courier:</strong> {lead.courier}</p>
-                <p><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</p>
+                <p><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MM/dd/yyyy') : 'N/A'}</p>
             </div>
         </div>
 

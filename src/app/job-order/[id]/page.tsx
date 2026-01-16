@@ -4,7 +4,7 @@ import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@
 import { collection, doc, query, updateDoc } from 'firebase/firestore';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Printer, Save, X, ArrowLeft, ArrowRight, Plus, Trash2, Upload } from 'lucide-react';
+import { Printer, Save, X, ArrowLeft, ArrowRight, Plus, Trash2, Upload } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
@@ -13,8 +13,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
@@ -112,7 +110,7 @@ export default function JobOrderPage() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [joNumber, setJoNumber] = useState<string>('');
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [deliveryDateInput, setDeliveryDateInput] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const layoutImageUploadRef = useRef<HTMLInputElement>(null);
@@ -169,6 +167,47 @@ export default function JobOrderPage() {
     
     return originalState !== currentState;
   }, [fetchedLead, lead, deliveryDate]);
+
+  useEffect(() => {
+    if (deliveryDate) {
+        setDeliveryDateInput(format(deliveryDate, 'MM/dd/yyyy'));
+    } else {
+        setDeliveryDateInput('');
+    }
+  }, [deliveryDate]);
+
+  const handleDateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDeliveryDateInput(e.target.value);
+  };
+
+  const handleDateInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      const dateValue = e.target.value;
+      if (dateValue === '') {
+          setDeliveryDate(undefined);
+          return;
+      }
+      
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateValue)) {
+          const date = new Date(dateValue);
+          if (!isNaN(date.getTime())) {
+              setDeliveryDate(date);
+          } else {
+              toast({
+                  variant: "destructive",
+                  title: "Invalid Date",
+                  description: "Please enter a valid date.",
+              });
+              setDeliveryDateInput(deliveryDate ? format(deliveryDate, 'MM/dd/yyyy') : '');
+          }
+      } else {
+          toast({
+              variant: "destructive",
+              title: "Invalid Date Format",
+              description: "Please use MM/DD/YYYY format.",
+          });
+          setDeliveryDateInput(deliveryDate ? format(deliveryDate, 'MM/dd/yyyy') : '');
+      }
+  };
 
 
   useEffect(() => {
@@ -563,35 +602,16 @@ export default function JobOrderPage() {
                 </div>
                 <div className='w-full no-print flex items-center gap-1'>
                     <strong className='flex-shrink-0'>Delivery Date:</strong>
-                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                        <PopoverTrigger asChild>
-                            <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-full justify-start text-left font-normal h-8 text-xs",
-                                !deliveryDate && "text-muted-foreground"
-                            )}
-                            disabled={!canEdit}
-                            >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : <span>Pick a date</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                            mode="single"
-                            selected={deliveryDate}
-                            onSelect={(date) => {
-                                setDeliveryDate(date);
-                                setIsCalendarOpen(false);
-                            }}
-                            disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
-                            initialFocus
-                            />
-                        </PopoverContent>
-                    </Popover>
+                    <Input
+                        value={deliveryDateInput}
+                        onChange={handleDateInputChange}
+                        onBlur={handleDateInputBlur}
+                        placeholder="MM/DD/YYYY"
+                        className="h-8 text-xs"
+                        readOnly={!canEdit}
+                    />
                 </div>
-                <span className="print-only"><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MMMM dd, yyyy') : 'N/A'}</span>
+                <span className="print-only"><strong>Delivery Date:</strong> {deliveryDate ? format(deliveryDate, 'MM/dd/yyyy') : 'N/A'}</span>
             </div>
         </div>
 
