@@ -1,3 +1,4 @@
+
 'use client';
 
     import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -274,23 +275,25 @@
               originalPubliclyPrintableState = currentLeadSnap.data().publiclyPrintable;
           }
 
-          await updateDoc(leadRef, {
-            publiclyPrintable: true
-          });
-          console.log(`Attempted to set lead ${id} to publiclyPrintable: true`);
+          if (originalPubliclyPrintableState !== true) {
+            await updateDoc(leadRef, {
+              publiclyPrintable: true
+            });
+            console.log(`Attempted to set lead ${id} to publiclyPrintable: true`);
 
-          const updatedLeadSnap = await getDoc(leadRef);
-          if (!updatedLeadSnap.exists() || !updatedLeadSnap.data().publiclyPrintable) {
-              throw new Error("Failed to confirm 'publiclyPrintable' status after update. Write might have been denied by rules or failed silently.");
+            const updatedLeadSnap = await getDoc(leadRef);
+            if (!updatedLeadSnap.exists() || !updatedLeadSnap.data().publiclyPrintable) {
+                throw new Error("Failed to confirm 'publiclyPrintable' status after update. Write might have been denied by rules or failed silently.");
+            }
+            console.log(`CONFIRMED: Lead ${id} is now publiclyPrintable: true in Firestore.`);
           }
-          console.log(`CONFIRMED: Lead ${id} is now publiclyPrintable: true in Firestore.`);
 
           const jobOrderUrl = `/job-order/${id}/print`;
           printWindow = window.open(jobOrderUrl, '_blank', 'noopener,noreferrer,height=800,width=1200,scrollbars=yes');
 
           if (printWindow) {
             const checkWindowClosed = setInterval(async () => {
-              if (printWindow!.closed) {
+              if (printWindow!.closed && originalPubliclyPrintableState !== true) {
                 clearInterval(checkWindowClosed);
                 try {
                   await updateDoc(leadRef, {
@@ -303,9 +306,11 @@
               }
             }, 1000);
           } else {
-              await updateDoc(leadRef, {
-                  publiclyPrintable: originalPubliclyPrintableState !== undefined ? originalPubliclyPrintableState : false
-              });
+              if (originalPubliclyPrintableState !== true) {
+                await updateDoc(leadRef, {
+                    publiclyPrintable: originalPubliclyPrintableState !== undefined ? originalPubliclyPrintableState : false
+                });
+              }
               toast({
                   variant: "destructive",
                   title: "Popup Blocked",
@@ -321,13 +326,15 @@
             description: error.message || "Failed to prepare lead for printing. Please try again.",
           });
           if (leadRef && (originalPubliclyPrintableState !== undefined || (error && error.message && error.message.includes('confirm')))) {
-              try {
-                  await updateDoc(leadRef, {
-                      publiclyPrintable: originalPubliclyPrintableState !== undefined ? originalPubliclyPrintableState : false
-                  });
-                  console.log(`Reverted publiclyPrintable to original state (${originalPubliclyPrintableState}) due to error.`);
-              } catch (revertError) {
-                  console.error("Critical: Error during emergency revert of publiclyPrintable flag:", revertError);
+              if (originalPubliclyPrintableState !== true) {
+                try {
+                    await updateDoc(leadRef, {
+                        publiclyPrintable: originalPubliclyPrintableState !== undefined ? originalPubliclyPrintableState : false
+                    });
+                    console.log(`Reverted publiclyPrintable to original state (${originalPubliclyPrintableState}) due to error.`);
+                } catch (revertError) {
+                    console.error("Critical: Error during emergency revert of publiclyPrintable flag:", revertError);
+                }
               }
           }
         }
@@ -652,7 +659,7 @@
                         <Input
                             value={lead.recipientName || ''}
                             onChange={handleRecipientNameChange}
-                            className="h-8 text-xs no-print"
+                            className="h-8 text-xs no-print placeholder:text-foreground"
                             readOnly={!canEdit}
                             placeholder={lead.customerName}
                         />
@@ -947,5 +954,3 @@
     </div>
   );
 }
-
-    
