@@ -2,7 +2,7 @@
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, query, updateDoc } from 'firebase/firestore';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Printer, Save, X, ArrowLeft, ArrowRight, Plus, Trash2, Upload } from 'lucide-react';
 import { format, addDays } from 'date-fns';
@@ -90,7 +90,7 @@ export default function JobOrderPage() {
   const { toast } = useToast();
   const router = useRouter();
   const { userProfile } = useUser();
-  const pathname = router.pathname;
+  const pathname = usePathname();
   const canEdit = hasEditPermission(userProfile?.position as any, `/job-order`);
   
   const [currentPage, setCurrentPage] = useState(0);
@@ -254,9 +254,79 @@ export default function JobOrderPage() {
     }
   }, [lead, allLeads]);
 
-  const handlePrint = () => {
-    const jobOrderUrl = `/job-order/${id}/print`;
-    window.open(jobOrderUrl, '_blank', 'height=800,width=1200,scrollbars=yes');
+  // MODIFIED handlePrint FUNCTION
+  const handlePrint = async () => { // <--- Changed to async
+    if (!leadRef || !id) {
+        console.error("Lead reference or ID is missing for printing.");
+        toast({
+            variant: "destructive",
+            title: "Printing Error",
+            description: "Cannot prepare lead for printing. Please try again.",
+        });
+        return;
+    }
+
+    try {
+      // 1. Set the 'publiclyPrintable' flag to true on the specific lead document.
+      // This allows the unauthenticated print page to read this specific document.
+      await updateDoc(leadRef, {
+        publiclyPrintable: true
+      });
+      console.log(`Successfully set lead ${id} to publiclyPrintable: true`);
+
+      // 2. Open the print preview window.
+      const jobOrderUrl = `/job-order/${id}/print`; // Ensure this URL points to your print preview page
+      const printWindow = window.open(jobOrderUrl, '_blank', 'noopener,noreferrer,height=800,width=1200,scrollbars=yes');
+
+      // 3. (Crucial for Security) Set up a mechanism to revert the flag to false
+      // once the print preview window is closed.
+      if (printWindow) {
+        const checkWindowClosed = setInterval(async () => {
+          if (printWindow.closed) {
+            clearInterval(checkWindowClosed); // Stop checking once the window is closed
+            try {
+              await updateDoc(leadRef, {
+                publiclyPrintable: false
+              });
+              console.log(`Successfully reverted lead ${id} to publiclyPrintable: false`);
+            } catch (revertError) {
+              console.error("Error reverting publiclyPrintable flag:", revertError);
+              // In a production app, you might want a more robust cleanup mechanism
+              // or log this error for manual intervention if the flag fails to revert.
+            }
+          }
+        }, 1000); // Check every second if the window is still open
+      } else {
+          // If window.open failed (e.g., popup blocker), ensure the flag is reverted
+          // This prevents the lead from staying publicly printable indefinitely.
+          await updateDoc(leadRef, {
+              publiclyPrintable: false
+          });
+          toast({
+              variant: "destructive",
+              title: "Popup Blocked",
+              description: "Please allow popups for this site to open the print preview.",
+          });
+      }
+
+    } catch (error: any) {
+      console.error("Error preparing lead for print preview:", error);
+      toast({
+        variant: "destructive",
+        title: "Printing Error",
+        description: error.message || "Failed to prepare lead for printing. Please try again.",
+      });
+      // Ensure the flag is reverted if an error occurs before the window opens
+      try {
+          if (leadRef) { // Ensure leadRef exists before attempting to update
+              await updateDoc(leadRef, {
+                  publiclyPrintable: false
+              });
+          }
+      } catch (revertError) {
+          console.error("Error reverting publiclyPrintable flag after initial error:", revertError);
+      }
+    }
   };
   
   const handleClose = () => {
@@ -655,228 +725,221 @@ export default function JobOrderPage() {
                   <Checkbox className="mx-auto" checked={order.design?.backText || false} onCheckedChange={(checked) => handleDesignChange(index, 'backText', !!checked)} disabled={!canEdit} />
                 </td>
                 <td className="border border-black p-0.5">
-                  <Textarea
-                    value={order.remarks}
-                    onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)}
-                    className="text-xs no-print p-1 h-[30px]"
-                    placeholder="Add remarks..."
-                    readOnly={!canEdit}
-                  />
-                   <p className="print-only text-xs">{order.remarks}</p>
+                  <Textarea value={order.remarks} onChange={(e) => handleOrderChange(index, 'remarks', e.target.value)} className="text-xs no-print p-1 h-[30px]" placeholder="Add remarks..." readOnly={!canEdit} />
+                  <p className="print-only text-xs"> {order.remarks} </p>
                 </td>
               </tr>
             ))}
-             <tr>
-                <td colSpan={3} className="text-right font-bold p-0.5">TOTAL</td>
-                <td className="text-center font-bold p-0.5">{totalQuantity} PCS</td>
-                <td colSpan={5}></td>
+            <tr>
+              <td colSpan={3} className="text-right font-bold p-0.5"> TOTAL </td>
+              <td className="text-center font-bold p-0.5"> {totalQuantity} PCS </td>
+              <td colSpan={5}></td>
             </tr>
           </tbody>
         </table>
-
-        <div className="text-xs mb-2 pt-2">
-            <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
-            <div className="space-y-1">
-                <p className="font-bold italic">Prepared by:</p>
-                <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
-                <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
-            </div>
-             <div className="space-y-1">
-                <p className="font-bold italic">Noted by:</p>
-                <p className="pt-8 border-b border-black text-center font-semibold">MYREZA BANAWON</p>
-                <p className="text-center font-bold">Sales Head</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
-            </div>
-
-            <div className="col-span-2 mt-0">
-                <p className="font-bold italic">Approved by:</p>
-            </div>
-
-
-            <div className="space-y-1">
-                <p className="pt-8 border-b border-black"></p>
-                <p className="text-center font-semibold">Programming</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
-            </div>
-            <div className="space-y-1">
-                <p className="pt-8 border-b border-black"></p>
-                <p className="text-center font-semibold">Inventory</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
-            </div>
-            <div className="space-y-1">
-                <p className="pt-8 border-b border-black"></p>
-                <p className="text-center font-semibold">Production Line Leader</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
-            </div>
-            <div className="space-y-1">
-                <p className="pt-8 border-b border-black"></p>
-                <p className="text-center font-semibold">Production Supervisor</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
-            </div>
-             <div className="space-y-1">
-                <p className="pt-8 border-b border-black"></p>
-                <p className="text-center font-semibold">Quality Control</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
-            </div>
-            <div className="space-y-1">
-                <p className="pt-8 border-b border-black"></p>
-                <p className="text-center font-semibold">Logistics</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
-            </div>
-             <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
-                <p className="pt-8 border-b border-black"></p>
-                <p className="text-center font-semibold">Operations Supervisor</p>
-                <p className="text-center">(Name &amp; Signature, Date)</p>
-            </div>
-        </div>
-      </div>
-      
-      {/* Layout Pages */}
-      <div className={cn("p-10 mx-auto max-w-4xl printable-area print-page mt-16", currentPage === 0 && "hidden")}>
-         {canEdit && (
-            <div className="flex justify-between items-center mb-4 no-print">
-              <div className="flex gap-2">
-                  <Button onClick={addLayout} size="sm"><Plus className="mr-2 h-4 w-4"/>Add Layout</Button>
-                  <Button onClick={() => deleteLayout(currentLayoutIndex)} size="sm" variant="destructive" disabled={(lead.layouts?.length ?? 0) <= 1}><Trash2 className="mr-2 h-4 w-4" />Delete Layout</Button>
-              </div>
-            </div>
-         )}
-
-        {currentLayout && (
-          <div key={currentLayout.id}>
-             <div
-              tabIndex={0}
-              onPaste={(e) => canEdit && handleImagePaste(e, currentLayoutIndex)}
-              onDoubleClick={() => canEdit && layoutImageUploadRef.current?.click()}
-              onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
-              className={cn("relative group w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4 no-print focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none", canEdit && "cursor-pointer")}
-            >
-              {currentLayout.layoutImage ? (
-                <>
-                  <Image src={currentLayout.layoutImage} alt={`Layout ${currentLayoutIndex + 1}`} layout="fill" objectFit="contain" />
-                  {canEdit && (
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleLayoutChange(currentLayoutIndex, 'layoutImage', '');
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </>
-              ) : (
-                <div className="text-gray-500 flex flex-col items-center gap-2">
-                  <Upload className="h-12 w-12" />
-                  <span>{canEdit ? "Double-click to upload or paste image" : "No layout image"}</span>
-                </div>
-              )}
-              <input type="file" ref={layoutImageUploadRef} onChange={(e) => handleFileUpload(e, currentLayoutIndex)} className="hidden" accept="image/*" disabled={!canEdit}/>
-            </div>
-
-
-            <h2 className="text-2xl font-bold text-center mb-4">
-              {lead.layouts && lead.layouts.length > 1
-                ? `LAYOUT #${currentLayoutIndex + 1}`
-                : "LAYOUT"}
-            </h2>
-            <table className="w-full border-collapse border border-black mb-6">
-                <tbody>
-                    <tr>
-                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><Textarea value={currentLayout.dstLogoLeft} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstLogoLeft', e.target.value)} className="mt-1 no-print" readOnly={!canEdit} /><p className="print-only whitespace-pre-wrap">{currentLayout.dstLogoLeft}</p></td>
-                        <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><Textarea value={currentLayout.dstBackLogo} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstBackLogo', e.target.value)} className="mt-1 no-print" readOnly={!canEdit} /><p className="print-only whitespace-pre-wrap">{currentLayout.dstBackLogo}</p></td>
-                    </tr>
-                    <tr>
-                        <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><Textarea value={currentLayout.dstLogoRight} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstLogoRight', e.target.value)} className="mt-1 no-print" readOnly={!canEdit} /><p className="print-only whitespace-pre-wrap">{currentLayout.dstLogoRight}</p></td>
-                        <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><Textarea value={currentLayout.dstBackText} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstBackText', e.target.value)} className="mt-1 no-print" readOnly={!canEdit} /><p className="print-only whitespace-pre-wrap">{currentLayout.dstBackText}</p></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
-            <table className="w-full border-collapse border border-black text-xs">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border border-black p-1">No.</th>
-                  <th className="border border-black p-1">Names</th>
-                  <th className="border border-black p-1">Color</th>
-                  <th className="border border-black p-1">Sizes</th>
-                  <th className="border border-black p-1">Qty</th>
-                  <th className="border border-black p-1">BACK TEXT</th>
-                  {canEdit && <th className="border border-black p-1 no-print">Action</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {(currentLayout.namedOrders || []).map((order, orderIndex) => (
-                  <tr key={order.id}>
-                    <td className="border border-black p-1 text-center">{orderIndex + 1}</td>
-                    <td className="border border-black p-1"><Input value={order.name} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'name', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.name}</span></td>
-                    <td className="border border-black p-1"><Input value={order.color} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'color', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.color}</span></td>
-                    <td className="border border-black p-1"><Input value={order.size} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'size', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.size}</span></td>
-                    <td className="border border-black p-1"><Input type="number" value={order.quantity} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'quantity', parseInt(e.target.value) || 0)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.quantity}</span></td>
-                    <td className="border border-black p-1"><Input value={order.backText} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'backText', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.backText}</span></td>
-                    {canEdit && (
-                        <td className="border border-black p-1 text-center no-print">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeNamedOrder(currentLayoutIndex, orderIndex)}><Trash2 className="h-4 w-4"/></Button>
-                        </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {canEdit && <Button onClick={() => addNamedOrder(currentLayoutIndex)} className="mt-2 no-print" size="sm"><Plus className="mr-2 h-4 w-4"/>Add Name</Button>}
-          </div>
-        )}
-      </div>
-
-      <style jsx global>{`
-        @media print {
-          body {
-            background-color: #fff !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          .no-print, header, .no-print * {
-            display: none !important;
-          }
-          .printable-area {
-            display: block !important;
-            margin-top: 0 !important;
-            padding: 1rem !important;
-            max-width: 100% !important;
-            color: black !important;
-          }
-          .printable-area * {
-            color: black !important;
-          }
-          .print-only {
-            display: inline-block !important;
-          }
-          .bg-gray-200 {
-            background-color: #e5e7eb !important;
-          }
-          .print-page {
-            page-break-after: always;
-          }
-           .print-page:last-of-type {
-            page-break-after: auto;
-          }
-          @page {
-            size: legal;
-            margin: 0.5in;
-          }
-        }
-        .print-only {
-          display: none;
-        }
-      `}</style>
+    <div className="text-xs mb-2 pt-2">
+        <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
     </div>
-  );
-}
+    
+    <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
+        <div className="space-y-1">
+            <p className="font-bold italic">Prepared by:</p>
+            <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
+            <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
+            <p className="text-center">(Name &amp; Signature, Date)</p>
+        </div>
+         <div className="space-y-1">
+            <p className="font-bold italic">Noted by:</p>
+            <p className="pt-8 border-b border-black text-center font-semibold">MYREZA BANAWON</p>
+            <p className="text-center font-bold">Sales Head</p>
+            <p className="text-center">(Name &amp; Signature, Date)</p>
+        </div>
+
+        <div className="col-span-2 mt-0">
+            <p className="font-bold italic">Approved by:</p>
+        </div>
+
+
+        <div className="space-y-1">
+            <p className="pt-8 border-b border-black"></p>
+            <p className="text-center font-semibold">Programming</p>
+            <p className="text-center">(Name &amp; Signature, Date)</p>
+        </div>
+        <div className="space-y-1">
+            <p className="pt-8 border-b border-black"></p>
+            <p className="text-center font-semibold">Inventory</p>
+            <p className="text-center">(Name &amp; Signature, Date)</p>
+        </div>
+        <div className="space-y-1">
+            <p className="pt-8 border-b border-black"></p>
+            <p className="text-center font-semibold">Production Line Leader</p>
+            <p className="text-center">(Name &amp; Signature, Date)</p>
+        </div>
+        <div className="space-y-1">
+            <p className="pt-8 border-b border-black"></p>
+            <p className="text-center font-semibold">Production Supervisor</p>
+            <p className="text-center">(Name &amp; Signature, Date)</p>
+        </div>
+         <div className="space-y-1">
+            <p className="pt-8 border-b border-black"></p>
+            <p className="text-center font-semibold">Quality Control</p>
+            <p className="text-center">(Name &amp; Signature, Date)</p>
+        </div>
+        <div className="space-y-1">
+            <p className="pt-8 border-b border-black"></p>
+            <p className="text-center font-semibold">Logistics</p>
+            <p className="text-center">(Name &amp; Signature, Date)</p>
+        </div>
+         <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
+            <p className="pt-8 border-b border-black"></p>
+            <p className="text-center font-semibold">Operations Supervisor</p>
+            <p className="text-center">(Name &amp; Signature, Date)</p>
+        </div>
+    </div>
+  </div>
+  
+  {/* Layout Pages */}
+  <div className={cn("p-10 mx-auto max-w-4xl printable-area print-page mt-16", currentPage === 0 && "hidden")}>
+     {canEdit && (
+        <div className="flex justify-between items-center mb-4 no-print">
+          <div className="flex gap-2">
+              <Button onClick={addLayout} size="sm"><Plus className="mr-2 h-4 w-4"/>Add Layout</Button>
+              <Button onClick={() => deleteLayout(currentLayoutIndex)} size="sm" variant="destructive" disabled={(lead.layouts?.length ?? 0) <= 1}><Trash2 className="mr-2 h-4 w-4" />Delete Layout</Button>
+          </div>
+        </div>
+     )}
+
+    {currentLayout && (
+      <div key={currentLayout.id}>
+         <div
+          tabIndex={0}
+          onPaste={(e) => canEdit && handleImagePaste(e, currentLayoutIndex)}
+          onDoubleClick={() => canEdit && layoutImageUploadRef.current?.click()}
+          onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
+          className={cn("relative group w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4 no-print focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none", canEdit && "cursor-pointer")}
+        >
+          {currentLayout.layoutImage ? (
+            <>
+              <Image src={currentLayout.layoutImage} alt={`Layout ${currentLayoutIndex + 1}`} layout="fill" objectFit="contain" />
+              {canEdit && (
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLayoutChange(currentLayoutIndex, 'layoutImage', '');
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </>
+          ) : (
+            <div className="text-gray-500 flex flex-col items-center gap-2">
+              <Upload className="h-12 w-12" />
+              <span>{canEdit ? "Double-click to upload or paste image" : "No layout image"}</span>
+            </div>
+          )}
+          <input type="file" ref={layoutImageUploadRef} onChange={(e) => handleFileUpload(e, currentLayoutIndex)} className="hidden" accept="image/*" disabled={!canEdit}/>
+        </div>
+
+
+        <h2 className="text-2xl font-bold text-center mb-4">
+          {lead.layouts && lead.layouts.length > 1
+            ? `LAYOUT #${currentLayoutIndex + 1}`
+            : "LAYOUT"}
+        </h2>
+        <table className="w-full border-collapse border border-black mb-6">
+            <tbody>
+                <tr>
+                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><Textarea value={currentLayout.dstLogoLeft} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstLogoLeft', e.target.value)} className="mt-1 no-print" readOnly={!canEdit} /><p className="print-only whitespace-pre-wrap">{currentLayout.dstLogoLeft}</p></td>
+                    <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><Textarea value={currentLayout.dstBackLogo} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstBackLogo', e.target.value)} className="mt-1 no-print" readOnly={!canEdit} /><p className="print-only whitespace-pre-wrap">{currentLayout.dstBackLogo}</p></td>
+                </tr>
+                <tr>
+                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><Textarea value={currentLayout.dstLogoRight} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstLogoRight', e.target.value)} className="mt-1 no-print" readOnly={!canEdit} /><p className="print-only whitespace-pre-wrap">{currentLayout.dstLogoRight}</p></td>
+                    <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><Textarea value={currentLayout.dstBackText} onChange={(e) => handleLayoutChange(currentLayoutIndex, 'dstBackText', e.target.value)} className="mt-1 no-print" readOnly={!canEdit} /><p className="print-only whitespace-pre-wrap">{currentLayout.dstBackText}</p></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
+        <table className="w-full border-collapse border border-black text-xs">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="border border-black p-1">No.</th>
+              <th className="border border-black p-1">Names</th>
+              <th className="border border-black p-1">Color</th>
+              <th className="border border-black p-1">Sizes</th>
+              <th className="border border-black p-1">Qty</th>
+              <th className="border border-black p-1">BACK TEXT</th>
+              {canEdit && <th className="border border-black p-1 no-print">Action</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {(currentLayout.namedOrders || []).map((order, orderIndex) => (
+              <tr key={order.id}>
+                <td className="border border-black p-1 text-center">{orderIndex + 1}</td>
+                <td className="border border-black p-1"><Input value={order.name} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'name', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.name}</span></td>
+                <td className="border border-black p-1"><Input value={order.color} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'color', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.color}</span></td>
+                <td className="border border-black p-1"><Input value={order.size} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'size', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.size}</span></td>
+                <td className="border border-black p-1"><Input type="number" value={order.quantity} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'quantity', parseInt(e.target.value) || 0)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.quantity}</span></td>
+                <td className="border border-black p-1"><Input value={order.backText} onChange={(e) => handleNamedOrderChange(currentLayoutIndex, orderIndex, 'backText', e.target.value)} className="h-7 text-xs no-print" readOnly={!canEdit} /><span className="print-only">{order.backText}</span></td>
+                {canEdit && (
+                    <td className="border border-black p-1 text-center no-print">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeNamedOrder(currentLayoutIndex, orderIndex)}><Trash2 className="h-4 w-4"/></Button>
+                    </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {canEdit && <Button onClick={() => addNamedOrder(currentLayoutIndex)} className="mt-2 no-print" size="sm"><Plus className="mr-2 h-4 w-4"/>Add Name</Button>}
+      </div>
+    )}
+  </div>
+
+  <style jsx global>{`
+    @media print {
+      body {
+        background-color: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .no-print, header, .no-print * {
+        display: none !important;
+      }
+      .printable-area {
+        display: block !important;
+        margin-top: 0 !important;
+        padding: 1rem !important;
+        max-width: 100% !important;
+        color: black !important;
+      }
+      .printable-area * {
+        color: black !important;
+      }
+      .print-only {
+        display: inline-block !important;
+      }
+      .bg-gray-200 {
+        background-color: #e5e7eb !important;
+      }
+      .print-page {
+        page-break-after: always;
+      }
+       .print-page:last-of-type {
+        page-break-after: auto;
+      }
+      @page {
+        size: legal;
+        margin: 0.5in;
+      }
+    }
+    .print-only {
+      display: none;
+    }
+  `}</style>
+</div>
+); }
+    
