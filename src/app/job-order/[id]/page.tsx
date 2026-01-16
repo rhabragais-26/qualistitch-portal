@@ -1,4 +1,5 @@
 
+
 'use client';
 
     import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -267,56 +268,10 @@
         }
 
         let printWindow: Window | null = null;
-        let originalPubliclyPrintableState: boolean | undefined = undefined;
-
+        
         try {
-          const currentLeadSnap = await getDoc(leadRef);
-          if (currentLeadSnap.exists()) {
-              originalPubliclyPrintableState = currentLeadSnap.data().publiclyPrintable;
-          }
-
-          if (originalPubliclyPrintableState !== true) {
-            await updateDoc(leadRef, {
-              publiclyPrintable: true
-            });
-            console.log(`Attempted to set lead ${id} to publiclyPrintable: true`);
-
-            const updatedLeadSnap = await getDoc(leadRef);
-            if (!updatedLeadSnap.exists() || !updatedLeadSnap.data().publiclyPrintable) {
-                throw new Error("Failed to confirm 'publiclyPrintable' status after update. Write might have been denied by rules or failed silently.");
-            }
-            console.log(`CONFIRMED: Lead ${id} is now publiclyPrintable: true in Firestore.`);
-          }
-
           const jobOrderUrl = `/job-order/${id}/print`;
           printWindow = window.open(jobOrderUrl, '_blank', 'noopener,noreferrer,height=800,width=1200,scrollbars=yes');
-
-          if (printWindow) {
-            const checkWindowClosed = setInterval(async () => {
-              if (printWindow!.closed && originalPubliclyPrintableState !== true) {
-                clearInterval(checkWindowClosed);
-                try {
-                  await updateDoc(leadRef, {
-                    publiclyPrintable: originalPubliclyPrintableState !== undefined ? originalPubliclyPrintableState : false
-                  });
-                  console.log(`Successfully reverted lead ${id} to publiclyPrintable: ${originalPubliclyPrintableState !== undefined ? originalPubliclyPrintableState : false}`);
-                } catch (revertError) {
-                  console.error("Error reverting publiclyPrintable flag:", revertError);
-                }
-              }
-            }, 1000);
-          } else {
-              if (originalPubliclyPrintableState !== true) {
-                await updateDoc(leadRef, {
-                    publiclyPrintable: originalPubliclyPrintableState !== undefined ? originalPubliclyPrintableState : false
-                });
-              }
-              toast({
-                  variant: "destructive",
-                  title: "Popup Blocked",
-                  description: "Please allow popups for this site to open the print preview.",
-              });
-          }
 
         } catch (error: any) {
           console.error("Error preparing lead for print preview:", error);
@@ -325,18 +280,6 @@
             title: "Printing Error",
             description: error.message || "Failed to prepare lead for printing. Please try again.",
           });
-          if (leadRef && (originalPubliclyPrintableState !== undefined || (error && error.message && error.message.includes('confirm')))) {
-              if (originalPubliclyPrintableState !== true) {
-                try {
-                    await updateDoc(leadRef, {
-                        publiclyPrintable: originalPubliclyPrintableState !== undefined ? originalPubliclyPrintableState : false
-                    });
-                    console.log(`Reverted publiclyPrintable to original state (${originalPubliclyPrintableState}) due to error.`);
-                } catch (revertError) {
-                    console.error("Critical: Error during emergency revert of publiclyPrintable flag:", revertError);
-                }
-              }
-          }
         }
       };
       
@@ -604,7 +547,7 @@
                           <Save className="mr-2 h-4 w-4" />
                           Save Changes
                       </Button>
-                      <Button onClick={handlePrint} className="text-white font-bold shadow-md">
+                      <Button onClick={handlePrint} className="text-white font-bold shadow-md" disabled={!lead.joNumber}>
                           <Printer className="mr-2 h-4 w-4" />
                           Print J.O.
                       </Button>
@@ -615,7 +558,7 @@
                           <X className="mr-2 h-4 w-4" />
                           Close
                       </Button>
-                      <Button onClick={handlePrint} className="text-white font-bold shadow-md">
+                      <Button onClick={handlePrint} className="text-white font-bold shadow-md" disabled={!lead.joNumber}>
                           <Printer className="mr-2 h-4 w-4" />
                           Print J.O.
                       </Button>
@@ -954,3 +897,5 @@
     </div>
   );
 }
+
+    
