@@ -1,13 +1,13 @@
 'use client';
 
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 
 type DesignDetails = {
@@ -63,12 +63,19 @@ type Lead = {
   courier: string;
   joNumber?: number;
   layouts?: Layout[];
-  publiclyPrintable?: boolean;
+};
+
+type UserProfileInfo = {
+  uid: string;
+  firstName: string;
+  lastName: string;
+  nickname: string;
 };
 
 export default function JobOrderPrintPage() {
   const { id } = useParams();
   const firestore = useFirestore();
+  const [scesFullName, setScesFullName] = useState('');
 
   const leadRef = useMemoFirebase(
     () => (firestore && id ? doc(firestore, 'leads', id as string) : null),
@@ -77,10 +84,40 @@ export default function JobOrderPrintPage() {
   const { data: lead, isLoading: isLeadLoading, error } = useDoc<Lead>(leadRef);
 
   useEffect(() => {
+    const fetchScesName = async () => {
+      if (lead && firestore) {
+        // Since we can't use hooks conditionally, we fetch users collection data inside here
+        const usersSnapshot = await getDoc(doc(firestore, "users", lead.salesRepresentative));
+        if(usersSnapshot.exists()){
+             const scesProfile = usersSnapshot.data() as UserProfileInfo;
+             setScesFullName(scesProfile ? `${scesProfile.firstName} ${scesProfile.lastName}`.toUpperCase() : lead.salesRepresentative.toUpperCase());
+        }
+      }
+    };
+    fetchScesName();
+  }, [lead, firestore]);
+
+  useEffect(() => {
+    // Function to handle the afterprint event
+    const handleAfterPrint = () => {
+      // Close the current window/tab after the print dialog is dismissed
+      window.close();
+    };
+
     if (!isLeadLoading && lead) {
+      // Add the event listener for 'afterprint'
+      window.addEventListener('afterprint', handleAfterPrint);
+
+      // Trigger the print dialog after a short delay
+      // This delay ensures the event listener is active and the content is rendered
       setTimeout(() => window.print(), 1000);
     }
-  }, [isLeadLoading, lead]);
+
+    // Cleanup function: remove the event listener when the component unmounts
+    return () => {
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, [isLeadLoading, lead]); // Dependencies remain the same
   
   if (isLeadLoading || !lead) {
     return (
@@ -100,8 +137,6 @@ export default function JobOrderPrintPage() {
     return <div className="text-red-500 p-10">Error loading lead: {error.message}</div>;
   }
   
-  const scesFullName = lead.salesRepresentative.toUpperCase();
-
   const joNumber = lead.joNumber ? `QSBP-${new Date().getFullYear().toString().slice(-2)}-${lead.joNumber.toString().padStart(5, '0')}` : 'Not Saved';
   const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
@@ -215,7 +250,7 @@ export default function JobOrderPrintPage() {
         <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
             <div className="space-y-1">
                 <p className="font-bold italic">Prepared by:</p>
-                <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
+                <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName || lead.salesRepresentative}</p>
                 <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
                 <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>

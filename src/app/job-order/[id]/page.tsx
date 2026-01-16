@@ -111,7 +111,7 @@
       const { data: fetchedLead, isLoading: isLeadLoading, error, refetch: refetchLead } = useDoc<Lead>(leadRef);
       const [lead, setLead] = useState<Lead | null>(null);
       const [joNumber, setJoNumber] = useState<string>('');
-      const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
+      const [deliveryDateString, setDeliveryDateString] = useState('');
       const [showConfirmDialog, setShowConfirmDialog] = useState(false);
       const textareaRef = useRef<HTMLTextAreaElement>(null);
       const layoutImageUploadRef = useRef<HTMLInputElement>(null);
@@ -121,16 +121,10 @@
       const isDirty = useMemo(() => {
         if (!fetchedLead || !lead) return false;
 
-        // Create a simplified, consistently ordered version of the lead data for comparison
-        const normalize = (l: Lead, date?: Date) => {
-          const deliveryDateStr = date 
-            ? date.toISOString().split('T')[0]
-            : (l.deliveryDate ? new Date(l.deliveryDate).toISOString().split('T')[0] : null);
-
+        const normalize = (l: Lead) => {
           return {
             ...l,
             recipientName: l.recipientName || '',
-            deliveryDate: deliveryDateStr,
             orders: (l.orders || []).map(o => ({
               productType: o.productType,
               color: o.color,
@@ -163,11 +157,19 @@
           };
         };
 
-        const originalState = JSON.stringify(normalize(fetchedLead, fetchedLead.deliveryDate ? new Date(fetchedLead.deliveryDate) : undefined));
-        const currentState = JSON.stringify(normalize(lead, deliveryDate));
+        let originalDeliveryDateString = '';
+        if (fetchedLead.deliveryDate) {
+            originalDeliveryDateString = format(new Date(fetchedLead.deliveryDate), 'MMMM dd, yyyy');
+        } else {
+            const calculatedDate = addDays(new Date(fetchedLead.submissionDateTime), fetchedLead.priorityType === 'Rush' ? 7 : 22);
+            originalDeliveryDateString = format(calculatedDate, 'MMMM dd, yyyy');
+        }
+        
+        const originalState = JSON.stringify({ ...normalize(fetchedLead), deliveryDateString: originalDeliveryDateString });
+        const currentState = JSON.stringify({ ...normalize(lead), deliveryDateString });
         
         return originalState !== currentState;
-      }, [fetchedLead, lead, deliveryDate]);
+      }, [fetchedLead, lead, deliveryDateString]);
 
       useEffect(() => {
         if (textareaRef.current) {
@@ -190,12 +192,13 @@
 
           setLead({ ...fetchedLead, orders: initializedOrders, courier: fetchedLead.courier || 'Pick-up', layouts: initializedLayouts });
 
+          let initialDate;
           if (fetchedLead.deliveryDate) {
-            setDeliveryDate(new Date(fetchedLead.deliveryDate));
+            initialDate = new Date(fetchedLead.deliveryDate);
           } else {
-            const calculatedDeliveryDate = addDays(new Date(fetchedLead.submissionDateTime), fetchedLead.priorityType === 'Rush' ? 7 : 22);
-            setDeliveryDate(calculatedDeliveryDate);
+            initialDate = addDays(new Date(fetchedLead.submissionDateTime), fetchedLead.priorityType === 'Rush' ? 7 : 22);
           }
+          setDeliveryDateString(format(initialDate, 'MMMM dd, yyyy'));
         }
       }, [fetchedLead]);
 
@@ -305,6 +308,20 @@
       const handleSaveChanges = async (navigateOnSuccess = false) => {
         if (!lead || !leadRef || !allLeads) return;
 
+        let parsedDate: Date | null = null;
+        if (deliveryDateString) {
+            const date = new Date(deliveryDateString);
+            if (isNaN(date.getTime())) {
+                toast({
+                    variant: "destructive",
+                    title: "Invalid Date Format",
+                    description: "Please use a valid date format, e.g., 'February 08, 2026'.",
+                });
+                return;
+            }
+            parsedDate = date;
+        }
+
         let newJoNumber: number | undefined = lead.joNumber;
         
         if (!newJoNumber) {
@@ -318,7 +335,7 @@
         const dataToUpdate = {
             ...lead,
             joNumber: newJoNumber,
-            deliveryDate: deliveryDate ? deliveryDate.toISOString() : null,
+            deliveryDate: parsedDate ? parsedDate.toISOString() : null,
             lastModified: new Date().toISOString(),
             layouts: layoutsToSave,
         };
@@ -583,7 +600,14 @@
                     </div>
                     <div className="flex items-center gap-2">
                         <strong className='flex-shrink-0'>Delivery Date:</strong>
-                        <span className="text-sm font-medium">{deliveryDate ? format(deliveryDate, "MMMM dd, yyyy") : 'N/A'}</span>
+                         <Input
+                            value={deliveryDateString}
+                            onChange={(e) => setDeliveryDateString(e.target.value)}
+                            readOnly={!canEdit}
+                            className="h-8 text-xs no-print"
+                            placeholder="Month Day, Year"
+                        />
+                        <span className="print-only">{deliveryDateString}</span>
                     </div>
                 </div>
             </div>
@@ -846,5 +870,3 @@
     </div>
   );
 }
-
-    
