@@ -539,11 +539,11 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                        <>
                         {Object.values(payments).flat().map((payment, index) => (
                           <div key={index} className="flex justify-between items-center text-sm">
-                              <p className="text-xs text-muted-foreground italic pl-2">via {payment.mode}</p>
-                              <div className="text-right">
-                                  <span className="text-muted-foreground mr-2">{payment.type === 'full' ? 'Full Payment:' : 'Down Payment:'}</span>
-                                  <span className="font-medium">{formatCurrency(payment.amount)}</span>
-                              </div>
+                              <span className="text-muted-foreground">
+                                {payment.type === 'full' ? 'Full Payment' : 'Down Payment'}{' '}
+                                <span className="italic text-xs">(via {payment.mode})</span>:
+                              </span>
+                              <span className="font-medium">{formatCurrency(payment.amount)}</span>
                           </div>
                         ))}
 
@@ -808,3 +808,4 @@ function AddPaymentDialog({ grandTotal, setPayments, payments }: { grandTotal: n
   );
 }
 
+```
