@@ -111,6 +111,127 @@ type EnrichedLead = Lead & {
   totalCustomerQuantity: number;
 };
 
+const RecordsTableRow = React.memo(({
+    lead,
+    openLeadId,
+    openCustomerDetails,
+    isRepeat,
+    getContactDisplay,
+    toggleCustomerDetails,
+    handleOpenEditLeadDialog,
+    handleDeleteLead,
+    setOpenLeadId
+}: {
+    lead: EnrichedLead;
+    openLeadId: string | null;
+    openCustomerDetails: string | null;
+    isRepeat: boolean;
+    getContactDisplay: (lead: Lead) => string | null;
+    toggleCustomerDetails: (id: string) => void;
+    handleOpenEditLeadDialog: (lead: Lead) => void;
+    handleDeleteLead: (id: string) => void;
+    setOpenLeadId: React.Dispatch<React.SetStateAction<string | null>>;
+}) => {
+    return (
+        <TableRow>
+            <TableCell className="text-xs align-top py-2 text-black">
+                <Collapsible>
+                <CollapsibleTrigger asChild>
+                    <div className="flex items-center cursor-pointer">
+                        <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
+                        <div className='flex items-center'>
+                            <span>{formatDateTime(lead.submissionDateTime).dateTime}</span>
+                        </div>
+                    </div>
+                </CollapsibleTrigger>
+                    <div className="pl-5 text-gray-500">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
+                <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-xs">
+                    <span className='font-bold text-gray-600'>Last Modified:</span>
+                    <div>{formatDateTime(lead.lastModified).dateTime}</div>
+                    <div>{formatDateTime(lead.lastModified).dayOfWeek}</div>
+                </CollapsibleContent>
+            </Collapsible>
+            </TableCell>
+            <TableCell className="text-xs align-top py-2 text-black">
+            <div className="flex items-start">
+                <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
+                {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+                <div className='flex flex-col'>
+                <span className="font-medium">{lead.customerName}</span>
+                {isRepeat ? (
+                    <TooltipProvider>
+                        <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1.5 cursor-pointer">
+                            <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                            <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                {lead.orderNumber}
+                            </span>
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                        </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    ) : (
+                    <span className="text-xs text-blue-600 font-semibold">New Customer</span>
+                    )}
+                {openCustomerDetails === lead.id && (
+                    <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
+                    {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                    {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                    </div>
+                )}
+                </div>
+            </div>
+            </TableCell>
+            <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
+            <TableCell className="align-middle py-2 text-center">
+            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                {lead.priorityType}
+            </Badge>
+            </TableCell>
+            <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.orderType}</TableCell>
+            <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.courier === '-' ? '' : lead.courier}</TableCell>
+            <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.paymentType}</TableCell>
+            <TableCell className="text-center align-middle py-2">
+            <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
+                View
+                {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
+            </Button>
+            </TableCell>
+            <TableCell className="text-center align-middle py-2">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
+                <Edit className="h-4 w-4" />
+                </Button>
+                <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
+                    <Trash2 className="h-4 w-4" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the entire lead record.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDeleteLead(lead.id)}>Delete Lead</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            </TableCell>
+        </TableRow>
+    );
+});
+RecordsTableRow.displayName = 'RecordsTableRow';
+
+
 export function RecordsTable() {
   const firestore = useFirestore();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
@@ -505,172 +626,89 @@ export function RecordsTable() {
                 <TableBody>
                 {filteredLeads.map((lead) => {
                   const isRepeat = lead.orderNumber > 1;
-                  return(
-                  <React.Fragment key={lead.id}>
-                    <TableRow>
-                      <TableCell className="text-xs align-top py-2 text-black">
-                         <Collapsible>
-                            <CollapsibleTrigger asChild>
-                               <div className="flex items-center cursor-pointer">
-                                  <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                  <div className='flex items-center'>
-                                      <span>{formatDateTime(lead.submissionDateTime).dateTime}</span>
-                                  </div>
-                                </div>
-                            </CollapsibleTrigger>
-                             <div className="pl-5 text-gray-500">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
-                            <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-xs">
-                                <span className='font-bold text-gray-600'>Last Modified:</span>
-                                <div>{formatDateTime(lead.lastModified).dateTime}</div>
-                                <div>{formatDateTime(lead.lastModified).dayOfWeek}</div>
-                            </CollapsibleContent>
-                        </Collapsible>
-                      </TableCell>
-                      <TableCell className="text-xs align-top py-2 text-black">
-                        <div className="flex items-start">
-                          <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
-                            {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                          </Button>
-                          <div className='flex flex-col'>
-                            <span className="font-medium">{lead.customerName}</span>
-                            {isRepeat ? (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div className="flex items-center gap-1.5 cursor-pointer">
-                                        <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                        <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                          {lead.orderNumber}
-                                        </span>
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              ) : (
-                                <span className="text-xs text-blue-600 font-semibold">New Customer</span>
-                              )}
-                            {openCustomerDetails === lead.id && (
-                              <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
-                                {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
-                                {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
-                      <TableCell className="align-middle py-2 text-center">
-                        <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                          {lead.priorityType}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.orderType}</TableCell>
-                      <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.courier === '-' ? '' : lead.courier}</TableCell>
-                      <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.paymentType}</TableCell>
-                      <TableCell className="text-center align-middle py-2">
-                        <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
-                          View
-                          {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-                        </Button>
-                      </TableCell>
-                      <TableCell className="text-center align-middle py-2">
-                           <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                           <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the entire lead record.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteLead(lead.id)}>Delete Lead</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                      </TableCell>
-                    </TableRow>
-                    {openLeadId === lead.id && (
-                      <TableRow className="bg-gray-50">
-                        <TableCell colSpan={13} className="p-2">
-                           <div className="p-2">
-                            <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
-                             <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead className="py-1 px-2 text-black font-bold">Product Type</TableHead>
-                                  <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
-                                  <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
-                                  <TableHead className="py-1 px-2 text-black font-bold text-center">Quantity</TableHead>
-                                  <TableHead className="text-right py-1 px-2 text-black pr-8">Action</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {lead.orders?.map((order: any, index: number) => (
-                                  <TableRow key={index} className="border-0">
-                                    <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
-                                    <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
-                                    <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
-                                    <TableCell className="py-1 px-2 text-xs text-black text-center">
-                                      {order.quantity}
+                  return (
+                    <React.Fragment key={lead.id}>
+                        <RecordsTableRow 
+                            lead={lead}
+                            openLeadId={openLeadId}
+                            openCustomerDetails={openCustomerDetails}
+                            isRepeat={isRepeat}
+                            getContactDisplay={getContactDisplay}
+                            toggleCustomerDetails={toggleCustomerDetails}
+                            handleOpenEditLeadDialog={handleOpenEditLeadDialog}
+                            handleDeleteLead={handleDeleteLead}
+                            setOpenLeadId={setOpenLeadId}
+                        />
+                        {openLeadId === lead.id && (
+                        <TableRow className="bg-gray-50">
+                            <TableCell colSpan={13} className="p-2">
+                            <div className="p-2">
+                                <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
+                                <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                    <TableHead className="py-1 px-2 text-black font-bold">Product Type</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-center">Quantity</TableHead>
+                                    <TableHead className="text-right py-1 px-2 text-black pr-8">Action</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {lead.orders?.map((order: any, index: number) => (
+                                    <TableRow key={index} className="border-0">
+                                        <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-center">
+                                        {order.quantity}
+                                        </TableCell>
+                                        <TableCell className="text-right py-1">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently delete the ordered item.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteOrder(lead.id, index)}>Delete</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                        </TableCell>
+                                    </TableRow>
+                                    ))}
+                                </TableBody>
+                                <TableFooter>
+                                    <TableRow>
+                                    <TableCell colSpan={3} className="text-right font-bold text-black py-1 px-2">Total Quantity</TableCell>
+                                    <TableCell className="font-bold text-black text-center py-1 px-2">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
+                                    <TableCell className='text-right py-1 px-2'>
+                                        <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
+                                        <PlusCircle className="h-4 w-4 mr-1" />
+                                        Add Order
+                                        </Button>
                                     </TableCell>
-                                    <TableCell className="text-right py-1">
-                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
-                                        <Edit className="h-4 w-4" />
-                                      </Button>
-                                       <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                          <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                              This action cannot be undone. This will permanently delete the ordered item.
-                                            </AlertDialogDescription>
-                                          </AlertDialogHeader>
-                                          <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteOrder(lead.id, index)}>Delete</AlertDialogAction>
-                                          </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                      </AlertDialog>
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                              <TableFooter>
-                                 <TableRow>
-                                  <TableCell colSpan={3} className="text-right font-bold text-black py-1 px-2">Total Quantity</TableCell>
-                                  <TableCell className="font-bold text-black text-center py-1 px-2">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
-                                  <TableCell className='text-right py-1 px-2'>
-                                    <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
-                                      <PlusCircle className="h-4 w-4 mr-1" />
-                                      Add Order
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              </TableFooter>
-                            </Table>
-                          </div>
-                         </TableCell>
-                      </TableRow>
-                    )}
-                  </React.Fragment>
-                )})}
+                                    </TableRow>
+                                </TableFooter>
+                                </Table>
+                            </div>
+                            </TableCell>
+                        </TableRow>
+                        )}
+                    </React.Fragment>
+                  )})}
                 </TableBody>
             </Table>
           </div>

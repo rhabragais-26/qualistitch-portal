@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection, query, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,6 +53,121 @@ const positions: UserPosition[] = [
     'Page Admin'
 ];
 
+const AdminUserTableRow = React.memo(({
+  user,
+  editedUser,
+  onFieldChange,
+  onPermissionChange,
+  onSaveChanges,
+  onSetUserToDelete,
+}: {
+  user: UserProfile;
+  editedUser: Partial<UserProfile>;
+  onFieldChange: (uid: string, field: 'role' | 'position', value: string) => void;
+  onPermissionChange: (uid: string, pageGroup: PageGroup, checked: boolean) => void;
+  onSaveChanges: (uid: string) => void;
+  onSetUserToDelete: (user: UserProfile) => void;
+}) => {
+  const isModified = 
+      user.role !== editedUser.role || 
+      user.position !== editedUser.position ||
+      !isEqual(user.permissions || {}, editedUser.permissions || {});
+
+  return (
+    <TableRow>
+      <TableCell className="font-medium align-middle text-center">{user.nickname}</TableCell>
+      <TableCell className="align-middle text-center">{`${user.firstName} ${user.lastName}`}</TableCell>
+      <TableCell className="align-middle text-center">{user.email}</TableCell>
+      <TableCell className="align-middle text-center">
+        <Select
+          value={editedUser.position || user.position}
+          onValueChange={(newPosition: string) => onFieldChange(user.uid, 'position', newPosition)}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {positions.map(pos => (
+              <SelectItem key={pos} value={pos}>{pos}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell className="align-middle text-center">
+        <Select
+          value={editedUser.role || user.role}
+          onValueChange={(newRole: 'admin' | 'user') => onFieldChange(user.uid, 'role', newRole)}
+        >
+          <SelectTrigger className="w-[120px]">
+            <SelectValue>
+              <Badge variant={editedUser.role === 'admin' ? 'destructive' : 'secondary'}>
+                  {(editedUser.role || user.role)?.charAt(0).toUpperCase() + (editedUser.role || user.role)?.slice(1)}
+              </Badge>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="user">User</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell className="align-middle text-center">
+          <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="flex items-center gap-1 text-xs">
+              View Permissions
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+              <div className="p-2 mt-1 border rounded-md bg-gray-50 text-xs">
+              <p className="font-semibold mb-2">Can Edit:</p>
+              <div className="grid grid-cols-2 gap-2">
+                {allPageGroups.map(group => (
+                  <div key={group.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${user.uid}-${group.id}`}
+                      checked={hasEditPermission(editedUser.position, group.path, editedUser.permissions)}
+                      onCheckedChange={(checked) => onPermissionChange(user.uid, group.id, !!checked)}
+                    />
+                    <Label htmlFor={`${user.uid}-${group.id}`} className="text-xs font-normal">
+                      {group.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              </div>
+          </CollapsibleContent>
+          </Collapsible>
+      </TableCell>
+      <TableCell className="text-center text-xs align-middle">
+          {user.lastModified ? formatDateTime(user.lastModified).dateTimeShort : '-'}
+      </TableCell>
+      <TableCell className="text-center align-middle">
+        <Button
+          size="sm"
+          onClick={() => onSaveChanges(user.uid)}
+          disabled={!isModified}
+          className="h-8"
+        >
+          <Save className="mr-2 h-4 w-4" />
+          Save
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 ml-1 text-destructive hover:bg-destructive/10"
+          onClick={() => onSetUserToDelete(user)}
+          >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+});
+AdminUserTableRow.displayName = 'AdminUserTableRow';
+
+
 export function AdminUsersTable() {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -83,14 +198,14 @@ export function AdminUsersTable() {
     }
   }, [users]);
   
-  const handleFieldChange = (uid: string, field: 'role' | 'position', value: string) => {
+  const handleFieldChange = useCallback((uid: string, field: 'role' | 'position', value: string) => {
     setEditedUsers(prev => ({
       ...prev,
       [uid]: { ...prev[uid], [field]: value }
     }));
-  };
+  }, []);
 
-  const handlePermissionChange = (uid: string, pageGroup: PageGroup, checked: boolean) => {
+  const handlePermissionChange = useCallback((uid: string, pageGroup: PageGroup, checked: boolean) => {
     setEditedUsers(prev => {
         const userChanges = { ...prev[uid] };
         const currentPermissions = { ...(userChanges.permissions || {}) };
@@ -100,9 +215,9 @@ export function AdminUsersTable() {
             [uid]: { ...userChanges, permissions: currentPermissions }
         };
     });
-  };
+  }, []);
 
-  const handleSaveChanges = async (uid: string) => {
+  const handleSaveChanges = useCallback(async (uid: string) => {
     if (!firestore) return;
     const userChanges = editedUsers[uid];
     if (!userChanges) return;
@@ -123,7 +238,7 @@ export function AdminUsersTable() {
         description: e.message || `Could not update the user's details.`,
       });
     }
-  };
+  }, [firestore, editedUsers, toast, refetch]);
 
   const handleDeleteUser = async () => {
     if (!userToDelete || !firestore) return;
@@ -227,105 +342,17 @@ export function AdminUsersTable() {
                     </TableCell>
                   </TableRow>
                 ) : filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => {
-                    const editedUser = editedUsers[user.uid] || {};
-                    const isModified = 
-                      user.role !== editedUser.role || 
-                      user.position !== editedUser.position ||
-                      !isEqual(user.permissions || {}, editedUser.permissions || {});
-
-                    return (
-                      <TableRow key={user.uid}>
-                        <TableCell className="font-medium align-middle text-center">{user.nickname}</TableCell>
-                        <TableCell className="align-middle text-center">{`${user.firstName} ${user.lastName}`}</TableCell>
-                        <TableCell className="align-middle text-center">{user.email}</TableCell>
-                        <TableCell className="align-middle text-center">
-                          <Select
-                            value={editedUser.position || user.position}
-                            onValueChange={(newPosition: string) => handleFieldChange(user.uid, 'position', newPosition)}
-                          >
-                            <SelectTrigger className="w-[200px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {positions.map(pos => (
-                                <SelectItem key={pos} value={pos}>{pos}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="align-middle text-center">
-                          <Select
-                            value={editedUser.role || user.role}
-                            onValueChange={(newRole: 'admin' | 'user') => handleFieldChange(user.uid, 'role', newRole)}
-                          >
-                            <SelectTrigger className="w-[120px]">
-                              <SelectValue>
-                                <Badge variant={editedUser.role === 'admin' ? 'destructive' : 'secondary'}>
-                                    {(editedUser.role || user.role)?.charAt(0).toUpperCase() + (editedUser.role || user.role)?.slice(1)}
-                                </Badge>
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="user">User</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="align-middle text-center">
-                           <Collapsible>
-                            <CollapsibleTrigger asChild>
-                              <Button variant="ghost" size="sm" className="flex items-center gap-1 text-xs">
-                                View Permissions
-                                <ChevronDown className="h-4 w-4" />
-                              </Button>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                               <div className="p-2 mt-1 border rounded-md bg-gray-50 text-xs">
-                                <p className="font-semibold mb-2">Can Edit:</p>
-                                <div className="grid grid-cols-2 gap-2">
-                                  {allPageGroups.map(group => (
-                                    <div key={group.id} className="flex items-center space-x-2">
-                                      <Checkbox
-                                        id={`${user.uid}-${group.id}`}
-                                        checked={hasEditPermission(editedUser.position, group.path, editedUser.permissions)}
-                                        onCheckedChange={(checked) => handlePermissionChange(user.uid, group.id, !!checked)}
-                                      />
-                                      <Label htmlFor={`${user.uid}-${group.id}`} className="text-xs font-normal">
-                                        {group.label}
-                                      </Label>
-                                    </div>
-                                  ))}
-                                </div>
-                               </div>
-                            </CollapsibleContent>
-                           </Collapsible>
-                        </TableCell>
-                        <TableCell className="text-center text-xs align-middle">
-                            {user.lastModified ? formatDateTime(user.lastModified).dateTimeShort : '-'}
-                        </TableCell>
-                        <TableCell className="text-center align-middle">
-                          <Button
-                            size="sm"
-                            onClick={() => handleSaveChanges(user.uid)}
-                            disabled={!isModified}
-                            className="h-8"
-                          >
-                            <Save className="mr-2 h-4 w-4" />
-                            Save
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 ml-1 text-destructive hover:bg-destructive/10"
-                            onClick={() => setUserToDelete(user)}
-                           >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
+                  filteredUsers.map((user) => (
+                    <AdminUserTableRow
+                      key={user.uid}
+                      user={user}
+                      editedUser={editedUsers[user.uid] || {}}
+                      onFieldChange={handleFieldChange}
+                      onPermissionChange={handlePermissionChange}
+                      onSaveChanges={handleSaveChanges}
+                      onSetUserToDelete={setUserToDelete}
+                    />
+                  ))
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center text-muted-foreground">

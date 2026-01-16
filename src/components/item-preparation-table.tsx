@@ -80,6 +80,152 @@ const programmingStatusOptions = [
     'Pending Initial Program'
 ];
 
+const ItemPreparationTableRowGroup = React.memo(({
+    lead,
+    getProgrammingStatus,
+    formatJoNumber,
+    getContactDisplay,
+    handleJoReceivedChange,
+    handleOpenPreparedDialog,
+    setLeadToSend
+}: {
+    lead: EnrichedLead;
+    getProgrammingStatus: (lead: Lead) => { text: string; variant: "success" | "destructive" | "warning" | "default" | "secondary"; };
+    formatJoNumber: (joNumber: number | undefined) => string;
+    getContactDisplay: (lead: Lead) => string | null;
+    handleJoReceivedChange: (leadId: string, checked: boolean) => void;
+    handleOpenPreparedDialog: (lead: Lead) => void;
+    setLeadToSend: (lead: Lead) => void;
+}) => {
+    const isRepeat = lead.orderNumber > 1;
+    const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+    const numOrders = lead.orders.length;
+    const programmingStatus = getProgrammingStatus(lead);
+    const isStockJacketOnly = lead.orderType === 'Stock (Jacket Only)';
+    const leadsQuery = useMemoFirebase(() => collection(useFirestore(), 'leads'), []);
+    const { data: leads } = useCollection<Lead>(leadsQuery);
+    const leadFromQueue = leads?.find(l => l.id === lead.id);
+
+    return (
+        <React.Fragment>
+            {lead.orders.map((order, orderIndex) => (
+                <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex === 0 ? "border-t-2 border-black" : ""}>
+                    {orderIndex === 0 && (
+                        <TableCell rowSpan={numOrders + 1} className="font-medium text-xs align-middle py-3 text-black border-b-2 border-black text-center">
+                            <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                    <div className="flex items-center justify-center cursor-pointer">
+                                        <span>{lead.customerName}</span>
+                                        <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                    </div>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
+                                    {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
+                                    {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
+                                </CollapsibleContent>
+                            </Collapsible>
+                            {isRepeat ? (
+                                <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                    <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
+                                        <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                        <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                        {lead.orderNumber}
+                                        </span>
+                                    </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                    <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                </TooltipProvider>
+                            ) : (
+                                <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                            )}
+                        </TableCell>
+                    )}
+                    {orderIndex === 0 && (
+                        <TableCell rowSpan={numOrders + 1} className="text-xs align-middle py-3 text-black border-b-2 border-black text-center">
+                        <div>{formatJoNumber(lead.joNumber)}</div>
+                        </TableCell>
+                    )}
+                    {orderIndex === 0 && (
+                        <TableCell rowSpan={numOrders + 1} className="align-middle py-3 border-b-2 border-black text-center">
+                        <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
+                        {isStockJacketOnly && <p className="text-xs font-bold mt-1">Stocks (Jacket Only)</p>}
+                        </TableCell>
+                    )}
+                    {orderIndex === 0 && (
+                        <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
+                        <div className="flex flex-col items-center justify-center gap-1">
+                            <Checkbox
+                            checked={lead.isJoHardcopyReceived || false}
+                            onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
+                            disabled={!leadFromQueue?.isJoPrinted}
+                            />
+                            {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
+                        </div>
+                    </TableCell>
+                    )}
+                <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
+                    <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
+                    <TableCell className="py-1 px-2 text-xs text-black text-center">{order.size}</TableCell>
+                    <TableCell className="py-1 px-2 text-xs text-black text-center">{order.quantity}</TableCell>
+                    {orderIndex === 0 && (
+                        <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
+                        {lead.isPreparedForProduction ? (
+                            <div className="flex items-center justify-center text-sm text-green-600 font-semibold">
+                                <Check className="mr-2 h-4 w-4" /> Prepared
+                            </div>
+                            ) : (
+                                <Button
+                                    size="sm"
+                                    onClick={() => handleOpenPreparedDialog(lead)}
+                                    className="h-7 px-2"
+                                    disabled={!isStockJacketOnly && programmingStatus.text !== 'Final Program Uploaded'}
+                                >
+                                    Prepared
+                                </Button>
+                            )}
+                        </TableCell>
+                    )}
+                    {orderIndex === 0 && (
+                        <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
+                            {lead.isSentToProduction || lead.isEndorsedToLogistics ? (
+                            <div className="flex flex-col items-center gap-1">
+                                <div className="flex items-center text-sm text-green-600 font-semibold">
+                                    <Check className="mr-2 h-4 w-4" /> Sent
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                    <div>{formatDateTime(lead.sentToProductionTimestamp!).dateTimeShort}</div>
+                                </div>
+                            </div>
+                            ) : (
+                                <Button
+                                    size="sm"
+                                    onClick={() => setLeadToSend(lead)}
+                                    disabled={!lead.isPreparedForProduction || !lead.isJoHardcopyReceived}
+                                    className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
+                                >
+                                    <Send className="mr-2 h-4 w-4" /> 
+                                    {isStockJacketOnly ? 'Send to Logistics' : 'Send to Prod'}
+                                </Button>
+                            )}
+                        </TableCell>
+                    )}
+                </TableRow>
+            ))}
+            <TableRow className="border-b-2 border-black bg-gray-50">
+                <TableCell colSpan={3} className="py-1 px-2 text-xs font-bold text-right">Total Quantity</TableCell>
+                <TableCell className="py-1 px-2 text-xs text-center font-bold">{totalQuantity}</TableCell>
+            </TableRow>
+        </React.Fragment>
+    );
+});
+ItemPreparationTableRowGroup.displayName = 'ItemPreparationTableRowGroup';
+
+
 const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
@@ -431,131 +577,18 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {jobOrders?.map((lead) => {
-                  const isRepeat = lead.orderNumber > 1;
-                  const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-                  const numOrders = lead.orders.length;
-                  const programmingStatus = getProgrammingStatus(lead);
-                  const isStockJacketOnly = lead.orderType === 'Stock (Jacket Only)';
-                  const leadFromQueue = leads?.find(l => l.id === lead.id);
-
-                  return (
-                    <React.Fragment key={lead.id}>
-                      {lead.orders.map((order, orderIndex) => (
-                          <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex === 0 ? "border-t-2 border-black" : ""}>
-                              {orderIndex === 0 && (
-                                  <TableCell rowSpan={numOrders + 1} className="font-medium text-xs align-middle py-3 text-black border-b-2 border-black text-center">
-                                      <Collapsible>
-                                          <CollapsibleTrigger asChild>
-                                              <div className="flex items-center justify-center cursor-pointer">
-                                                  <span>{lead.customerName}</span>
-                                                  <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                              </div>
-                                          </CollapsibleTrigger>
-                                          <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
-                                              {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
-                                              {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
-                                          </CollapsibleContent>
-                                      </Collapsible>
-                                       {isRepeat ? (
-                                          <TooltipProvider>
-                                            <Tooltip>
-                                              <TooltipTrigger asChild>
-                                                <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
-                                                  <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                                  <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                                    {lead.orderNumber}
-                                                  </span>
-                                                </div>
-                                              </TooltipTrigger>
-                                              <TooltipContent>
-                                                <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                              </TooltipContent>
-                                            </Tooltip>
-                                          </TooltipProvider>
-                                        ) : (
-                                          <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                                        )}
-                                  </TableCell>
-                              )}
-                              {orderIndex === 0 && (
-                                  <TableCell rowSpan={numOrders + 1} className="text-xs align-middle py-3 text-black border-b-2 border-black text-center">
-                                    <div>{formatJoNumber(lead.joNumber)}</div>
-                                  </TableCell>
-                              )}
-                              {orderIndex === 0 && (
-                                  <TableCell rowSpan={numOrders + 1} className="align-middle py-3 border-b-2 border-black text-center">
-                                    <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
-                                    {isStockJacketOnly && <p className="text-xs font-bold mt-1">Stocks (Jacket Only)</p>}
-                                  </TableCell>
-                              )}
-                              {orderIndex === 0 && (
-                                 <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
-                                    <div className="flex flex-col items-center justify-center gap-1">
-                                      <Checkbox
-                                        checked={lead.isJoHardcopyReceived || false}
-                                        onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                        disabled={!leadFromQueue?.isJoPrinted}
-                                      />
-                                      {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
-                                    </div>
-                                </TableCell>
-                              )}
-                            <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
-                              <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
-                              <TableCell className="py-1 px-2 text-xs text-black text-center">{order.size}</TableCell>
-                              <TableCell className="py-1 px-2 text-xs text-black text-center">{order.quantity}</TableCell>
-                              {orderIndex === 0 && (
-                                  <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
-                                  {lead.isPreparedForProduction ? (
-                                        <div className="flex items-center justify-center text-sm text-green-600 font-semibold">
-                                            <Check className="mr-2 h-4 w-4" /> Prepared
-                                        </div>
-                                      ) : (
-                                          <Button
-                                              size="sm"
-                                              onClick={() => handleOpenPreparedDialog(lead)}
-                                              className="h-7 px-2"
-                                              disabled={!isStockJacketOnly && programmingStatus.text !== 'Final Program Uploaded'}
-                                          >
-                                              Prepared
-                                          </Button>
-                                      )}
-                                  </TableCell>
-                              )}
-                              {orderIndex === 0 && (
-                                  <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
-                                      {lead.isSentToProduction || lead.isEndorsedToLogistics ? (
-                                        <div className="flex flex-col items-center gap-1">
-                                            <div className="flex items-center text-sm text-green-600 font-semibold">
-                                                <Check className="mr-2 h-4 w-4" /> Sent
-                                            </div>
-                                            <div className="text-xs text-gray-500">
-                                                <div>{formatDateTime(lead.sentToProductionTimestamp!).dateTimeShort}</div>
-                                            </div>
-                                        </div>
-                                      ) : (
-                                          <Button
-                                              size="sm"
-                                              onClick={() => setLeadToSend(lead)}
-                                              disabled={!lead.isPreparedForProduction || !lead.isJoHardcopyReceived}
-                                              className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
-                                          >
-                                              <Send className="mr-2 h-4 w-4" /> 
-                                              {isStockJacketOnly ? 'Send to Logistics' : 'Send to Prod'}
-                                          </Button>
-                                      )}
-                                  </TableCell>
-                              )}
-                          </TableRow>
-                      ))}
-                      {/* Total Row */}
-                      <TableRow className="border-b-2 border-black bg-gray-50">
-                          <TableCell colSpan={3} className="py-1 px-2 text-xs font-bold text-right">Total Quantity</TableCell>
-                          <TableCell className="py-1 px-2 text-xs text-center font-bold">{totalQuantity}</TableCell>
-                      </TableRow>
-                    </React.Fragment>
-                )})}
+                {jobOrders?.map((lead) => (
+                    <ItemPreparationTableRowGroup
+                        key={lead.id}
+                        lead={lead}
+                        getProgrammingStatus={getProgrammingStatus}
+                        formatJoNumber={formatJoNumber}
+                        getContactDisplay={getContactDisplay}
+                        handleJoReceivedChange={handleJoReceivedChange}
+                        handleOpenPreparedDialog={handleOpenPreparedDialog}
+                        setLeadToSend={setLeadToSend}
+                    />
+                ))}
                 </TableBody>
             </Table>
           </div>

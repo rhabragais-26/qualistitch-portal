@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
@@ -152,6 +151,340 @@ const formatJoNumber = (joNumber: number | undefined) => {
     const currentYear = new Date().getFullYear().toString().slice(-2);
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
 };
+
+const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
+  const [imageInView, setImageInView] = useState<string | null>(null);
+  
+  const finalFiles = [
+    ...(lead.layouts?.[0]?.finalLogoDst?.filter(f => f).map(f => ({ ...f, type: 'Logo (DST)' })) || []),
+    ...(lead.layouts?.[0]?.finalBackDesignDst?.filter(f => f).map(f => ({ ...f, type: 'Back Design (DST)' })) || []),
+    ...(lead.layouts?.[0]?.finalNamesDst?.filter(f => f).map(f => ({ ...f, type: 'Name (DST)' })) || []),
+  ];
+
+  const handleJobOrderPrint = () => {
+    const jobOrderUrl = `/job-order/${lead.id}/print`;
+    window.open(jobOrderUrl, '_blank', 'height=800,width=1200,scrollbars=yes');
+  };
+
+  const handleDownload = async (url: string, name: string) => {
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const fileHandle = await (window as any).showSaveFilePicker({
+            suggestedName: name,
+        });
+        const writable = await fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+    } catch (err) {
+        console.error('File save failed:', err);
+    }
+  };
+
+  const hasFilesToDownload = useMemo(() => {
+    const sequenceLogoFiles = lead.layouts?.[0]?.sequenceLogo?.some(s => s?.url);
+    const sequenceBackFiles = lead.layouts?.[0]?.sequenceBackDesign?.some(s => s?.url);
+    return finalFiles.length > 0 || sequenceLogoFiles || sequenceBackFiles;
+  }, [finalFiles, lead.layouts]);
+
+  const handleDownloadAll = async () => {
+    if (!hasFilesToDownload) return;
+    try {
+        const dirHandle = await (window as any).showDirectoryPicker();
+        
+        const filesToDownload: { name: string; url: string; type: string; }[] = [];
+
+        if(finalFiles.length > 0) {
+            filesToDownload.push(...finalFiles.filter((f): f is FileObject & { type: string } => !!f));
+        }
+
+        const sequenceLogoFiles = lead.layouts?.[0]?.sequenceLogo?.filter((s): s is FileObject => !!s?.url);
+        if(sequenceLogoFiles){
+            sequenceLogoFiles.forEach((file, index) => {
+                filesToDownload.push({ name: `sequence-logo-${index + 1}.png`, url: file.url, type: 'Sequence' });
+            });
+        }
+
+        const sequenceBackFiles = lead.layouts?.[0]?.sequenceBackDesign?.filter((s): s is FileObject => !!s?.url);
+        if(sequenceBackFiles){
+            sequenceBackFiles.forEach((file, index) => {
+                filesToDownload.push({ name: `sequence-back-${index + 1}.png`, url: file.url, type: 'Sequence' });
+            });
+        }
+        
+        for (const file of filesToDownload) {
+            if(file) {
+                const response = await fetch(file.url);
+                const blob = await response.blob();
+                const fileHandle = await dirHandle.getFileHandle(file.name, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+            }
+        }
+    } catch (err) {
+        console.error('Download all failed:', err);
+    }
+  };
+
+
+  return (
+    <>
+      {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+            </Button>
+          </div>
+        </div>
+      )}
+      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-x-6">
+        <div className="space-y-4">
+            <div className="space-y-2">
+                <h3 className="font-bold text-lg text-primary">Job Order and Layout</h3>
+                <Button onClick={handleJobOrderPrint} variant="default" size="lg" className="bg-primary text-white hover:bg-primary/90">
+                    Check Job Order and Layout
+                </Button>
+            </div>
+            <div>
+                <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
+                <div className="max-h-48 overflow-y-auto pr-2 mt-2">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                        {finalFiles.map((file, index) => (
+                        file && 
+                        <div key={index} className="flex items-center justify-between p-1 bg-white rounded-md border">
+                            <span className="truncate text-xs pl-1"><strong>{file.type}:</strong> {file.name}</span>
+                            <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-7 w-7 text-primary">
+                                <Download className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        ))}
+                    </div>
+                </div>
+                <Button onClick={handleDownloadAll} disabled={!hasFilesToDownload} size="sm" className="text-white font-bold mt-2"><Download className="mr-2 h-4 w-4" />Download All</Button>
+            </div>
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="font-bold text-lg text-primary">Sequence</h3>
+          <div className="flex gap-2 flex-wrap">
+              {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
+              <div key={`seq-logo-${index}`} className="relative cursor-pointer w-32 h-32" onClick={() => setImageInView(seq.url)}>
+                  <Image src={seq.url} alt={`Sequence Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border"/>
+              </div>
+              ))}
+              {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && seq.url && (
+                  <div key={`seq-back-${index}`} className="relative cursor-pointer w-32 h-32" onClick={() => setImageInView(seq.url)}>
+                  <Image src={seq.url} alt={`Sequence Back Design ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border"/>
+              </div>
+              ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+});
+ProductionDocuments.displayName = 'ProductionDocuments';
+
+const ProductionQueueTableRow = React.memo(({
+    lead,
+    deadlineInfo,
+    productionStatus,
+    openLeadId,
+    toggleLeadDetails,
+    getContactDisplay,
+    handleJoReceivedChange,
+    handleStatusChange,
+    handleCheckboxChange,
+    handleEndorseToLogistics
+}: {
+    lead: EnrichedLead;
+    deadlineInfo: { text: string; isOverdue: boolean; isUrgent: boolean; remainingDays: number; };
+    productionStatus: { text: string; variant: "success" | "warning" | "secondary" | "default" | "destructive"; };
+    openLeadId: string | null;
+    toggleLeadDetails: (id: string) => void;
+    getContactDisplay: (lead: Lead) => string | null;
+    handleJoReceivedChange: (id: string, checked: boolean) => void;
+    handleStatusChange: (id: string, field: "productionType" | "sewerType", value: string) => void;
+    handleCheckboxChange: (id: string, field: CheckboxField, checked: boolean) => void;
+    handleEndorseToLogistics: (id: string) => void;
+}) => {
+    const isRepeat = lead.orderNumber > 1;
+    const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
+
+    return (
+        <>
+            <TableRow>
+                <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
+                    <Collapsible>
+                        <CollapsibleTrigger asChild>
+                            <div className="flex items-center justify-center cursor-pointer">
+                                <span>{lead.customerName}</span>
+                                <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
+                            </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
+                            {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
+                            {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
+                        </CollapsibleContent>
+                    </Collapsible>
+                    {isRepeat ? (
+                        <TooltipProvider>
+                            <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
+                                <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                    {lead.orderNumber}
+                                </span>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                            </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                        ) : (
+                        <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                    )}
+                </TableCell>
+                <TableCell className="text-xs align-middle py-3 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
+                <TableCell className="align-middle py-3 text-center">
+                    <div className="flex flex-col items-center gap-1">
+                        <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                        {lead.priorityType}
+                        </Badge>
+                        <div className={cn("text-gray-500 text-[10px] whitespace-nowrap", specialOrderTypes.includes(lead.orderType) && "font-bold")}>
+                        {lead.orderType}
+                        </div>
+                    </div>
+                </TableCell>
+                <TableCell className={cn(
+                    "text-center text-xs align-middle py-3 font-medium",
+                    deadlineInfo.isOverdue && "text-red-500",
+                    deadlineInfo.isUrgent && "text-amber-600",
+                    !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
+                )}>
+                    {deadlineInfo.text}
+                </TableCell>
+                <TableCell className="text-xs align-middle py-3 text-black text-center">
+                    <Button variant="ghost" className="h-auto py-1 px-2 flex items-center gap-1 text-black hover:bg-gray-100 hover:text-black" onClick={() => toggleLeadDetails(lead.id)}>
+                    <FileText className="h-4 w-4" />
+                    <span className="whitespace-normal break-words leading-tight">View Documents</span>
+                    <ChevronDown className={cn("h-4 w-4 transition-transform", openLeadId === lead.id && "rotate-180")} />
+                    </Button>
+                </TableCell>
+                <TableCell className="text-center align-middle py-2">
+                    <div className="flex flex-col items-center justify-center gap-1">
+                        <Checkbox
+                        checked={lead.isJoHardcopyReceived || false}
+                        onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
+                        disabled={!lead.isJoPrinted}
+                        />
+                        {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
+                    </div>
+                </TableCell>
+                <TableCell className="text-center align-middle py-3">
+                    <div className="flex flex-col items-center justify-center gap-1">
+                    <Checkbox
+                        checked={lead.isCutting || false}
+                        onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
+                        disabled={!lead.isJoHardcopyReceived}
+                    />
+                    {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
+                    </div>
+                </TableCell>
+                <TableCell className="text-center align-middle py-3">
+                    <Select
+                    value={lead.productionType || 'Pending'}
+                    onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
+                    disabled={!lead.isCutting || lead.isEmbroideryDone}
+                    >
+                    <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType))}>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {productionOptions.map(option => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                </TableCell>
+                <TableCell className="text-center align-middle py-3">
+                    <div className="flex flex-col items-center justify-center gap-1">
+                    <Checkbox
+                        checked={lead.isEmbroideryDone || false}
+                        onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
+                        disabled={!lead.isCutting || !lead.productionType || lead.productionType === 'Pending'}
+                    />
+                    {lead.embroideryDoneTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.embroideryDoneTimestamp).dateTimeShort}</div>}
+                    </div>
+                </TableCell>
+                <TableCell className="text-center align-middle py-3">
+                    <Select
+                    value={lead.sewerType || 'Pending'}
+                    onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
+                    disabled={!lead.isEmbroideryDone || lead.isSewing}
+                    >
+                    <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType))}>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {productionOptions.map(option => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                </TableCell>
+                <TableCell className="text-center align-middle py-3">
+                    <div className="flex flex-col items-center justify-center gap-1">
+                    <Checkbox
+                        checked={lead.isSewing || false}
+                        onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
+                        disabled={!lead.isEmbroideryDone || !lead.sewerType || lead.sewerType === 'Pending'}
+                    />
+                    {lead.sewingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
+                    </div>
+                </TableCell>
+                <TableCell className="text-center align-middle py-3">
+                    <Badge variant={productionStatus.variant}>{productionStatus.text}</Badge>
+                </TableCell>
+                <TableCell className="text-center align-middle py-3">
+                    <Button
+                        size="sm"
+                        onClick={() => handleEndorseToLogistics(lead.id)}
+                        disabled={!lead.isDone}
+                        className={cn(
+                            "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
+                        )}
+                    >
+                        <Send className="h-3.5 w-3.5" />
+                        <span className='whitespace-normal break-words'>Send to Logistics</span>
+                    </Button>
+                </TableCell>
+            </TableRow>
+            {openLeadId === lead.id && (
+                <TableRow>
+                    <TableCell colSpan={13} className="p-0">
+                        <ProductionDocuments lead={lead} />
+                    </TableCell>
+                </TableRow>
+            )}
+        </>
+    );
+});
+ProductionQueueTableRow.displayName = 'ProductionQueueTableRow';
 
 
 export function ProductionQueueTable() {
@@ -481,171 +814,21 @@ export function ProductionQueueTable() {
                 </TableHeader>
                 <TableBody>
                 {productionQueue && productionQueue.length > 0 ? (
-                  productionQueue.map((lead) => {
-                    const isRepeat = lead.orderNumber > 1;
-                    const deadlineInfo = calculateProductionDeadline(lead);
-                    const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
-                    const productionStatus = getProductionStatusLabel(lead);
-                    return (
-                      <React.Fragment key={lead.id}>
-                          <TableRow>
-                              <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
-                                <Collapsible>
-                                  <CollapsibleTrigger asChild>
-                                      <div className="flex items-center justify-center cursor-pointer">
-                                          <span>{lead.customerName}</span>
-                                          <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                      </div>
-                                  </CollapsibleTrigger>
-                                  <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
-                                      {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
-                                      {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
-                                  </CollapsibleContent>
-                                </Collapsible>
-                                {isRepeat ? (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
-                                            <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                            <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                              {lead.orderNumber}
-                                            </span>
-                                          </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  ) : (
-                                    <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                                  )}
-                              </TableCell>
-                              <TableCell className="text-xs align-middle py-3 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
-                              <TableCell className="align-middle py-3 text-center">
-                                <div className="flex flex-col items-center gap-1">
-                                  <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                                    {lead.priorityType}
-                                  </Badge>
-                                  <div className={cn("text-gray-500 text-[10px] whitespace-nowrap", specialOrderTypes.includes(lead.orderType) && "font-bold")}>
-                                    {lead.orderType}
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell className={cn(
-                                "text-center text-xs align-middle py-3 font-medium",
-                                deadlineInfo.isOverdue && "text-red-500",
-                                deadlineInfo.isUrgent && "text-amber-600",
-                                !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
-                              )}>
-                                {deadlineInfo.text}
-                              </TableCell>
-                              <TableCell className="text-xs align-middle py-3 text-black text-center">
-                                <Button variant="ghost" className="h-auto py-1 px-2 flex items-center gap-1 text-black hover:bg-gray-100 hover:text-black" onClick={() => toggleLeadDetails(lead.id)}>
-                                  <FileText className="h-4 w-4" />
-                                  <span className="whitespace-normal break-words leading-tight">View Documents</span>
-                                  <ChevronDown className={cn("h-4 w-4 transition-transform", openLeadId === lead.id && "rotate-180")} />
-                                </Button>
-                              </TableCell>
-                               <TableCell className="text-center align-middle py-2">
-                                    <div className="flex flex-col items-center justify-center gap-1">
-                                      <Checkbox
-                                        checked={lead.isJoHardcopyReceived || false}
-                                        onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isJoHardcopyReceived', !!checked)}
-                                        disabled={!lead.isJoPrinted}
-                                      />
-                                      {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
-                                    </div>
-                                </TableCell>
-                              <TableCell className="text-center align-middle py-3">
-                                <div className="flex flex-col items-center justify-center gap-1">
-                                  <Checkbox
-                                      checked={lead.isCutting || false}
-                                      onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
-                                      disabled={!lead.isJoHardcopyReceived}
-                                  />
-                                  {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-center align-middle py-3">
-                                <Select
-                                  value={lead.productionType || 'Pending'}
-                                  onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
-                                  disabled={!lead.isCutting || lead.isEmbroideryDone}
-                                >
-                                  <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType))}>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {productionOptions.map(option => (
-                                        <SelectItem key={option} value={option}>{option}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell className="text-center align-middle py-3">
-                                <div className="flex flex-col items-center justify-center gap-1">
-                                  <Checkbox
-                                      checked={lead.isEmbroideryDone || false}
-                                      onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
-                                      disabled={!lead.isCutting || !lead.productionType || lead.productionType === 'Pending'}
-                                  />
-                                  {lead.embroideryDoneTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.embroideryDoneTimestamp).dateTimeShort}</div>}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-center align-middle py-3">
-                                <Select
-                                  value={lead.sewerType || 'Pending'}
-                                  onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
-                                  disabled={!lead.isEmbroideryDone || lead.isSewing}
-                                >
-                                  <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType))}>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {productionOptions.map(option => (
-                                        <SelectItem key={option} value={option}>{option}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell className="text-center align-middle py-3">
-                                <div className="flex flex-col items-center justify-center gap-1">
-                                  <Checkbox
-                                    checked={lead.isSewing || false}
-                                    onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
-                                    disabled={!lead.isEmbroideryDone || !lead.sewerType || lead.sewerType === 'Pending'}
-                                  />
-                                  {lead.sewingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-center align-middle py-3">
-                                <Badge variant={productionStatus.variant}>{productionStatus.text}</Badge>
-                              </TableCell>
-                              <TableCell className="text-center align-middle py-3">
-                                  <Button
-                                      size="sm"
-                                      onClick={() => handleEndorseToLogistics(lead.id)}
-                                      disabled={!lead.isDone}
-                                      className={cn(
-                                          "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
-                                      )}
-                                  >
-                                      <Send className="h-3.5 w-3.5" />
-                                      <span className='whitespace-normal break-words'>Send to Logistics</span>
-                                  </Button>
-                              </TableCell>
-                          </TableRow>
-                          {openLeadId === lead.id && (
-                            <TableRow>
-                              <TableCell colSpan={13} className="p-0">
-                                  <ProductionDocuments lead={lead} />
-                              </TableCell>
-                            </TableRow>
-                          )}
-                      </React.Fragment>
-                  )})
+                    productionQueue.map((lead) => (
+                        <ProductionQueueTableRow
+                            key={lead.id}
+                            lead={lead}
+                            deadlineInfo={calculateProductionDeadline(lead)}
+                            productionStatus={getProductionStatusLabel(lead)}
+                            openLeadId={openLeadId}
+                            toggleLeadDetails={toggleLeadDetails}
+                            getContactDisplay={getContactDisplay}
+                            handleJoReceivedChange={handleJoReceivedChange}
+                            handleStatusChange={handleStatusChange}
+                            handleCheckboxChange={handleCheckboxChange}
+                            handleEndorseToLogistics={handleEndorseToLogistics}
+                        />
+                    ))
                 ) : (
                   <TableRow>
                     <TableCell colSpan={13} className="text-center text-muted-foreground">
@@ -660,148 +843,3 @@ export function ProductionQueueTable() {
     </Card>
   );
 }
-
-const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
-  const [imageInView, setImageInView] = useState<string | null>(null);
-  
-  const finalFiles = [
-    ...(lead.layouts?.[0]?.finalLogoDst?.filter(f => f).map(f => ({ ...f, type: 'Logo (DST)' })) || []),
-    ...(lead.layouts?.[0]?.finalBackDesignDst?.filter(f => f).map(f => ({ ...f, type: 'Back Design (DST)' })) || []),
-    ...(lead.layouts?.[0]?.finalNamesDst?.filter(f => f).map(f => ({ ...f, type: 'Name (DST)' })) || []),
-  ];
-
-  const handleJobOrderPrint = () => {
-    const jobOrderUrl = `/job-order/${lead.id}/print`;
-    window.open(jobOrderUrl, '_blank', 'height=800,width=1200,scrollbars=yes');
-  };
-
-  const handleDownload = async (url: string, name: string) => {
-    try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const fileHandle = await (window as any).showSaveFilePicker({
-            suggestedName: name,
-        });
-        const writable = await fileHandle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-    } catch (err) {
-        console.error('File save failed:', err);
-    }
-  };
-
-  const hasFilesToDownload = useMemo(() => {
-    const sequenceLogoFiles = lead.layouts?.[0]?.sequenceLogo?.some(s => s?.url);
-    const sequenceBackFiles = lead.layouts?.[0]?.sequenceBackDesign?.some(s => s?.url);
-    return finalFiles.length > 0 || sequenceLogoFiles || sequenceBackFiles;
-  }, [finalFiles, lead.layouts]);
-
-  const handleDownloadAll = async () => {
-    if (!hasFilesToDownload) return;
-    try {
-        const dirHandle = await (window as any).showDirectoryPicker();
-        
-        const filesToDownload: { name: string; url: string; type: string; }[] = [];
-
-        if(finalFiles.length > 0) {
-            filesToDownload.push(...finalFiles.filter((f): f is FileObject & { type: string } => !!f));
-        }
-
-        const sequenceLogoFiles = lead.layouts?.[0]?.sequenceLogo?.filter((s): s is FileObject => !!s?.url);
-        if(sequenceLogoFiles){
-            sequenceLogoFiles.forEach((file, index) => {
-                filesToDownload.push({ name: `sequence-logo-${index + 1}.png`, url: file.url, type: 'Sequence' });
-            });
-        }
-
-        const sequenceBackFiles = lead.layouts?.[0]?.sequenceBackDesign?.filter((s): s is FileObject => !!s?.url);
-        if(sequenceBackFiles){
-            sequenceBackFiles.forEach((file, index) => {
-                filesToDownload.push({ name: `sequence-back-${index + 1}.png`, url: file.url, type: 'Sequence' });
-            });
-        }
-        
-        for (const file of filesToDownload) {
-            if(file) {
-                const response = await fetch(file.url);
-                const blob = await response.blob();
-                const fileHandle = await dirHandle.getFileHandle(file.name, { create: true });
-                const writable = await fileHandle.createWritable();
-                await writable.write(blob);
-                await writable.close();
-            }
-        }
-    } catch (err) {
-        console.error('Download all failed:', err);
-    }
-  };
-
-
-  return (
-    <>
-      {imageInView && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
-          onClick={() => setImageInView(null)}
-        >
-          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
-            <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
-             <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setImageInView(null)}
-                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
-            >
-                <X className="h-6 w-6" />
-                <span className="sr-only">Close</span>
-            </Button>
-          </div>
-        </div>
-      )}
-      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-x-6">
-        <div className="space-y-4">
-            <div className="space-y-2">
-                <h3 className="font-bold text-lg text-primary">Job Order and Layout</h3>
-                <Button onClick={handleJobOrderPrint} variant="default" size="lg" className="bg-primary text-white hover:bg-primary/90">
-                    Check Job Order and Layout
-                </Button>
-            </div>
-            <div>
-                <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
-                <div className="max-h-48 overflow-y-auto pr-2 mt-2">
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                        {finalFiles.map((file, index) => (
-                        file && 
-                        <div key={index} className="flex items-center justify-between p-1 bg-white rounded-md border">
-                            <span className="truncate text-xs pl-1"><strong>{file.type}:</strong> {file.name}</span>
-                            <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-7 w-7 text-primary">
-                                <Download className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        ))}
-                    </div>
-                </div>
-                <Button onClick={handleDownloadAll} disabled={!hasFilesToDownload} size="sm" className="text-white font-bold mt-2"><Download className="mr-2 h-4 w-4" />Download All</Button>
-            </div>
-        </div>
-
-        <div className="space-y-2">
-          <h3 className="font-bold text-lg text-primary">Sequence</h3>
-          <div className="flex gap-2 flex-wrap">
-              {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
-              <div key={`seq-logo-${index}`} className="relative cursor-pointer w-32 h-32" onClick={() => setImageInView(seq.url)}>
-                  <Image src={seq.url} alt={`Sequence Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border"/>
-              </div>
-              ))}
-              {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && seq.url && (
-                  <div key={`seq-back-${index}`} className="relative cursor-pointer w-32 h-32" onClick={() => setImageInView(seq.url)}>
-                  <Image src={seq.url} alt={`Sequence Back Design ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border"/>
-              </div>
-              ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-});
-ProductionDocuments.displayName = 'ProductionDocuments';
