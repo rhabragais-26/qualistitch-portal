@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -299,7 +300,7 @@ export default function JobOrderPage() {
             <Save className="mr-2 h-4 w-4" />
             Save Changes
             </Button>
-            <Button onClick={handlePrint} className="text-white font-bold" disabled={!lead?.joNumber}>
+            <Button onClick={handlePrint} className="text-white font-bold">
             <Printer className="mr-2 h-4 w-4" />
             Print J.O.
             </Button>

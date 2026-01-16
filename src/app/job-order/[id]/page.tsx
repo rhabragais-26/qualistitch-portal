@@ -464,7 +464,7 @@ export default function JobOrderPage() {
                       <Save className="mr-2 h-4 w-4" />
                       Save Changes
                   </Button>
-                  <Button onClick={handlePrint} className="text-white font-bold shadow-md" disabled={!lead?.joNumber || isDirty}>
+                  <Button onClick={handlePrint} className="text-white font-bold shadow-md">
                       <Printer className="mr-2 h-4 w-4" />
                       Print J.O.
                   </Button>
