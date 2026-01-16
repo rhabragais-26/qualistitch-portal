@@ -1176,7 +1176,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
                       <Button
                         type="button"
                         onClick={handleAddOrder}
-                        disabled={!newOrderProductType || (showSingleQuantity ? singleQuantity === 0 : sizeQuantities.every(sq => sq.quantity === 0))}
+                        disabled={!newOrderProductType || (!isPatches && !isClientOwned && !newOrderColor) || (showSingleQuantity ? singleQuantity === 0 : sizeQuantities.every(sq => sq.quantity === 0))}
                       >
                         Add
                       </Button>
