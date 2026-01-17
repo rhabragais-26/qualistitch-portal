@@ -48,7 +48,7 @@ export default function AuthPage() {
                 <Card>
                 <CardHeader>
                     <CardTitle>Sign Up</CardTitle>
-                    <CardDescription>Create a new account to get started.</CardDescription>
+                    <CardDescription>A required verification will be sent to your email after successful sign up</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <SignupForm onSignupSuccess={() => setActiveTab('login')} />
