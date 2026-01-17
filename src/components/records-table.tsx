@@ -77,7 +77,6 @@ const poloShirtColors = [
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
-const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 const paymentTypes = ['Partially Paid', 'Fully Paid', 'COD'];
 const orderTypes = ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'];
 const priorityTypes = ['Rush', 'Regular'];
@@ -273,6 +272,11 @@ export function RecordsTable() {
 
   const isLoading = areLeadsLoading || isInventoryLoading;
   const error = leadsError || inventoryError;
+
+  const salesRepresentatives = useMemo(() => {
+    if (!leads) return [];
+    return [...new Set(leads.map(lead => lead.salesRepresentative).filter(Boolean))].sort();
+  }, [leads]);
 
   // State for editing a lead
   const [isEditLeadDialogOpen, setIsEditLeadDialogOpen] = useState(false);

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -34,8 +35,6 @@ import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 
-
-const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 
 type Order = {
   productType: string;
@@ -85,6 +84,11 @@ export function JobOrderTable() {
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+
+  const salesRepresentatives = useMemo(() => {
+    if (!leads) return [];
+    return [...new Set(leads.map(lead => lead.salesRepresentative).filter(Boolean))].sort();
+  }, [leads]);
 
   const handleProcessJobOrder = useCallback((lead: Lead) => {
     router.push(`/job-order/${lead.id}`);
@@ -146,27 +150,27 @@ export function JobOrderTable() {
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-      customerOrderStats[name].totalQuantity += orderQuantity;
+      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
     });
   
     const enrichedLeads: EnrichedLead[] = [];
   
-    Object.values(customerOrderStats).forEach(({ orders, totalQuantity }) => {
+    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
       orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
       orders.forEach((lead, index) => {
         enrichedLeads.push({
           ...lead,
           orderNumber: index + 1,
-          totalCustomerQuantity: totalQuantity,
+          totalCustomerQuantity: totalCustomerQuantity,
         });
       });
     });
