@@ -143,6 +143,7 @@ export default function NewOrderPage() {
       orders: values.orders,
       submissionDateTime: now,
       lastModified: now,
+      lastModifiedBy: userProfile.nickname,
       publiclyPrintable: true,
       grandTotal,
       paidAmount,

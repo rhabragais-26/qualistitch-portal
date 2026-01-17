@@ -46,7 +46,7 @@ interface EditLeadFullDialogProps {
 export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLeadFullDialogProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { user, isUserLoading, userError } = useUser();
+  const { user, userProfile, isUserLoading, userError } = useUser();
   
   const [stagedOrders, setStagedOrders] = useState<Order[]>([]);
   const [orderType, setOrderType] = useState<'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | undefined>(undefined);
@@ -195,7 +195,8 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             paidAmount,
             modeOfPayment,
             paymentType,
-            lastModified: new Date().toISOString()
+            lastModified: new Date().toISOString(),
+            lastModifiedBy: userProfile?.nickname,
         };
         
         console.log("DEBUG: Data to update:", dataToUpdate);
@@ -222,7 +223,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         console.log("DEBUG: Finally block: Update process finished.");
         // No longer need to setIsConfirmSaveOpen(false) as AlertDialog is removed
     }
-  }, [firestore, lead, handleUpdate, onClose, toast, formMethods, stagedOrders, addOns, discounts, payments, grandTotal, balance, user]);
+  }, [firestore, lead, handleUpdate, onClose, toast, formMethods, stagedOrders, addOns, discounts, payments, grandTotal, balance, user, userProfile]);
 
   // Debugging logs for dialog states - AlertDialog logs are removed
   useEffect(() => {

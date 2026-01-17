@@ -100,6 +100,7 @@ const leadSchema = z.object({
   orders: z.array(orderSchema),
   submissionDateTime: z.string(),
   lastModified: z.string(),
+  lastModifiedBy: z.string().optional(),
   grandTotal: z.number().optional(),
   paidAmount: z.number().optional(),
   modeOfPayment: z.string().optional(),

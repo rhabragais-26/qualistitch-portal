@@ -80,6 +80,7 @@ type Lead = {
   isRecheckingQuality?: boolean;
   isJoHardcopyReceived?: boolean;
   layouts?: Layout[];
+  lastModifiedBy?: string;
 }
 
 type EnrichedLead = Lead & {
@@ -128,7 +129,7 @@ export function JobOrderTable() {
     if (mobile && landline) {
       return `${mobile} / ${landline}`;
     }
-    return mobile || landline || 'N/A';
+    return mobile || landline || null;
   }, []);
 
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
@@ -435,10 +436,10 @@ export function JobOrderTable() {
                                     </div>
                                 </CollapsibleTrigger>
                                 <div className="text-gray-500 text-center">{creationDate.dayOfWeek}</div>
-                                <CollapsibleContent className="pt-1 text-gray-500 text-xs text-center">
+                                <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-xs text-left">
                                     <span className='font-bold text-gray-600'>Last Modified:</span>
                                     <div>{modifiedDate.dateTime}</div>
-                                    <div>{modifiedDate.dayOfWeek}</div>
+                                    <div>{modifiedDate.dayOfWeek}{lead.lastModifiedBy ? ` (${lead.lastModifiedBy})` : ''}</div>
                                 </CollapsibleContent>
                               </Collapsible>
                             </TableCell>
@@ -596,4 +597,3 @@ export function JobOrderTable() {
     </Card>
   );
 }
-

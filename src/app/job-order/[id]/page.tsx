@@ -74,6 +74,7 @@
       joNumber?: number;
       layouts?: Layout[];
       publiclyPrintable?: boolean;
+      lastModifiedBy?: string;
     };
 
     const courierOptions = ['J&T', 'Lalamove', 'LBC', 'Pick-up'];
@@ -305,7 +306,7 @@
       };
       
       const handleSaveChanges = async (navigateOnSuccess = false) => {
-        if (!lead || !leadRef || !allLeads) return;
+        if (!lead || !leadRef || !allLeads || !userProfile) return;
 
         let newJoNumber: number | undefined = lead.joNumber;
         
@@ -322,6 +323,7 @@
             joNumber: newJoNumber,
             deliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() : null,
             lastModified: new Date().toISOString(),
+            lastModifiedBy: userProfile.nickname,
             layouts: layoutsToSave,
             publiclyPrintable: true,
         };
