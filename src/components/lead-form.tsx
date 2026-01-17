@@ -91,7 +91,7 @@ const orderSchema = z.object({
   color: z.string().min(1, "Color cannot be empty."),
   size: z.string().min(1, "Size cannot be empty."),
   quantity: z.number().min(1, "Quantity must be at least 1."),
-  embroidery: z.enum(['logo', 'logoAndText', 'name']),
+  embroidery: z.enum(['logo', 'logoAndText', 'name']).optional(),
   pricePerPatch: z.number().optional(),
 });
 
@@ -1205,14 +1205,6 @@ export function LeadForm({
                   </TableBody>
                 </Table>
               </div>
-               <FormField control={form.control} name="orders" render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                        <Input type="hidden" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}/>
             </div>
         </div>
       </CardContent>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -43,15 +42,6 @@ interface EditLeadFullDialogProps {
   onUpdate: () => void;
 }
 
-type LeadUpdateData = FormValues & {
-    stagedOrders: Order[];
-    addOns: Record<string, AddOns>;
-    discounts: Record<string, Discount>;
-    payments: Record<string, Payment[]>;
-    grandTotal: number;
-    balance: number;
-}
-
 export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLeadFullDialogProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -65,14 +55,13 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   const [balance, setBalance] = useState(0);
   
   const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
-  const [dataToSave, setDataToSave] = useState<LeadUpdateData | null>(null);
 
   const formMethods = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onSubmit',
   });
   
-  const { reset, handleSubmit, formState: { errors } } = formMethods;
+  const { reset, handleSubmit, getValues } = formMethods;
 
   useEffect(() => {
     if (isOpen && lead) {
@@ -132,20 +121,10 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         setPayments({});
         setGrandTotal(0);
         setBalance(0);
-        setDataToSave(null);
     }
   }, [isOpen, lead, reset]);
   
-  const onValidSubmit = (values: FormValues) => {
-    setDataToSave({
-        ...values,
-        stagedOrders,
-        addOns,
-        discounts,
-        payments,
-        grandTotal,
-        balance,
-    });
+  const onValidSubmit = () => {
     setIsConfirmSaveOpen(true);
   };
 
@@ -158,25 +137,17 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   };
 
   const handleConfirmSave = useCallback(async () => {
-    if (!firestore || !lead || !dataToSave) return;
+    if (!firestore || !lead) return;
 
-    const {
-        stagedOrders: ordersToSave,
-        addOns: addOnsToSave,
-        discounts: discountsToSave,
-        payments: paymentsToSave,
-        grandTotal: totalToSave,
-        balance: balanceToSave,
-        ...formValuesToSave
-    } = dataToSave;
+    const formValuesToSave = getValues();
 
     try {
-        const paidAmount = Object.values(paymentsToSave).flat().reduce((sum, p) => sum + p.amount, 0);
-        const modeOfPayment = Object.values(paymentsToSave).flat().map(p => p.mode).join(', ');
+        const paidAmount = Object.values(payments).flat().reduce((sum, p) => sum + p.amount, 0);
+        const modeOfPayment = Object.values(payments).flat().map(p => p.mode).join(', ');
 
         let paymentType: string;
         if (paidAmount > 0) {
-            paymentType = balanceToSave > 0 ? 'Partially Paid' : 'Fully Paid';
+            paymentType = balance > 0 ? 'Partially Paid' : 'Fully Paid';
         } else {
             paymentType = 'COD';
         }
@@ -192,13 +163,13 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             barangay: toTitleCase(formValuesToSave.barangay || ''),
             city: toTitleCase(formValuesToSave.city || ''),
             province: toTitleCase(formValuesToSave.province || ''),
-            orders: ordersToSave,
-            productType: [...new Set(ordersToSave.map(o => o.productType))].join(', '),
-            addOns: addOnsToSave,
-            discounts: discountsToSave,
-            payments: Object.values(paymentsToSave).flat(),
-            grandTotal: totalToSave,
-            balance: balanceToSave,
+            orders: stagedOrders,
+            productType: [...new Set(stagedOrders.map(o => o.productType))].join(', '),
+            addOns,
+            discounts,
+            payments: Object.values(payments).flat(),
+            grandTotal,
+            balance,
             paidAmount,
             modeOfPayment,
             paymentType,
@@ -222,10 +193,9 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             description: e.message || "Could not update the lead.",
         });
     } finally {
-        setDataToSave(null);
         setIsConfirmSaveOpen(false);
     }
-  }, [firestore, lead, dataToSave, onUpdate, onClose, toast]);
+  }, [firestore, lead, onUpdate, onClose, toast, getValues, stagedOrders, addOns, discounts, payments, grandTotal, balance]);
 
   return (
     <>
@@ -281,7 +251,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will update the lead record with your changes.
+              This action will update the order records with your changes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
