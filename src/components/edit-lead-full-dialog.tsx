@@ -17,8 +17,8 @@ import { useFirestore } from '@/firebase';
 import { LeadForm } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
-import { AddOns, Discount, Payment } from './invoice-card';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { AddOns, Discount, Payment } from './invoice-dialogs';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from './ui/alert-dialog';
 import type { Lead as LeadType } from './records-table';
 
 interface EditLeadFullDialogProps {
