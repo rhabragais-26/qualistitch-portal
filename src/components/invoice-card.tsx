@@ -12,7 +12,8 @@ import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOptio
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { AddOns, Discount, Payment, AddOnsDialog, DiscountDialog, AddPaymentDialog } from './invoice-dialogs';
+import { AddOns, Discount, Payment } from "./invoice-dialogs";
+import { AddOnsDialog, DiscountDialog, AddPaymentDialog } from './invoice-dialogs';
 
 type InvoiceCardProps = {
   orders: Order[];
@@ -396,23 +397,27 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                         <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
                       </div>
                     </div>
-                     {totalPaid > 0 && (
-                       <>
-                        {Object.values(payments).flat().map((payment, index) => (
-                          <div key={index} className="flex justify-end items-center text-sm text-right">
-                              <span className="text-muted-foreground mr-2">
-                                {payment.type === 'full' ? 'Full Payment' : 'Down Payment'} <span className="italic">(via {payment.mode})</span>:
-                              </span>
-                              <span className="font-medium">{formatCurrency(payment.amount)}</span>
-                          </div>
-                        ))}
-
-                        <div className="flex justify-end items-center text-lg mt-2">
-                            <span className="font-bold text-black">Balance:</span>
-                            <span className="font-bold text-destructive ml-2">{formatCurrency(balance)}</span>
+                    
+                    {totalPaid > 0 ? (
+                      Object.values(payments).flat().map((payment, index) => (
+                        <div key={index} className="flex justify-end items-center text-sm text-right">
+                            <span className="text-muted-foreground mr-2">
+                              {payment.type === 'full' ? 'Full Payment' : 'Down Payment'} <span className="italic">(via {payment.mode})</span>:
+                            </span>
+                            <span className="font-medium">{formatCurrency(payment.amount)}</span>
                         </div>
-                       </>
+                      ))
+                    ) : (
+                      <div className="flex justify-end items-center text-sm text-right">
+                          <span className="text-muted-foreground mr-2">Payment:</span>
+                          <span className="font-medium">{formatCurrency(0)}</span>
+                      </div>
                     )}
+
+                    <div className="flex justify-end items-center text-lg mt-2">
+                        <span className="font-bold text-black">Balance:</span>
+                        <span className="font-bold text-destructive ml-2">{formatCurrency(balance)}</span>
+                    </div>
                  </div>
             </div>
         </CardFooter>
