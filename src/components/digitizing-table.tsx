@@ -176,7 +176,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
   const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([]);
   const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
   const [sequenceLogo, setSequenceLogo] = useState<(FileObject | null)[]>([null]);
-  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
+  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([null]);
   const [finalProgrammedLogo, setFinalProgrammedLogo] = useState<(FileObject | null)[]>([null]);
   const [finalProgrammedBackDesign, setFinalProgrammedBackDesign] = useState<(FileObject | null)[]>([]);
   const [isNamesOnly, setIsNamesOnly] = useState(false);
@@ -1163,7 +1163,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                     </TooltipProvider>
                                   ) : (
                                     <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                                )}
+                                  )}
                                 {openCustomerDetails === lead.id && (
                                     <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
                                     {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
@@ -1306,7 +1306,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {hasInitialImages && (
                                     <Card className="bg-white">
-                                        <CardHeader><CardTitle className="text-base">Initial Program Images</CardTitle></CardHeader>
+                                        <CardHeader><CardTitle className="text-base">Reference Images</CardTitle></CardHeader>
                                         <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs">
                                             {lead.layouts?.[0]?.logoLeftImage && (
                                               <div> 
@@ -1437,3 +1437,5 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
+    
