@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
@@ -36,7 +36,19 @@ export function LoginForm() {
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      if (!userCredential.user.emailVerified) {
+        await signOut(auth);
+        toast({
+          variant: 'destructive',
+          title: 'Email Not Verified',
+          description:
+            "Please verify your email by clicking the link sent to your inbox. Check your spam folder if you can't find it.",
+          duration: 10000,
+        });
+        setIsLoading(false);
+        return;
+      }
       // The redirect is handled by the page component
     } catch (error: any) {
       console.error('Login Error:', error);
