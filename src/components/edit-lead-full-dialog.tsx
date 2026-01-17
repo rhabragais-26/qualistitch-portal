@@ -8,7 +8,6 @@ import {
   DialogTitle,
   DialogClose,
   DialogFooter,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import {
     AlertDialog,
@@ -30,6 +29,7 @@ import { Order } from './lead-form';
 import { AddOns, Discount, Payment } from "./invoice-dialogs";
 import type { Lead as LeadType } from './records-table';
 import { toTitleCase } from '@/lib/utils';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 
 interface EditLeadFullDialogProps {
@@ -37,6 +37,15 @@ interface EditLeadFullDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: () => void;
+}
+
+type LeadUpdateData = FormValues & {
+    stagedOrders: Order[];
+    addOns: Record<string, AddOns>;
+    discounts: Record<string, Discount>;
+    payments: Record<string, Payment[]>;
+    grandTotal: number;
+    balance: number;
 }
 
 export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLeadFullDialogProps) {
@@ -50,45 +59,20 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   const [payments, setPayments] = useState<Record<string, Payment[]>>({});
   const [grandTotal, setGrandTotal] = useState(0);
   const [balance, setBalance] = useState(0);
-  const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
-  const [formValues, setFormValues] = useState<FormValues | null>(null);
+  
+  const [dataToSave, setDataToSave] = useState<LeadUpdateData | null>(null);
 
   const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
-    if (isOpen) {
-        setFormKey(prev => prev + 1); // This will re-mount the form
-    }
-  }, [isOpen, lead]);
-
-
-  const initialFormValues = useMemo(() => {
-    if (!lead) return null;
-    return {
-        customerName: toTitleCase(lead.customerName || ''),
-        companyName: lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '',
-        mobileNo: lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '',
-        landlineNo: lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber : '',
-        isInternational: lead.isInternational ?? false,
-        houseStreet: lead.houseStreet ? toTitleCase(lead.houseStreet) : '',
-        barangay: lead.barangay ? toTitleCase(lead.barangay) : '',
-        city: lead.city ? toTitleCase(lead.city) : '',
-        province: lead.province ? toTitleCase(lead.province) : '',
-        internationalAddress: lead.isInternational ? lead.location : '',
-        courier: lead.courier === '-' ? undefined : lead.courier,
-        orderType: lead.orderType as any,
-        priorityType: lead.priorityType as any,
-        orders: lead.orders || [],
-    };
-  }, [lead]);
-
-  useEffect(() => {
     if (isOpen && lead) {
+      setFormKey(prev => prev + 1);
       setStagedOrders(lead.orders || []);
       
       const paymentsObject: Record<string, Payment[]> = {};
-      if (lead.payments && Array.isArray(lead.payments) && lead.payments.length > 0) {
-        paymentsObject['main'] = lead.payments as Payment[];
+      const leadPayments = lead.payments as any; // Handle legacy and new structure
+      if (leadPayments && Array.isArray(leadPayments) && leadPayments.length > 0) {
+        paymentsObject['main'] = leadPayments as Payment[];
       } else if (lead.paidAmount) {
           paymentsObject['main'] = [{
               type: lead.balance === 0 && lead.paidAmount === lead.grandTotal ? 'full' : 'down',
@@ -111,50 +95,87 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         setPayments({});
         setGrandTotal(0);
         setBalance(0);
-        setFormValues(null);
+        setDataToSave(null);
     }
   }, [isOpen, lead]);
+
+
+  const initialFormValues = useMemo(() => {
+    if (!lead) return null;
+    const courier = lead.courier === '-' ? undefined : lead.courier;
+    return {
+        customerName: toTitleCase(lead.customerName || ''),
+        companyName: lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '',
+        mobileNo: lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '',
+        landlineNo: lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber : '',
+        isInternational: lead.isInternational ?? false,
+        houseStreet: lead.houseStreet ? toTitleCase(lead.houseStreet) : '',
+        barangay: lead.barangay ? toTitleCase(lead.barangay) : '',
+        city: lead.city ? toTitleCase(lead.city) : '',
+        province: lead.province ? toTitleCase(lead.province) : '',
+        internationalAddress: lead.isInternational ? lead.location : '',
+        courier: courier,
+        orderType: lead.orderType as any,
+        priorityType: lead.priorityType as any,
+        orders: lead.orders || [],
+    };
+  }, [lead]);
+
   
   const handleFormSubmit = useCallback((values: FormValues) => {
-    setFormValues(values);
-    setIsConfirmSaveOpen(true);
-  }, []);
+    setDataToSave({
+        ...values,
+        stagedOrders,
+        addOns,
+        discounts,
+        payments,
+        grandTotal,
+        balance,
+    });
+  }, [stagedOrders, addOns, discounts, payments, grandTotal, balance]);
 
-  const handleEditLeadSubmit = useCallback(async () => {
-    if (!firestore || !lead || !formValues) return;
-    
-    setIsConfirmSaveOpen(false);
+  const handleConfirmSave = useCallback(async () => {
+    if (!firestore || !lead || !dataToSave) return;
+
+    const {
+        stagedOrders: ordersToSave,
+        addOns: addOnsToSave,
+        discounts: discountsToSave,
+        payments: paymentsToSave,
+        grandTotal: totalToSave,
+        balance: balanceToSave,
+        ...formValuesToSave
+    } = dataToSave;
 
     try {
-        const paidAmount = Object.values(payments).flat().reduce((sum, p) => sum + p.amount, 0);
-        const modeOfPayment = Object.values(payments).flat().map(p => p.mode).join(', ');
+        const paidAmount = Object.values(paymentsToSave).flat().reduce((sum, p) => sum + p.amount, 0);
+        const modeOfPayment = Object.values(paymentsToSave).flat().map(p => p.mode).join(', ');
 
         let paymentType: string;
         if (paidAmount > 0) {
-            paymentType = balance > 0 ? 'Partially Paid' : 'Fully Paid';
+            paymentType = balanceToSave > 0 ? 'Partially Paid' : 'Fully Paid';
         } else {
             paymentType = 'COD';
         }
         
         const dataToUpdate = {
-            ...formValues,
-            customerName: toTitleCase(formValues.customerName),
-            companyName: formValues.companyName ? toTitleCase(formValues.companyName) : '-',
-            contactNumber: formValues.mobileNo || '-',
-            landlineNumber: formValues.landlineNo || '-',
-            location: formValues.isInternational ? formValues.internationalAddress : [formValues.houseStreet, formValues.barangay, formValues.city, formValues.province].filter(Boolean).map(toTitleCase).join(', '),
-            houseStreet: toTitleCase(formValues.houseStreet || ''),
-            barangay: toTitleCase(formValues.barangay || ''),
-            city: toTitleCase(formValues.city || ''),
-            province: toTitleCase(formValues.province || ''),
-            isInternational: formValues.isInternational,
-            orders: stagedOrders,
-            productType: [...new Set(stagedOrders.map(o => o.productType))].join(', '),
-            addOns,
-            discounts,
-            payments: Object.values(payments).flat(),
-            grandTotal,
-            balance,
+            ...formValuesToSave,
+            customerName: toTitleCase(formValuesToSave.customerName),
+            companyName: formValuesToSave.companyName ? toTitleCase(formValuesToSave.companyName) : '-',
+            contactNumber: formValuesToSave.mobileNo || '-',
+            landlineNumber: formValuesToSave.landlineNo || '-',
+            location: formValuesToSave.isInternational ? formValuesToSave.internationalAddress : [formValuesToSave.houseStreet, formValuesToSave.barangay, formValuesToSave.city, formValuesToSave.province].filter(Boolean).map(toTitleCase).join(', '),
+            houseStreet: toTitleCase(formValuesToSave.houseStreet || ''),
+            barangay: toTitleCase(formValuesToSave.barangay || ''),
+            city: toTitleCase(formValuesToSave.city || ''),
+            province: toTitleCase(formValuesToSave.province || ''),
+            orders: ordersToSave,
+            productType: [...new Set(ordersToSave.map(o => o.productType))].join(', '),
+            addOns: addOnsToSave,
+            discounts: discountsToSave,
+            payments: Object.values(paymentsToSave).flat(),
+            grandTotal: totalToSave,
+            balance: balanceToSave,
             paidAmount,
             modeOfPayment,
             paymentType,
@@ -177,16 +198,20 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             title: "Update Failed",
             description: e.message || "Could not update the lead.",
         });
+    } finally {
+        setDataToSave(null);
     }
-  }, [firestore, lead, formValues, stagedOrders, payments, addOns, discounts, grandTotal, balance, onUpdate, onClose, toast]);
+  }, [firestore, lead, dataToSave, onUpdate, onClose, toast]);
 
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] w-full h-[95vh] flex flex-col">
           <DialogHeader className="flex-shrink-0 pt-6 px-6">
-             <DialogTitle className="text-xl">Edit Customer Details and Orders</DialogTitle>
-             <DialogDescription className="sr-only">Edit Lead</DialogDescription>
+             <DialogTitle className="text-xl font-bold">Edit Customer Details and Orders</DialogTitle>
+             <VisuallyHidden>
+                <DialogDescription>Edit Lead</DialogDescription>
+             </VisuallyHidden>
           </DialogHeader>
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
               <div className="xl:col-span-3">
@@ -224,7 +249,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
           </DialogFooter>
       </DialogContent>
     </Dialog>
-    <AlertDialog open={isConfirmSaveOpen} onOpenChange={setIsConfirmSaveOpen}>
+    <AlertDialog open={!!dataToSave} onOpenChange={(open) => !open && setDataToSave(null)}>
         <AlertDialogContent>
           <AlertDialogHeaderComponent>
             <AlertDialogTitleComponent>Are you absolutely sure?</AlertDialogTitleComponent>
@@ -234,11 +259,13 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
           </AlertDialogHeaderComponent>
           <AlertDialogFooterComponent>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleEditLeadSubmit}>Save</AlertDialogAction>
+            <AlertDialogAction onClick={handleConfirmSave}>Save</AlertDialogAction>
           </AlertDialogFooterComponent>
         </AlertDialogContent>
     </AlertDialog>
     </>
   );
 }
+    
+
     
