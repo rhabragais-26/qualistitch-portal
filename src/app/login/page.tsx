@@ -9,20 +9,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function AuthPage() {
-  const { user, isUserLoading } = useUser();
+  const { user, userProfile, isUserLoading } = useUser();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('login');
 
   useEffect(() => {
-    // If user is loaded and is not anonymous, redirect to the root page to handle routing.
-    if (!isUserLoading && user) {
+    // If user is loaded and their profile is also loaded, redirect away from auth page.
+    // This prevents redirection during the signup process before the user is signed out.
+    if (!isUserLoading && user && userProfile) {
       router.replace('/');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, userProfile, isUserLoading, router]);
 
-  // While checking user state, or if the user is already logged in, show a loading message.
-  // This prevents the login form from flashing before the redirect happens.
-  if (isUserLoading || user) {
+  // While checking user state, or if the user is logged in with a profile, show a loading message.
+  if (isUserLoading || (user && userProfile)) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
