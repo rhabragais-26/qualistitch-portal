@@ -63,6 +63,12 @@ const orderSchema = z.object({
 });
 export type Order = z.infer<typeof orderSchema>;
 
+const paymentSchema = z.object({
+    type: z.enum(['down', 'full']),
+    amount: z.number(),
+    mode: z.string(),
+});
+
 const leadSchema = z.object({
   id: z.string(),
   customerName: z.string(),
@@ -88,7 +94,7 @@ const leadSchema = z.object({
   balance: z.number().optional(),
   addOns: z.any().optional(),
   discounts: z.any().optional(),
-  payments: z.any().optional(),
+  payments: z.array(paymentSchema).optional(),
   productType: z.string().optional(),
 });
 
@@ -213,8 +219,15 @@ const RecordsTableRow = React.memo(({
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
-            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.modeOfPayment || '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-destructive font-bold">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">
+                <div>{lead.modeOfPayment || 'CASH'}</div>
+                {lead.payments && lead.payments[0] && (
+                    <div className="text-xs text-gray-500 capitalize">
+                        ({lead.payments[0].type === 'down' ? 'Down Payment' : 'Full Payment'})
+                    </div>
+                )}
+            </TableCell>
             <TableCell className="text-center align-middle py-2">
             <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                 View
@@ -595,8 +608,8 @@ export function RecordsTable() {
                     <TableHead className="text-center text-white align-middle">Courier</TableHead>
                     <TableHead className="text-center text-white align-middle">Grand Total</TableHead>
                     <TableHead className="text-center text-white align-middle">Paid Amount</TableHead>
-                    <TableHead className="text-center text-white align-middle">Mode of Payment</TableHead>
                     <TableHead className="text-center text-white align-middle">Balance</TableHead>
+                    <TableHead className="text-center text-white align-middle">Mode of Payment</TableHead>
                     <TableHead className="text-center text-white align-middle">Items</TableHead>
                     <TableHead className="text-center text-white align-middle">Actions</TableHead>
                   </TableRow>
@@ -761,6 +774,7 @@ export function RecordsTable() {
     </Card>
   );
 }
+
 
 
 
