@@ -54,6 +54,7 @@ type Lead = {
   landlineNumber?: string;
   location: string;
   salesRepresentative: string;
+  scesFullName?: string;
   priorityType: 'Rush' | 'Regular';
   paymentType: string;
   orderType: string;
@@ -258,7 +259,7 @@ export default function JobOrderPrintPage() {
         <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
             <div className="space-y-1">
                 <p className="font-bold italic">Prepared by:</p>
-                <p className="pt-8 border-b border-black text-center font-semibold">{lead.salesRepresentative.toUpperCase()}</p>
+                <p className="pt-8 border-b border-black text-center font-semibold">{(lead.scesFullName || lead.salesRepresentative).toUpperCase()}</p>
                 <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
                 <p className="text-center">(Name & Signature, Date)</p>
             </div>
