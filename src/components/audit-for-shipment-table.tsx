@@ -228,9 +228,12 @@ export function AuditForShipmentTable() {
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader>
         <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="text-black">Auditing before Shipment</CardTitle>
             <CardDescription className="text-gray-600">
               Review orders before they are finalized for shipment.
             </CardDescription>
+          </div>
             <div className="flex items-center gap-4">
                 <Input
                     placeholder="Search J.O. No..."
