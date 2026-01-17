@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react"
@@ -86,6 +87,7 @@ import { useToast } from '@/hooks/use-toast';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
+  id: z.string().optional(), // Keep track of original order if needed
   productType: z.string().min(1, "Product type cannot be empty."),
   color: z.string().min(1, "Color cannot be empty."),
   size: z.string().min(1, "Size cannot be empty."),
@@ -354,26 +356,27 @@ export function LeadForm({
 
   useEffect(() => {
     if (isEditing && initialLeadData) {
-      const { customerName, companyName, contactNumber, landlineNumber, location, houseStreet, barangay, city, province, courier, orderType, priorityType, isInternational } = initialLeadData as LeadType & { isInternational?: boolean };
-      
-      reset({
-        customerName: customerName || '',
-        companyName: companyName || '',
-        mobileNo: contactNumber || '',
-        landlineNo: landlineNumber || '',
-        isInternational: isInternational || false,
-        houseStreet: houseStreet || '',
-        barangay: barangay || '',
-        city: city || '',
-        province: province || '',
-        internationalAddress: isInternational ? location : '',
-        courier: courier === '-' ? undefined : courier,
-        orderType: orderType as any,
-        priorityType: priorityType as any,
-        orders: initialLeadData.orders || [],
-      });
+        const { customerName, companyName, contactNumber, landlineNumber, location, houseStreet, barangay, city, province, courier, orderType, priorityType, isInternational, orders } = initialLeadData;
+        
+        reset({
+            customerName: toTitleCase(customerName || ''),
+            companyName: companyName && companyName !== '-' ? toTitleCase(companyName) : '',
+            mobileNo: contactNumber && contactNumber !== '-' ? contactNumber : '',
+            landlineNo: landlineNumber && landlineNumber !== '-' ? landlineNumber : '',
+            isInternational: isInternational ?? false,
+            houseStreet: houseStreet ? toTitleCase(houseStreet) : '',
+            barangay: barangay ? toTitleCase(barangay) : '',
+            city: city ? toTitleCase(city) : '',
+            province: province ? toTitleCase(province) : '',
+            internationalAddress: isInternational ? location : '',
+            courier: courier === '-' ? undefined : courier,
+            orderType: orderType as any,
+            priorityType: priorityType as any,
+            orders: orders || [],
+        });
+        setStagedOrders(orders || []);
     }
-  }, [isEditing, initialLeadData, reset]);
+  }, [isEditing, initialLeadData, reset, setStagedOrders]);
 
   
   const handleSuggestionClick = (lead: Lead) => {
@@ -783,7 +786,7 @@ export function LeadForm({
                 </CardDescription>
               </>
             ) : (
-              <h3 className="font-headline text-xl font-bold mb-4">Customer Details</h3>
+              <h3 className="font-headline text-xl font-bold">Customer Details</h3>
             )}
           </div>
           {!isEditing && (
@@ -836,7 +839,8 @@ export function LeadForm({
                   <FormItem className="relative mt-2">
                     <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
                     <FormControl>
-                      <Input {...field} autoComplete="off" autoFocus={!isEditing} onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} 
+                      <Input {...field} autoComplete="off" autoFocus={!isEditing} 
+                        onBlur={() => !isEditing && setTimeout(() => setCustomerSuggestions([]), 150)} 
                         onChange={(e) => {
                             field.onChange(e);
                             if (isEditing) return;
@@ -864,7 +868,7 @@ export function LeadForm({
                   <FormItem className="relative">
                     <FormLabel className="flex items-center gap-2 text-black text-xs"><Building className="h-4 w-4 text-primary" />Company Name (Optional)</FormLabel>
                     <FormControl>
-                      <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCompanySuggestions([]), 150)} />
+                      <Input {...field} autoComplete="off" onBlur={() => !isEditing && setTimeout(() => setCompanySuggestions([]), 150)} />
                     </FormControl>
                     {!isEditing && companySuggestions.length > 0 && (
                       <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
@@ -932,7 +936,7 @@ export function LeadForm({
                             <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
                             <FormControl>
-                                <Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 150)} autoComplete="off" />
+                                <Input {...field} onBlur={() => !isEditing && setTimeout(() => setBarangaySuggestions([]), 150)} autoComplete="off" />
                             </FormControl>
                             {!isEditing && barangayValue && barangaySuggestions.length > 0 && !selectedLead && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
@@ -952,7 +956,7 @@ export function LeadForm({
                             <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
                             <FormControl>
-                                <Input {...field} onBlur={() => setTimeout(() => setCitySuggestions([]), 150)} autoComplete="off" />
+                                <Input {...field} onBlur={() => !isEditing && setTimeout(() => setCitySuggestions([]), 150)} autoComplete="off" />
                             </FormControl>
                             {!isEditing && cityValue && citySuggestions.length > 0 && !selectedLead && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
@@ -1017,7 +1021,7 @@ export function LeadForm({
               <FormField control={form.control} name="orderType" render={({field}) => (
                   <FormItem>
                   <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
                       <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                   </Select>
@@ -1054,7 +1058,7 @@ export function LeadForm({
               <FormField control={form.control} name="courier" render={({field}) => (
                 <FormItem>
                     <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
                     <SelectContent>{courierOptions.map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                     </Select>
@@ -1207,7 +1211,7 @@ export function LeadForm({
                       </TableRow>
                     ) : (
                       stagedOrders.map((order, index) => (
-                        <TableRow key={index}>
+                        <TableRow key={order.id || index}>
                           <TableCell className="py-2 px-4 text-black">{order.productType}</TableCell>
                           <TableCell className="py-2 px-4 text-black">{order.color}</TableCell>
                           <TableCell className="py-2 px-4 text-black">{order.size}</TableCell>
@@ -1343,5 +1347,7 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
+
+    
 
     
