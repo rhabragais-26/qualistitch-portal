@@ -194,10 +194,12 @@ const RecordsTableRow = React.memo(({
                     </div>
                 </CollapsibleTrigger>
                     <div className="text-gray-500 text-center">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
-                <CollapsibleContent className="pt-1 text-gray-500 text-xs text-center">
+                <CollapsibleContent className="pt-1 text-gray-500 text-xs">
+                  <div className="text-center">
                     <span className='font-bold text-gray-600'>Last Modified:</span>
-                    <div className="text-center">{formatDateTime(lead.lastModified).dateTime}</div>
-                    <div className='text-center'>{formatDateTime(lead.lastModified).dayOfWeek}{lead.lastModifiedBy ? ` (${lead.lastModifiedBy})` : ''}</div>
+                    <div>{formatDateTime(lead.lastModified).dateTime}</div>
+                    <div>{formatDateTime(lead.lastModified).dayOfWeek}{lead.lastModifiedBy ? ` (${lead.lastModifiedBy})` : ''}</div>
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
             </TableCell>
@@ -255,20 +257,11 @@ const RecordsTableRow = React.memo(({
                 {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
               </Button>
             </TableCell>
-            <TableCell className="text-center align-middle py-2">
-              <div className="relative inline-flex items-center justify-center">
-                <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload
-                </Button>
-                {imageCount > 0 && (
-                    <div
-                        className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
-                    >
-                        {imageCount}
-                    </div>
-                )}
-              </div>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">
+              <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload
+              </Button>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
               <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
@@ -607,7 +600,7 @@ export function RecordsTable() {
                         {openLeadId === lead.id && (
                         <TableRow className="bg-gray-50">
                             <TableCell colSpan={14}>
-                            <div className="p-2">
+                            <div className="p-2 max-w-xl mx-auto">
                                 <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
                                 <Table>
                                 <TableHeader>
