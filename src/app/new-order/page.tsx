@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
-import { LeadForm, FormValues } from '@/components/lead-form';
+import { LeadForm, FormValues, formSchema } from '@/components/lead-form';
 import { InvoiceCard, AddOns, Discount, Payment } from '@/components/invoice-card';
 import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { useRouter } from 'next/navigation';
@@ -28,6 +28,8 @@ import { ItemPricesDialog } from '@/components/item-prices-dialog';
 import { toTitleCase } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { collection, doc } from 'firebase/firestore';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 
 export default function NewOrderPage() {
@@ -56,6 +58,11 @@ export default function NewOrderPage() {
   const [resetFormTrigger, setResetFormTrigger] = useState(0);
   const formId = "new-lead-form";
 
+  const formMethods = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    mode: 'onSubmit',
+  });
+
 
   useEffect(() => {
     if (!isUserLoading && (!user || user.isAnonymous)) {
@@ -68,13 +75,14 @@ export default function NewOrderPage() {
   }
   
   const handleResetClick = () => {
-    setResetFormTrigger(prev => prev + 1);
+    formMethods.reset();
     setStagedOrders([]);
     setAddOns({});
     setDiscounts({});
     setPayments({});
     setGrandTotal(0);
     setBalance(0);
+    setResetFormTrigger(prev => prev + 1);
   }
 
   const handleNewOrderSubmit = (values: FormValues) => {
@@ -147,102 +155,97 @@ export default function NewOrderPage() {
       {showItemPrices && <ItemPricesDialog onClose={() => setShowItemPrices(false)} onDraggingChange={setIsItemPricesDragging} />}
 
       <Header isNewOrderPageDirty={isFormDirty}>
-        <main className={cn("flex-1 w-full p-4 sm:p-6 lg:p-8", (isCalculatorDragging || isSizeChartDragging || isItemPricesDragging) && "select-none")}>
-            <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start">
-                <div className="xl:col-span-3">
-                    <LeadForm 
-                        formId={formId}
-                        onDirtyChange={setIsFormDirty} 
-                        stagedOrders={stagedOrders}
-                        setStagedOrders={setStagedOrders}
-                        resetFormTrigger={resetFormTrigger}
-                        onOrderTypeChange={setOrderType}
-                        onSubmit={handleNewOrderSubmit}
-                    />
-                </div>
-                <div className="xl:col-span-2 space-y-4">
-                     <div className="flex justify-center gap-4">
-                        <Button type="button" variant="outline" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowCalculator(true)}>
-                            <CalculatorIcon className="mr-2 h-4 w-4" />
-                            Show Calculator
-                        </Button>
-                        <Button type="button" variant="outline" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowSizeChart(true)}>
-                            <Ruler className="mr-2 h-4 w-4" />
-                            Check Size Chart
-                        </Button>
-                        <Button type="button" variant="outline" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowItemPrices(true)}>
-                            <Tag className="mr-2 h-4 w-4" />
-                            Check Item Prices
-                        </Button>
+        <FormProvider {...formMethods}>
+          <form id={formId} onSubmit={formMethods.handleSubmit(handleNewOrderSubmit)}>
+            <main className={cn("flex-1 w-full p-4 sm:p-6 lg:p-8", (isCalculatorDragging || isSizeChartDragging || isItemPricesDragging) && "select-none")}>
+                <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start">
+                    <div className="xl:col-span-3">
+                        <LeadForm 
+                            onDirtyChange={setIsFormDirty} 
+                            stagedOrders={stagedOrders}
+                            setStagedOrders={setStagedOrders}
+                            resetFormTrigger={resetFormTrigger}
+                            onOrderTypeChange={setOrderType}
+                        />
                     </div>
-                    <InvoiceCard 
-                        orders={stagedOrders} 
-                        orderType={orderType} 
-                        addOns={addOns}
-                        setAddOns={setAddOns}
-                        discounts={discounts}
-                        setDiscounts={setDiscounts}
-                        payments={payments}
-                        setPayments={setPayments}
-                        onGrandTotalChange={setGrandTotal}
-                        onBalanceChange={setBalance}
-                    />
-                    <div className="flex justify-end pt-4 col-span-full">
-                        <div className="flex gap-4">
-                            <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button type="button" variant="outline">Reset</Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>This action will clear all the fields in the form.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleResetClick}>Continue</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                            </AlertDialog>
-                            <AlertDialog>
+                    <div className="xl:col-span-2 space-y-4">
+                        <div className="flex justify-center gap-4">
+                            <Button type="button" variant="outline" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowCalculator(true)}>
+                                <CalculatorIcon className="mr-2 h-4 w-4" />
+                                Show Calculator
+                            </Button>
+                            <Button type="button" variant="outline" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowSizeChart(true)}>
+                                <Ruler className="mr-2 h-4 w-4" />
+                                Check Size Chart
+                            </Button>
+                            <Button type="button" variant="outline" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowItemPrices(true)}>
+                                <Tag className="mr-2 h-4 w-4" />
+                                Check Item Prices
+                            </Button>
+                        </div>
+                        <InvoiceCard 
+                            orders={stagedOrders} 
+                            orderType={orderType} 
+                            addOns={addOns}
+                            setAddOns={setAddOns}
+                            discounts={discounts}
+                            setDiscounts={setDiscounts}
+                            payments={payments}
+                            setPayments={setPayments}
+                            onGrandTotalChange={setGrandTotal}
+                            onBalanceChange={setBalance}
+                        />
+                        <div className="flex justify-end pt-4 col-span-full">
+                            <div className="flex gap-4">
+                                <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button type="button" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
-                                        Submit
-                                    </Button>
+                                    <Button type="button" variant="outline">Reset</Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            Please confirm that the customer information and order details are correct.
-                                            {Object.keys(payments).length === 0 && (
-                                                <span className="block mt-4 font-semibold text-destructive">
-                                                    You have not recorded any payment. Are you sure you want to proceed as Cash on Delivery (COD)?
-                                                </span>
-                                            )}
-                                        </AlertDialogDescription>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>This action will clear all the fields in the form.</AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => {
-                                            const form = document.getElementById(formId);
-                                            if (form) {
-                                                form.requestSubmit();
-                                            }
-                                        }}>
-                                            Confirm & Submit
-                                        </AlertDialogAction>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleResetClick}>Continue</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
-                            </AlertDialog>
+                                </AlertDialog>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button type="submit" form={formId} size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
+                                            Submit
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Please confirm that the customer information and order details are correct.
+                                                {Object.keys(payments).length === 0 && (
+                                                    <span className="block mt-4 font-semibold text-destructive">
+                                                        You have not recorded any payment. Are you sure you want to proceed as Cash on Delivery (COD)?
+                                                    </span>
+                                                )}
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction type="submit" form={formId}>
+                                                Confirm &amp; Submit
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
+            </main>
+          </form>
+        </FormProvider>
       </Header>
     </div>
   );
 }
-
-    

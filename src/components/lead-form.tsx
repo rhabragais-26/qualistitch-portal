@@ -3,7 +3,7 @@
 
 import * as React from "react"
 import {zodResolver} from '@hookform/resolvers/zod';
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext, useFieldArray, FormProvider, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import {useState, useEffect, useMemo} from 'react';
 
@@ -223,6 +223,8 @@ type LeadFormProps = {
   onOrderTypeChange: (orderType: FormValues['orderType'] | undefined) => void;
   isEditing?: boolean;
   initialLeadData?: (LeadType & { orderNumber: number; totalCustomerQuantity: number; }) | null;
+  onDirtyChange?: (isDirty: boolean) => void;
+  resetFormTrigger?: number;
 };
 
 export function LeadForm({ 
@@ -231,6 +233,8 @@ export function LeadForm({
   onOrderTypeChange,
   isEditing = false,
   initialLeadData = null,
+  onDirtyChange,
+  resetFormTrigger
 }: LeadFormProps) {
   const {toast} = useToast();
   const [dateString, setDateString] = useState('');
@@ -263,7 +267,25 @@ export function LeadForm({
   const [formattedPrice, setFormattedPrice] = useState('');
   
   const form = useFormContext<FormValues>();
-  const { control, watch, setValue, formState } = form;
+  const { control, watch, setValue, formState, reset } = form;
+
+  // Watch for form state changes to report dirtiness
+  useEffect(() => {
+    if (onDirtyChange) {
+      onDirtyChange(formState.isDirty);
+    }
+  }, [formState.isDirty, onDirtyChange]);
+  
+  // Handle form reset trigger
+  useEffect(() => {
+    if (resetFormTrigger && resetFormTrigger > 0 && !isEditing) {
+      reset(); // Reset the form
+      setStagedOrders([]);
+      setSelectedLead(null);
+      setManualStatus(null);
+    }
+  }, [resetFormTrigger, reset, isEditing, setStagedOrders]);
+
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
 
@@ -705,7 +727,9 @@ export function LeadForm({
       <CardHeader className='space-y-0 pb-2'>
         <div className="flex justify-between items-start">
           <div className="flex-1 space-y-0">
-             {!isEditing ? (
+             {isEditing ? (
+                <CardTitle className="text-xl font-bold">Customer Details</CardTitle>
+             ) : (
               <>
                 <CardTitle className="font-headline text-2xl">
                   Create New Order
@@ -714,7 +738,7 @@ export function LeadForm({
                   Fill in the details below to create a record for customer and order.
                 </CardDescription>
               </>
-            ) : null}
+            )}
           </div>
           {!isEditing && (
             <div className="text-base text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
@@ -978,6 +1002,7 @@ export function LeadForm({
                       ))}
                       </RadioGroup>
                   </FormControl>
+                  <FormMessage />
                   </FormItem>
               )}
               />
@@ -1288,13 +1313,3 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
-
-    
-
-    
-
-
-
-
-    
-

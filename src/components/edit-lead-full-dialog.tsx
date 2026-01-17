@@ -18,10 +18,10 @@ import {
     AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
-    AlertDialogHeader as AlertDialogHeaderComponent,
-    AlertDialogTitle as AlertDialogTitleComponent,
-    AlertDialogDescription as AlertDialogDescriptionComponent,
-    AlertDialogFooter as AlertDialogFooterComponent,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogFooter,
 } from './ui/alert-dialog';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -72,7 +72,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     mode: 'onSubmit',
   });
   
-  const { reset, handleSubmit } = formMethods;
+  const { reset, handleSubmit, formState: { errors } } = formMethods;
 
   useEffect(() => {
     if (isOpen && lead) {
@@ -144,7 +144,8 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     setIsConfirmSaveOpen(true);
   };
 
-  const onInvalidSubmit = () => {
+  const onInvalidSubmit = (errors: any) => {
+    console.error("Form validation errors:", errors);
     toast({
       variant: "destructive",
       title: "Invalid Input",
@@ -273,20 +274,18 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     </Dialog>
     <AlertDialog open={isConfirmSaveOpen} onOpenChange={setIsConfirmSaveOpen}>
         <AlertDialogContent>
-          <AlertDialogHeaderComponent>
-            <AlertDialogTitleComponent>Are you absolutely sure?</AlertDialogTitleComponent>
-            <AlertDialogDescriptionComponent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
               This action will update the lead record with your changes.
-            </AlertDialogDescriptionComponent>
-          </AlertDialogHeaderComponent>
-          <AlertDialogFooterComponent>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmSave}>Save</AlertDialogAction>
-          </AlertDialogFooterComponent>
+          </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
     </>
   );
 }
-
-    
