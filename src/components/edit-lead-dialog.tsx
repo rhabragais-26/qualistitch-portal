@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -38,12 +37,13 @@ type Lead = {
   orders: Order[];
   submissionDateTime: string;
   lastModified: string;
+  courier: string;
 }
 
-const salesRepresentatives = ['Myreza', 'Quencess', 'Cath', 'Loise', 'Joanne', 'Thors', 'Francis', 'Junary', 'Kenneth'];
 const paymentTypes = ['Partially Paid', 'Fully Paid', 'COD'];
 const orderTypes = ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'];
 const priorityTypes = ['Rush', 'Regular'];
+const courierTypes = ['Lalamove', 'J&T', 'In-house', 'Pick-up'];
 
 const EditLeadDialogMemo = React.memo(function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   isOpen: boolean;
@@ -57,10 +57,10 @@ const EditLeadDialogMemo = React.memo(function EditLeadDialog({ isOpen, onOpenCh
   const [contactNumber, setContactNumber] = useState(lead.contactNumber);
   const [landlineNumber, setLandlineNumber] = useState(lead.landlineNumber || '');
   const [location, setLocation] = useState(lead.location);
-  const [salesRepresentative, setSalesRepresentative] = useState(lead.salesRepresentative);
   const [paymentType, setPaymentType] = useState(lead.paymentType);
   const [orderType, setOrderType] = useState(lead.orderType);
   const [priorityType, setPriorityType] = useState(lead.priorityType);
+  const [courier, setCourier] = useState(lead.courier);
   const [error, setError] = useState<string | null>(null);
 
   const toTitleCase = (str: string) => {
@@ -75,13 +75,13 @@ const EditLeadDialogMemo = React.memo(function EditLeadDialog({ isOpen, onOpenCh
     if (lead) {
       setCustomerName(lead.customerName);
       setCompanyName(lead.companyName || '');
-      setContactNumber(lead.contactNumber);
+      setContactNumber(lead.contactNumber || '');
       setLandlineNumber(lead.landlineNumber || '');
       setLocation(lead.location);
-      setSalesRepresentative(lead.salesRepresentative);
       setPaymentType(lead.paymentType);
       setOrderType(lead.orderType);
       setPriorityType(lead.priorityType);
+      setCourier(lead.courier);
     }
   }, [lead]);
   
@@ -141,10 +141,10 @@ const EditLeadDialogMemo = React.memo(function EditLeadDialog({ isOpen, onOpenCh
       contactNumber: mobile || '-',
       landlineNumber: landline || '-',
       location: toTitleCase(location),
-      salesRepresentative,
       paymentType,
       orderType,
       priorityType,
+      courier: courier || '-',
     };
     onSave(updatedLead);
   };
@@ -183,15 +183,15 @@ const EditLeadDialogMemo = React.memo(function EditLeadDialog({ isOpen, onOpenCh
             </div>
           </div>
           <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="location">Address</Label>
               <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
-            </div>
+          </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="salesRepresentative">SCES</Label>
-              <Select onValueChange={setSalesRepresentative} value={salesRepresentative}>
-                <SelectTrigger id="salesRepresentative"><SelectValue /></SelectTrigger>
-                <SelectContent>{salesRepresentatives.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+             <div className="space-y-2">
+              <Label htmlFor="courier">Courier (Optional)</Label>
+              <Select onValueChange={setCourier} value={courier === '-' ? '' : courier}>
+                <SelectTrigger id="courier"><SelectValue placeholder="Select Courier" /></SelectTrigger>
+                <SelectContent>{courierTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
@@ -202,15 +202,15 @@ const EditLeadDialogMemo = React.memo(function EditLeadDialog({ isOpen, onOpenCh
               </Select>
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="orderType">Order Type</Label>
-            <Select onValueChange={setOrderType} value={orderType}>
-              <SelectTrigger id="orderType"><SelectValue /></SelectTrigger>
-              <SelectContent>{orderTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+             <div className="space-y-2">
+              <Label htmlFor="orderType">Order Type</Label>
+              <Select onValueChange={setOrderType} value={orderType}>
+                <SelectTrigger id="orderType"><SelectValue /></SelectTrigger>
+                <SelectContent>{orderTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+             <div className="space-y-2">
               <Label>Priority Type</Label>
               <RadioGroup onValueChange={(v) => setPriorityType(v as 'Rush' | 'Regular')} value={priorityType} className="flex pt-2">
                 {priorityTypes.map(o => <div key={o} className="flex items-center space-x-2"><RadioGroupItem value={o} id={`priority-${o}`}/><Label htmlFor={`priority-${o}`}>{o}</Label></div>)}

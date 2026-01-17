@@ -46,40 +46,12 @@ import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { z } from 'zod';
+import { EditLeadDialog } from './edit-lead-dialog';
+import { EditOrderDialog } from './edit-order-dialog';
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
 };
-
-const productTypes = [
-  'Executive Jacket 1',
-  'Executive Jacket v2 (with lines)',
-  'Turtle Neck Jacket',
-  'Corporate Jacket',
-  'Reversible v1',
-  'Reversible v2',
-  'Polo Shirt (Coolpass)',
-  'Polo Shirt (Cotton Blend)',
-  'Patches',
-  'Client Owned',
-];
-
-const jacketColors = [
-  'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
-  'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
-  'Army Green',
-];
-
-const poloShirtColors = [
-    'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow', 'Slate Blue', 'Yellow', 'Orange', 'Dark Green', 'Green', 'Light Green', 'Pink', 'Fuchsia', 'Sky Blue', 'Oatmeal', 'Cream', 'Purple', 'Gold', 'Brown'
-];
-
-const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
-
-const paymentTypes = ['Partially Paid', 'Fully Paid', 'COD'];
-const orderTypes = ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'];
-const priorityTypes = ['Rush', 'Regular'];
-const courierTypes = ['Lalamove', 'J&T', 'In-house', 'Pick-up'];
 
 const orderSchema = z.object({
   productType: z.string(),
@@ -286,6 +258,24 @@ export function RecordsTable() {
   const [editingOrder, setEditingOrder] = useState<{ leadId: string; order: Order; index: number } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [csrFilter, setCsrFilter] = useState('All');
+
+  const productTypes = [
+    'Executive Jacket 1', 'Executive Jacket v2 (with lines)', 'Turtle Neck Jacket',
+    'Corporate Jacket', 'Reversible v1', 'Reversible v2', 'Polo Shirt (Coolpass)',
+    'Polo Shirt (Cotton Blend)', 'Patches', 'Client Owned',
+  ];
+
+  const jacketColors = [
+    'Black', 'Brown', 'Dark Khaki', 'Light Khaki', 'Olive Green', 'Navy Blue',
+    'Light Gray', 'Dark Gray', 'Khaki', 'Black/Khaki', 'Black/Navy Blue',
+    'Army Green',
+  ];
+
+  const poloShirtColors = [
+      'White', 'Black', 'Light Gray', 'Dark Gray', 'Red', 'Maroon', 'Navy Blue', 'Royal Blue', 'Aqua Blue', 'Emerald Green', 'Golden Yellow', 'Slate Blue', 'Yellow', 'Orange', 'Dark Green', 'Green', 'Light Green', 'Pink', 'Fuchsia', 'Sky Blue', 'Oatmeal', 'Cream', 'Purple', 'Gold', 'Brown'
+  ];
+
+  const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
@@ -795,327 +785,5 @@ export function RecordsTable() {
         />
       )}
     </Card>
-  );
-}
-
-// Separate component for the Edit Lead Dialog
-function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
-  lead: Lead;
-  onSave: (updatedLead: Partial<Lead>) => void;
-  onClose: () => void;
-}) {
-  const [customerName, setCustomerName] = useState(lead.customerName);
-  const [companyName, setCompanyName] = useState(lead.companyName || '');
-  const [contactNumber, setContactNumber] = useState(lead.contactNumber || '');
-  const [landlineNumber, setLandlineNumber] = useState(lead.landlineNumber || '');
-  const [location, setLocation] = useState(lead.location);
-  const [paymentType, setPaymentType] = useState(lead.paymentType);
-  const [orderType, setOrderType] = useState(lead.orderType);
-  const [priorityType, setPriorityType] = useState(lead.priorityType);
-  const [courier, setCourier] = useState(lead.courier);
-  const [error, setError] = useState<string | null>(null);
-
-  const toTitleCase = (str: string) => {
-    if (!str) return '';
-    return str
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  };
-
-  React.useEffect(() => {
-    if (lead) {
-      setCustomerName(lead.customerName);
-      setCompanyName(lead.companyName || '');
-      setContactNumber(lead.contactNumber || '');
-      setLandlineNumber(lead.landlineNumber || '');
-      setLocation(lead.location);
-      setPaymentType(lead.paymentType);
-      setOrderType(lead.orderType);
-      setPriorityType(lead.priorityType);
-      setCourier(lead.courier);
-    }
-  }, [lead]);
-  
-  const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/\D/g, '');
-    if (rawValue.length <= 11) {
-      let formattedValue = '';
-      if (rawValue.length > 0) {
-        formattedValue = rawValue.substring(0, 4);
-      }
-      if (rawValue.length > 4) {
-        formattedValue += '-' + rawValue.substring(4, 7);
-      }
-      if (rawValue.length > 7) {
-        formattedValue += '-' + rawValue.substring(7, 11);
-      }
-      setContactNumber(formattedValue);
-    }
-  };
-
-  const handleLandlineNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/\D/g, '');
-    if (rawValue.length <= 10) {
-      let formattedValue = '';
-      if (rawValue.length > 0) {
-        formattedValue = rawValue.substring(0, 2);
-      }
-      if (rawValue.length > 2) {
-        formattedValue += '-' + rawValue.substring(2, 6);
-      }
-      if (rawValue.length > 6) {
-        formattedValue += '-' + rawValue.substring(6, 10);
-      }
-      setLandlineNumber(formattedValue);
-    }
-  };
-
-
-  const validateAndSave = () => {
-    setError(null);
-
-    const mobile = contactNumber.trim();
-    const landline = landlineNumber.trim();
-    
-    if (mobile && mobile !== '-' && !/^\d{4}-\d{3}-\d{4}$/.test(mobile)) {
-        setError("Mobile number must be in 0000-000-0000 format.");
-        return;
-    }
-    if (landline && landline !== '-' && !/^\d{2}-\d{4}-\d{4}$/.test(landline)) {
-        setError("Landline number must be in 00-0000-0000 format.");
-        return;
-    }
-
-    const updatedLead: Partial<Lead> = {
-      customerName: toTitleCase(customerName),
-      companyName: companyName ? toTitleCase(companyName) : '-',
-      contactNumber: mobile || '-',
-      landlineNumber: landline || '-',
-      location: toTitleCase(location),
-      paymentType,
-      orderType,
-      priorityType,
-      courier: courier || '-',
-    };
-    onSave(updatedLead);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) onClose();
-      onOpenChange(open);
-    }}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Edit Lead Details</DialogTitle>
-          <DialogDescription>
-            Update the details for the selected lead.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="customerName">Customer Name</Label>
-              <Input id="customerName" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
-            </div>
-             <div className="space-y-2">
-              <Label htmlFor="companyName">Company Name</Label>
-              <Input id="companyName" value={companyName === '-' ? '' : companyName} onChange={(e) => setCompanyName(e.target.value)} />
-            </div>
-          </div>
-           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="contactNo">Mobile No. (Optional)</Label>
-              <Input id="contactNo" value={contactNumber === '-' ? '' : contactNumber} onChange={handleMobileNoChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="landlineNo">Landline No. (Optional)</Label>
-              <Input id="landlineNo" value={landlineNumber === '-' ? '' : landlineNumber} onChange={handleLandlineNoChange} />
-            </div>
-          </div>
-          <div className="space-y-2">
-              <Label htmlFor="location">Address</Label>
-              <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-             <div className="space-y-2">
-              <Label htmlFor="courier">Courier (Optional)</Label>
-              <Select onValueChange={setCourier} value={courier === '-' ? '' : courier}>
-                <SelectTrigger id="courier"><SelectValue placeholder="Select Courier" /></SelectTrigger>
-                <SelectContent>{courierTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="paymentType">Payment Type</Label>
-              <Select onValueChange={setPaymentType} value={paymentType}>
-                <SelectTrigger id="paymentType"><SelectValue /></SelectTrigger>
-                <SelectContent>{paymentTypes.map(o => <SelectItem key={o} value={o}>{o === 'COD' ? 'COD (Cash on Delivery)' : o}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-             <div className="space-y-2">
-              <Label htmlFor="orderType">Order Type</Label>
-              <Select onValueChange={setOrderType} value={orderType}>
-                <SelectTrigger id="orderType"><SelectValue /></SelectTrigger>
-                <SelectContent>{orderTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-             <div className="space-y-2">
-              <Label>Priority Type</Label>
-              <RadioGroup onValueChange={(v) => setPriorityType(v as 'Rush' | 'Regular')} value={priorityType} className="flex pt-2">
-                {priorityTypes.map(o => <div key={o} className="flex items-center space-x-2"><RadioGroupItem value={o} id={`priority-${o}`}/><Label htmlFor={`priority-${o}`}>{o}</Label></div>)}
-              </RadioGroup>
-            </div>
-          </div>
-           {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-        </div>
-        <DialogFooter>
-          <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
-          <Button type="button" onClick={validateAndSave} className="text-white font-bold">Save Changes</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-
-// Separate component for the Edit Order Dialog
-function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
-  order: Order;
-  onSave: (updatedOrder: Order) => void;
-  onClose: () => void;
-}) {
-  const [productType, setProductType] = useState(order.productType);
-  const [color, setColor] = useState(order.color);
-  const [size, setSize] = useState(order.size);
-  const [quantity, setQuantity] = useState<number | string>(order.quantity);
-
-  const isPolo = productType.includes('Polo Shirt');
-  const availableColors = isPolo ? poloShirtColors : jacketColors;
-
-  React.useEffect(() => {
-    setProductType(order.productType);
-    setColor(order.color);
-    setSize(order.size);
-    setQuantity(order.quantity);
-  }, [order]);
-  
-  useEffect(() => {
-    if (!availableColors.includes(color)) {
-        setColor('');
-    }
-  }, [productType, availableColors, color]);
-
-  const handleSave = () => {
-    const numQuantity = typeof quantity === 'string' ? parseInt(quantity, 10) : quantity;
-    if (productType && color && size && numQuantity > 0) {
-      onSave({ productType, color, size, quantity: numQuantity });
-    }
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) onClose();
-      onOpenChange(open);
-    }}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Edit Order</DialogTitle>
-          <DialogDescription>
-            Update the details for the selected order.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="edit-product-type">Product Type:</Label>
-            <Select onValueChange={setProductType} value={productType}>
-              <SelectTrigger id="edit-product-type">
-                <SelectValue placeholder="Select a Product Type" />
-              </SelectTrigger>
-              <SelectContent>
-                {productTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className='grid grid-cols-2 gap-4'>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="edit-color" className='text-sm'>Color:</Label>              <Select onValueChange={setColor} value={color} disabled={productType === 'Patches'}>
-                <SelectTrigger id="edit-color">
-                  <SelectValue placeholder="Select a Color" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableColors.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="edit-size" className='text-sm'>Size:</Label>
-              <Select onValueChange={setSize} value={size} disabled={productType === 'Patches'}>
-                <SelectTrigger id="edit-size" className="w-[100px]">
-                  <SelectValue placeholder="Size" />
-                </SelectTrigger>
-                <SelectContent>
-                  {productSizes.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 justify-center">
-            <Label htmlFor="edit-quantity">Quantity:</Label>
-            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setQuantity(q => Math.max(1, (typeof q === 'string' ? parseInt(q, 10) || 0 : q) - 1))}>
-              <Minus className="h-4 w-4" />
-            </Button>
-            <Input
-              id="edit-quantity"
-              type="text"
-              value={quantity}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === '' || /^[0-9\b]+$/.test(value)) {
-                  setQuantity(value === '' ? '' : parseInt(value, 10));
-                }
-              }}
-              onBlur={(e) => {
-                if (e.target.value === '') {
-                  setQuantity(1);
-                }
-              }}
-              className="w-16 text-center"
-            />
-            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setQuantity(q => (typeof q === 'string' ? parseInt(q, 10) || 0 : q) + 1)}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Close
-            </Button>
-          </DialogClose>
-          <Button type="button" onClick={handleSave} disabled={!productType || !color || !size || quantity === 0 || Number(quantity) < 1} className="text-white font-bold">
-            Save Changes
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
