@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react"
@@ -371,10 +370,10 @@ export function LeadForm({
         courier: courier === '-' ? undefined : courier,
         orderType: orderType as any,
         priorityType: priorityType as any,
-        orders: stagedOrders,
+        orders: initialLeadData.orders || [],
       });
     }
-  }, [isEditing, initialLeadData, reset, stagedOrders]);
+  }, [isEditing, initialLeadData, reset]);
 
   
   const handleSuggestionClick = (lead: Lead) => {
@@ -773,9 +772,7 @@ export function LeadForm({
       <CardHeader className='space-y-0 pb-2'>
         <div className="flex justify-between items-start">
           <div className="flex-1 space-y-0">
-             {isEditing ? (
-                 <h3 className="font-headline text-xl font-bold mb-4">Edit Customer Details and Orders</h3>
-              ) : (
+             {!isEditing && (
               <>
                 <CardTitle className="font-headline text-2xl">
                   Create New Order

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -62,23 +62,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
     }
   }, [lead]);
 
-  useEffect(() => {
-    if (!lead || !isOpen) {
-        setIsAnythingDirty(false);
-        return;
-    }
-
-    const ordersDirty = !isEqual(stagedOrders, lead.orders || []);
-    const addOnsDirty = !isEqual(addOns, lead.addOns || {});
-    const discountsDirty = !isEqual(discounts, lead.discounts || {});
-    
-    const leadPayments = lead.payments || [];
-    const currentPayments = Object.values(payments).flat();
-    const paymentsDirty = !isEqual(currentPayments, leadPayments);
-
-    setIsAnythingDirty(isFormDirty || ordersDirty || addOnsDirty || discountsDirty || paymentsDirty);
-  }, [stagedOrders, addOns, discounts, payments, lead, isFormDirty, isOpen]);
-
   const handleEditLeadSubmit = async (formValues: FormValues) => {
     if (!firestore || !lead) return;
 
@@ -139,19 +122,37 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
     }
   };
 
+  const handleSave = () => {
+    document.getElementById('lead-form-edit')?.requestSubmit();
+  }
+  
+  useEffect(() => {
+    if (!lead || !isOpen) {
+        setIsAnythingDirty(false);
+        return;
+    }
+
+    const ordersDirty = !isEqual(stagedOrders, lead.orders || []);
+    const addOnsDirty = !isEqual(addOns, lead.addOns || {});
+    const discountsDirty = !isEqual(discounts, lead.discounts || {});
+    
+    const leadPayments = lead.payments || [];
+    const currentPayments = Object.values(payments).flat();
+    const paymentsDirty = !isEqual(currentPayments, leadPayments);
+
+    setIsAnythingDirty(isFormDirty || ordersDirty || addOnsDirty || discountsDirty || paymentsDirty);
+  }, [stagedOrders, addOns, discounts, payments, lead, isFormDirty, isOpen]);
+
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[90vw] w-full h-[95vh] flex flex-col">
           <DialogHeader className="sr-only">
             <DialogTitle>Edit Lead: {lead?.customerName}</DialogTitle>
-            <DialogDescription>
-              Make changes to the lead information and order details.
-            </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
               <div className="xl:col-span-3">
-                  <h3 className="font-headline text-xl font-bold mb-4">Edit Customer Details and Orders</h3>
+                  <h3 className="font-headline text-xl font-bold mb-4">Customer Details</h3>
                   <LeadForm 
                       onDirtyChange={setIsFormDirty} 
                       stagedOrders={stagedOrders}
@@ -194,9 +195,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              document.getElementById('lead-form-edit')?.requestSubmit();
-            }}>Save</AlertDialogAction>
+            <AlertDialogAction onClick={handleSave}>Save</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
