@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -21,7 +20,6 @@ import {
     AlertDialogDescription as AlertDialogDescriptionComponent,
     AlertDialogHeader as AlertDialogHeaderComponent,
     AlertDialogTitle as AlertDialogTitleComponent,
-    AlertDialogFooter,
 } from './ui/alert-dialog';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -72,6 +70,9 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     mode: 'onSubmit',
   });
 
+  const { key, ...formRest } = form;
+  const reInitForm = form.reset;
+
   useEffect(() => {
     if (isOpen && lead) {
       let courierValue = lead.courier;
@@ -94,7 +95,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         priorityType: lead.priorityType as any,
         orders: lead.orders || [],
       };
-      form.reset(initialFormValues);
+      reInitForm(initialFormValues);
 
       setStagedOrders(lead.orders || []);
       
@@ -127,9 +128,9 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         setBalance(0);
         setDataToSave(null);
     }
-  }, [isOpen, lead, form]);
+  }, [isOpen, lead, reInitForm]);
   
-  const handleEditLeadSubmit = useCallback((values: FormValues) => {
+  const onValidSubmit = useCallback((values: FormValues) => {
     setDataToSave({
         ...values,
         stagedOrders,
@@ -141,6 +142,19 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     });
     setIsConfirmSaveOpen(true);
   }, [stagedOrders, addOns, discounts, payments, grandTotal, balance]);
+
+  const handleSaveChangesClick = async () => {
+    const isValid = await form.trigger();
+    if (isValid) {
+      onValidSubmit(form.getValues());
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Invalid Input",
+        description: "Please correct the errors in the form before saving.",
+      });
+    }
+  };
 
   const handleConfirmSave = useCallback(async () => {
     if (!firestore || !lead || !dataToSave) return;
@@ -221,47 +235,45 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] w-full h-[95vh] flex flex-col">
         <FormProvider {...form}>
-            <form onSubmit={form.handleSubmit(handleEditLeadSubmit)} className="flex flex-col h-full">
-                <DialogHeader className="flex-shrink-0 pt-6 px-6">
-                    <DialogTitle className="text-xl font-bold">Edit Customer Details and Orders</DialogTitle>
-                    <DialogDescription>
-                        Please change necessary details for update and make sure the data inputs are correct before saving
-                    </DialogDescription>
-                </DialogHeader>
+            <DialogHeader className="flex-shrink-0 pt-6 px-6">
+                <DialogTitle className="text-xl font-bold">Edit Customer Details and Orders</DialogTitle>
+                <DialogDescription>
+                    Please change necessary details for update and make sure the data inputs are correct before saving
+                </DialogDescription>
+            </DialogHeader>
 
-                <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0 mt-4">
-                    <div className="xl:col-span-3">
-                        {isOpen && lead && (
-                            <LeadForm 
-                                stagedOrders={stagedOrders}
-                                setStagedOrders={setStagedOrders}
-                                onOrderTypeChange={setOrderType}
-                                isEditing={true}
-                                initialLeadData={lead}
-                            />
-                        )}
-                    </div>
-                    <div className="xl:col-span-2 space-y-4">
-                        <InvoiceCard 
-                            orders={stagedOrders} 
-                            orderType={orderType} 
-                            addOns={addOns}
-                            setAddOns={setAddOns}
-                            discounts={discounts}
-                            setDiscounts={setDiscounts}
-                            payments={payments}
-                            setPayments={setPayments}
-                            onGrandTotalChange={setGrandTotal}
-                            onBalanceChange={setBalance}
+            <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0 mt-4">
+                <div className="xl:col-span-3">
+                    {isOpen && lead && (
+                        <LeadForm 
+                            stagedOrders={stagedOrders}
+                            setStagedOrders={setStagedOrders}
+                            onOrderTypeChange={setOrderType}
+                            isEditing={true}
+                            initialLeadData={lead}
                         />
-                    </div>
+                    )}
                 </div>
-                
-                <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
-                    <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                    <Button type="submit">Save Changes</Button>
-                </DialogFooter>
-            </form>
+                <div className="xl:col-span-2 space-y-4">
+                    <InvoiceCard 
+                        orders={stagedOrders} 
+                        orderType={orderType} 
+                        addOns={addOns}
+                        setAddOns={setAddOns}
+                        discounts={discounts}
+                        setDiscounts={setDiscounts}
+                        payments={payments}
+                        setPayments={setPayments}
+                        onGrandTotalChange={setGrandTotal}
+                        onBalanceChange={setBalance}
+                    />
+                </div>
+            </div>
+            
+            <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
+                <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                <Button type="button" onClick={handleSaveChangesClick}>Save Changes</Button>
+            </DialogFooter>
         </FormProvider>
       </DialogContent>
     </Dialog>
