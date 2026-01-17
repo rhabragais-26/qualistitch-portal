@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -284,7 +285,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   }, [paymentType, grandTotal, isOpen, hasPayments]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/[^\d.]/g, ''); // Allow dots for decimals
+    const rawValue = e.target.value.replace(/[^d.]/g, ''); // Allow dots for decimals
     const numericValue = parseFloat(rawValue);
 
     if (!isNaN(numericValue)) {
@@ -349,7 +350,12 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
                 <SelectValue placeholder="Select mode of payment" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Gcash">Gcash</SelectItem>
+                <SelectItem value="CASH">CASH</SelectItem>
+                <SelectItem value="GCash (Jam)">GCash (Jam)</SelectItem>
+                <SelectItem value="GCash (Jonathan)">GCash (Jonathan)</SelectItem>
+                <SelectItem value="GCash (Jhun)">GCash (Jhun)</SelectItem>
+                <SelectItem value="GCash (Jays)">GCash (Jays)</SelectItem>
+                <SelectItem value="GCash (Tantan)">GCash (Tantan)</SelectItem>
                 <SelectItem value="Paymaya">Paymaya</SelectItem>
                 <SelectItem value="Bank Transfer to BDO">Bank Transfer to BDO</SelectItem>
                 <SelectItem value="Bank Transfer to BPI">Bank Transfer to BPI</SelectItem>
