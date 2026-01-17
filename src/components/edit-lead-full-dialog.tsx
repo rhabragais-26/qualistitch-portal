@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -25,8 +24,8 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter as AlertDialogFooterComponent,
-  AlertDialogTitle as AlertDialogTitleComponent,
   AlertDialogHeader,
+  AlertDialogTitle as AlertDialogTitleComponent,
 } from './ui/alert-dialog';
 import type { Lead as LeadType } from './records-table';
 import { toTitleCase } from '@/lib/utils';
@@ -53,6 +52,29 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
   const [formValues, setFormValues] = useState<FormValues | null>(null);
 
+  const isDirty = useMemo(() => {
+    if (!lead || !formValues) return false;
+
+    // This is a simplified deep comparison. For complex objects, a library like lodash.isEqual might be better.
+    const initialData = JSON.stringify({
+      ...formValues,
+      orders: lead.orders || [],
+      addOns: lead.addOns || {},
+      discounts: lead.discounts || {},
+      payments: lead.payments || [],
+    });
+
+    const currentState = JSON.stringify({
+      ...formValues,
+      orders: stagedOrders,
+      addOns,
+      discounts,
+      payments: Object.values(payments).flat(),
+    });
+    
+    return initialData !== currentState;
+  }, [lead, formValues, stagedOrders, addOns, discounts, payments]);
+  
 
   useEffect(() => {
     if (isOpen && lead) {
@@ -87,9 +109,14 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         setBalance(0);
     }
   }, [isOpen, lead]);
+  
+  const handleFormSubmit = useCallback((values: FormValues) => {
+    setFormValues(values);
+    setIsConfirmSaveOpen(true);
+  }, []);
 
-  const handleEditLeadSubmit = useCallback(async (values: FormValues) => {
-    if (!firestore || !lead) return;
+  const handleEditLeadSubmit = useCallback(async () => {
+    if (!firestore || !lead || !formValues) return;
     
     setIsConfirmSaveOpen(false); // Close confirmation dialog on submit
 
@@ -105,12 +132,12 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         }
         
         const dataToUpdate = {
-            ...values,
-            customerName: toTitleCase(values.customerName),
-            companyName: values.companyName ? toTitleCase(values.companyName) : '-',
-            contactNumber: values.mobileNo || '-',
-            landlineNumber: values.landlineNo || '-',
-            location: values.isInternational ? values.internationalAddress : [values.houseStreet, values.barangay, values.city, values.province].filter(Boolean).map(toTitleCase).join(', '),
+            ...formValues,
+            customerName: toTitleCase(formValues.customerName),
+            companyName: formValues.companyName ? toTitleCase(formValues.companyName) : '-',
+            contactNumber: formValues.mobileNo || '-',
+            landlineNumber: formValues.landlineNo || '-',
+            location: formValues.isInternational ? formValues.internationalAddress : [formValues.houseStreet, formValues.barangay, formValues.city, formValues.province].filter(Boolean).map(toTitleCase).join(', '),
             orders: stagedOrders, // Use the state from invoice card
             productType: [...new Set(stagedOrders.map(o => o.productType))].join(', '),
             addOns,
@@ -141,12 +168,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             description: e.message || "Could not update the lead.",
         });
     }
-  }, [firestore, lead, stagedOrders, payments, addOns, discounts, grandTotal, balance, onClose, toast, onUpdate]);
-
-  const triggerSubmit = () => {
-    // This function will be called by the AlertDialog action
-    document.getElementById('lead-form-edit')?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-  };
+  }, [firestore, lead, formValues, stagedOrders, payments, addOns, discounts, grandTotal, balance, onClose, toast, onUpdate]);
 
   return (
     <>
@@ -161,13 +183,12 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
           </DialogHeader>
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
               <div className="xl:col-span-3">
-                  <h3 className="font-headline text-xl font-bold mb-4">Customer Details</h3>
                   {lead && (
                     <LeadForm 
                         stagedOrders={stagedOrders}
                         setStagedOrders={setStagedOrders}
                         onOrderTypeChange={setOrderType}
-                        onSubmit={handleEditLeadSubmit}
+                        onSubmit={handleFormSubmit}
                         isEditing={true}
                         initialLeadData={lead}
                         onDirtyChange={() => {}}
@@ -176,7 +197,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
                   )}
               </div>
               <div className="xl:col-span-2 space-y-4">
-                  <h3 className="font-headline text-xl font-bold mb-4">Pricing Summary</h3>
                   <InvoiceCard 
                       orders={stagedOrders} 
                       orderType={orderType} 
@@ -193,7 +213,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
           </div>
           <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
             <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-            <Button type="button" onClick={() => setIsConfirmSaveOpen(true)}>Save Changes</Button>
+            <Button type="submit" form="lead-form-edit" disabled={!isDirty}>Save Changes</Button>
           </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -207,12 +227,10 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
           </AlertDialogHeader>
           <AlertDialogFooterComponent>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={triggerSubmit}>Save</AlertDialogAction>
+            <AlertDialogAction onClick={handleEditLeadSubmit}>Save</AlertDialogAction>
           </AlertDialogFooterComponent>
         </AlertDialogContent>
     </AlertDialog>
     </>
   );
 }
-
-    
