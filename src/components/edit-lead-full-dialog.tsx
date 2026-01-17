@@ -213,8 +213,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   }, [firestore, lead, dataToSave, onUpdate, onClose, toast]);
 
   const handleClose = () => {
-    // A simple check for dirty state can be done here if needed.
-    // For now, it just closes.
     onClose();
   }
 
@@ -273,10 +271,10 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
               This action will update the lead record with your changes.
             </AlertDialogDescriptionComponent>
           </AlertDialogHeaderComponent>
-          <Footer>
+          <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmSave}>Save</AlertDialogAction>
-          </Footer>
+          </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
     </>
