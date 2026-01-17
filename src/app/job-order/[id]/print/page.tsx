@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore } from '@/firebase';
@@ -75,13 +76,28 @@ export default function JobOrderPrintPage() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!firestore || !id) {
+    const fetchAndPrint = async () => {
+      if (!id) {
+        setError(new Error("Job order ID is missing."));
         setIsLoading(false);
-        setError(new Error("Firestore or ID not available."));
         return;
-    };
-
-    const fetchLead = async () => {
+      }
+      
+      const storedLeadData = localStorage.getItem(`job-order-${id}`);
+      
+      if (storedLeadData) {
+        try {
+          const leadData = JSON.parse(storedLeadData);
+          setLead(leadData);
+          setIsLoading(false);
+          // Wait for state to update and content to render before printing
+          setTimeout(() => window.print(), 500);
+        } catch (e) {
+          setError(new Error("Failed to parse job order data."));
+          setIsLoading(false);
+        }
+      } else if (firestore) {
+        // Fallback to fetching from Firestore if local storage is empty
         const leadDocRef = doc(firestore, 'leads', id as string);
         try {
             const docSnap = await getDoc(leadDocRef);
@@ -100,33 +116,27 @@ export default function JobOrderPrintPage() {
         } finally {
             setIsLoading(false);
         }
+      }
     };
 
-    fetchLead();
+    fetchAndPrint();
 
-  }, [firestore, id]);
-
-  useEffect(() => {
-    // Function to handle the afterprint event
     const handleAfterPrint = () => {
-      // Close the current window/tab after the print dialog is dismissed
+      if (id) {
+        localStorage.removeItem(`job-order-${id}`);
+      }
       window.close();
     };
 
-    if (!isLoading && lead) {
-      // Add the event listener for 'afterprint'
-      window.addEventListener('afterprint', handleAfterPrint);
+    window.addEventListener('afterprint', handleAfterPrint);
 
-      // Trigger the print dialog after a short delay
-      // This delay ensures the event listener is active and the content is rendered
-      setTimeout(() => window.print(), 1000);
-    }
-
-    // Cleanup function: remove the event listener when the component unmounts
     return () => {
       window.removeEventListener('afterprint', handleAfterPrint);
+      if (id) {
+         localStorage.removeItem(`job-order-${id}`);
+      }
     };
-  }, [isLoading, lead]);
+  }, [firestore, id]);
   
   if (isLoading || !lead) {
     return (
@@ -228,16 +238,16 @@ export default function JobOrderPrintPage() {
                 <td className="border border-black p-0.5 text-center">{order.size}</td>
                 <td className="border border-black p-0.5 text-center">{order.quantity}</td>
                 <td className="border border-black p-0.5 text-center">
-                    <Checkbox className="mx-auto" checked={order.design?.left || false} readOnly />
+                    <Checkbox className="mx-auto" checked={order.design?.left || false} disabled />
                 </td>
                 <td className="border border-black p-0.5 text-center">
-                   <Checkbox className="mx-auto" checked={order.design?.right || false} readOnly />
+                   <Checkbox className="mx-auto" checked={order.design?.right || false} disabled />
                 </td>
                 <td className="border border-black p-0.5 text-center">
-                  <Checkbox className="mx-auto" checked={order.design?.backLogo || false} readOnly />
+                  <Checkbox className="mx-auto" checked={order.design?.backLogo || false} disabled />
                 </td>
                 <td className="border border-black p-0.5 text-center">
-                  <Checkbox className="mx-auto" checked={order.design?.backText || false} readOnly />
+                  <Checkbox className="mx-auto" checked={order.design?.backText || false} disabled />
                 </td>
                 <td className="border border-black p-0.5">
                    <p className="text-xs">{order.remarks}</p>
