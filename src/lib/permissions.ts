@@ -22,7 +22,6 @@ export const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
     { id: 'inventory', label: 'Inventory', path: '/inventory/summary' },
     { id: 'production', label: 'Production', path: '/production/production-queue' },
     { id: 'logistics', label: 'Logistics', path: '/logistics/shipment-queue' },
-    { id: 'admin', label: 'Admin', path: '/admin/users' },
 ];
 
 type UserPermissions = {
