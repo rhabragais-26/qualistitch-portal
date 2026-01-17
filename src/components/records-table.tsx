@@ -251,7 +251,7 @@ const RecordsTableRow = React.memo(({
                 {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
             </Button>
             </TableCell>
-             <TableCell className="text-center align-middle py-2">
+            <TableCell className="text-center align-middle py-2">
                 <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleOpenUploadDialog(lead)}>
                     <Upload className="h-4 w-4" />
                 </Button>
@@ -870,7 +870,7 @@ export function RecordsTable() {
             <DialogHeader>
                 <DialogTitle>Reference Images for Digitizing</DialogTitle>
                 <DialogDescription>
-                    Upload logos and back designs for J.O. No. {uploadLead?.joNumber ? formatJoNumber(uploadLead.joNumber) : uploadLead?.id}
+                    Upload logos or back design for the Digitizing team's reference.
                 </DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-6 py-4">
@@ -905,7 +905,7 @@ export function RecordsTable() {
             </div>
             <DialogFooter>
                 <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                <Button onClick={handleSaveImages}>Save Images</Button>
+                <Button onClick={handleSaveImages} disabled={!logoLeftImage && !logoRightImage && !backLogoImage && !backDesignImage}>Save Images</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>
