@@ -52,10 +52,16 @@ export function LoginForm() {
       // The redirect is handled by the page component
     } catch (error: any) {
       console.error('Login Error:', error);
+      let errorMessage = 'An unknown error occurred.';
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email or password. Please try again.';
+      } else {
+        errorMessage = error.message;
+      }
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: error.message || 'An unknown error occurred.',
+        description: errorMessage,
       });
       setIsLoading(false);
     }
