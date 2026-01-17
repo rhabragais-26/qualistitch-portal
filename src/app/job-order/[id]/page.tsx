@@ -160,7 +160,7 @@
 
         const originalState = JSON.stringify({
             ...normalize(fetchedLead),
-            deliveryDate: fetchedLead.deliveryDate ? format(new Date(fetchedLead.deliveryDate), 'MMMM dd, yyyy') : undefined
+            deliveryDate: fetchedLead.deliveryDate ? format(new Date(fetchedLead.deliveryDate), 'MMM dd, yyyy') : undefined
         });
 
         const currentState = JSON.stringify({
@@ -194,9 +194,9 @@
 
           let initialDate;
           if (fetchedLead.deliveryDate) {
-            initialDate = format(new Date(fetchedLead.deliveryDate), 'MMMM dd, yyyy');
+            initialDate = format(new Date(fetchedLead.deliveryDate), 'MMM dd, yyyy');
           } else {
-            initialDate = format(addDays(new Date(fetchedLead.submissionDateTime), fetchedLead.priorityType === 'Rush' ? 7 : 22), 'MMMM dd, yyyy');
+            initialDate = format(addDays(new Date(fetchedLead.submissionDateTime), fetchedLead.priorityType === 'Rush' ? 7 : 22), 'MMM dd, yyyy');
           }
           setDeliveryDate(initialDate);
         }
@@ -554,7 +554,7 @@
                     </div>
                 </div>
                 <div className="space-y-1">
-                    <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
+                    <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
                     <p><strong>Type of Order:</strong> {lead.orderType}</p>
                     <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                     <p><strong>SCES Name:</strong> {scesNickname}</p>

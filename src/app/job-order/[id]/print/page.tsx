@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore } from '@/firebase';
@@ -170,7 +171,7 @@ export default function JobOrderPrintPage() {
   }
   
   const joNumber = lead.joNumber ? `QSBP-${new Date().getFullYear().toString().slice(-2)}-${lead.joNumber.toString().padStart(5, '0')}` : 'Not Saved';
-  const deliveryDate = lead.deliveryDate ? format(new Date(lead.deliveryDate), "MMMM dd, yyyy") : format(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22), "MMMM dd, yyyy");
+  const deliveryDate = lead.deliveryDate ? format(new Date(lead.deliveryDate), "MMM dd, yyyy") : format(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22), "MMM dd, yyyy");
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
 
   const getContactDisplay = () => {
@@ -211,7 +212,7 @@ export default function JobOrderPrintPage() {
                 <p><strong>Delivery Address:</strong> <span className="whitespace-pre-wrap">{lead.location}</span></p>
             </div>
             <div className="space-y-1">
-                <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMMM d, yyyy')}</p>
+                <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
                 <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                 <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
