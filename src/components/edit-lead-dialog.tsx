@@ -42,7 +42,7 @@ type Lead = {
 
 const orderTypes = ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'];
 const priorityTypes = ['Rush', 'Regular'];
-const courierTypes = ['Lalamove', 'J&T', 'In-house', 'Pick-up'];
+const courierTypes = ['Lalamove', 'J&T', 'In-house', 'Pick-up', 'DHL', 'FedEx'];
 
 const EditLeadDialogMemo = React.memo(function EditLeadDialog({ isOpen, onOpenChange, lead, onSave, onClose }: {
   isOpen: boolean;
