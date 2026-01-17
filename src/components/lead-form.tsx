@@ -84,6 +84,8 @@ import { Textarea } from './ui/textarea';
 import { AddOns, Discount, Payment } from "./invoice-card";
 import { EditOrderDialog } from './edit-order-dialog';
 import type { Lead as LeadType } from './records-table';
+import { getTierLabel } from '@/lib/pricing';
+
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -480,6 +482,7 @@ export function LeadForm({
 
 
   useEffect(() => {
+    if (isEditing) return;
     if (customerNameValue && leads && !selectedLead) {
         const uniqueSuggestions = leads.filter(
             (lead, index, self) =>
@@ -490,9 +493,10 @@ export function LeadForm({
     } else {
         setCustomerSuggestions([]);
     }
-  }, [customerNameValue, leads, selectedLead]);
+  }, [isEditing, customerNameValue, leads, selectedLead]);
 
   useEffect(() => {
+    if (isEditing) return;
     if (companyNameValue && leads && !selectedLead) {
       const uniqueSuggestions = leads.filter(
         (lead, index, self) =>
@@ -504,9 +508,10 @@ export function LeadForm({
     } else {
       setCompanySuggestions([]);
     }
-  }, [companyNameValue, leads, selectedLead]);
+  }, [isEditing, companyNameValue, leads, selectedLead]);
 
   useEffect(() => {
+    if (isEditing) return;
     if (cityValue && !selectedLead) {
       const filteredCities = citiesAndMunicipalities.filter(city =>
         city.name.toLowerCase().includes(cityValue.toLowerCase())
@@ -515,9 +520,10 @@ export function LeadForm({
     } else {
       setCitySuggestions([]);
     }
-  }, [cityValue, citiesAndMunicipalities, selectedLead]);
+  }, [isEditing, cityValue, citiesAndMunicipalities, selectedLead]);
 
   useEffect(() => {
+    if (isEditing) return;
     if (barangayValue && cityValue && provinceValue && !selectedLead) {
         const selectedCity = citiesAndMunicipalities.find(
             c => c.name.toLowerCase() === cityValue.toLowerCase() && c.province.toLowerCase() === provinceValue.toLowerCase()
@@ -533,7 +539,7 @@ export function LeadForm({
     } else {
         setBarangaySuggestions([]);
     }
-  }, [barangayValue, cityValue, provinceValue, citiesAndMunicipalities, selectedLead]);
+  }, [isEditing, barangayValue, cityValue, provinceValue, citiesAndMunicipalities, selectedLead]);
 
 
   useEffect(() => {
@@ -855,7 +861,9 @@ export function LeadForm({
       <CardHeader className='space-y-0 pb-2'>
         <div className="flex justify-between items-start">
           <div className="flex-1 space-y-0">
-             {!isEditing && (
+             {isEditing ? (
+                 <CardTitle className="font-headline text-xl">Edit Customer Details and Orders</CardTitle>
+             ) : (
               <>
                 <CardTitle className="font-headline text-2xl">
                   Create New Order
@@ -1276,7 +1284,7 @@ export function LeadForm({
                       <TableHead className="py-2 px-4 text-black">Color</TableHead>
                       <TableHead className="py-2 px-4 text-black">Size</TableHead>
                       <TableHead className="py-2 px-4 text-black text-center">Qty</TableHead>
-                      <TableHead className="py-2 px-4 text-right text-black pr-8">Action</TableHead>
+                      <TableHead className="text-right py-1 px-2 text-black pr-8">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
