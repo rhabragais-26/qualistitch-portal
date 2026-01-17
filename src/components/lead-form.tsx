@@ -839,7 +839,7 @@ export function LeadForm({
                   <FormItem className="relative mt-2">
                     <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
                     <FormControl>
-                      <Input {...field} autoComplete="off" autoFocus={!isEditing} 
+                      <Input {...field} autoComplete="off"
                         onBlur={() => !isEditing && setTimeout(() => setCustomerSuggestions([]), 150)} 
                         onChange={(e) => {
                             field.onChange(e);
