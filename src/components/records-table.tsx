@@ -259,12 +259,19 @@ const RecordsTableRow = React.memo(({
             </Button>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
-                <div className="flex items-center justify-center gap-2">
+                <div className="relative inline-flex items-center justify-center">
                     <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)}>
                         <Upload className="mr-2 h-4 w-4" />
                         Upload
                     </Button>
-                    {imageCount > 0 && <Badge variant="secondary">{imageCount}</Badge>}
+                    {imageCount > 0 && (
+                        <Badge
+                            variant="destructive"
+                            className="absolute -top-1 -left-1 h-4 w-4 shrink-0 items-center justify-center rounded-full p-0 text-xs"
+                        >
+                           {imageCount}
+                        </Badge>
+                    )}
                 </div>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
@@ -591,12 +598,6 @@ export function RecordsTable() {
     return mobile || landline || null;
   }, []);
 
-  const formatJoNumber = useCallback((joNumber: number | undefined) => {
-    if (!joNumber) return '';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-  }, []);
-
   const handleOpenUploadDialog = useCallback((lead: Lead) => {
       const layout = lead.layouts?.[0];
       setLogoLeftImage(layout?.logoLeftImage || '');
@@ -742,7 +743,7 @@ export function RecordsTable() {
                     <TableHead className="text-center text-white align-middle">Courier</TableHead>
                     <TableHead className="text-center text-white align-middle">Grand Total</TableHead>
                     <TableHead className="text-center text-white align-middle">Paid Amount</TableHead>
-                    <TableHead className="text-center text-white align-middle">Balance</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle">Balance</TableHead>
                     <TableHead className="text-center text-white align-middle">Mode of Payment</TableHead>
                     <TableHead className="text-center text-white align-middle">Items</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
@@ -777,7 +778,7 @@ export function RecordsTable() {
                                     <TableHead className="py-1 px-2 text-black font-bold">Product Type</TableHead>
                                     <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
                                     <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
-                                    <TableHead className="py-1 px-2 text-black font-bold text-center">Quantity</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -786,7 +787,7 @@ export function RecordsTable() {
                                         <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
                                         <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
                                         <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.quantity}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-right align-middle">{order.quantity}</TableCell>
                                     </TableRow>
                                     ))}
                                 </TableBody>
