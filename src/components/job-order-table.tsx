@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useRef } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
@@ -29,12 +29,14 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Upload, Trash2 } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose, DialogFooter } from "@/components/ui/dialog"
+import Image from 'next/image';
+import { Label } from './ui/label';
 
 type Order = {
   productType: string;
@@ -42,6 +44,18 @@ type Order = {
   size: string;
   quantity: number;
 }
+
+type Layout = {
+  logoLeftImage?: string | null;
+  logoLeftImageUploadTime?: string | null;
+  logoRightImage?: string | null;
+  logoRightImageUploadTime?: string | null;
+  backLogoImage?: string | null;
+  backLogoImageUploadTime?: string | null;
+  backDesignImage?: string | null;
+  backDesignImageUploadTime?: string | null;
+}
+
 
 type Lead = {
   id: string;
@@ -65,6 +79,7 @@ type Lead = {
   isEndorsedToLogistics?: boolean;
   isRecheckingQuality?: boolean;
   isJoHardcopyReceived?: boolean;
+  layouts?: Layout[];
 }
 
 type EnrichedLead = Lead & {
@@ -81,6 +96,17 @@ export function JobOrderTable() {
   const [hoveredLeadId, setHoveredLeadId] = React.useState<string | null>(null);
   const router = useRouter();
   const [confirmingPrint, setConfirmingPrint] = useState<Lead | null>(null);
+  
+  const [uploadLead, setUploadLead] = useState<Lead | null>(null);
+  const [logoLeftImage, setLogoLeftImage] = useState<string>('');
+  const [logoRightImage, setLogoRightImage] = useState<string>('');
+  const [backLogoImage, setBackLogoImage] = useState<string>('');
+  const [backDesignImage, setBackDesignImage] = useState<string>('');
+  const logoLeftImageUploadRef = useRef<HTMLInputElement>(null);
+  const logoRightImageUploadRef = useRef<HTMLInputElement>(null);
+  const backLogoImageUploadRef = useRef<HTMLInputElement>(null);
+  const backDesignImageUploadRef = useRef<HTMLInputElement>(null);
+
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
@@ -186,8 +212,8 @@ export function JobOrderTable() {
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
         (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
-        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(lowercasedSearchTerm)) ||
-        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(lowercasedSearchTerm)))
+        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
+        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
         : true;
       
       const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
@@ -203,6 +229,92 @@ export function JobOrderTable() {
       return matchesSearch && matchesCsr && matchesJo;
     });
   }, [processedLeads, searchTerm, csrFilter, joNumberSearch, formatJoNumber]);
+  
+  const handleOpenUploadDialog = useCallback((lead: Lead) => {
+      const layout = lead.layouts?.[0];
+      setLogoLeftImage(layout?.logoLeftImage || '');
+      setLogoRightImage(layout?.logoRightImage || '');
+      setBackLogoImage(layout?.backLogoImage || '');
+      setBackDesignImage(layout?.backDesignImage || '');
+      setUploadLead(lead);
+  }, []);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+          const reader = new FileReader();
+          reader.onload = (readEvent) => {
+              setter(readEvent.target?.result as string);
+          };
+          reader.readAsDataURL(file);
+      }
+  };
+
+  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
+      const items = e.clipboardData.items;
+      for (const item of items) {
+          if (item.type.includes('image')) {
+              const blob = item.getAsFile();
+              if (blob) {
+                  const reader = new FileReader();
+                  reader.onload = (readEvent) => {
+                      setter(readEvent.target?.result as string);
+                  };
+                  reader.readAsDataURL(blob);
+              }
+          }
+      }
+  };
+
+  const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<string>>) => {
+      e.stopPropagation();
+      setter('');
+  };
+
+  const handleSaveImages = useCallback(async () => {
+    if (!uploadLead || !firestore) return;
+
+    const leadDocRef = doc(firestore, 'leads', uploadLead.id);
+    const layouts = uploadLead.layouts?.length ? [...uploadLead.layouts] : [{}];
+    
+    const existingLayout = layouts[0] || {};
+    const now = new Date().toISOString();
+
+    const updatedFirstLayout = {
+        ...existingLayout,
+        logoLeftImage: logoLeftImage || null,
+        logoLeftImageUploadTime: logoLeftImage ? (existingLayout.logoLeftImage === logoLeftImage ? existingLayout.logoLeftImageUploadTime : now) : null,
+        logoRightImage: logoRightImage || null,
+        logoRightImageUploadTime: logoRightImage ? (existingLayout.logoRightImage === logoRightImage ? existingLayout.logoRightImageUploadTime : now) : null,
+        backLogoImage: backLogoImage || null,
+        backLogoImageUploadTime: backLogoImage ? (existingLayout.backLogoImage === backLogoImage ? existingLayout.backLogoImageUploadTime : now) : null,
+        backDesignImage: backDesignImage || null,
+        backDesignImageUploadTime: backDesignImage ? (existingLayout.backDesignImage === backDesignImage ? existingLayout.backDesignImageUploadTime : now) : null,
+    };
+
+    layouts[0] = updatedFirstLayout;
+
+    try {
+        await updateDoc(leadDocRef, {
+            layouts: layouts,
+            lastModified: new Date().toISOString(),
+        });
+
+        toast({
+            title: 'Images Saved!',
+            description: 'The reference images have been saved.',
+        });
+        setUploadLead(null); // Close dialog
+    } catch (e: any) {
+        console.error("Error saving images: ", e);
+        toast({
+            variant: "destructive",
+            title: "Save Failed",
+            description: e.message || "Could not save the images.",
+        });
+    }
+  }, [uploadLead, firestore, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage]);
+
 
   if (isLoading) {
     return (
@@ -283,6 +395,7 @@ export function JobOrderTable() {
                       <TableHead className="text-white font-bold align-middle">Contact No.</TableHead>
                       <TableHead className="text-white font-bold align-middle">SCES</TableHead>
                       <TableHead className="text-white font-bold align-middle">Priority</TableHead>
+                       <TableHead className="text-white font-bold align-middle text-center w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
                       <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                       <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
                       <TableHead className="text-center text-white font-bold align-middle">Printed</TableHead>
@@ -297,6 +410,13 @@ export function JobOrderTable() {
                       const creationDate = formatDateTime(lead.submissionDateTime);
                       const modifiedDate = formatDateTime(lead.lastModified);
                       const isRepeat = lead.orderNumber > 1;
+                       const imageCount = [
+                            lead.layouts?.[0]?.logoLeftImage,
+                            lead.layouts?.[0]?.logoRightImage,
+                            lead.layouts?.[0]?.backLogoImage,
+                            lead.layouts?.[0]?.backDesignImage,
+                        ].filter(Boolean).length;
+
                       return (
                         <TableRow key={lead.id}>
                             <TableCell className="font-medium text-xs align-middle py-2 text-black">
@@ -327,6 +447,21 @@ export function JobOrderTable() {
                                <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                                 {lead.priorityType}
                               </Badge>
+                            </TableCell>
+                            <TableCell className="text-center align-middle py-2">
+                                <div className="relative inline-flex items-center justify-center">
+                                    <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)}>
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        Upload
+                                    </Button>
+                                    {imageCount > 0 && (
+                                        <div
+                                            className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
+                                        >
+                                           {imageCount}
+                                        </div>
+                                    )}
+                                </div>
                             </TableCell>
                             <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                             <TableCell className="text-center align-middle py-2">
@@ -396,6 +531,50 @@ export function JobOrderTable() {
                 </Table>
           </div>
       </CardContent>
+       <Dialog open={!!uploadLead} onOpenChange={(isOpen) => !isOpen && setUploadLead(null)}>
+        <DialogContent className="sm:max-w-4xl">
+            <DialogHeader>
+                <DialogTitle>Reference Images for Digitizing</DialogTitle>
+                <DialogDescription>
+                   Upload logos or back design for the Digitizing team's reference.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-6 py-4">
+                <div className="space-y-2">
+                <Label>Logo Left</Label>
+                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setLogoLeftImage)} onDoubleClick={() => logoLeftImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                    {logoLeftImage ? (<> <Image src={logoLeftImage} alt="Logo Left" layout="fill" objectFit="contain" className="rounded-md" /> {logoLeftImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setLogoLeftImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
+                    <input type="file" accept="image/*" ref={logoLeftImageUploadRef} onChange={(e) => handleImageUpload(e, setLogoLeftImage)} className="hidden" />
+                </div>
+                </div>
+                <div className="space-y-2">
+                <Label>Logo Right</Label>
+                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setLogoRightImage)} onDoubleClick={() => logoRightImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                    {logoRightImage ? (<> <Image src={logoRightImage} alt="Logo Right" layout="fill" objectFit="contain" className="rounded-md" /> {logoRightImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setLogoRightImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
+                    <input type="file" accept="image/*" ref={logoRightImageUploadRef} onChange={(e) => handleImageUpload(e, setLogoRightImage)} className="hidden" />
+                </div>
+                </div>
+                <div className="space-y-2">
+                <Label>Back Logo</Label>
+                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setBackLogoImage)} onDoubleClick={() => backLogoImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                    {backLogoImage ? (<> <Image src={backLogoImage} alt="Back Logo" layout="fill" objectFit="contain" className="rounded-md" /> {backLogoImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setBackLogoImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
+                    <input type="file" accept="image/*" ref={backLogoImageUploadRef} onChange={(e) => handleImageUpload(e, setBackLogoImage)} className="hidden" />
+                </div>
+                </div>
+                <div className="space-y-2">
+                <Label>Back Design</Label>
+                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setBackDesignImage)} onDoubleClick={() => backDesignImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                    {backDesignImage ? (<> <Image src={backDesignImage} alt="Back Design" layout="fill" objectFit="contain" className="rounded-md" /> {backDesignImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setBackDesignImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
+                    <input type="file" accept="image/*" ref={backDesignImageUploadRef} onChange={(e) => handleImageUpload(e, setBackDesignImage)} className="hidden" />
+                </div>
+                </div>
+            </div>
+            <DialogFooter>
+                <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                <Button onClick={handleSaveImages} disabled={!logoLeftImage && !logoRightImage && !backLogoImage && !backDesignImage}>Save Images</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
     </Card>
   );
 }

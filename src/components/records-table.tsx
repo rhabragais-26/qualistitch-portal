@@ -23,8 +23,7 @@ import {
 import { Badge } from './ui/badge';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, PlusCircle, Edit, Trash2, Upload, Save } from 'lucide-react';
-import Image from 'next/image';
+import { ChevronDown, ChevronUp, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -157,8 +156,7 @@ const RecordsTableRow = React.memo(({
     toggleCustomerDetails,
     handleOpenEditLeadDialog,
     handleDeleteLead,
-    setOpenLeadId,
-    handleOpenUploadDialog
+    setOpenLeadId
 }: {
     lead: EnrichedLead;
     openLeadId: string | null;
@@ -169,14 +167,7 @@ const RecordsTableRow = React.memo(({
     handleOpenEditLeadDialog: (lead: Lead) => void;
     handleDeleteLead: (id: string) => void;
     setOpenLeadId: React.Dispatch<React.SetStateAction<string | null>>;
-    handleOpenUploadDialog: (lead: Lead) => void;
 }) => {
-    const imageCount = [
-        lead.layouts?.[0]?.logoLeftImage,
-        lead.layouts?.[0]?.logoRightImage,
-        lead.layouts?.[0]?.backLogoImage,
-        lead.layouts?.[0]?.backDesignImage,
-    ].filter(Boolean).length;
     
     return (
         <TableRow>
@@ -245,11 +236,11 @@ const RecordsTableRow = React.memo(({
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 font-bold text-destructive">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
-               <div>{lead.modeOfPayment || 'COD'}</div>
+                <div>{lead.modeOfPayment ? lead.modeOfPayment : 'COD'}</div>
                 <div className="text-xs text-gray-500 capitalize">
-                    {lead.modeOfPayment
-                        ? (lead.payments && lead.payments[0] ? `(${lead.payments[0].type === 'down' ? 'Down Payment' : 'Full Payment'})` : null)
-                        : '(Cash on Delivery)'}
+                {lead.modeOfPayment ? (
+                    lead.payments && lead.payments[0] ? `(${lead.payments[0].type === 'down' ? 'Down Payment' : 'Full Payment'})` : null
+                ) : '(Cash on Delivery)'}
                 </div>
             </TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
@@ -257,21 +248,6 @@ const RecordsTableRow = React.memo(({
                 View
                 {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
             </Button>
-            </TableCell>
-            <TableCell className="text-center align-middle py-2">
-                <div className="relative inline-flex items-center justify-center">
-                    <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload
-                    </Button>
-                    {imageCount > 0 && (
-                        <div
-                            className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
-                        >
-                           {imageCount}
-                        </div>
-                    )}
-                </div>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
                 <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
@@ -306,24 +282,7 @@ RecordsTableRow.displayName = 'RecordsTableRow';
 export function RecordsTable() {
   const firestore = useFirestore();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
-  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
-  const [newOrderProductType, setNewOrderProductType] = useState('');
-  const [newOrderColor, setNewOrderColor] = useState('');
-  const [sizeQuantities, setSizeQuantities] = useState(
-    productSizes.map(size => ({ size, quantity: 0 }))
-  );
-  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const [uploadLead, setUploadLead] = useState<Lead | null>(null);
-  const [logoLeftImage, setLogoLeftImage] = useState<string>('');
-  const [logoRightImage, setLogoRightImage] = useState<string>('');
-  const [backLogoImage, setBackLogoImage] = useState<string>('');
-  const [backDesignImage, setBackDesignImage] = useState<string>('');
-  const logoLeftImageUploadRef = useRef<HTMLInputElement>(null);
-  const logoRightImageUploadRef = useRef<HTMLInputElement>(null);
-  const backLogoImageUploadRef = useRef<HTMLInputElement>(null);
-  const backDesignImageUploadRef = useRef<HTMLInputElement>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema);
@@ -341,7 +300,6 @@ export function RecordsTable() {
 
   const [editingLead, setEditingLead] = useState<(Lead & EnrichedLead) | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingOrder, setEditingOrder] = useState<{ leadId: string; order: Order; index: number } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [csrFilter, setCsrFilter] = useState('All');
 
@@ -407,164 +365,11 @@ export function RecordsTable() {
         setOpenCustomerDetails(null);
     }
   }, [searchTerm]);
-
-
-  const handleOpenAddOrderDialog = useCallback((leadId: string) => {
-    setSelectedLeadId(leadId);
-    setIsOrderDialogOpen(true);
-  }, []);
-  
-  const isPolo = newOrderProductType.includes('Polo Shirt');
-  const isPatches = newOrderProductType === 'Patches';
-  const availableColors = isPolo ? poloShirtColors : jacketColors;
-  
-  useEffect(() => {
-     if (isPatches) {
-      setNewOrderColor('N/A');
-    } else if (!availableColors.includes(newOrderColor)) {
-        setNewOrderColor('');
-    }
-  }, [newOrderProductType, isPatches, availableColors, newOrderColor]);
-
-  useEffect(() => {
-    if (isPatches) {
-     setSizeQuantities([{ size: 'N/A', quantity: 0 }]);
-   } else {
-     setSizeQuantities(productSizes.map(size => ({ size, quantity: 0 })));
-   }
- }, [isPatches]);
-
-  const resetAddOrderForm = useCallback(() => {
-    setNewOrderProductType('');
-    setNewOrderColor('');
-    setSizeQuantities(productSizes.map(size => ({ size, quantity: 0 })));
-    setSelectedLeadId(null);
-    setIsOrderDialogOpen(false);
-  }, []);
-
-  const handleAddOrder = useCallback(async () => {
-    if (!selectedLeadId || !firestore) return;
-
-    const isProductPatches = newOrderProductType === 'Patches';
-    const color = isProductPatches ? 'N/A' : newOrderColor;
-    let ordersAddedCount = 0;
-    const newOrders: Order[] = [];
-
-    if (newOrderProductType && color) {
-        sizeQuantities.forEach(item => {
-            if (item.quantity > 0) {
-                newOrders.push({
-                    productType: newOrderProductType,
-                    color: color,
-                    size: isProductPatches ? 'N/A' : item.size,
-                    quantity: item.quantity,
-                });
-                ordersAddedCount++;
-            }
-        });
-    }
-
-    if (ordersAddedCount > 0) {
-        const leadDocRef = doc(firestore, 'leads', selectedLeadId);
-        try {
-            const updatePromises = newOrders.map(order => 
-                updateDoc(leadDocRef, {
-                    orders: arrayUnion(order)
-                })
-            );
-            await Promise.all(updatePromises);
-            
-            await updateDoc(leadDocRef, {
-                lastModified: new Date().toISOString(),
-            });
-
-            toast({
-                title: `${ordersAddedCount} Order(s) Added!`,
-                description: 'The new orders have been added to the lead.',
-            });
-            resetAddOrderForm();
-        } catch (e: any) {
-            console.error("Error adding orders: ", e);
-            toast({
-                variant: "destructive",
-                title: "Uh oh! Something went wrong.",
-                description: e.message || "Could not add the new orders.",
-            });
-        }
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'No Orders to Add',
-            description: 'Please enter a quantity for at least one size.',
-        });
-    }
-  }, [selectedLeadId, firestore, newOrderProductType, newOrderColor, sizeQuantities, toast, resetAddOrderForm]);
   
   const handleOpenEditLeadDialog = useCallback((lead: Lead & EnrichedLead) => {
     setEditingLead(lead);
     setIsEditDialogOpen(true);
   }, []);
-
-  const handleEditOrder = useCallback(async (updatedOrder: Order) => {
-    if (!editingOrder || !firestore || !leads) return;
-  
-    const { leadId, index } = editingOrder;
-    const lead = leads.find(l => l.id === leadId);
-    if (!lead) return;
-  
-    const updatedOrders = [...lead.orders];
-    updatedOrders[index] = updatedOrder;
-  
-    const leadDocRef = doc(firestore, 'leads', leadId);
-  
-    try {
-      await updateDoc(leadDocRef, { 
-        orders: updatedOrders,
-        lastModified: new Date().toISOString(),
-      });
-      toast({
-        title: "Order Updated!",
-        description: "The order has been successfully updated.",
-      });
-      setIsEditDialogOpen(false);
-      setEditingOrder(null);
-    } catch (e: any) {
-      console.error("Error updating order: ", e);
-      toast({
-        variant: "destructive",
-        title: "Update Failed",
-        description: e.message || "Could not update the order.",
-      });
-    }
-  }, [editingOrder, firestore, leads, toast]);
-  
-  const handleDeleteOrder = useCallback(async (leadId: string, orderIndex: number) => {
-    if (!firestore || !leads) return;
-    const lead = leads.find(l => l.id === leadId);
-    if (!lead) return;
-  
-    const orderToDelete = lead.orders[orderIndex];
-    
-    const leadDocRef = doc(firestore, 'leads', leadId);
-  
-    try {
-      await updateDoc(leadDocRef, { 
-        orders: arrayRemove(orderToDelete),
-        lastModified: new Date().toISOString(),
-      });
-      toast({
-        title: "Order Deleted!",
-        description: "The order has been removed from the lead.",
-      });
-    } catch (e: any) {
-      console.error("Error deleting order: ", e);
-      toast({
-        variant: "destructive",
-        title: "Delete Failed",
-        description: e.message- "Could not delete the order.",
-      });
-    }
-  }, [firestore, leads, toast]);
 
   const handleDeleteLead = useCallback(async (leadId: string) => {
     if(!leadId || !firestore) return;
@@ -596,91 +401,6 @@ export function RecordsTable() {
     }
     return mobile || landline || null;
   }, []);
-
-  const handleOpenUploadDialog = useCallback((lead: Lead) => {
-      const layout = lead.layouts?.[0];
-      setLogoLeftImage(layout?.logoLeftImage || '');
-      setLogoRightImage(layout?.logoRightImage || '');
-      setBackLogoImage(layout?.backLogoImage || '');
-      setBackDesignImage(layout?.backDesignImage || '');
-      setUploadLead(lead);
-  }, []);
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-          const reader = new FileReader();
-          reader.onload = (readEvent) => {
-              setter(readEvent.target?.result as string);
-          };
-          reader.readAsDataURL(file);
-      }
-  };
-
-  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
-      const items = e.clipboardData.items;
-      for (const item of items) {
-          if (item.type.includes('image')) {
-              const blob = item.getAsFile();
-              if (blob) {
-                  const reader = new FileReader();
-                  reader.onload = (readEvent) => {
-                      setter(readEvent.target?.result as string);
-                  };
-                  reader.readAsDataURL(blob);
-              }
-          }
-      }
-  };
-
-  const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<string>>) => {
-      e.stopPropagation();
-      setter('');
-  };
-
-  const handleSaveImages = useCallback(async () => {
-    if (!uploadLead || !firestore) return;
-
-    const leadDocRef = doc(firestore, 'leads', uploadLead.id);
-    const layouts = uploadLead.layouts?.length ? [...uploadLead.layouts] : [{}];
-    
-    const existingLayout = layouts[0] || {};
-    const now = new Date().toISOString();
-
-    const updatedFirstLayout = {
-        ...existingLayout,
-        logoLeftImage: logoLeftImage || null,
-        logoLeftImageUploadTime: logoLeftImage ? (existingLayout.logoLeftImage === logoLeftImage ? existingLayout.logoLeftImageUploadTime : now) : null,
-        logoRightImage: logoRightImage || null,
-        logoRightImageUploadTime: logoRightImage ? (existingLayout.logoRightImage === logoRightImage ? existingLayout.logoRightImageUploadTime : now) : null,
-        backLogoImage: backLogoImage || null,
-        backLogoImageUploadTime: backLogoImage ? (existingLayout.backLogoImage === backLogoImage ? existingLayout.backLogoImageUploadTime : now) : null,
-        backDesignImage: backDesignImage || null,
-        backDesignImageUploadTime: backDesignImage ? (existingLayout.backDesignImage === backDesignImage ? existingLayout.backDesignImageUploadTime : now) : null,
-    };
-
-    layouts[0] = updatedFirstLayout;
-
-    try {
-        await updateDoc(leadDocRef, {
-            layouts: layouts,
-            lastModified: new Date().toISOString(),
-        });
-
-        toast({
-            title: 'Images Saved!',
-            description: 'The reference images have been saved.',
-        });
-        setUploadLead(null); // Close dialog
-    } catch (e: any) {
-        console.error("Error saving images: ", e);
-        toast({
-            variant: "destructive",
-            title: "Save Failed",
-            description: e.message || "Could not save the images.",
-        });
-    }
-  }, [uploadLead, firestore, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage]);
 
   if (isLoading) {
     return (
@@ -745,7 +465,6 @@ export function RecordsTable() {
                     <TableHead className="text-center text-white font-bold align-middle">Balance</TableHead>
                     <TableHead className="text-center text-white align-middle">Mode of Payment</TableHead>
                     <TableHead className="text-center text-white align-middle">Items</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[140px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -764,7 +483,6 @@ export function RecordsTable() {
                             handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}
                             handleDeleteLead={handleDeleteLead}
                             setOpenLeadId={setOpenLeadId}
-                            handleOpenUploadDialog={handleOpenUploadDialog}
                         />
                         {openLeadId === lead.id && (
                         <TableRow className="bg-gray-50">
@@ -807,58 +525,6 @@ export function RecordsTable() {
             </Table>
           </div>
       </CardContent>
-       <Dialog open={isOrderDialogOpen} onOpenChange={(isOpen) => {
-          if (!isOpen) {
-            resetAddOrderForm();
-          }
-          setIsOrderDialogOpen(isOpen);
-        }}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Add Order Details</DialogTitle>
-            <DialogDescription>Select product details to add</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label>Product Type:</Label>
-              <Select onValueChange={setNewOrderProductType} value={newOrderProductType}>
-                <SelectTrigger><SelectValue placeholder="Select a Product Type" /></SelectTrigger>
-                <SelectContent>{productTypes.map((type) => (<SelectItem key={type} value={type}>{type}</SelectItem>))}</SelectContent>
-              </Select>
-            </div>
-            <div className='flex items-center gap-2'>
-              <Label>Color:</Label>
-              <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={isPatches}>
-                <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
-                <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
-              </Select>
-            </div>
-             <div className="space-y-4">
-              {!isPatches && <Label>Size Quantities</Label>}
-               <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-                  {sizeQuantities.map((item, index) => (
-                      <div key={item.size} className="flex items-center justify-between">
-                          {!isPatches && <Label className="text-sm font-bold">{item.size}</Label>}
-                          <div className={cn("flex items-center gap-2", isPatches && "w-full justify-center")}>
-                              <p>Remaining Stocks: </p>
-                          </div>
-                      </div>
-                  ))}
-               </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
-             <Button 
-              type="button" 
-              onClick={handleAddOrder} 
-              disabled={!newOrderProductType || (!isPatches && !newOrderColor) || sizeQuantities.every(sq => sq.quantity === 0)}
-            >
-              Add
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       {editingLead && (
         <EditLeadFullDialog
           isOpen={isEditDialogOpen}
@@ -867,59 +533,6 @@ export function RecordsTable() {
           onUpdate={refetchLeads}
         />
       )}
-      {editingOrder && (
-        <EditOrderDialog 
-          isOpen={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          order={editingOrder.order}
-          onSave={handleEditOrder}
-          onClose={() => setEditingOrder(null)}
-        />
-      )}
-      <Dialog open={!!uploadLead} onOpenChange={(isOpen) => !isOpen && setUploadLead(null)}>
-        <DialogContent className="sm:max-w-4xl">
-            <DialogHeader>
-                <DialogTitle>Reference Images for Digitizing</DialogTitle>
-                <DialogDescription>
-                    Upload logos or back design for the Digitizing team's reference.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="grid grid-cols-2 gap-6 py-4">
-                <div className="space-y-2">
-                <Label>Logo Left</Label>
-                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setLogoLeftImage)} onDoubleClick={() => logoLeftImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {logoLeftImage ? (<> <Image src={logoLeftImage} alt="Logo Left" layout="fill" objectFit="contain" className="rounded-md" /> {logoLeftImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setLogoLeftImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                    <input type="file" accept="image/*" ref={logoLeftImageUploadRef} onChange={(e) => handleImageUpload(e, setLogoLeftImage)} className="hidden" />
-                </div>
-                </div>
-                <div className="space-y-2">
-                <Label>Logo Right</Label>
-                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setLogoRightImage)} onDoubleClick={() => logoRightImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {logoRightImage ? (<> <Image src={logoRightImage} alt="Logo Right" layout="fill" objectFit="contain" className="rounded-md" /> {logoRightImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setLogoRightImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                    <input type="file" accept="image/*" ref={logoRightImageUploadRef} onChange={(e) => handleImageUpload(e, setLogoRightImage)} className="hidden" />
-                </div>
-                </div>
-                <div className="space-y-2">
-                <Label>Back Logo</Label>
-                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setBackLogoImage)} onDoubleClick={() => backLogoImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {backLogoImage ? (<> <Image src={backLogoImage} alt="Back Logo" layout="fill" objectFit="contain" className="rounded-md" /> {backLogoImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setBackLogoImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                    <input type="file" accept="image/*" ref={backLogoImageUploadRef} onChange={(e) => handleImageUpload(e, setBackLogoImage)} className="hidden" />
-                </div>
-                </div>
-                <div className="space-y-2">
-                <Label>Back Design</Label>
-                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setBackDesignImage)} onDoubleClick={() => backDesignImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {backDesignImage ? (<> <Image src={backDesignImage} alt="Back Design" layout="fill" objectFit="contain" className="rounded-md" /> {backDesignImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setBackDesignImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                    <input type="file" accept="image/*" ref={backDesignImageUploadRef} onChange={(e) => handleImageUpload(e, setBackDesignImage)} className="hidden" />
-                </div>
-                </div>
-            </div>
-            <DialogFooter>
-                <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                <Button onClick={handleSaveImages} disabled={!logoLeftImage && !logoRightImage && !backLogoImage && !backDesignImage}>Save Images</Button>
-            </DialogFooter>
-        </DialogContent>
-    </Dialog>
     </Card>
   );
 }
