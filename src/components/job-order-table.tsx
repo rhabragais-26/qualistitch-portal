@@ -29,7 +29,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { Check, ChevronDown, Upload, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, Upload, Trash2, ChevronUp } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
@@ -106,6 +106,7 @@ export function JobOrderTable() {
   const logoRightImageUploadRef = useRef<HTMLInputElement>(null);
   const backLogoImageUploadRef = useRef<HTMLInputElement>(null);
   const backDesignImageUploadRef = useRef<HTMLInputElement>(null);
+  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -315,6 +316,10 @@ export function JobOrderTable() {
     }
   }, [uploadLead, firestore, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage]);
 
+  const toggleCustomerDetails = useCallback((leadId: string) => {
+    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
+  }, [openCustomerDetails]);
+
 
   if (isLoading) {
     return (
@@ -391,16 +396,16 @@ export function JobOrderTable() {
                 <Table>
                   <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                     <TableRow>
-                      <TableHead className="text-white font-bold align-middle">Order Created</TableHead>
-                      <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
-                      <TableHead className="text-white font-bold align-middle">Contact No.</TableHead>
-                      <TableHead className="text-white font-bold align-middle">SCES</TableHead>
-                      <TableHead className="text-white font-bold align-middle">Priority</TableHead>
-                       <TableHead className="text-white font-bold align-middle text-center w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
-                      <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Order Created</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Customer Name</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Contact No.</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">SCES</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">J.O. No.</TableHead>
                       <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
                       <TableHead className="text-center text-white font-bold align-middle">Printed</TableHead>
-                      <TableHead className="text-white font-bold align-middle">J.O. Status</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center">J.O. Status</TableHead>
                     </TableRow>
                   </TableHeader>
                     <TableBody>
@@ -419,49 +424,62 @@ export function JobOrderTable() {
 
                       return (
                         <TableRow key={lead.id}>
-                            <TableCell className="text-xs align-middle py-2 text-black">
+                            <TableCell className="text-xs align-middle py-2 text-black text-center">
                               <Collapsible>
                                 <CollapsibleTrigger asChild>
-                                    <div className="flex items-center cursor-pointer">
+                                    <div className="flex items-center justify-center cursor-pointer">
                                         <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                        <div>
-                                            <div>{creationDate.dateTime}</div>
-                                            <div className="text-gray-500">{creationDate.dayOfWeek}</div>
+                                        <div className='flex items-center'>
+                                            <span>{creationDate.dateTime}</span>
                                         </div>
                                     </div>
                                 </CollapsibleTrigger>
-                                <CollapsibleContent className="pt-1 pl-5 text-gray-500 text-xs">
+                                <div className="text-gray-500 text-center">{creationDate.dayOfWeek}</div>
+                                <CollapsibleContent className="pt-1 text-gray-500 text-xs text-center">
                                     <span className='font-bold text-gray-600'>Last Modified:</span>
                                     <div>{modifiedDate.dateTime}</div>
                                     <div>{modifiedDate.dayOfWeek}</div>
                                 </CollapsibleContent>
                               </Collapsible>
                             </TableCell>
-                            <TableCell className="font-medium text-xs align-middle py-2 text-black">
-                                {lead.customerName}
-                                {isRepeat ? (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <div className="flex items-center gap-1.5 cursor-pointer">
-                                            <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                            <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                              {lead.orderNumber}
-                                            </span>
-                                          </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  ) : (
-                                    <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                                  )}
+                            <TableCell className="font-medium text-xs align-middle py-2 text-black text-center">
+                                <div className="flex items-center justify-center">
+                                    <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
+                                    {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                    </Button>
+                                    <div className='flex flex-col items-center'>
+                                    <span className="font-medium">{lead.customerName}</span>
+                                    {isRepeat ? (
+                                        <TooltipProvider>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <div className="flex items-center gap-1.5 cursor-pointer">
+                                                <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                                <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                                  {lead.orderNumber}
+                                                </span>
+                                              </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      ) : (
+                                        <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                                      )}
+                                    {openCustomerDetails === lead.id && (
+                                        <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
+                                        {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                                        {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                                        </div>
+                                    )}
+                                    </div>
+                                </div>
                             </TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black">{getContactDisplay(lead)}</TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
-                            <TableCell className="align-middle py-2">
+                            <TableCell className="text-xs align-middle py-2 text-black text-center">{getContactDisplay(lead)}</TableCell>
+                            <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.salesRepresentative}</TableCell>
+                            <TableCell className="align-middle py-2 text-center">
                                <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                                 {lead.priorityType}
                               </Badge>
@@ -481,7 +499,7 @@ export function JobOrderTable() {
                                     )}
                                 </div>
                             </TableCell>
-                            <TableCell className="font-medium text-xs align-middle py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
+                            <TableCell className="font-medium text-xs align-middle py-2 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                             <TableCell className="text-center align-middle py-2">
                                <Button 
                                   size="sm" 
@@ -523,7 +541,7 @@ export function JobOrderTable() {
                                     )}
                                 </div>
                              </TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black font-medium">{getJoStatus(lead)}</TableCell>
+                            <TableCell className="text-xs align-middle py-2 text-black font-medium text-center">{getJoStatus(lead)}</TableCell>
                         </TableRow>
                       );
                     })}
@@ -578,3 +596,4 @@ export function JobOrderTable() {
     </Card>
   );
 }
+
