@@ -23,13 +23,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 type InvoiceCardProps = {
   orders: Order[];
   orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services';
+  addOns: Record<string, AddOns>;
+  setAddOns: React.Dispatch<React.SetStateAction<Record<string, AddOns>>>;
+  discounts: Record<string, Discount>;
+  setDiscounts: React.Dispatch<React.SetStateAction<Record<string, Discount>>>;
+  payments: Record<string, Payment[]>;
+  setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>>;
+  onGrandTotalChange: (total: number) => void;
+  onBalanceChange: (balance: number) => void;
 };
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
 };
 
-type AddOns = {
+export type AddOns = {
   backLogo: number;
   names: number;
   plusSize: number;
@@ -39,13 +47,13 @@ type AddOns = {
   shippingFee: number;
 };
 
-type Discount = {
+export type Discount = {
   type: 'percentage' | 'fixed';
   value: number;
   reason?: string;
 };
 
-type Payment = {
+export type Payment = {
   type: 'down' | 'full';
   amount: number;
   mode: string;
@@ -166,12 +174,9 @@ function AddOnsDialog({
 }
 
 
-export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
+export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, setDiscounts, payments, setPayments, onGrandTotalChange, onBalanceChange }: InvoiceCardProps) {
   
-  const [addOns, setAddOns] = useState<Record<string, AddOns>>({});
-  const [discounts, setDiscounts] = useState<Record<string, Discount>>({});
   const [removingAddOn, setRemovingAddOn] = useState<{ groupKey: string; addOnType: keyof AddOns; } | null>(null);
-  const [payments, setPayments] = useState<Record<string, Payment[]>>({});
 
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
@@ -244,6 +249,14 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
   }, [payments]);
 
   const balance = grandTotal - totalPaid;
+
+  useEffect(() => {
+    onGrandTotalChange(grandTotal);
+  }, [grandTotal, onGrandTotalChange]);
+
+  useEffect(() => {
+      onBalanceChange(balance);
+  }, [balance, onBalanceChange]);
 
   const handleConfirmRemoveAddOn = () => {
     if (!removingAddOn) return;

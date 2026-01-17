@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
 import { LeadForm } from '@/components/lead-form';
-import { InvoiceCard } from '@/components/invoice-card';
+import { InvoiceCard, AddOns, Discount, Payment } from '@/components/invoice-card';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { Order } from '@/components/lead-form';
@@ -40,6 +40,12 @@ export default function NewOrderPage() {
   
   const [orderType, setOrderType] = useState<'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | undefined>(undefined);
 
+  const [addOns, setAddOns] = useState<Record<string, AddOns>>({});
+  const [discounts, setDiscounts] = useState<Record<string, Discount>>({});
+  const [payments, setPayments] = useState<Record<string, Payment[]>>({});
+  const [grandTotal, setGrandTotal] = useState(0);
+  const [balance, setBalance] = useState(0);
+
   const [resetFormTrigger, setResetFormTrigger] = useState(0);
 
   useEffect(() => {
@@ -55,6 +61,11 @@ export default function NewOrderPage() {
   const handleResetClick = () => {
     setResetFormTrigger(prev => prev + 1);
     setStagedOrders([]);
+    setAddOns({});
+    setDiscounts({});
+    setPayments({});
+    setGrandTotal(0);
+    setBalance(0);
   }
 
   return (
@@ -73,6 +84,11 @@ export default function NewOrderPage() {
                         setStagedOrders={setStagedOrders}
                         resetFormTrigger={resetFormTrigger}
                         onOrderTypeChange={setOrderType}
+                        addOns={addOns}
+                        discounts={discounts}
+                        payments={payments}
+                        grandTotal={grandTotal}
+                        balance={balance}
                     />
                 </div>
                 <div className="xl:col-span-2 space-y-4">
@@ -90,7 +106,18 @@ export default function NewOrderPage() {
                             Check Item Prices
                         </Button>
                     </div>
-                    <InvoiceCard orders={stagedOrders} orderType={orderType} />
+                    <InvoiceCard 
+                        orders={stagedOrders} 
+                        orderType={orderType} 
+                        addOns={addOns}
+                        setAddOns={setAddOns}
+                        discounts={discounts}
+                        setDiscounts={setDiscounts}
+                        payments={payments}
+                        setPayments={setPayments}
+                        onGrandTotalChange={setGrandTotal}
+                        onBalanceChange={setBalance}
+                    />
                     <div className="flex justify-end pt-4 col-span-full">
                         <div className="flex gap-4">
                             <AlertDialog>

@@ -81,6 +81,7 @@ import { StatusBanner } from '@/components/ui/status-banner';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
 import { Textarea } from './ui/textarea';
+import { AddOns, Discount, Payment } from "./invoice-card";
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -220,9 +221,26 @@ type LeadFormProps = {
   stagedOrders: Order[];
   setStagedOrders: React.Dispatch<React.SetStateAction<Order[]>>;
   resetFormTrigger: number;
+  onOrderTypeChange: (orderType: FormValues['orderType'] | undefined) => void;
+  addOns: Record<string, AddOns>;
+  discounts: Record<string, Discount>;
+  payments: Record<string, Payment[]>;
+  grandTotal: number;
+  balance: number;
 };
 
-export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFormTrigger }: LeadFormProps) {
+export function LeadForm({ 
+  onDirtyChange, 
+  stagedOrders, 
+  setStagedOrders, 
+  resetFormTrigger, 
+  onOrderTypeChange,
+  addOns,
+  discounts,
+  payments,
+  grandTotal,
+  balance
+}: LeadFormProps) {
   const {toast} = useToast();
   const [dateString, setDateString] = useState('');
   const [timeString, setTimeString] = useState('');
@@ -385,6 +403,11 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
   const cityValue = watch('city');
   const provinceValue = watch('province');
   const isInternational = watch('isInternational');
+  const orderTypeValue = watch('orderType');
+
+  useEffect(() => {
+    onOrderTypeChange(orderTypeValue);
+  }, [orderTypeValue, onOrderTypeChange]);
 
   useEffect(() => {
     if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
@@ -586,6 +609,9 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
     const leadsRef = collection(firestore, 'leads');
     const leadDocRef = doc(leadsRef, leadId);
     const now = new Date().toISOString();
+    
+    const paidAmount = Object.values(payments).flat().reduce((sum, p) => sum + p.amount, 0);
+    const modeOfPayment = Object.values(payments).flat().map(p => p.mode).join(', ');
 
     const submissionData = {
       id: leadId,
@@ -601,6 +627,7 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
       courier: values.courier || '-',
       paymentType: values.paymentType,
       salesRepresentative: userProfile.nickname,
+      scesFullName: `${userProfile.firstName} ${userProfile.lastName}`,
       orderType: values.orderType,
       priorityType: values.priorityType,
       productType: values.orders.map(o => o.productType).join(', '),
@@ -608,6 +635,13 @@ export function LeadForm({ onDirtyChange, stagedOrders, setStagedOrders, resetFo
       submissionDateTime: now,
       lastModified: now,
       publiclyPrintable: true,
+      grandTotal,
+      paidAmount,
+      modeOfPayment,
+      balance,
+      addOns,
+      discounts,
+      payments: Object.values(payments).flat(),
     };
 
     setDocumentNonBlocking(leadDocRef, submissionData, {});
