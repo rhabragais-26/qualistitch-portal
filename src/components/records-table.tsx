@@ -104,6 +104,7 @@ const leadSchema = z.object({
   lastModifiedBy: z.string().optional(),
   grandTotal: z.number().optional(),
   paidAmount: z.number().optional(),
+  paymentType: z.string().optional(),
   modeOfPayment: z.string().optional(),
   balance: z.number().optional(),
   addOns: z.any().optional(),
@@ -198,7 +199,7 @@ const RecordsTableRow = React.memo(({
                     <div className="text-center">{formatDateTime(lead.lastModified).dateTime}</div>
                     <div className='text-center'>{formatDateTime(lead.lastModified).dayOfWeek}{lead.lastModifiedBy ? ` (${lead.lastModifiedBy})` : ''}</div>
                 </CollapsibleContent>
-            </Collapsible>
+              </Collapsible>
             </TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
               <div className="flex items-center justify-center">
@@ -246,7 +247,8 @@ const RecordsTableRow = React.memo(({
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 font-bold text-destructive">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
-            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.modeOfPayment || '-'}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType === 'COD' ? 'CASH' : (lead.modeOfPayment || '-')}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
               <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                 View
@@ -254,19 +256,19 @@ const RecordsTableRow = React.memo(({
               </Button>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
-                <div className="relative inline-flex items-center justify-center">
-                    <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload
-                    </Button>
-                    {imageCount > 0 && (
-                        <div
-                            className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
-                        >
-                           {imageCount}
-                        </div>
-                    )}
-                </div>
+              <div className="relative inline-flex items-center justify-center">
+                <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload
+                </Button>
+                {imageCount > 0 && (
+                    <div
+                        className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
+                    >
+                        {imageCount}
+                    </div>
+                )}
+              </div>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
               <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
@@ -578,6 +580,7 @@ export function RecordsTable() {
                     <TableHead className="text-white align-middle text-center">Grand Total</TableHead>
                     <TableHead className="text-white align-middle text-center">Paid Amount</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Balance</TableHead>
+                    <TableHead className="text-white align-middle text-center">Payment Type</TableHead>
                     <TableHead className="text-white align-middle text-center">Mode of Payment</TableHead>
                     <TableHead className="text-white align-middle text-center">Items</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center whitespace-nowrap">Reference Image for Digitizing</TableHead>
@@ -603,7 +606,7 @@ export function RecordsTable() {
                         />
                         {openLeadId === lead.id && (
                         <TableRow className="bg-gray-50">
-                            <TableCell colSpan={13}>
+                            <TableCell colSpan={14}>
                             <div className="p-2">
                                 <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
                                 <Table>
