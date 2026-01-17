@@ -265,12 +265,11 @@ const RecordsTableRow = React.memo(({
                         Upload
                     </Button>
                     {imageCount > 0 && (
-                        <Badge
-                            variant="destructive"
-                            className="absolute -top-1 -left-1 h-4 w-4 shrink-0 items-center justify-center rounded-full p-0 text-xs"
+                        <div
+                            className="absolute -top-1.5 -left-1.5 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
                         >
                            {imageCount}
-                        </Badge>
+                        </div>
                     )}
                 </div>
             </TableCell>
@@ -747,7 +746,7 @@ export function RecordsTable() {
                     <TableHead className="text-center text-white align-middle">Mode of Payment</TableHead>
                     <TableHead className="text-center text-white align-middle">Items</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
-                    <TableHead className="text-center text-white align-middle">Actions</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[140px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -769,7 +768,7 @@ export function RecordsTable() {
                         />
                         {openLeadId === lead.id && (
                         <TableRow className="bg-gray-50">
-                            <TableCell colSpan={13} className="p-2">
+                            <TableCell colSpan={13}>
                             <div className="p-2">
                                 <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
                                 <Table>
