@@ -364,22 +364,20 @@ export function LeadForm({
 
   useEffect(() => {
     if (isEditing && initialLeadData) {
-      const { customerName, companyName, contactNumber, landlineNumber, location, houseStreet, barangay, city, province, courier, orderType, priorityType } = initialLeadData;
+      const { customerName, companyName, contactNumber, landlineNumber, location, houseStreet, barangay, city, province, courier, orderType, priorityType, isInternational } = initialLeadData as LeadType & { isInternational?: boolean };
       
-      const isInternational = !houseStreet && !barangay && !city && !province;
-
       reset({
         customerName: customerName || '',
         companyName: companyName || '',
         mobileNo: contactNumber || '',
         landlineNo: landlineNumber || '',
-        isInternational: isInternational,
+        isInternational: isInternational || false,
         houseStreet: houseStreet || '',
         barangay: barangay || '',
         city: city || '',
         province: province || '',
         internationalAddress: isInternational ? location : '',
-        courier: courier || undefined,
+        courier: courier === '-' ? undefined : courier,
         orderType: orderType as any,
         priorityType: priorityType as any,
         orders: stagedOrders,
@@ -559,10 +557,12 @@ export function LeadForm({
       });
       setTimeString(timeStr);
     };
-    updateDateTime();
-    const intervalId = setInterval(updateDateTime, 1000);
-    return () => clearInterval(intervalId);
-  }, []);
+    if(!isEditing) {
+      updateDateTime();
+      const intervalId = setInterval(updateDateTime, 1000);
+      return () => clearInterval(intervalId);
+    }
+  }, [isEditing]);
   
   const { fields, append, remove, update } = useFieldArray({
     control: form.control,
@@ -671,6 +671,7 @@ export function LeadForm({
       companyName: values.companyName ? toTitleCase(values.companyName) : '-',
       contactNumber: values.mobileNo || '-',
       landlineNumber: values.landlineNo || '-',
+      isInternational: values.isInternational,
       houseStreet: values.isInternational ? '' : toTitleCase(values.houseStreet || ''),
       barangay: values.isInternational ? '' : toTitleCase(values.barangay || ''),
       city: values.isInternational ? '' : toTitleCase(values.city || ''),
@@ -854,13 +855,15 @@ export function LeadForm({
       <CardHeader className='space-y-0 pb-2'>
         <div className="flex justify-between items-start">
           <div className="flex-1 space-y-0">
-            <CardTitle className="font-headline text-2xl">
-              {isEditing ? 'Edit Order' : 'Create New Order'}
-            </CardTitle>
-            {!isEditing && (
-              <CardDescription className="text-gray-600">
-                Fill in the details below to create a record for customer and order.
-              </CardDescription>
+             {!isEditing && (
+              <>
+                <CardTitle className="font-headline text-2xl">
+                  Create New Order
+                </CardTitle>
+                <CardDescription className="text-gray-600">
+                  Fill in the details below to create a record for customer and order.
+                </CardDescription>
+              </>
             )}
           </div>
           {!isEditing && (
@@ -881,7 +884,7 @@ export function LeadForm({
                   {customerStatus && customerNameValue && (
                     <div className={cn("animate-in fade-in-down flex items-center gap-2")}>
                       {customerStatus === 'Repeat' ? (
-                         <div onClick={() => setIsStatusDialogOpen(true)} className="cursor-pointer">
+                         <div onClick={() => !isEditing && setIsStatusDialogOpen(true)} className={!isEditing ? 'cursor-pointer' : ''}>
                             <StatusBanner
                                 text="Repeat Buyer"
                                 backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
@@ -891,7 +894,7 @@ export function LeadForm({
                             />
                          </div>
                       ) : (
-                        <div onClick={() => customerStatus === 'New' && setIsStatusDialogOpen(true)} className={customerStatus === 'New' ? 'cursor-pointer' : ''}>
+                        <div onClick={() => customerStatus === 'New' && !isEditing && setIsStatusDialogOpen(true)} className={customerStatus === 'New' && !isEditing ? 'cursor-pointer' : ''}>
                             <StatusBanner
                             text="New Customer"
                             backgroundColor="#FFFFFF"

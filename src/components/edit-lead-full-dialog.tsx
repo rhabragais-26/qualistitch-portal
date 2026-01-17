@@ -4,9 +4,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
   DialogClose,
   DialogFooter
 } from "@/components/ui/dialog";
@@ -18,7 +15,7 @@ import { LeadForm } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
 import { AddOns, Discount, Payment } from './invoice-dialogs';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from './ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import type { Lead as LeadType } from './records-table';
 
 interface EditLeadFullDialogProps {
@@ -120,13 +117,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[90vw] w-full h-[95vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Edit Lead: {lead.customerName}</DialogTitle>
-          <DialogDescription>
-            Make changes to the lead information and order details.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 py-2">
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-6">
           <div className="xl:col-span-3">
              <LeadForm 
                 onDirtyChange={setIsFormDirty} 
