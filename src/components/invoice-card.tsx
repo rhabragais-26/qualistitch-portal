@@ -529,9 +529,9 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                      {totalPaid > 0 && (
                        <>
                         {Object.values(payments).flat().map((payment, index) => (
-                           <div key={index} className="flex justify-end items-center text-sm">
+                          <div key={index} className="flex justify-end items-center text-sm text-right">
                               <span className="text-muted-foreground mr-2">
-                                {payment.type === 'full' ? 'Full Payment' : 'Down Payment'} <span className="italic">(via {payment.mode})</span>
+                                {payment.type === 'full' ? 'Full Payment' : 'Down Payment'} <span className="italic">(via {payment.mode})</span>:
                               </span>
                               <span className="font-medium">{formatCurrency(payment.amount)}</span>
                           </div>
@@ -797,5 +797,3 @@ function AddPaymentDialog({ grandTotal, setPayments, payments }: { grandTotal: n
     </Dialog>
   );
 }
-
-```
