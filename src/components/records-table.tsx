@@ -152,30 +152,30 @@ const RecordsTableRow = React.memo(({
 }) => {
     return (
         <TableRow>
-            <TableCell className="text-xs align-top py-2 text-black">
+            <TableCell className="text-xs align-middle text-center py-2 text-black">
                 <Collapsible>
                 <CollapsibleTrigger asChild>
-                    <div className="flex items-center cursor-pointer">
+                    <div className="flex items-center justify-center cursor-pointer">
                         <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
                         <div className='flex items-center'>
                             <span>{formatDateTime(lead.submissionDateTime).dateTime}</span>
                         </div>
                     </div>
                 </CollapsibleTrigger>
-                    <div className="pl-5 text-gray-500">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
-                <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-xs">
+                    <div className="pl-5 text-gray-500 text-left">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
+                <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-xs text-left">
                     <span className='font-bold text-gray-600'>Last Modified:</span>
                     <div>{formatDateTime(lead.lastModified).dateTime}</div>
                     <div>{formatDateTime(lead.lastModified).dayOfWeek}</div>
                 </CollapsibleContent>
             </Collapsible>
             </TableCell>
-            <TableCell className="text-xs align-top py-2 text-black">
-            <div className="flex items-start">
+            <TableCell className="text-xs align-middle text-center py-2 text-black">
+            <div className="flex items-center justify-center">
                 <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
                 {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </Button>
-                <div className='flex flex-col'>
+                <div className='flex flex-col items-center'>
                 <span className="font-medium">{lead.customerName}</span>
                 {isRepeat ? (
                     <TooltipProvider>
@@ -205,18 +205,18 @@ const RecordsTableRow = React.memo(({
                 </div>
             </div>
             </TableCell>
-            <TableCell className="text-xs align-middle py-2 text-black">{lead.salesRepresentative}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.salesRepresentative}</TableCell>
             <TableCell className="align-middle py-2 text-center">
             <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                 {lead.priorityType}
             </Badge>
             </TableCell>
-            <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.orderType}</TableCell>
-            <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.courier === '-' ? '' : lead.courier}</TableCell>
-            <TableCell className="text-xs align-middle py-2 text-black text-right">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
-            <TableCell className="text-xs align-middle py-2 text-black text-right">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
-            <TableCell className="text-xs align-middle py-2 text-black">{lead.modeOfPayment || '-'}</TableCell>
-            <TableCell className="text-xs align-middle py-2 text-black text-right">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.orderType}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.modeOfPayment || '-'}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
             <TableCell className="text-center align-middle py-2">
             <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                 View
@@ -689,13 +689,12 @@ export function RecordsTable() {
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white align-middle">Date & Time</TableHead>
-                    <TableHead className="text-white align-middle">Customer</TableHead>
-                    <TableHead className="text-white align-middle">SCES</TableHead>
+                    <TableHead className="text-white align-middle text-center">Date & Time</TableHead>
+                    <TableHead className="text-white align-middle text-center">Customer</TableHead>
+                    <TableHead className="text-white align-middle text-center">SCES</TableHead>
                     <TableHead className="text-center text-white align-middle">Priority</TableHead>
                     <TableHead className="text-center text-white align-middle">Order Type</TableHead>
                     <TableHead className="text-center text-white align-middle">Courier</TableHead>
-                    <TableHead className="text-center text-white align-middle">Payment</TableHead>
                     <TableHead className="text-center text-white align-middle">Grand Total</TableHead>
                     <TableHead className="text-center text-white align-middle">Paid Amount</TableHead>
                     <TableHead className="text-center text-white align-middle">Mode of Payment</TableHead>
@@ -722,7 +721,7 @@ export function RecordsTable() {
                         />
                         {openLeadId === lead.id && (
                         <TableRow className="bg-gray-50">
-                            <TableCell colSpan={13} className="p-2">
+                            <TableCell colSpan={12} className="p-2">
                             <div className="p-2">
                                 <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
                                 <Table>
