@@ -1,9 +1,11 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogClose,
@@ -14,8 +16,7 @@ import {
     AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter as AlertDialogFooterComponent,
+    AlertDialogDescription as AlertDialogDescriptionComponent,
     AlertDialogHeader as AlertDialogHeaderComponent,
     AlertDialogTitle as AlertDialogTitleComponent,
 } from './ui/alert-dialog';
@@ -60,17 +61,18 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   const [grandTotal, setGrandTotal] = useState(0);
   const [balance, setBalance] = useState(0);
   
+  const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
   const [dataToSave, setDataToSave] = useState<LeadUpdateData | null>(null);
 
   const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
     if (isOpen && lead) {
-      setFormKey(prev => prev + 1);
+      setFormKey(prev => prev + 1); // This will force re-mounting of the LeadForm
       setStagedOrders(lead.orders || []);
       
       const paymentsObject: Record<string, Payment[]> = {};
-      const leadPayments = lead.payments as any; // Handle legacy and new structure
+      const leadPayments = lead.payments as any;
       if (leadPayments && Array.isArray(leadPayments) && leadPayments.length > 0) {
         paymentsObject['main'] = leadPayments as Payment[];
       } else if (lead.paidAmount) {
@@ -102,7 +104,10 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
 
   const initialFormValues = useMemo(() => {
     if (!lead) return null;
-    const courier = lead.courier === '-' ? undefined : lead.courier;
+    let courierValue = lead.courier;
+    if (courierValue === '-') {
+        courierValue = undefined;
+    }
     return {
         customerName: toTitleCase(lead.customerName || ''),
         companyName: lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '',
@@ -114,7 +119,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         city: lead.city ? toTitleCase(lead.city) : '',
         province: lead.province ? toTitleCase(lead.province) : '',
         internationalAddress: lead.isInternational ? lead.location : '',
-        courier: courier,
+        courier: courierValue,
         orderType: lead.orderType as any,
         priorityType: lead.priorityType as any,
         orders: lead.orders || [],
@@ -122,7 +127,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   }, [lead]);
 
   
-  const handleFormSubmit = useCallback((values: FormValues) => {
+  const handleEditLeadSubmit = useCallback((values: FormValues) => {
     setDataToSave({
         ...values,
         stagedOrders,
@@ -132,6 +137,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         grandTotal,
         balance,
     });
+    setIsConfirmSaveOpen(true);
   }, [stagedOrders, addOns, discounts, payments, grandTotal, balance]);
 
   const handleConfirmSave = useCallback(async () => {
@@ -200,18 +206,25 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         });
     } finally {
         setDataToSave(null);
+        setIsConfirmSaveOpen(false);
     }
   }, [firestore, lead, dataToSave, onUpdate, onClose, toast]);
 
+  const handleClose = () => {
+    // A simple check for dirty state can be done here if needed.
+    // For now, it just closes.
+    onClose();
+  }
+
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] w-full h-[95vh] flex flex-col">
           <DialogHeader className="flex-shrink-0 pt-6 px-6">
-             <DialogTitle className="text-xl font-bold">Edit Customer Details and Orders</DialogTitle>
-             <VisuallyHidden>
-                <DialogDescription>Edit Lead</DialogDescription>
-             </VisuallyHidden>
+            <DialogTitle className="text-xl font-bold">Edit Customer Details and Orders</DialogTitle>
+            <DialogDescription>
+                Please change necessary details for update and make sure the data inputs are correct before saving
+            </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
               <div className="xl:col-span-3">
@@ -221,7 +234,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
                         stagedOrders={stagedOrders}
                         setStagedOrders={setStagedOrders}
                         onOrderTypeChange={setOrderType}
-                        onSubmit={handleFormSubmit}
+                        onSubmit={handleEditLeadSubmit}
                         isEditing={true}
                         initialLeadData={lead}
                         initialFormValues={initialFormValues}
@@ -249,13 +262,13 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
           </DialogFooter>
       </DialogContent>
     </Dialog>
-    <AlertDialog open={!!dataToSave} onOpenChange={(open) => !open && setDataToSave(null)}>
+    <AlertDialog open={isConfirmSaveOpen} onOpenChange={setIsConfirmSaveOpen}>
         <AlertDialogContent>
           <AlertDialogHeaderComponent>
             <AlertDialogTitleComponent>Are you absolutely sure?</AlertDialogTitleComponent>
-            <AlertDialogDescription>
+            <AlertDialogDescriptionComponent>
               This action will update the lead record with your changes.
-            </AlertDialogDescription>
+            </AlertDialogDescriptionComponent>
           </AlertDialogHeaderComponent>
           <AlertDialogFooterComponent>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -266,6 +279,8 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     </>
   );
 }
+    
+
     
 
     
