@@ -40,7 +40,6 @@ type Lead = {
   courier: string;
 }
 
-const paymentTypes = ['Partially Paid', 'Fully Paid', 'COD'];
 const orderTypes = ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'];
 const priorityTypes = ['Rush', 'Regular'];
 const courierTypes = ['Lalamove', 'J&T', 'In-house', 'Pick-up'];
@@ -57,7 +56,6 @@ const EditLeadDialogMemo = React.memo(function EditLeadDialog({ isOpen, onOpenCh
   const [contactNumber, setContactNumber] = useState(lead.contactNumber);
   const [landlineNumber, setLandlineNumber] = useState(lead.landlineNumber || '');
   const [location, setLocation] = useState(lead.location);
-  const [paymentType, setPaymentType] = useState(lead.paymentType);
   const [orderType, setOrderType] = useState(lead.orderType);
   const [priorityType, setPriorityType] = useState(lead.priorityType);
   const [courier, setCourier] = useState(lead.courier);
@@ -78,7 +76,6 @@ const EditLeadDialogMemo = React.memo(function EditLeadDialog({ isOpen, onOpenCh
       setContactNumber(lead.contactNumber || '');
       setLandlineNumber(lead.landlineNumber || '');
       setLocation(lead.location);
-      setPaymentType(lead.paymentType);
       setOrderType(lead.orderType);
       setPriorityType(lead.priorityType);
       setCourier(lead.courier);
@@ -141,7 +138,6 @@ const EditLeadDialogMemo = React.memo(function EditLeadDialog({ isOpen, onOpenCh
       contactNumber: mobile || '-',
       landlineNumber: landline || '-',
       location: toTitleCase(location),
-      paymentType,
       orderType,
       priorityType,
       courier: courier || '-',
@@ -187,35 +183,26 @@ const EditLeadDialogMemo = React.memo(function EditLeadDialog({ isOpen, onOpenCh
               <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-             <div className="space-y-2">
-              <Label htmlFor="courier">Courier (Optional)</Label>
-              <Select onValueChange={setCourier} value={courier === '-' ? '' : courier}>
-                <SelectTrigger id="courier"><SelectValue placeholder="Select Courier" /></SelectTrigger>
-                <SelectContent>{courierTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
             <div className="space-y-2">
-              <Label htmlFor="paymentType">Payment Type</Label>
-              <Select onValueChange={setPaymentType} value={paymentType}>
-                <SelectTrigger id="paymentType"><SelectValue /></SelectTrigger>
-                <SelectContent>{paymentTypes.map(o => <SelectItem key={o} value={o}>{o === 'COD' ? 'COD (Cash on Delivery)' : o}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-             <div className="space-y-2">
               <Label htmlFor="orderType">Order Type</Label>
               <Select onValueChange={setOrderType} value={orderType}>
                 <SelectTrigger id="orderType"><SelectValue /></SelectTrigger>
                 <SelectContent>{orderTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-             <div className="space-y-2">
-              <Label>Priority Type</Label>
-              <RadioGroup onValueChange={(v) => setPriorityType(v as 'Rush' | 'Regular')} value={priorityType} className="flex pt-2">
-                {priorityTypes.map(o => <div key={o} className="flex items-center space-x-2"><RadioGroupItem value={o} id={`priority-${o}`}/><Label htmlFor={`priority-${o}`}>{o}</Label></div>)}
-              </RadioGroup>
+            <div className="space-y-2">
+              <Label htmlFor="courier">Courier (Optional)</Label>
+              <Select onValueChange={setCourier} value={courier === '-' ? '' : courier}>
+                <SelectTrigger id="courier"><SelectValue placeholder="Select Courier" /></SelectTrigger>
+                <SelectContent>{courierTypes.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Priority Type</Label>
+            <RadioGroup onValueChange={(v) => setPriorityType(v as 'Rush' | 'Regular')} value={priorityType} className="flex pt-2">
+              {priorityTypes.map(o => <div key={o} className="flex items-center space-x-2"><RadioGroupItem value={o} id={`priority-${o}`}/><Label htmlFor={`priority-${o}`}>{o}</Label></div>)}
+            </RadioGroup>
           </div>
            {error && <p className="text-sm font-medium text-destructive">{error}</p>}
         </div>

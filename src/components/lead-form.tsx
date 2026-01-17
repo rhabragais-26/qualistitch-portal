@@ -82,6 +82,7 @@ import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
 import { Textarea } from './ui/textarea';
 import { AddOns, Discount, Payment } from "./invoice-card";
+import { EditOrderDialog } from './edit-order-dialog';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -108,7 +109,6 @@ const formSchema = z.object({
   internationalAddress: z.string().optional(),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   courier: z.string().optional(),
-  paymentType: z.enum(['Partially Paid', 'Fully Paid', 'COD'], {required_error: "You need to select a payment type."}),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
   orders: z.array(orderSchema).min(1, "Please add at least one order."),
 }).refine(data => {
@@ -326,7 +326,6 @@ export function LeadForm({
       province: '',
       internationalAddress: '',
       courier: undefined,
-      paymentType: undefined,
       orderType: undefined,
       priorityType: 'Regular',
       orders: [],
@@ -349,7 +348,6 @@ export function LeadForm({
             province: '',
             internationalAddress: '',
             courier: undefined,
-            paymentType: undefined,
             orderType: undefined,
             priorityType: 'Regular',
             orders: [],
@@ -613,6 +611,17 @@ export function LeadForm({
     const paidAmount = Object.values(payments).flat().reduce((sum, p) => sum + p.amount, 0);
     const modeOfPayment = Object.values(payments).flat().map(p => p.mode).join(', ');
 
+    let paymentType: 'Partially Paid' | 'Fully Paid' | 'COD';
+    if (paidAmount > 0) {
+      if (balance > 0) {
+        paymentType = 'Partially Paid';
+      } else {
+        paymentType = 'Fully Paid';
+      }
+    } else {
+      paymentType = 'COD';
+    }
+
     const submissionData = {
       id: leadId,
       customerName: toTitleCase(values.customerName),
@@ -625,7 +634,7 @@ export function LeadForm({
       province: values.isInternational ? '' : toTitleCase(values.province || ''),
       location: values.isInternational ? values.internationalAddress : [values.houseStreet, values.barangay, values.city, values.province].filter(Boolean).map(toTitleCase).join(', '),
       courier: values.courier || '-',
-      paymentType: values.paymentType,
+      paymentType: paymentType,
       salesRepresentative: userProfile.nickname,
       scesFullName: `${userProfile.firstName} ${userProfile.lastName}`,
       orderType: values.orderType,
@@ -665,7 +674,6 @@ export function LeadForm({
         province: '',
         internationalAddress: '',
         courier: undefined,
-        paymentType: undefined,
         orderType: undefined,
         priorityType: 'Regular',
         orders: [],
@@ -1032,23 +1040,13 @@ export function LeadForm({
             <Separator className="my-4" />
             
             <h3 className="font-headline text-xl mt-4">Order Details</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-4">
               <FormField control={form.control} name="orderType" render={({field}) => (
                   <FormItem>
                   <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value || ''}>
                       <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
                       <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
-                  </Select>
-                  <FormMessage />
-                  </FormItem>
-              )}/>
-              <FormField control={form.control} name="paymentType" render={({field}) => (
-                  <FormItem>
-                  <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><CreditCard className="h-4 w-4 text-primary" />Payment Type</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                      <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Payment Type" /></SelectTrigger></FormControl>
-                      <SelectContent>{['Partially Paid', 'Fully Paid', 'COD'].map((option) => (<SelectItem key={option} value={option}>{option === 'COD' ? 'COD (Cash on Delivery)' : option}</SelectItem>))}</SelectContent>
                   </Select>
                   <FormMessage />
                   </FormItem>
@@ -1371,140 +1369,4 @@ function SetCustomerStatusDialog({
             </DialogContent>
         </Dialog>
     );
-}
-
-function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
-  order: Order;
-  onSave: (updatedOrder: Order) => void;
-  onClose: () => void;
-}) {
-  const [productType, setProductType] = useState(order.productType);
-  const [color, setColor] = useState(order.color);
-  const [size, setSize] = useState(order.size);
-  const [quantity, setQuantity] = useState<number | string>(order.quantity);
-
-  const isPolo = productType.includes('Polo Shirt');
-  const availableColors = isPolo ? poloShirtColors : jacketColors;
-
-  React.useEffect(() => {
-    setProductType(order.productType);
-    setColor(order.color);
-    setSize(order.size);
-    setQuantity(order.quantity);
-  }, [order]);
-  
-  useEffect(() => {
-    if (!availableColors.includes(color)) {
-        setColor('');
-    }
-  }, [productType, availableColors, color]);
-
-  const handleSave = () => {
-    const numQuantity = typeof quantity === 'string' ? parseInt(quantity, 10) : quantity;
-    if (productType && color && size && numQuantity > 0) {
-      onSave({ ...order, productType, color, size, quantity: numQuantity });
-    }
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) onClose();
-      onOpenChange(open);
-    }}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Edit Order</DialogTitle>
-          <DialogDescription>
-            Update the details for the selected order.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="edit-product-type">Product Type:</Label>
-            <Select onValueChange={setProductType} value={productType}>
-              <SelectTrigger id="edit-product-type">
-                <SelectValue placeholder="Select a Product Type" />
-              </SelectTrigger>
-              <SelectContent>
-                {productTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className='grid grid-cols-2 gap-4'>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="edit-color" className='text-sm'>Color:</Label>              <Select onValueChange={setColor} value={color} disabled={productType === 'Patches'}>
-                <SelectTrigger id="edit-color">
-                  <SelectValue placeholder="Select a Color" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableColors.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="edit-size" className='text-sm'>Size:</Label>
-              <Select onValueChange={setSize} value={size} disabled={productType === 'Patches'}>
-                <SelectTrigger id="edit-size" className="w-[100px]">
-                  <SelectValue placeholder="Size" />
-                </SelectTrigger>
-                <SelectContent>
-                  {productSizes.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 justify-center">
-            <Label htmlFor="edit-quantity">Quantity:</Label>
-            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setQuantity(q => Math.max(1, (typeof q === 'string' ? parseInt(q, 10) || 0 : q) - 1))}>
-              <Minus className="h-4 w-4" />
-            </Button>
-            <Input
-              id="edit-quantity"
-              type="text"
-              value={quantity}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === '' || /^[0-9\b]+$/.test(value)) {
-                  setQuantity(value === '' ? '' : parseInt(value, 10));
-                }
-              }}
-              onBlur={(e) => {
-                if (e.target.value === '') {
-                  setQuantity(1);
-                }
-              }}
-              className="w-16 text-center"
-            />
-            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => setQuantity(q => (typeof q === 'string' ? parseInt(q, 10) || 0 : q) + 1)}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Close
-            </Button>
-          </DialogClose>
-          <Button type="button" onClick={handleSave} disabled={!productType || !color || !size || quantity === 0 || Number(quantity) < 1} className="text-white font-bold">
-            Save Changes
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
 }
