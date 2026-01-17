@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -19,6 +18,7 @@ import {
     AlertDialogDescription as AlertDialogDescriptionComponent,
     AlertDialogHeader as AlertDialogHeaderComponent,
     AlertDialogTitle as AlertDialogTitleComponent,
+    AlertDialogFooter as AlertDialogFooterComponent,
 } from './ui/alert-dialog';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -222,7 +222,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] w-full h-[95vh] flex flex-col">
           <DialogHeader className="flex-shrink-0 pt-6 px-6">
             <DialogTitle className="text-xl font-bold">Edit Customer Details and Orders</DialogTitle>
-            <DialogDescription>
+             <DialogDescription>
                 Please change necessary details for update and make sure the data inputs are correct before saving
             </DialogDescription>
           </DialogHeader>
@@ -279,8 +279,3 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     </>
   );
 }
-    
-
-    
-
-    
