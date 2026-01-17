@@ -17,9 +17,10 @@ import {
     AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
-    AlertDialogDescription as AlertDialogDescriptionComponent,
-    AlertDialogHeader as AlertDialogHeaderComponent,
-    AlertDialogTitle as AlertDialogTitleComponent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from './ui/alert-dialog';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -65,13 +66,12 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
   const [dataToSave, setDataToSave] = useState<LeadUpdateData | null>(null);
 
-  const form = useForm<FormValues>({
+  const formMethods = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onSubmit',
   });
-
-  const { key, ...formRest } = form;
-  const reInitForm = form.reset;
+  
+  const { reset, trigger, getValues } = formMethods;
 
   useEffect(() => {
     if (isOpen && lead) {
@@ -95,7 +95,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         priorityType: lead.priorityType as any,
         orders: lead.orders || [],
       };
-      reInitForm(initialFormValues);
+      reset(initialFormValues);
 
       setStagedOrders(lead.orders || []);
       
@@ -128,25 +128,22 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         setBalance(0);
         setDataToSave(null);
     }
-  }, [isOpen, lead, reInitForm]);
+  }, [isOpen, lead, reset]);
   
-  const onValidSubmit = useCallback((values: FormValues) => {
-    setDataToSave({
-        ...values,
-        stagedOrders,
-        addOns,
-        discounts,
-        payments,
-        grandTotal,
-        balance,
-    });
-    setIsConfirmSaveOpen(true);
-  }, [stagedOrders, addOns, discounts, payments, grandTotal, balance]);
-
   const handleSaveChangesClick = async () => {
-    const isValid = await form.trigger();
+    const isValid = await trigger();
     if (isValid) {
-      onValidSubmit(form.getValues());
+        const values = getValues();
+        setDataToSave({
+            ...values,
+            stagedOrders,
+            addOns,
+            discounts,
+            payments,
+            grandTotal,
+            balance,
+        });
+      setIsConfirmSaveOpen(true);
     } else {
       toast({
         variant: "destructive",
@@ -226,15 +223,11 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     }
   }, [firestore, lead, dataToSave, onUpdate, onClose, toast]);
 
-  const handleClose = () => {
-    onClose();
-  }
-
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] w-full h-[95vh] flex flex-col">
-        <FormProvider {...form}>
+        <FormProvider {...formMethods}>
             <DialogHeader className="flex-shrink-0 pt-6 px-6">
                 <DialogTitle className="text-xl font-bold">Edit Customer Details and Orders</DialogTitle>
                 <DialogDescription>
@@ -279,12 +272,12 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     </Dialog>
     <AlertDialog open={isConfirmSaveOpen} onOpenChange={setIsConfirmSaveOpen}>
         <AlertDialogContent>
-          <AlertDialogHeaderComponent>
-            <AlertDialogTitleComponent>Are you absolutely sure?</AlertDialogTitleComponent>
-            <AlertDialogDescriptionComponent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
               This action will update the lead record with your changes.
-            </AlertDialogDescriptionComponent>
-          </AlertDialogHeaderComponent>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmSave}>Save</AlertDialogAction>
