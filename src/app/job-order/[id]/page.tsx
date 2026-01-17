@@ -77,7 +77,7 @@
       lastModifiedBy?: string;
     };
 
-    const courierOptions = ['J&T', 'Lalamove', 'LBC', 'Pick-up'];
+    const courierOptions = ['Lalamove', 'J&T', 'In-house', 'Pick-up', 'DHL', 'FedEx'];
 
     type UserProfileInfo = {
       uid: string;
@@ -592,7 +592,7 @@
                         <Input
                             value={deliveryDate}
                             onChange={(e) => setDeliveryDate(e.target.value)}
-                            placeholder="Month Day, Year"
+                            placeholder="MMM dd, yyyy"
                             className="h-8 text-xs"
                             readOnly={!canEdit}
                         />
