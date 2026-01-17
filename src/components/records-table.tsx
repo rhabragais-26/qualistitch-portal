@@ -171,6 +171,13 @@ const RecordsTableRow = React.memo(({
     setOpenLeadId: React.Dispatch<React.SetStateAction<string | null>>;
     handleOpenUploadDialog: (lead: Lead) => void;
 }) => {
+    const imageCount = [
+        lead.layouts?.[0]?.logoLeftImage,
+        lead.layouts?.[0]?.logoRightImage,
+        lead.layouts?.[0]?.backLogoImage,
+        lead.layouts?.[0]?.backDesignImage,
+    ].filter(Boolean).length;
+    
     return (
         <TableRow>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
@@ -252,9 +259,13 @@ const RecordsTableRow = React.memo(({
             </Button>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleOpenUploadDialog(lead)}>
-                    <Upload className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center justify-center gap-2">
+                    <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload
+                    </Button>
+                    {imageCount > 0 && <Badge variant="secondary">{imageCount}</Badge>}
+                </div>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
