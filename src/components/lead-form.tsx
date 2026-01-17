@@ -229,7 +229,7 @@ type LeadFormProps = {
   grandTotal: number;
   balance: number;
   isEditing?: boolean;
-  initialLeadData?: LeadType | null;
+  initialLeadData?: (LeadType & { orderNumber: number; totalCustomerQuantity: number; }) | null;
 };
 
 export function LeadForm({ 
@@ -444,7 +444,19 @@ export function LeadForm({
     }
   }, [customerNameValue, selectedLead]);
   
+  // Effect for setting initial status in edit mode
   useEffect(() => {
+    if (isEditing && initialLeadData) {
+      const isRepeat = initialLeadData.orderNumber > 1;
+      setCustomerStatus(isRepeat ? 'Repeat' : 'New');
+      setOrderCount(initialLeadData.orderNumber);
+    }
+  }, [isEditing, initialLeadData]);
+
+  // Effect for dynamic status on new order form
+  useEffect(() => {
+    if (isEditing) return;
+
     if (!customerNameValue) {
       setCustomerStatus(null);
       setOrderCount(0);
@@ -466,7 +478,7 @@ export function LeadForm({
       setCustomerStatus('New');
       setOrderCount(0);
     }
-  }, [customerNameValue, leads, manualStatus, manualOrderCount]);
+  }, [isEditing, customerNameValue, leads, manualStatus, manualOrderCount]);
 
 
   useEffect(() => {
