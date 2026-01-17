@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -42,10 +43,12 @@ export default function PendingApprovalPage() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
       <div className="text-center max-w-2xl mx-auto flex flex-col items-center h-full justify-center">
         <header className="mb-8">
-            <span className={cn("font-bold font-headline flex items-baseline shining-metal from-amber-200 via-yellow-400 to-amber-200 shining-text whitespace-nowrap")}>
-                <span className="text-5xl">Q</span>
-                <span className="text-4xl">UALISTITCH Inc.</span>
-              </span>
+            <div className="bg-black rounded-lg px-8 py-4">
+                <span className={cn("font-bold font-headline flex items-baseline shining-metal from-amber-200 via-yellow-400 to-amber-200 shining-text whitespace-nowrap")}>
+                    <span className="text-5xl">Q</span>
+                    <span className="text-4xl">UALISTITCH Inc.</span>
+                </span>
+            </div>
         </header>
         <main className="flex-grow flex flex-col items-center justify-center">
           <h1 className="text-4xl font-bold mb-6">Welcome to the Qualistitch Portal!</h1>
