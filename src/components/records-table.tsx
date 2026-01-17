@@ -236,11 +236,11 @@ const RecordsTableRow = React.memo(({
             </TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.orderType}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
-            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
+            <TableCell className={cn("text-xs align-middle text-center py-2", lead.balance === 0 ? "font-bold text-green-700" : "text-black")}>{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
             <TableCell className={cn("text-xs align-middle text-center py-2", lead.paidAmount == null || lead.paidAmount === 0 ? "text-muted-foreground" : "text-black")}>
               {lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}
             </TableCell>
-            <TableCell className="text-xs align-middle text-center py-2 font-bold text-destructive">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
+            <TableCell className={cn("text-xs align-middle text-center py-2 font-bold", lead.balance === 0 ? "text-muted-foreground" : "text-destructive")}>{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType === 'COD' ? 'CASH' : (lead.modeOfPayment || '-')}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
