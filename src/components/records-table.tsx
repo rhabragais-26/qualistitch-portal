@@ -44,9 +44,10 @@ import { collection, query } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 import { EditOrderDialog } from './edit-order-dialog';
 import { EditLeadFullDialog } from './edit-lead-full-dialog';
+import { FieldErrors } from 'react-hook-form';
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
@@ -221,11 +222,11 @@ const RecordsTableRow = React.memo(({
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-destructive font-bold">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
-                <div>{lead.modeOfPayment || 'CASH'}</div>
+                <div>{lead.modeOfPayment || 'COD'}</div>
                  <div className="text-xs text-gray-500 capitalize">
-                    {lead.modeOfPayment 
+                    {lead.modeOfPayment
                         ? (lead.payments && lead.payments[0] ? `(${lead.payments[0].type === 'down' ? 'Down Payment' : 'Full Payment'})` : null)
-                        : '(COD)'}
+                        : '(Cash on Delivery)'}
                 </div>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
@@ -626,7 +627,7 @@ export function RecordsTable() {
                             isRepeat={isRepeat}
                             getContactDisplay={getContactDisplay}
                             toggleCustomerDetails={toggleCustomerDetails}
-                            handleOpenEditLeadDialog={handleOpenEditLeadDialog}
+                            handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}
                             handleDeleteLead={handleDeleteLead}
                             setOpenLeadId={setOpenLeadId}
                         />
@@ -779,3 +780,6 @@ export function RecordsTable() {
 
 
 
+
+
+    
