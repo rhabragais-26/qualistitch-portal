@@ -245,7 +245,7 @@ const RecordsTableRow = React.memo(({
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 font-bold text-destructive">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
-                <div>{lead.modeOfPayment || 'COD'}</div>
+               <div>{lead.modeOfPayment || 'COD'}</div>
                 <div className="text-xs text-gray-500 capitalize">
                     {lead.modeOfPayment
                         ? (lead.payments && lead.payments[0] ? `(${lead.payments[0].type === 'down' ? 'Down Payment' : 'Full Payment'})` : null)
@@ -266,7 +266,7 @@ const RecordsTableRow = React.memo(({
                     </Button>
                     {imageCount > 0 && (
                         <div
-                            className="absolute -top-1.5 -left-1.5 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
+                            className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
                         >
                            {imageCount}
                         </div>
@@ -274,13 +274,13 @@ const RecordsTableRow = React.memo(({
                 </div>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
-                <Edit className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
+                <Edit className="h-5 w-5" />
                 </Button>
                 <AlertDialog>
                 <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
-                    <Trash2 className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-red-100">
+                    <Trash2 className="h-5 w-5" />
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
