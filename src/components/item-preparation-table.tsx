@@ -97,15 +97,11 @@ const ItemPreparationTableRowGroup = React.memo(({
     handleOpenPreparedDialog: (lead: Lead) => void;
     setLeadToSend: (lead: Lead) => void;
 }) => {
-    const firestore = useFirestore();
     const isRepeat = lead.orderNumber > 1;
     const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
     const numOrders = lead.orders.length;
     const programmingStatus = getProgrammingStatus(lead);
     const isStockJacketOnly = lead.orderType === 'Stock (Jacket Only)';
-    const leadsQuery = useMemoFirebase(() => collection(firestore, 'leads'), [firestore]);
-    const { data: leads } = useCollection<Lead>(leadsQuery);
-    const leadFromQueue = leads?.find(l => l.id === lead.id);
 
     return (
         <React.Fragment>
@@ -163,7 +159,7 @@ const ItemPreparationTableRowGroup = React.memo(({
                             <Checkbox
                             checked={lead.isJoHardcopyReceived || false}
                             onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                            disabled={!leadFromQueue?.isJoPrinted}
+                            disabled={!lead.isJoPrinted}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                         </div>
