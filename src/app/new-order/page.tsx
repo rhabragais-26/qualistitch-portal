@@ -2,9 +2,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
-import { LeadForm } from '@/components/lead-form';
+import { LeadForm, FormValues } from '@/components/lead-form';
 import { InvoiceCard, AddOns, Discount, Payment } from '@/components/invoice-card';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { Order } from '@/components/lead-form';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { CalculatorIcon, Ruler, Tag } from 'lucide-react';
 import { Calculator } from '@/components/calculator';
 import { SizeChartDialog } from '@/components/size-chart-dialog';
 import { cn } from '@/lib/utils';
+import { v4 as uuidv4 } from 'uuid';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,12 +25,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { ItemPricesDialog } from '@/components/item-prices-dialog';
+import { toTitleCase } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { collection, doc } from 'firebase/firestore';
+
 
 export default function NewOrderPage() {
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [stagedOrders, setStagedOrders] = useState<Order[]>([]);
-  const { user, isUserLoading } = useUser();
+  const { user, userProfile, isUserLoading } = useUser();
   const router = useRouter();
+  const firestore = useFirestore();
+  const { toast } = useToast();
 
   const [showCalculator, setShowCalculator] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
@@ -68,6 +75,69 @@ export default function NewOrderPage() {
     setBalance(0);
   }
 
+  const handleNewOrderSubmit = (values: FormValues) => {
+    if (!firestore || !userProfile) return;
+    const leadId = uuidv4();
+    const leadsRef = collection(firestore, 'leads');
+    const leadDocRef = doc(leadsRef, leadId);
+    const now = new Date().toISOString();
+    
+    const paidAmount = Object.values(payments).flat().reduce((sum, p) => sum + p.amount, 0);
+    const modeOfPayment = Object.values(payments).flat().map(p => p.mode).join(', ');
+
+    let paymentType: 'Partially Paid' | 'Fully Paid' | 'COD';
+    if (paidAmount > 0) {
+      if (balance > 0) {
+        paymentType = 'Partially Paid';
+      } else {
+        paymentType = 'Fully Paid';
+      }
+    } else {
+      paymentType = 'COD';
+    }
+
+    const submissionData = {
+      id: leadId,
+      customerName: toTitleCase(values.customerName),
+      companyName: values.companyName ? toTitleCase(values.companyName) : '-',
+      contactNumber: values.mobileNo || '-',
+      landlineNumber: values.landlineNo || '-',
+      isInternational: values.isInternational,
+      houseStreet: values.isInternational ? '' : toTitleCase(values.houseStreet || ''),
+      barangay: values.isInternational ? '' : toTitleCase(values.barangay || ''),
+      city: values.isInternational ? '' : toTitleCase(values.city || ''),
+      province: values.isInternational ? '' : toTitleCase(values.province || ''),
+      location: values.isInternational ? values.internationalAddress : [values.houseStreet, values.barangay, values.city, values.province].filter(Boolean).map(toTitleCase).join(', '),
+      courier: values.courier || '-',
+      paymentType: paymentType,
+      salesRepresentative: userProfile.nickname,
+      scesFullName: `${userProfile.firstName} ${userProfile.lastName}`,
+      orderType: values.orderType,
+      priorityType: values.priorityType,
+      productType: values.orders.map(o => o.productType).join(', '),
+      orders: values.orders,
+      submissionDateTime: now,
+      lastModified: now,
+      publiclyPrintable: true,
+      grandTotal,
+      paidAmount,
+      modeOfPayment,
+      balance,
+      addOns,
+      discounts,
+      payments: Object.values(payments).flat(),
+    };
+
+    setDocumentNonBlocking(leadDocRef, submissionData, {});
+
+    toast({
+      title: 'Lead Submitted!',
+      description: 'The new lead for ' + toTitleCase(values.customerName) + ' has been successfully recorded.',
+    });
+    
+    handleResetClick();
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       {showCalculator && <Calculator onClose={() => setShowCalculator(false)} onDraggingChange={setIsCalculatorDragging} />}
@@ -84,11 +154,7 @@ export default function NewOrderPage() {
                         setStagedOrders={setStagedOrders}
                         resetFormTrigger={resetFormTrigger}
                         onOrderTypeChange={setOrderType}
-                        addOns={addOns}
-                        discounts={discounts}
-                        payments={payments}
-                        grandTotal={grandTotal}
-                        balance={balance}
+                        onSubmit={handleNewOrderSubmit}
                     />
                 </div>
                 <div className="xl:col-span-2 space-y-4">

@@ -14,12 +14,15 @@ import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
-import { LeadForm } from './lead-form';
+import { LeadForm, FormValues } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
 import { AddOns, Discount, Payment } from "./invoice-dialogs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle as AlertDialogTitleComponent, AlertDialogFooter } from './ui/alert-dialog';
 import type { Lead as LeadType } from './records-table';
+import { isEqual } from 'lodash';
+import { toTitleCase } from '@/lib/utils';
+
 
 interface EditLeadFullDialogProps {
   lead: LeadType | null;
@@ -41,6 +44,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
   const [balance, setBalance] = useState(0);
   const [resetFormTrigger, setResetFormTrigger] = useState(0);
   const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
+  const [isAnythingDirty, setIsAnythingDirty] = useState(false);
 
   useEffect(() => {
     if (lead) {
@@ -58,16 +62,25 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
     }
   }, [lead]);
 
-  const handleSave = async () => {
-    if (!firestore || !lead) return;
+  useEffect(() => {
+    if (!lead || !isOpen) {
+        setIsAnythingDirty(false);
+        return;
+    }
 
-    const form = document.getElementById('lead-form-edit') as HTMLFormElement;
+    const ordersDirty = !isEqual(stagedOrders, lead.orders || []);
+    const addOnsDirty = !isEqual(addOns, lead.addOns || {});
+    const discountsDirty = !isEqual(discounts, lead.discounts || {});
     
-    const formData = new FormData(form);
-    const formValues: any = {};
-    formData.forEach((value, key) => {
-        formValues[key] = value;
-    });
+    const leadPayments = lead.payments || [];
+    const currentPayments = Object.values(payments).flat();
+    const paymentsDirty = !isEqual(currentPayments, leadPayments);
+
+    setIsAnythingDirty(isFormDirty || ordersDirty || addOnsDirty || discountsDirty || paymentsDirty);
+  }, [stagedOrders, addOns, discounts, payments, lead, isFormDirty, isOpen]);
+
+  const handleEditLeadSubmit = async (formValues: FormValues) => {
+    if (!firestore || !lead) return;
 
     const paidAmount = Object.values(payments).flat().reduce((sum, p) => sum + p.amount, 0);
     const modeOfPayment = Object.values(payments).flat().map(p => p.mode).join(', ');
@@ -80,7 +93,19 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
     }
     
     const dataToUpdate: Partial<LeadType> = {
-        ...formValues,
+        customerName: toTitleCase(formValues.customerName),
+        companyName: formValues.companyName ? toTitleCase(formValues.companyName) : '-',
+        contactNumber: formValues.mobileNo || '-',
+        landlineNumber: formValues.landlineNo || '-',
+        isInternational: formValues.isInternational,
+        houseStreet: formValues.isInternational ? '' : toTitleCase(formValues.houseStreet || ''),
+        barangay: formValues.isInternational ? '' : toTitleCase(formValues.barangay || ''),
+        city: formValues.isInternational ? '' : toTitleCase(formValues.city || ''),
+        province: formValues.isInternational ? '' : toTitleCase(formValues.province || ''),
+        location: formValues.isInternational ? formValues.internationalAddress : [formValues.houseStreet, formValues.barangay, formValues.city, formValues.province].filter(Boolean).map(toTitleCase).join(', '),
+        courier: formValues.courier || '-',
+        orderType: formValues.orderType,
+        priorityType: formValues.priorityType,
         orders: stagedOrders,
         addOns,
         discounts,
@@ -118,25 +143,22 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[90vw] w-full h-[95vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="sr-only">Edit Lead: {lead?.customerName}</DialogTitle>
-            <DialogDescription className="sr-only">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Edit Lead: {lead?.customerName}</DialogTitle>
+            <DialogDescription>
               Make changes to the lead information and order details.
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
               <div className="xl:col-span-3">
+                  <h3 className="font-headline text-xl font-bold mb-4">Edit Customer Details and Orders</h3>
                   <LeadForm 
                       onDirtyChange={setIsFormDirty} 
                       stagedOrders={stagedOrders}
                       setStagedOrders={setStagedOrders}
                       resetFormTrigger={resetFormTrigger}
                       onOrderTypeChange={setOrderType}
-                      addOns={addOns}
-                      discounts={discounts}
-                      payments={payments}
-                      grandTotal={grandTotal}
-                      balance={balance}
+                      onSubmit={handleEditLeadSubmit}
                       isEditing={true}
                       initialLeadData={lead}
                   />
@@ -158,7 +180,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
           </div>
           <DialogFooter className="mt-auto pt-4 border-t">
           <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-          <Button type="button" onClick={() => setIsConfirmSaveOpen(true)} disabled={!isFormDirty}>Save Changes</Button>
+          <Button type="button" onClick={() => setIsConfirmSaveOpen(true)} disabled={!isAnythingDirty}>Save Changes</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -172,7 +194,9 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSave}>Save</AlertDialogAction>
+            <AlertDialogAction onClick={() => {
+              document.getElementById('lead-form-edit')?.requestSubmit();
+            }}>Save</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>

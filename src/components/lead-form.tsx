@@ -25,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {useToast} from '@/hooks/use-toast';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {
   AlertTriangle,
@@ -73,18 +72,17 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from './ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { useCollection, useFirestore, useMemoFirebase, useUser, setDocumentNonBlocking } from '@/firebase';
-import { collection, doc, query } from 'firebase/firestore';
-import { v4 as uuidv4 } from 'uuid';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
 import locations from '@/lib/ph-locations.json';
 import { StatusBanner } from '@/components/ui/status-banner';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
 import { Textarea } from './ui/textarea';
-import { AddOns, Discount, Payment } from "./invoice-card";
 import { EditOrderDialog } from './edit-order-dialog';
 import type { Lead as LeadType } from './records-table';
 import { getTierLabel } from '@/lib/pricing';
+import { toTitleCase } from "@/lib/utils";
 
 
 // Define the form schema using Zod
@@ -99,7 +97,7 @@ const orderSchema = z.object({
 
 export type Order = z.infer<typeof orderSchema>;
 
-const formSchema = z.object({
+export const formSchema = z.object({
   customerName: z.string().min(1, {message: 'Customer name is required'}),
   companyName: z.string().optional(),
   mobileNo: z.string().optional(),
@@ -167,7 +165,7 @@ const formSchema = z.object({
     }
   });
 
-type FormValues = z.infer<typeof formSchema>;
+export type FormValues = z.infer<typeof formSchema>;
 
 type InventoryItem = {
   id: string;
@@ -225,11 +223,7 @@ type LeadFormProps = {
   setStagedOrders: React.Dispatch<React.SetStateAction<Order[]>>;
   resetFormTrigger: number;
   onOrderTypeChange: (orderType: FormValues['orderType'] | undefined) => void;
-  addOns: Record<string, AddOns>;
-  discounts: Record<string, Discount>;
-  payments: Record<string, Payment[]>;
-  grandTotal: number;
-  balance: number;
+  onSubmit: (values: FormValues) => void;
   isEditing?: boolean;
   initialLeadData?: (LeadType & { orderNumber: number; totalCustomerQuantity: number; }) | null;
 };
@@ -240,11 +234,7 @@ export function LeadForm({
   setStagedOrders, 
   resetFormTrigger, 
   onOrderTypeChange,
-  addOns,
-  discounts,
-  payments,
-  grandTotal,
-  balance,
+  onSubmit,
   isEditing = false,
   initialLeadData = null,
 }: LeadFormProps) {
@@ -260,7 +250,6 @@ export function LeadForm({
   );
   const [newOrderEmbroidery, setNewOrderEmbroidery] = useState<'logo' | 'logoAndText' | 'name'>('logo');
   const firestore = useFirestore();
-  const { userProfile } = useUser();
   const [editingOrder, setEditingOrder] = useState<{order: Order, index: number} | null>(null);
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Lead[]>([]);
@@ -387,13 +376,6 @@ export function LeadForm({
     }
   }, [isEditing, initialLeadData, reset, stagedOrders]);
 
-  const toTitleCase = (str: string) => {
-    if (!str) return '';
-    return str
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  };
   
   const handleSuggestionClick = (lead: Lead) => {
     setSelectedLead(lead);
@@ -482,7 +464,10 @@ export function LeadForm({
 
 
   useEffect(() => {
-    if (isEditing) return;
+    if (isEditing) {
+        setCustomerSuggestions([]);
+        return;
+    };
     if (customerNameValue && leads && !selectedLead) {
         const uniqueSuggestions = leads.filter(
             (lead, index, self) =>
@@ -496,7 +481,10 @@ export function LeadForm({
   }, [isEditing, customerNameValue, leads, selectedLead]);
 
   useEffect(() => {
-    if (isEditing) return;
+     if (isEditing) {
+        setCompanySuggestions([]);
+        return;
+    };
     if (companyNameValue && leads && !selectedLead) {
       const uniqueSuggestions = leads.filter(
         (lead, index, self) =>
@@ -511,7 +499,10 @@ export function LeadForm({
   }, [isEditing, companyNameValue, leads, selectedLead]);
 
   useEffect(() => {
-    if (isEditing) return;
+    if (isEditing) {
+        setCitySuggestions([]);
+        return;
+    };
     if (cityValue && !selectedLead) {
       const filteredCities = citiesAndMunicipalities.filter(city =>
         city.name.toLowerCase().includes(cityValue.toLowerCase())
@@ -523,7 +514,10 @@ export function LeadForm({
   }, [isEditing, cityValue, citiesAndMunicipalities, selectedLead]);
 
   useEffect(() => {
-    if (isEditing) return;
+    if (isEditing) {
+        setBarangaySuggestions([]);
+        return;
+    };
     if (barangayValue && cityValue && provinceValue && !selectedLead) {
         const selectedCity = citiesAndMunicipalities.find(
             c => c.name.toLowerCase() === cityValue.toLowerCase() && c.province.toLowerCase() === provinceValue.toLowerCase()
@@ -649,88 +643,6 @@ export function LeadForm({
     }
   };
 
-  function onSubmit(values: FormValues) {
-    if (isEditing) return; // Prevent submission when editing
-    if (!firestore || !userProfile) return;
-    const leadId = uuidv4();
-    const leadsRef = collection(firestore, 'leads');
-    const leadDocRef = doc(leadsRef, leadId);
-    const now = new Date().toISOString();
-    
-    const paidAmount = Object.values(payments).flat().reduce((sum, p) => sum + p.amount, 0);
-    const modeOfPayment = Object.values(payments).flat().map(p => p.mode).join(', ');
-
-    let paymentType: 'Partially Paid' | 'Fully Paid' | 'COD';
-    if (paidAmount > 0) {
-      if (balance > 0) {
-        paymentType = 'Partially Paid';
-      } else {
-        paymentType = 'Fully Paid';
-      }
-    } else {
-      paymentType = 'COD';
-    }
-
-    const submissionData = {
-      id: leadId,
-      customerName: toTitleCase(values.customerName),
-      companyName: values.companyName ? toTitleCase(values.companyName) : '-',
-      contactNumber: values.mobileNo || '-',
-      landlineNumber: values.landlineNo || '-',
-      isInternational: values.isInternational,
-      houseStreet: values.isInternational ? '' : toTitleCase(values.houseStreet || ''),
-      barangay: values.isInternational ? '' : toTitleCase(values.barangay || ''),
-      city: values.isInternational ? '' : toTitleCase(values.city || ''),
-      province: values.isInternational ? '' : toTitleCase(values.province || ''),
-      location: values.isInternational ? values.internationalAddress : [values.houseStreet, values.barangay, values.city, values.province].filter(Boolean).map(toTitleCase).join(', '),
-      courier: values.courier || '-',
-      paymentType: paymentType,
-      salesRepresentative: userProfile.nickname,
-      scesFullName: `${userProfile.firstName} ${userProfile.lastName}`,
-      orderType: values.orderType,
-      priorityType: values.priorityType,
-      productType: values.orders.map(o => o.productType).join(', '),
-      orders: values.orders,
-      submissionDateTime: now,
-      lastModified: now,
-      publiclyPrintable: true,
-      grandTotal,
-      paidAmount,
-      modeOfPayment,
-      balance,
-      addOns,
-      discounts,
-      payments: Object.values(payments).flat(),
-    };
-
-    setDocumentNonBlocking(leadDocRef, submissionData, {});
-
-    toast({
-      title: 'Lead Submitted!',
-      description: 'The new lead for ' + toTitleCase(values.customerName) + ' has been successfully recorded.',
-    });
-    
-    // Trigger reset from parent
-    setStagedOrders([]);
-    reset({
-        customerName: '',
-        companyName: '',
-        mobileNo: '',
-        landlineNo: '',
-        isInternational: false,
-        houseStreet: '',
-        barangay: '',
-        city: '',
-        province: '',
-        internationalAddress: '',
-        courier: undefined,
-        orderType: undefined,
-        priorityType: 'Regular',
-        orders: [],
-    });
-    setSelectedLead(null);
-    setManualStatus(null);
-  }
   
   const getRemainingStock = (order: z.infer<typeof orderSchema>) => {
     if (!inventoryItems) return 'N/A';
@@ -861,9 +773,7 @@ export function LeadForm({
       <CardHeader className='space-y-0 pb-2'>
         <div className="flex justify-between items-start">
           <div className="flex-1 space-y-0">
-             {isEditing ? (
-                 <CardTitle className="font-headline text-xl">Edit Customer Details and Orders</CardTitle>
-             ) : (
+             {!isEditing && (
               <>
                 <CardTitle className="font-headline text-2xl">
                   Create New Order
@@ -883,7 +793,7 @@ export function LeadForm({
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form id={isEditing ? 'lead-form-edit' : 'lead-form'} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form id={isEditing ? 'lead-form-edit' : 'lead-form'} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               
               {/* Customer and Contact Info */}
