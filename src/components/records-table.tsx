@@ -106,6 +106,16 @@ const leadSchema = z.object({
 
 type Lead = z.infer<typeof leadSchema>;
 
+const inventoryItemSchema = z.object({
+  id: z.string(),
+  productType: z.string(),
+  color: z.string(),
+  size: z.string(),
+  stock: z.number(),
+});
+type InventoryItem = z.infer<typeof inventoryItemSchema>;
+
+
 type EnrichedLead = Lead & {
   orderNumber: number;
   totalCustomerQuantity: number;
@@ -245,7 +255,13 @@ export function RecordsTable() {
   const { toast } = useToast();
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, leadSchema);
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, leadSchema);
+  
+  const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
+  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, inventoryItemSchema);
+
+  const isLoading = areLeadsLoading || isInventoryLoading;
+  const error = leadsError || inventoryError;
 
   // State for editing a lead
   const [isEditLeadDialogOpen, setIsEditLeadDialogOpen] = useState(false);
@@ -411,6 +427,56 @@ export function RecordsTable() {
         });
     }
   }, [selectedLeadId, firestore, newOrderProductType, newOrderColor, sizeQuantities, toast, resetAddOrderForm]);
+  
+  const getRemainingStock = useCallback((order: Order) => {
+    if (!inventoryItems) return 0;
+    const itemInInventory = inventoryItems.find(item =>
+      item.productType === order.productType &&
+      item.color === order.color &&
+      item.size === order.size
+    );
+    return itemInInventory ? itemInInventory.stock : 0;
+}, [inventoryItems]);
+
+  const handleQuantityChange = useCallback(async (leadId: string, orderIndex: number, newQuantity: number) => {
+    if (!firestore || !leads) return;
+    if (newQuantity < 1) return;
+
+    const lead = leads.find(l => l.id === leadId);
+    if (!lead) return;
+    
+    const order = lead.orders[orderIndex];
+    const stock = getRemainingStock(order);
+
+    if (newQuantity > stock) {
+        toast({
+            variant: "destructive",
+            title: "Not enough stock",
+            description: `There are only ${stock} items available.`,
+        });
+        return;
+    }
+
+    const updatedOrders = [...lead.orders];
+    updatedOrders[orderIndex] = { ...updatedOrders[orderIndex], quantity: newQuantity };
+
+    const leadDocRef = doc(firestore, 'leads', leadId);
+
+    try {
+      await updateDoc(leadDocRef, {
+        orders: updatedOrders,
+        lastModified: new Date().toISOString(),
+      });
+    } catch (e: any) {
+      console.error("Error updating quantity: ", e);
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: e.message || "Could not update the quantity.",
+      });
+    }
+  }, [firestore, leads, toast, getRemainingStock]);
+
 
   const handleSizeQuantityChange = useCallback((index: number, change: number) => {
     setSizeQuantities(current =>
@@ -651,6 +717,7 @@ export function RecordsTable() {
                                     <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
                                     <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
                                     <TableHead className="py-1 px-2 text-black font-bold text-center">Quantity</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-center">Remaining Stocks</TableHead>
                                     <TableHead className="text-right py-1 px-2 text-black pr-8">Action</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -660,9 +727,26 @@ export function RecordsTable() {
                                         <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
                                         <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
                                         <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black text-center">
-                                        {order.quantity}
+                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Button
+                                                    variant="outline" size="icon" className="h-6 w-6"
+                                                    onClick={() => handleQuantityChange(lead.id, index, order.quantity - 1)}
+                                                    disabled={order.quantity <= 1}
+                                                >
+                                                    <Minus className="h-3 w-3" />
+                                                </Button>
+                                                <span className='w-8 text-center'>{order.quantity}</span>
+                                                <Button
+                                                    variant="outline" size="icon" className="h-6 w-6"
+                                                    onClick={() => handleQuantityChange(lead.id, index, order.quantity + 1)}
+                                                    disabled={order.quantity >= getRemainingStock(order)}
+                                                >
+                                                    <Plus className="h-3 w-3" />
+                                                </Button>
+                                            </div>
                                         </TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{getRemainingStock(order)}</TableCell>
                                         <TableCell className="text-right py-1">
                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
                                             <Edit className="h-4 w-4" />
@@ -694,6 +778,7 @@ export function RecordsTable() {
                                     <TableRow>
                                     <TableCell colSpan={3} className="text-right font-bold text-black py-1 px-2">Total Quantity</TableCell>
                                     <TableCell className="font-bold text-black text-center py-1 px-2">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
+                                    <TableCell />
                                     <TableCell className='text-right py-1 px-2'>
                                         <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
                                         <PlusCircle className="h-4 w-4 mr-1" />
