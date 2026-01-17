@@ -194,7 +194,7 @@ const RecordsTableRow = React.memo(({
                     </div>
                 </CollapsibleTrigger>
                     <div className="text-gray-500 text-center">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
-                <CollapsibleContent className="pt-1 text-gray-500 text-xs">
+                <CollapsibleContent className="pt-1 text-gray-500 text-xs text-center">
                   <div className="text-center">
                     <span className='font-bold text-gray-600'>Last Modified:</span>
                     <div>{formatDateTime(lead.lastModified).dateTime}</div>
@@ -258,10 +258,19 @@ const RecordsTableRow = React.memo(({
               </Button>
             </TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
-              <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)}>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload
-              </Button>
+              <div className="relative inline-flex items-center justify-center">
+                <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload
+                </Button>
+                {imageCount > 0 && (
+                    <div
+                        className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
+                    >
+                        {imageCount}
+                    </div>
+                )}
+              </div>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
               <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
@@ -601,23 +610,23 @@ export function RecordsTable() {
                         <TableRow>
                             <TableCell colSpan={14} className="p-0">
                             <div className="p-4 max-w-xl mx-auto bg-blue-50 rounded-md my-2">
-                                <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
+                                <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
                                 <Table>
                                 <TableHeader>
                                     <TableRow>
-                                    <TableHead className="py-1 px-2 text-black font-bold">Product Type</TableHead>
-                                    <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
-                                    <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
-                                    <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-center align-middle">Product Type</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-center align-middle">Color</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-center align-middle">Size</TableHead>
+                                    <TableHead className="py-1 px-2 text-black font-bold text-center align-middle">Quantity</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {lead.orders?.map((order: any, index: number) => (
                                     <TableRow key={order.id || index} className="border-0">
-                                        <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black text-right align-middle">{order.quantity}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.productType}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.color}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.size}</TableCell>
+                                        <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.quantity}</TableCell>
                                     </TableRow>
                                     ))}
                                 </TableBody>
