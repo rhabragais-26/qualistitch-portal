@@ -53,6 +53,7 @@ const formatCurrency = (value: number) => {
 };
 
 const orderSchema = z.object({
+  id: z.string().optional(),
   productType: z.string(),
   color: z.string(),
   size: z.string(),
@@ -77,7 +78,7 @@ const leadSchema = z.object({
   salesRepresentative: z.string(),
   priorityType: z.string(),
   orderType: z.string(),
-  courier: z.string(),
+  courier: z.string().optional(),
   orders: z.array(orderSchema),
   submissionDateTime: z.string(),
   lastModified: z.string(),
@@ -263,7 +264,7 @@ export function RecordsTable() {
   const { toast } = useToast();
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, leadSchema);
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema);
   
   const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, inventoryItemSchema);
@@ -439,6 +440,7 @@ export function RecordsTable() {
   
   const handleOpenEditLeadDialog = useCallback((lead: Lead & EnrichedLead) => {
     setEditingLead(lead);
+    setIsEditDialogOpen(true);
   }, []);
 
   const handleEditOrder = useCallback(async (updatedOrder: Order) => {
@@ -632,13 +634,13 @@ export function RecordsTable() {
                                 </TableHeader>
                                 <TableBody>
                                     {lead.orders?.map((order: any, index: number) => (
-                                    <TableRow key={index} className="border-0">
+                                    <TableRow key={order.id || index} className="border-0">
                                         <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
                                         <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
                                         <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
                                         <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.quantity}</TableCell>
                                         <TableCell className="text-right py-1">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => setIsEditDialogOpen(true)}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => { setEditingOrder({ leadId: lead.id, order, index }); setIsEditDialogOpen(true); }}>
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                         <AlertDialog>
@@ -741,9 +743,10 @@ export function RecordsTable() {
       </Dialog>
       {editingLead && (
         <EditLeadFullDialog
-          isOpen={!!editingLead}
-          onClose={() => setEditingLead(null)}
+          isOpen={isEditDialogOpen}
+          onClose={() => { setEditingLead(null); setIsEditDialogOpen(false); }}
           lead={editingLead}
+          onUpdate={refetchLeads}
         />
       )}
       {editingOrder && (
@@ -758,4 +761,5 @@ export function RecordsTable() {
     </Card>
   );
 }
+
 
