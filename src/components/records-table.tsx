@@ -23,7 +23,7 @@ import {
 import { Badge } from './ui/badge';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, PlusCircle, Edit, Trash2, Upload } from 'lucide-react';
+import { ChevronDown, ChevronUp, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -48,7 +48,6 @@ import { z, ZodError } from 'zod';
 import { EditOrderDialog } from './edit-order-dialog';
 import { EditLeadFullDialog } from './edit-lead-full-dialog';
 import { FieldErrors } from 'react-hook-form';
-import Image from 'next/image';
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
@@ -160,7 +159,6 @@ const RecordsTableRow = React.memo(({
     handleOpenEditLeadDialog,
     handleDeleteLead,
     setOpenLeadId,
-    handleOpenUploadDialog,
 }: {
     lead: EnrichedLead;
     openLeadId: string | null;
@@ -171,15 +169,7 @@ const RecordsTableRow = React.memo(({
     handleOpenEditLeadDialog: (lead: Lead) => void;
     handleDeleteLead: (id: string) => void;
     setOpenLeadId: React.Dispatch<React.SetStateAction<string | null>>;
-    handleOpenUploadDialog: (lead: Lead) => void;
 }) => {
-    
-    const imageCount = [
-        lead.layouts?.[0]?.logoLeftImage,
-        lead.layouts?.[0]?.logoRightImage,
-        lead.layouts?.[0]?.backLogoImage,
-        lead.layouts?.[0]?.backDesignImage,
-    ].filter(Boolean).length;
     
     return (
         <TableRow>
@@ -247,7 +237,9 @@ const RecordsTableRow = React.memo(({
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.orderType}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
-            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
+            <TableCell className={cn("text-xs align-middle text-center py-2", lead.paidAmount == null || lead.paidAmount === 0 ? "text-muted-foreground" : "text-black")}>
+              {lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}
+            </TableCell>
             <TableCell className="text-xs align-middle text-center py-2 font-bold text-destructive">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType === 'COD' ? 'CASH' : (lead.modeOfPayment || '-')}</TableCell>
@@ -256,21 +248,6 @@ const RecordsTableRow = React.memo(({
                 View
                 {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
               </Button>
-            </TableCell>
-            <TableCell className="text-xs align-middle text-center py-2 text-black">
-              <div className="relative inline-flex items-center justify-center">
-                <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload
-                </Button>
-                {imageCount > 0 && (
-                    <div
-                        className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
-                    >
-                        {imageCount}
-                    </div>
-                )}
-              </div>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
               <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
@@ -312,16 +289,6 @@ export function RecordsTable() {
   
   const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, inventoryItemSchema);
-
-  const [uploadLead, setUploadLead] = useState<Lead | null>(null);
-  const [logoLeftImage, setLogoLeftImage] = useState<string>('');
-  const [logoRightImage, setLogoRightImage] = useState<string>('');
-  const [backLogoImage, setBackLogoImage] = useState<string>('');
-  const [backDesignImage, setBackDesignImage] = useState<string>('');
-  const logoLeftImageUploadRef = useRef<HTMLInputElement>(null);
-  const logoRightImageUploadRef = useRef<HTMLInputElement>(null);
-  const backLogoImageUploadRef = useRef<HTMLInputElement>(null);
-  const backDesignImageUploadRef = useRef<HTMLInputElement>(null);
 
   const isLoading = areLeadsLoading || isInventoryLoading;
   const error = leadsError || inventoryError;
@@ -435,92 +402,6 @@ export function RecordsTable() {
     return mobile || landline || null;
   }, []);
 
-  const handleOpenUploadDialog = useCallback((lead: Lead) => {
-      const layout = lead.layouts?.[0];
-      setLogoLeftImage(layout?.logoLeftImage || '');
-      setLogoRightImage(layout?.logoRightImage || '');
-      setBackLogoImage(layout?.backLogoImage || '');
-      setBackDesignImage(layout?.backDesignImage || '');
-      setUploadLead(lead);
-  }, []);
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-          const reader = new FileReader();
-          reader.onload = (readEvent) => {
-              setter(readEvent.target?.result as string);
-          };
-          reader.readAsDataURL(file);
-      }
-  };
-
-  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
-      const items = e.clipboardData.items;
-      for (const item of items) {
-          if (item.type.includes('image')) {
-              const blob = item.getAsFile();
-              if (blob) {
-                  const reader = new FileReader();
-                  reader.onload = (readEvent) => {
-                      setter(readEvent.target?.result as string);
-                  };
-                  reader.readAsDataURL(blob);
-              }
-          }
-      }
-  };
-
-  const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<string>>) => {
-      e.stopPropagation();
-      setter('');
-  };
-
-  const handleSaveImages = useCallback(async () => {
-    if (!uploadLead || !firestore) return;
-
-    const leadDocRef = doc(firestore, 'leads', uploadLead.id);
-    const layouts = uploadLead.layouts?.length ? [...uploadLead.layouts] : [{}];
-    
-    const existingLayout = layouts[0] || {};
-    const now = new Date().toISOString();
-
-    const updatedFirstLayout = {
-        ...existingLayout,
-        logoLeftImage: logoLeftImage || null,
-        logoLeftImageUploadTime: logoLeftImage ? (existingLayout.logoLeftImage === logoLeftImage ? existingLayout.logoLeftImageUploadTime : now) : null,
-        logoRightImage: logoRightImage || null,
-        logoRightImageUploadTime: logoRightImage ? (existingLayout.logoRightImage === logoRightImage ? existingLayout.logoRightImageUploadTime : now) : null,
-        backLogoImage: backLogoImage || null,
-        backLogoImageUploadTime: backLogoImage ? (existingLayout.backLogoImage === backLogoImage ? existingLayout.backLogoImageUploadTime : now) : null,
-        backDesignImage: backDesignImage || null,
-        backDesignImageUploadTime: backDesignImage ? (existingLayout.backDesignImage === backDesignImage ? existingLayout.backDesignImageUploadTime : now) : null,
-    };
-
-    layouts[0] = updatedFirstLayout;
-
-    try {
-        await updateDoc(leadDocRef, {
-            layouts: layouts,
-            lastModified: new Date().toISOString(),
-        });
-
-        toast({
-            title: 'Images Saved!',
-            description: 'The reference images have been saved.',
-        });
-        setUploadLead(null); // Close dialog
-    } catch (e: any) {
-        console.error("Error saving images: ", e);
-        toast({
-            variant: "destructive",
-            title: "Save Failed",
-            description: e.message || "Could not save the images.",
-        });
-    }
-  }, [uploadLead, firestore, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage]);
-
-
   if (isLoading) {
     return (
       <div className="space-y-2 p-4">
@@ -585,7 +466,6 @@ export function RecordsTable() {
                     <TableHead className="text-white align-middle text-center">Payment Type</TableHead>
                     <TableHead className="text-white align-middle text-center">Mode of Payment</TableHead>
                     <TableHead className="text-white align-middle text-center">Items</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center whitespace-nowrap">Reference Image for Digitizing</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[140px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -604,11 +484,10 @@ export function RecordsTable() {
                             handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}
                             handleDeleteLead={handleDeleteLead}
                             setOpenLeadId={setOpenLeadId}
-                            handleOpenUploadDialog={handleOpenUploadDialog}
                         />
                         {openLeadId === lead.id && (
                         <TableRow>
-                            <TableCell colSpan={14} className="p-0">
+                            <TableCell colSpan={13} className="p-0">
                             <div className="p-4 max-w-xl mx-auto bg-blue-50 rounded-md my-2">
                                 <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
                                 <Table>
@@ -647,50 +526,6 @@ export function RecordsTable() {
             </Table>
           </div>
       </CardContent>
-       <Dialog open={!!uploadLead} onOpenChange={(isOpen) => !isOpen && setUploadLead(null)}>
-        <DialogContent className="sm:max-w-4xl">
-            <DialogHeader>
-                <DialogTitle>Reference Image for Digitizing</DialogTitle>
-                <DialogDescription>
-                   Upload logos or back design for the Digitizing team's reference.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="grid grid-cols-2 gap-6 py-4">
-                <div className="space-y-2">
-                <Label>Logo Left</Label>
-                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setLogoLeftImage)} onDoubleClick={() => logoLeftImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {logoLeftImage ? (<> <Image src={logoLeftImage} alt="Logo Left" layout="fill" objectFit="contain" className="rounded-md" /> {logoLeftImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setLogoLeftImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                    <input type="file" accept="image/*" ref={logoLeftImageUploadRef} onChange={(e) => handleImageUpload(e, setLogoLeftImage)} className="hidden" />
-                </div>
-                </div>
-                <div className="space-y-2">
-                <Label>Logo Right</Label>
-                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setLogoRightImage)} onDoubleClick={() => logoRightImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {logoRightImage ? (<> <Image src={logoRightImage} alt="Logo Right" layout="fill" objectFit="contain" className="rounded-md" /> {logoRightImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setLogoRightImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                    <input type="file" accept="image/*" ref={logoRightImageUploadRef} onChange={(e) => handleImageUpload(e, setLogoRightImage)} className="hidden" />
-                </div>
-                </div>
-                <div className="space-y-2">
-                <Label>Back Logo</Label>
-                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setBackLogoImage)} onDoubleClick={() => backLogoImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {backLogoImage ? (<> <Image src={backLogoImage} alt="Back Logo" layout="fill" objectFit="contain" className="rounded-md" /> {backLogoImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setBackLogoImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                    <input type="file" accept="image/*" ref={backLogoImageUploadRef} onChange={(e) => handleImageUpload(e, setBackLogoImage)} className="hidden" />
-                </div>
-                </div>
-                <div className="space-y-2">
-                <Label>Back Design</Label>
-                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setBackDesignImage)} onDoubleClick={() => backDesignImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {backDesignImage ? (<> <Image src={backDesignImage} alt="Back Design" layout="fill" objectFit="contain" className="rounded-md" /> {backDesignImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setBackDesignImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                    <input type="file" accept="image/*" ref={backDesignImageUploadRef} onChange={(e) => handleImageUpload(e, setBackDesignImage)} className="hidden" />
-                </div>
-                </div>
-            </div>
-            <DialogFooter>
-                <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                <Button onClick={handleSaveImages} disabled={!logoLeftImage && !logoRightImage && !backLogoImage && !backDesignImage}>Save Images</Button>
-            </DialogFooter>
-        </DialogContent>
-    </Dialog>
       {editingLead && (
         <EditLeadFullDialog
           isOpen={isEditDialogOpen}
