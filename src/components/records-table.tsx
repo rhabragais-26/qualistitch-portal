@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
@@ -235,7 +236,7 @@ const RecordsTableRow = React.memo(({
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
-            <TableCell className="text-xs align-middle text-center py-2 text-black font-bold text-destructive">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 font-bold text-destructive">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
                 <div>{lead.modeOfPayment || 'COD'}</div>
                 <div className="text-xs text-gray-500 capitalize">
@@ -245,13 +246,15 @@ const RecordsTableRow = React.memo(({
                 </div>
             </TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
-                <div>{lead.modeOfPayment ? (lead.paymentType || '-') : 'COD'}</div>
-            </TableCell>
-            <TableCell className="text-center align-middle py-2">
-            <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
+                <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                 View
                 {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
             </Button>
+            </TableCell>
+             <TableCell className="text-center align-middle py-2">
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleOpenUploadDialog(lead)}>
+                    <Upload className="h-4 w-4" />
+                </Button>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
@@ -276,11 +279,6 @@ const RecordsTableRow = React.memo(({
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-            </TableCell>
-             <TableCell className="text-center align-middle py-2">
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleOpenUploadDialog(lead)}>
-                    <Upload className="h-4 w-4" />
-                </Button>
             </TableCell>
         </TableRow>
     );
@@ -735,10 +733,9 @@ export function RecordsTable() {
                     <TableHead className="text-center text-white align-middle">Paid Amount</TableHead>
                     <TableHead className="text-center text-white align-middle">Balance</TableHead>
                     <TableHead className="text-center text-white align-middle">Mode of Payment</TableHead>
-                    <TableHead className="text-center text-white align-middle">Payment Type</TableHead>
                     <TableHead className="text-center text-white align-middle">Items</TableHead>
-                    <TableHead className="text-center text-white align-middle">Actions</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
+                    <TableHead className="text-center text-white align-middle">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -760,7 +757,7 @@ export function RecordsTable() {
                         />
                         {openLeadId === lead.id && (
                         <TableRow className="bg-gray-50">
-                            <TableCell colSpan={14} className="p-2">
+                            <TableCell colSpan={13} className="p-2">
                             <div className="p-2">
                                 <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
                                 <Table>
