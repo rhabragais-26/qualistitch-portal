@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFirestore } from '@/firebase';
@@ -76,51 +75,64 @@ export default function JobOrderPrintPage() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const fetchAndPrint = async () => {
+    let isMounted = true;
+
+    const fetchLeadData = async () => {
       if (!id) {
-        setError(new Error("Job order ID is missing."));
-        setIsLoading(false);
-        return;
+        if(isMounted) setError(new Error("Job order ID is missing."));
+        return null;
       }
-      
+
       const storedLeadData = localStorage.getItem(`job-order-${id}`);
-      
       if (storedLeadData) {
         try {
-          const leadData = JSON.parse(storedLeadData);
-          setLead(leadData);
-          setIsLoading(false);
-          // Wait for state to update and content to render before printing
-          setTimeout(() => window.print(), 500);
+          return JSON.parse(storedLeadData);
         } catch (e) {
-          setError(new Error("Failed to parse job order data."));
-          setIsLoading(false);
+          if(isMounted) setError(new Error("Failed to parse job order data."));
+          return null;
         }
-      } else if (firestore) {
-        // Fallback to fetching from Firestore if local storage is empty
+      }
+
+      if (firestore) {
         const leadDocRef = doc(firestore, 'leads', id as string);
         try {
-            const docSnap = await getDoc(leadDocRef);
-            if (docSnap.exists()) {
-                setLead({ id: docSnap.id, ...docSnap.data() } as Lead);
-            } else {
-                setError(new Error('Job order not found.'));
-            }
+          const docSnap = await getDoc(leadDocRef);
+          if (docSnap.exists()) {
+            return { id: docSnap.id, ...docSnap.data() } as Lead;
+          } else {
+            if(isMounted) setError(new Error('Job order not found.'));
+            return null;
+          }
         } catch (err) {
-            console.error("Error fetching job order for print:", err);
+          console.error("Error fetching job order for print:", err);
+           if(isMounted) {
             if (err instanceof Error) {
                 setError(err);
             } else {
                 setError(new Error('An unknown error occurred during fetch.'));
             }
-        } finally {
-            setIsLoading(false);
+           }
+          return null;
+        }
+      }
+      return null;
+    };
+
+    const runPrintFlow = async () => {
+      const leadData = await fetchLeadData();
+      if (isMounted) {
+        if (leadData) {
+          setLead(leadData);
+          setIsLoading(false);
+          setTimeout(() => window.print(), 500);
+        } else {
+          setIsLoading(false);
         }
       }
     };
 
-    fetchAndPrint();
-
+    runPrintFlow();
+    
     const handleAfterPrint = () => {
       if (id) {
         localStorage.removeItem(`job-order-${id}`);
@@ -131,9 +143,10 @@ export default function JobOrderPrintPage() {
     window.addEventListener('afterprint', handleAfterPrint);
 
     return () => {
+      isMounted = false;
       window.removeEventListener('afterprint', handleAfterPrint);
       if (id) {
-         localStorage.removeItem(`job-order-${id}`);
+        localStorage.removeItem(`job-order-${id}`);
       }
     };
   }, [firestore, id]);
@@ -238,16 +251,16 @@ export default function JobOrderPrintPage() {
                 <td className="border border-black p-0.5 text-center">{order.size}</td>
                 <td className="border border-black p-0.5 text-center">{order.quantity}</td>
                 <td className="border border-black p-0.5 text-center">
-                    <Checkbox className="mx-auto" checked={order.design?.left || false} disabled />
+                    <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.left || false} disabled />
                 </td>
                 <td className="border border-black p-0.5 text-center">
-                   <Checkbox className="mx-auto" checked={order.design?.right || false} disabled />
+                   <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.right || false} disabled />
                 </td>
                 <td className="border border-black p-0.5 text-center">
-                  <Checkbox className="mx-auto" checked={order.design?.backLogo || false} disabled />
+                  <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backLogo || false} disabled />
                 </td>
                 <td className="border border-black p-0.5 text-center">
-                  <Checkbox className="mx-auto" checked={order.design?.backText || false} disabled />
+                  <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backText || false} disabled />
                 </td>
                 <td className="border border-black p-0.5">
                    <p className="text-xs">{order.remarks}</p>
