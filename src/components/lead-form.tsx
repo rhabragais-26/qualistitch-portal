@@ -83,6 +83,7 @@ import { Checkbox } from './ui/checkbox';
 import { Textarea } from './ui/textarea';
 import { AddOns, Discount, Payment } from "./invoice-card";
 import { EditOrderDialog } from './edit-order-dialog';
+import type { Lead as LeadType } from './records-table';
 
 // Define the form schema using Zod
 const orderSchema = z.object({
@@ -227,6 +228,8 @@ type LeadFormProps = {
   payments: Record<string, Payment[]>;
   grandTotal: number;
   balance: number;
+  isEditing?: boolean;
+  initialLeadData?: LeadType | null;
 };
 
 export function LeadForm({ 
@@ -239,7 +242,9 @@ export function LeadForm({
   discounts,
   payments,
   grandTotal,
-  balance
+  balance,
+  isEditing = false,
+  initialLeadData = null,
 }: LeadFormProps) {
   const {toast} = useToast();
   const [dateString, setDateString] = useState('');
@@ -335,7 +340,7 @@ export function LeadForm({
   const { control, handleSubmit, reset, watch, setValue, formState: { isDirty } } = form;
   
   useEffect(() => {
-    if (resetFormTrigger > 0) {
+    if (resetFormTrigger > 0 && !isEditing) {
         reset({
             customerName: '',
             companyName: '',
@@ -355,7 +360,32 @@ export function LeadForm({
         setSelectedLead(null);
         setManualStatus(null);
     }
-  }, [resetFormTrigger, reset]);
+  }, [resetFormTrigger, reset, isEditing]);
+
+  useEffect(() => {
+    if (isEditing && initialLeadData) {
+      const { customerName, companyName, contactNumber, landlineNumber, location, houseStreet, barangay, city, province, courier, orderType, priorityType } = initialLeadData;
+      
+      const isInternational = !houseStreet && !barangay && !city && !province;
+
+      reset({
+        customerName: customerName || '',
+        companyName: companyName || '',
+        mobileNo: contactNumber || '',
+        landlineNo: landlineNumber || '',
+        isInternational: isInternational,
+        houseStreet: houseStreet || '',
+        barangay: barangay || '',
+        city: city || '',
+        province: province || '',
+        internationalAddress: isInternational ? location : '',
+        courier: courier || undefined,
+        orderType: orderType as any,
+        priorityType: priorityType as any,
+        orders: stagedOrders,
+      });
+    }
+  }, [isEditing, initialLeadData, reset, stagedOrders]);
 
   const toTitleCase = (str: string) => {
     if (!str) return '';
@@ -602,6 +632,7 @@ export function LeadForm({
   };
 
   function onSubmit(values: FormValues) {
+    if (isEditing) return; // Prevent submission when editing
     if (!firestore || !userProfile) return;
     const leadId = uuidv4();
     const leadsRef = collection(firestore, 'leads');
@@ -823,7 +854,7 @@ export function LeadForm({
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form id="lead-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form id={isEditing ? 'lead-form-edit' : 'lead-form'} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               
               {/* Customer and Contact Info */}

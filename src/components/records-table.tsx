@@ -38,7 +38,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { collection, query } from 'firebase/firestore';
@@ -46,8 +45,8 @@ import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { z } from 'zod';
-import { EditLeadDialog } from './edit-lead-dialog';
 import { EditOrderDialog } from './edit-order-dialog';
+import { EditLeadFullDialog } from './edit-lead-full-dialog';
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
@@ -59,7 +58,7 @@ const orderSchema = z.object({
   size: z.string(),
   quantity: z.number(),
 });
-type Order = z.infer<typeof orderSchema>;
+export type Order = z.infer<typeof orderSchema>;
 
 const leadSchema = z.object({
   id: z.string(),
@@ -80,9 +79,12 @@ const leadSchema = z.object({
   paidAmount: z.number().optional(),
   modeOfPayment: z.string().optional(),
   balance: z.number().optional(),
+  addOns: z.any().optional(),
+  discounts: z.any().optional(),
+  payments: z.any().optional(),
 });
 
-type Lead = z.infer<typeof leadSchema>;
+export type Lead = z.infer<typeof leadSchema>;
 
 const inventoryItemSchema = z.object({
   id: z.string(),
@@ -267,11 +269,7 @@ export function RecordsTable() {
     return [...new Set(leads.map(lead => lead.salesRepresentative).filter(Boolean))].sort();
   }, [leads]);
 
-  // State for editing a lead
-  const [isEditLeadDialogOpen, setIsEditLeadDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
-
-  // State for editing an order
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<{ leadId: string; order: Order; index: number } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -434,40 +432,8 @@ export function RecordsTable() {
   
   const handleOpenEditLeadDialog = useCallback((lead: Lead) => {
     setEditingLead(lead);
-    setIsEditLeadDialogOpen(true);
   }, []);
 
-  const handleEditLead = useCallback(async (updatedLead: Partial<Lead>) => {
-    if (!editingLead || !firestore) return;
-
-    const leadDocRef = doc(firestore, 'leads', editingLead.id);
-
-    try {
-      await updateDoc(leadDocRef, {
-        ...updatedLead,
-        lastModified: new Date().toISOString(),
-      });
-      toast({
-        title: "Lead Updated!",
-        description: "The lead details have been successfully updated.",
-      });
-      setIsEditLeadDialogOpen(false);
-      setEditingLead(null);
-    } catch (e: any) {
-      console.error("Error updating lead: ", e);
-      toast({
-        variant: "destructive",
-        title: "Update Failed",
-        description: e.message || "Could not update the lead.",
-      });
-    }
-  }, [editingLead, firestore, toast]);
-
-  const handleOpenEditDialog = useCallback((leadId: string, order: Order, index: number) => {
-    setEditingOrder({ leadId, order, index });
-    setIsEditDialogOpen(true);
-  }, []);
-  
   const handleEditOrder = useCallback(async (updatedOrder: Order) => {
     if (!editingOrder || !firestore || !leads) return;
   
@@ -665,7 +631,7 @@ export function RecordsTable() {
                                         <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
                                         <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.quantity}</TableCell>
                                         <TableCell className="text-right py-1">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditDialog(lead.id, order, index)}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => setIsEditDialogOpen(true)}>
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                         <AlertDialog>
@@ -767,12 +733,10 @@ export function RecordsTable() {
         </DialogContent>
       </Dialog>
       {editingLead && (
-        <EditLeadDialog
-          isOpen={isEditLeadDialogOpen}
-          onOpenChange={setIsEditLeadDialogOpen}
-          lead={editingLead}
-          onSave={handleEditLead}
+        <EditLeadFullDialog
+          isOpen={!!editingLead}
           onClose={() => setEditingLead(null)}
+          lead={editingLead}
         />
       )}
       {editingOrder && (
