@@ -61,6 +61,22 @@ export default function NewOrderPage() {
   const formMethods = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onSubmit',
+    defaultValues: {
+      customerName: "",
+      companyName: "",
+      mobileNo: "",
+      landlineNo: "",
+      isInternational: false,
+      houseStreet: "",
+      barangay: "",
+      city: "",
+      province: "",
+      internationalAddress: "",
+      orderType: undefined,
+      priorityType: "Regular",
+      courier: undefined,
+      orders: [],
+    }
   });
 
 
