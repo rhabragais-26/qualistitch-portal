@@ -1,6 +1,6 @@
 
 export type UserPosition = 
-  | 'SCES / Sales Representative'
+  | 'SCES'
   | 'Sales Supervisor'
   | 'Sales Manager'
   | 'Inventory Officer'
@@ -52,7 +52,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
 };
 
 const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
-  'SCES / Sales Representative': ['sales'],
+  'SCES': ['sales'],
   'Sales Supervisor': ['sales'],
   'Sales Manager': ['sales'],
   'Inventory Officer': ['inventory'],

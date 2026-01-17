@@ -29,7 +29,7 @@ import { UserPosition } from '@/lib/permissions';
 const positions: UserPosition[] = [
     'Not Assigned',
     'CEO',
-    'SCES / Sales Representative',
+    'SCES',
     'Sales Supervisor',
     'Sales Manager',
     'Inventory Officer',
