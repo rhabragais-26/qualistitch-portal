@@ -69,6 +69,10 @@ type Lead = {
   isSalesAuditRequested?: boolean;
 }
 
+type UserProfileInfo = {
+  position: string;
+};
+
 const HeaderMemo = React.memo(function Header({ 
   isNewOrderPageDirty = false, 
   isOperationalCasesPageDirty = false,
@@ -90,11 +94,22 @@ const HeaderMemo = React.memo(function Header({
     [firestore]
   );
   const { data: leads } = useCollection<Lead>(leadsQuery);
+  
+  const usersQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'users')) : null),
+    [firestore]
+  );
+  const { data: usersData } = useCollection<UserProfileInfo>(usersQuery);
 
   const auditQueueCount = useMemo(() => {
     if (!leads) return 0;
     return leads.filter(lead => lead.isSalesAuditRequested).length;
   }, [leads]);
+
+  const unassignedUsersCount = useMemo(() => {
+    if (!usersData) return 0;
+    return usersData.filter(user => user.position === 'Not Assigned').length;
+  }, [usersData]);
 
   useEffect(() => {
     setIsClient(true);
@@ -339,8 +354,17 @@ const HeaderMemo = React.memo(function Header({
                      </DropdownMenuItem>
                      {isAdmin && (
                         <DropdownMenuItem onClick={() => router.push('/admin/users')}>
-                            <UserCog className="mr-2" />
-                            Admin Setting
+                            <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center">
+                                    <UserCog className="mr-2" />
+                                    <span>Admin Setting</span>
+                                </div>
+                                {unassignedUsersCount > 0 && (
+                                    <Badge variant="destructive" className="h-5 w-5 justify-center rounded-full p-0 ml-2 text-xs">
+                                        {unassignedUsersCount}
+                                    </Badge>
+                                )}
+                            </div>
                         </DropdownMenuItem>
                      )}
                     <DropdownMenuSeparator />
