@@ -44,7 +44,7 @@ export function LoginForm() {
           title: 'Email Not Verified',
           description:
             "Please verify your email by clicking the link sent to your inbox. Check your spam folder if you can't find it.",
-          duration: 10000,
+          duration: 2000,
         });
         setIsLoading(false);
         return;
