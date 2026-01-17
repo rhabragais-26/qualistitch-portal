@@ -23,7 +23,7 @@ import {
 import { Badge } from './ui/badge';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, PlusCircle, Plus, Minus, Edit, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -31,7 +31,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
-  DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog"
 import { Input } from './ui/input';
@@ -236,12 +235,12 @@ const RecordsTableRow = React.memo(({
                     <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the entire lead record.
+                        This action cannot be undone. This will permanently delete the entire recorded orders.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDeleteLead(lead.id)}>Delete Lead</AlertDialogAction>
+                    <AlertDialogAction onClick={() => handleDeleteLead(lead.id)}>Delete Order</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -442,26 +441,6 @@ export function RecordsTable() {
         });
     }
   }, [selectedLeadId, firestore, newOrderProductType, newOrderColor, sizeQuantities, toast, resetAddOrderForm]);
-  
-  const handleSizeQuantityChange = useCallback((index: number, change: number) => {
-    setSizeQuantities(current =>
-      current.map((item, i) =>
-        i === index
-          ? { ...item, quantity: Math.max(0, item.quantity + change) }
-          : item
-      )
-    );
-  }, []);
-  
-  const handleSizeQuantityInputChange = useCallback((index: number, value: string) => {
-    setSizeQuantities(current =>
-      current.map((item, i) =>
-        i === index
-          ? { ...item, quantity: value === '' ? 0 : parseInt(value, 10) || 0 }
-          : item
-      )
-    );
-  }, []);
   
   const handleOpenEditLeadDialog = useCallback((lead: Lead) => {
     setEditingLead(lead);
@@ -775,22 +754,10 @@ export function RecordsTable() {
               {!isPatches && <Label>Size Quantities</Label>}
                <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                   {sizeQuantities.map((item, index) => (
-                      <div key={item.size} className="flex items-center justify-start gap-4">
-                          {!isPatches && <Label className="text-sm font-bold w-12">{item.size}</Label>}
+                      <div key={item.size} className="flex items-center justify-between">
+                          {!isPatches && <Label className="text-sm font-bold">{item.size}</Label>}
                           <div className={cn("flex items-center gap-2", isPatches && "w-full justify-center")}>
-                              <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, -1)}>
-                                  <Minus className="h-4 w-4" />
-                              </Button>
-                              <Input
-                                  type="text"
-                                  value={item.quantity}
-                                  onChange={(e) => handleSizeQuantityInputChange(index, e.target.value)}
-                                  onBlur={(e) => { if (e.target.value === '') handleSizeQuantityInputChange(index, '0')}}
-                                  className="w-14 text-center"
-                              />
-                              <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => handleSizeQuantityChange(index, 1)}>
-                                  <Plus className="h-4 w-4" />
-                              </Button>
+                              <p>Remaining Stocks: </p>
                           </div>
                       </div>
                   ))}
