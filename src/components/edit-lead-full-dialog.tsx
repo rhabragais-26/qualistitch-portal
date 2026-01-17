@@ -6,7 +6,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogClose,
-  DialogFooter
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -15,8 +17,8 @@ import { useFirestore } from '@/firebase';
 import { LeadForm } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
-import { AddOns, Discount, Payment } from './invoice-dialogs';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from './ui/alert-dialog';
+import { AddOns, Discount, Payment } from "./invoice-dialogs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle as AlertDialogTitleComponent, AlertDialogFooter } from './ui/alert-dialog';
 import type { Lead as LeadType } from './records-table';
 
 interface EditLeadFullDialogProps {
@@ -117,6 +119,10 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[90vw] w-full h-[95vh] flex flex-col">
           <DialogHeader>
+            <DialogTitle className="sr-only">Edit Lead: {lead?.customerName}</DialogTitle>
+            <DialogDescription className="sr-only">
+              Make changes to the lead information and order details.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
               <div className="xl:col-span-3">
@@ -159,7 +165,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
     <AlertDialog open={isConfirmSaveOpen} onOpenChange={setIsConfirmSaveOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitleComponent>Are you absolutely sure?</AlertDialogTitleComponent>
             <AlertDialogDescription>
               This action will update the lead record with your changes.
             </AlertDialogDescription>
