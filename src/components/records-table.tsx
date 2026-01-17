@@ -598,9 +598,9 @@ export function RecordsTable() {
                             handleOpenUploadDialog={handleOpenUploadDialog}
                         />
                         {openLeadId === lead.id && (
-                        <TableRow className="bg-gray-50">
-                            <TableCell colSpan={14}>
-                            <div className="p-2 max-w-xl mx-auto">
+                        <TableRow>
+                            <TableCell colSpan={14} className="p-0">
+                            <div className="p-4 max-w-xl mx-auto bg-blue-50 rounded-md my-2">
                                 <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
                                 <Table>
                                 <TableHeader>
