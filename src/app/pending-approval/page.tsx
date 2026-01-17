@@ -56,21 +56,26 @@ export default function PendingApprovalPage() {
           </p>
         </main>
         <footer className="text-center flex flex-col items-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-24 w-24 mb-4 text-muted-foreground"
-          >
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            <path d="m9 12 2 2 4-4" />
-          </svg>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-24 w-24 text-muted-foreground"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+            <p className="text-lg text-muted-foreground text-left">
+              <span className="font-bold">Access Pending:</span> Awaiting administrator approval.
+            </p>
+          </div>
           <p className="text-sm text-muted-foreground mb-6">Thank you for your patience. Please try signing in again later.</p>
           <Button onClick={handleSignOut} variant="outline">
             <LogOut className="mr-2 h-4 w-4" />
