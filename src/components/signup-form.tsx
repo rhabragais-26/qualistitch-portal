@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useAuth, useFirestore } from '@/firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -65,12 +65,19 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
         nickname: values.nickname,
         email: user.email,
         role: 'user',
+        position: 'Not Assigned',
         createdAt: new Date().toISOString(),
       });
       
+      // 3. Send verification email
+      await sendEmailVerification(user);
+
+      // 4. Sign the user out to force login after verification
+      await signOut(auth);
+
       toast({
         title: 'Signup Successful!',
-        description: 'Your account has been created. Please log in.',
+        description: 'Your account has been created. Please check your email to verify your account, then log in.',
       });
       onSignupSuccess();
     } catch (error: any) {

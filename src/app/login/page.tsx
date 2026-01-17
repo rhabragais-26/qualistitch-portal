@@ -14,9 +14,9 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState('login');
 
   useEffect(() => {
-    // If user is loaded and is not anonymous, redirect to new-order
+    // If user is loaded and is not anonymous, redirect to the root page to handle routing.
     if (!isUserLoading && user) {
-      router.replace('/new-order');
+      router.replace('/');
     }
   }, [user, isUserLoading, router]);
 

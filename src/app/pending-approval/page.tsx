@@ -1,0 +1,66 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth, useUser } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+export default function PendingApprovalPage() {
+  const { user, userProfile, isUserLoading } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isUserLoading) {
+      // If user is not logged in, or is logged in but has an assigned position, redirect them.
+      if (!user) {
+        router.replace('/login');
+      } else if (userProfile && userProfile.position !== 'Not Assigned') {
+        router.replace('/new-order');
+      }
+    }
+  }, [user, userProfile, isUserLoading, router]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.replace('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  // While loading, or if user data is inconsistent, show a loading screen.
+  if (isUserLoading || !user || !userProfile) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
+      <div className="text-center max-w-2xl mx-auto flex flex-col items-center h-full justify-center">
+        <header className="mb-8">
+            <span className={cn("font-bold font-headline flex items-baseline shining-metal from-amber-200 via-yellow-400 to-amber-200 shining-text whitespace-nowrap")}>
+                <span className="text-5xl">Q</span>
+                <span className="text-4xl">UALISTITCH Inc.</span>
+              </span>
+        </header>
+        <main className="flex-grow flex flex-col items-center justify-center">
+          <h1 className="text-4xl font-bold mb-6">Welcome to the Qualistitch Portal!</h1>
+          <p className="text-lg text-muted-foreground mb-8">
+            Thank you for joining us. To ensure the security of our system, all new accounts require a quick manual review. You’ll have full access to all pages as soon as an administrator approves your profile.
+          </p>
+        </main>
+        <footer className="text-center">
+          <p className="text-sm text-muted-foreground mb-6">Thank you for your patience. Please try signing in again later.</p>
+          <Button onClick={handleSignOut} variant="outline">
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
+        </footer>
+      </div>
+    </div>
+  );
+}
