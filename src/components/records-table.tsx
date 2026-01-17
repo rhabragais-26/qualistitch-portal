@@ -234,6 +234,7 @@ const RecordsTableRow = React.memo(({
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.orderType}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black font-bold text-destructive">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
                 <div>{lead.modeOfPayment || 'COD'}</div>
@@ -728,11 +729,12 @@ export function RecordsTable() {
                     <TableHead className="text-center text-white align-middle">Order Type</TableHead>
                     <TableHead className="text-center text-white align-middle">Courier</TableHead>
                     <TableHead className="text-center text-white align-middle">Grand Total</TableHead>
+                    <TableHead className="text-center text-white align-middle">Paid Amount</TableHead>
                     <TableHead className="text-center text-white align-middle">Balance</TableHead>
                     <TableHead className="text-center text-white align-middle">Mode of Payment</TableHead>
                     <TableHead className="text-center text-white align-middle">Items</TableHead>
                     <TableHead className="text-center text-white align-middle">Actions</TableHead>
-                    <TableHead className="text-center text-white align-middle">Reference Image</TableHead>
+                    <TableHead className="text-center text-white align-middle w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -754,7 +756,7 @@ export function RecordsTable() {
                         />
                         {openLeadId === lead.id && (
                         <TableRow className="bg-gray-50">
-                            <TableCell colSpan={12} className="p-2">
+                            <TableCell colSpan={13} className="p-2">
                             <div className="p-2">
                                 <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
                                 <Table>
