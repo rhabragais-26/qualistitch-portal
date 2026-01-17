@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect } from 'react';
@@ -6,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function PendingApprovalPage() {
@@ -56,7 +55,8 @@ export default function PendingApprovalPage() {
             Thank you for joining us. To ensure the security of our system, all new accounts require a quick manual review. You’ll have full access to all pages as soon as an administrator approves your profile.
           </p>
         </main>
-        <footer className="text-center">
+        <footer className="text-center flex flex-col items-center">
+          <Shield className="h-24 w-24 mb-4 text-muted-foreground" />
           <p className="text-sm text-muted-foreground mb-6">Thank you for your patience. Please try signing in again later.</p>
           <Button onClick={handleSignOut} variant="outline">
             <LogOut className="mr-2 h-4 w-4" />
