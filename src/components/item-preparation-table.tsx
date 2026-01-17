@@ -97,12 +97,13 @@ const ItemPreparationTableRowGroup = React.memo(({
     handleOpenPreparedDialog: (lead: Lead) => void;
     setLeadToSend: (lead: Lead) => void;
 }) => {
+    const firestore = useFirestore();
     const isRepeat = lead.orderNumber > 1;
     const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
     const numOrders = lead.orders.length;
     const programmingStatus = getProgrammingStatus(lead);
     const isStockJacketOnly = lead.orderType === 'Stock (Jacket Only)';
-    const leadsQuery = useMemoFirebase(() => collection(useFirestore(), 'leads'), []);
+    const leadsQuery = useMemoFirebase(() => collection(firestore, 'leads'), [firestore]);
     const { data: leads } = useCollection<Lead>(leadsQuery);
     const leadFromQueue = leads?.find(l => l.id === lead.id);
 
@@ -131,7 +132,7 @@ const ItemPreparationTableRowGroup = React.memo(({
                                     <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
                                         <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                         <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                        {lead.orderNumber}
+                                          {lead.orderNumber}
                                         </span>
                                     </div>
                                     </TooltipTrigger>
