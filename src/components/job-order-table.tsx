@@ -391,6 +391,7 @@ export function JobOrderTable() {
                 <Table>
                   <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                     <TableRow>
+                      <TableHead className="text-white font-bold align-middle">Order Created</TableHead>
                       <TableHead className="text-white font-bold align-middle">Customer Name</TableHead>
                       <TableHead className="text-white font-bold align-middle">Contact No.</TableHead>
                       <TableHead className="text-white font-bold align-middle">SCES</TableHead>
@@ -399,7 +400,6 @@ export function JobOrderTable() {
                       <TableHead className="text-white font-bold align-middle">J.O. No.</TableHead>
                       <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
                       <TableHead className="text-center text-white font-bold align-middle">Printed</TableHead>
-                      <TableHead className="text-white font-bold align-middle">Date Created</TableHead>
                       <TableHead className="text-white font-bold align-middle">J.O. Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -419,6 +419,24 @@ export function JobOrderTable() {
 
                       return (
                         <TableRow key={lead.id}>
+                            <TableCell className="text-xs align-middle py-2 text-black">
+                              <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                    <div className="flex items-center cursor-pointer">
+                                        <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                        <div>
+                                            <div>{creationDate.dateTime}</div>
+                                            <div className="text-gray-500">{creationDate.dayOfWeek}</div>
+                                        </div>
+                                    </div>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="pt-1 pl-5 text-gray-500 text-xs">
+                                    <span className='font-bold text-gray-600'>Last Modified:</span>
+                                    <div>{modifiedDate.dateTime}</div>
+                                    <div>{modifiedDate.dayOfWeek}</div>
+                                </CollapsibleContent>
+                              </Collapsible>
+                            </TableCell>
                             <TableCell className="font-medium text-xs align-middle py-2 text-black">
                                 {lead.customerName}
                                 {isRepeat ? (
@@ -505,24 +523,6 @@ export function JobOrderTable() {
                                     )}
                                 </div>
                              </TableCell>
-                             <TableCell className="text-xs align-middle py-2 text-black">
-                              <Collapsible>
-                                <CollapsibleTrigger asChild>
-                                    <div className="flex items-center cursor-pointer">
-                                        <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                        <div>
-                                            <div>{creationDate.dateTime}</div>
-                                            <div className="text-gray-500">{creationDate.dayOfWeek}</div>
-                                        </div>
-                                    </div>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="pt-1 pl-5 text-gray-500 text-xs">
-                                    <span className='font-bold text-gray-600'>Last Modified:</span>
-                                    <div>{modifiedDate.dateTime}</div>
-                                    <div>{modifiedDate.dayOfWeek}</div>
-                                </CollapsibleContent>
-                              </Collapsible>
-                            </TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black font-medium">{getJoStatus(lead)}</TableCell>
                         </TableRow>
                       );
