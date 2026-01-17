@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react"
@@ -83,6 +82,7 @@ import { EditOrderDialog } from './edit-order-dialog';
 import type { Lead as LeadType } from './records-table';
 import { getTierLabel } from '@/lib/pricing';
 import { toTitleCase } from "@/lib/utils";
+import { useToast } from '@/hooks/use-toast';
 
 
 // Define the form schema using Zod
@@ -108,9 +108,9 @@ export const formSchema = z.object({
   city: z.string().optional(),
   province: z.string().optional(),
   internationalAddress: z.string().optional(),
-  priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   courier: z.string().optional(),
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
+  priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   orders: z.array(orderSchema).min(1, "Please add at least one order."),
 }).refine(data => {
     if (data.mobileNo) return /^\d{4}-\d{3}-\d{4}$/.test(data.mobileNo) || data.mobileNo === '';
@@ -773,7 +773,9 @@ export function LeadForm({
       <CardHeader className='space-y-0 pb-2'>
         <div className="flex justify-between items-start">
           <div className="flex-1 space-y-0">
-             {!isEditing && (
+             {isEditing ? (
+                 <h3 className="font-headline text-xl font-bold mb-4">Edit Customer Details and Orders</h3>
+              ) : (
               <>
                 <CardTitle className="font-headline text-2xl">
                   Create New Order
@@ -843,7 +845,7 @@ export function LeadForm({
                         }}
                       />
                     </FormControl>
-                    {customerSuggestions.length > 0 && (
+                    {!isEditing && customerSuggestions.length > 0 && (
                       <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                         <CardContent className="p-2 max-h-40 overflow-y-auto">
                           {customerSuggestions.map((lead) => (
@@ -863,7 +865,7 @@ export function LeadForm({
                     <FormControl>
                       <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCompanySuggestions([]), 150)} />
                     </FormControl>
-                    {companySuggestions.length > 0 && (
+                    {!isEditing && companySuggestions.length > 0 && (
                       <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                         <CardContent className="p-2 max-h-40 overflow-y-auto">
                           {companySuggestions.map((lead) => (
@@ -931,7 +933,7 @@ export function LeadForm({
                             <FormControl>
                                 <Input {...field} onBlur={() => setTimeout(() => setBarangaySuggestions([]), 150)} autoComplete="off" />
                             </FormControl>
-                            {barangayValue && barangaySuggestions.length > 0 && !selectedLead && (
+                            {!isEditing && barangayValue && barangaySuggestions.length > 0 && !selectedLead && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {barangaySuggestions.map((barangay, index) => (
@@ -951,7 +953,7 @@ export function LeadForm({
                             <FormControl>
                                 <Input {...field} onBlur={() => setTimeout(() => setCitySuggestions([]), 150)} autoComplete="off" />
                             </FormControl>
-                            {cityValue && citySuggestions.length > 0 && !selectedLead && (
+                            {!isEditing && cityValue && citySuggestions.length > 0 && !selectedLead && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {citySuggestions.map((city, index) => (
@@ -1340,3 +1342,5 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
+
+    
