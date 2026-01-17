@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
@@ -61,9 +61,35 @@ export function LoginForm() {
     }
   }
 
+  async function handlePasswordReset() {
+    const email = form.getValues('email');
+    if (!email) {
+      form.setError('email', { type: 'manual', message: 'Please enter your email to reset the password.' });
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: 'Password Reset Email Sent',
+        description: 'Please check your inbox for a link to reset your password.',
+      });
+    } catch (error: any) {
+      console.error('Password Reset Error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error Sending Reset Email',
+        description: error.message || 'An unknown error occurred.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="email"
@@ -101,8 +127,20 @@ export function LoginForm() {
             </FormItem>
           )}
         />
+        <div className="flex items-center justify-end -mt-2">
+            <Button
+                type="button"
+                variant="link"
+                className="p-0 h-auto text-sm font-medium"
+                onClick={handlePasswordReset}
+                disabled={isLoading}
+            >
+                Forgot Password?
+            </Button>
+        </div>
+
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? 'Logging in...' : 'Login'}
+          {isLoading ? 'Please wait...' : 'Login'}
         </Button>
       </form>
     </Form>
