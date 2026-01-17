@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogTitle,
   DialogClose,
   DialogFooter,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -32,7 +32,7 @@ import { toTitleCase } from '@/lib/utils';
 
 
 interface EditLeadFullDialogProps {
-  lead: (LeadType & { orderNumber: number, totalCustomerQuantity: number }) | null;
+  lead: (LeadType & { orderNumber: number, totalCustomerQuantity: number; }) | null;
   isOpen: boolean;
   onClose: () => void;
   onUpdate: () => void;
@@ -51,6 +51,35 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   const [balance, setBalance] = useState(0);
   const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
   const [formValues, setFormValues] = useState<FormValues | null>(null);
+
+  const [formKey, setFormKey] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) {
+        setFormKey(prev => prev + 1); // This will re-mount the form
+    }
+  }, [isOpen, lead]);
+
+
+  const initialValues = useMemo(() => {
+    if (!lead) return null;
+    return {
+        customerName: toTitleCase(lead.customerName || ''),
+        companyName: lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '',
+        mobileNo: lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '',
+        landlineNo: lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber : '',
+        isInternational: lead.isInternational ?? false,
+        houseStreet: lead.houseStreet ? toTitleCase(lead.houseStreet) : '',
+        barangay: lead.barangay ? toTitleCase(lead.barangay) : '',
+        city: lead.city ? toTitleCase(lead.city) : '',
+        province: lead.province ? toTitleCase(lead.province) : '',
+        internationalAddress: lead.isInternational ? lead.location : '',
+        courier: lead.courier === '-' ? undefined : lead.courier,
+        orderType: lead.orderType as any,
+        priorityType: lead.priorityType as any,
+        orders: lead.orders || [],
+    };
+  }, [lead]);
 
   useEffect(() => {
     if (isOpen && lead) {
@@ -143,26 +172,27 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             description: e.message || "Could not update the lead.",
         });
     }
-  }, [firestore, lead, formValues, stagedOrders, payments, addOns, discounts, grandTotal, balance, onClose, toast, onUpdate]);
+  }, [firestore, lead, formValues, stagedOrders, payments, addOns, discounts, grandTotal, balance, onUpdate, onClose, toast]);
 
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] w-full h-[95vh] flex flex-col">
           <DialogHeader className="flex-shrink-0 pt-6 px-6">
-            <h3 className="font-headline text-xl font-bold">Customer Details</h3>
+             <DialogTitle className="sr-only">Edit Lead</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
               <div className="xl:col-span-3">
-                  {lead && (
+                  {isOpen && lead && initialValues && (
                     <LeadForm 
-                        key={lead.id}
+                        key={formKey}
                         stagedOrders={stagedOrders}
                         setStagedOrders={setStagedOrders}
                         onOrderTypeChange={setOrderType}
                         onSubmit={handleFormSubmit}
                         isEditing={true}
                         initialLeadData={lead}
+                        initialFormValues={initialValues} // Pass memoized initial values
                     />
                   )}
               </div>
@@ -183,7 +213,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
           </div>
           <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
             <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-            <Button type="submit" form="lead-form-edit">Save Changes</Button>
+            <Button type="submit" form="lead-form" disabled={false}>Save Changes</Button>
           </DialogFooter>
       </DialogContent>
     </Dialog>
