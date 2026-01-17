@@ -73,7 +73,7 @@ const leadSchema = z.object({
   id: z.string(),
   customerName: z.string(),
   companyName: z.string().optional(),
-  contactNumber: z.string(),
+  contactNumber: z.string().optional(),
   landlineNumber: z.string().optional(),
   location: z.string(),
   houseStreet: z.string().optional(),
@@ -222,11 +222,11 @@ const RecordsTableRow = React.memo(({
             <TableCell className="text-xs align-middle text-center py-2 text-destructive font-bold">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
                 <div>{lead.modeOfPayment || 'CASH'}</div>
-                {lead.payments && lead.payments[0] && (
-                    <div className="text-xs text-gray-500 capitalize">
-                        ({lead.payments[0].type === 'down' ? 'Down Payment' : 'Full Payment'})
-                    </div>
-                )}
+                 <div className="text-xs text-gray-500 capitalize">
+                    {lead.modeOfPayment 
+                        ? (lead.payments && lead.payments[0] ? `(${lead.payments[0].type === 'down' ? 'Down Payment' : 'Full Payment'})` : null)
+                        : '(COD)'}
+                </div>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
             <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
@@ -774,6 +774,7 @@ export function RecordsTable() {
     </Card>
   );
 }
+
 
 
 
