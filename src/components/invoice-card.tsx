@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Order } from './lead-form';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
-import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice } from '@/lib/pricing';
+import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, getTierLabel } from '@/lib/pricing';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
@@ -199,7 +199,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                         </div>
                         <div className="flex gap-2">
                             <DiscountDialog groupKey={groupKey} discounts={discounts} setDiscounts={setDiscounts} />
-                            <AddOnsDialog groupKey={groupKey} addOns={addOns} setAddOns={setAddOns} totalQuantity={groupData.totalQuantity} />
+                            <AddOnsDialog groupKey={groupKey} addOns={addOns} setAddOns={setAddOns} />
                         </div>
                     </div>
                     <div className="border rounded-md">
