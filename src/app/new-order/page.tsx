@@ -135,9 +135,37 @@ export default function NewOrderPage() {
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                             </AlertDialog>
-                            <Button type="submit" form="lead-form" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
-                                Submit
-                            </Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button type="button" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
+                                        Submit
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Please confirm that the customer information and order details are correct.
+                                            {Object.keys(payments).length === 0 && (
+                                                <span className="block mt-4 font-semibold text-destructive">
+                                                    You have not recorded any payment. Are you sure you want to proceed as Cash on Delivery (COD)?
+                                                </span>
+                                            )}
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => {
+                                            const form = document.getElementById('lead-form');
+                                            if (form) {
+                                                form.requestSubmit();
+                                            }
+                                        }}>
+                                            Confirm & Submit
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </div>
                     </div>
                 </div>
