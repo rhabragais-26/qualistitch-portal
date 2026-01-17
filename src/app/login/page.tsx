@@ -14,15 +14,14 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState('login');
 
   useEffect(() => {
-    // If user is loaded and their profile is also loaded, redirect away from auth page.
-    // This prevents redirection during the signup process before the user is signed out.
-    if (!isUserLoading && user && userProfile) {
+    // If user is loaded, verified, and has a profile, redirect away from auth page.
+    if (!isUserLoading && user && user.emailVerified && userProfile) {
       router.replace('/');
     }
   }, [user, userProfile, isUserLoading, router]);
 
-  // While checking user state, or if the user is logged in with a profile, show a loading message.
-  if (isUserLoading || (user && userProfile)) {
+  // While checking user state, or if the user is logged in with a verified profile, show a loading message.
+  if (isUserLoading || (user && user.emailVerified && userProfile)) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
