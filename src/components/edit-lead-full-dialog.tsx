@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -51,30 +51,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   const [balance, setBalance] = useState(0);
   const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
   const [formValues, setFormValues] = useState<FormValues | null>(null);
-
-  const isDirty = useMemo(() => {
-    if (!lead || !formValues) return false;
-
-    // This is a simplified deep comparison. For complex objects, a library like lodash.isEqual might be better.
-    const initialData = JSON.stringify({
-      ...formValues,
-      orders: lead.orders || [],
-      addOns: lead.addOns || {},
-      discounts: lead.discounts || {},
-      payments: lead.payments || [],
-    });
-
-    const currentState = JSON.stringify({
-      ...formValues,
-      orders: stagedOrders,
-      addOns,
-      discounts,
-      payments: Object.values(payments).flat(),
-    });
-    
-    return initialData !== currentState;
-  }, [lead, formValues, stagedOrders, addOns, discounts, payments]);
-  
 
   useEffect(() => {
     if (isOpen && lead) {
@@ -177,9 +153,9 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
           onClose(); // Call the passed onClose handler
         }
       }}>
-      <DialogContent className="max-w-[90vw] w-full h-[95vh] flex flex-col">
+      <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] w-full h-[95vh] flex flex-col">
           <DialogHeader className="flex-shrink-0 pt-6 px-6">
-            <DialogTitle className="sr-only">Edit Lead: {lead?.customerName}</DialogTitle>
+             <DialogTitle className="sr-only">Edit Lead: {lead?.customerName}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
               <div className="xl:col-span-3">
@@ -213,7 +189,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
           </div>
           <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
             <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-            <Button type="submit" form="lead-form-edit" disabled={!isDirty}>Save Changes</Button>
+            <Button type="submit" form="lead-form-edit">Save Changes</Button>
           </DialogFooter>
       </DialogContent>
     </Dialog>
