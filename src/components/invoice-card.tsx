@@ -77,21 +77,12 @@ function AddOnsDialog({
   };
 
   const handleNumericChange = (field: keyof AddOns, value: string) => {
-    const numericValue = parseInt(value, 10);
+    const numericValue = parseInt(value.replace(/[^0-9]/g, ''), 10);
     setLocalAddOns(prev => ({
         ...prev,
         [field]: isNaN(numericValue) ? 0 : numericValue
     }));
   };
-
-  const handleCurrencyChange = (field: keyof AddOns, value: string) => {
-    const sanitizedValue = value.replace(/[^0-9]/g, '');
-    const numericValue = parseInt(sanitizedValue, 10);
-     setLocalAddOns(prev => ({
-        ...prev,
-        [field]: isNaN(numericValue) ? 0 : numericValue
-    }));
-  }
 
   const isSaveDisabled = Object.values(localAddOns).every(val => val === 0);
 
@@ -140,28 +131,28 @@ function AddOnsDialog({
             <Label htmlFor="programFeeLogo" className="text-base">Program Fee (Logo)</Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
-              <Input id="programFeeLogo" value={localAddOns.programFeeLogo || ''} onChange={(e) => handleCurrencyChange('programFeeLogo', e.target.value)} className="w-32 pl-7" placeholder="0" />
+              <Input id="programFeeLogo" value={localAddOns.programFeeLogo || ''} onChange={(e) => handleNumericChange('programFeeLogo', e.target.value)} className="w-32 pl-7" placeholder="0" />
             </div>
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="programFeeBackText" className="text-base">Program Fee (Back Text)</Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
-              <Input id="programFeeBackText" value={localAddOns.programFeeBackText || ''} onChange={(e) => handleCurrencyChange('programFeeBackText', e.target.value)} className="w-32 pl-7" placeholder="0" />
+              <Input id="programFeeBackText" value={localAddOns.programFeeBackText || ''} onChange={(e) => handleNumericChange('programFeeBackText', e.target.value)} className="w-32 pl-7" placeholder="0" />
             </div>
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="rushFee" className="text-base">Rush Fee</Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
-              <Input id="rushFee" value={localAddOns.rushFee || ''} onChange={(e) => handleCurrencyChange('rushFee', e.target.value)} className="w-32 pl-7" placeholder="0" />
+              <Input id="rushFee" value={localAddOns.rushFee || ''} onChange={(e) => handleNumericChange('rushFee', e.target.value)} className="w-32 pl-7" placeholder="0" />
             </div>
           </div>
            <div className="flex items-center justify-between">
             <Label htmlFor="shippingFee" className="text-base">Shipping Fee</Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
-              <Input id="shippingFee" value={localAddOns.shippingFee || ''} onChange={(e) => handleCurrencyChange('shippingFee', e.target.value)} className="w-32 pl-7" placeholder="0" />
+              <Input id="shippingFee" value={localAddOns.shippingFee || ''} onChange={(e) => handleNumericChange('shippingFee', e.target.value)} className="w-32 pl-7" placeholder="0" />
             </div>
           </div>
         </div>
@@ -538,9 +529,9 @@ export function InvoiceCard({ orders, orderType }: InvoiceCardProps) {
                      {totalPaid > 0 && (
                        <>
                         {Object.values(payments).flat().map((payment, index) => (
-                          <div key={index} className="flex justify-between items-center text-sm">
-                              <span className="text-muted-foreground">
-                                {payment.type === 'full' ? 'Full Payment' : 'Down Payment'} <span className="italic">(via {payment.mode})</span>:
+                           <div key={index} className="flex justify-end items-center text-sm">
+                              <span className="text-muted-foreground mr-2">
+                                {payment.type === 'full' ? 'Full Payment' : 'Down Payment'} <span className="italic">(via {payment.mode})</span>
                               </span>
                               <span className="font-medium">{formatCurrency(payment.amount)}</span>
                           </div>
@@ -806,3 +797,5 @@ function AddPaymentDialog({ grandTotal, setPayments, payments }: { grandTotal: n
     </Dialog>
   );
 }
+
+```
