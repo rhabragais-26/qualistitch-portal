@@ -1,3 +1,4 @@
+// edit-lead-full-dialog.tsx (WITHOUT ALERTDIALOG)
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -12,20 +13,21 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogDescription,
-    AlertDialogFooter,
-} from './ui/alert-dialog';
+// AlertDialog imports removed as it's no longer used
+// import {
+//     AlertDialog,
+//     AlertDialogAction,
+//     AlertDialogCancel,
+//     AlertDialogContent,
+//     AlertDialogHeader,
+//     AlertDialogTitle,
+//     AlertDialogDescription,
+//     AlertDialogFooter,
+// } from './ui/alert-dialog';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { LeadForm, FormValues, formSchema } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
@@ -44,6 +46,7 @@ interface EditLeadFullDialogProps {
 export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLeadFullDialogProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { user, isUserLoading, userError } = useUser();
   
   const [stagedOrders, setStagedOrders] = useState<Order[]>([]);
   const [orderType, setOrderType] = useState<'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | undefined>(undefined);
@@ -53,7 +56,8 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   const [grandTotal, setGrandTotal] = useState(0);
   const [balance, setBalance] = useState(0);
   
-  const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
+  // No longer needed as AlertDialog is removed
+  // const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
 
   const formMethods = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -128,11 +132,14 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     }
   }, [isOpen, lead, reset]);
   
+  // MODIFIED: Directly call handleConfirmSave
   const onValidSubmit = () => {
-    setIsConfirmSaveOpen(true);
+    console.log("DEBUG: Form submitted (valid), directly calling handleConfirmSave.");
+    handleConfirmSave();
   };
 
   const onInvalidSubmit = (errors: FieldErrors<FormValues>) => {
+    console.warn("DEBUG: Form has validation errors:", errors);
     toast({
       variant: "destructive",
       title: "Invalid Input",
@@ -141,9 +148,20 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   };
 
   const handleConfirmSave = useCallback(async () => {
-    if (!firestore || !lead) return;
+    console.log("DEBUG: handleConfirmSave called. (Firebase update attempt)");
+    console.log("DEBUG: Current user in handleConfirmSave:", user?.uid);
+    if (!firestore || !lead) {
+        console.warn("DEBUG: Firestore or lead is not available. Cannot save.");
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: "Firebase services not ready.",
+        });
+        return;
+    }
 
     const formValuesToSave = formMethods.getValues();
+    console.log("DEBUG: Form values to save:", formValuesToSave);
 
     try {
         const paidAmount = Object.values(payments).flat().reduce((sum, p) => sum + p.amount, 0);
@@ -164,7 +182,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             landlineNumber: formValuesToSave.landlineNo || '-',
             location: formValuesToSave.isInternational ? formValuesToSave.internationalAddress : [formValuesToSave.houseStreet, formValuesToSave.barangay, formValuesToSave.city, formValuesToSave.province].filter((v): v is string => !!v).map(toTitleCase).join(', '),
             houseStreet: formValuesToSave.houseStreet ? toTitleCase(formValuesToSave.houseStreet) : '',
-            barangay: formValuesToSave.barangay ? toTitleCase(formValuesToSave.barangay) : '',
+            barangay: formValuesToSave.barangay ? toTitleCase(formValuesToSave.barangay) : '', 
             city: formValuesToSave.city ? toTitleCase(formValuesToSave.city) : '',
             province: formValuesToSave.province ? toTitleCase(formValuesToSave.province) : '',
             orders: stagedOrders,
@@ -180,26 +198,46 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             lastModified: new Date().toISOString()
         };
         
+        console.log("DEBUG: Data to update:", dataToUpdate);
+
         const leadDocRef = doc(firestore, 'leads', lead.id);
         await updateDoc(leadDocRef, dataToUpdate);
         
+        console.log("DEBUG: Document updated successfully in Firestore.");
         toast({
             title: "Lead Updated!",
             description: "The lead details have been successfully updated.",
         });
         handleUpdate();
-        onClose();
+        onClose(); // Close the main Dialog after successful save
     } catch (e: any) {
-        console.error("Error updating lead: ", e);
+        console.error("DEBUG: Error updating lead: ", e);
+        console.error("DEBUG: Error details (code, message):", e.code, e.message);
         toast({
             variant: "destructive",
             title: "Update Failed",
             description: e.message || "Could not update the lead.",
         });
     } finally {
-        setIsConfirmSaveOpen(false);
+        console.log("DEBUG: Finally block: Update process finished.");
+        // No longer need to setIsConfirmSaveOpen(false) as AlertDialog is removed
     }
-  }, [firestore, lead, handleUpdate, onClose, toast, formMethods, stagedOrders, addOns, discounts, payments, grandTotal, balance]);
+  }, [firestore, lead, handleUpdate, onClose, toast, formMethods, stagedOrders, addOns, discounts, payments, grandTotal, balance, user]);
+
+  // Debugging logs for dialog states - AlertDialog logs are removed
+  useEffect(() => {
+    console.log("DEBUG: Main Dialog isOpen state:", isOpen);
+  }, [isOpen]);
+
+  // useEffect(() => {
+  //   console.log("DEBUG: AlertDialog isConfirmSaveOpen state:", isConfirmSaveOpen);
+  //   if (isConfirmSaveOpen) {
+  //     console.log("DEBUG: AlertDialog is now OPEN.");
+  //   } else {
+  //     console.log("DEBUG: AlertDialog is now CLOSED.");
+  //   }
+  // }, [isConfirmSaveOpen]);
+
 
   return (
     <>
@@ -244,26 +282,23 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
                 
                 <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
                     <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                    <Button type="submit" form={`edit-lead-form-${lead?.id}`}>Save Changes</Button>
+                    {/* The Save Changes button will now directly trigger form submission and update */}
+                    <Button 
+                      type="button" 
+                      form={`edit-lead-form-${lead?.id}`} 
+                      onClick={() => {
+                        console.log("DEBUG: Main Dialog 'Save Changes' button clicked (will manually trigger form validation and direct save).");
+                        handleSubmit(onValidSubmit, onInvalidSubmit)();
+                      }}
+                    >
+                      Save Changes
+                    </Button>
                 </DialogFooter>
             </form>
         </FormProvider>
       </DialogContent>
     </Dialog>
-    <AlertDialog open={isConfirmSaveOpen} onOpenChange={setIsConfirmSaveOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action will update the order records with your changes.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmSave}>Save</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-    </AlertDialog>
+    {/* AlertDialog component removed from here */}
     </>
   );
 }

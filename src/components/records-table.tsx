@@ -214,7 +214,7 @@ const RecordsTableRow = React.memo(({
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.modeOfPayment || '-'}</TableCell>
-            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-destructive font-bold">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
             <TableCell className="text-center align-middle py-2">
             <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                 View
@@ -761,5 +761,6 @@ export function RecordsTable() {
     </Card>
   );
 }
+
 
 
