@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Dialog,
@@ -32,7 +32,6 @@ import { Order } from './lead-form';
 import { AddOns, Discount, Payment } from "./invoice-dialogs";
 import type { Lead as LeadType } from './records-table';
 import { toTitleCase } from '@/lib/utils';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 
 interface EditLeadFullDialogProps {
@@ -61,7 +60,11 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     mode: 'onSubmit',
   });
   
-  const { reset, handleSubmit, getValues } = formMethods;
+  const { reset, handleSubmit } = formMethods;
+
+  const handleUpdate = useCallback(() => {
+    onUpdate();
+  }, [onUpdate]);
 
   useEffect(() => {
     if (isOpen && lead) {
@@ -128,7 +131,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     setIsConfirmSaveOpen(true);
   };
 
-  const onInvalidSubmit = (errors: any) => {
+  const onInvalidSubmit = (errors: FieldErrors<FormValues>) => {
     toast({
       variant: "destructive",
       title: "Invalid Input",
@@ -139,12 +142,12 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   const handleConfirmSave = useCallback(async () => {
     if (!firestore || !lead) return;
 
-    const formValuesToSave = getValues();
+    const formValuesToSave = formMethods.getValues();
 
     try {
         const paidAmount = Object.values(payments).flat().reduce((sum, p) => sum + p.amount, 0);
         const modeOfPayment = Object.values(payments).flat().map(p => p.mode).join(', ');
-
+        
         let paymentType: string;
         if (paidAmount > 0) {
             paymentType = balance > 0 ? 'Partially Paid' : 'Fully Paid';
@@ -183,7 +186,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             title: "Lead Updated!",
             description: "The lead details have been successfully updated.",
         });
-        onUpdate();
+        handleUpdate();
         onClose();
     } catch (e: any) {
         console.error("Error updating lead: ", e);
@@ -195,7 +198,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     } finally {
         setIsConfirmSaveOpen(false);
     }
-  }, [firestore, lead, onUpdate, onClose, toast, getValues, stagedOrders, addOns, discounts, payments, grandTotal, balance]);
+  }, [firestore, lead, handleUpdate, onClose, toast, formMethods, stagedOrders, addOns, discounts, payments, grandTotal, balance]);
 
   return (
     <>
