@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogClose,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
     AlertDialog,
@@ -61,7 +62,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   }, [isOpen, lead]);
 
 
-  const initialValues = useMemo(() => {
+  const initialFormValues = useMemo(() => {
     if (!lead) return null;
     return {
         customerName: toTitleCase(lead.customerName || ''),
@@ -184,11 +185,12 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] w-full h-[95vh] flex flex-col">
           <DialogHeader className="flex-shrink-0 pt-6 px-6">
-             <DialogTitle>Customer Details</DialogTitle>
+             <DialogTitle className="text-xl">Edit Customer Details and Orders</DialogTitle>
+             <DialogDescription className="sr-only">Edit Lead</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
               <div className="xl:col-span-3">
-                  {isOpen && lead && initialValues && (
+                  {isOpen && lead && initialFormValues && (
                     <LeadForm 
                         key={formKey}
                         stagedOrders={stagedOrders}
@@ -197,7 +199,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
                         onSubmit={handleFormSubmit}
                         isEditing={true}
                         initialLeadData={lead}
-                        initialFormValues={initialValues}
+                        initialFormValues={initialFormValues}
                     />
                   )}
               </div>
@@ -239,3 +241,4 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     </>
   );
 }
+    
