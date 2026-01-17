@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogClose,
   DialogFooter
 } from "@/components/ui/dialog";
@@ -15,11 +17,11 @@ import { LeadForm } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
 import { AddOns, Discount, Payment } from './invoice-dialogs';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogFooter } from './ui/alert-dialog';
 import type { Lead as LeadType } from './records-table';
 
 interface EditLeadFullDialogProps {
-  lead: LeadType;
+  lead: LeadType | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -77,7 +79,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
     } else {
       paymentType = 'COD';
     }
-
+    
     const dataToUpdate: Partial<LeadType> = {
         ...formValues,
         orders: stagedOrders,
@@ -95,7 +97,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
     const leadDocRef = doc(firestore, 'leads', lead.id);
 
     try {
-        await updateDoc(leadDocRef, dataToUpdate);
+        await updateDoc(leadDocRef, dataToUpdate as any);
         toast({
             title: "Lead Updated!",
             description: "The lead details have been successfully updated.",
@@ -117,39 +119,39 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[90vw] w-full h-[95vh] flex flex-col">
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-6">
-          <div className="xl:col-span-3">
-             <LeadForm 
-                onDirtyChange={setIsFormDirty} 
-                stagedOrders={stagedOrders}
-                setStagedOrders={setStagedOrders}
-                resetFormTrigger={resetFormTrigger}
-                onOrderTypeChange={setOrderType}
-                addOns={addOns}
-                discounts={discounts}
-                payments={payments}
-                grandTotal={grandTotal}
-                balance={balance}
-                isEditing={true}
-                initialLeadData={lead}
-            />
+          <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-6">
+              <div className="xl:col-span-3">
+                  <LeadForm 
+                      onDirtyChange={setIsFormDirty} 
+                      stagedOrders={stagedOrders}
+                      setStagedOrders={setStagedOrders}
+                      resetFormTrigger={resetFormTrigger}
+                      onOrderTypeChange={setOrderType}
+                      addOns={addOns}
+                      discounts={discounts}
+                      payments={payments}
+                      grandTotal={grandTotal}
+                      balance={balance}
+                      isEditing={true}
+                      initialLeadData={lead}
+                  />
+              </div>
+              <div className="xl:col-span-2 space-y-4">
+                  <InvoiceCard 
+                      orders={stagedOrders} 
+                      orderType={orderType} 
+                      addOns={addOns}
+                      setAddOns={setAddOns}
+                      discounts={discounts}
+                      setDiscounts={setDiscounts}
+                      payments={payments}
+                      setPayments={setPayments}
+                      onGrandTotalChange={setGrandTotal}
+                      onBalanceChange={setBalance}
+                  />
+              </div>
           </div>
-          <div className="xl:col-span-2 space-y-4">
-            <InvoiceCard 
-                orders={stagedOrders} 
-                orderType={orderType} 
-                addOns={addOns}
-                setAddOns={setAddOns}
-                discounts={discounts}
-                setDiscounts={setDiscounts}
-                payments={payments}
-                setPayments={setPayments}
-                onGrandTotalChange={setGrandTotal}
-                onBalanceChange={setBalance}
-            />
-          </div>
-        </div>
-        <DialogFooter className="mt-auto pt-4 border-t">
+          <DialogFooter className="mt-auto pt-4 border-t">
           <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
           <Button type="button" onClick={() => setIsConfirmSaveOpen(true)} disabled={!isFormDirty}>Save Changes</Button>
         </DialogFooter>
