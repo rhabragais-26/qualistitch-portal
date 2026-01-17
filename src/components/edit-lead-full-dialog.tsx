@@ -5,7 +5,6 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
   DialogClose,
   DialogFooter
 } from "@/components/ui/dialog";
@@ -17,7 +16,7 @@ import { LeadForm } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
 import { AddOns, Discount, Payment } from './invoice-dialogs';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogFooter } from './ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from './ui/alert-dialog';
 import type { Lead as LeadType } from './records-table';
 
 interface EditLeadFullDialogProps {
@@ -40,22 +39,20 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
   const [balance, setBalance] = useState(0);
   const [resetFormTrigger, setResetFormTrigger] = useState(0);
   const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
-  const [leadData, setLeadData] = useState<Partial<LeadType>>({});
 
   useEffect(() => {
     if (lead) {
       setStagedOrders(lead.orders || []);
-      setOrderType(lead.orderType as any);
-      setAddOns(lead.addOns || {});
-      setDiscounts(lead.discounts || {});
       const paymentsObject: Record<string, Payment[]> = {};
       if (lead.payments && lead.payments.length > 0) {
         paymentsObject['main'] = lead.payments as Payment[];
       }
       setPayments(paymentsObject);
+      setAddOns(lead.addOns || {});
+      setDiscounts(lead.discounts || {});
       setGrandTotal(lead.grandTotal || 0);
       setBalance(lead.balance || 0);
-      setLeadData(lead);
+      setOrderType(lead.orderType as any);
     }
   }, [lead]);
 
@@ -119,7 +116,9 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[90vw] w-full h-[95vh] flex flex-col">
-          <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-6">
+          <DialogHeader>
+          </DialogHeader>
+          <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
               <div className="xl:col-span-3">
                   <LeadForm 
                       onDirtyChange={setIsFormDirty} 
