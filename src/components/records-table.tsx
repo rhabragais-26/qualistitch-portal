@@ -57,6 +57,8 @@ const orderSchema = z.object({
   color: z.string(),
   size: z.string(),
   quantity: z.number(),
+  embroidery: z.enum(['logo', 'logoAndText', 'name']).optional(),
+  pricePerPatch: z.number().optional(),
 });
 export type Order = z.infer<typeof orderSchema>;
 
@@ -67,9 +69,13 @@ const leadSchema = z.object({
   contactNumber: z.string(),
   landlineNumber: z.string().optional(),
   location: z.string(),
+  houseStreet: z.string().optional(),
+  barangay: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  isInternational: z.boolean().optional(),
   salesRepresentative: z.string(),
   priorityType: z.string(),
-  paymentType: z.string(),
   orderType: z.string(),
   courier: z.string(),
   orders: z.array(orderSchema),
@@ -269,7 +275,7 @@ export function RecordsTable() {
     return [...new Set(leads.map(lead => lead.salesRepresentative).filter(Boolean))].sort();
   }, [leads]);
 
-  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [editingLead, setEditingLead] = useState<(Lead & EnrichedLead) | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<{ leadId: string; order: Order; index: number } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -430,7 +436,7 @@ export function RecordsTable() {
     }
   }, [selectedLeadId, firestore, newOrderProductType, newOrderColor, sizeQuantities, toast, resetAddOrderForm]);
   
-  const handleOpenEditLeadDialog = useCallback((lead: Lead) => {
+  const handleOpenEditLeadDialog = useCallback((lead: Lead & EnrichedLead) => {
     setEditingLead(lead);
   }, []);
 
