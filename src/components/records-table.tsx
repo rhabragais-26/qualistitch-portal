@@ -183,7 +183,7 @@ const RecordsTableRow = React.memo(({
     return (
         <TableRow>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
-                <Collapsible>
+              <Collapsible>
                 <CollapsibleTrigger asChild>
                     <div className="flex items-center justify-center cursor-pointer">
                         <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
@@ -192,65 +192,66 @@ const RecordsTableRow = React.memo(({
                         </div>
                     </div>
                 </CollapsibleTrigger>
-                    <div className="pl-5 text-gray-500 text-center">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
+                    <div className="text-gray-500 text-center">{formatDateTime(lead.submissionDateTime).dayOfWeek}</div>
                 <CollapsibleContent className="pt-1 text-gray-500 text-xs text-center">
                     <span className='font-bold text-gray-600'>Last Modified:</span>
-                    <div>{formatDateTime(lead.lastModified).dateTime}</div>
-                    <div>{formatDateTime(lead.lastModified).dayOfWeek}{lead.lastModifiedBy ? ` (${lead.lastModifiedBy})` : ''}</div>
+                    <div className="text-center">{formatDateTime(lead.lastModified).dateTime}</div>
+                    <div className='text-center'>{formatDateTime(lead.lastModified).dayOfWeek}{lead.lastModifiedBy ? ` (${lead.lastModifiedBy})` : ''}</div>
                 </CollapsibleContent>
             </Collapsible>
             </TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
-            <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center">
                 <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
-                {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </Button>
                 <div className='flex flex-col items-center'>
-                <span className="font-medium">{lead.customerName}</span>
-                {isRepeat ? (
+                  <span className="font-medium">{lead.customerName}</span>
+                  {isRepeat ? (
                     <TooltipProvider>
-                        <Tooltip>
+                      <Tooltip>
                         <TooltipTrigger asChild>
-                            <div className="flex items-center gap-1.5 cursor-pointer">
+                          <div className="flex items-center gap-1.5 cursor-pointer">
                             <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                             <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                {lead.orderNumber}
+                              {lead.orderNumber}
                             </span>
-                            </div>
+                          </div>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                          <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
                         </TooltipContent>
-                        </Tooltip>
+                      </Tooltip>
                     </TooltipProvider>
-                    ) : (
+                  ) : (
                     <span className="text-xs text-blue-600 font-semibold">New Customer</span>
-                    )}
-                {openCustomerDetails === lead.id && (
-                    <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
-                    {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
-                    {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                  )}
+                  {openCustomerDetails === lead.id && (
+                    <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
+                      {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                      {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                     </div>
-                )}
+                  )}
                 </div>
-            </div>
+              </div>
             </TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.salesRepresentative}</TableCell>
-            <TableCell className="align-middle py-2 text-center">
-            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">
+              <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                 {lead.priorityType}
-            </Badge>
+              </Badge>
             </TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.orderType}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.courier === '-' ? '' : lead.courier}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 font-bold text-destructive">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.modeOfPayment || '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
-                <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
+              <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                 View
                 {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-            </Button>
+              </Button>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
                 <div className="relative inline-flex items-center justify-center">
@@ -262,34 +263,34 @@ const RecordsTableRow = React.memo(({
                         <div
                             className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
                         >
-                            {imageCount}
+                           {imageCount}
                         </div>
                     )}
                 </div>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
-                <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
                 <Edit className="h-5 w-5" />
-                </Button>
-                <AlertDialog>
+              </Button>
+              <AlertDialog>
                 <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-red-100">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-red-100">
                     <Trash2 className="h-5 w-5" />
-                    </Button>
+                  </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
-                    <AlertDialogHeader>
+                  <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the entire recorded orders.
+                      This action cannot be undone. This will permanently delete the entire recorded orders.
                     </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={() => handleDeleteLead(lead.id)}>Delete Order</AlertDialogAction>
-                    </AlertDialogFooter>
+                  </AlertDialogFooter>
                 </AlertDialogContent>
-            </AlertDialog>
+              </AlertDialog>
             </TableCell>
         </TableRow>
     );
@@ -571,16 +572,16 @@ export function RecordsTable() {
                     <TableHead className="text-white align-middle text-center">Date & Time</TableHead>
                     <TableHead className="text-white align-middle text-center">Customer</TableHead>
                     <TableHead className="text-white align-middle text-center">SCES</TableHead>
-                    <TableHead className="text-center text-white align-middle">Priority</TableHead>
-                    <TableHead className="text-center text-white align-middle">Order Type</TableHead>
-                    <TableHead className="text-center text-white align-middle">Courier</TableHead>
-                    <TableHead className="text-center text-white align-middle">Grand Total</TableHead>
-                    <TableHead className="text-center text-white align-middle">Paid Amount</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle">Balance</TableHead>
-                    <TableHead className="text-center text-white align-middle">Mode of Payment</TableHead>
-                    <TableHead className="text-center text-white align-middle">Items</TableHead>
+                    <TableHead className="text-white align-middle text-center">Priority</TableHead>
+                    <TableHead className="text-white align-middle text-center">Order Type</TableHead>
+                    <TableHead className="text-white align-middle text-center">Courier</TableHead>
+                    <TableHead className="text-white align-middle text-center">Grand Total</TableHead>
+                    <TableHead className="text-white align-middle text-center">Paid Amount</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Balance</TableHead>
+                    <TableHead className="text-white align-middle text-center">Mode of Payment</TableHead>
+                    <TableHead className="text-white align-middle text-center">Items</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center whitespace-nowrap">Reference Image for Digitizing</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle w-[140px]">Actions</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[140px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
