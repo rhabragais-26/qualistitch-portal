@@ -88,6 +88,7 @@ const leadSchema = z.object({
   addOns: z.any().optional(),
   discounts: z.any().optional(),
   payments: z.any().optional(),
+  productType: z.string().optional(),
 });
 
 export type Lead = z.infer<typeof leadSchema>;
@@ -757,3 +758,4 @@ export function RecordsTable() {
     </Card>
   );
 }
+

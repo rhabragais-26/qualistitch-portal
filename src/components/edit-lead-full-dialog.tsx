@@ -8,7 +8,6 @@ import {
   DialogClose,
   DialogFooter,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -18,9 +17,8 @@ import { LeadForm, FormValues } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
 import { AddOns, Discount, Payment } from "./invoice-dialogs";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle as AlertDialogTitleComponent, AlertDialogFooter } from './ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogFooter as AlertDialogFooterComponent, AlertDialogTitle as AlertDialogTitleComponent } from './ui/alert-dialog';
 import type { Lead as LeadType } from './records-table';
-import { isEqual } from 'lodash';
 import { toTitleCase } from '@/lib/utils';
 
 
@@ -34,7 +32,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
   const firestore = useFirestore();
   const { toast } = useToast();
   
-  const [isFormDirty, setIsFormDirty] = useState(false);
   const [stagedOrders, setStagedOrders] = useState<Order[]>([]);
   const [orderType, setOrderType] = useState<'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | undefined>(undefined);
   const [addOns, setAddOns] = useState<Record<string, AddOns>>({});
@@ -44,7 +41,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
   const [balance, setBalance] = useState(0);
   const [resetFormTrigger, setResetFormTrigger] = useState(0);
   const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
-  const [isAnythingDirty, setIsAnythingDirty] = useState(false);
+  const [isFormDirty, setIsFormDirty] = useState(false);
 
   useEffect(() => {
     if (lead) {
@@ -89,7 +86,8 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
         courier: formValues.courier || '-',
         orderType: formValues.orderType,
         priorityType: formValues.priorityType,
-        orders: stagedOrders,
+        orders: formValues.orders,
+        productType: [...new Set(formValues.orders.map(o => o.productType))].join(', '),
         addOns,
         discounts,
         payments: Object.values(payments).flat(),
@@ -125,36 +123,18 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
   const handleSave = () => {
     document.getElementById('lead-form-edit')?.requestSubmit();
   }
-  
-  useEffect(() => {
-    if (!lead || !isOpen) {
-        setIsAnythingDirty(false);
-        return;
-    }
-
-    const ordersDirty = !isEqual(stagedOrders, lead.orders || []);
-    const addOnsDirty = !isEqual(addOns, lead.addOns || {});
-    const discountsDirty = !isEqual(discounts, lead.discounts || {});
-    
-    const leadPayments = lead.payments || [];
-    const currentPayments = Object.values(payments).flat();
-    const paymentsDirty = !isEqual(currentPayments, leadPayments);
-
-    setIsAnythingDirty(isFormDirty || ordersDirty || addOnsDirty || discountsDirty || paymentsDirty);
-  }, [stagedOrders, addOns, discounts, payments, lead, isFormDirty, isOpen]);
 
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[90vw] w-full h-[95vh] flex flex-col">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Edit Lead: {lead?.customerName}</DialogTitle>
+          <DialogHeader className="flex-shrink-0">
+             <DialogTitle className="sr-only">Edit Lead: {lead?.customerName}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
               <div className="xl:col-span-3">
-                  <h3 className="font-headline text-xl font-bold mb-4">Customer Details</h3>
                   <LeadForm 
-                      onDirtyChange={setIsFormDirty} 
+                      onDirtyChange={setIsFormDirty}
                       stagedOrders={stagedOrders}
                       setStagedOrders={setStagedOrders}
                       resetFormTrigger={resetFormTrigger}
@@ -181,7 +161,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
           </div>
           <DialogFooter className="mt-auto pt-4 border-t">
           <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-          <Button type="button" onClick={() => setIsConfirmSaveOpen(true)} disabled={!isAnythingDirty}>Save Changes</Button>
+          <Button type="button" onClick={() => setIsConfirmSaveOpen(true)}>Save Changes</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -193,10 +173,10 @@ export function EditLeadFullDialog({ lead, isOpen, onClose }: EditLeadFullDialog
               This action will update the lead record with your changes.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooterComponent>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleSave}>Save</AlertDialogAction>
-          </AlertDialogFooter>
+          </AlertDialogFooterComponent>
         </AlertDialogContent>
     </AlertDialog>
     </>

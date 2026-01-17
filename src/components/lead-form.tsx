@@ -572,6 +572,11 @@ export function LeadForm({
   useEffect(() => {
     setValue('orders', stagedOrders);
   }, [stagedOrders, setValue]);
+  
+  useEffect(() => {
+    onDirtyChange(isDirty);
+  }, [isDirty, onDirtyChange]);
+
 
   const orderType = watch('orderType');
 
@@ -580,10 +585,6 @@ export function LeadForm({
       setValue('priorityType', 'Rush');
     }
   }, [orderType, setValue]);
-
-  useEffect(() => {
-    onDirtyChange(isDirty);
-  }, [isDirty, onDirtyChange]);
 
   const isPolo = newOrderProductType.includes('Polo Shirt');
   const isPatches = newOrderProductType === 'Patches';
@@ -772,7 +773,7 @@ export function LeadForm({
       <CardHeader className='space-y-0 pb-2'>
         <div className="flex justify-between items-start">
           <div className="flex-1 space-y-0">
-             {!isEditing && (
+             {!isEditing ? (
               <>
                 <CardTitle className="font-headline text-2xl">
                   Create New Order
@@ -781,6 +782,8 @@ export function LeadForm({
                   Fill in the details below to create a record for customer and order.
                 </CardDescription>
               </>
+            ) : (
+              <h3 className="font-headline text-xl font-bold mb-4">Customer Details</h3>
             )}
           </div>
           {!isEditing && (
@@ -833,9 +836,10 @@ export function LeadForm({
                   <FormItem className="relative mt-2">
                     <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
                     <FormControl>
-                      <Input {...field} autoComplete="off" onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} 
+                      <Input {...field} autoComplete="off" autoFocus={!isEditing} onBlur={() => setTimeout(() => setCustomerSuggestions([]), 150)} 
                         onChange={(e) => {
                             field.onChange(e);
+                            if (isEditing) return;
                             if (manualStatus) {
                                 setManualStatus(null);
                             }
