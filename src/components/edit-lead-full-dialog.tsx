@@ -9,6 +9,16 @@ import {
   DialogClose,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter as AlertDialogFooterComponent,
+    AlertDialogHeader as AlertDialogHeaderComponent,
+    AlertDialogTitle as AlertDialogTitleComponent,
+} from './ui/alert-dialog';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -17,16 +27,6 @@ import { LeadForm, FormValues } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
 import { AddOns, Discount, Payment } from "./invoice-dialogs";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter as AlertDialogFooterComponent,
-  AlertDialogHeader,
-  AlertDialogTitle as AlertDialogTitleComponent,
-} from './ui/alert-dialog';
 import type { Lead as LeadType } from './records-table';
 import { toTitleCase } from '@/lib/utils';
 
@@ -88,11 +88,11 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
       const paymentsObject: Record<string, Payment[]> = {};
       if (lead.payments && Array.isArray(lead.payments) && lead.payments.length > 0) {
         paymentsObject['main'] = lead.payments as Payment[];
-      } else if (lead.paidAmount && lead.modeOfPayment) {
+      } else if (lead.paidAmount) {
           paymentsObject['main'] = [{
               type: lead.balance === 0 && lead.paidAmount === lead.grandTotal ? 'full' : 'down',
               amount: lead.paidAmount,
-              mode: lead.modeOfPayment,
+              mode: lead.modeOfPayment || 'Unknown',
           }];
       }
       setPayments(paymentsObject);
@@ -142,6 +142,11 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             contactNumber: formValues.mobileNo || '-',
             landlineNumber: formValues.landlineNo || '-',
             location: formValues.isInternational ? formValues.internationalAddress : [formValues.houseStreet, formValues.barangay, formValues.city, formValues.province].filter(Boolean).map(toTitleCase).join(', '),
+            houseStreet: toTitleCase(formValues.houseStreet || ''),
+            barangay: toTitleCase(formValues.barangay || ''),
+            city: toTitleCase(formValues.city || ''),
+            province: toTitleCase(formValues.province || ''),
+            isInternational: formValues.isInternational,
             orders: stagedOrders,
             productType: [...new Set(stagedOrders.map(o => o.productType))].join(', '),
             addOns,
@@ -179,7 +184,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] w-full h-[95vh] flex flex-col">
           <DialogHeader className="flex-shrink-0 pt-6 px-6">
-             <DialogTitle className="sr-only">Edit Lead</DialogTitle>
+             <DialogTitle>Customer Details</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
               <div className="xl:col-span-3">
@@ -192,7 +197,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
                         onSubmit={handleFormSubmit}
                         isEditing={true}
                         initialLeadData={lead}
-                        initialFormValues={initialValues} // Pass memoized initial values
+                        initialFormValues={initialValues}
                     />
                   )}
               </div>
@@ -213,18 +218,18 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
           </div>
           <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
             <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-            <Button type="submit" form="lead-form" disabled={false}>Save Changes</Button>
+            <Button type="submit" form="lead-form">Save Changes</Button>
           </DialogFooter>
       </DialogContent>
     </Dialog>
     <AlertDialog open={isConfirmSaveOpen} onOpenChange={setIsConfirmSaveOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader>
+          <AlertDialogHeaderComponent>
             <AlertDialogTitleComponent>Are you absolutely sure?</AlertDialogTitleComponent>
             <AlertDialogDescription>
               This action will update the lead record with your changes.
             </AlertDialogDescription>
-          </AlertDialogHeader>
+          </AlertDialogHeaderComponent>
           <AlertDialogFooterComponent>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleEditLeadSubmit}>Save</AlertDialogAction>

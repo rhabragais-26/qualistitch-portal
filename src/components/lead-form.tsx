@@ -227,6 +227,7 @@ type LeadFormProps = {
   onSubmit: (values: FormValues) => void;
   isEditing?: boolean;
   initialLeadData?: (LeadType & { orderNumber: number; totalCustomerQuantity: number; }) | null;
+  initialFormValues?: FormValues | null;
 };
 
 export function LeadForm({ 
@@ -238,6 +239,7 @@ export function LeadForm({
   onSubmit,
   isEditing = false,
   initialLeadData = null,
+  initialFormValues = null,
 }: LeadFormProps) {
   const {toast} = useToast();
   const [dateString, setDateString] = useState('');
@@ -272,7 +274,7 @@ export function LeadForm({
   const formatCurrency = (value: number) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/[^\d.]/g, '');
+    const rawValue = e.target.value.replace(/[^d.]/g, '');
     const numericValue = parseFloat(rawValue);
 
     if (!isNaN(numericValue)) {
@@ -311,22 +313,7 @@ export function LeadForm({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onSubmit',
-    defaultValues: isEditing && initialLeadData ? {
-        customerName: toTitleCase(initialLeadData.customerName || ''),
-        companyName: initialLeadData.companyName && initialLeadData.companyName !== '-' ? toTitleCase(initialLeadData.companyName) : '',
-        mobileNo: initialLeadData.contactNumber && initialLeadData.contactNumber !== '-' ? initialLeadData.contactNumber : '',
-        landlineNo: initialLeadData.landlineNumber && initialLeadData.landlineNumber !== '-' ? initialLeadData.landlineNumber : '',
-        isInternational: initialLeadData.isInternational ?? false,
-        houseStreet: initialLeadData.houseStreet ? toTitleCase(initialLeadData.houseStreet) : '',
-        barangay: initialLeadData.barangay ? toTitleCase(initialLeadData.barangay) : '',
-        city: initialLeadData.city ? toTitleCase(initialLeadData.city) : '',
-        province: initialLeadData.province ? toTitleCase(initialLeadData.province) : '',
-        internationalAddress: initialLeadData.isInternational ? initialLeadData.location : '',
-        courier: initialLeadData.courier === '-' ? undefined : initialLeadData.courier,
-        orderType: initialLeadData.orderType as any,
-        priorityType: initialLeadData.priorityType as any,
-        orders: initialLeadData.orders || [],
-    } : {
+    defaultValues: initialFormValues || {
       customerName: '',
       companyName: '',
       mobileNo: '',
@@ -612,7 +599,7 @@ export function LeadForm({
   }, [isPatches, isClientOwned]);
 
   const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
-    const rawValue = e.target.value.replace(/\D/g, '');
+    const rawValue = e.target.value.replace(/D/g, '');
     if (rawValue.length <= 11) {
       let formattedValue = '';
       if (rawValue.length > 0) {
@@ -629,7 +616,7 @@ export function LeadForm({
   };
 
   const handleLandlineNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
-    const rawValue = e.target.value.replace(/\D/g, '');
+    const rawValue = e.target.value.replace(/D/g, '');
     if (rawValue.length <= 10) {
       let formattedValue = '';
       if (rawValue.length > 0) {
@@ -795,7 +782,7 @@ export function LeadForm({
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form id={isEditing ? 'lead-form-edit' : 'lead-form'} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form id="lead-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               
               {/* Customer and Contact Info */}
@@ -1052,16 +1039,24 @@ export function LeadForm({
                   </FormItem>
               )}
               />
-              <FormField control={form.control} name="courier" render={({field}) => (
+              <FormField control={form.control} name="courier" render={({field}) => {
+                const allCourierOptions = useMemo(() => {
+                    if (field.value && !courierOptions.includes(field.value)) {
+                        return [field.value, ...courierOptions];
+                    }
+                    return courierOptions;
+                }, [field.value]);
+
+                return (
                 <FormItem>
                     <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
-                    <SelectContent>{courierOptions.map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                    <SelectContent>{allCourierOptions.map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                     </Select>
                     <FormMessage />
                 </FormItem>
-              )}/>
+              )}}/>
             </div>
 
             <Separator className="my-4" />
@@ -1348,4 +1343,5 @@ function SetCustomerStatusDialog({
     
 
     
+
 
