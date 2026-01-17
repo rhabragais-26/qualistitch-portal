@@ -6,11 +6,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogClose,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
     AlertDialog,
@@ -68,7 +68,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
 
   useEffect(() => {
     if (isOpen && lead) {
-      let courierValue = lead.courier;
+      let courierValue: string | undefined = lead.courier;
       if (courierValue === '-') {
           courierValue = undefined;
       }
@@ -117,6 +117,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
       setOrderType(lead.orderType as any);
 
     } else if (!isOpen) {
+        reset();
         setStagedOrders([]);
         setOrderType(undefined);
         setAddOns({});
@@ -161,11 +162,11 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             companyName: formValuesToSave.companyName ? toTitleCase(formValuesToSave.companyName) : '-',
             contactNumber: formValuesToSave.mobileNo || '-',
             landlineNumber: formValuesToSave.landlineNo || '-',
-            location: formValuesToSave.isInternational ? formValuesToSave.internationalAddress : [formValuesToSave.houseStreet, formValuesToSave.barangay, formValuesToSave.city, formValuesToSave.province].filter(Boolean).map(toTitleCase).join(', '),
-            houseStreet: toTitleCase(formValuesToSave.houseStreet || ''),
-            barangay: toTitleCase(formValuesToSave.barangay || ''),
-            city: toTitleCase(formValuesToSave.city || ''),
-            province: toTitleCase(formValuesToSave.province || ''),
+            location: formValuesToSave.isInternational ? formValuesToSave.internationalAddress : [formValuesToSave.houseStreet, formValuesToSave.barangay, formValuesToSave.city, formValuesToSave.province].filter((v): v is string => !!v).map(toTitleCase).join(', '),
+            houseStreet: formValuesToSave.houseStreet ? toTitleCase(formValuesToSave.houseStreet) : '',
+            barangay: formValuesToSave.barangay ? toTitleCase(formValuesToSave.barangay) : '',
+            city: formValuesToSave.city ? toTitleCase(formValuesToSave.city) : '',
+            province: formValuesToSave.province ? toTitleCase(formValuesToSave.province) : '',
             orders: stagedOrders,
             productType: [...new Set(stagedOrders.map(o => o.productType))].join(', '),
             addOns,

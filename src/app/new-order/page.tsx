@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
@@ -133,7 +132,7 @@ export default function NewOrderPage() {
       barangay: values.isInternational ? '' : toTitleCase(values.barangay || ''),
       city: values.isInternational ? '' : toTitleCase(values.city || ''),
       province: values.isInternational ? '' : toTitleCase(values.province || ''),
-      location: values.isInternational ? values.internationalAddress : [values.houseStreet, values.barangay, values.city, values.province].filter(Boolean).map(toTitleCase).join(', '),
+      location: values.isInternational ? values.internationalAddress : [values.houseStreet, values.barangay, values.city, values.province].filter((v): v is string => !!v).map(toTitleCase).join(', '),
       courier: values.courier || '-',
       paymentType: paymentType,
       salesRepresentative: userProfile.nickname,
