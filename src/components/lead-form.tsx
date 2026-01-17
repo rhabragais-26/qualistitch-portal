@@ -854,14 +854,20 @@ export function LeadForm({
       <CardHeader className='space-y-0 pb-2'>
         <div className="flex justify-between items-start">
           <div className="flex-1 space-y-0">
-              <CardTitle className="font-headline text-2xl">Create New Order</CardTitle>
-               <div className="flex items-center gap-4">
-                <CardDescription className="text-gray-600">Fill in the details below to create a record for customer and order.</CardDescription>
-              </div>
+            <CardTitle className="font-headline text-2xl">
+              {isEditing ? 'Edit Order' : 'Create New Order'}
+            </CardTitle>
+            {!isEditing && (
+              <CardDescription className="text-gray-600">
+                Fill in the details below to create a record for customer and order.
+              </CardDescription>
+            )}
           </div>
-          <div className="text-base text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
-            <div>{dateString} - {dayOfWeek} | <span className="blinking-time">{timeString}</span></div>
-          </div>
+          {!isEditing && (
+            <div className="text-base text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
+              <div>{dateString} - {dayOfWeek} | <span className="blinking-time">{timeString}</span></div>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
