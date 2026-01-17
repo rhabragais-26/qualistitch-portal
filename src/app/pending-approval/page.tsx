@@ -67,10 +67,11 @@ export default function PendingApprovalPage() {
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="h-24 w-24 text-muted-foreground"
+              className="h-24 w-24 text-amber-500"
             >
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              <path d="m9 12 2 2 4-4" />
+              <circle cx="12" cy="12" r="4" />
+              <path d="m9 9 6 6" />
             </svg>
             <p className="text-lg text-muted-foreground text-left">
               <span className="font-bold">Access Pending:</span> Awaiting administrator approval.
