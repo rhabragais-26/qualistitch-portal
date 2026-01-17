@@ -162,9 +162,10 @@ export const getUnitPrice = (productType: string, quantity: number, embroidery: 
   const group = getProductGroup(productType);
   if (!group) return 0;
   
-  const embroideryForPricing = embroidery === 'name' ? 'logo' : embroidery;
+  const embroideryForPricing = embroidery === 'name' ? 'logo' : (embroidery || 'logo');
 
   const pricing = pricingTiers[group][embroideryForPricing];
+  if (!pricing) return 0;
   const tier = pricing.tiers.find(t => quantity >= t.min && quantity <= t.max);
 
   return tier ? tier.price : 0;
@@ -185,8 +186,11 @@ export const getTierLabel = (productType: string, quantity: number, embroidery: 
   const group = getProductGroup(productType);
   if (!group) return '';
 
-  const embroideryForPricing = embroidery === 'name' ? 'logo' : embroidery;
+  const embroideryForPricing = embroidery === 'name' ? 'logo' : (embroidery || 'logo');
   const pricing = pricingTiers[group][embroideryForPricing];
+
+  if (!pricing) return '';
+
   const tier = pricing.tiers.find(t => quantity >= t.min && quantity <= t.max);
 
   if (!tier) return '';
