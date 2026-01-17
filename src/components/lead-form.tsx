@@ -219,10 +219,10 @@ const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6X
 const courierOptions = ['Lalamove', 'J&T', 'In-house', 'Pick-up', 'DHL', 'FedEx'];
 
 type LeadFormProps = {
-  onDirtyChange: (isDirty: boolean) => void;
+  onDirtyChange?: (isDirty: boolean) => void;
   stagedOrders: Order[];
   setStagedOrders: React.Dispatch<React.SetStateAction<Order[]>>;
-  resetFormTrigger: number;
+  resetFormTrigger?: number;
   onOrderTypeChange: (orderType: FormValues['orderType'] | undefined) => void;
   onSubmit: (values: FormValues) => void;
   isEditing?: boolean;
@@ -311,7 +311,22 @@ export function LeadForm({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onSubmit',
-    defaultValues: {
+    defaultValues: isEditing && initialLeadData ? {
+        customerName: toTitleCase(initialLeadData.customerName || ''),
+        companyName: initialLeadData.companyName && initialLeadData.companyName !== '-' ? toTitleCase(initialLeadData.companyName) : '',
+        mobileNo: initialLeadData.contactNumber && initialLeadData.contactNumber !== '-' ? initialLeadData.contactNumber : '',
+        landlineNo: initialLeadData.landlineNumber && initialLeadData.landlineNumber !== '-' ? initialLeadData.landlineNumber : '',
+        isInternational: initialLeadData.isInternational ?? false,
+        houseStreet: initialLeadData.houseStreet ? toTitleCase(initialLeadData.houseStreet) : '',
+        barangay: initialLeadData.barangay ? toTitleCase(initialLeadData.barangay) : '',
+        city: initialLeadData.city ? toTitleCase(initialLeadData.city) : '',
+        province: initialLeadData.province ? toTitleCase(initialLeadData.province) : '',
+        internationalAddress: initialLeadData.isInternational ? initialLeadData.location : '',
+        courier: initialLeadData.courier === '-' ? undefined : initialLeadData.courier,
+        orderType: initialLeadData.orderType as any,
+        priorityType: initialLeadData.priorityType as any,
+        orders: initialLeadData.orders || [],
+    } : {
       customerName: '',
       companyName: '',
       mobileNo: '',
@@ -332,7 +347,7 @@ export function LeadForm({
   const { control, handleSubmit, reset, watch, setValue, formState: { isDirty } } = form;
   
   useEffect(() => {
-    if (resetFormTrigger > 0 && !isEditing) {
+    if (resetFormTrigger && resetFormTrigger > 0 && !isEditing) {
         reset({
             customerName: '',
             companyName: '',
@@ -356,27 +371,9 @@ export function LeadForm({
 
   useEffect(() => {
     if (isEditing && initialLeadData) {
-        const { customerName, companyName, contactNumber, landlineNumber, location, houseStreet, barangay, city, province, courier, orderType, priorityType, isInternational, orders } = initialLeadData;
-        
-        reset({
-            customerName: toTitleCase(customerName || ''),
-            companyName: companyName && companyName !== '-' ? toTitleCase(companyName) : '',
-            mobileNo: contactNumber && contactNumber !== '-' ? contactNumber : '',
-            landlineNo: landlineNumber && landlineNumber !== '-' ? landlineNumber : '',
-            isInternational: isInternational ?? false,
-            houseStreet: houseStreet ? toTitleCase(houseStreet) : '',
-            barangay: barangay ? toTitleCase(barangay) : '',
-            city: city ? toTitleCase(city) : '',
-            province: province ? toTitleCase(province) : '',
-            internationalAddress: isInternational ? location : '',
-            courier: courier === '-' ? undefined : courier,
-            orderType: orderType as any,
-            priorityType: priorityType as any,
-            orders: orders || [],
-        });
-        setStagedOrders(orders || []);
+      setStagedOrders(initialLeadData.orders || []);
     }
-  }, [isEditing, initialLeadData, reset, setStagedOrders]);
+  }, [isEditing, initialLeadData, setStagedOrders]);
 
   
   const handleSuggestionClick = (lead: Lead) => {
@@ -577,7 +574,9 @@ export function LeadForm({
   }, [stagedOrders, setValue]);
   
   useEffect(() => {
-    onDirtyChange(isDirty);
+    if (onDirtyChange) {
+      onDirtyChange(isDirty);
+    }
   }, [isDirty, onDirtyChange]);
 
 
@@ -785,9 +784,7 @@ export function LeadForm({
                   Fill in the details below to create a record for customer and order.
                 </CardDescription>
               </>
-            ) : (
-              <h3 className="font-headline text-xl font-bold">Customer Details</h3>
-            )}
+            ) : null}
           </div>
           {!isEditing && (
             <div className="text-base text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
@@ -1351,3 +1348,4 @@ function SetCustomerStatusDialog({
     
 
     
+

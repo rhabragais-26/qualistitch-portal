@@ -60,7 +60,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
       if (lead.payments && Array.isArray(lead.payments) && lead.payments.length > 0) {
         paymentsObject['main'] = lead.payments as Payment[];
       } else if (lead.paidAmount && lead.modeOfPayment) {
-          // Compatibility for old data structure
           paymentsObject['main'] = [{
               type: lead.balance === 0 && lead.paidAmount === lead.grandTotal ? 'full' : 'down',
               amount: lead.paidAmount,
@@ -74,8 +73,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
       setGrandTotal(lead.grandTotal || 0);
       setBalance(lead.balance || 0);
       setOrderType(lead.orderType as any);
-    } else {
-        // Reset state when dialog is closed or lead is not present
+    } else if (!isOpen) {
         setStagedOrders([]);
         setOrderType(undefined);
         setAddOns({});
@@ -83,6 +81,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         setPayments({});
         setGrandTotal(0);
         setBalance(0);
+        setFormValues(null);
     }
   }, [isOpen, lead]);
   
@@ -94,7 +93,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   const handleEditLeadSubmit = useCallback(async () => {
     if (!firestore || !lead || !formValues) return;
     
-    setIsConfirmSaveOpen(false); // Close confirmation dialog on submit
+    setIsConfirmSaveOpen(false);
 
     try {
         const paidAmount = Object.values(payments).flat().reduce((sum, p) => sum + p.amount, 0);
@@ -114,7 +113,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             contactNumber: formValues.mobileNo || '-',
             landlineNumber: formValues.landlineNo || '-',
             location: formValues.isInternational ? formValues.internationalAddress : [formValues.houseStreet, formValues.barangay, formValues.city, formValues.province].filter(Boolean).map(toTitleCase).join(', '),
-            orders: stagedOrders, // Use the state from invoice card
+            orders: stagedOrders,
             productType: [...new Set(stagedOrders.map(o => o.productType))].join(', '),
             addOns,
             discounts,
@@ -134,8 +133,8 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             title: "Lead Updated!",
             description: "The lead details have been successfully updated.",
         });
-        onUpdate(); // Callback to refetch data in parent
-        onClose(); // Close the main dialog
+        onUpdate();
+        onClose();
     } catch (e: any) {
         console.error("Error updating lead: ", e);
         toast({
@@ -148,27 +147,22 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
 
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={(open) => {
-        if (!open) {
-          onClose(); // Call the passed onClose handler
-        }
-      }}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] w-full h-[95vh] flex flex-col">
           <DialogHeader className="flex-shrink-0 pt-6 px-6">
-             <DialogTitle className="sr-only">Edit Lead: {lead?.customerName}</DialogTitle>
+            <h3 className="font-headline text-xl font-bold">Customer Details</h3>
           </DialogHeader>
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
               <div className="xl:col-span-3">
                   {lead && (
                     <LeadForm 
+                        key={lead.id}
                         stagedOrders={stagedOrders}
                         setStagedOrders={setStagedOrders}
                         onOrderTypeChange={setOrderType}
                         onSubmit={handleFormSubmit}
                         isEditing={true}
                         initialLeadData={lead}
-                        onDirtyChange={() => {}}
-                        resetFormTrigger={0}
                     />
                   )}
               </div>
