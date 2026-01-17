@@ -436,7 +436,7 @@ export function JobOrderTable() {
                                     </div>
                                 </CollapsibleTrigger>
                                 <div className="text-gray-500 text-center">{creationDate.dayOfWeek}</div>
-                                <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-xs text-left">
+                                <CollapsibleContent className="pt-1 text-gray-500 text-xs text-center">
                                     <span className='font-bold text-gray-600'>Last Modified:</span>
                                     <div>{modifiedDate.dateTime}</div>
                                     <div>{modifiedDate.dayOfWeek}{lead.lastModifiedBy ? ` (${lead.lastModifiedBy})` : ''}</div>
@@ -553,7 +553,7 @@ export function JobOrderTable() {
        <Dialog open={!!uploadLead} onOpenChange={(isOpen) => !isOpen && setUploadLead(null)}>
         <DialogContent className="sm:max-w-4xl">
             <DialogHeader>
-                <DialogTitle>Reference Images for Digitizing</DialogTitle>
+                <DialogTitle>Reference Image for Digitizing</DialogTitle>
                 <DialogDescription>
                    Upload logos or back design for the Digitizing team's reference.
                 </DialogDescription>
