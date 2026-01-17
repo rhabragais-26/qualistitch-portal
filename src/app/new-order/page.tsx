@@ -54,6 +54,8 @@ export default function NewOrderPage() {
   const [balance, setBalance] = useState(0);
 
   const [resetFormTrigger, setResetFormTrigger] = useState(0);
+  const formId = "new-lead-form";
+
 
   useEffect(() => {
     if (!isUserLoading && (!user || user.isAnonymous)) {
@@ -149,6 +151,7 @@ export default function NewOrderPage() {
             <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start">
                 <div className="xl:col-span-3">
                     <LeadForm 
+                        formId={formId}
                         onDirtyChange={setIsFormDirty} 
                         stagedOrders={stagedOrders}
                         setStagedOrders={setStagedOrders}
@@ -222,7 +225,7 @@ export default function NewOrderPage() {
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={() => {
-                                            const form = document.getElementById('lead-form');
+                                            const form = document.getElementById(formId);
                                             if (form) {
                                                 form.requestSubmit();
                                             }
@@ -241,3 +244,5 @@ export default function NewOrderPage() {
     </div>
   );
 }
+
+    

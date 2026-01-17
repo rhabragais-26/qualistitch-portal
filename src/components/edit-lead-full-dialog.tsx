@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -18,7 +19,7 @@ import {
     AlertDialogDescription as AlertDialogDescriptionComponent,
     AlertDialogHeader as AlertDialogHeaderComponent,
     AlertDialogTitle as AlertDialogTitleComponent,
-    AlertDialogFooter as AlertDialogFooterComponent,
+    AlertDialogFooter,
 } from './ui/alert-dialog';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -65,6 +66,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   const [dataToSave, setDataToSave] = useState<LeadUpdateData | null>(null);
 
   const [formKey, setFormKey] = useState(0);
+  const formId = useMemo(() => `edit-lead-form-${lead?.id || 'new'}`, [lead]);
 
   useEffect(() => {
     if (isOpen && lead) {
@@ -231,6 +233,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
                   {isOpen && lead && initialFormValues && (
                     <LeadForm 
                         key={formKey}
+                        formId={formId}
                         stagedOrders={stagedOrders}
                         setStagedOrders={setStagedOrders}
                         onOrderTypeChange={setOrderType}
@@ -258,7 +261,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
           </div>
           <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
             <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-            <Button type="submit" form="lead-form">Save Changes</Button>
+            <Button type="submit" form={formId}>Save Changes</Button>
           </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -270,12 +273,14 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
               This action will update the lead record with your changes.
             </AlertDialogDescriptionComponent>
           </AlertDialogHeaderComponent>
-          <AlertDialogFooterComponent>
+          <Footer>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmSave}>Save</AlertDialogAction>
-          </AlertDialogFooterComponent>
+          </Footer>
         </AlertDialogContent>
     </AlertDialog>
     </>
   );
 }
+
+    

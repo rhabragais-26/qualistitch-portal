@@ -219,6 +219,7 @@ const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6X
 const courierOptions = ['Lalamove', 'J&T', 'In-house', 'Pick-up', 'DHL', 'FedEx'];
 
 type LeadFormProps = {
+  formId?: string;
   onDirtyChange?: (isDirty: boolean) => void;
   stagedOrders: Order[];
   setStagedOrders: React.Dispatch<React.SetStateAction<Order[]>>;
@@ -231,6 +232,7 @@ type LeadFormProps = {
 };
 
 export function LeadForm({ 
+  formId = 'lead-form',
   onDirtyChange, 
   stagedOrders, 
   setStagedOrders, 
@@ -782,7 +784,7 @@ export function LeadForm({
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form id="lead-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form id={formId} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               
               {/* Customer and Contact Info */}
@@ -1345,3 +1347,6 @@ function SetCustomerStatusDialog({
     
 
 
+
+
+    
