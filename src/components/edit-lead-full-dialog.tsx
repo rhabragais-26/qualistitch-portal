@@ -80,6 +80,11 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
       if (courierValue === '-') {
           courierValue = undefined;
       }
+      const initializedOrders = (lead.orders || []).map((order: any) => ({
+        ...order,
+        embroidery: order.embroidery || 'logo',
+      }));
+
       const initialFormValues = {
         customerName: toTitleCase(lead.customerName || ''),
         companyName: lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '',
@@ -94,11 +99,11 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         courier: courierValue,
         orderType: lead.orderType as any,
         priorityType: lead.priorityType as any,
-        orders: lead.orders || [],
+        orders: initializedOrders,
       };
       reset(initialFormValues);
 
-      setStagedOrders(lead.orders || []);
+      setStagedOrders(initializedOrders);
       
       const paymentsObject: Record<string, Payment[]> = {};
       const leadPayments = lead.payments as any;
@@ -145,7 +150,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   };
 
   const onInvalidSubmit = (errors: any) => {
-    console.error("Form validation errors:", errors);
     toast({
       variant: "destructive",
       title: "Invalid Input",
@@ -228,7 +232,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] w-full h-[95vh] flex flex-col">
         <FormProvider {...formMethods}>
-            <form onSubmit={handleSubmit(onValidSubmit, onInvalidSubmit)} className="flex flex-col flex-1 overflow-hidden">
+            <form id={`edit-lead-form-${lead?.id}`} onSubmit={handleSubmit(onValidSubmit, onInvalidSubmit)} className="flex flex-col flex-1 overflow-hidden">
                 <DialogHeader className="flex-shrink-0 pt-6 px-6">
                     <DialogTitle className="text-xl font-bold">Edit Customer Details and Orders</DialogTitle>
                     <DialogDescription>
@@ -266,7 +270,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
                 
                 <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
                     <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                    <Button type="submit">Save Changes</Button>
+                    <Button type="submit" form={`edit-lead-form-${lead?.id}`}>Save Changes</Button>
                 </DialogFooter>
             </form>
         </FormProvider>

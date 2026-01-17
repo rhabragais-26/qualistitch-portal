@@ -120,6 +120,10 @@
           "type": "string",
           "description": "Sales Representative associated with the lead."
         },
+        "scesFullName": {
+          "type": "string",
+          "description": "The full name of the sales representative."
+        },
         "orderType": {
           "type": "string",
           "description": "Type of order for the lead."
@@ -154,6 +158,10 @@
         "joNumber": {
           "type": "number",
           "description": "The job order number for the lead."
+        },
+        "publiclyPrintable": {
+          "type": "boolean",
+          "description": "Indicates if a job order can be printed without authentication."
         },
         "isJoPrinted": {
           "type": "boolean",
@@ -328,6 +336,10 @@
               "size": { "type": "string" },
               "quantity": { "type": "number" },
               "remarks": { "type": "string" },
+              "embroidery": {
+                "type": "string",
+                "enum": ["logo", "logoAndText", "name"]
+              },
               "design": {
                 "type": "object",
                 "properties": {
@@ -338,7 +350,7 @@
                 }
               }
             },
-            "required": ["productType", "color", "size", "quantity"]
+            "required": ["productType", "color", "size", "quantity", "embroidery"]
           }
         },
         "layouts": {
@@ -532,6 +544,30 @@
                 }
               }
             }
+          }
+        },
+        "grandTotal": { "type": "number", "description": "The grand total of the order." },
+        "paidAmount": { "type": "number", "description": "The amount paid by the customer." },
+        "modeOfPayment": { "type": "string", "description": "The mode of payment used." },
+        "balance": { "type": "number", "description": "The remaining balance to be paid." },
+        "addOns": {
+          "type": "object",
+          "description": "Add-ons applied to the order, grouped by product type."
+        },
+        "discounts": {
+          "type": "object",
+          "description": "Discounts applied to the order, grouped by product type."
+        },
+        "payments": {
+          "type": "array",
+          "description": "Payments made for the order.",
+          "items": {
+              "type": "object",
+              "properties": {
+                  "type": { "type": "string", "enum": ["down", "full"] },
+                  "amount": { "type": "number" },
+                  "mode": { "type": "string" }
+              }
           }
         }
       },
