@@ -3,13 +3,12 @@
 
 import * as React from "react"
 import {zodResolver} from '@hookform/resolvers/zod';
-import {useForm, useFieldArray} from 'react-hook-form';
+import { useFormContext, useFieldArray } from 'react-hook-form';
 import * as z from 'zod';
 import {useState, useEffect, useMemo} from 'react';
 
 import {Button} from '@/components/ui/button';
 import {
-  Form,
   FormControl,
   FormField,
   FormItem,
@@ -71,7 +70,7 @@ import {
 } from "@/components/ui/dialog"
 import { Separator } from './ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import locations from '@/lib/ph-locations.json';
 import { StatusBanner } from '@/components/ui/status-banner';
@@ -219,29 +218,19 @@ const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6X
 const courierOptions = ['Lalamove', 'J&T', 'In-house', 'Pick-up', 'DHL', 'FedEx'];
 
 type LeadFormProps = {
-  formId?: string;
-  onDirtyChange?: (isDirty: boolean) => void;
   stagedOrders: Order[];
   setStagedOrders: React.Dispatch<React.SetStateAction<Order[]>>;
-  resetFormTrigger?: number;
   onOrderTypeChange: (orderType: FormValues['orderType'] | undefined) => void;
-  onSubmit: (values: FormValues) => void;
   isEditing?: boolean;
   initialLeadData?: (LeadType & { orderNumber: number; totalCustomerQuantity: number; }) | null;
-  initialFormValues?: FormValues | null;
 };
 
 export function LeadForm({ 
-  formId = 'lead-form',
-  onDirtyChange, 
   stagedOrders, 
   setStagedOrders, 
-  resetFormTrigger, 
   onOrderTypeChange,
-  onSubmit,
   isEditing = false,
   initialLeadData = null,
-  initialFormValues = null,
 }: LeadFormProps) {
   const {toast} = useToast();
   const [dateString, setDateString] = useState('');
@@ -273,6 +262,9 @@ export function LeadForm({
   const [pricePerPatch, setPricePerPatch] = useState(0);
   const [formattedPrice, setFormattedPrice] = useState('');
   
+  const form = useFormContext<FormValues>();
+  const { control, watch, setValue, formState } = form;
+
   const formatCurrency = (value: number) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -312,52 +304,7 @@ export function LeadForm({
   const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
   const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    mode: 'onSubmit',
-    defaultValues: initialFormValues || {
-      customerName: '',
-      companyName: '',
-      mobileNo: '',
-      landlineNo: '',
-      isInternational: false,
-      houseStreet: '',
-      barangay: '',
-      city: '',
-      province: '',
-      internationalAddress: '',
-      courier: undefined,
-      orderType: undefined,
-      priorityType: 'Regular',
-      orders: [],
-    },
-  });
   
-  const { control, handleSubmit, reset, watch, setValue, formState: { isDirty } } = form;
-  
-  useEffect(() => {
-    if (resetFormTrigger && resetFormTrigger > 0 && !isEditing) {
-        reset({
-            customerName: '',
-            companyName: '',
-            mobileNo: '',
-            landlineNo: '',
-            isInternational: false,
-            houseStreet: '',
-            barangay: '',
-            city: '',
-            province: '',
-            internationalAddress: '',
-            courier: undefined,
-            orderType: undefined,
-            priorityType: 'Regular',
-            orders: [],
-        });
-        setSelectedLead(null);
-        setManualStatus(null);
-    }
-  }, [resetFormTrigger, reset, isEditing]);
-
   useEffect(() => {
     if (isEditing && initialLeadData) {
       setStagedOrders(initialLeadData.orders || []);
@@ -562,12 +509,6 @@ export function LeadForm({
     setValue('orders', stagedOrders);
   }, [stagedOrders, setValue]);
   
-  useEffect(() => {
-    if (onDirtyChange) {
-      onDirtyChange(isDirty);
-    }
-  }, [isDirty, onDirtyChange]);
-
 
   const orderType = watch('orderType');
 
@@ -783,8 +724,7 @@ export function LeadForm({
         </div>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form id={formId} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               
               {/* Customer and Contact Info */}
@@ -1240,9 +1180,16 @@ export function LeadForm({
                   </TableBody>
                 </Table>
               </div>
+               <FormField control={form.control} name="orders" render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                        <Input type="hidden" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
             </div>
-          </form>
-        </Form>
+        </div>
       </CardContent>
     </Card>
      <SetCustomerStatusDialog

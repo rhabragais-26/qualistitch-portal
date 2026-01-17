@@ -2,6 +2,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Dialog,
   DialogContent,
@@ -25,7 +27,7 @@ import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
-import { LeadForm, FormValues } from './lead-form';
+import { LeadForm, FormValues, formSchema } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
 import { AddOns, Discount, Payment } from "./invoice-dialogs";
@@ -65,12 +67,35 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
   const [dataToSave, setDataToSave] = useState<LeadUpdateData | null>(null);
 
-  const [formKey, setFormKey] = useState(0);
-  const formId = useMemo(() => `edit-lead-form-${lead?.id || 'new'}`, [lead]);
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    mode: 'onSubmit',
+  });
 
   useEffect(() => {
     if (isOpen && lead) {
-      setFormKey(prev => prev + 1); // This will force re-mounting of the LeadForm
+      let courierValue = lead.courier;
+      if (courierValue === '-') {
+          courierValue = undefined;
+      }
+      const initialFormValues = {
+        customerName: toTitleCase(lead.customerName || ''),
+        companyName: lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '',
+        mobileNo: lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '',
+        landlineNo: lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber : '',
+        isInternational: lead.isInternational ?? false,
+        houseStreet: lead.houseStreet ? toTitleCase(lead.houseStreet) : '',
+        barangay: lead.barangay ? toTitleCase(lead.barangay) : '',
+        city: lead.city ? toTitleCase(lead.city) : '',
+        province: lead.province ? toTitleCase(lead.province) : '',
+        internationalAddress: lead.isInternational ? lead.location : '',
+        courier: courierValue,
+        orderType: lead.orderType as any,
+        priorityType: lead.priorityType as any,
+        orders: lead.orders || [],
+      };
+      form.reset(initialFormValues);
+
       setStagedOrders(lead.orders || []);
       
       const paymentsObject: Record<string, Payment[]> = {};
@@ -91,6 +116,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
       setGrandTotal(lead.grandTotal || 0);
       setBalance(lead.balance || 0);
       setOrderType(lead.orderType as any);
+
     } else if (!isOpen) {
         setStagedOrders([]);
         setOrderType(undefined);
@@ -101,33 +127,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         setBalance(0);
         setDataToSave(null);
     }
-  }, [isOpen, lead]);
-
-
-  const initialFormValues = useMemo(() => {
-    if (!lead) return null;
-    let courierValue = lead.courier;
-    if (courierValue === '-') {
-        courierValue = undefined;
-    }
-    return {
-        customerName: toTitleCase(lead.customerName || ''),
-        companyName: lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '',
-        mobileNo: lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '',
-        landlineNo: lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber : '',
-        isInternational: lead.isInternational ?? false,
-        houseStreet: lead.houseStreet ? toTitleCase(lead.houseStreet) : '',
-        barangay: lead.barangay ? toTitleCase(lead.barangay) : '',
-        city: lead.city ? toTitleCase(lead.city) : '',
-        province: lead.province ? toTitleCase(lead.province) : '',
-        internationalAddress: lead.isInternational ? lead.location : '',
-        courier: courierValue,
-        orderType: lead.orderType as any,
-        priorityType: lead.priorityType as any,
-        orders: lead.orders || [],
-    };
-  }, [lead]);
-
+  }, [isOpen, lead, form]);
   
   const handleEditLeadSubmit = useCallback((values: FormValues) => {
     setDataToSave({
@@ -220,47 +220,49 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     <>
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[90vw] w-full h-[95vh] flex flex-col">
-          <DialogHeader className="flex-shrink-0 pt-6 px-6">
-            <DialogTitle className="text-xl font-bold">Edit Customer Details and Orders</DialogTitle>
-             <DialogDescription>
-                Please change necessary details for update and make sure the data inputs are correct before saving
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0">
-              <div className="xl:col-span-3">
-                  {isOpen && lead && initialFormValues && (
-                    <LeadForm 
-                        key={formKey}
-                        formId={formId}
-                        stagedOrders={stagedOrders}
-                        setStagedOrders={setStagedOrders}
-                        onOrderTypeChange={setOrderType}
-                        onSubmit={handleEditLeadSubmit}
-                        isEditing={true}
-                        initialLeadData={lead}
-                        initialFormValues={initialFormValues}
-                    />
-                  )}
-              </div>
-              <div className="xl:col-span-2 space-y-4">
-                  <InvoiceCard 
-                      orders={stagedOrders} 
-                      orderType={orderType} 
-                      addOns={addOns}
-                      setAddOns={setAddOns}
-                      discounts={discounts}
-                      setDiscounts={setDiscounts}
-                      payments={payments}
-                      setPayments={setPayments}
-                      onGrandTotalChange={setGrandTotal}
-                      onBalanceChange={setBalance}
-                  />
-              </div>
-          </div>
-          <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
-            <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-            <Button type="submit" form={formId}>Save Changes</Button>
-          </DialogFooter>
+        <FormProvider {...form}>
+            <form onSubmit={form.handleSubmit(handleEditLeadSubmit)} className="flex flex-col h-full">
+                <DialogHeader className="flex-shrink-0 pt-6 px-6">
+                    <DialogTitle className="text-xl font-bold">Edit Customer Details and Orders</DialogTitle>
+                    <DialogDescription>
+                        Please change necessary details for update and make sure the data inputs are correct before saving
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start flex-1 overflow-y-auto px-6 pt-0 mt-4">
+                    <div className="xl:col-span-3">
+                        {isOpen && lead && (
+                            <LeadForm 
+                                stagedOrders={stagedOrders}
+                                setStagedOrders={setStagedOrders}
+                                onOrderTypeChange={setOrderType}
+                                isEditing={true}
+                                initialLeadData={lead}
+                            />
+                        )}
+                    </div>
+                    <div className="xl:col-span-2 space-y-4">
+                        <InvoiceCard 
+                            orders={stagedOrders} 
+                            orderType={orderType} 
+                            addOns={addOns}
+                            setAddOns={setAddOns}
+                            discounts={discounts}
+                            setDiscounts={setDiscounts}
+                            payments={payments}
+                            setPayments={setPayments}
+                            onGrandTotalChange={setGrandTotal}
+                            onBalanceChange={setBalance}
+                        />
+                    </div>
+                </div>
+                
+                <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
+                    <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                    <Button type="submit">Save Changes</Button>
+                </DialogFooter>
+            </form>
+        </FormProvider>
       </DialogContent>
     </Dialog>
     <AlertDialog open={isConfirmSaveOpen} onOpenChange={setIsConfirmSaveOpen}>
@@ -280,5 +282,3 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     </>
   );
 }
-
-    
