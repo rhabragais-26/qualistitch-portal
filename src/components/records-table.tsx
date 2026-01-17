@@ -238,11 +238,14 @@ const RecordsTableRow = React.memo(({
             <TableCell className="text-xs align-middle text-center py-2 text-black font-bold text-destructive">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
                 <div>{lead.modeOfPayment || 'COD'}</div>
-                 <div className="text-xs text-gray-500 capitalize">
+                <div className="text-xs text-gray-500 capitalize">
                     {lead.modeOfPayment
                         ? (lead.payments && lead.payments[0] ? `(${lead.payments[0].type === 'down' ? 'Down Payment' : 'Full Payment'})` : null)
                         : '(Cash on Delivery)'}
                 </div>
+            </TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">
+                <div>{lead.modeOfPayment ? (lead.paymentType || '-') : 'COD'}</div>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
             <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
@@ -732,9 +735,10 @@ export function RecordsTable() {
                     <TableHead className="text-center text-white align-middle">Paid Amount</TableHead>
                     <TableHead className="text-center text-white align-middle">Balance</TableHead>
                     <TableHead className="text-center text-white align-middle">Mode of Payment</TableHead>
+                    <TableHead className="text-center text-white align-middle">Payment Type</TableHead>
                     <TableHead className="text-center text-white align-middle">Items</TableHead>
                     <TableHead className="text-center text-white align-middle">Actions</TableHead>
-                    <TableHead className="text-center text-white align-middle w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -756,7 +760,7 @@ export function RecordsTable() {
                         />
                         {openLeadId === lead.id && (
                         <TableRow className="bg-gray-50">
-                            <TableCell colSpan={13} className="p-2">
+                            <TableCell colSpan={14} className="p-2">
                             <div className="p-2">
                                 <h4 className="font-semibold text-black mb-2">Ordered Items</h4>
                                 <Table>
@@ -766,7 +770,6 @@ export function RecordsTable() {
                                     <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
                                     <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
                                     <TableHead className="py-1 px-2 text-black font-bold text-center">Quantity</TableHead>
-                                    <TableHead className="text-right py-1 px-2 text-black pr-8">Action</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -776,30 +779,6 @@ export function RecordsTable() {
                                         <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
                                         <TableCell className="py-1 px-2 text-xs text-black">{order.size}</TableCell>
                                         <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.quantity}</TableCell>
-                                        <TableCell className="text-right py-1">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => { setEditingOrder({ leadId: lead.id, order, index }); setIsEditDialogOpen(true); }}>
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete the ordered item.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDeleteOrder(lead.id, index)}>Delete</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                        </TableCell>
                                     </TableRow>
                                     ))}
                                 </TableBody>
@@ -807,12 +786,6 @@ export function RecordsTable() {
                                     <TableRow>
                                     <TableCell colSpan={3} className="text-right font-bold text-black py-1 px-2">Total Quantity</TableCell>
                                     <TableCell className="font-bold text-black text-center py-1 px-2">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
-                                    <TableCell className='text-right py-1 px-2'>
-                                        <Button variant="outline" size="sm" onClick={() => handleOpenAddOrderDialog(lead.id)}>
-                                        <PlusCircle className="h-4 w-4 mr-1" />
-                                        Add Order
-                                        </Button>
-                                    </TableCell>
                                     </TableRow>
                                 </TableFooter>
                                 </Table>
