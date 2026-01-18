@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -119,8 +120,8 @@ const HeaderMemo = React.memo(function Header({
   const getActiveMenuClass = useCallback((paths: string[]) => {
     const isActive = paths.some(path => pathname === path || (path !== '/' && pathname.startsWith(path)));
     return isActive
-      ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-      : 'bg-secondary text-secondary-foreground hover:bg-accent/90 hover:text-white';
+      ? 'bg-white text-primary hover:bg-gray-100'
+      : 'bg-primary text-primary-foreground hover:bg-primary/90';
   }, [pathname]);
 
   const handleNavigation = useCallback((url: string) => {
@@ -176,7 +177,7 @@ const HeaderMemo = React.memo(function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b bg-black no-print">
+      <header className="sticky top-0 z-40 w-full bg-black no-print">
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex items-center">
             <Link href="/new-order" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/new-order'); }}>
