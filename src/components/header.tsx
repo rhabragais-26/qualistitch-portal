@@ -191,7 +191,7 @@ const HeaderMemo = React.memo(function Header({
             {isClient && (
               <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment']))}>
+                  <Button variant="ghost" className={cn("h-full rounded-none px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment']))}>
                     <TrendingUp className="mr-2" />
                     Sales
                     <ChevronDown className="ml-2 h-4 w-4" />
@@ -233,7 +233,7 @@ const HeaderMemo = React.memo(function Header({
             {isClient && (
               <DropdownMenu open={openMenu === 'digitizing'} onOpenChange={(isOpen) => handleMenuOpenChange('digitizing', isOpen)}>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports', '/digitizing/program-files-database']))}>
+                   <Button variant="ghost" className={cn("h-full rounded-none px-4 font-bold", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports', '/digitizing/program-files-database']))}>
                       <ScanLine className="mr-2" />
                       Digitizing
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -258,7 +258,7 @@ const HeaderMemo = React.memo(function Header({
             {isClient && (
               <DropdownMenu open={openMenu === 'inventory'} onOpenChange={(isOpen) => handleMenuOpenChange('inventory', isOpen)}>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/inventory/add-items', '/inventory/item-preparation-for-production', '/inventory/summary', '/inventory/reports', '/inventory/operational-cases']))}>
+                   <Button variant="ghost" className={cn("h-full rounded-none px-4 font-bold", getActiveMenuClass(['/inventory/add-items', '/inventory/item-preparation-for-production', '/inventory/summary', '/inventory/reports', '/inventory/operational-cases']))}>
                       <Boxes className="mr-2" />
                       Inventory
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -291,7 +291,7 @@ const HeaderMemo = React.memo(function Header({
             {isClient && (
               <DropdownMenu open={openMenu === 'production'} onOpenChange={(isOpen) => handleMenuOpenChange('production', isOpen)}>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/production/production-queue']))}>
+                   <Button variant="ghost" className={cn("h-full rounded-none px-4 font-bold", getActiveMenuClass(['/production/production-queue']))}>
                       <Cog className="mr-2" />
                       Production
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -308,7 +308,7 @@ const HeaderMemo = React.memo(function Header({
             {isClient && (
               <DropdownMenu open={openMenu === 'logistics'} onOpenChange={(isOpen) => handleMenuOpenChange('logistics', isOpen)}>
                 <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/logistics/shipment-queue', '/logistics/summary']))}>
+                   <Button variant="ghost" className={cn("h-full rounded-none px-4 font-bold", getActiveMenuClass(['/logistics/shipment-queue', '/logistics/summary']))}>
                       <Truck className="mr-2" />
                       Logistics
                       <ChevronDown className="ml-2 h-4 w-4" />
@@ -326,7 +326,7 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/order-status']))}>
+            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className={cn("h-full rounded-none px-4 font-bold", getActiveMenuClass(['/order-status']))}>
               <ListOrdered className="mr-2" />
               Overall Order Status
             </Button>
