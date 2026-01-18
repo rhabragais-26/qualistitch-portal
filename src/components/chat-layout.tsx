@@ -202,16 +202,17 @@ export function ChatLayout() {
             </div>
         </ScrollArea>
         <div className="p-4 border-t">
-            <form onSubmit={handleSendMessage} className="flex items-center gap-4">
-            <Input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Type a message..."
-                autoComplete="off"
-            />
-            <Button type="submit" size="icon" disabled={!message.trim()}>
-                <Send className="h-5 w-5" />
-            </Button>
+            <form onSubmit={handleSendMessage} className="relative flex items-center">
+              <Input
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Type a message..."
+                  autoComplete="off"
+                  className="pr-12"
+              />
+              <Button type="submit" size="icon" disabled={!message.trim()} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 bg-transparent hover:bg-black/10 text-black">
+                  <Send className="h-5 w-5" />
+              </Button>
             </form>
         </div>
     </div>
