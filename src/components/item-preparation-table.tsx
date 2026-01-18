@@ -559,7 +559,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
         </div>
       </CardHeader>
       <CardContent>
-           <div className="border rounded-md">
+           <div className="border rounded-md pb-4">
             <Table>
                 <TableHeader className="bg-neutral-800">
                   <TableRow>
@@ -599,3 +599,5 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
+    
