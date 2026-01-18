@@ -37,9 +37,8 @@ export function CollapsibleChat() {
     <div className={cn(
         "fixed z-50 transition-all duration-300 ease-in-out flex flex-col no-print",
         isExpanded 
-            ? "w-96 h-[70vh] max-h-[500px] bg-card text-card-foreground border rounded-t-lg shadow-xl" 
-            : "w-auto",
-        isExpanded ? "bottom-0 left-0" : "bottom-12 left-0"
+            ? "w-96 h-[70vh] max-h-[500px] bg-card text-card-foreground border rounded-t-lg shadow-xl bottom-1 left-1" 
+            : "w-auto bottom-12 left-0"
       )}>
       <div className={cn("overflow-hidden rounded-t-lg", isExpanded ? "flex-1" : "h-0")}>
         {isExpanded && <ChatLayout />}
