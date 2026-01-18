@@ -380,7 +380,7 @@ const HeaderMemo = React.memo(function Header({
         </div>
       </header>
       
-      <main className="flex-1 w-full overflow-hidden bg-white">
+      <main className="flex-1 w-full overflow-y-auto bg-white">
         {children}
       </main>
 

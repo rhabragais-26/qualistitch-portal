@@ -26,7 +26,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background h-full">
         <FirebaseClientProvider>
-          <div className="flex-1 flex flex-col overflow-hidden h-screen">
+          <div className="flex-1 flex flex-col">
             {children}
           </div>
           <CollapsibleChat />
