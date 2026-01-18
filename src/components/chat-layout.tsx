@@ -127,7 +127,7 @@ export function ChatLayout() {
                             <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                         )}
                         </div>
-                        <div className="flex flex-col items-start">
+                        <div className="flex items-baseline gap-2">
                             <span className="font-medium">{u.nickname}</span>
                             {u.position && <span className="text-xs text-black/70">({u.position})</span>}
                         </div>
@@ -156,7 +156,7 @@ export function ChatLayout() {
                 <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
             )}
             </div>
-            <div className="flex flex-col items-start">
+            <div className="flex items-baseline gap-2">
             <h2 className="text-lg font-bold leading-tight">{selectedUser.nickname}</h2>
             {selectedUser.position && <span className="text-xs text-black/70">({selectedUser.position})</span>}
             </div>
