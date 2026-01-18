@@ -95,9 +95,10 @@ type OperationalCasesFormProps = {
   onSaveComplete: () => void;
   onDirtyChange: (isDirty: boolean) => void;
   isReadOnly: boolean;
+  setImageInView: (url: string | null) => void;
 }
 
-const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete, onDirtyChange, isReadOnly }: OperationalCasesFormProps) {
+const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete, onDirtyChange, isReadOnly, setImageInView }: OperationalCasesFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const imageUploadRef = useRef<HTMLInputElement>(null);
@@ -108,7 +109,6 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
 
   const [isQuantityDialogOpen, setIsQuantityDialogOpen] = useState(false);
   const [caseItems, setCaseItems] = useState<CaseItem[]>([]);
-  const [imageInView, setImageInView] = useState<string | null>(null);
 
   const leadsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'leads')) : null),
@@ -568,25 +568,6 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
             initialItems={caseItems}
         />
     )}
-    {imageInView && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
-          onClick={() => setImageInView(null)}
-        >
-          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
-            <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
-             <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setImageInView(null)}
-                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
-            >
-                <X className="h-6 w-6" />
-                <span className="sr-only">Close</span>
-            </Button>
-          </div>
-        </div>
-      )}
     </>
   );
 });
