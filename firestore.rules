@@ -31,5 +31,17 @@ service cloud.firestore {
     match /sizeCharts/{chartId} {
       allow read, write: if true;
     }
+
+    match /direct_messages/{channelId} {
+      // Allow read/write only if the requesting user is a participant
+      allow read, write: if request.auth.uid in resource.data.participants;
+      
+      match /messages/{messageId} {
+        // Allow read if user is a participant
+        allow read: if get(/databases/$(database)/documents/direct_messages/$(channelId)).data.participants[0] == request.auth.uid || get(/databases/$(database)/documents/direct_messages/$(channelId)).data.participants[1] == request.auth.uid;
+        // Allow create if user is the sender and is a participant
+        allow create: if request.resource.data.senderId == request.auth.uid && (get(/databases/$(database)/documents/direct_messages/$(channelId)).data.participants[0] == request.auth.uid || get(/databases/$(database)/documents/direct_messages/$(channelId)).data.participants[1] == request.auth.uid);
+      }
+    }
   }
 }

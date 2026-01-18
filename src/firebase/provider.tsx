@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore, doc, onSnapshot, DocumentData, Unsubscribe, getDoc } from 'firebase/firestore';
+import { Firestore, doc, onSnapshot, DocumentData, Unsubscribe, getDoc, updateDoc } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
 import { initiateAnonymousSignIn } from './auth-writes';
@@ -16,6 +17,7 @@ interface UserProfile {
   role: 'user' | 'admin';
   position: string;
   photoURL?: string;
+  lastSeen?: string;
 }
 
 interface UserAuthState {
@@ -86,6 +88,25 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     isUserLoading: true,
     userError: null,
   });
+
+  // Effect for simplified user presence
+  useEffect(() => {
+    if (!firestore || !userAuthState.user) return;
+
+    const userStatusRef = doc(firestore, 'users', userAuthState.user.uid);
+
+    const updateLastSeen = () => {
+      updateDoc(userStatusRef, { lastSeen: new Date().toISOString() }).catch(err => {
+        // This might fail if the user is offline, which is expected.
+        // console.warn("Could not update lastSeen:", err.message);
+      });
+    };
+
+    updateLastSeen(); // Update once on load
+    const interval = setInterval(updateLastSeen, 60 * 1000); // Update every 60 seconds
+
+    return () => clearInterval(interval);
+  }, [firestore, userAuthState.user]);
 
   // Effect to subscribe to Firebase auth state changes and fetch user profile
   useEffect(() => {
