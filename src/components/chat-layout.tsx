@@ -294,14 +294,12 @@ export function ChatLayout() {
                       differenceInMinutes(
                         msg.timestamp.toDate(),
                         messages[index - 1].timestamp.toDate()
-                      ) > 10);
+                      ) > 5);
 
                   let formattedTimestamp = '';
                   if (msg.timestamp) {
                     const date = msg.timestamp.toDate();
-                    if (isToday(date)) {
-                      formattedTimestamp = format(date, 'h:mm aa');
-                    } else if (isThisWeek(date, { weekStartsOn: 1 })) {
+                    if (isThisWeek(date, { weekStartsOn: 1 })) {
                       formattedTimestamp = format(date, "EEE 'at' h:mm aa");
                     } else {
                       formattedTimestamp = format(date, "MMM-dd 'at' h:mm aa");
