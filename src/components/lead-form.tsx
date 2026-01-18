@@ -1173,9 +1173,7 @@ export function LeadForm({
                       <TableHead className="py-1 px-2 text-black text-center align-middle">Color</TableHead>
                       <TableHead className="py-1 px-2 text-black text-center align-middle">Size</TableHead>
                       <TableHead className="py-1 px-2 text-black text-center align-middle">Qty</TableHead>
-                      <TableHead className="py-1 px-2 text-black text-center align-middle">
-                        <span className="whitespace-normal">Remaining Stocks</span>
-                      </TableHead>
+                      <TableHead className="py-1 px-2 text-black text-center align-middle whitespace-normal">Remaining Stocks</TableHead>
                       <TableHead className="py-1 px-2 text-black text-center align-middle">Action</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1194,23 +1192,23 @@ export function LeadForm({
                           <TableCell className="py-1 px-2 text-black text-center align-middle">{order.color}</TableCell>
                           <TableCell className="py-1 px-2 text-black text-center align-middle">{order.size}</TableCell>
                           <TableCell className="py-1 px-2 text-black text-center align-middle">
-                            <div className="flex items-center justify-center gap-2">
+                            <div className="flex items-center justify-center gap-1">
                                 <Button
                                     type="button"
                                     size="icon"
-                                    className="h-6 w-6 bg-red-600 hover:bg-red-700 text-white"
+                                    className="h-5 w-5 bg-red-600 hover:bg-red-700 text-white"
                                     onClick={() => handleStagedOrderQuantityChange(index, -1)}
                                     disabled={isReadOnly}
                                 >
                                     <Minus className="h-3 w-3" />
                                 </Button>
-                                <div className="w-14 h-8 flex items-center justify-center font-bold text-base border rounded-md">
+                                <div className="w-12 h-7 flex items-center justify-center text-sm border rounded-md">
                                     {order.quantity}
                                 </div>
                                 <Button
                                     type="button"
                                     size="icon"
-                                    className="h-6 w-6 bg-green-600 hover:bg-green-700 text-white"
+                                    className="h-5 w-5 bg-green-600 hover:bg-green-700 text-white"
                                     onClick={() => handleStagedOrderQuantityChange(index, 1)}
                                     disabled={isReadOnly}
                                 >
