@@ -24,7 +24,7 @@ export function CollapsibleChat() {
             <Button
               variant="ghost"
               onClick={() => setIsExpanded(!isExpanded)}
-              className={cn(isExpanded ? "w-full border-t" : "h-12 w-12 p-0 rounded-full")}
+              className={cn(isExpanded ? "w-full border-t" : "h-12 w-12 p-0 rounded-full bg-accent/70 text-white hover:bg-accent/90")}
             >
               {isExpanded ? <ChevronsLeft className="h-5 w-5" /> : <MessageSquare className="h-6 w-6" />}
             </Button>
