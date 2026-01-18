@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { collection, query, orderBy, addDoc, serverTimestamp, setDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, addDoc, serverTimestamp, setDoc, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,6 +27,16 @@ interface ChatMessage {
   timestamp: any;
 }
 
+interface DirectMessageChannel {
+    participants: string[];
+    lastMessage?: {
+        senderId: string;
+        text: string;
+        timestamp: any;
+        readBy: string[];
+    }
+}
+
 export function ChatLayout() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -37,6 +47,9 @@ export function ChatLayout() {
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('nickname', 'asc')) : null, [firestore]);
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
+
+  const channelsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'direct_messages')) : null, [firestore]);
+  const { data: channels } = useCollection<DirectMessageChannel>(channelsQuery);
 
   const channelId = useMemo(() => {
     if (!user || !selectedUser) return null;
@@ -54,6 +67,22 @@ export function ChatLayout() {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (selectedUser && channelId && firestore && user) {
+        const channelRef = doc(firestore, 'direct_messages', channelId);
+        getDoc(channelRef).then(docSnap => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.lastMessage && data.lastMessage.senderId !== user.uid && !data.lastMessage.readBy?.includes(user.uid)) {
+                    updateDoc(channelRef, {
+                        'lastMessage.readBy': arrayUnion(user.uid)
+                    });
+                }
+            }
+        })
+    }
+  }, [selectedUser, channelId, firestore, user]);
 
   useEffect(() => {
     if (messageInputRef.current) {
@@ -77,15 +106,19 @@ export function ChatLayout() {
         text: message,
         timestamp: serverTimestamp(),
     };
+    
+    const lastMessageData = {
+        senderId: user.uid,
+        text: message,
+        timestamp: serverTimestamp(),
+        readBy: [user.uid]
+    };
 
     try {
       // First, ensure the channel document exists or is updated.
       await setDoc(channelRef, {
         participants: [user.uid, selectedUser.uid],
-        lastMessage: {
-          text: message,
-          timestamp: serverTimestamp(),
-        }
+        lastMessage: lastMessageData
       }, { merge: true });
       
       // Then, add the message to the subcollection.
@@ -138,7 +171,12 @@ export function ChatLayout() {
                 </div>
             ) : (
                 <ul>
-                {users?.filter(u => u.uid !== user?.uid).map(u => (
+                {users?.filter(u => u.uid !== user?.uid).map(u => {
+                    const channel = channels?.find(c => c.participants.includes(user!.uid) && c.participants.includes(u.uid));
+                    const lastMessage = channel?.lastMessage;
+                    const isUnread = lastMessage && lastMessage.senderId !== user!.uid && !lastMessage.readBy?.includes(user!.uid);
+
+                    return (
                     <li key={u.uid}>
                     <button
                         className={cn(
@@ -152,11 +190,18 @@ export function ChatLayout() {
                             <AvatarFallback className="bg-primary text-primary-foreground">{getInitials(u.nickname)}</AvatarFallback>
                         </Avatar>
                         </div>
-                        <div className="flex-grow">
+                        <div className="flex-grow overflow-hidden">
                             <div className="flex items-baseline gap-2">
                                 <span className="font-medium">{u.nickname}</span>
                                 {u.position && <span className="text-xs text-black/70">({u.position})</span>}
                             </div>
+                            {lastMessage ? (
+                                <p className={cn("text-xs text-black/70 truncate", isUnread && "font-bold")}>
+                                    {lastMessage.text}
+                                </p>
+                            ) : (
+                                <p className="text-xs text-black/70 italic">No conversations yet</p>
+                            )}
                         </div>
                         <div className="flex items-center gap-2 text-xs ml-auto">
                             <div className={cn("w-2.5 h-2.5 rounded-full", isOnline(u.lastSeen) ? "bg-green-500" : "bg-gray-400")} />
@@ -164,7 +209,7 @@ export function ChatLayout() {
                         </div>
                     </button>
                     </li>
-                ))}
+                )})}
                 </ul>
             )}
             </ScrollArea>

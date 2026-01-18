@@ -34,25 +34,31 @@
         "required": ["uid", "firstName", "lastName", "nickname", "email", "role", "position"]
     },
     "DirectMessageChannel": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "DirectMessageChannel",
-        "type": "object",
-        "description": "Represents a direct message channel between two users.",
-        "properties": {
-            "participants": {
-                "type": "array",
-                "items": { "type": "string" },
-                "description": "An array containing the UIDs of the two participants."
-            },
-            "lastMessage": {
-                "type": "object",
-                "properties": {
-                    "text": { "type": "string" },
-                    "timestamp": { "type": "string", "format": "date-time" }
-                }
-            }
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DirectMessageChannel",
+      "type": "object",
+      "description": "Represents a direct message channel between two users.",
+      "properties": {
+        "participants": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "An array containing the UIDs of the two participants."
         },
-        "required": ["participants"]
+        "lastMessage": {
+          "type": "object",
+          "properties": {
+            "senderId": { "type": "string" },
+            "text": { "type": "string" },
+            "timestamp": { "type": "string", "format": "date-time" },
+            "readBy": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "An array of participant UIDs who have read the last message."
+            }
+          }
+        }
+      },
+      "required": ["participants"]
     },
     "ChatMessage": {
       "$schema": "http://json-schema.org/draft-07/schema#",
