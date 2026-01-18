@@ -280,7 +280,7 @@ export function ChatLayout() {
             </div>
         </div>
         <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
+            <div>
             {messagesLoading && !messages ? (
                 <div className="flex justify-center items-center h-full">
                     <p>Loading messages...</p>
@@ -318,6 +318,7 @@ export function ChatLayout() {
                       <div
                         className={cn(
                             "flex w-full",
+                            !showTimestamp && index > 0 && 'mt-1',
                             msg.senderId === user?.uid ? "justify-end" : "justify-start"
                         )}
                       >
@@ -368,4 +369,3 @@ export function ChatLayout() {
     </div>
   );
 }
-    
