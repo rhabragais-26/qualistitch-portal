@@ -347,7 +347,7 @@ export function ChatLayout() {
             <div ref={messagesEndRef} />
             </div>
         </ScrollArea>
-        <div className="p-4 border-t">
+        <div className="p-4 border-t" style={{ backgroundColor: '#d9f7f2' }}>
             <form onSubmit={handleSendMessage} className="relative flex items-center">
               <Textarea
                   ref={messageInputRef}
