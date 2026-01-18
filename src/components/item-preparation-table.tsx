@@ -437,7 +437,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
   }
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
        {confirmingLead && (
         <AlertDialog open={!!confirmingLead} onOpenChange={() => setConfirmingLead(null)}>
           <AlertDialogContent>

@@ -737,7 +737,7 @@ export function ProductionQueueTable({ isReadOnly }: { isReadOnly: boolean }) {
   }
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
       <AlertDialog open={!!uncheckConfirmation} onOpenChange={(open) => !open && setUncheckConfirmation(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

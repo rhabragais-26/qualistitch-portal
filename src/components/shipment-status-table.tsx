@@ -20,7 +20,7 @@ import {
 
 const ShipmentStatusTableMemo = React.memo(function ShipmentStatusTable() {
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black border-none">
       <CardHeader>
         <CardTitle className="text-black">Shipment Status</CardTitle>
         <CardDescription className="text-gray-600">

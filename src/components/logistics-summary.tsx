@@ -12,7 +12,7 @@ import {
 
 const LogisticsSummaryMemo = React.memo(function LogisticsSummary() {
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black border-none">
       <CardHeader>
         <CardTitle className="text-black">Logistics Summary</CardTitle>
         <CardDescription className="text-gray-600">
