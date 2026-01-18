@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export function CollapsibleChat() {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -37,7 +37,7 @@ export function CollapsibleChat() {
             <Button
               variant="ghost"
               onClick={() => setIsExpanded(!isExpanded)}
-              className={cn(isExpanded ? "w-full border-t" : "h-9 w-9 p-0 rounded-full bg-amber-500/50 text-white hover:bg-amber-500 hover:text-white")}
+              className={cn(isExpanded ? "w-full border-t hover:bg-amber-500 hover:text-white" : "h-9 w-9 p-0 rounded-full bg-amber-500/50 text-white hover:bg-amber-500")}
             >
               {isExpanded ? <ChevronsLeft className="h-5 w-5" /> : <MessageSquare className="h-6 w-6" />}
             </Button>
