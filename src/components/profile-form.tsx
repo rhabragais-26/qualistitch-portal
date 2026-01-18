@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,11 +19,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Camera, Eye, EyeOff } from 'lucide-react';
+import { Camera, Eye, EyeOff, X } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { UserPosition } from '@/lib/permissions';
+import Image from 'next/image';
 
 const positions: UserPosition[] = [
     'Not Assigned',
@@ -86,6 +86,7 @@ export function ProfileForm() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [imageInView, setImageInView] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -124,7 +125,12 @@ export function ProfileForm() {
   };
 
   const handleAvatarClick = () => {
-    fileInputRef.current?.click();
+    const photoUrl = form.getValues('photoURL') || userProfile?.photoURL;
+    if (photoUrl) {
+      setImageInView(photoUrl);
+    } else {
+      fileInputRef.current?.click();
+    }
   };
   
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -216,188 +222,215 @@ export function ProfileForm() {
   }
 
   return (
-    <Card className="w-full max-w-2xl shadow-xl">
-      <CardHeader>
-        <CardTitle>{userProfile?.nickname}'s Profile</CardTitle>
-        <CardDescription>Manage your personal information and password.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
-                 <Avatar className="h-32 w-32">
-                    <AvatarImage src={form.getValues('photoURL') || userProfile?.photoURL || ''} alt={userProfile?.nickname} />
-                    <AvatarFallback className="text-4xl bg-primary text-primary-foreground">
-                        {getInitials(userProfile?.nickname)}
-                    </AvatarFallback>
-                </Avatar>
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="h-8 w-8 text-white" />
+    <>
+      {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <Image src={imageInView} alt="Enlarged Profile Photo" layout="fill" objectFit="contain" />
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+            </Button>
+          </div>
+        </div>
+      )}
+      <Card className="w-full max-w-2xl shadow-xl">
+        <CardHeader>
+          <CardTitle>{userProfile?.nickname}'s Profile</CardTitle>
+          <CardDescription>Manage your personal information and password.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
+                  <Avatar className="h-32 w-32">
+                      <AvatarImage src={form.getValues('photoURL') || userProfile?.photoURL || ''} alt={userProfile?.nickname} />
+                      <AvatarFallback className="text-4xl bg-primary text-primary-foreground">
+                          {getInitials(userProfile?.nickname)}
+                      </AvatarFallback>
+                  </Avatar>
+                  <div
+                    className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                      <Camera className="h-8 w-8 text-white" />
+                  </div>
                 </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept="image/png, image/jpeg, image/gif"
+                />
               </div>
-               <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept="image/png, image/jpeg, image/gif"
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Juan" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Dela Cruz" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                control={form.control}
-                name="nickname"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Nickname</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Your nickname" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                        <Input readOnly value={user?.email || ''} className="bg-muted" />
-                    </FormControl>
-                </FormItem>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                control={form.control}
-                name="position"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Position</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={!isAdmin}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {positions.map(pos => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Your phone number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                          <Input placeholder="Juan" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+                  <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                          <Input placeholder="Dela Cruz" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                  control={form.control}
+                  name="nickname"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Nickname</FormLabel>
+                      <FormControl>
+                          <Input placeholder="Your nickname" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+                  <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                          <Input readOnly value={user?.email || ''} className="bg-muted" />
+                      </FormControl>
+                  </FormItem>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                  control={form.control}
+                  name="position"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Position</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={!isAdmin}>
+                          <FormControl>
+                          <SelectTrigger>
+                              <SelectValue />
+                          </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                          {positions.map(pos => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+                  <FormField
+                  control={form.control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                          <Input placeholder="Your phone number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+              </div>
 
-            <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-lg font-medium">Change Password</h3>
-                <FormField
-                    control={form.control}
-                    name="currentPassword"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Current Password</FormLabel>
-                         <div className="relative">
-                            <FormControl>
-                                <Input type={showCurrentPassword ? "text" : "password"} {...field} />
-                            </FormControl>
-                            <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowCurrentPassword(prev => !prev)}>
-                                {showCurrentPassword ? <EyeOff /> : <Eye />}
-                            </Button>
-                        </div>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <FormField
-                        control={form.control}
-                        name="newPassword"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>New Password</FormLabel>
-                             <div className="relative">
-                                <FormControl>
-                                    <Input type={showNewPassword ? "text" : "password"} {...field} />
-                                </FormControl>
-                                <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowNewPassword(prev => !prev)}>
-                                    {showNewPassword ? <EyeOff /> : <Eye />}
-                                </Button>
-                            </div>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="confirmPassword"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Confirm New Password</FormLabel>
-                             <div className="relative">
-                                <FormControl>
-                                    <Input type={showConfirmPassword ? "text" : "password"} {...field} />
-                                </FormControl>
-                                <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowConfirmPassword(prev => !prev)}>
-                                    {showConfirmPassword ? <EyeOff /> : <Eye />}
-                                </Button>
-                            </div>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-            </div>
+              <div className="space-y-4 pt-4 border-t">
+                  <h3 className="text-lg font-medium">Change Password</h3>
+                  <FormField
+                      control={form.control}
+                      name="currentPassword"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Current Password</FormLabel>
+                          <div className="relative">
+                              <FormControl>
+                                  <Input type={showCurrentPassword ? "text" : "password"} {...field} />
+                              </FormControl>
+                              <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowCurrentPassword(prev => !prev)}>
+                                  {showCurrentPassword ? <EyeOff /> : <Eye />}
+                              </Button>
+                          </div>
+                          <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                          control={form.control}
+                          name="newPassword"
+                          render={({ field }) => (
+                              <FormItem>
+                              <FormLabel>New Password</FormLabel>
+                              <div className="relative">
+                                  <FormControl>
+                                      <Input type={showNewPassword ? "text" : "password"} {...field} />
+                                  </FormControl>
+                                  <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowNewPassword(prev => !prev)}>
+                                      {showNewPassword ? <EyeOff /> : <Eye />}
+                                  </Button>
+                              </div>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                      <FormField
+                          control={form.control}
+                          name="confirmPassword"
+                          render={({ field }) => (
+                              <FormItem>
+                              <FormLabel>Confirm New Password</FormLabel>
+                              <div className="relative">
+                                  <FormControl>
+                                      <Input type={showConfirmPassword ? "text" : "password"} {...field} />
+                                  </FormControl>
+                                  <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowConfirmPassword(prev => !prev)}>
+                                      {showConfirmPassword ? <EyeOff /> : <Eye />}
+                                  </Button>
+                              </div>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                  </div>
+              </div>
 
-            <div className="flex justify-end">
-                <Button type="submit" disabled={isSaving || !form.formState.isDirty}>
-                {isSaving ? 'Saving...' : 'Save Changes'}
-                </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+              <div className="flex justify-end">
+                  <Button type="submit" disabled={isSaving || !form.formState.isDirty}>
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                  </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </>
   );
 }
