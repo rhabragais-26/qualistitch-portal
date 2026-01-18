@@ -6,7 +6,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send } from 'lucide-react';
+import { Send, ArrowLeft } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
@@ -94,120 +94,117 @@ export function ChatLayout() {
     return nickname.charAt(0).toUpperCase();
   };
 
-  return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
-      <aside className="w-1/4 border-r bg-gray-50 flex flex-col">
-        <div className="p-4 border-b">
-          <h2 className="text-xl font-bold">Chats</h2>
-        </div>
-        <ScrollArea className="flex-1">
-          {usersLoading ? (
-            <div className="p-4 space-y-4">
-              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+  if (!selectedUser) {
+    return (
+        <div className="flex flex-col h-full">
+            <div className="p-4 border-b">
+                <h2 className="text-xl font-bold">Chats</h2>
             </div>
-          ) : (
-            <ul>
-              {users?.filter(u => u.uid !== user?.uid).map(u => (
-                <li key={u.uid}>
-                  <button
-                    className={cn(
-                      "w-full text-left p-4 flex items-center gap-4 hover:bg-gray-100",
-                      selectedUser?.uid === u.uid && "bg-blue-100"
-                    )}
-                    onClick={() => setSelectedUser(u)}
-                  >
-                    <div className="relative">
-                      <Avatar>
-                        <AvatarImage src={u.photoURL} alt={u.nickname} />
-                        <AvatarFallback className="bg-primary text-primary-foreground">{getInitials(u.nickname)}</AvatarFallback>
-                      </Avatar>
-                      {isOnline(u.lastSeen) && (
-                        <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                      )}
-                    </div>
-                    <div className="flex flex-col items-start">
-                        <span className="font-medium">{u.nickname}</span>
-                        {u.position && <span className="text-xs text-gray-500">({u.position})</span>}
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </ScrollArea>
-      </aside>
-      <main className="w-3/4 flex flex-col">
-        {selectedUser ? (
-          <>
-            <div className="p-4 border-b flex items-center gap-4">
-              <div className="relative">
-                <Avatar>
-                  <AvatarImage src={selectedUser.photoURL} alt={selectedUser.nickname} />
-                  <AvatarFallback className="bg-primary text-primary-foreground">{getInitials(selectedUser.nickname)}</AvatarFallback>
-                </Avatar>
-                 {isOnline(selectedUser.lastSeen) && (
-                  <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                )}
-              </div>
-              <div className="flex flex-col items-start">
-                <h2 className="text-xl font-bold">{selectedUser.nickname}</h2>
-                {selectedUser.position && <span className="text-sm text-gray-500">({selectedUser.position})</span>}
-              </div>
-            </div>
-            <ScrollArea className="flex-1 p-4" ref={chatContainerRef}>
-              <div className="space-y-4">
-                {messagesLoading && !messages ? (
-                    <div className="flex justify-center items-center h-full">
-                        <p>Loading messages...</p>
-                    </div>
-                ) : messages && messages.length > 0 ? (
-                  messages.map(msg => (
-                    <div
-                      key={msg.id}
-                      className={cn(
-                        "flex items-end gap-2",
-                        msg.senderId === user?.uid ? "justify-end" : "justify-start"
-                      )}
-                    >
-                      <div
+            <ScrollArea className="flex-1">
+            {usersLoading ? (
+                <div className="p-4 space-y-4">
+                {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+            ) : (
+                <ul>
+                {users?.filter(u => u.uid !== user?.uid).map(u => (
+                    <li key={u.uid}>
+                    <button
                         className={cn(
-                          "max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2",
-                          msg.senderId === user?.uid
-                            ? "bg-blue-100 text-black"
-                            : "bg-gray-200 text-black"
+                        "w-full text-left p-4 flex items-center gap-4 hover:bg-gray-100",
                         )}
-                      >
-                        <p className="text-sm">{msg.text}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                    <div className="flex justify-center items-center h-full">
-                        <p className="text-gray-500">No messages yet. Start the conversation!</p>
-                    </div>
-                )}
-              </div>
+                        onClick={() => setSelectedUser(u)}
+                    >
+                        <div className="relative">
+                        <Avatar>
+                            <AvatarImage src={u.photoURL} alt={u.nickname} />
+                            <AvatarFallback className="bg-primary text-primary-foreground">{getInitials(u.nickname)}</AvatarFallback>
+                        </Avatar>
+                        {isOnline(u.lastSeen) && (
+                            <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+                        )}
+                        </div>
+                        <div className="flex flex-col items-start">
+                            <span className="font-medium">{u.nickname}</span>
+                            {u.position && <span className="text-xs text-gray-500">({u.position})</span>}
+                        </div>
+                    </button>
+                    </li>
+                ))}
+                </ul>
+            )}
             </ScrollArea>
-            <div className="p-4 border-t">
-              <form onSubmit={handleSendMessage} className="flex items-center gap-4">
-                <Input
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Type a message..."
-                  autoComplete="off"
-                />
-                <Button type="submit" size="icon" disabled={!message.trim()}>
-                  <Send className="h-5 w-5" />
-                </Button>
-              </form>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+        <div className="p-4 border-b flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedUser(null)}>
+                <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="relative">
+            <Avatar>
+                <AvatarImage src={selectedUser.photoURL} alt={selectedUser.nickname} />
+                <AvatarFallback className="bg-primary text-primary-foreground">{getInitials(selectedUser.nickname)}</AvatarFallback>
+            </Avatar>
+                {isOnline(selectedUser.lastSeen) && (
+                <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+            )}
             </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-gray-500">Select a user to start chatting.</p>
-          </div>
-        )}
-      </main>
+            <div className="flex flex-col items-start">
+            <h2 className="text-lg font-bold leading-tight">{selectedUser.nickname}</h2>
+            {selectedUser.position && <span className="text-xs text-gray-500">({selectedUser.position})</span>}
+            </div>
+        </div>
+        <ScrollArea className="flex-1 p-4 bg-gray-50" ref={chatContainerRef}>
+            <div className="space-y-4">
+            {messagesLoading && !messages ? (
+                <div className="flex justify-center items-center h-full">
+                    <p>Loading messages...</p>
+                </div>
+            ) : messages && messages.length > 0 ? (
+                messages.map(msg => (
+                <div
+                    key={msg.id}
+                    className={cn(
+                    "flex items-end gap-2",
+                    msg.senderId === user?.uid ? "justify-end" : "justify-start"
+                    )}
+                >
+                    <div
+                    className={cn(
+                        "max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2",
+                        msg.senderId === user?.uid
+                        ? "bg-blue-100 text-black"
+                        : "bg-gray-200 text-black"
+                    )}
+                    >
+                    <p className="text-sm">{msg.text}</p>
+                    </div>
+                </div>
+                ))
+            ) : (
+                <div className="flex justify-center items-center h-full">
+                    <p className="text-gray-500">No messages yet. Start the conversation!</p>
+                </div>
+            )}
+            </div>
+        </ScrollArea>
+        <div className="p-4 border-t bg-white">
+            <form onSubmit={handleSendMessage} className="flex items-center gap-4">
+            <Input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Type a message..."
+                autoComplete="off"
+            />
+            <Button type="submit" size="icon" disabled={!message.trim()}>
+                <Send className="h-5 w-5" />
+            </Button>
+            </form>
+        </div>
     </div>
   );
 }

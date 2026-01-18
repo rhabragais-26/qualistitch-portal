@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -329,10 +328,6 @@ const HeaderMemo = React.memo(function Header({
             <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/order-status']))}>
               <ListOrdered className="mr-2" />
               Overall Order Status
-            </Button>
-            <Button variant="ghost" onClick={() => handleNavigation('/chat')} className={cn("h-10 rounded-md px-4 font-bold", getActiveMenuClass(['/chat']))}>
-              <MessageSquare className="mr-2" />
-              Chat
             </Button>
           </nav>
            <div className="ml-auto flex items-center gap-4">

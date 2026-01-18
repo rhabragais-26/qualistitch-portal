@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import {Toaster} from '@/components/ui/toaster';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase';
+import { CollapsibleChat } from '@/components/collapsible-chat';
 
 export const metadata: Metadata = {
   title: 'Qualistitch Inc.',
@@ -25,7 +26,12 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background h-full">
         <FirebaseClientProvider>
-          {children}
+          <div className="flex h-screen">
+            <CollapsibleChat />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {children}
+            </div>
+          </div>
           <Toaster />
         </FirebaseClientProvider>
       </body>
