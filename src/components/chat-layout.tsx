@@ -357,9 +357,9 @@ export function ChatLayout() {
                   onKeyDown={handleKeyDown}
                   placeholder="Type a message..."
                   autoComplete="off"
-                  className="pr-12 resize-none min-h-0"
+                  className="pr-12 resize-none min-h-0 no-scrollbar"
               />
-              <Button type="submit" size="icon" disabled={!message.trim()} className="absolute right-2 bottom-2 h-8 w-8 bg-transparent hover:bg-black/10 text-black">
+              <Button type="submit" size="icon" disabled={!message.trim()} className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 bg-transparent hover:bg-black/10 text-black">
                   <Send className="h-5 w-5" />
               </Button>
             </form>
