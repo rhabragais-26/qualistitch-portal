@@ -65,7 +65,7 @@ type AdjustmentState = {
     date?: string;
 }
 
-export function AuditForShipmentTable() {
+export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads } = useCollection<Lead>(leadsQuery);
@@ -313,6 +313,7 @@ export function AuditForShipmentTable() {
                               value={leadAdjustmentState.status}
                               onValueChange={(status: 'Yes' | 'No') => handleAdjustmentStateChange(lead.id, { status })}
                               className="flex gap-4 justify-center"
+                              disabled={isReadOnly}
                           >
                               <div className="flex items-center space-x-2">
                                   <RadioGroupItem value="Yes" id={`yes-${lead.id}`} />
@@ -330,14 +331,14 @@ export function AuditForShipmentTable() {
                             className="text-xs w-[150px] mx-auto"
                             value={leadAdjustmentState.date || ''}
                             onChange={(e) => handleAdjustmentStateChange(lead.id, { date: e.target.value })}
-                            disabled={leadAdjustmentState.status !== 'Yes'}
+                            disabled={leadAdjustmentState.status !== 'Yes' || isReadOnly}
                           />
                         </TableCell>
                         <TableCell className="text-center">
                             <Checkbox
                                 checked={lead.isWaybillPrinted}
                                 onCheckedChange={(checked) => handleWaybillPrintedChange(lead, !!checked)}
-                                disabled={isWaybillDisabled}
+                                disabled={isWaybillDisabled || isReadOnly}
                              />
                         </TableCell>
                         <TableCell className="text-center">
@@ -352,7 +353,7 @@ export function AuditForShipmentTable() {
                                 size="sm" 
                                 className="h-7 text-xs font-bold" 
                                 onClick={() => handleProceedToShipment(lead)}
-                                disabled={isProceedDisabled}
+                                disabled={isProceedDisabled || isReadOnly}
                             >
                                 Proceed to Shipment
                             </Button>
