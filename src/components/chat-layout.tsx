@@ -186,7 +186,7 @@ export function ChatLayout() {
             <div className="p-4 border-b flex justify-between items-center" style={{ backgroundColor: '#d9f7f2' }}>
                 <h2 className="text-xl font-bold">Chats</h2>
                 <p className="text-xs text-black/70 max-w-sm text-left pl-5">
-                    This chat function is only intended for Follow Ups, Reminders and Order-related transactions. Do not use this for non-work related stuffs. (press <span className="font-bold">ESC</span> to close)
+                    This chat function is only intended for Follow Ups, Reminders and Order-related transactions. Do not use this for non-work-related stuffs. (press <span className="font-bold">ESC</span> to close)
                 </p>
             </div>
             <ScrollArea className="flex-1">
