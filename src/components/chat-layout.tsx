@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -177,12 +176,14 @@ export function ChatLayout() {
                     const channel = channels?.find(c => c.participants.includes(user!.uid) && c.participants.includes(u.uid));
                     const lastMessage = channel?.lastMessage;
                     const isUnread = lastMessage && lastMessage.senderId !== user!.uid && !lastMessage.readBy?.includes(user!.uid);
+                    const lastMessageSender = lastMessage ? users?.find(sender => sender.uid === lastMessage.senderId) : null;
+                    const senderNickname = lastMessageSender ? (lastMessageSender.uid === user?.uid ? "You" : lastMessageSender.nickname) : '';
 
                     return (
                     <li key={u.uid}>
                     <button
                         className={cn(
-                        "w-full text-left p-4 flex items-center gap-4 hover:bg-black/10",
+                        "w-full text-left py-2 px-4 flex items-center gap-4 hover:bg-black/10",
                         )}
                         onClick={() => setSelectedUser(u)}
                     >
@@ -200,7 +201,7 @@ export function ChatLayout() {
                             <Separator className="my-1 bg-gray-300" />
                             {lastMessage ? (
                                 <p className={cn("text-sm text-black/70 truncate italic", isUnread && "font-bold")}>
-                                    {lastMessage.text}
+                                   {senderNickname && `${senderNickname}: `}{lastMessage.text}
                                 </p>
                             ) : (
                                 <p className="text-sm text-black/70 italic">No conversations yet</p>
