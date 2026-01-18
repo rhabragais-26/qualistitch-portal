@@ -10,6 +10,7 @@ import { Send, ArrowLeft } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
+import { format } from 'date-fns';
 
 interface UserProfile {
   uid: string;
@@ -21,7 +22,7 @@ interface UserProfile {
 
 interface ChatMessage {
   id: string;
-  senderId: string; // This is the field name used when reading messages, but we'll write 'ownerId'
+  senderId: string;
   text: string;
   timestamp: any;
 }
@@ -64,45 +65,21 @@ export function ChatLayout() {
   }, [message]);
 
   const sendMessage = async () => {
-    // Basic validation before attempting to send
     if (!message.trim() || !user || !channelId || !firestore || !selectedUser) {
-        console.warn("Message not sent: Missing message text, user, channel, firestore, or selectedUser.");
         return;
     }
-
-    // --- START DEBUGGING LOGS ---
-    console.log("Current authenticated user object:", user);
-    if (user && user.uid) {
-        console.log("Current authenticated user UID:", user.uid);
-    } else {
-        console.error("User is not authenticated or UID is missing. Cannot send message.");
-        // Consider displaying a user-friendly message to the UI here, e.g., "Please sign in to send messages."
-        return; // Stop execution if no valid user
-    }
-    // --- END DEBUGGING LOGS ---
-
 
     const channelRef = doc(firestore, 'direct_messages', channelId);
     const messagesRef = collection(channelRef, 'messages');
 
-    // THIS IS THE CRUCIAL CHANGE: Changed 'senderId' to 'ownerId'
     const messageData = {
-        ownerId: user.uid, // <-- CHANGED from 'senderId' to 'ownerId' to match security rules
+        senderId: user.uid,
         text: message,
         timestamp: serverTimestamp(),
     };
 
-    // --- START DEBUGGING LOGS ---
-    console.log("Attempting to send message with data:", messageData);
-    console.log("Authenticated user's UID:", user.uid);
-    // --- END DEBUGGING LOGS ---
-
-
     try {
-      // First write operation: adding the message to the subcollection
-      await addDoc(messagesRef, messageData);
-
-      // Second write operation: updating the parent direct_message document
+      // First, ensure the channel document exists or is updated.
       await setDoc(channelRef, {
         participants: [user.uid, selectedUser.uid],
         lastMessage: {
@@ -110,13 +87,13 @@ export function ChatLayout() {
           timestamp: serverTimestamp(),
         }
       }, { merge: true });
+      
+      // Then, add the message to the subcollection.
+      await addDoc(messagesRef, messageData);
 
       setMessage('');
-      console.log("Message sent successfully!"); // Added success log
     } catch (error) {
       console.error("Error sending message:", error);
-      // It's good practice to show this error to the user in the UI as well
-      // alert("Failed to send message: " + error.message);
     }
   };
 
@@ -229,20 +206,25 @@ export function ChatLayout() {
                 <div
                     key={msg.id}
                     className={cn(
-                    "flex items-end gap-2",
-                    msg.senderId === user?.uid ? "justify-end" : "justify-start"
+                        "flex flex-col gap-1",
+                        msg.senderId === user?.uid ? "items-end" : "items-start"
                     )}
                 >
                     <div
-                    className={cn(
-                        "max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2",
-                        msg.senderId === user?.uid
-                        ? "bg-white text-black"
-                        : "bg-black/10 text-black"
-                    )}
+                        className={cn(
+                            "max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2",
+                            msg.senderId === user?.uid
+                            ? "bg-white text-black"
+                            : "bg-black/10 text-black"
+                        )}
                     >
-                    <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                        <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                     </div>
+                    {msg.timestamp && (
+                        <span className="text-[10px] text-gray-500 px-1">
+                            {msg.timestamp.toDate ? format(msg.timestamp.toDate(), 'p') : ''}
+                        </span>
+                    )}
                 </div>
                 ))
             ) : (
