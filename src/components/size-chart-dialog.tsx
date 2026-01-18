@@ -52,6 +52,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
 
   const [sizeChartData, setSizeChartData] = useState<SizeChartData>(initialSizeChartData);
   const [isDirty, setIsDirty] = useState(false);
+  const [imageInView, setImageInView] = useState<string | null>(null);
   
   const bomberJacketInputRef = useRef<HTMLInputElement>(null);
   const poloShirtInputRef = useRef<HTMLInputElement>(null);
@@ -241,7 +242,8 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
                 canEdit && "cursor-pointer hover:bg-gray-700/50",
                 data && !data.image && "border-2 border-dashed border-gray-600 p-4"
             )}
-            onDoubleClick={() => canEdit && fileInputRef.current?.click()}
+            onClick={() => data?.image && setImageInView(data.image)}
+            onDoubleClick={() => canEdit && !data?.image && fileInputRef.current?.click()}
             onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
         >
             {data && !data.image ? (
@@ -253,7 +255,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
                 <>
                     <Image src={data.image} alt={`${tab} Size Chart`} layout="fill" objectFit="contain" />
                     {canEdit && (
-                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setDeletingTab(tab)}>
+                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => {e.stopPropagation(); setDeletingTab(tab)}}>
                             <Trash2 className="h-4 w-4"/>
                         </Button>
                     )}
@@ -347,6 +349,26 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
           )}
         </Card>
       </div>
+
+       {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+            </Button>
+          </div>
+        </div>
+      )}
 
       <AlertDialog open={!!deletingTab} onOpenChange={(open) => !open && setDeletingTab(null)}>
         <AlertDialogContent>

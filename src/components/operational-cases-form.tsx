@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays, Inbox } from 'lucide-react';
+import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays, Inbox, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, setDoc, updateDoc } from 'firebase/firestore';
@@ -109,6 +108,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
 
   const [isQuantityDialogOpen, setIsQuantityDialogOpen] = useState(false);
   const [caseItems, setCaseItems] = useState<CaseItem[]>([]);
+  const [imageInView, setImageInView] = useState<string | null>(null);
 
   const leadsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'leads')) : null),
@@ -508,7 +508,8 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                                 className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
                                 style={{ height: '120px' }}
                                 onPaste={handleImagePaste}
-                                onDoubleClick={() => imageUploadRef.current?.click()}
+                                onClick={() => imageValue && setImageInView(imageValue)}
+                                onDoubleClick={() => !imageValue && imageUploadRef.current?.click()}
                                 onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
                             >
                                 {imageValue ? (
@@ -517,7 +518,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                                     <Button
                                     variant="destructive"
                                     size="icon"
-                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                                     onClick={handleRemoveImage}
                                     disabled={isReadOnly}
                                     >
@@ -567,6 +568,25 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
             initialItems={caseItems}
         />
     )}
+    {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+            </Button>
+          </div>
+        </div>
+      )}
     </>
   );
 });

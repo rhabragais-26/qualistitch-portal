@@ -97,6 +97,7 @@
       const canEdit = hasEditPermission(userProfile?.position as any, `/job-order`);
       
       const [currentPage, setCurrentPage] = useState(0);
+      const [imageInView, setImageInView] = useState<string | null>(null);
 
       const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
       const { data: allLeads, isLoading: areAllLeadsLoading } = useCollection<Lead>(leadsQuery);
@@ -478,6 +479,25 @@
 
       return (
         <div className="bg-white text-black min-h-screen">
+          {imageInView && (
+            <div
+              className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+              onClick={() => setImageInView(null)}
+            >
+              <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+                <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
+                 <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setImageInView(null)}
+                    className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+                >
+                    <X className="h-6 w-6" />
+                    <span className="sr-only">Close</span>
+                </Button>
+              </div>
+            </div>
+          )}
           <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -730,7 +750,8 @@
              <div
               tabIndex={0}
               onPaste={(e) => canEdit && handleImagePaste(e, currentLayoutIndex)}
-              onDoubleClick={() => canEdit && layoutImageUploadRef.current?.click()}
+              onClick={() => currentLayout.layoutImage && setImageInView(currentLayout.layoutImage)}
+              onDoubleClick={() => canEdit && !currentLayout.layoutImage && layoutImageUploadRef.current?.click()}
               onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
               className={cn("relative group w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4 no-print focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none", canEdit && "cursor-pointer")}
             >
