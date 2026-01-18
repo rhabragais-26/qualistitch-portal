@@ -49,7 +49,7 @@ export function CollapsibleChat() {
                <Button
                 variant="ghost"
                 onClick={() => setIsExpanded(true)}
-                className="h-24 w-9 p-1 rounded-r-lg bg-amber-500/50 text-white hover:bg-amber-500 flex items-center justify-center"
+                className="h-24 w-9 p-1 rounded-l-none rounded-r-lg bg-amber-500/50 text-white hover:bg-amber-500 flex items-center justify-center"
               >
                 <span className="[writing-mode:vertical-rl] rotate-180 font-bold tracking-wider">CHAT</span>
               </Button>
