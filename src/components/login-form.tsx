@@ -6,8 +6,9 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
@@ -33,6 +34,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function LoginForm() {
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -90,6 +92,21 @@ export function LoginForm() {
     
     setIsResetting(true);
     try {
+      // Check if email exists in 'users' collection
+      const usersRef = collection(firestore, 'users');
+      const q = query(usersRef, where("email", "==", resetEmail));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        toast({
+          variant: 'destructive',
+          title: 'Email not registered',
+          description: 'Please check the email address and try again.',
+        });
+        setIsResetting(false);
+        return;
+      }
+
       await sendPasswordResetEmail(auth, resetEmail);
       toast({
         title: 'Password Reset Email Sent',
