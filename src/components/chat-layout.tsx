@@ -10,7 +10,7 @@ import { Send, ArrowLeft } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
-import { format } from 'date-fns';
+import { format, isToday, isThisWeek, differenceInMinutes } from 'date-fns';
 import { Separator } from './ui/separator';
 
 interface UserProfile {
@@ -286,36 +286,60 @@ export function ChatLayout() {
                     <p>Loading messages...</p>
                 </div>
             ) : messages && messages.length > 0 ? (
-                messages.map(msg => (
-                <div
-                    key={msg.id}
-                    className={cn(
-                        "flex w-full",
-                        msg.senderId === user?.uid ? "justify-end" : "justify-start"
-                    )}
-                >
-                    <div className={cn(
-                        "flex flex-col gap-1",
-                         msg.senderId === user?.uid ? "items-end" : "items-start"
-                    )}>
-                        <div
-                            className={cn(
-                                "max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2",
-                                msg.senderId === user?.uid
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-white text-black"
-                            )}
-                        >
-                            <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                messages.map((msg, index) => {
+                  const showTimestamp =
+                    index === 0 ||
+                    (messages[index - 1].timestamp &&
+                      msg.timestamp &&
+                      differenceInMinutes(
+                        msg.timestamp.toDate(),
+                        messages[index - 1].timestamp.toDate()
+                      ) > 10);
+
+                  let formattedTimestamp = '';
+                  if (msg.timestamp) {
+                    const date = msg.timestamp.toDate();
+                    if (isToday(date)) {
+                      formattedTimestamp = format(date, 'h:mm aa');
+                    } else if (isThisWeek(date, { weekStartsOn: 1 })) {
+                      formattedTimestamp = format(date, "EEE 'at' h:mm aa");
+                    } else {
+                      formattedTimestamp = format(date, "MMM-dd 'at' h:mm aa");
+                    }
+                  }
+
+                  return (
+                    <React.Fragment key={msg.id}>
+                      {showTimestamp && (
+                        <div className="text-center text-xs text-gray-500 my-2">
+                          {formattedTimestamp}
                         </div>
-                        {msg.timestamp && (
-                            <span className="text-[10px] text-gray-500 px-1">
-                                {msg.timestamp.toDate ? format(msg.timestamp.toDate(), 'p') : ''}
-                            </span>
+                      )}
+                      <div
+                        className={cn(
+                            "flex w-full",
+                            msg.senderId === user?.uid ? "justify-end" : "justify-start"
                         )}
-                    </div>
-                </div>
-                ))
+                      >
+                        <div className={cn(
+                            "flex flex-col gap-1",
+                            msg.senderId === user?.uid ? "items-end" : "items-start"
+                        )}>
+                            <div
+                                className={cn(
+                                    "max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2",
+                                    msg.senderId === user?.uid
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-white text-black"
+                                )}
+                            >
+                                <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                            </div>
+                        </div>
+                      </div>
+                    </React.Fragment>
+                  );
+                })
             ) : (
                 <div className="flex justify-center items-center h-full">
                     <p className="text-black/70">No messages yet. Start the conversation!</p>
@@ -344,3 +368,4 @@ export function ChatLayout() {
     </div>
   );
 }
+    
