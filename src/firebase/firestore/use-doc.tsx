@@ -1,3 +1,4 @@
+
 'use client';
     
 import { useState, useEffect, useCallback } from 'react';
@@ -16,6 +17,10 @@ import { z, ZodError } from 'zod';
 
 /** Utility type to add an 'id' field to a given type T. */
 type WithId<T> = T & { id: string };
+
+export interface UseDocOptions {
+  listen?: boolean;
+}
 
 /**
  * Interface for the return value of the useDoc hook.
@@ -40,7 +45,8 @@ export interface UseDocResult<T> {
  */
 export function useDoc<T = any>(
   memoizedDocRef: DocumentReference<DocumentData> | null | undefined,
-  schema?: z.Schema<T>
+  schema?: z.Schema<T>,
+  options: UseDocOptions = { listen: true }
 ): UseDocResult<T> {
   type StateDataType = WithId<T> | null;
 
@@ -51,6 +57,7 @@ export function useDoc<T = any>(
 
   const fetchData = useCallback(async (ref: DocumentReference<DocumentData>) => {
     setIsLoading(true);
+    setError(null);
     try {
       const docSnap = await getDoc(ref);
       if (docSnap.exists()) {
@@ -67,9 +74,14 @@ export function useDoc<T = any>(
       } else {
         setData(null);
       }
-      setError(null);
     } catch (e: any) {
-      setError(e);
+      const contextualError = new FirestorePermissionError({
+        operation: 'get',
+        path: ref.path,
+      });
+      setError(contextualError);
+      setData(null);
+      errorEmitter.emit('permission-error', contextualError);
     } finally {
       setIsLoading(false);
     }
@@ -91,50 +103,53 @@ export function useDoc<T = any>(
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
+    if (options.listen) {
+        setIsLoading(true);
+        setError(null);
 
-    const unsubscribe = onSnapshot(
-      memoizedDocRef,
-      (snapshot: DocumentSnapshot<DocumentData>) => {
-        try {
-          if (snapshot.exists()) {
-            const docData = snapshot.data();
-            if (schema) {
-              const validationResult = schema.safeParse(docData);
-              if (!validationResult.success) {
-                throw new Error(`Validation failed for doc ${snapshot.id}: ${validationResult.error.message}`);
+        const unsubscribe = onSnapshot(
+          memoizedDocRef,
+          (snapshot: DocumentSnapshot<DocumentData>) => {
+            try {
+              if (snapshot.exists()) {
+                const docData = snapshot.data();
+                if (schema) {
+                  const validationResult = schema.safeParse(docData);
+                  if (!validationResult.success) {
+                    throw new Error(`Validation failed for doc ${snapshot.id}: ${validationResult.error.message}`);
+                  }
+                  setData({ ...(validationResult.data as T), id: snapshot.id });
+                } else {
+                  setData({ ...(docData as T), id: snapshot.id });
+                }
+              } else {
+                setData(null);
               }
-              setData({ ...(validationResult.data as T), id: snapshot.id });
-            } else {
-              setData({ ...(docData as T), id: snapshot.id });
+              setError(null);
+            } catch(e: any) {
+              setError(e instanceof Error ? e : new Error('An unknown validation error occurred.'));
+            } finally {
+              setIsLoading(false);
             }
-          } else {
+          },
+          (error: FirestoreError) => {
+            const contextualError = new FirestorePermissionError({
+              operation: 'get',
+              path: memoizedDocRef.path,
+            });
+
+            setError(contextualError);
             setData(null);
+            setIsLoading(false);
+
+            errorEmitter.emit('permission-error', contextualError);
           }
-          setError(null);
-        } catch(e: any) {
-          setError(e instanceof Error ? e : new Error('An unknown validation error occurred.'));
-        } finally {
-          setIsLoading(false);
-        }
-      },
-      (error: FirestoreError) => {
-        const contextualError = new FirestorePermissionError({
-          operation: 'get',
-          path: memoizedDocRef.path,
-        });
-
-        setError(contextualError);
-        setData(null);
-        setIsLoading(false);
-
-        errorEmitter.emit('permission-error', contextualError);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [memoizedDocRef, isUserLoading, schema]);
+        );
+        return () => unsubscribe();
+    } else {
+        fetchData(memoizedDocRef);
+    }
+  }, [memoizedDocRef, isUserLoading, schema, options.listen, fetchData]);
 
   return { data, isLoading, error, refetch };
 }

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
 type CaseItem = {
+    id: string;
     productType: string;
     color: string;
     size: string;
@@ -51,12 +52,21 @@ export function ResolvedCasesDialog({ isOpen, onClose, archivedCases, deletedCas
   const [caseToReopen, setCaseToReopen] = useState<OperationalCase | null>(null);
   const [reopeningRemarks, setReopeningRemarks] = useState('');
 
-  const filterCases = (cases: OperationalCase[]) => {
-    return cases.filter(c =>
+  const filteredArchivedCases = useMemo(() => {
+    if (!archivedCases) return [];
+    return archivedCases.filter(c =>
       c.joNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.customerName.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }
+  }, [archivedCases, searchTerm]);
+
+  const filteredDeletedCases = useMemo(() => {
+    if (!deletedCases) return [];
+    return deletedCases.filter(c =>
+      c.joNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [deletedCases, searchTerm]);
 
   const handleReopenConfirm = () => {
     if (caseToReopen) {
@@ -94,8 +104,8 @@ export function ResolvedCasesDialog({ isOpen, onClose, archivedCases, deletedCas
                                 <div className="p-2 text-xs">
                                     <h4 className="font-bold mb-2">Item Breakdown</h4>
                                     <ul className="list-disc pl-4 space-y-1">
-                                        {caseItem.caseItems?.map(item => (
-                                            <li key={item.id}>{item.quantity}x {item.productType} ({item.color}, {item.size})</li>
+                                        {caseItem.caseItems?.map((item, index) => (
+                                            <li key={index}>{item.quantity}x {item.productType} ({item.color}, {item.size})</li>
                                         ))}
                                     </ul>
                                 </div>
@@ -150,10 +160,10 @@ export function ResolvedCasesDialog({ isOpen, onClose, archivedCases, deletedCas
             </div>
             <div className="flex-grow overflow-hidden">
                 <TabsContent value="resolved" className="h-full mt-0">
-                    {renderCaseList(filterCases(archivedCases), 'resolved')}
+                    {renderCaseList(filteredArchivedCases, 'resolved')}
                 </TabsContent>
                 <TabsContent value="deleted" className="h-full mt-0">
-                    {renderCaseList(filterCases(deletedCases), 'deleted')}
+                    {renderCaseList(filteredDeletedCases, 'deleted')}
                 </TabsContent>
             </div>
           </Tabs>
@@ -203,5 +213,3 @@ export function ResolvedCasesDialog({ isOpen, onClose, archivedCases, deletedCas
     </>
   );
 }
-
-    

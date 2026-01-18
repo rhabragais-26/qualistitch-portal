@@ -48,7 +48,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   
   const firestore = useFirestore();
   const sizeChartRef = useMemoFirebase(() => firestore ? doc(firestore, 'sizeCharts', 'default') : null, [firestore]);
-  const { data: fetchedData, isLoading } = useDoc<SizeChartData>(sizeChartRef);
+  const { data: fetchedData, isLoading } = useDoc<SizeChartData>(sizeChartRef, undefined, { listen: false });
 
   const [sizeChartData, setSizeChartData] = useState<SizeChartData>(initialSizeChartData);
   const [isDirty, setIsDirty] = useState(false);
