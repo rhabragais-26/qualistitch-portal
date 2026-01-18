@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react"
@@ -1168,14 +1169,14 @@ export function LeadForm({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="py-1 px-2 text-black">Product</TableHead>
-                      <TableHead className="py-1 px-2 text-black">Color</TableHead>
-                      <TableHead className="py-1 px-2 text-black">Size</TableHead>
-                      <TableHead className="py-1 px-2 text-black text-center">Qty</TableHead>
-                      <TableHead className="py-1 px-2 text-black text-center">
+                      <TableHead className="py-1 px-2 text-black text-center align-middle">Product</TableHead>
+                      <TableHead className="py-1 px-2 text-black text-center align-middle">Color</TableHead>
+                      <TableHead className="py-1 px-2 text-black text-center align-middle">Size</TableHead>
+                      <TableHead className="py-1 px-2 text-black text-center align-middle">Qty</TableHead>
+                      <TableHead className="py-1 px-2 text-black text-center align-middle">
                         <span className="whitespace-normal">Remaining Stocks</span>
                       </TableHead>
-                      <TableHead className="text-right py-1 px-2 text-black">Action</TableHead>
+                      <TableHead className="py-1 px-2 text-black text-center align-middle">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1189,10 +1190,10 @@ export function LeadForm({
                         const isNegative = typeof remainingStock === 'number' && remainingStock < 0;
                         return (
                         <TableRow key={order.id || index}>
-                          <TableCell className="py-1 px-2 text-black">{order.productType}</TableCell>
-                          <TableCell className="py-1 px-2 text-black">{order.color}</TableCell>
-                          <TableCell className="py-1 px-2 text-black">{order.size}</TableCell>
-                          <TableCell className="py-1 px-2 text-black">
+                          <TableCell className="py-1 px-2 text-black text-center align-middle">{order.productType}</TableCell>
+                          <TableCell className="py-1 px-2 text-black text-center align-middle">{order.color}</TableCell>
+                          <TableCell className="py-1 px-2 text-black text-center align-middle">{order.size}</TableCell>
+                          <TableCell className="py-1 px-2 text-black text-center align-middle">
                             <div className="flex items-center justify-center gap-2">
                                 <Button
                                     type="button"
@@ -1217,10 +1218,10 @@ export function LeadForm({
                                 </Button>
                             </div>
                           </TableCell>
-                           <TableCell className={cn("py-1 px-2 text-black text-center font-bold", isNegative && "text-destructive")}>
+                           <TableCell className={cn("py-1 px-2 text-black font-bold text-center align-middle", isNegative && "text-destructive")}>
                              {remainingStock}
                            </TableCell>
-                          <TableCell className="py-1 px-2 text-right">
+                          <TableCell className="py-1 px-2 text-center align-middle">
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleEditOrder(order, index)} disabled={isReadOnly}>
                                 <Edit className="h-4 w-4" />
                             </Button>
