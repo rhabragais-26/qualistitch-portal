@@ -141,7 +141,11 @@ type FileUploadChecklistItem = {
   timestamp?: string | null;
 };
 
-const DigitizingTableMemo = React.memo(function DigitizingTable() {
+type DigitizingTableProps = {
+  isReadOnly: boolean;
+};
+
+const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly }: DigitizingTableProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -1198,7 +1202,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                             <Checkbox
                               checked={lead.isJoHardcopyReceived || false}
                               onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                              disabled={!lead.isJoPrinted}
+                              disabled={!lead.isJoPrinted || isReadOnly}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                           </div>
@@ -1208,7 +1212,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                             <Checkbox
                               checked={lead.isUnderProgramming || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isUnderProgramming', !!checked)}
-                              disabled={!lead.isJoHardcopyReceived}
+                              disabled={!lead.isJoHardcopyReceived || isReadOnly}
                             />
                             {lead.underProgrammingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.underProgrammingTimestamp).dateTimeShort}</div>}
                           </div>
@@ -1218,7 +1222,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                             <Checkbox
                               checked={lead.isInitialApproval || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isInitialApproval', !!checked)}
-                              disabled={!lead.isUnderProgramming}
+                              disabled={!lead.isUnderProgramming || isReadOnly}
                             />
                             {lead.initialApprovalTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.initialApprovalTimestamp).dateTimeShort}</div>}
                           </div>
@@ -1228,7 +1232,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                             <Checkbox
                               checked={lead.isLogoTesting || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isLogoTesting', !!checked)}
-                              disabled={!lead.isInitialApproval}
+                              disabled={!lead.isInitialApproval || isReadOnly}
                             />
                             {lead.logoTestingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.logoTestingTimestamp).dateTimeShort}</div>}
                           </div>
@@ -1238,7 +1242,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                             <Checkbox
                               checked={lead.isRevision || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isRevision', !!checked)}
-                              disabled={!lead.isLogoTesting || lead.isFinalApproval}
+                              disabled={!lead.isLogoTesting || lead.isFinalApproval || isReadOnly}
                               className={cn(lead.isFinalApproval && "disabled:opacity-100")}
                             />
                             {lead.revisionTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.revisionTimestamp).dateTimeShort}</div>}
@@ -1249,7 +1253,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                             <Checkbox
                               checked={lead.isFinalApproval || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isFinalApproval', !!checked)}
-                              disabled={!lead.isLogoTesting}
+                              disabled={!lead.isLogoTesting || isReadOnly}
                             />
                             {lead.finalApprovalTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.finalApprovalTimestamp).dateTimeShort}</div>}
                           </div>
@@ -1259,7 +1263,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                             <Checkbox
                               checked={lead.isFinalProgram || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isFinalProgram', !!checked)}
-                              disabled={!lead.isFinalApproval}
+                              disabled={!lead.isFinalApproval || isReadOnly}
                             />
                             {lead.finalProgramTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.finalProgramTimestamp).dateTimeShort}</div>}
                           </div>
@@ -1292,7 +1296,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
                                     'h-7 px-3 text-white font-bold',
                                     lead.isFinalProgram ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-gray-400'
                                 )}
-                                disabled={!lead.isFinalProgram}
+                                disabled={!lead.isFinalProgram || isReadOnly}
                                 onClick={() => setReviewConfirmLead(lead)}
                             >
                                 Done
@@ -1437,5 +1441,3 @@ const DigitizingTableMemo = React.memo(function DigitizingTable() {
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
-
-    

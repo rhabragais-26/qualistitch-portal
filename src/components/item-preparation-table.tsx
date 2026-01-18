@@ -87,7 +87,8 @@ const ItemPreparationTableRowGroup = React.memo(({
     getContactDisplay,
     handleJoReceivedChange,
     handleOpenPreparedDialog,
-    setLeadToSend
+    setLeadToSend,
+    isReadOnly,
 }: {
     lead: EnrichedLead;
     getProgrammingStatus: (lead: Lead) => { text: string; variant: "success" | "destructive" | "warning" | "default" | "secondary"; };
@@ -96,6 +97,7 @@ const ItemPreparationTableRowGroup = React.memo(({
     handleJoReceivedChange: (leadId: string, checked: boolean) => void;
     handleOpenPreparedDialog: (lead: Lead) => void;
     setLeadToSend: (lead: Lead) => void;
+    isReadOnly: boolean;
 }) => {
     const isRepeat = lead.orderNumber > 1;
     const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
@@ -159,7 +161,7 @@ const ItemPreparationTableRowGroup = React.memo(({
                             <Checkbox
                             checked={lead.isJoHardcopyReceived || false}
                             onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                            disabled={!lead.isJoPrinted}
+                            disabled={!lead.isJoPrinted || isReadOnly}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                         </div>
@@ -180,7 +182,7 @@ const ItemPreparationTableRowGroup = React.memo(({
                                     size="sm"
                                     onClick={() => handleOpenPreparedDialog(lead)}
                                     className="h-7 px-2"
-                                    disabled={!isStockJacketOnly && programmingStatus.text !== 'Final Program Uploaded'}
+                                    disabled={(!isStockJacketOnly && programmingStatus.text !== 'Final Program Uploaded') || isReadOnly}
                                 >
                                     Prepared
                                 </Button>
@@ -202,7 +204,7 @@ const ItemPreparationTableRowGroup = React.memo(({
                                 <Button
                                     size="sm"
                                     onClick={() => setLeadToSend(lead)}
-                                    disabled={!lead.isPreparedForProduction || !lead.isJoHardcopyReceived}
+                                    disabled={!lead.isPreparedForProduction || !lead.isJoHardcopyReceived || isReadOnly}
                                     className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
                                 >
                                     <Send className="mr-2 h-4 w-4" /> 
@@ -223,7 +225,7 @@ const ItemPreparationTableRowGroup = React.memo(({
 ItemPreparationTableRowGroup.displayName = 'ItemPreparationTableRowGroup';
 
 
-const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
+const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isReadOnly }: { isReadOnly: boolean }) {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
@@ -584,6 +586,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable() {
                         handleJoReceivedChange={handleJoReceivedChange}
                         handleOpenPreparedDialog={handleOpenPreparedDialog}
                         setLeadToSend={setLeadToSend}
+                        isReadOnly={isReadOnly}
                     />
                 ))}
                 </TableBody>

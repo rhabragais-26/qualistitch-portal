@@ -307,7 +307,8 @@ const ProductionQueueTableRow = React.memo(({
     handleJoReceivedChange,
     handleStatusChange,
     handleCheckboxChange,
-    handleEndorseToLogistics
+    handleEndorseToLogistics,
+    isReadOnly,
 }: {
     lead: EnrichedLead;
     deadlineInfo: { text: string; isOverdue: boolean; isUrgent: boolean; remainingDays: number; };
@@ -319,6 +320,7 @@ const ProductionQueueTableRow = React.memo(({
     handleStatusChange: (id: string, field: "productionType" | "sewerType", value: string) => void;
     handleCheckboxChange: (id: string, field: CheckboxField, checked: boolean) => void;
     handleEndorseToLogistics: (id: string) => void;
+    isReadOnly: boolean;
 }) => {
     const isRepeat = lead.orderNumber > 1;
     const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
@@ -390,7 +392,7 @@ const ProductionQueueTableRow = React.memo(({
                         <Checkbox
                         checked={lead.isJoHardcopyReceived || false}
                         onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                        disabled={!lead.isJoPrinted}
+                        disabled={!lead.isJoPrinted || isReadOnly}
                         />
                         {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                     </div>
@@ -400,7 +402,7 @@ const ProductionQueueTableRow = React.memo(({
                     <Checkbox
                         checked={lead.isCutting || false}
                         onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
-                        disabled={!lead.isJoHardcopyReceived}
+                        disabled={!lead.isJoHardcopyReceived || isReadOnly}
                     />
                     {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
                     </div>
@@ -409,7 +411,7 @@ const ProductionQueueTableRow = React.memo(({
                     <Select
                     value={lead.productionType || 'Pending'}
                     onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
-                    disabled={!lead.isCutting || lead.isEmbroideryDone}
+                    disabled={!lead.isCutting || lead.isEmbroideryDone || isReadOnly}
                     >
                     <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType))}>
                         <SelectValue />
@@ -426,7 +428,7 @@ const ProductionQueueTableRow = React.memo(({
                     <Checkbox
                         checked={lead.isEmbroideryDone || false}
                         onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
-                        disabled={!lead.isCutting || !lead.productionType || lead.productionType === 'Pending'}
+                        disabled={!lead.isCutting || !lead.productionType || lead.productionType === 'Pending' || isReadOnly}
                     />
                     {lead.embroideryDoneTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.embroideryDoneTimestamp).dateTimeShort}</div>}
                     </div>
@@ -435,7 +437,7 @@ const ProductionQueueTableRow = React.memo(({
                     <Select
                     value={lead.sewerType || 'Pending'}
                     onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
-                    disabled={!lead.isEmbroideryDone || lead.isSewing}
+                    disabled={!lead.isEmbroideryDone || lead.isSewing || isReadOnly}
                     >
                     <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType))}>
                         <SelectValue />
@@ -452,7 +454,7 @@ const ProductionQueueTableRow = React.memo(({
                     <Checkbox
                         checked={lead.isSewing || false}
                         onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
-                        disabled={!lead.isEmbroideryDone || !lead.sewerType || lead.sewerType === 'Pending'}
+                        disabled={!lead.isEmbroideryDone || !lead.sewerType || lead.sewerType === 'Pending' || isReadOnly}
                     />
                     {lead.sewingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
                     </div>
@@ -464,7 +466,7 @@ const ProductionQueueTableRow = React.memo(({
                     <Button
                         size="sm"
                         onClick={() => handleEndorseToLogistics(lead.id)}
-                        disabled={!lead.isDone}
+                        disabled={!lead.isDone || isReadOnly}
                         className={cn(
                             "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
                         )}
@@ -487,7 +489,7 @@ const ProductionQueueTableRow = React.memo(({
 ProductionQueueTableRow.displayName = 'ProductionQueueTableRow';
 
 
-export function ProductionQueueTable() {
+export function ProductionQueueTable({ isReadOnly }: { isReadOnly: boolean }) {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
@@ -724,7 +726,7 @@ export function ProductionQueueTable() {
     return (
       <div className="space-y-2 p-4">
         {[...Array(10)].map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full" />
+          <Skeleton key={i} className="h-12 w-full bg-gray-200" />
         ))}
       </div>
     );
@@ -827,6 +829,7 @@ export function ProductionQueueTable() {
                             handleStatusChange={handleStatusChange}
                             handleCheckboxChange={handleCheckboxChange}
                             handleEndorseToLogistics={handleEndorseToLogistics}
+                            isReadOnly={isReadOnly}
                         />
                     ))
                 ) : (
