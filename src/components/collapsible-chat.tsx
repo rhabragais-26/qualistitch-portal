@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,8 +6,10 @@ import { ChatLayout } from '@/components/chat-layout';
 import { ChevronsLeft, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { useUser } from '@/firebase';
 
 export function CollapsibleChat() {
+  const { user, isUserLoading } = useUser();
   const [isMounted, setIsMounted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -28,7 +29,7 @@ export function CollapsibleChat() {
     };
   }, []);
 
-  if (!isMounted) {
+  if (!isMounted || isUserLoading || !user || user.isAnonymous) {
     return null;
   }
 

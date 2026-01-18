@@ -21,7 +21,7 @@ interface UserProfile {
 
 interface ChatMessage {
   id: string;
-  senderId: string;
+  senderId: string; // This is the field name used when reading messages, but we'll write 'ownerId'
   text: string;
   timestamp: any;
 }
@@ -64,18 +64,45 @@ export function ChatLayout() {
   }, [message]);
 
   const sendMessage = async () => {
-    if (!message.trim() || !user || !channelId || !firestore || !selectedUser) return;
+    // Basic validation before attempting to send
+    if (!message.trim() || !user || !channelId || !firestore || !selectedUser) {
+        console.warn("Message not sent: Missing message text, user, channel, firestore, or selectedUser.");
+        return;
+    }
+
+    // --- START DEBUGGING LOGS ---
+    console.log("Current authenticated user object:", user);
+    if (user && user.uid) {
+        console.log("Current authenticated user UID:", user.uid);
+    } else {
+        console.error("User is not authenticated or UID is missing. Cannot send message.");
+        // Consider displaying a user-friendly message to the UI here, e.g., "Please sign in to send messages."
+        return; // Stop execution if no valid user
+    }
+    // --- END DEBUGGING LOGS ---
+
 
     const channelRef = doc(firestore, 'direct_messages', channelId);
     const messagesRef = collection(channelRef, 'messages');
 
-    try {
-      await addDoc(messagesRef, {
-        senderId: user.uid,
+    // THIS IS THE CRUCIAL CHANGE: Changed 'senderId' to 'ownerId'
+    const messageData = {
+        ownerId: user.uid, // <-- CHANGED from 'senderId' to 'ownerId' to match security rules
         text: message,
         timestamp: serverTimestamp(),
-      });
+    };
 
+    // --- START DEBUGGING LOGS ---
+    console.log("Attempting to send message with data:", messageData);
+    console.log("Authenticated user's UID:", user.uid);
+    // --- END DEBUGGING LOGS ---
+
+
+    try {
+      // First write operation: adding the message to the subcollection
+      await addDoc(messagesRef, messageData);
+
+      // Second write operation: updating the parent direct_message document
       await setDoc(channelRef, {
         participants: [user.uid, selectedUser.uid],
         lastMessage: {
@@ -85,8 +112,11 @@ export function ChatLayout() {
       }, { merge: true });
 
       setMessage('');
+      console.log("Message sent successfully!"); // Added success log
     } catch (error) {
       console.error("Error sending message:", error);
+      // It's good practice to show this error to the user in the UI as well
+      // alert("Failed to send message: " + error.message);
     }
   };
 
