@@ -1168,12 +1168,14 @@ export function LeadForm({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="py-2 px-4 text-black">Product</TableHead>
-                      <TableHead className="py-2 px-4 text-black">Color</TableHead>
-                      <TableHead className="py-2 px-4 text-black">Size</TableHead>
-                      <TableHead className="py-2 px-4 text-black text-center">Qty</TableHead>
-                      <TableHead className="py-2 px-4 text-black text-center">Remaining</TableHead>
-                      <TableHead className="text-right py-1 px-2 text-black pr-8">Action</TableHead>
+                      <TableHead className="py-1 px-2 text-black">Product</TableHead>
+                      <TableHead className="py-1 px-2 text-black">Color</TableHead>
+                      <TableHead className="py-1 px-2 text-black">Size</TableHead>
+                      <TableHead className="py-1 px-2 text-black text-center">Qty</TableHead>
+                      <TableHead className="py-1 px-2 text-black text-center">
+                        <span className="whitespace-normal">Remaining Stocks</span>
+                      </TableHead>
+                      <TableHead className="text-right py-1 px-2 text-black">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1182,12 +1184,15 @@ export function LeadForm({
                         <TableCell colSpan={6} className="py-4 px-4 text-center text-muted-foreground">No orders added yet.</TableCell>
                       </TableRow>
                     ) : (
-                      stagedOrders.map((order, index) => (
+                      stagedOrders.map((order, index) => {
+                        const remainingStock = getRemainingStock(order);
+                        const isNegative = typeof remainingStock === 'number' && remainingStock < 0;
+                        return (
                         <TableRow key={order.id || index}>
-                          <TableCell className="py-2 px-4 text-black">{order.productType}</TableCell>
-                          <TableCell className="py-2 px-4 text-black">{order.color}</TableCell>
-                          <TableCell className="py-2 px-4 text-black">{order.size}</TableCell>
-                          <TableCell className="py-2 px-4 text-black">
+                          <TableCell className="py-1 px-2 text-black">{order.productType}</TableCell>
+                          <TableCell className="py-1 px-2 text-black">{order.color}</TableCell>
+                          <TableCell className="py-1 px-2 text-black">{order.size}</TableCell>
+                          <TableCell className="py-1 px-2 text-black">
                             <div className="flex items-center justify-center gap-2">
                                 <Button
                                     type="button"
@@ -1212,8 +1217,10 @@ export function LeadForm({
                                 </Button>
                             </div>
                           </TableCell>
-                           <TableCell className="py-2 px-4 text-black text-center">{getRemainingStock(order)}</TableCell>
-                          <TableCell className="py-2 px-4 text-right">
+                           <TableCell className={cn("py-1 px-2 text-black text-center font-bold", isNegative && "text-destructive")}>
+                             {remainingStock}
+                           </TableCell>
+                          <TableCell className="py-1 px-2 text-right">
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleEditOrder(order, index)} disabled={isReadOnly}>
                                 <Edit className="h-4 w-4" />
                             </Button>
@@ -1238,7 +1245,7 @@ export function LeadForm({
                             </AlertDialog>
                           </TableCell>
                         </TableRow>
-                      ))
+                      )})
                     )}
                   </TableBody>
                 </Table>
