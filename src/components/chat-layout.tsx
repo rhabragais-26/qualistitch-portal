@@ -180,6 +180,30 @@ export function ChatLayout() {
     return nickname.charAt(0).toUpperCase();
   };
 
+  const sortedUsers = useMemo(() => {
+    if (!users || !user) return [];
+    const otherUsers = users.filter(u => u.uid !== user.uid);
+
+    return otherUsers.sort((a, b) => {
+        const channelA = channels?.find(c => c.participants.includes(user.uid) && c.participants.includes(a.uid));
+        const channelB = channels?.find(c => c.participants.includes(user.uid) && c.participants.includes(b.uid));
+
+        const unreadA = channelA?.unreadCount?.[user.uid] || 0;
+        const unreadB = channelB?.unreadCount?.[user.uid] || 0;
+
+        if (unreadA > 0 && unreadB === 0) return -1;
+        if (unreadB > 0 && unreadA === 0) return 1;
+
+        const timestampA = channelA?.lastMessage?.timestamp?.toDate() || new Date(0);
+        const timestampB = channelB?.lastMessage?.timestamp?.toDate() || new Date(0);
+
+        if (timestampA > timestampB) return -1;
+        if (timestampB > timestampA) return 1;
+
+        return a.nickname.localeCompare(b.nickname);
+    });
+  }, [users, user, channels]);
+
   if (!selectedUser) {
     return (
         <div className="flex flex-col h-full" style={{ backgroundColor: '#e6fafa' }}>
@@ -196,7 +220,7 @@ export function ChatLayout() {
                 </div>
             ) : (
                 <ul>
-                {users?.filter(u => u.uid !== user?.uid).map(u => {
+                {sortedUsers.map(u => {
                     const channel = channels?.find(c => c.participants.includes(user!.uid) && c.participants.includes(u.uid));
                     const lastMessage = channel?.lastMessage;
                     const isUnread = lastMessage && lastMessage.senderId !== user!.uid && !lastMessage.readBy?.includes(user!.uid);
