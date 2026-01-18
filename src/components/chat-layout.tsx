@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -17,6 +16,7 @@ interface UserProfile {
   nickname: string;
   photoURL?: string;
   lastSeen?: string;
+  position?: string;
 }
 
 interface ChatMessage {
@@ -125,7 +125,10 @@ export function ChatLayout() {
                         <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                       )}
                     </div>
-                    <span className="font-medium">{u.nickname}</span>
+                    <div className="flex flex-col items-start">
+                        <span className="font-medium">{u.nickname}</span>
+                        {u.position && <span className="text-xs text-gray-500">({u.position})</span>}
+                    </div>
                   </button>
                 </li>
               ))}
@@ -146,7 +149,10 @@ export function ChatLayout() {
                   <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                 )}
               </div>
-              <h2 className="text-xl font-bold">{selectedUser.nickname}</h2>
+              <div className="flex flex-col items-start">
+                <h2 className="text-xl font-bold">{selectedUser.nickname}</h2>
+                {selectedUser.position && <span className="text-sm text-gray-500">({selectedUser.position})</span>}
+              </div>
             </div>
             <ScrollArea className="flex-1 p-4" ref={chatContainerRef}>
               <div className="space-y-4">
