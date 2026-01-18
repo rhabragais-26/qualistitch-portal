@@ -26,7 +26,7 @@ import { Label } from '@/components/ui/label';
 
 
 const formSchema = z.object({
-  email: z.string().email({ message: 'Invalid email address.' }),
+  email: z.string().min(1, { message: 'Email or Nickname is required.' }),
   password: z.string().min(1, { message: 'Password is required.' }),
 });
 
@@ -54,8 +54,52 @@ export function LoginForm() {
 
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
+    let emailToUse = values.email;
+
+    if (!values.email.includes('@')) {
+      // It's a nickname, look it up.
+      if (!firestore) {
+        toast({
+          variant: "destructive",
+          title: "Login Error",
+          description: "Database service is not ready. Please try again.",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const usersRef = collection(firestore, 'users');
+        const q = query(usersRef, where("nickname", "==", values.email));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          toast({
+            variant: "destructive",
+            title: "Login Failed",
+            description: "Nickname not found. Please use your full email address or check for typos.",
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        emailToUse = querySnapshot.docs[0].data().email;
+
+      } catch (error) {
+        console.error("Error looking up nickname:", error);
+        toast({
+          variant: "destructive",
+          title: "Login Error",
+          description: "An error occurred while trying to log you in.",
+        });
+        setIsLoading(false);
+        return;
+      }
+    }
+
+
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, emailToUse, values.password);
       if (!userCredential.user.emailVerified) {
         await signOut(auth);
         toast({
@@ -134,9 +178,9 @@ export function LoginForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Email or Nickname</FormLabel>
               <FormControl>
-                <Input placeholder="yourname@example.com" {...field} />
+                <Input placeholder="yourname@example.com or nickname" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
