@@ -96,8 +96,8 @@ export function ChatLayout() {
 
   if (!selectedUser) {
     return (
-        <div className="flex flex-col h-full" style={{ backgroundColor: '#d0f0ed' }}>
-            <div className="p-4 border-b flex justify-between items-center" style={{ backgroundColor: '#b9e2de' }}>
+        <div className="flex flex-col h-full" style={{ backgroundColor: '#e6fafa' }}>
+            <div className="p-4 border-b flex justify-between items-center" style={{ backgroundColor: '#d9f7f2' }}>
                 <h2 className="text-xl font-bold">Chats</h2>
                 <p className="text-xs text-black/70 max-w-sm text-left pl-5">
                     This chat function is only intended for Follow Ups, Reminders and Order-related transactions. Do not use this for non-work related stuffs. (press <span className="font-bold">ESC</span> to close)
@@ -145,8 +145,8 @@ export function ChatLayout() {
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: '#d0f0ed' }}>
-        <div className="p-4 border-b flex items-center gap-4" style={{ backgroundColor: '#b9e2de' }}>
+    <div className="flex flex-col h-full" style={{ backgroundColor: '#e6fafa' }}>
+        <div className="p-4 border-b flex items-center gap-4" style={{ backgroundColor: '#d9f7f2' }}>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedUser(null)}>
                 <ArrowLeft className="h-5 w-5" />
             </Button>
