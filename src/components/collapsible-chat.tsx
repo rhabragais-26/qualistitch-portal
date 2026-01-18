@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChatLayout } from '@/components/chat-layout';
-import { ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronsLeft, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -13,7 +13,7 @@ export function CollapsibleChat() {
   return (
     <div className={cn(
         "fixed bottom-0 left-0 z-50 transition-all duration-300 ease-in-out flex flex-col no-print",
-        isExpanded ? "w-96 h-[70vh] max-h-[500px] bg-card text-card-foreground border rounded-lg shadow-xl" : "w-auto h-auto"
+        isExpanded ? "w-96 h-[70vh] max-h-[500px] bg-card text-card-foreground border-t border-r rounded-tr-lg shadow-xl" : "w-auto h-auto"
       )}>
       <div className={cn("overflow-hidden", isExpanded ? "flex-1" : "h-0")}>
         {isExpanded && <ChatLayout />}
@@ -24,9 +24,9 @@ export function CollapsibleChat() {
             <Button
               variant="ghost"
               onClick={() => setIsExpanded(!isExpanded)}
-              className={cn("w-full", isExpanded && "border-t")}
+              className={cn(isExpanded ? "w-full border-t" : "h-12 w-12 p-0 rounded-full")}
             >
-              {isExpanded ? <ChevronsLeft className="h-5 w-5" /> : <ChevronsRight className="h-5 w-5" />}
+              {isExpanded ? <ChevronsLeft className="h-5 w-5" /> : <MessageSquare className="h-6 w-6" />}
             </Button>
           </TooltipTrigger>
           {!isExpanded && (
