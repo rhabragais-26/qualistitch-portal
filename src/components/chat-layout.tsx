@@ -96,7 +96,7 @@ export function ChatLayout() {
 
   if (!selectedUser) {
     return (
-        <div className="flex flex-col h-full" style={{ backgroundColor: '#81cdc6' }}>
+        <div className="flex flex-col h-full" style={{ backgroundColor: '#d0f0ed' }}>
             <div className="p-4 border-b flex justify-between items-center">
                 <h2 className="text-xl font-bold">Chats</h2>
                 <p className="text-xs text-black/70 max-w-sm text-left pl-5">
@@ -142,7 +142,7 @@ export function ChatLayout() {
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: '#81cdc6' }}>
+    <div className="flex flex-col h-full" style={{ backgroundColor: '#d0f0ed' }}>
         <div className="p-4 border-b flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedUser(null)}>
                 <ArrowLeft className="h-5 w-5" />
