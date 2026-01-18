@@ -206,8 +206,7 @@ export function ChatLayout() {
                 <div
                     key={msg.id}
                     className={cn(
-                        "flex flex-col gap-1",
-                        msg.senderId === user?.uid ? "items-end" : "items-start"
+                        "flex flex-col gap-1 items-end"
                     )}
                 >
                     <div
