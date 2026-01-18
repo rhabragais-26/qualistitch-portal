@@ -26,15 +26,17 @@ type InvoiceCardProps = {
   setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>>;
   onGrandTotalChange: (total: number) => void;
   onBalanceChange: (balance: number) => void;
+  isReadOnly?: boolean;
 };
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
 };
 
-export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, setDiscounts, payments, setPayments, onGrandTotalChange, onBalanceChange }: InvoiceCardProps) {
+export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, setDiscounts, payments, setPayments, onGrandTotalChange, onBalanceChange, isReadOnly }: InvoiceCardProps) {
   
   const [removingAddOn, setRemovingAddOn] = useState<{ groupKey: string; addOnType: keyof AddOns; } | null>(null);
+  const [removedFees, setRemovedFees] = useState<Record<string, { logo?: boolean; backText?: boolean }>>({});
 
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
@@ -66,7 +68,13 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const isPatches = group.productType === 'Patches';
       const patchPrice = isPatches ? group.orders[0]?.pricePerPatch || 0 : 0;
       const unitPrice = getUnitPrice(group.productType, group.totalQuantity, group.embroidery, patchPrice);
-      const { logoFee, backTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery, isClientOwned, orderType);
+      const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery, isClientOwned, orderType);
+      
+      const isLogoFeeRemoved = removedFees[groupKey]?.logo;
+      const isBackTextFeeRemoved = removedFees[groupKey]?.backText;
+      
+      const logoFee = !isLogoFeeRemoved ? initialLogoFee : 0;
+      const backTextFee = !isBackTextFeeRemoved ? initialBackTextFee : 0;
 
       let subtotal = group.totalQuantity * unitPrice;
 
@@ -100,7 +108,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       total += subtotal;
     });
     return total;
-  }, [groupedOrders, addOns, discounts, orderType]);
+  }, [groupedOrders, addOns, discounts, orderType, removedFees]);
   
   const totalPaid = useMemo(() => {
     return Object.values(payments).flat().reduce((sum, payment) => sum + payment.amount, 0);
@@ -140,6 +148,16 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     });
   }
 
+  const handleRemoveFee = (groupKey: string, feeType: 'logo' | 'backText') => {
+    setRemovedFees(prev => ({
+        ...prev,
+        [groupKey]: {
+            ...(prev[groupKey] || {}),
+            [feeType]: true,
+        }
+    }));
+  };
+
 
   return (
     <Card className="shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
@@ -177,7 +195,13 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const namesTotal = groupAddOns.names * namesPrice;
                 const plusSizeTotal = groupAddOns.plusSize * plusSizePrice;
 
-                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + plusSizeTotal + groupAddOns.programFeeLogo + groupAddOns.programFeeBackText + groupAddOns.rushFee + groupAddOns.shippingFee + logoFee + backTextFee;
+                const isLogoFeeRemoved = removedFees[groupKey]?.logo;
+                const isBackTextFeeRemoved = removedFees[groupKey]?.backText;
+                
+                const finalLogoFee = !isLogoFeeRemoved ? logoFee : 0;
+                const finalBackTextFee = !isBackTextFeeRemoved ? backTextFee : 0;
+
+                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + plusSizeTotal + groupAddOns.programFeeLogo + groupAddOns.programFeeBackText + groupAddOns.rushFee + groupAddOns.shippingFee + finalLogoFee + finalBackTextFee;
 
                 let discountAmount = 0;
                 if(groupDiscount) {
@@ -199,8 +223,8 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                             <span className="text-sm font-normal text-muted-foreground">({groupData.embroidery === 'logo' ? 'Logo Only' : groupData.embroidery === 'logoAndText' ? 'Logo + Back Text' : 'Name Only'})</span>
                         </div>
                         <div className="flex gap-2">
-                            <DiscountDialog groupKey={groupKey} discounts={discounts} setDiscounts={setDiscounts} />
-                            <AddOnsDialog groupKey={groupKey} addOns={addOns} setAddOns={setAddOns} />
+                            <DiscountDialog groupKey={groupKey} discounts={discounts} setDiscounts={setDiscounts} isReadOnly={isReadOnly} />
+                            <AddOnsDialog groupKey={groupKey} addOns={addOns} setAddOns={setAddOns} isReadOnly={isReadOnly} />
                         </div>
                     </div>
                     <div className="border rounded-md">
@@ -340,15 +364,29 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     </TableCell>
                                 </TableRow>
                             )}
-                          {logoFee > 0 && (
-                            <TableRow>
-                                <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">One-time Logo Programming Fee</TableCell>
+                          {logoFee > 0 && !isLogoFeeRemoved && (
+                            <TableRow className="group">
+                                <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">
+                                    <div className="flex justify-end items-center gap-2">
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveFee(groupKey, 'logo')}>
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                        <span>One-time Logo Programming Fee</span>
+                                    </div>
+                                </TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(logoFee)}</TableCell>
                             </TableRow>
                           )}
-                          {backTextFee > 0 && (
-                             <TableRow>
-                                <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">One-time Back Text Programming Fee</TableCell>
+                          {backTextFee > 0 && !isBackTextFeeRemoved && (
+                             <TableRow className="group">
+                                <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">
+                                  <div className="flex justify-end items-center gap-2">
+                                      <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveFee(groupKey, 'backText')}>
+                                          <X className="h-3 w-3" />
+                                      </Button>
+                                      <span>One-time Back Text Programming Fee</span>
+                                  </div>
+                                </TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(backTextFee)}</TableCell>
                             </TableRow>
                           )}
@@ -392,7 +430,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 <Separator />
                  <div className="mt-4 space-y-2">
                     <div className="flex justify-between items-center text-lg">
-                      <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} />
+                      <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly}/>
                       <div className="text-right">
                         <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
                       </div>
