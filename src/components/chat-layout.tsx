@@ -229,9 +229,15 @@ export function ChatLayout() {
                                     {unreadCount} new unread message{unreadCount > 1 ? 's' : ''}
                                 </p>
                             ) : lastMessage ? (
-                                <p className={cn("text-sm text-black/70 truncate italic", isUnread && "font-bold")}>
-                                   {senderNickname && `${senderNickname}: `}{lastMessage.text}
-                                </p>
+                                (() => {
+                                    const fullMessage = `${senderNickname ? `${senderNickname}: ` : ''}${lastMessage.text}`;
+                                    const truncatedMessage = fullMessage.length > 35 ? `${fullMessage.substring(0, 32)}...` : fullMessage;
+                                    return (
+                                        <p className={cn("text-sm text-black/70 truncate italic", isUnread && "font-bold")}>
+                                            {truncatedMessage}
+                                        </p>
+                                    );
+                                })()
                             ) : (
                                 <p className="text-sm text-black/70 italic">No conversations yet</p>
                             )}
