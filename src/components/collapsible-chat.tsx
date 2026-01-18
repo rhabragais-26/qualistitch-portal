@@ -12,7 +12,7 @@ export function CollapsibleChat() {
 
   return (
     <div className={cn(
-        "relative h-screen bg-card text-card-foreground border-r transition-all duration-300 ease-in-out flex flex-col no-print",
+        "fixed bottom-4 left-4 z-50 h-[70vh] max-h-[500px] bg-card text-card-foreground border rounded-lg shadow-xl transition-all duration-300 ease-in-out flex flex-col no-print",
         isExpanded ? "w-96" : "w-16"
       )}>
       <div className="flex-1 overflow-hidden">
