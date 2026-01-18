@@ -26,6 +26,7 @@ type StagedItemsListProps = {
   onUpdateItem: (item: StagedItem) => void;
   onRemoveItem: (id: string) => void;
   onSaveAll: () => void;
+  isReadOnly: boolean;
 };
 
 const productTypes = [
@@ -141,7 +142,7 @@ function EditItemDialog({
 }
 
 
-const StagedItemsListMemo = React.memo(function StagedItemsList({ items, onUpdateItem, onRemoveItem, onSaveAll }: StagedItemsListProps) {
+const StagedItemsListMemo = React.memo(function StagedItemsList({ items, onUpdateItem, onRemoveItem, onSaveAll, isReadOnly }: StagedItemsListProps) {
     const [editingItem, setEditingItem] = useState<StagedItem | null>(null);
   
     return (
@@ -177,10 +178,10 @@ const StagedItemsListMemo = React.memo(function StagedItemsList({ items, onUpdat
                       <TableCell className="text-xs">{item.size}</TableCell>
                       <TableCell className="text-center text-xs">{item.stock}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => setEditingItem(item)} className="h-8 w-8 text-blue-600 hover:bg-gray-200">
+                        <Button variant="ghost" size="icon" onClick={() => setEditingItem(item)} className="h-8 w-8 text-blue-600 hover:bg-gray-200" disabled={isReadOnly}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => onRemoveItem(item.id)} className="h-8 w-8 text-destructive hover:bg-red-100">
+                        <Button variant="ghost" size="icon" onClick={() => onRemoveItem(item.id)} className="h-8 w-8 text-destructive hover:bg-red-100" disabled={isReadOnly}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -192,7 +193,7 @@ const StagedItemsListMemo = React.memo(function StagedItemsList({ items, onUpdat
           </ScrollArea>
         </CardContent>
         <CardFooter className="flex justify-end">
-            <Button onClick={onSaveAll} disabled={items.length === 0} className="font-bold text-white">
+            <Button onClick={onSaveAll} disabled={items.length === 0 || isReadOnly} className="font-bold text-white">
                 <Save className="mr-2 h-4 w-4" />
                 Save All Items
             </Button>

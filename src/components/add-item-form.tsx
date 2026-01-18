@@ -69,9 +69,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 type AddItemFormProps = {
     onAddItem: (item: Omit<StagedItem, 'id'>) => void;
+    isReadOnly: boolean;
 }
 
-const AddItemFormMemo = React.memo(function AddItemForm({ onAddItem }: AddItemFormProps) {
+const AddItemFormMemo = React.memo(function AddItemForm({ onAddItem, isReadOnly }: AddItemFormProps) {
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -150,7 +151,7 @@ const AddItemFormMemo = React.memo(function AddItemForm({ onAddItem }: AddItemFo
       <CardContent>
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-6">
+            <fieldset disabled={isReadOnly} className="space-y-6">
               <FormField
                 control={control}
                 name="productType"
@@ -192,7 +193,6 @@ const AddItemFormMemo = React.memo(function AddItemForm({ onAddItem }: AddItemFo
                 </FormItem>
                 )}
               />
-            </div>
 
             <Separator />
 
@@ -252,13 +252,14 @@ const AddItemFormMemo = React.memo(function AddItemForm({ onAddItem }: AddItemFo
 
 
             <div className="flex justify-end gap-4">
-              <Button type="button" variant="outline" size="lg" onClick={handleReset}>
+              <Button type="button" variant="outline" size="lg" onClick={handleReset} disabled={isReadOnly}>
                 Reset
               </Button>
-              <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold" disabled={!isValid}>
+              <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold" disabled={!isValid || isReadOnly}>
                 Add to List
               </Button>
             </div>
+            </fieldset>
           </form>
         </Form>
       </CardContent>

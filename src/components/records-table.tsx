@@ -154,6 +154,7 @@ const RecordsTableRow = React.memo(({
     openLeadId,
     openCustomerDetails,
     isRepeat,
+    isReadOnly,
     getContactDisplay,
     toggleCustomerDetails,
     handleOpenEditLeadDialog,
@@ -164,6 +165,7 @@ const RecordsTableRow = React.memo(({
     openLeadId: string | null;
     openCustomerDetails: string | null;
     isRepeat: boolean;
+    isReadOnly: boolean;
     getContactDisplay: (lead: Lead) => string | null;
     toggleCustomerDetails: (id: string) => void;
     handleOpenEditLeadDialog: (lead: Lead) => void;
@@ -250,12 +252,12 @@ const RecordsTableRow = React.memo(({
               </Button>
             </TableCell>
             <TableCell className="text-center align-middle py-2">
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)}>
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)} disabled={isReadOnly}>
                 <Edit className="h-5 w-5" />
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-red-100">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-red-100" disabled={isReadOnly}>
                     <Trash2 className="h-5 w-5" />
                   </Button>
                 </AlertDialogTrigger>
@@ -279,7 +281,7 @@ const RecordsTableRow = React.memo(({
 RecordsTableRow.displayName = 'RecordsTableRow';
 
 
-export function RecordsTable() {
+export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const firestore = useFirestore();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -479,6 +481,7 @@ export function RecordsTable() {
                             openLeadId={openLeadId}
                             openCustomerDetails={openCustomerDetails}
                             isRepeat={isRepeat}
+                            isReadOnly={isReadOnly}
                             getContactDisplay={getContactDisplay}
                             toggleCustomerDetails={toggleCustomerDetails}
                             handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}

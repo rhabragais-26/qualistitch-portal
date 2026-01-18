@@ -4,7 +4,7 @@ import { Header } from '@/components/header';
 import { LeadForm, FormValues, formSchema } from '@/components/lead-form';
 import { InvoiceCard, AddOns, Discount, Payment } from '@/components/invoice-card';
 import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Order } from '@/components/lead-form';
 import { Button } from '@/components/ui/button';
 import { CalculatorIcon, Ruler, Tag } from 'lucide-react';
@@ -29,6 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 import { collection, doc } from 'firebase/firestore';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { hasEditPermission } from '@/lib/permissions';
 
 
 export default function NewOrderPage() {
@@ -38,6 +39,9 @@ export default function NewOrderPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const pathname = usePathname();
+  const canEdit = hasEditPermission(userProfile?.position as any, pathname);
+
 
   const [showCalculator, setShowCalculator] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
@@ -182,6 +186,7 @@ export default function NewOrderPage() {
                             setStagedOrders={setStagedOrders}
                             resetFormTrigger={resetFormTrigger}
                             onOrderTypeChange={setOrderType}
+                            isReadOnly={!canEdit}
                         />
                     </div>
                     <div className="xl:col-span-2 space-y-4">
@@ -210,7 +215,9 @@ export default function NewOrderPage() {
                             setPayments={setPayments}
                             onGrandTotalChange={setGrandTotal}
                             onBalanceChange={setBalance}
+                            isReadOnly={!canEdit}
                         />
+                         {canEdit && (
                         <div className="flex justify-end pt-4 col-span-full">
                             <div className="flex gap-4">
                                 <AlertDialog>
@@ -256,6 +263,7 @@ export default function NewOrderPage() {
                                 </AlertDialog>
                             </div>
                         </div>
+                        )}
                     </div>
                 </div>
             </main>

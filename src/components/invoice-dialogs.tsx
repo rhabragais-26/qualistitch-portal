@@ -37,10 +37,12 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
   groupKey,
   addOns,
   setAddOns,
+  isReadOnly,
 }: {
   groupKey: string;
   addOns: Record<string, AddOns>;
   setAddOns: React.Dispatch<React.SetStateAction<Record<string, AddOns>>>;
+  isReadOnly?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const currentAddOns = addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 };
@@ -70,7 +72,7 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-7 px-2 bg-blue-500 text-white hover:bg-blue-600 font-bold">
+        <Button variant="outline" size="sm" className="h-7 px-2 bg-blue-500 text-white hover:bg-blue-600 font-bold" disabled={isReadOnly}>
           <Plus className="mr-1 h-3 w-3" />
           Add Ons
         </Button>
@@ -146,7 +148,7 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
   );
 });
 
-export const DiscountDialog = React.memo(function DiscountDialog({ groupKey, discounts, setDiscounts }: { groupKey: string, discounts: Record<string, Discount>, setDiscounts: React.Dispatch<React.SetStateAction<Record<string, Discount>>> }) {
+export const DiscountDialog = React.memo(function DiscountDialog({ groupKey, discounts, setDiscounts, isReadOnly }: { groupKey: string, discounts: Record<string, Discount>, setDiscounts: React.Dispatch<React.SetStateAction<Record<string, Discount>>>, isReadOnly?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const [localDiscount, setLocalDiscount] = useState<Discount>(discounts[groupKey] || { type: 'percentage', value: 0, reason: '' });
   const [inputValue, setInputValue] = useState('');
@@ -186,7 +188,7 @@ export const DiscountDialog = React.memo(function DiscountDialog({ groupKey, dis
       setIsOpen(open);
     }}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-7 px-2 bg-amber-500 text-white hover:bg-amber-600 font-bold">
+        <Button variant="outline" size="sm" className="h-7 px-2 bg-amber-500 text-white hover:bg-amber-600 font-bold" disabled={isReadOnly}>
             <TicketPercent className="mr-1 h-3 w-3" />
             Discount
         </Button>
@@ -247,7 +249,7 @@ export const DiscountDialog = React.memo(function DiscountDialog({ groupKey, dis
   );
 });
 
-export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTotal, setPayments, payments }: { grandTotal: number; setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>>, payments: Record<string, Payment[]> }) {
+export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTotal, setPayments, payments, isReadOnly }: { grandTotal: number; setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>>, payments: Record<string, Payment[]>, isReadOnly?: boolean }) {
   const [paymentType, setPaymentType] = useState<'down' | 'full'>('down');
   const [amount, setAmount] = useState(0);
   const [formattedAmount, setFormattedAmount] = useState('');
@@ -311,7 +313,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">{hasPayments ? 'Edit Payment' : 'Add Payment'}</Button>
+        <Button variant="outline" disabled={isReadOnly}>{hasPayments ? 'Edit Payment' : 'Add Payment'}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

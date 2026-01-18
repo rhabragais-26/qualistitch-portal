@@ -42,9 +42,10 @@ type OperationalCase = {
 
 type RecordedCasesListProps = {
   onEdit: (caseItem: OperationalCase) => void;
+  isReadOnly: boolean;
 };
 
-const RecordedCasesListMemo = React.memo(function RecordedCasesList({ onEdit }: RecordedCasesListProps) {
+const RecordedCasesListMemo = React.memo(function RecordedCasesList({ onEdit, isReadOnly }: RecordedCasesListProps) {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   const [caseToResolve, setCaseToResolve] = useState<OperationalCase | null>(null);
@@ -239,6 +240,7 @@ const RecordedCasesListMemo = React.memo(function RecordedCasesList({ onEdit }: 
                             size="sm"
                             onClick={() => setCaseToResolve(caseItem)}
                             className="shadow-md transition-transform active:scale-95 text-white font-bold w-full"
+                            disabled={isReadOnly}
                           >
                             <Check className="mr-2 h-4 w-4" />
                             Resolved
@@ -248,6 +250,7 @@ const RecordedCasesListMemo = React.memo(function RecordedCasesList({ onEdit }: 
                             variant="outline"
                             onClick={() => onEdit(caseItem)}
                             className="shadow-md transition-transform active:scale-95 font-bold w-full"
+                            disabled={isReadOnly}
                           >
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
@@ -257,6 +260,7 @@ const RecordedCasesListMemo = React.memo(function RecordedCasesList({ onEdit }: 
                             variant="outline"
                             onClick={() => setCaseToDelete(caseItem)}
                             className="shadow-md transition-transform active:scale-95 font-bold w-full text-red-500 border-red-500 hover:bg-red-50 hover:text-red-600"
+                            disabled={isReadOnly}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete

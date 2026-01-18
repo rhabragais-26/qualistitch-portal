@@ -95,9 +95,10 @@ type OperationalCasesFormProps = {
   onCancelEdit: () => void;
   onSaveComplete: () => void;
   onDirtyChange: (isDirty: boolean) => void;
+  isReadOnly: boolean;
 }
 
-const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete, onDirtyChange }: OperationalCasesFormProps) {
+const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete, onDirtyChange, isReadOnly }: OperationalCasesFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const imageUploadRef = useRef<HTMLInputElement>(null);
@@ -347,6 +348,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
       <CardContent>
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <fieldset disabled={isReadOnly} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <FormField
                     control={control}
@@ -369,7 +371,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                                     setShowSuggestions(true);
                                 }}
                                 autoComplete='off'
-                                disabled={isEditing}
+                                disabled={isEditing || isReadOnly}
                             />
                         </FormControl>
                         {showSuggestions && joSuggestions.length > 0 && (
@@ -400,7 +402,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                       <FormLabel className="flex items-center gap-2 text-black">
                         <TriangleAlert className="h-4 w-4 text-primary" /> Case Type
                       </FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isReadOnly}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a Case Type" />
@@ -467,7 +469,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                             value={caseItems.reduce((sum, item) => sum + item.quantity, 0)}
                             className="w-24 text-center font-bold bg-gray-100"
                         />
-                         <Button type="button" onClick={() => setIsQuantityDialogOpen(true)} disabled={!foundLead} variant="default" className="text-white font-bold bg-primary hover:bg-primary/90">
+                         <Button type="button" onClick={() => setIsQuantityDialogOpen(true)} disabled={!foundLead || isReadOnly} variant="default" className="text-white font-bold bg-primary hover:bg-primary/90">
                             Select Items with Related Case
                         </Button>
                     </div>
@@ -502,7 +504,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                         <FormLabel className="text-black">Upload Image (Optional)</FormLabel>
                         <FormControl>
                             <div 
-                                tabIndex={0}
+                                tabIndex={isReadOnly ? -1 : 0}
                                 className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none"
                                 style={{ height: '120px' }}
                                 onPaste={handleImagePaste}
@@ -517,6 +519,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                                     size="icon"
                                     className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                                     onClick={handleRemoveImage}
+                                    disabled={isReadOnly}
                                     >
                                     <Trash2 className="h-4 w-4" />
                                     </Button>
@@ -524,7 +527,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                                 ) : (
                                 <div className="text-gray-500">
                                     <Upload className="mx-auto h-8 w-8" />
-                                    <p className="text-xs mt-2">Double-click to upload or paste image</p>
+                                    <p className="text-xs mt-2">{isReadOnly ? 'No image uploaded' : 'Double-click to upload or paste image'}</p>
                                 </div>
                                 )}
                                 <input 
@@ -532,7 +535,8 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                                 accept="image/*" 
                                 ref={imageUploadRef} 
                                 onChange={handleImageUpload}
-                                className="hidden" 
+                                className="hidden"
+                                disabled={isReadOnly}
                                 />
                             </div>
                         </FormControl>
@@ -542,13 +546,14 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
             />
 
             <div className="flex justify-end gap-4 pt-4">
-              <Button type="button" variant="outline" size="lg" onClick={handleFormReset}>
+              <Button type="button" variant="outline" size="lg" onClick={handleFormReset} disabled={isReadOnly}>
                 {isEditing ? 'Cancel' : 'Reset'}
               </Button>
-              <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
+              <Button type="submit" size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold" disabled={isReadOnly}>
                 {isEditing ? 'Save Changes' : 'Save Case'}
               </Button>
             </div>
+            </fieldset>
           </form>
         </Form>
       </CardContent>
