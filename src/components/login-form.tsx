@@ -136,21 +136,6 @@ export function LoginForm() {
     
     setIsResetting(true);
     try {
-      // Check if email exists in 'users' collection
-      const usersRef = collection(firestore, 'users');
-      const q = query(usersRef, where("email", "==", resetEmail));
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        toast({
-          variant: 'destructive',
-          title: 'Email not registered',
-          description: 'Please check the email address and try again.',
-        });
-        setIsResetting(false);
-        return;
-      }
-
       await sendPasswordResetEmail(auth, resetEmail);
       toast({
         title: 'Password Reset Email Sent',
