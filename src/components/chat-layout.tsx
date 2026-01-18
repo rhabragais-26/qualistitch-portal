@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -11,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { format } from 'date-fns';
+import { Separator } from './ui/separator';
 
 interface UserProfile {
   uid: string;
@@ -195,12 +197,13 @@ export function ChatLayout() {
                                 <span className="font-medium">{u.nickname}</span>
                                 {u.position && <span className="text-xs text-black/70">({u.position})</span>}
                             </div>
+                            <Separator className="my-1 bg-gray-300" />
                             {lastMessage ? (
-                                <p className={cn("text-xs text-black/70 truncate", isUnread && "font-bold")}>
+                                <p className={cn("text-sm text-black/70 truncate italic", isUnread && "font-bold")}>
                                     {lastMessage.text}
                                 </p>
                             ) : (
-                                <p className="text-xs text-black/70 italic">No conversations yet</p>
+                                <p className="text-sm text-black/70 italic">No conversations yet</p>
                             )}
                         </div>
                         <div className="flex items-center gap-2 text-xs ml-auto">
