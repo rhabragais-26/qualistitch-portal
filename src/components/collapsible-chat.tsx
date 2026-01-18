@@ -12,15 +12,11 @@ export function CollapsibleChat() {
 
   return (
     <div className={cn(
-        "fixed bottom-4 left-4 z-50 h-[70vh] max-h-[500px] bg-card text-card-foreground border rounded-lg shadow-xl transition-all duration-300 ease-in-out flex flex-col no-print",
-        isExpanded ? "w-96" : "w-16"
+        "fixed bottom-4 left-4 z-50 bg-card text-card-foreground border rounded-lg shadow-xl transition-all duration-300 ease-in-out flex flex-col no-print",
+        isExpanded ? "w-96 h-[70vh] max-h-[500px]" : "w-16"
       )}>
-      <div className="flex-1 overflow-hidden">
-        {isExpanded ? (
-          <ChatLayout />
-        ) : (
-          null
-        )}
+      <div className={cn("overflow-hidden", isExpanded && "flex-1")}>
+        {isExpanded && <ChatLayout />}
       </div>
       <div className="p-2 border-t mt-auto">
         <TooltipProvider>
