@@ -37,7 +37,7 @@ export function CollapsibleChat() {
         isExpanded 
             ? "w-96 h-[70vh] max-h-[500px] bg-card text-card-foreground border rounded-t-lg shadow-xl" 
             : "w-auto",
-        isExpanded ? "bottom-0 left-0" : "bottom-0 left-0"
+        isExpanded ? "bottom-0 left-0" : "bottom-12 left-0"
       )}>
       <div className={cn("overflow-hidden rounded-t-lg", isExpanded ? "flex-1" : "h-0")}>
         {isExpanded && <ChatLayout />}
@@ -49,7 +49,7 @@ export function CollapsibleChat() {
                <Button
                 variant="ghost"
                 onClick={() => setIsExpanded(true)}
-                className="h-24 w-9 p-1 rounded-l-none rounded-r-lg bg-amber-500/50 text-white hover:bg-amber-500 hover:text-white flex items-center justify-center"
+                className="h-24 w-9 p-1 rounded-l-none rounded-r-lg bg-[#81cdc6] text-white hover:bg-[#69bab2] flex items-center justify-center"
               >
                 <span className="[writing-mode:vertical-rl] rotate-180 font-bold tracking-wider">CHAT</span>
               </Button>
