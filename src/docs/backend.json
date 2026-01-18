@@ -17,6 +17,7 @@
           "role": { "type": "string", "description": "The user's role in the system (e.g., 'admin', 'user')." },
           "position": { "type": "string", "description": "The user's job title or position in the company." },
           "lastModified": { "type": "string", "format": "date-time", "description": "Timestamp for when the profile was last modified." },
+          "lastSeen": { "type": "string", "format": "date-time", "description": "Timestamp of the user's last activity for presence indication." },
           "permissions": {
             "type": "object",
             "description": "Custom user permissions for page groups.",
@@ -31,6 +32,51 @@
           }
         },
         "required": ["uid", "firstName", "lastName", "nickname", "email", "role", "position"]
+    },
+    "DirectMessageChannel": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DirectMessageChannel",
+      "type": "object",
+      "description": "Represents a direct message channel between two users.",
+      "properties": {
+        "participants": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "An array containing the UIDs of the two participants."
+        },
+        "lastMessage": {
+          "type": "object",
+          "properties": {
+            "senderId": { "type": "string" },
+            "text": { "type": "string" },
+            "timestamp": { "type": "string", "format": "date-time" },
+            "readBy": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "An array of participant UIDs who have read the last message."
+            }
+          }
+        },
+        "unreadCount": {
+          "type": "object",
+          "additionalProperties": { "type": "number" },
+          "description": "A map of user UIDs to their unread message count."
+        }
+      },
+      "required": ["participants"]
+    },
+    "ChatMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChatMessage",
+      "type": "object",
+      "description": "Represents a single message in a chat.",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string", "description": "UID of the user who sent the message." },
+        "text": { "type": "string", "description": "The content of the message." },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "text", "timestamp"]
     },
     "SizeChart": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -140,10 +186,6 @@
           "type": "string",
           "format": "date-time",
           "description": "The date and time when the lead was last modified."
-        },
-        "lastModifiedBy": {
-            "type": "string",
-            "description": "The nickname of the user who last modified the lead."
         },
         "deliveryDate": {
             "type": "string",
@@ -677,6 +719,42 @@
             {
               "name": "userId",
               "description": "Unique identifier for the user document, same as Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/direct_messages/{channelId}",
+        "definition": {
+          "entityName": "DirectMessageChannel",
+          "schema": {
+            "$ref": "#/backend/entities/DirectMessageChannel"
+          },
+          "description": "Metadata for a direct message channel.",
+          "params": [
+            {
+              "name": "channelId",
+              "description": "Unique identifier for the direct message channel, composed of two user UIDs."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/direct_messages/{channelId}/messages/{messageId}",
+        "definition": {
+          "entityName": "ChatMessage",
+          "schema": {
+            "$ref": "#/backend/entities/ChatMessage"
+          },
+          "description": "Stores individual chat messages within a direct message channel.",
+          "params": [
+            {
+              "name": "channelId",
+              "description": "Unique identifier for the direct message channel, composed of two user UIDs."
+            },
+            {
+              "name": "messageId",
+              "description": "Unique identifier for the chat message."
             }
           ]
         }

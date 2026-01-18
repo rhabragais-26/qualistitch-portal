@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { collection, query, orderBy, addDoc, serverTimestamp, setDoc, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, query, orderBy, addDoc, serverTimestamp, setDoc, doc, getDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,6 +35,9 @@ interface DirectMessageChannel {
         text: string;
         timestamp: any;
         readBy: string[];
+    };
+    unreadCount?: {
+        [key: string]: number;
     }
 }
 
@@ -72,16 +75,27 @@ export function ChatLayout() {
   useEffect(() => {
     if (selectedUser && channelId && firestore && user) {
         const channelRef = doc(firestore, 'direct_messages', channelId);
-        getDoc(channelRef).then(docSnap => {
+        
+        const updateReadStatus = async () => {
+            const docSnap = await getDoc(channelRef);
             if (docSnap.exists()) {
-                const data = docSnap.data();
+                const data = docSnap.data() as DirectMessageChannel;
+                const updates: {[key: string]: any} = {};
+
                 if (data.lastMessage && data.lastMessage.senderId !== user.uid && !data.lastMessage.readBy?.includes(user.uid)) {
-                    updateDoc(channelRef, {
-                        'lastMessage.readBy': arrayUnion(user.uid)
-                    });
+                    updates['lastMessage.readBy'] = arrayUnion(user.uid);
+                }
+                
+                if (data.unreadCount && data.unreadCount[user.uid] > 0) {
+                    updates[`unreadCount.${user.uid}`] = 0;
+                }
+
+                if (Object.keys(updates).length > 0) {
+                    await updateDoc(channelRef, updates);
                 }
             }
-        })
+        };
+        updateReadStatus();
     }
   }, [selectedUser, channelId, firestore, user]);
 
@@ -116,13 +130,25 @@ export function ChatLayout() {
     };
 
     try {
-      // First, ensure the channel document exists or is updated.
-      await setDoc(channelRef, {
-        participants: [user.uid, selectedUser.uid],
-        lastMessage: lastMessageData
-      }, { merge: true });
+      const otherUserId = selectedUser.uid;
+      const channelSnap = await getDoc(channelRef);
+
+      if (channelSnap.exists()) {
+          await updateDoc(channelRef, {
+              lastMessage: lastMessageData,
+              [`unreadCount.${otherUserId}`]: increment(1)
+          });
+      } else {
+          await setDoc(channelRef, {
+              participants: [user.uid, selectedUser.uid],
+              lastMessage: lastMessageData,
+              unreadCount: {
+                  [user.uid]: 0,
+                  [otherUserId]: 1,
+              },
+          });
+      }
       
-      // Then, add the message to the subcollection.
       await addDoc(messagesRef, messageData);
 
       setMessage('');
@@ -178,6 +204,7 @@ export function ChatLayout() {
                     const isUnread = lastMessage && lastMessage.senderId !== user!.uid && !lastMessage.readBy?.includes(user!.uid);
                     const lastMessageSender = lastMessage ? users?.find(sender => sender.uid === lastMessage.senderId) : null;
                     const senderNickname = lastMessageSender ? (lastMessageSender.uid === user?.uid ? "You" : lastMessageSender.nickname) : '';
+                    const unreadCount = channel?.unreadCount?.[user!.uid] || 0;
 
                     return (
                     <li key={u.uid}>
@@ -199,7 +226,11 @@ export function ChatLayout() {
                                 {u.position && <span className="text-xs text-black/70">({u.position})</span>}
                             </div>
                             <Separator className="my-1 bg-gray-300" />
-                            {lastMessage ? (
+                            {unreadCount > 0 ? (
+                                <p className="text-sm text-black font-bold truncate italic">
+                                    {unreadCount} new unread message{unreadCount > 1 ? 's' : ''}
+                                </p>
+                            ) : lastMessage ? (
                                 <p className={cn("text-sm text-black/70 truncate italic", isUnread && "font-bold")}>
                                    {senderNickname && `${senderNickname}: `}{lastMessage.text}
                                 </p>
