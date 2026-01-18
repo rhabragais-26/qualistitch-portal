@@ -123,13 +123,16 @@ export function ChatLayout() {
                             <AvatarImage src={u.photoURL} alt={u.nickname} />
                             <AvatarFallback className="bg-primary text-primary-foreground">{getInitials(u.nickname)}</AvatarFallback>
                         </Avatar>
-                        {isOnline(u.lastSeen) && (
-                            <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                        )}
                         </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="font-medium">{u.nickname}</span>
-                            {u.position && <span className="text-xs text-black/70">({u.position})</span>}
+                        <div className="flex-grow">
+                            <div className="flex items-baseline gap-2">
+                                <span className="font-medium">{u.nickname}</span>
+                                {u.position && <span className="text-xs text-black/70">({u.position})</span>}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs ml-auto">
+                            <div className={cn("w-2.5 h-2.5 rounded-full", isOnline(u.lastSeen) ? "bg-green-500" : "bg-gray-400")} />
+                            <span className="text-black/70">{isOnline(u.lastSeen) ? "Active" : "Inactive"}</span>
                         </div>
                     </button>
                     </li>
@@ -143,7 +146,7 @@ export function ChatLayout() {
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: '#d0f0ed' }}>
-        <div className="p-4 border-b flex items-center gap-2">
+        <div className="p-4 border-b flex items-center gap-4">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedUser(null)}>
                 <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -152,13 +155,16 @@ export function ChatLayout() {
                 <AvatarImage src={selectedUser.photoURL} alt={selectedUser.nickname} />
                 <AvatarFallback className="bg-primary text-primary-foreground">{getInitials(selectedUser.nickname)}</AvatarFallback>
             </Avatar>
-                {isOnline(selectedUser.lastSeen) && (
-                <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-            )}
             </div>
-            <div className="flex items-baseline gap-2">
-            <h2 className="text-lg font-bold leading-tight">{selectedUser.nickname}</h2>
-            {selectedUser.position && <span className="text-xs text-black/70">({selectedUser.position})</span>}
+            <div className="flex flex-col">
+                <div className="flex items-baseline gap-2">
+                <h2 className="text-lg font-bold leading-tight">{selectedUser.nickname}</h2>
+                {selectedUser.position && <span className="text-xs text-black/70">({selectedUser.position})</span>}
+                </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs ml-auto">
+                <div className={cn("w-2.5 h-2.5 rounded-full", isOnline(selectedUser.lastSeen) ? "bg-green-500" : "bg-gray-400")} />
+                <span className="text-black/70">{isOnline(selectedUser.lastSeen) ? "Active" : "Inactive"}</span>
             </div>
         </div>
         <ScrollArea className="flex-1 p-4" ref={chatContainerRef}>
