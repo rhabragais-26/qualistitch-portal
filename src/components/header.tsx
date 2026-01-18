@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -177,7 +176,7 @@ const HeaderMemo = React.memo(function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-black no-print">
+      <header className="sticky top-0 z-40 w-full bg-black no-print border-b border-white">
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex items-center">
             <Link href="/new-order" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/new-order'); }}>
