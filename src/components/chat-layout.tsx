@@ -101,7 +101,7 @@ export function ChatLayout() {
     if (messageInputRef.current) {
       messageInputRef.current.style.height = 'auto';
       const scrollHeight = messageInputRef.current.scrollHeight;
-      const maxHeight = 120; // max height of ~6 lines
+      const maxHeight = 60; // max height of ~2-3 lines
       messageInputRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
     }
   }, [message]);
@@ -319,7 +319,7 @@ export function ChatLayout() {
             </div>
         </ScrollArea>
         <div className="p-4 border-t">
-            <form onSubmit={handleSendMessage} className="relative flex items-end">
+            <form onSubmit={handleSendMessage} className="relative flex items-center">
               <Textarea
                   ref={messageInputRef}
                   rows={1}
@@ -328,7 +328,7 @@ export function ChatLayout() {
                   onKeyDown={handleKeyDown}
                   placeholder="Type a message..."
                   autoComplete="off"
-                  className="pr-12 resize-none"
+                  className="pr-12 resize-none min-h-0"
               />
               <Button type="submit" size="icon" disabled={!message.trim()} className="absolute right-2 bottom-2 h-8 w-8 bg-transparent hover:bg-black/10 text-black">
                   <Send className="h-5 w-5" />
