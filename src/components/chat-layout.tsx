@@ -206,25 +206,30 @@ export function ChatLayout() {
                 <div
                     key={msg.id}
                     className={cn(
-                        "flex flex-col gap-1",
-                        msg.senderId === user?.uid ? "items-end" : "items-start"
+                        "flex w-full",
+                        msg.senderId === user?.uid ? "justify-end" : "justify-start"
                     )}
                 >
-                    <div
-                        className={cn(
-                            "max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2",
-                            msg.senderId === user?.uid
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-white text-black"
+                    <div className={cn(
+                        "flex flex-col gap-1",
+                         msg.senderId === user?.uid ? "items-end" : "items-start"
+                    )}>
+                        <div
+                            className={cn(
+                                "max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2",
+                                msg.senderId === user?.uid
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-white text-black"
+                            )}
+                        >
+                            <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                        </div>
+                        {msg.timestamp && (
+                            <span className="text-[10px] text-gray-500 px-1">
+                                {msg.timestamp.toDate ? format(msg.timestamp.toDate(), 'p') : ''}
+                            </span>
                         )}
-                    >
-                        <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                     </div>
-                    {msg.timestamp && (
-                        <span className="text-[10px] text-gray-500 px-1">
-                            {msg.timestamp.toDate ? format(msg.timestamp.toDate(), 'p') : ''}
-                        </span>
-                    )}
                 </div>
                 ))
             ) : (
