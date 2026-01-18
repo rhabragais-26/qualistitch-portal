@@ -99,6 +99,7 @@ export function ChatLayout() {
         <div className="flex flex-col h-full">
             <div className="p-4 border-b">
                 <h2 className="text-xl font-bold">Chats</h2>
+                <p className="text-xs text-gray-500 mt-1">This chat function is only intended to Follow Ups, Reminders and Transactions related to Orders. Do not use this for non-work related stuffs.</p>
             </div>
             <ScrollArea className="flex-1">
             {usersLoading ? (
