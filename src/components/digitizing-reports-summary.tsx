@@ -133,7 +133,7 @@ export function DigitizingReportsSummary() {
         </div>
       </div>
       <div className="printable-area grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground border-none">
           <CardHeader>
             <CardTitle>Job Order Status Summary</CardTitle>
             <CardDescription>Number of job orders in each programming stage.</CardDescription>
@@ -159,7 +159,7 @@ export function DigitizingReportsSummary() {
             </div>
           </CardContent>
         </Card>
-        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground">
+        <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-card text-card-foreground border-none">
           <CardHeader>
             <CardTitle>Overdue Status</CardTitle>
             <CardDescription>Breakdown of overdue job orders.</CardDescription>

@@ -225,7 +225,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
   }, [processedLeads, searchTerm, joNumberSearch, formatJoNumber]);
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black border-none">
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
