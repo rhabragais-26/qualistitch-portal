@@ -28,7 +28,7 @@ interface ChatMessage {
   timestamp: any;
 }
 
-interface DirectMessageChannel {
+export interface DirectMessageChannel {
     participants: string[];
     lastMessage?: {
         senderId: string;
@@ -391,3 +391,5 @@ export function ChatLayout() {
     </div>
   );
 }
+
+    

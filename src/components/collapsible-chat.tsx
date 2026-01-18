@@ -1,17 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChatLayout } from '@/components/chat-layout';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import type { DirectMessageChannel } from './chat-layout';
+import { Badge } from './ui/badge';
 
 export function CollapsibleChat() {
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const [isMounted, setIsMounted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isContentVisible, setIsContentVisible] = useState(false);
+
+  const channelsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'direct_messages'), where('participants', 'array-contains', user.uid));
+  }, [firestore, user]);
+
+  const { data: channels } = useCollection<DirectMessageChannel>(channelsQuery);
+
+  const totalUnreadCount = useMemo(() => {
+    if (!channels || !user) return 0;
+    return channels.reduce((total, channel) => {
+      return total + (channel.unreadCount?.[user.uid] || 0);
+    }, 0);
+  }, [channels, user]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -77,8 +95,13 @@ export function CollapsibleChat() {
                 <Button
                   variant="ghost"
                   onClick={() => setIsExpanded(true)}
-                  className="h-24 w-9 p-1 rounded-l-none rounded-r-lg bg-[#81cdc6] text-white hover:bg-[#69bab2] hover:text-white flex items-center justify-center"
+                  className="relative h-24 w-9 p-1 rounded-l-none rounded-r-lg bg-[#81cdc6] text-white hover:bg-[#69bab2] hover:text-white flex items-center justify-center"
                 >
+                  {totalUnreadCount > 0 && (
+                    <Badge variant="destructive" className="absolute -top-1 -right-2 h-5 w-5 justify-center rounded-full p-0">
+                      {totalUnreadCount}
+                    </Badge>
+                  )}
                   <span className="[writing-mode:vertical-rl] rotate-180 font-bold tracking-wider">CHAT</span>
                 </Button>
               </TooltipTrigger>
@@ -92,3 +115,5 @@ export function CollapsibleChat() {
     </div>
   );
 }
+
+    
