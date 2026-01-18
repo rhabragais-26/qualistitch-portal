@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react"
@@ -1192,31 +1191,20 @@ export function LeadForm({
                             <div className="flex items-center justify-center gap-2">
                                 <Button
                                     type="button"
-                                    variant="outline"
                                     size="icon"
-                                    className="h-6 w-6"
+                                    className="h-6 w-6 bg-red-600 hover:bg-red-700 text-white"
                                     onClick={() => handleStagedOrderQuantityChange(index, -1)}
                                     disabled={isReadOnly}
                                 >
                                     <Minus className="h-3 w-3" />
                                 </Button>
-                                <Input
-                                    type="number"
-                                    value={order.quantity}
-                                    onChange={(e) => {
-                                        const newQuantity = parseInt(e.target.value, 10) || 1;
-                                        const newOrders = [...stagedOrders];
-                                        newOrders[index].quantity = newQuantity;
-                                        setStagedOrders(newOrders);
-                                    }}
-                                    className="w-14 h-8 text-center"
-                                    readOnly={isReadOnly}
-                                />
+                                <div className="w-14 h-8 flex items-center justify-center font-bold text-base border rounded-md">
+                                    {order.quantity}
+                                </div>
                                 <Button
                                     type="button"
-                                    variant="outline"
                                     size="icon"
-                                    className="h-6 w-6"
+                                    className="h-6 w-6 bg-green-600 hover:bg-green-700 text-white"
                                     onClick={() => handleStagedOrderQuantityChange(index, 1)}
                                     disabled={isReadOnly}
                                 >
