@@ -144,6 +144,30 @@
       -ms-overflow-style: none;  /* IE and Edge */
       scrollbar-width: none;  /* Firefox */
   }
+
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(-10vh) rotateZ(0deg) rotateY(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(110vh) rotateZ(720deg) rotateY(360deg);
+      opacity: 0;
+    }
+  }
+  
+  .confetti-container {
+    overflow: hidden;
+  }
+  
+  .confetti-piece {
+    position: absolute;
+    top: -10%;
+    width: 10px;
+    height: 20px;
+    opacity: 0;
+    animation: confetti-fall 5s linear;
+  }
 }
 
 @media print {
@@ -174,3 +198,5 @@
     fill: #000 !important;
   }
 }
+
+    

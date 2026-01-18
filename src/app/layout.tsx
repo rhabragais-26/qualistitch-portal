@@ -3,6 +3,7 @@ import {Toaster} from '@/components/ui/toaster';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase';
 import { CollapsibleChat } from '@/components/collapsible-chat';
+import { RealtimeConfetti } from '@/components/realtime-confetti';
 
 export const metadata: Metadata = {
   title: 'Qualistitch Inc.',
@@ -26,6 +27,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background h-full">
         <FirebaseClientProvider>
+          <RealtimeConfetti />
           <div className="flex-1 flex flex-col">
             {children}
           </div>
@@ -36,3 +38,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    
