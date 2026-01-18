@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { collection, query, orderBy, addDoc, serverTimestamp, setDoc, doc } from 'firebase/firestore';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Send, ArrowLeft } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -32,6 +32,7 @@ export function ChatLayout() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [message, setMessage] = useState('');
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('nickname', 'asc')) : null, [firestore]);
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
@@ -53,8 +54,16 @@ export function ChatLayout() {
     }
   }, [messages]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (messageInputRef.current) {
+      messageInputRef.current.style.height = 'auto';
+      const scrollHeight = messageInputRef.current.scrollHeight;
+      const maxHeight = 120; // max height of ~6 lines
+      messageInputRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+    }
+  }, [message]);
+
+  const sendMessage = async () => {
     if (!message.trim() || !user || !channelId || !firestore || !selectedUser) return;
 
     const channelRef = doc(firestore, 'direct_messages', channelId);
@@ -78,6 +87,18 @@ export function ChatLayout() {
       setMessage('');
     } catch (error) {
       console.error("Error sending message:", error);
+    }
+  };
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
     }
   };
 
@@ -190,7 +211,7 @@ export function ChatLayout() {
                         : "bg-black/10 text-black"
                     )}
                     >
-                    <p className="text-sm">{msg.text}</p>
+                    <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                     </div>
                 </div>
                 ))
@@ -202,15 +223,18 @@ export function ChatLayout() {
             </div>
         </ScrollArea>
         <div className="p-4 border-t">
-            <form onSubmit={handleSendMessage} className="relative flex items-center">
-              <Input
+            <form onSubmit={handleSendMessage} className="relative flex items-end">
+              <Textarea
+                  ref={messageInputRef}
+                  rows={1}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder="Type a message..."
                   autoComplete="off"
-                  className="pr-12"
+                  className="pr-12 resize-none"
               />
-              <Button type="submit" size="icon" disabled={!message.trim()} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 bg-transparent hover:bg-black/10 text-black">
+              <Button type="submit" size="icon" disabled={!message.trim()} className="absolute right-2 bottom-2 h-8 w-8 bg-transparent hover:bg-black/10 text-black">
                   <Send className="h-5 w-5" />
               </Button>
             </form>
