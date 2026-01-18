@@ -96,10 +96,10 @@ export function ChatLayout() {
 
   if (!selectedUser) {
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full" style={{ backgroundColor: '#81cdc6' }}>
             <div className="p-4 border-b flex justify-between items-center">
                 <h2 className="text-xl font-bold">Chats</h2>
-                <p className="text-xs text-gray-500 max-w-sm text-left pl-5">
+                <p className="text-xs text-black/70 max-w-sm text-left pl-5">
                     This chat function is only intended for Follow Ups, Reminders and Order-related transactions. Do not use this for non-work related stuffs. (press <span className="font-bold">ESC</span> to close)
                 </p>
             </div>
@@ -114,7 +114,7 @@ export function ChatLayout() {
                     <li key={u.uid}>
                     <button
                         className={cn(
-                        "w-full text-left p-4 flex items-center gap-4 hover:bg-gray-100",
+                        "w-full text-left p-4 flex items-center gap-4 hover:bg-black/10",
                         )}
                         onClick={() => setSelectedUser(u)}
                     >
@@ -129,7 +129,7 @@ export function ChatLayout() {
                         </div>
                         <div className="flex flex-col items-start">
                             <span className="font-medium">{u.nickname}</span>
-                            {u.position && <span className="text-xs text-gray-500">({u.position})</span>}
+                            {u.position && <span className="text-xs text-black/70">({u.position})</span>}
                         </div>
                     </button>
                     </li>
@@ -142,7 +142,7 @@ export function ChatLayout() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" style={{ backgroundColor: '#81cdc6' }}>
         <div className="p-4 border-b flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedUser(null)}>
                 <ArrowLeft className="h-5 w-5" />
@@ -158,10 +158,10 @@ export function ChatLayout() {
             </div>
             <div className="flex flex-col items-start">
             <h2 className="text-lg font-bold leading-tight">{selectedUser.nickname}</h2>
-            {selectedUser.position && <span className="text-xs text-gray-500">({selectedUser.position})</span>}
+            {selectedUser.position && <span className="text-xs text-black/70">({selectedUser.position})</span>}
             </div>
         </div>
-        <ScrollArea className="flex-1 p-4 bg-gray-50" ref={chatContainerRef}>
+        <ScrollArea className="flex-1 p-4" ref={chatContainerRef}>
             <div className="space-y-4">
             {messagesLoading && !messages ? (
                 <div className="flex justify-center items-center h-full">
@@ -180,8 +180,8 @@ export function ChatLayout() {
                     className={cn(
                         "max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2",
                         msg.senderId === user?.uid
-                        ? "bg-blue-100 text-black"
-                        : "bg-gray-200 text-black"
+                        ? "bg-white text-black"
+                        : "bg-black/10 text-black"
                     )}
                     >
                     <p className="text-sm">{msg.text}</p>
@@ -190,12 +190,12 @@ export function ChatLayout() {
                 ))
             ) : (
                 <div className="flex justify-center items-center h-full">
-                    <p className="text-gray-500">No messages yet. Start the conversation!</p>
+                    <p className="text-black/70">No messages yet. Start the conversation!</p>
                 </div>
             )}
             </div>
         </ScrollArea>
-        <div className="p-4 border-t bg-white">
+        <div className="p-4 border-t">
             <form onSubmit={handleSendMessage} className="flex items-center gap-4">
             <Input
                 value={message}
