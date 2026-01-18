@@ -210,7 +210,7 @@
           } else {
             const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
             const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
-            const newJoNum = maxJoNumber + 1;
+            const newJoNum = Math.max(maxJoNumber + 1, 10000);
             setJoNumber(`QSBP-${currentYear}-${newJoNum.toString().padStart(5, '0')}`);
           }
         }
@@ -313,7 +313,7 @@
         if (!newJoNumber) {
             const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
             const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
-            newJoNumber = maxJoNumber + 1;
+            newJoNumber = Math.max(maxJoNumber + 1, 10000);
         }
 
         const layoutsToSave = (lead.layouts || []).filter(hasLayoutContent);
