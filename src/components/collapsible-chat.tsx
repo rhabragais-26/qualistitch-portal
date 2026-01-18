@@ -45,7 +45,7 @@ export function CollapsibleChat() {
   }
 
   return (
-    <div className="fixed z-50 bottom-4 left-4 no-print">
+    <div className="fixed z-50 bottom-4 left-0 no-print">
       <div
         className={cn(
           "relative transition-all duration-300 ease-in-out",
