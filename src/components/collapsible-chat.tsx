@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChatLayout } from '@/components/chat-layout';
-import { ChevronsLeft, MessageSquare } from 'lucide-react';
+import { ChevronsLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useUser } from '@/firebase';
@@ -12,6 +12,7 @@ export function CollapsibleChat() {
   const { user, isUserLoading } = useUser();
   const [isMounted, setIsMounted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isContentVisible, setIsContentVisible] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -29,38 +30,84 @@ export function CollapsibleChat() {
     };
   }, []);
 
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isExpanded) {
+      setIsContentVisible(true);
+    } else {
+      timer = setTimeout(() => setIsContentVisible(false), 300); // Matches duration-300
+    }
+    return () => clearTimeout(timer);
+  }, [isExpanded]);
+
+
   if (!isMounted || isUserLoading || !user || user.isAnonymous) {
     return null;
   }
 
   return (
-    <div className={cn(
-        "fixed z-50 transition-all duration-300 ease-in-out flex flex-col no-print",
-        isExpanded 
-            ? "w-96 h-[70vh] max-h-[500px] bg-card text-card-foreground border rounded-t-lg shadow-xl bottom-1 left-1" 
-            : "w-auto bottom-12 left-0"
-      )}>
-      <div className={cn("overflow-hidden rounded-t-lg", isExpanded ? "flex-1" : "h-0")}>
-        {isExpanded && <ChatLayout />}
+    <div className="fixed z-50 bottom-4 left-4 no-print">
+      <div
+        className={cn(
+          "relative transition-all duration-300 ease-in-out",
+          isExpanded ? "w-96 h-[70vh] max-h-[500px]" : "w-9 h-24"
+        )}
+      >
+        {/* Chat Window */}
+        <div
+          className={cn(
+            "absolute inset-0 bg-card text-card-foreground border rounded-lg shadow-xl flex flex-col transition-opacity duration-300",
+            isExpanded ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+        >
+          <div className="absolute top-2 right-2 z-10">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                      variant="ghost"
+                      onClick={() => setIsExpanded(false)}
+                      className="h-8 w-8 p-1 rounded-full bg-transparent text-black hover:bg-black/10"
+                  >
+                      <ChevronsLeft className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Close Chat</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <div className="flex-1 overflow-hidden mt-10">
+            {isContentVisible && <ChatLayout />}
+          </div>
+        </div>
+
+        {/* CHAT Button */}
+        <div
+          className={cn(
+            "absolute inset-0 transition-opacity duration-300",
+            !isExpanded ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+        >
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsExpanded(true)}
+                  className="h-24 w-9 p-1 rounded-l-none rounded-r-lg bg-[#81cdc6] text-white hover:bg-[#81cdc6] hover:text-white flex items-center justify-center"
+                >
+                  <span className="[writing-mode:vertical-rl] rotate-180 font-bold tracking-wider">CHAT</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Open Chat</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
-      {!isExpanded && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-               <Button
-                variant="ghost"
-                onClick={() => setIsExpanded(true)}
-                className="h-24 w-9 p-1 rounded-l-none rounded-r-lg bg-[#81cdc6] text-white hover:bg-[#81cdc6] hover:text-white flex items-center justify-center"
-              >
-                <span className="[writing-mode:vertical-rl] rotate-180 font-bold tracking-wider">CHAT</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>Open Chat</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
     </div>
   );
 }
