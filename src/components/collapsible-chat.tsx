@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -36,7 +37,7 @@ export function CollapsibleChat() {
             <Button
               variant="ghost"
               onClick={() => setIsExpanded(!isExpanded)}
-              className={cn(isExpanded ? "w-full border-t" : "h-10 w-10 p-0 rounded-full bg-amber-500/80 text-white hover:bg-amber-500")}
+              className={cn(isExpanded ? "w-full border-t" : "h-10 w-10 p-0 rounded-full bg-amber-500/50 text-white hover:bg-amber-500")}
             >
               {isExpanded ? <ChevronsLeft className="h-5 w-5" /> : <MessageSquare className="h-5 w-5" />}
             </Button>
