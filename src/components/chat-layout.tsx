@@ -46,8 +46,8 @@ export function ChatLayout() {
   const firestore = useFirestore();
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [message, setMessage] = useState('');
-  const chatContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('nickname', 'asc')) : null, [firestore]);
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
@@ -67,9 +67,7 @@ export function ChatLayout() {
   const { data: messages, isLoading: messagesLoading } = useCollection<ChatMessage>(messagesQuery);
   
   useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
@@ -275,7 +273,7 @@ export function ChatLayout() {
                 <span className="text-black/70">{isOnline(selectedUser.lastSeen) ? "Active" : "Inactive"}</span>
             </div>
         </div>
-        <ScrollArea className="flex-1 p-4" ref={chatContainerRef}>
+        <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
             {messagesLoading && !messages ? (
                 <div className="flex justify-center items-center h-full">
@@ -317,6 +315,7 @@ export function ChatLayout() {
                     <p className="text-black/70">No messages yet. Start the conversation!</p>
                 </div>
             )}
+            <div ref={messagesEndRef} />
             </div>
         </ScrollArea>
         <div className="p-4 border-t">
