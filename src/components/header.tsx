@@ -189,147 +189,141 @@ const HeaderMemo = React.memo(function Header({
           </div>
           <nav className="flex items-end gap-2 h-full flex-1">
             {isClient && (
-              <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment']))}>
-                    <TrendingUp className="mr-2" />
-                    Sales
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleNavigation('/new-order')}>
-                    <PlusSquare className="mr-2" />
-                    New Order
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigation('/records')}>
-                    <Database className="mr-2" />
-                    View Orders
-                  </DropdownMenuItem>
-                   <DropdownMenuItem onClick={() => handleNavigation('/job-order')}>
-                    <ClipboardList className="mr-2" />
-                    Job Order
-                  </DropdownMenuItem>
-                   <DropdownMenuItem onClick={() => handleNavigation('/sales/audit-for-shipment')}>
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center">
-                        <FileCheck className="mr-2" />
-                        <span>Audit for Shipment</span>
+              <>
+                <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment']))}>
+                      <TrendingUp className="mr-2" />
+                      Sales
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleNavigation('/new-order')}>
+                      <PlusSquare className="mr-2" />
+                      New Order
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/records')}>
+                      <Database className="mr-2" />
+                      View Orders
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/job-order')}>
+                      <ClipboardList className="mr-2" />
+                      Job Order
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/sales/audit-for-shipment')}>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          <FileCheck className="mr-2" />
+                          <span>Audit for Shipment</span>
+                        </div>
+                        {auditQueueCount > 0 && (
+                          <Badge variant="destructive" className="h-4 w-4 shrink-0 justify-center rounded-full p-0 ml-2">
+                            {auditQueueCount}
+                          </Badge>
+                        )}
                       </div>
-                      {auditQueueCount > 0 && (
-                        <Badge variant="destructive" className="h-4 w-4 shrink-0 justify-center rounded-full p-0 ml-2">
-                          {auditQueueCount}
-                        </Badge>
-                      )}
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigation('/reports')}>
-                    <LineChart className="mr-2" />
-                    Reports
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            {isClient && (
-              <DropdownMenu open={openMenu === 'digitizing'} onOpenChange={(isOpen) => handleMenuOpenChange('digitizing', isOpen)}>
-                <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports', '/digitizing/program-files-database']))}>
-                      <ScanLine className="mr-2" />
-                      Digitizing
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleNavigation('/digitizing/programming-queue')}>
-                    <ClipboardList className="mr-2" />
-                    Programming Queue
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigation('/digitizing/program-files-database')}>
-                    <FolderKanban className="mr-2" />
-                    Program Files Database
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigation('/digitizing/reports')}>
-                    <LineChart className="mr-2" />
-                    Reports
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            {isClient && (
-              <DropdownMenu open={openMenu === 'inventory'} onOpenChange={(isOpen) => handleMenuOpenChange('inventory', isOpen)}>
-                <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/inventory/add-items', '/inventory/item-preparation-for-production', '/inventory/summary', '/inventory/reports', '/inventory/operational-cases']))}>
-                      <Boxes className="mr-2" />
-                      Inventory
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleNavigation('/inventory/add-items')}>
-                    <PlusSquare className="mr-2" />
-                    Add Items
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigation('/inventory/item-preparation-for-production')}>
-                    <Package className="mr-2" />
-                    Item Preparation
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigation('/inventory/summary')}>
-                    <Database className="mr-2" />
-                    Summary
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigation('/inventory/reports')}>
-                    <LineChart className="mr-2" />
-                    Reports
-                  </DropdownMenuItem>
-                   <DropdownMenuItem onClick={() => handleNavigation('/inventory/operational-cases')}>
-                    <TriangleAlert className="mr-2" />
-                    Operational Cases
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            {isClient && (
-              <DropdownMenu open={openMenu === 'production'} onOpenChange={(isOpen) => handleMenuOpenChange('production', isOpen)}>
-                <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/production/production-queue']))}>
-                      <Cog className="mr-2" />
-                      Production
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleNavigation('/production/production-queue')}>
-                    <ClipboardList className="mr-2" />
-                    Production Queue
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            {isClient && (
-              <DropdownMenu open={openMenu === 'logistics'} onOpenChange={(isOpen) => handleMenuOpenChange('logistics', isOpen)}>
-                <DropdownMenuTrigger asChild>
-                   <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/logistics/shipment-queue', '/logistics/summary']))}>
-                      <Truck className="mr-2" />
-                      Logistics
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleNavigation('/logistics/shipment-queue')}>
-                        <PackageSearch className="mr-2" />
-                        Shipment Queue
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigation('/logistics/summary')}>
-                        <FileText className="mr-2" />
-                        Summary
+                    <DropdownMenuItem onClick={() => handleNavigation('/reports')}>
+                      <LineChart className="mr-2" />
+                      Reports
                     </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu open={openMenu === 'digitizing'} onOpenChange={(isOpen) => handleMenuOpenChange('digitizing', isOpen)}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports', '/digitizing/program-files-database']))}>
+                        <ScanLine className="mr-2" />
+                        Digitizing
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleNavigation('/digitizing/programming-queue')}>
+                      <ClipboardList className="mr-2" />
+                      Programming Queue
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/digitizing/program-files-database')}>
+                      <FolderKanban className="mr-2" />
+                      Program Files Database
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/digitizing/reports')}>
+                      <LineChart className="mr-2" />
+                      Reports
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu open={openMenu === 'inventory'} onOpenChange={(isOpen) => handleMenuOpenChange('inventory', isOpen)}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/inventory/add-items', '/inventory/item-preparation-for-production', '/inventory/summary', '/inventory/reports', '/inventory/operational-cases']))}>
+                        <Boxes className="mr-2" />
+                        Inventory
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleNavigation('/inventory/add-items')}>
+                      <PlusSquare className="mr-2" />
+                      Add Items
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/inventory/item-preparation-for-production')}>
+                      <Package className="mr-2" />
+                      Item Preparation
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/inventory/summary')}>
+                      <Database className="mr-2" />
+                      Summary
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/inventory/reports')}>
+                      <LineChart className="mr-2" />
+                      Reports
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/inventory/operational-cases')}>
+                      <TriangleAlert className="mr-2" />
+                      Operational Cases
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu open={openMenu === 'production'} onOpenChange={(isOpen) => handleMenuOpenChange('production', isOpen)}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/production/production-queue']))}>
+                        <Cog className="mr-2" />
+                        Production
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleNavigation('/production/production-queue')}>
+                      <ClipboardList className="mr-2" />
+                      Production Queue
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu open={openMenu === 'logistics'} onOpenChange={(isOpen) => handleMenuOpenChange('logistics', isOpen)}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/logistics/shipment-queue', '/logistics/summary']))}>
+                        <Truck className="mr-2" />
+                        Logistics
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleNavigation('/logistics/shipment-queue')}>
+                          <PackageSearch className="mr-2" />
+                          Shipment Queue
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleNavigation('/logistics/summary')}>
+                          <FileText className="mr-2" />
+                          Summary
+                      </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/order-status']))}>
+                  <ListOrdered className="mr-2" />
+                  Overall Order Status
+                </Button>
+              </>
             )}
-            <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/order-status']))}>
-              <ListOrdered className="mr-2" />
-              Overall Order Status
-            </Button>
           </nav>
            <div className="ml-auto flex items-center gap-4">
               {user && userProfile && (
