@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChatLayout } from '@/components/chat-layout';
-import { MessageSquare, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
@@ -19,24 +19,24 @@ export function CollapsibleChat() {
         {isExpanded ? (
           <ChatLayout />
         ) : (
-          <div className="flex flex-col items-center justify-center h-full py-4">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" onClick={() => setIsExpanded(true)} className="w-full h-16">
-                    <MessageSquare className="h-6 w-6" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right"><p>Open Chat</p></TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+          null
         )}
       </div>
       <div className="p-2 border-t mt-auto">
-        <Button variant="ghost" onClick={() => setIsExpanded(!isExpanded)} className="w-full">
-          {isExpanded ? <ChevronsLeft className="h-5 w-5" /> : <ChevronsRight className="h-5 w-5" />}
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" onClick={() => setIsExpanded(!isExpanded)} className="w-full">
+                {isExpanded ? <ChevronsLeft className="h-5 w-5" /> : <ChevronsRight className="h-5 w-5" />}
+              </Button>
+            </TooltipTrigger>
+            {!isExpanded && (
+              <TooltipContent side="right">
+                <p>Open Chat</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );
