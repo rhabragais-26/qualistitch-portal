@@ -225,6 +225,7 @@ type LeadFormProps = {
   initialLeadData?: (LeadType & { orderNumber: number; totalCustomerQuantity: number; }) | null;
   onDirtyChange?: (isDirty: boolean) => void;
   resetFormTrigger?: number;
+  isReadOnly?: boolean;
 };
 
 export function LeadForm({ 
@@ -234,7 +235,8 @@ export function LeadForm({
   isEditing = false,
   initialLeadData = null,
   onDirtyChange,
-  resetFormTrigger
+  resetFormTrigger,
+  isReadOnly
 }: LeadFormProps) {
   const {toast} = useToast();
   const [dateString, setDateString] = useState('');
@@ -691,6 +693,17 @@ export function LeadForm({
     );
   };
   
+  const handleStagedOrderQuantityChange = (index: number, change: number) => {
+    setStagedOrders(currentOrders => {
+        const newOrders = [...currentOrders];
+        const newQuantity = (newOrders[index].quantity || 0) + change;
+        if (newQuantity >= 1) {
+            newOrders[index] = { ...newOrders[index], quantity: newQuantity };
+        }
+        return newOrders;
+    });
+  };
+
   const handleSaveStatus = (status: 'New' | 'Repeat', count: number, totalQty: number) => {
     setManualStatus(status);
     if (status === 'Repeat') {
@@ -722,7 +735,7 @@ export function LeadForm({
   };
 
   return (
-    <>
+    <fieldset disabled={isReadOnly} className="space-y-4">
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black">
       <CardHeader className='space-y-0 pb-2'>
         <div className="flex justify-between items-start">
@@ -1033,7 +1046,7 @@ export function LeadForm({
                 <h3 className="text-lg font-medium text-black">Orders</h3>
                 <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button type="button" variant="outline"><PlusCircle className="mr-2 h-4 w-4" />Add Order</Button>
+                    <Button type="button" variant="outline" disabled={isReadOnly}><PlusCircle className="mr-2 h-4 w-4" />Add Order</Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
@@ -1160,13 +1173,14 @@ export function LeadForm({
                       <TableHead className="py-2 px-4 text-black">Color</TableHead>
                       <TableHead className="py-2 px-4 text-black">Size</TableHead>
                       <TableHead className="py-2 px-4 text-black text-center">Qty</TableHead>
+                      <TableHead className="py-2 px-4 text-black text-center">Remaining</TableHead>
                       <TableHead className="text-right py-1 px-2 text-black pr-8">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {stagedOrders.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="py-4 px-4 text-center text-muted-foreground">No orders added yet.</TableCell>
+                        <TableCell colSpan={6} className="py-4 px-4 text-center text-muted-foreground">No orders added yet.</TableCell>
                       </TableRow>
                     ) : (
                       stagedOrders.map((order, index) => (
@@ -1174,14 +1188,50 @@ export function LeadForm({
                           <TableCell className="py-2 px-4 text-black">{order.productType}</TableCell>
                           <TableCell className="py-2 px-4 text-black">{order.color}</TableCell>
                           <TableCell className="py-2 px-4 text-black">{order.size}</TableCell>
-                          <TableCell className="py-2 px-4 text-black text-center">{order.quantity}</TableCell>
+                          <TableCell className="py-2 px-4 text-black">
+                            <div className="flex items-center justify-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => handleStagedOrderQuantityChange(index, -1)}
+                                    disabled={isReadOnly}
+                                >
+                                    <Minus className="h-3 w-3" />
+                                </Button>
+                                <Input
+                                    type="number"
+                                    value={order.quantity}
+                                    onChange={(e) => {
+                                        const newQuantity = parseInt(e.target.value, 10) || 1;
+                                        const newOrders = [...stagedOrders];
+                                        newOrders[index].quantity = newQuantity;
+                                        setStagedOrders(newOrders);
+                                    }}
+                                    className="w-14 h-8 text-center"
+                                    readOnly={isReadOnly}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => handleStagedOrderQuantityChange(index, 1)}
+                                    disabled={isReadOnly}
+                                >
+                                    <Plus className="h-3 w-3" />
+                                </Button>
+                            </div>
+                          </TableCell>
+                           <TableCell className="py-2 px-4 text-black text-center">{getRemainingStock(order)}</TableCell>
                           <TableCell className="py-2 px-4 text-right">
-                             <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleEditOrder(order, index)}>
+                             <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleEditOrder(order, index)} disabled={isReadOnly}>
                                 <Edit className="h-4 w-4" />
                             </Button>
                              <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-red-100" disabled={isReadOnly}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                                 </AlertDialogTrigger>
@@ -1224,7 +1274,7 @@ export function LeadForm({
         onClose={() => setEditingOrder(null)}
         />
     )}
-    </>
+    </fieldset>
   );
 }
 
