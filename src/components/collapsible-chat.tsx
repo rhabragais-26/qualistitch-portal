@@ -46,12 +46,12 @@ export function CollapsibleChat() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
+               <Button
                 variant="ghost"
                 onClick={() => setIsExpanded(true)}
-                className="h-9 w-9 p-1.5 rounded-full bg-amber-500/50 text-white hover:bg-amber-500"
+                className="h-24 w-9 p-1 rounded-r-lg bg-amber-500/50 text-white hover:bg-amber-500 flex items-center justify-center"
               >
-                <MessageSquare className="h-6 w-6 text-white" />
+                <span className="[writing-mode:vertical-rl] rotate-180 font-bold tracking-wider">CHAT</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
