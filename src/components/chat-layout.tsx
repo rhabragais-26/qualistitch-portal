@@ -220,7 +220,7 @@ export function ChatLayout() {
                         </div>
                         <div className="flex-grow overflow-hidden">
                             <div className="flex items-baseline gap-2">
-                                <span className="font-medium">{u.nickname}</span>
+                                <span className="font-bold">{u.nickname}</span>
                                 {u.position && <span className="text-xs text-black/70">({u.position})</span>}
                             </div>
                             <Separator className="my-1 bg-gray-300" />
