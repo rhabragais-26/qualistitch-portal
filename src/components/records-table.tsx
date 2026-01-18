@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
@@ -419,7 +418,7 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
   }
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
+    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
@@ -512,12 +511,14 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
                                     </TableRow>
                                     ))}
                                 </TableBody>
-                                <TableFooter>
-                                    <TableRow>
-                                    <TableCell colSpan={3} className="text-right font-bold text-black py-1 px-2">Total Quantity</TableCell>
-                                    <TableCell className="font-bold text-black text-center py-1 px-2">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
-                                    </TableRow>
-                                </TableFooter>
+                                {lead.orders && lead.orders.length > 1 && (
+                                  <TableFooter>
+                                      <TableRow>
+                                      <TableCell colSpan={3} className="text-right font-bold text-black pt-1 px-2">Total Quantity</TableCell>
+                                      <TableCell className="font-bold text-black text-center pt-1 px-2">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
+                                      </TableRow>
+                                  </TableFooter>
+                                )}
                                 </Table>
                             </div>
                             </TableCell>
