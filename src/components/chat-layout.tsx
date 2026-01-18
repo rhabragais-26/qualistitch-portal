@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -52,7 +53,7 @@ export function ChatLayout() {
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('nickname', 'asc')) : null, [firestore]);
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
-  const channelsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'direct_messages')) : null, [firestore]);
+  const channelsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'direct_messages'), orderBy('lastMessage.timestamp', 'desc')) : null, [firestore]);
   const { data: channels } = useCollection<DirectMessageChannel>(channelsQuery);
 
   const channelId = useMemo(() => {
@@ -331,7 +332,7 @@ export function ChatLayout() {
                                     "max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2",
                                     msg.senderId === user?.uid
                                     ? "bg-primary text-primary-foreground"
-                                    : "bg-white text-black"
+                                    : "bg-amber-400 text-black"
                                 )}
                             >
                                 <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
