@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChatLayout } from '@/components/chat-layout';
-import { ChevronsLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useUser } from '@/firebase';
@@ -56,29 +55,11 @@ export function CollapsibleChat() {
         {/* Chat Window */}
         <div
           className={cn(
-            "absolute inset-0 bg-card text-card-foreground border rounded-lg shadow-xl flex flex-col transition-opacity duration-300",
-            isExpanded ? "opacity-100" : "opacity-0 pointer-events-none"
+            "absolute inset-0 bg-card text-card-foreground border rounded-lg shadow-xl flex flex-col transition-all duration-300 ease-in-out",
+            isExpanded ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
           )}
         >
-          <div className="absolute top-2 right-2 z-10">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                      variant="ghost"
-                      onClick={() => setIsExpanded(false)}
-                      className="h-8 w-8 p-1 rounded-full bg-transparent text-black hover:bg-black/10"
-                  >
-                      <ChevronsLeft className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Close Chat</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <div className="flex-1 overflow-hidden mt-10">
+          <div className="flex-1 overflow-hidden">
             {isContentVisible && <ChatLayout />}
           </div>
         </div>
