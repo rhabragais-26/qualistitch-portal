@@ -23,7 +23,7 @@ export function CollapsibleChat() {
     <div className={cn(
         "fixed z-50 transition-all duration-300 ease-in-out flex flex-col no-print",
         isExpanded 
-            ? "w-96 h-[70vh] max-h-[500px] bg-card text-card-foreground border-t border-r rounded-tr-lg shadow-xl" 
+            ? "w-96 h-[70vh] max-h-[500px] bg-card text-card-foreground border rounded-tr-lg shadow-xl" 
             : "w-auto h-auto",
         isExpanded ? "bottom-0 left-0" : "bottom-[2px] left-[2px]"
       )}>
