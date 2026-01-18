@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -45,17 +44,30 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
   isReadOnly?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const currentAddOns = addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 };
-  const [localAddOns, setLocalAddOns] = useState<AddOns>(currentAddOns);
+  const [localAddOns, setLocalAddOns] = useState<AddOns>({ backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 });
 
   useEffect(() => {
     if (isOpen) {
-      setLocalAddOns(addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 });
+      setLocalAddOns({ backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 });
     }
-  }, [isOpen, addOns, groupKey]);
+  }, [isOpen]);
 
   const handleSave = () => {
-    setAddOns(prev => ({ ...prev, [groupKey]: localAddOns }));
+    setAddOns(prev => {
+      const existingAddOns = prev[groupKey] || { backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 };
+      
+      const newAddOns: AddOns = {
+        backLogo: existingAddOns.backLogo + localAddOns.backLogo,
+        names: existingAddOns.names + localAddOns.names,
+        plusSize: existingAddOns.plusSize + localAddOns.plusSize,
+        programFeeLogo: localAddOns.programFeeLogo > 0 ? localAddOns.programFeeLogo : existingAddOns.programFeeLogo,
+        programFeeBackText: localAddOns.programFeeBackText > 0 ? localAddOns.programFeeBackText : existingAddOns.programFeeBackText,
+        rushFee: localAddOns.rushFee > 0 ? localAddOns.rushFee : existingAddOns.rushFee,
+        shippingFee: localAddOns.shippingFee > 0 ? localAddOns.shippingFee : existingAddOns.shippingFee,
+      };
+
+      return { ...prev, [groupKey]: newAddOns };
+    });
     setIsOpen(false);
   };
 
