@@ -143,7 +143,7 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="you@example.com" {...field} />
+                <Input placeholder="yourname@example.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

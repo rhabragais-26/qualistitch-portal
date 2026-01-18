@@ -136,7 +136,7 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="you@example.com" {...field} />
+                <Input placeholder="yourname@example.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -189,7 +189,7 @@ export function LoginForm() {
                         <Label htmlFor="reset-email" className="sr-only">Email</Label>
                         <Input
                             id="reset-email"
-                            placeholder="you@example.com"
+                            placeholder="yourname@example.com"
                             value={resetEmail}
                             onChange={(e) => setResetEmail(e.target.value)}
                             type="email"
