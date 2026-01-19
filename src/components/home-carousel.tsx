@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -36,6 +37,10 @@ export function HomeCarousel() {
   useEffect(() => {
     if (!app || isAuthLoading || !user) {
         // Wait until firebase app and user are fully loaded
+        if (!isAuthLoading && !user) {
+          setError("You must be logged in to view images.");
+          setIsLoading(false);
+        }
         return;
     };
     const storage = getStorage(app);
@@ -56,21 +61,41 @@ export function HomeCarousel() {
               allImageRefs.map(itemRef => getDownloadURL(itemRef))
           );
 
-          const urls = results
-              .filter(result => {
-                  if (result.status === 'rejected') {
-                      console.warn(`Failed to get download URL:`, result.reason);
-                      return false;
-                  }
-                  return true;
-              })
-              .map(result => (result as PromiseFulfilledResult<string>).value);
+          const successfulUrls: string[] = [];
+          const failedReasons: any[] = [];
+
+          results.forEach(result => {
+              if (result.status === 'fulfilled') {
+                  successfulUrls.push(result.value);
+              } else {
+                  console.error('Failed to get download URL:', result.reason);
+                  failedReasons.push(result.reason);
+              }
+          });
           
-          setImageUrls(urls);
+          setImageUrls(successfulUrls);
+
+          if (failedReasons.length > 0) {
+              const firstError = failedReasons[0];
+              let errorMessage = `Failed to load ${failedReasons.length} of ${allImageRefs.length} images.`;
+              
+              if (firstError.code === 'storage/object-not-found') {
+                  errorMessage += " Reason: The 'Carousel' folder or images within it could not be found. Please check that the folder name is capitalized correctly and contains your images.";
+              } else if (firstError.code === 'storage/unauthorized') {
+                  errorMessage += " Reason: You are not authorized to view these images. Please check your Firebase Storage security rules.";
+              } else {
+                  errorMessage += ` First error: ${firstError.message}`;
+              }
+              setError(errorMessage);
+          }
 
       } catch (e: any) {
           console.error("Error fetching carousel images:", e);
-          setError(e.message || "An unknown error occurred while fetching images.");
+          if (e.code === 'storage/object-not-found') {
+            setError("The 'Carousel' folder could not be found in your Firebase Storage. Please ensure it exists at the root of your storage bucket.");
+          } else {
+            setError(e.message || "An unknown error occurred while fetching images.");
+          }
       } finally {
           setIsLoading(false);
       }
@@ -81,7 +106,7 @@ export function HomeCarousel() {
 
   if (isLoading || isAuthLoading) {
     return (
-      <div className="w-full h-full">
+      <div className="w-full max-w-4xl mx-auto aspect-[4/5]">
         <div className="p-1 h-full">
           <Card className="h-full">
             <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg h-full">
@@ -96,15 +121,15 @@ export function HomeCarousel() {
   if (error) {
     return (
         <div className="w-full h-full flex items-center justify-center bg-destructive/10 rounded-lg p-4">
-            <p className="text-center text-destructive font-medium">Error loading images: {error}</p>
+            <p className="text-center text-destructive font-medium">{error}</p>
         </div>
     );
   }
 
   if (imageUrls.length === 0) {
     return (
-        <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-            <p className="text-muted-foreground">No images found in 'Carousel' storage folder.</p>
+        <div className="w-full max-w-4xl mx-auto aspect-[4/5] flex items-center justify-center bg-gray-100 rounded-lg">
+            <p className="text-muted-foreground">No images found in the 'Carousel' storage folder.</p>
         </div>
     );
   }
