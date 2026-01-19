@@ -383,6 +383,7 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
         title: "Lead Deleted!",
         description: "The lead has been removed from the records.",
       });
+      refetchLeads();
     } catch (e: any) {
       console.error("Error deleting lead: ", e);
       toast({
@@ -391,7 +392,7 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
         description: e.message || "Could not delete the lead.",
       });
     }
-  }, [firestore, toast]);
+  }, [firestore, toast, refetchLeads]);
 
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
@@ -541,3 +542,4 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
     </Card>
   );
 }
+
