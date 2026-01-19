@@ -26,7 +26,7 @@ const CongratulationsPopup = ({ isClosing, onClose }: { isClosing: boolean, onCl
         <div 
             className={cn(
                 "relative w-full max-w-sm rounded-2xl bg-gradient-to-br from-purple-600 via-red-500 to-orange-400 p-8 text-white text-center shadow-2xl m-4 animate-in fade-in zoom-in-75",
-                isClosing && "animate-out fade-out zoom-out-95"
+                isClosing && "animate-out fade-out-50 zoom-out-95"
             )}
             style={{ animationDuration: `${FADE_OUT_DURATION}ms` }}
             onClick={(e) => e.stopPropagation()}
@@ -74,34 +74,57 @@ export function RealtimeConfetti() {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [lastTimestamp, setLastTimestamp] = useState<string | null>(null);
-  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const timers = useRef<{ main?: NodeJS.Timeout, animation?: NodeJS.Timeout }>({});
 
-  const handleClose = () => {
-    if (isClosing || !isVisible) return;
+  // Centralized function to handle closing the popup
+  const closePopup = () => {
+    // Prevent multiple triggers
+    if (isClosingRef.current || !isVisibleRef.current) return;
+
+    // Clear any existing timers to avoid conflicts
+    clearTimeout(timers.current.main);
+    clearTimeout(timers.current.animation);
+
     setIsClosing(true);
-    closeTimerRef.current = setTimeout(() => {
+    timers.current.animation = setTimeout(() => {
         setIsVisible(false);
         setIsClosing(false);
     }, FADE_OUT_DURATION);
   };
+  
+  // Refs to hold current state for access in callbacks without dependency issues
+  const isVisibleRef = useRef(isVisible);
+  const isClosingRef = useRef(isClosing);
+  useEffect(() => {
+    isVisibleRef.current = isVisible;
+    isClosingRef.current = isClosing;
+  }, [isVisible, isClosing]);
 
   useEffect(() => {
+    // Effect to show the popup based on Firestore data
     if (appState?.showConfetti && appState.confettiTimestamp && appState.confettiTimestamp !== lastTimestamp) {
-      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+      
+      // Clear any lingering timers from previous events
+      clearTimeout(timers.current.main);
+      clearTimeout(timers.current.animation);
+      
       setLastTimestamp(appState.confettiTimestamp);
       setIsVisible(true);
       setIsClosing(false);
       
-      const timer = setTimeout(handleClose, CONFETTI_DURATION);
-
-      return () => {
-        clearTimeout(timer);
-        if(closeTimerRef.current) {
-            clearTimeout(closeTimerRef.current);
-        }
-      };
+      // Set new timer to auto-close the popup
+      timers.current.main = setTimeout(closePopup, CONFETTI_DURATION);
     }
+    
+    // Cleanup function runs on unmount or when dependencies change
+    return () => {
+      clearTimeout(timers.current.main);
+      clearTimeout(timers.current.animation);
+    };
+  // `closePopup` is defined outside and stable, so not needed as a dependency
   }, [appState, lastTimestamp]);
+
 
   if (!isVisible) {
     return null;
@@ -110,7 +133,7 @@ export function RealtimeConfetti() {
   return (
     <>
       <LocalConfetti />
-      <CongratulationsPopup isClosing={isClosing} onClose={handleClose} />
+      <CongratulationsPopup isClosing={isClosing} onClose={closePopup} />
     </>
   );
 }
