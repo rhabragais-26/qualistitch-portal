@@ -37,7 +37,7 @@ const CongratulationsPopup = ({ isClosing, onClose }: { isClosing: boolean, onCl
 
             <h3 className="text-5xl font-bold">Congratulations, Cathy!</h3>
             <h2 className="text-2xl text-white/80 mb-8">
-                Amazing work for hitting <strong>100 items</strong> in a single day. Cheers!
+                Amazing work for hitting <strong>100 items</strong> with a total of <strong>85,000.00</strong> in a single day. Cheers!
             </h2>
         </div>
     </div>
