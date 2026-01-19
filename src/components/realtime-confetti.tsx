@@ -47,9 +47,9 @@ const CongratulationsPopup = ({ isClosing, onClose, nickname, message, photoURL 
                     <Image
                         src={photoURL}
                         alt={nickname || 'Profile Picture'}
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 rounded-lg"
+                        width={100}
+                        height={100}
+                        className="w-[100px] h-[100px] rounded-lg border-4 border-yellow-300 animate-zoom-in-out"
                     />
                 </div>
             )}
