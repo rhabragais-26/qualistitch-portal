@@ -7,7 +7,6 @@ import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 
 const CONFETTI_DURATION = 5000;
 
@@ -29,11 +28,18 @@ const LocalConfetti = () => (
     </div>
 );
 
+const CongratulationsWindow = () => (
+  <div className="fixed inset-0 z-[201] flex items-center justify-center pointer-events-none">
+    <div className="bg-black/70 text-white p-8 rounded-lg shadow-2xl animate-in fade-in zoom-in-50">
+      <h2 className="text-4xl font-bold tracking-widest animate-pulse">CONGRATULATIONS</h2>
+    </div>
+  </div>
+);
+
 
 export default function AdminUsersPage() {
   const { user, isAdmin, isUserLoading } = useUser();
   const router = useRouter();
-  const { toast } = useToast();
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
@@ -44,10 +50,6 @@ export default function AdminUsersPage() {
 
   const handleTestConfetti = () => {
     setShowConfetti(true);
-    toast({
-      title: "Confetti!",
-      description: "Enjoy the animation!",
-    });
     setTimeout(() => {
       setShowConfetti(false);
     }, CONFETTI_DURATION);
@@ -60,6 +62,7 @@ export default function AdminUsersPage() {
   return (
     <>
       {showConfetti && <LocalConfetti />}
+      {showConfetti && <CongratulationsWindow />}
       <Header>
         <div className="p-4 sm:p-6 lg:p-8">
           <AdminUsersTable />
