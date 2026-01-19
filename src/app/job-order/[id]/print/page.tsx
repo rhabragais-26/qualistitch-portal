@@ -69,8 +69,7 @@ type Lead = {
 };
 
 export default function JobOrderPrintPage() {
-  const params = useParams();
-  const id = params.id;
+  const { id } = useParams() as { id: string };
   const firestore = useFirestore();
   const [lead, setLead] = useState<Lead | null>(null);
   const [scesPhotoURL, setScesPhotoURL] = useState<string | null>(null);

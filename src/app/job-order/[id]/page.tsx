@@ -88,8 +88,7 @@
 
 
     export default function JobOrderPage() {
-      const params = useParams();
-      const id = params.id;
+      const { id } = useParams() as { id: string };
       const firestore = useFirestore();
       const { toast } = useToast();
       const router = useRouter();

@@ -1,9 +1,8 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { getStorage, ref, listAll, getDownloadURL, type StorageReference } from 'firebase/storage';
-import { useFirebaseApp, useUser } from '@/firebase';
+import { useFirebaseApp, useUser } from '@/firebase'; // Assuming '@/firebase' provides useFirebaseApp and useUser
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -38,7 +37,9 @@ export function HomeCarousel() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Only proceed if Firebase app is initialized and user is loaded
+    // Only proceed if Firebase app is initialized and user loading is complete.
+    // Fetching is allowed even if the user is not authenticated (user is null)
+    // because Storage rules should grant public read for the Carousel path.
     if (!app || isUserLoading) {
       return;
     }
@@ -110,8 +111,14 @@ export function HomeCarousel() {
   // Render Skeleton while loading
   if (isLoading || isUserLoading) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
-        <Skeleton className="h-full w-full" />
+      <div className="w-full max-w-4xl mx-auto aspect-[3/4]">
+        <div className="p-1 h-full">
+          <Card className="h-full">
+            <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg h-full">
+              <Skeleton className="h-full w-full" />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -128,7 +135,7 @@ export function HomeCarousel() {
   // Render message if no images were found (after successful fetch, but empty)
   if (imageUrls.length === 0) {
     return (
-        <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+        <div className="w-full max-w-4xl mx-auto aspect-[3/4] flex items-center justify-center bg-gray-100 rounded-lg">
             <p className="text-muted-foreground">No images found in the 'Carousel' storage folder.</p>
         </div>
     );
@@ -136,7 +143,8 @@ export function HomeCarousel() {
 
   return (
     <Carousel
-      className="w-auto h-full"
+      // MODIFIED: Changed height to be responsive to viewport height
+      className="w-full h-[75vh]" // Use a percentage of viewport height, e.g., 75%
       plugins={[Autoplay({ delay: 3000, stopOnInteraction: true })]}
       opts={{ loop: true }}
     >
@@ -145,13 +153,14 @@ export function HomeCarousel() {
           <CarouselItem key={index} className="h-full">
             <div className="p-1 h-full">
               <Card className="h-full">
-                <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg h-full">
+                {/* Ensure CardContent has a height, using aspect ratio based on your images */}
+                <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg aspect-[3/4]">
                   <Image
                     src={url}
                     alt={`Carousel image ${index + 1}`}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-contain"
+                    className="object-contain" // Ensures the whole image is visible within the container
                     priority={index === 0}
                   />
                 </CardContent>
