@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -12,7 +11,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { format, isToday, isThisWeek, differenceInMinutes } from 'date-fns';
-import { Separator } from './ui/separator';
 
 interface UserProfile {
   uid: string;
@@ -207,7 +205,7 @@ export function ChatLayout() {
 
   if (!selectedUser) {
     return (
-        <div className="flex flex-col h-full rounded-t-lg" style={{ backgroundColor: '#e6fafa' }}>
+        <div className="flex flex-col h-full rounded-t-lg overflow-hidden" style={{ backgroundColor: '#e6fafa' }}>
             <div className="p-4 border-b flex justify-between items-center rounded-t-lg" style={{ backgroundColor: '#d9f7f2' }}>
                 <h2 className="text-xl font-bold">Chats</h2>
                 <p className="text-xs text-black/70 max-w-sm text-left pl-5">
@@ -233,7 +231,7 @@ export function ChatLayout() {
                     <li key={u.uid}>
                     <button
                         className={cn(
-                        "w-full text-left py-2 px-4 flex items-center gap-4 hover:bg-black/10",
+                        "w-full text-left py-2 px-4 flex items-center gap-4 hover:bg-black/10 border-b border-black/5",
                         )}
                         onClick={() => setSelectedUser(u)}
                     >
