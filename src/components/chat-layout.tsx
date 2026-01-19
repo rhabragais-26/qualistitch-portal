@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -206,7 +207,7 @@ export function ChatLayout() {
 
   if (!selectedUser) {
     return (
-        <div className="flex flex-col h-full" style={{ backgroundColor: '#e6fafa' }}>
+        <div className="flex flex-col h-full rounded-t-lg" style={{ backgroundColor: '#e6fafa' }}>
             <div className="p-4 border-b flex justify-between items-center rounded-t-lg" style={{ backgroundColor: '#d9f7f2' }}>
                 <h2 className="text-xl font-bold">Chats</h2>
                 <p className="text-xs text-black/70 max-w-sm text-left pl-5">
@@ -280,7 +281,7 @@ export function ChatLayout() {
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: '#e6fafa' }}>
+    <div className="flex flex-col h-full rounded-t-lg" style={{ backgroundColor: '#e6fafa' }}>
         <div className="p-4 border-b flex items-center gap-4 rounded-t-lg" style={{ backgroundColor: '#d9f7f2' }}>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedUser(null)}>
                 <ArrowLeft className="h-5 w-5" />
