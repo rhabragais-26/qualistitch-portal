@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -101,7 +100,7 @@ export function HomeCarousel() {
 
   if (isLoading || isUserLoading) {
     return (
-      <div className="w-full max-w-md mx-auto">
+      <div className="w-full max-w-2xl mx-auto">
         <div className="p-1">
           <Card className="aspect-[3/4]">
             <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg h-full">
@@ -123,7 +122,7 @@ export function HomeCarousel() {
 
   if (imageUrls.length === 0) {
     return (
-        <div className="w-full max-w-md mx-auto aspect-[3/4] flex items-center justify-center bg-gray-100 rounded-lg">
+        <div className="w-full max-w-2xl mx-auto aspect-[3/4] flex items-center justify-center bg-gray-100 rounded-lg">
             <p className="text-muted-foreground">No images found in the 'Carousel' storage folder.</p>
         </div>
     );
@@ -131,7 +130,7 @@ export function HomeCarousel() {
 
   return (
     <Carousel
-      className="w-full max-w-md"
+      className="w-full max-w-2xl"
       plugins={[Autoplay({ delay: 3000, stopOnInteraction: true })]}
       opts={{ loop: true }}
     >
@@ -145,7 +144,7 @@ export function HomeCarousel() {
                     src={url}
                     alt={`Carousel image ${index + 1}`}
                     fill
-                    sizes="(max-width: 768px) 100vw, 448px"
+                    sizes="(max-width: 768px) 100vw, 672px"
                     className="object-contain"
                     priority={index === 0}
                   />
