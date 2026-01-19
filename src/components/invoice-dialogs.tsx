@@ -182,14 +182,13 @@ export const DiscountDialog = React.memo(function DiscountDialog({ groupKey, dis
 
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
-    const numericValue = parseFloat(rawValue.replace(/[^0-9.]/g, ''));
-    if (!isNaN(numericValue)) {
-      setLocalDiscount(prev => ({ ...prev, value: numericValue }));
-      setInputValue(rawValue);
-    } else {
-      setLocalDiscount(prev => ({ ...prev, value: 0 }));
-      setInputValue('');
-    }
+    const sanitizedValue = rawValue.replace(/[^0-9.]/g, '');
+
+    const parts = sanitizedValue.split('.');
+    if (parts.length > 2) return;
+
+    setInputValue(sanitizedValue);
+    setLocalDiscount(prev => ({ ...prev, value: parseFloat(sanitizedValue) || 0 }));
   };
 
   return (
@@ -299,16 +298,22 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   }, [paymentType, grandTotal, isOpen, hasPayments]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/[^d.]/g, ''); // Allow dots for decimals
-    const numericValue = parseFloat(rawValue);
+    const rawValue = e.target.value;
+    // Allow only numbers and one decimal point. Remove any other characters.
+    const sanitizedValue = rawValue.replace(/[^0-9.]/g, '');
 
-    if (!isNaN(numericValue)) {
-      setAmount(numericValue);
-      setFormattedAmount(new Intl.NumberFormat('en-PH').format(numericValue));
-    } else {
-      setAmount(0);
-      setFormattedAmount('');
+    // To prevent entering multiple decimal points.
+    const parts = sanitizedValue.split('.');
+    if (parts.length > 2) {
+      // Re-join the first two parts to form a valid number string.
+      const validValue = `${parts[0]}.${parts.slice(1).join('')}`;
+      setFormattedAmount(validValue);
+      setAmount(parseFloat(validValue) || 0);
+      return;
     }
+
+    setFormattedAmount(sanitizedValue);
+    setAmount(parseFloat(sanitizedValue) || 0);
   };
   
   const handleSave = () => {

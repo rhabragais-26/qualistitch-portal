@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react"
@@ -80,7 +79,7 @@ import { Textarea } from './ui/textarea';
 import { EditOrderDialog } from './edit-order-dialog';
 import type { Lead as LeadType } from './records-table';
 import { getTierLabel } from '@/lib/pricing';
-import { toTitleCase } from "@/lib/utils";
+import { toTitleCase, formatCurrency } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -288,20 +287,15 @@ export function LeadForm({
     }
   }, [resetFormTrigger, reset, isEditing, setStagedOrders]);
 
-
-  const formatCurrency = (value: number) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
-
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/[^d.]/g, '');
-    const numericValue = parseFloat(rawValue);
-
-    if (!isNaN(numericValue)) {
-      setPricePerPatch(numericValue);
-      setFormattedPrice(rawValue);
-    } else {
-      setPricePerPatch(0);
-      setFormattedPrice('');
+    const value = e.target.value;
+    const sanitizedValue = value.replace(/[^0-9.]/g, '');
+    const parts = sanitizedValue.split('.');
+    if (parts.length > 2) {
+      return;
     }
+    setFormattedPrice(sanitizedValue);
+    setPricePerPatch(parseFloat(sanitizedValue) || 0);
   };
 
   const handlePriceBlur = () => {
