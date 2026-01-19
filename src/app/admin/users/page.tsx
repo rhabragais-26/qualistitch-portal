@@ -11,7 +11,7 @@ import { PartyPopper, X } from 'lucide-react';
 const CONFETTI_DURATION = 5000;
 
 const LocalConfetti = () => (
-    <div className="fixed inset-0 z-[200] pointer-events-none confetti-container">
+    <div className="fixed inset-0 z-[202] pointer-events-none confetti-container">
       {Array.from({ length: 150 }).map((_, i) => (
         <div
           key={i}
