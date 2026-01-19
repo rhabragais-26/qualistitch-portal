@@ -35,10 +35,10 @@ const CongratulationsPopup = ({ isClosing, onClose }: { isClosing: boolean, onCl
                 <PartyPopper className="h-24 w-24 text-yellow-300 animate-popper-pop" />
             </div>
             
-            <h4 className="text-5xl font-bold mb-4">Congratulations, Cathy!</h4>
-            <h1 className="text-sm text-white/80 mb-8">
+            <h3 className="text-5xl font-bold mb-4">Congratulations, Cathy!</h3>
+            <h2 className="text-sm text-white/80 mb-8">
                 Amazing work for hitting <strong>100 items</strong> in a single day. Cheers!
-            </h1>
+            </h2>
         </div>
     </div>
 );
@@ -77,6 +77,9 @@ export function RealtimeConfetti() {
   const closePopup = useCallback(() => {
     if (!isClosing) {
       setIsClosing(true);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
       timerRef.current = setTimeout(() => {
         setIsVisible(false);
         setIsClosing(false);
