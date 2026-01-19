@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -38,6 +37,7 @@ export function HomeCarousel() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Only proceed if Firebase app is initialized and user is loaded
     if (!app || isUserLoading) {
       return;
     }
@@ -45,9 +45,10 @@ export function HomeCarousel() {
     const storage = getStorage(app);
     const fetchImages = async () => {
       setIsLoading(true);
-      setError(null);
+      setError(null); // Clear previous errors
       try {
           const carouselRef = ref(storage, 'Carousel');
+          // Use listAllRecursive to find images in 'Carousel' and its subfolders
           const allImageRefs = await listAllRecursive(carouselRef);
           
           if (allImageRefs.length === 0) {
@@ -56,6 +57,7 @@ export function HomeCarousel() {
               return;
           }
 
+          // Fetch all download URLs concurrently
           const results = await Promise.allSettled(
               allImageRefs.map(itemRef => getDownloadURL(itemRef))
           );
@@ -74,6 +76,7 @@ export function HomeCarousel() {
           
           setImageUrls(successfulUrls);
 
+          // Handle any errors encountered during URL fetching
           if (failedReasons.length > 0) {
               const firstError = failedReasons[0];
               let errorMessage = `Failed to load ${failedReasons.length} of ${allImageRefs.length} images.`;
@@ -81,7 +84,7 @@ export function HomeCarousel() {
               if (firstError.code === 'storage/object-not-found') {
                   errorMessage += " Reason: The 'Carousel' folder or images within it could not be found. Please check that the folder name is capitalized correctly and contains your images.";
               } else if (firstError.code === 'storage/unauthorized') {
-                  errorMessage += " Reason: You are not authorized to view these images. Please ensure your Firebase Storage security rules for the 'Carousel' path are correctly configured for public read access, especially if images are in subfolders.";
+                  errorMessage += " Reason: You are not authorized to view these images. Please ensure your Firebase Storage security rules for the 'Carousel' path are correctly configured for public read access.";
               } else {
                   errorMessage += ` First error: ${firstError.message}`;
               }
@@ -103,9 +106,10 @@ export function HomeCarousel() {
     fetchImages();
   }, [app, isUserLoading]);
 
+  // Render Skeleton while loading
   if (isLoading || isUserLoading) {
     return (
-      <div className="w-full max-w-4xl mx-auto aspect-[3/4]">
+      <div className="w-full max-w-4xl mx-auto h-[80vh]">
         <div className="p-1 h-full">
           <Card className="h-full">
             <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg h-full">
@@ -117,6 +121,7 @@ export function HomeCarousel() {
     );
   }
   
+  // Render error message if there was a problem fetching images
   if (error) {
     return (
         <div className="w-full h-full flex items-center justify-center bg-destructive/10 rounded-lg p-4">
@@ -125,10 +130,10 @@ export function HomeCarousel() {
     );
   }
 
-  // Display message if no images were found after successful fetching
+  // Render message if no images were found (after successful fetch, but empty)
   if (imageUrls.length === 0) {
     return (
-        <div className="w-full max-w-4xl mx-auto aspect-[3/4] flex items-center justify-center bg-gray-100 rounded-lg">
+        <div className="w-full max-w-4xl mx-auto h-[80vh] flex items-center justify-center bg-gray-100 rounded-lg">
             <p className="text-muted-foreground">No images found in the 'Carousel' storage folder.</p>
         </div>
     );
@@ -136,7 +141,7 @@ export function HomeCarousel() {
 
   return (
     <Carousel
-      className="w-full max-w-4xl mx-auto aspect-[3/4]"
+      className="w-full max-w-4xl h-[80vh]"
       plugins={[Autoplay({ delay: 3000, stopOnInteraction: true })]}
       opts={{ loop: true }}
     >
