@@ -36,7 +36,7 @@ const CongratulationsPopup = ({ isClosing, onClose }: { isClosing: boolean, onCl
             </div>
             
             <h3 className="text-5xl font-bold mb-4">Congratulations, Cathy!</h3>
-            <h2 className="text-lg text-white/80 mb-8">
+            <h2 className="text-2xl text-white/80 mb-8">
                 Amazing work for hitting <strong>100 items</strong> in a single day. Cheers!
             </h2>
         </div>
@@ -91,11 +91,11 @@ export function RealtimeConfetti() {
     if (appState?.showConfetti && appState.confettiTimestamp && appState.confettiTimestamp !== lastTimestamp) {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
+        setIsClosing(false); // Reset closing state if a new confetti event comes in
       }
       
       setLastTimestamp(appState.confettiTimestamp);
       setIsVisible(true);
-      setIsClosing(false);
       
       timerRef.current = setTimeout(closePopup, CONFETTI_DURATION);
     }
