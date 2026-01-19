@@ -48,6 +48,11 @@ export function CollapsibleChat() {
   }, []);
 
   useEffect(() => {
+    // When the user logs in or out, ensure the chat is collapsed.
+    setIsExpanded(false);
+  }, [user?.uid]);
+
+  useEffect(() => {
     let timer: NodeJS.Timeout;
     if (isExpanded) {
       setIsContentVisible(true);
@@ -115,5 +120,3 @@ export function CollapsibleChat() {
     </div>
   );
 }
-
-    
