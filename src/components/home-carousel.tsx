@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { getStorage, ref, listAll, getDownloadURL, type StorageReference } from 'firebase/storage';
-import { useFirebaseApp, useUser } from '@/firebase';
+import { useFirebaseApp, useUser } from '@/firebase'; // Assuming '@/firebase' provides useFirebaseApp and useUser
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -16,33 +16,32 @@ import {
 import Autoplay from 'embla-carousel-autoplay';
 import { Skeleton } from './ui/skeleton';
 
-// Helper function to recursively list all files
+// Helper function to recursively list all files in a storage reference,
+// including those within subfolders.
 async function listAllRecursive(storageRef: StorageReference): Promise<StorageReference[]> {
     const res = await listAll(storageRef);
-    const files = res.items;
+    const files = res.items; // Files directly in the current folder
 
+    // Recursively list files in subfolders (prefixes)
     const promises = res.prefixes.map(folderRef => listAllRecursive(folderRef));
     const subfolderFiles = await Promise.all(promises);
 
+    // Concatenate all files found
     return files.concat(...subfolderFiles);
 }
 
 export function HomeCarousel() {
   const app = useFirebaseApp();
-  const { user, isUserLoading: isAuthLoading } = useUser();
+  const { user, isUserLoading } = useUser();
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!app || isAuthLoading || !user) {
-        // Wait until firebase app and user are fully loaded
-        if (!isAuthLoading && !user) {
-          setError("You must be logged in to view images.");
-          setIsLoading(false);
-        }
-        return;
-    };
+    if (!app || isUserLoading) {
+      return;
+    }
+
     const storage = getStorage(app);
     const fetchImages = async () => {
       setIsLoading(true);
@@ -82,7 +81,7 @@ export function HomeCarousel() {
               if (firstError.code === 'storage/object-not-found') {
                   errorMessage += " Reason: The 'Carousel' folder or images within it could not be found. Please check that the folder name is capitalized correctly and contains your images.";
               } else if (firstError.code === 'storage/unauthorized') {
-                  errorMessage += " Reason: You are not authorized to view these images. Please check your Firebase Storage security rules.";
+                  errorMessage += " Reason: You are not authorized to view these images. Please ensure your Firebase Storage security rules for the 'Carousel' path are correctly configured for public read access, especially if images are in subfolders.";
               } else {
                   errorMessage += ` First error: ${firstError.message}`;
               }
@@ -99,14 +98,14 @@ export function HomeCarousel() {
       } finally {
           setIsLoading(false);
       }
-  };
+    };
 
     fetchImages();
-  }, [app, isAuthLoading, user]);
+  }, [app, isUserLoading]);
 
-  if (isLoading || isAuthLoading) {
+  if (isLoading || isUserLoading) {
     return (
-      <div className="w-full max-w-4xl mx-auto aspect-[4/5]">
+      <div className="w-full max-w-4xl mx-auto aspect-[3/4]">
         <div className="p-1 h-full">
           <Card className="h-full">
             <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg h-full">
@@ -126,9 +125,10 @@ export function HomeCarousel() {
     );
   }
 
+  // Display message if no images were found after successful fetching
   if (imageUrls.length === 0) {
     return (
-        <div className="w-full max-w-4xl mx-auto aspect-[4/5] flex items-center justify-center bg-gray-100 rounded-lg">
+        <div className="w-full max-w-4xl mx-auto aspect-[3/4] flex items-center justify-center bg-gray-100 rounded-lg">
             <p className="text-muted-foreground">No images found in the 'Carousel' storage folder.</p>
         </div>
     );
@@ -136,7 +136,7 @@ export function HomeCarousel() {
 
   return (
     <Carousel
-      className="w-full h-full"
+      className="w-full max-w-4xl mx-auto aspect-[3/4]"
       plugins={[Autoplay({ delay: 3000, stopOnInteraction: true })]}
       opts={{ loop: true }}
     >

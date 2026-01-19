@@ -1,0 +1,9 @@
+[
+    {
+      "origin": ["https://6000-firebase-backup0115v4-1768477711817.cluster-yylgzpipxrar4v4a72liastuqy.cloudworkstations.dev"],
+      "method": ["GET", "OPTIONS"],
+      "responseHeader": ["Content-Type", "Firebase-Storage-Resumable-Upload-Protocol", "X-Firebase-Auth-Token"],
+      "maxAgeSeconds": 3600
+    }
+  ]
+  

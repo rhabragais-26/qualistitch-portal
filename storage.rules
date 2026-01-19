@@ -1,10 +1,37 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow read access to the Carousel folder for any authenticated user.
-    match /Carousel/{allPaths=**} {
+
+    // Allow anyone to read images in the 'Carousel' folder.
+    // This assumes your carousel images are directly under 'Carousel/{imageId}'.
+    match /Carousel/{imageId} {
+      allow read: if true; // Allows public read access
+    }
+
+    // For sizeCharts:
+    // Authenticated users can read and write files in this path.
+    match /sizeCharts/{tab}/{fileName} {
       allow read, write: if request.auth != null;
+    }
+
+    // For job-order PDF files:
+    // Only authenticated users can download (read) these files.
+    // The '{fileName}' wildcard captures the entire filename (e.g., "8e4b009b-54cc-4d3d-9f1e-6806756b8bd9.pdf").
+    // We then use 'fileName.endsWith(".pdf")' to ensure it's a PDF file.
+    match /job-orders/{fileName} {
+      allow read: if request.auth != null && fileName.endsWith(".pdf");
+      // No write permission for job-order PDFs by default via client-side.
+      // These are usually generated server-side or by specific processes.
+      allow write: if false; // Deny direct client-side writes to this path
+    }
+
+    // Default rule for all other paths:
+    // Only authenticated users can read files.
+    // Writing to any other path is explicitly denied by default for security.
+    // Note: The 'Carousel' rule above overrides this for '/Carousel/{imageId}'.
+    match /{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if false; // Deny all other writes by default
     }
   }
 }
