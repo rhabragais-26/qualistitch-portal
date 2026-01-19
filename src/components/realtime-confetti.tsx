@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -15,24 +16,24 @@ type AppState = {
   congratsPhotoURL?: string;
 };
 
-const CONFETTI_DURATION = 7000; // 7 seconds in ms
+const CONFETTI_DURATION = 7000;
 const FADE_OUT_DURATION = 500; // CSS animation duration
 
 const CongratulationsPopup = ({ isClosing, onClose, nickname, message, photoURL }: { isClosing: boolean, onClose: () => void, nickname?: string, message?: string, photoURL?: string }) => (
     <div
         className={cn(
-            "fixed inset-0 z-[201] flex items-center justify-center bg-black/50 animate-in fade-in",
-            isClosing && "animate-out fade-out"
+            "fixed inset-0 z-[201] flex items-center justify-center bg-black/50",
+            isClosing ? "animate-out fade-out" : "animate-in fade-in"
         )}
         style={{ animationDuration: `${FADE_OUT_DURATION}ms` }}
         onClick={onClose}
     >
         <div
             className={cn(
-                "relative w-full max-w-md rounded-2xl bg-gradient-to-br from-purple-600 via-red-500 to-orange-400 p-8 text-white text-center shadow-2xl m-4 animate-in fade-in zoom-in-75",
-                 isClosing && "animate-out fade-out-50 zoom-out-95"
+                "relative w-full max-w-md rounded-2xl bg-gradient-to-br from-purple-600 via-red-500 to-orange-400 p-8 text-white text-center shadow-2xl m-4",
+                isClosing ? "animate-out fade-out-50 zoom-out-95" : "animate-popup-zoom-in"
             )}
-            style={{ animationDuration: `${FADE_OUT_DURATION}ms` }}
+            style={{ animationDuration: isClosing ? `${FADE_OUT_DURATION}ms` : undefined }}
             onClick={(e) => e.stopPropagation()}
         >
             <div className="flex justify-center mb-6">
