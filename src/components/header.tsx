@@ -180,7 +180,7 @@ const HeaderMemo = React.memo(function Header({
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex items-center">
             <Link href="/new-order" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/new-order'); }}>
-              <span className={cn("font-bold font-headline flex items-baseline shining-metal from-amber-200 via-yellow-400 to-amber-200 shining-text whitespace-nowrap")}>
+              <span className={cn("font-bold font-headline flex items-baseline bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-200 bg-clip-text text-transparent shining-metal whitespace-nowrap")}>
                 <span className="text-3xl">Q</span>
                 <span className="text-2xl">UALISTITCH Inc.</span>
               </span>
