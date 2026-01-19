@@ -20,29 +20,29 @@ async function listAllRecursive(storageRef: StorageReference): Promise<StorageRe
     return files.concat(...subfolderFiles);
 }
 
-const slideTransition = {
+const morphTransition = {
   type: "spring",
-  stiffness: 400,
+  stiffness: 250,
   damping: 40,
-  bounce: 0.2
 };
 
-const slideVariants = {
+const morphVariants = {
   enter: (direction: number) => ({
     x: direction > 0 ? '100%' : '-100%',
     opacity: 0,
+    scale: 0.9,
   }),
   center: {
     zIndex: 1,
     x: 0,
     opacity: 1,
+    scale: 1,
   },
   exit: (direction: number) => ({
     zIndex: 0,
     x: direction < 0 ? '100%' : '-100%',
     opacity: 0,
-    scale: 0.95,
-    transition: { duration: 0.3 }
+    scale: 0.9,
   }),
 };
 
@@ -181,11 +181,11 @@ export function HomeCarousel() {
               <motion.div
                   key={page}
                   custom={direction}
-                  variants={slideVariants}
+                  variants={morphVariants}
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  transition={slideTransition}
+                  transition={morphTransition}
                   className="absolute inset-0 flex items-center justify-center gap-4"
               >
                   {imageUrls.length > 1 ? (
