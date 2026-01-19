@@ -324,7 +324,7 @@ const HeaderMemo = React.memo(function Header({
               </>
             )}
           </nav>
-           <div className="ml-auto flex items-center gap-4">
+           <div className="ml-auto flex items-center">
               {user && userProfile && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
