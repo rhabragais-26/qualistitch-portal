@@ -3,18 +3,38 @@
 
 import { Header } from '@/components/header';
 import { AdminUsersTable } from '@/components/admin-users-table';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+
+const CONFETTI_DURATION = 5000;
+
+const LocalConfetti = () => (
+    <div className="fixed inset-0 z-[200] pointer-events-none confetti-container">
+      {Array.from({ length: 150 }).map((_, i) => (
+        <div
+          key={i}
+          className="confetti-piece"
+          style={{
+            left: `${Math.random() * 100}vw`,
+            animationDelay: `${Math.random() * (CONFETTI_DURATION / 1000 - 1)}s`,
+            animationDuration: `${2 + Math.random() * 3}s`,
+            backgroundColor: `hsl(${Math.random() * 360}, 90%, 65%)`,
+            transform: `rotate(${Math.random() * 360}deg)`,
+          }}
+        />
+      ))}
+    </div>
+);
+
 
 export default function AdminUsersPage() {
   const { user, isAdmin, isUserLoading } = useUser();
   const router = useRouter();
-  const firestore = useFirestore();
   const { toast } = useToast();
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     if (!isUserLoading && !isAdmin) {
@@ -22,33 +42,15 @@ export default function AdminUsersPage() {
     }
   }, [isUserLoading, isAdmin, router]);
 
-  const handleTestConfetti = async () => {
-    if (!firestore) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Firestore not available.",
-      });
-      return;
-    }
-    const appStateRef = doc(firestore, 'appState', 'global');
-    try {
-      await setDoc(appStateRef, {
-        showConfetti: true,
-        confettiTimestamp: new Date().toISOString(),
-      });
-      toast({
-        title: "Confetti!",
-        description: "The confetti animation should be visible to all users.",
-      });
-    } catch (error) {
-      console.error("Error triggering confetti:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not trigger confetti.",
-      });
-    }
+  const handleTestConfetti = () => {
+    setShowConfetti(true);
+    toast({
+      title: "Confetti!",
+      description: "Enjoy the animation!",
+    });
+    setTimeout(() => {
+      setShowConfetti(false);
+    }, CONFETTI_DURATION);
   };
 
   if (isUserLoading || !isAdmin) {
@@ -56,15 +58,16 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <Header>
-      <div className="p-4 sm:p-6 lg:p-8">
-        <AdminUsersTable />
-        <div className="mt-4 flex justify-center">
-            <Button onClick={handleTestConfetti}>Test</Button>
+    <>
+      {showConfetti && <LocalConfetti />}
+      <Header>
+        <div className="p-4 sm:p-6 lg:p-8">
+          <AdminUsersTable />
+          <div className="mt-4 flex justify-center">
+              <Button onClick={handleTestConfetti}>Test</Button>
+          </div>
         </div>
-      </div>
-    </Header>
+      </Header>
+    </>
   );
 }
-
-    
