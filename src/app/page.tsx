@@ -14,7 +14,7 @@ export default function RootPage() {
         if (userProfile?.position === 'Not Assigned') {
           router.replace('/pending-approval');
         } else {
-          router.replace('/new-order');
+          router.replace('/home');
         }
       } else {
         router.replace('/login');
