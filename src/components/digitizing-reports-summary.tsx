@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -45,7 +46,7 @@ export function DigitizingReportsSummary() {
   
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
   const [reportData, setReportData] = useState<GenerateDigitizingReportOutput | null>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);

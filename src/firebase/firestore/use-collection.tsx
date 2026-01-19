@@ -19,6 +19,10 @@ import { z, ZodError } from 'zod';
 /** Utility type to add an 'id' field to a given type T. */
 export type WithId<T> = T & { id: string };
 
+export interface UseCollectionOptions {
+  listen?: boolean;
+}
+
 /**
  * Interface for the return value of the useCollection hook.
  * @template T Type of the document data.
@@ -50,11 +54,13 @@ export interface InternalQuery extends Query<DocumentData> {
  * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} memoizedTargetRefOrQuery -
  * The Firestore CollectionReference or Query. Waits if null/undefined. MUST BE MEMOIZED.
  * @param {z.Schema<T>} schema - A Zod schema to validate the document data.
+ * @param {UseCollectionOptions} options - Options for the hook, e.g., { listen: false } for a one-time fetch.
  * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
  */
 export function useCollection<T = any>(
     memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & {__memo?: boolean})  | null | undefined,
-    schema?: z.Schema<T>
+    schema?: z.Schema<T>,
+    options: UseCollectionOptions = { listen: true }
 ): UseCollectionResult<T> {
   type ResultItemType = WithId<T>;
   type StateDataType = ResultItemType[] | null;
@@ -73,7 +79,7 @@ export function useCollection<T = any>(
         if (schema) {
           const validationResult = schema.safeParse(docData);
           if (!validationResult.success) {
-            throw new Error(`Validation failed for doc ${doc.id}: ${validationResult.error.message}`);
+            throw new ZodError(validationResult.error.issues);
           }
           return { ...(validationResult.data as T), id: doc.id };
         }
@@ -82,19 +88,23 @@ export function useCollection<T = any>(
       setData(results);
       setError(null);
     } catch (e: any) {
-      const path: string =
-        ref.type === 'collection'
-          ? (ref as CollectionReference).path
-          : (ref as unknown as InternalQuery)._query.path.canonicalString();
+      if (e instanceof ZodError) {
+         setError(e);
+      } else {
+        const path: string =
+          ref.type === 'collection'
+            ? (ref as CollectionReference).path
+            : (ref as unknown as InternalQuery)._query.path.canonicalString();
 
-      const contextualError = new FirestorePermissionError({
-        operation: 'list',
-        path,
-      });
+        const contextualError = new FirestorePermissionError({
+          operation: 'list',
+          path,
+        });
 
-      setError(contextualError);
+        setError(contextualError);
+        errorEmitter.emit('permission-error', contextualError);
+      }
       setData(null);
-      errorEmitter.emit('permission-error', contextualError);
     } finally {
       setIsLoading(false);
     }
@@ -117,6 +127,11 @@ export function useCollection<T = any>(
       return;
     }
 
+    if (options.listen === false) {
+        fetchData(memoizedTargetRefOrQuery);
+        return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -130,7 +145,7 @@ export function useCollection<T = any>(
               const validationResult = schema.safeParse(docData);
               if (!validationResult.success) {
                 // Throw a detailed error for a specific document
-                throw new Error(`Validation failed for doc ${doc.id}: ${validationResult.error.message}`);
+                throw new ZodError(validationResult.error.issues);
               }
               return { ...(validationResult.data as T), id: doc.id };
             }
@@ -139,7 +154,7 @@ export function useCollection<T = any>(
           setData(results);
           setError(null);
         } catch (e: any) {
-          setError(e instanceof Error ? e : new Error('An unknown validation error occurred.'));
+           setError(e instanceof Error ? e : new Error('An unknown validation error occurred.'));
         } finally {
           setIsLoading(false);
         }
@@ -164,7 +179,7 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery, isUserLoading, user, schema]);
+  }, [memoizedTargetRefOrQuery, isUserLoading, user, schema, options.listen, fetchData]);
   
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
     console.warn('The query/reference passed to useCollection was not memoized with useMemoFirebase. This can lead to performance issues.', memoizedTargetRefOrQuery);

@@ -65,7 +65,7 @@ export function useDoc<T = any>(
         if (schema) {
           const validationResult = schema.safeParse(docData);
           if (!validationResult.success) {
-            throw new Error(`Validation failed for doc ${docSnap.id}: ${validationResult.error.message}`);
+            throw new ZodError(validationResult.error.issues);
           }
           setData({ ...(validationResult.data as T), id: docSnap.id });
         } else {
@@ -75,13 +75,17 @@ export function useDoc<T = any>(
         setData(null);
       }
     } catch (e: any) {
-      const contextualError = new FirestorePermissionError({
-        operation: 'get',
-        path: ref.path,
-      });
-      setError(contextualError);
+       if (e instanceof ZodError) {
+         setError(e);
+       } else {
+        const contextualError = new FirestorePermissionError({
+            operation: 'get',
+            path: ref.path,
+        });
+        setError(contextualError);
+        errorEmitter.emit('permission-error', contextualError);
+       }
       setData(null);
-      errorEmitter.emit('permission-error', contextualError);
     } finally {
       setIsLoading(false);
     }
@@ -116,7 +120,7 @@ export function useDoc<T = any>(
                 if (schema) {
                   const validationResult = schema.safeParse(docData);
                   if (!validationResult.success) {
-                    throw new Error(`Validation failed for doc ${snapshot.id}: ${validationResult.error.message}`);
+                    throw new ZodError(validationResult.error.issues);
                   }
                   setData({ ...(validationResult.data as T), id: snapshot.id });
                 } else {

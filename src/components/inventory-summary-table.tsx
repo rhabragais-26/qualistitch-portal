@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -90,8 +91,8 @@ export function InventorySummaryTable() {
     return query(collection(firestore, 'leads'));
   }, [firestore, user]);
 
-  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
+  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const availableColors = React.useMemo(() => {
     if (productTypeFilter === 'All') {

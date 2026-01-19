@@ -111,7 +111,7 @@ export function JobOrderTable() {
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const salesRepresentatives = useMemo(() => {
     if (!leads) return [];

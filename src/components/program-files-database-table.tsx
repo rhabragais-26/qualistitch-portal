@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -62,7 +63,7 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
   const [imageInView, setImageInView] = useState<string | null>(null);
 
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'leads')) : null), [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;

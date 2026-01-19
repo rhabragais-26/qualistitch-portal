@@ -46,7 +46,7 @@ export default function NewOrderPage() {
   const canEdit = hasEditPermission(userProfile?.position as any, pathname);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: allLeads } = useCollection<LeadType>(leadsQuery);
+  const { data: allLeads } = useCollection<LeadType>(leadsQuery, undefined, { listen: false });
 
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -54,7 +55,7 @@ export function InventoryReportTable() {
     return query(collection(firestore, 'inventory'));
   }, [firestore, user]);
 
-  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery);
+  const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
 
   const reportData = React.useMemo(() => {
     if (!inventoryItems) return { headers: [], rows: [] };

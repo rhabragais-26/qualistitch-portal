@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useCollection, useFirestore } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -177,12 +177,12 @@ export function AdminUsersTable() {
   const [editedUsers, setEditedUsers] = useState<Record<string, Partial<UserProfile>>>({});
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
 
-  const usersQuery = useMemo(() => {
+  const usersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'users'));
   }, [firestore]);
 
-  const { data: users, isLoading, error, refetch } = useCollection<UserProfile>(usersQuery);
+  const { data: users, isLoading, error, refetch } = useCollection<UserProfile>(usersQuery, undefined, { listen: false });
 
   useEffect(() => {
     if (users) {
