@@ -57,15 +57,21 @@ export function HomeCarousel() {
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-4xl mx-auto h-full">
-        <Skeleton className="h-full w-full" />
+      <div className="w-full max-w-4xl mx-auto">
+        <div className="p-1">
+          <Card>
+            <CardContent className="relative flex aspect-[4/5] items-center justify-center p-0 overflow-hidden rounded-lg">
+              <Skeleton className="h-full w-full" />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   if (imageUrls.length === 0) {
     return (
-        <div className="w-full max-w-4xl mx-auto flex items-center justify-center h-[60vh] bg-gray-100 rounded-lg">
+        <div className="w-full max-w-4xl mx-auto flex items-center justify-center aspect-[4/5] bg-gray-100 rounded-lg">
             <p className="text-muted-foreground">No images found in carousel storage.</p>
         </div>
     );
@@ -82,7 +88,7 @@ export function HomeCarousel() {
           <CarouselItem key={index}>
             <div className="p-1">
               <Card>
-                <CardContent className="relative flex aspect-video items-center justify-center p-0 overflow-hidden rounded-lg">
+                <CardContent className="relative flex aspect-[4/5] items-center justify-center p-0 overflow-hidden rounded-lg">
                   <Image
                     src={url}
                     alt={`Carousel image ${index + 1}`}
