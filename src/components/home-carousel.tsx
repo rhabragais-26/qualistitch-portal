@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -154,12 +155,8 @@ export function HomeCarousel() {
   if (isLoading || isUserLoading) {
     return (
       <div className="w-full max-w-lg mx-auto">
-        <div className="p-1">
-          <Card className="aspect-[3/4]">
-            <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg h-full">
-              <Skeleton className="h-full w-full" />
-            </CardContent>
-          </Card>
+        <div className="relative aspect-[3/4] overflow-hidden rounded-lg">
+          <Skeleton className="h-full w-full" />
         </div>
       </div>
     );
@@ -196,25 +193,21 @@ export function HomeCarousel() {
               transition={slideTransition}
               className="absolute w-full h-full"
           >
-              <div className="p-1">
-                <Card>
-                  <CardContent className="relative aspect-[3/4] flex flex-col items-center justify-center p-0 overflow-hidden rounded-lg">
-                    <motion.div
-                      className="w-full h-full relative"
-                      variants={imageVariants}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <Image
-                          src={imageUrls[imageIndex]}
-                          alt={`Carousel image ${imageIndex + 1}`}
-                          fill
-                          sizes="(max-width: 768px) 100vw, 512px"
-                          className="object-contain"
-                          priority
-                      />
-                    </motion.div>
-                  </CardContent>
-                </Card>
+              <div className="relative aspect-[3/4] overflow-hidden rounded-lg">
+                <motion.div
+                  className="w-full h-full relative"
+                  variants={imageVariants}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Image
+                      src={imageUrls[imageIndex]}
+                      alt={`Carousel image ${imageIndex + 1}`}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 512px"
+                      className="object-contain"
+                      priority
+                  />
+                </motion.div>
               </div>
           </motion.div>
         </AnimatePresence>
