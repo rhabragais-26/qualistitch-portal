@@ -180,7 +180,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             companyName: formValuesToSave.companyName ? toTitleCase(formValuesToSave.companyName) : '-',
             contactNumber: formValuesToSave.mobileNo || '-',
             landlineNumber: formValuesToSave.landlineNo || '-',
-            location: formValuesToSave.isInternational ? formValuesToSave.internationalAddress : [formValuesToSave.houseStreet, formValuesToSave.barangay, formValuesToSave.city, formValuesToSave.province].filter((v): v is string => !!v).map(toTitleCase).join(', '),
+            location: formValuesToSave.isInternational ? formValuesToSave.internationalAddress : [[formValuesToSave.houseStreet, formValuesToSave.barangay].filter(v => !!v).map(toTitleCase).join(' '), [formValuesToSave.city, formValuesToSave.province].filter(v => !!v).map(toTitleCase).join(' ')].filter(p => !!p).join(', '),
             houseStreet: formValuesToSave.houseStreet ? toTitleCase(formValuesToSave.houseStreet) : '',
             barangay: formValuesToSave.barangay ? toTitleCase(formValuesToSave.barangay) : '', 
             city: formValuesToSave.city ? toTitleCase(formValuesToSave.city) : '',

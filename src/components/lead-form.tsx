@@ -372,6 +372,10 @@ export function LeadForm({
     onOrderTypeChange(orderTypeValue);
   }, [orderTypeValue, onOrderTypeChange]);
 
+  const part1 = [houseStreetValue, barangayValue].filter(Boolean).join(' ');
+  const part2 = [cityValue, provinceValue].filter(Boolean).join(' ');
+  const concatenatedAddress = [part1, part2].filter(Boolean).join(', ');
+
   useEffect(() => {
     if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
         setSelectedLead(null);
@@ -706,8 +710,6 @@ export function LeadForm({
     }
     setIsStatusDialogOpen(false);
   };
-
-  const concatenatedAddress = [houseStreetValue, barangayValue, cityValue, provinceValue].filter(Boolean).join(', ');
 
   const handleEditOrder = (order: Order, index: number) => {
     setEditingOrder({order, index});
