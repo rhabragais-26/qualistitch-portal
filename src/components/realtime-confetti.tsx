@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -5,18 +6,20 @@ import { useDoc, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@
 import { doc } from 'firebase/firestore';
 import { PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 type AppState = {
   showConfetti?: boolean;
   confettiTimestamp?: string;
   congratsNickname?: string;
   congratsMessage?: string;
+  congratsPhotoURL?: string;
 };
 
 const CONFETTI_DURATION = 5000; // 5 seconds in ms
 const FADE_OUT_DURATION = 500; // CSS animation duration
 
-const CongratulationsPopup = ({ isClosing, onClose, nickname, message }: { isClosing: boolean, onClose: () => void, nickname?: string, message?: string }) => (
+const CongratulationsPopup = ({ isClosing, onClose, nickname, message, photoURL }: { isClosing: boolean, onClose: () => void, nickname?: string, message?: string, photoURL?: string }) => (
     <div
         className={cn(
             "fixed inset-0 z-[201] flex items-center justify-center bg-black/50 animate-in fade-in",
@@ -38,6 +41,19 @@ const CongratulationsPopup = ({ isClosing, onClose, nickname, message }: { isClo
             </div>
 
             <h3 className="text-5xl font-bold">{nickname ? `Congratulations, ${nickname}!` : 'Congratulations!'}</h3>
+            
+            {photoURL && (
+                <div className="flex justify-center my-6">
+                    <Image
+                        src={photoURL}
+                        alt={nickname || 'Profile Picture'}
+                        width={48}
+                        height={48}
+                        className="w-12 h-12 rounded-lg"
+                    />
+                </div>
+            )}
+
             <h2 className="text-2xl text-white/80 mb-8">
                 {message ? (
                     <span>
@@ -121,7 +137,7 @@ export function RealtimeConfetti() {
         setVisibility('hidden');
         // Reset the trigger in Firestore now that it's fully hidden
         if (appStateRef) {
-          setDocumentNonBlocking(appStateRef, { showConfetti: false, congratsMessage: null, congratsNickname: null }, { merge: true });
+          setDocumentNonBlocking(appStateRef, { showConfetti: false, congratsMessage: null, congratsNickname: null, congratsPhotoURL: null }, { merge: true });
         }
       }, FADE_OUT_DURATION);
 
@@ -142,6 +158,7 @@ export function RealtimeConfetti() {
         onClose={closePopup}
         nickname={appState?.congratsNickname}
         message={appState?.congratsMessage}
+        photoURL={appState?.congratsPhotoURL}
       />
     </>
   );

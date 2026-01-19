@@ -191,6 +191,7 @@ export default function NewOrderPage() {
               confettiTimestamp: new Date().toISOString(),
               congratsNickname: userProfile.nickname,
               congratsMessage: `Amazing work for hitting **${newTotalQuantity}** items with a total of **${formatCurrency(newTotalAmount)}** in a single day. Cheers!`,
+              congratsPhotoURL: userProfile.photoURL || null,
           }, { merge: true });
         }
     }
