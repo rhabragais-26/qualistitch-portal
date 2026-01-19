@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
 import { LeadForm, FormValues, formSchema } from '@/components/lead-form';
 import { InvoiceCard, AddOns, Discount, Payment } from '@/components/invoice-card';
-import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 import { Order } from '@/components/lead-form';
 import { Button } from '@/components/ui/button';
@@ -24,12 +24,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { ItemPricesDialog } from '@/components/item-prices-dialog';
-import { toTitleCase } from '@/lib/utils';
+import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, query } from 'firebase/firestore';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { hasEditPermission } from '@/lib/permissions';
+import { isSameDay } from 'date-fns';
+import type { Lead as LeadType } from '@/components/records-table';
 
 
 export default function NewOrderPage() {
@@ -41,6 +43,9 @@ export default function NewOrderPage() {
   const { toast } = useToast();
   const pathname = usePathname();
   const canEdit = hasEditPermission(userProfile?.position as any, pathname);
+
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: allLeads } = useCollection<LeadType>(leadsQuery);
 
 
   const [showCalculator, setShowCalculator] = useState(false);
@@ -157,6 +162,37 @@ export default function NewOrderPage() {
       discounts,
       payments: Object.values(payments).flat(),
     };
+
+    if (allLeads) {
+        const today = new Date();
+        const scesLeadsToday = allLeads.filter(lead => 
+          lead.salesRepresentative === userProfile.nickname &&
+          isSameDay(new Date(lead.submissionDateTime), today)
+        );
+
+        const previousTotalQuantity = scesLeadsToday.reduce((sum, lead) => 
+          sum + lead.orders.reduce((orderSum, order) => orderSum + order.quantity, 0), 0);
+        
+        const previousTotalAmount = scesLeadsToday.reduce((sum, lead) => sum + (lead.grandTotal || 0), 0);
+
+        const newOrderQuantity = values.orders.reduce((sum, order) => sum + order.quantity, 0);
+
+        const newTotalQuantity = previousTotalQuantity + newOrderQuantity;
+        const newTotalAmount = previousTotalAmount + grandTotal;
+
+        const milestones = [100, 300, 500, 700, 1000];
+        const crossedMilestone = milestones.find(m => previousTotalQuantity < m && newTotalQuantity >= m);
+
+        if (crossedMilestone) {
+          const appStateRef = doc(firestore, 'appState', 'global');
+          setDocumentNonBlocking(appStateRef, {
+              showConfetti: true,
+              confettiTimestamp: new Date().toISOString(),
+              congratsNickname: userProfile.nickname,
+              congratsMessage: `Amazing work for hitting **${newTotalQuantity}** items with a total of **${formatCurrency(newTotalAmount)}** in a single day. Cheers!`,
+          }, { merge: true });
+        }
+    }
 
     setDocumentNonBlocking(leadDocRef, submissionData, {});
 

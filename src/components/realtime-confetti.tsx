@@ -9,12 +9,14 @@ import { cn } from '@/lib/utils';
 type AppState = {
   showConfetti?: boolean;
   confettiTimestamp?: string;
+  congratsNickname?: string;
+  congratsMessage?: string;
 };
 
 const CONFETTI_DURATION = 5000; // 5 seconds in ms
 const FADE_OUT_DURATION = 500; // CSS animation duration
 
-const CongratulationsPopup = ({ isClosing, onClose }: { isClosing: boolean, onClose: () => void }) => (
+const CongratulationsPopup = ({ isClosing, onClose, nickname, message }: { isClosing: boolean, onClose: () => void, nickname?: string, message?: string }) => (
     <div
         className={cn(
             "fixed inset-0 z-[201] flex items-center justify-center bg-black/50 animate-in fade-in",
@@ -35,9 +37,17 @@ const CongratulationsPopup = ({ isClosing, onClose }: { isClosing: boolean, onCl
                 <PartyPopper className="h-24 w-24 text-yellow-300 animate-popper-pop" />
             </div>
 
-            <h3 className="text-5xl font-bold">Congratulations, Cathy!</h3>
+            <h3 className="text-5xl font-bold">{nickname ? `Congratulations, ${nickname}!` : 'Congratulations!'}</h3>
             <h2 className="text-2xl text-white/80 mb-8">
-                Amazing work for hitting <strong>100 items</strong> with a total of <strong>85,000.00</strong> in a single day. Cheers!
+                {message ? (
+                    <span>
+                        {message.split('**').map((part, index) =>
+                            index % 2 === 1 ? <strong key={index}>{part}</strong> : part
+                        )}
+                    </span>
+                ) : (
+                    'Amazing work!'
+                )}
             </h2>
         </div>
     </div>
@@ -111,7 +121,7 @@ export function RealtimeConfetti() {
         setVisibility('hidden');
         // Reset the trigger in Firestore now that it's fully hidden
         if (appStateRef) {
-          setDocumentNonBlocking(appStateRef, { showConfetti: false }, { merge: true });
+          setDocumentNonBlocking(appStateRef, { showConfetti: false, congratsMessage: null, congratsNickname: null }, { merge: true });
         }
       }, FADE_OUT_DURATION);
 
@@ -127,7 +137,12 @@ export function RealtimeConfetti() {
   return (
     <>
       <LocalConfetti />
-      <CongratulationsPopup isClosing={visibility === 'closing'} onClose={closePopup} />
+      <CongratulationsPopup 
+        isClosing={visibility === 'closing'} 
+        onClose={closePopup}
+        nickname={appState?.congratsNickname}
+        message={appState?.congratsMessage}
+      />
     </>
   );
 }

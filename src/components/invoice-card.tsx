@@ -14,6 +14,7 @@ import { X } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { AddOns, Discount, Payment } from "./invoice-dialogs";
 import { AddOnsDialog, DiscountDialog, AddPaymentDialog } from './invoice-dialogs';
+import { formatCurrency } from '@/lib/utils';
 
 type InvoiceCardProps = {
   orders: Order[];
@@ -27,10 +28,6 @@ type InvoiceCardProps = {
   onGrandTotalChange: (total: number) => void;
   onBalanceChange: (balance: number) => void;
   isReadOnly?: boolean;
-};
-
-const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
 };
 
 export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, setDiscounts, payments, setPayments, onGrandTotalChange, onBalanceChange, isReadOnly }: InvoiceCardProps) {
