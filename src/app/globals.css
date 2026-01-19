@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -168,6 +169,15 @@
     opacity: 0;
     animation: confetti-fall 5s linear;
   }
+  
+  @keyframes popper-pop {
+    0%, 100% { transform: scale(1) rotate(-5deg); }
+    50% { transform: scale(1.1) rotate(5deg); }
+  }
+  
+  .animate-popper-pop {
+    animation: popper-pop 1.5s ease-in-out infinite;
+  }
 }
 
 @media print {
@@ -198,5 +208,3 @@
     fill: #000 !important;
   }
 }
-
-    
