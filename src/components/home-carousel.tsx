@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getStorage, ref, listAll, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, listAll, getDownloadURL, type StorageReference } from 'firebase/storage';
 import { useFirebaseApp } from '@/firebase';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,38 +15,58 @@ import {
 import Autoplay from 'embla-carousel-autoplay';
 import { Skeleton } from './ui/skeleton';
 
+// Helper function to recursively list all files
+async function listAllRecursive(storageRef: StorageReference): Promise<StorageReference[]> {
+    const res = await listAll(storageRef);
+    const files = res.items;
+
+    const promises = res.prefixes.map(folderRef => listAllRecursive(folderRef));
+    const subfolderFiles = await Promise.all(promises);
+
+    return files.concat(...subfolderFiles);
+}
+
 export function HomeCarousel() {
   const app = useFirebaseApp();
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!app) return;
     const storage = getStorage(app);
     const fetchImages = async () => {
       setIsLoading(true);
+      setError(null);
       try {
           const carouselRef = ref(storage, 'Carousel');
-          const res = await listAll(carouselRef);
+          const allImageRefs = await listAllRecursive(carouselRef);
+          
+          if (allImageRefs.length === 0) {
+              setImageUrls([]);
+              setIsLoading(false);
+              return;
+          }
 
-          const results = await Promise.allSettled( // Use Promise.allSettled
-              res.items.map(async (itemRef) => {
-                  try {
-                      return await getDownloadURL(itemRef);
-                  } catch (itemError) {
-                      console.warn(`Failed to get download URL for ${itemRef.fullPath}:`, itemError);
-                      return null; // Return null for failed downloads
-                  }
-              })
+          const results = await Promise.allSettled(
+              allImageRefs.map(itemRef => getDownloadURL(itemRef))
           );
 
           const urls = results
-              .filter(result => result.status === 'fulfilled' && result.value !== null)
+              .filter(result => {
+                  if (result.status === 'rejected') {
+                      console.warn(`Failed to get download URL:`, result.reason);
+                      return false;
+                  }
+                  return true;
+              })
               .map(result => (result as PromiseFulfilledResult<string>).value);
-
+          
           setImageUrls(urls);
-      } catch (error) {
-          console.error("Error fetching carousel images (listAll or Promise.allSettled failed):", error);
+
+      } catch (e: any) {
+          console.error("Error fetching carousel images:", e);
+          setError(e.message || "An unknown error occurred while fetching images.");
       } finally {
           setIsLoading(false);
       }
@@ -57,7 +77,7 @@ export function HomeCarousel() {
 
   if (isLoading) {
     return (
-      <div className="w-full h-full max-w-4xl mx-auto">
+      <div className="w-full h-full">
         <div className="p-1 h-full">
           <Card className="h-full">
             <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg h-full">
@@ -68,18 +88,26 @@ export function HomeCarousel() {
       </div>
     );
   }
+  
+  if (error) {
+    return (
+        <div className="w-full h-full flex items-center justify-center bg-destructive/10 rounded-lg p-4">
+            <p className="text-center text-destructive font-medium">Error loading images: {error}</p>
+        </div>
+    );
+  }
 
   if (imageUrls.length === 0) {
     return (
-        <div className="w-full max-w-4xl mx-auto flex items-center justify-center h-full bg-gray-100 rounded-lg">
-            <p className="text-muted-foreground">No images found in carousel storage.</p>
+        <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+            <p className="text-muted-foreground">No images found in 'Carousel' storage folder.</p>
         </div>
     );
   }
 
   return (
     <Carousel
-      className="w-full max-w-4xl h-full mx-auto"
+      className="w-full h-full"
       plugins={[Autoplay({ delay: 3000, stopOnInteraction: true })]}
       opts={{ loop: true }}
     >
