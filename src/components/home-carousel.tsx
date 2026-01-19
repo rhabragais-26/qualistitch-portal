@@ -130,7 +130,7 @@ export function HomeCarousel() {
 
   return (
     <Carousel
-      className="w-full max-w-lg"
+      className="w-full max-w-lg mx-auto"
       plugins={[Autoplay({ delay: 3000, stopOnInteraction: true })]}
       opts={{ loop: true }}
     >
