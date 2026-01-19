@@ -12,7 +12,7 @@ export default function HomePage() {
       <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center justify-center space-y-8 text-center h-full">
         <div>
            <h1 className={cn(
-              "text-5xl font-bold font-headline bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent shining-metal"
+              "text-4xl font-bold font-headline bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent shining-metal"
             )}>
             Welcome back, {userProfile?.nickname || 'User'}!
           </h1>
