@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Header } from '@/components/header';
@@ -40,7 +39,7 @@ const CongratulationsPopup = ({ onClose }: { onClose: () => void }) => (
       </Button>
       
       <div className="flex justify-center mb-6">
-        <PartyPopper className="h-24 w-24 text-white animate-popper-pop" />
+        <PartyPopper className="h-24 w-24 text-yellow-300 animate-popper-pop" />
       </div>
       
       <h2 className="text-3xl font-bold mb-4">Congratulations!</h2>
@@ -51,9 +50,6 @@ const CongratulationsPopup = ({ onClose }: { onClose: () => void }) => (
         aliquam erat volutpat.
       </p>
       
-      <Button className="w-full bg-white/90 text-black font-bold hover:bg-white shadow-md">
-        SHARE
-      </Button>
     </div>
   </div>
 );
