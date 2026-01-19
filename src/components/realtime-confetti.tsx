@@ -14,14 +14,11 @@ type AppState = {
 const CONFETTI_DURATION = 5000; // 5 seconds in ms
 
 const CongratulationsPopup = ({ onClose }: { onClose: () => void }) => (
-    <div className="fixed inset-0 z-[201] flex items-center justify-center bg-black/50 animate-in fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-[201] flex items-center justify-center bg-black/50 animate-in fade-in animate-out fade-out-500" onClick={onClose}>
       <div 
-        className="relative w-full max-w-sm rounded-2xl bg-gradient-to-br from-purple-600 via-red-500 to-orange-400 p-8 text-white text-center shadow-2xl m-4 animate-in fade-in zoom-in-75"
+        className="relative w-full max-w-sm rounded-2xl bg-gradient-to-br from-purple-600 via-red-500 to-orange-400 p-8 text-white text-center shadow-2xl m-4 animate-in fade-in zoom-in-75 animate-out fade-out-500 zoom-out-95"
         onClick={(e) => e.stopPropagation()}
       >
-        <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-white/70 hover:text-white hover:bg-white/10" onClick={onClose}>
-          <X className="h-6 w-6" />
-        </Button>
         
         <div className="flex justify-center mb-6">
           <PartyPopper className="h-24 w-24 text-yellow-300 animate-popper-pop" />
