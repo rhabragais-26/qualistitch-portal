@@ -247,7 +247,6 @@ export function ChatLayout() {
                                 <span className="font-bold">{u.nickname}</span>
                                 {u.position && <span className="text-xs text-black/70">({u.position})</span>}
                             </div>
-                            <Separator className="my-1 bg-gray-300" />
                             {unreadCount > 0 ? (
                                 <p className="text-sm text-black font-bold truncate italic">
                                     {unreadCount} new unread message{unreadCount > 1 ? 's' : ''}
