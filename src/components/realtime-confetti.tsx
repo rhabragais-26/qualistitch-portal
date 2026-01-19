@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { PartyPopper, X } from 'lucide-react';
 
 type AppState = {
   showConfetti?: boolean;
@@ -11,6 +12,50 @@ type AppState = {
 };
 
 const CONFETTI_DURATION = 5000; // 5 seconds in ms
+
+const CongratulationsPopup = ({ onClose }: { onClose: () => void }) => (
+    <div className="fixed inset-0 z-[201] flex items-center justify-center bg-black/50 animate-in fade-in" onClick={onClose}>
+      <div 
+        className="relative w-full max-w-sm rounded-2xl bg-gradient-to-br from-purple-600 via-red-500 to-orange-400 p-8 text-white text-center shadow-2xl m-4 animate-in fade-in zoom-in-75"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-white/70 hover:text-white hover:bg-white/10" onClick={onClose}>
+          <X className="h-6 w-6" />
+        </Button>
+        
+        <div className="flex justify-center mb-6">
+          <PartyPopper className="h-24 w-24 text-yellow-300 animate-popper-pop" />
+        </div>
+        
+        <h2 className="text-3xl font-bold mb-4">Congratulations!</h2>
+        <p className="text-sm text-white/80 mb-8">
+          Lorem ipsum dolor sit amet, consectetuer
+          adipiscing elit, sed diam nonummy nibh
+          euismod tincidunt ut laoreet dolore magna
+          aliquam erat volutpat.
+        </p>
+        
+      </div>
+    </div>
+);
+
+const LocalConfetti = () => (
+    <div className="fixed inset-0 z-[202] pointer-events-none confetti-container">
+      {Array.from({ length: 150 }).map((_, i) => (
+        <div
+          key={i}
+          className="confetti-piece"
+          style={{
+            left: `${Math.random() * 100}vw`,
+            animationDelay: `${Math.random() * (CONFETTI_DURATION / 1000 - 1)}s`,
+            animationDuration: `${2 + Math.random() * 3}s`,
+            backgroundColor: `hsl(${Math.random() * 360}, 90%, 65%)`,
+            transform: `rotate(${Math.random() * 360}deg)`,
+          }}
+        />
+      ))}
+    </div>
+);
 
 export function RealtimeConfetti() {
   const firestore = useFirestore();
@@ -39,22 +84,9 @@ export function RealtimeConfetti() {
   }
 
   return (
-    <div className="fixed inset-0 z-[200] pointer-events-none confetti-container">
-      {Array.from({ length: 150 }).map((_, i) => (
-        <div
-          key={i}
-          className="confetti-piece"
-          style={{
-            left: `${Math.random() * 100}vw`,
-            animationDelay: `${Math.random() * (CONFETTI_DURATION / 1000 - 1)}s`,
-            animationDuration: `${2 + Math.random() * 3}s`,
-            backgroundColor: `hsl(${Math.random() * 360}, 90%, 65%)`,
-            transform: `rotate(${Math.random() * 360}deg)`,
-          }}
-        />
-      ))}
-    </div>
+    <>
+      <LocalConfetti />
+      <CongratulationsPopup onClose={() => setIsVisible(false)} />
+    </>
   );
 }
-
-    
