@@ -22,7 +22,7 @@ const FADE_OUT_DURATION = 500; // CSS animation duration
 const CongratulationsPopup = ({ isClosing, onClose, nickname, message, photoURL }: { isClosing: boolean, onClose: () => void, nickname?: string, message?: string, photoURL?: string }) => (
     <div
         className={cn(
-            "fixed inset-0 z-[201] flex items-center justify-center bg-black/50",
+            "fixed inset-0 z-[201] flex items-center justify-center bg-black/50 p-4",
             isClosing ? "animate-out fade-out" : "animate-in fade-in"
         )}
         style={{ animationDuration: `${FADE_OUT_DURATION}ms` }}
@@ -30,41 +30,47 @@ const CongratulationsPopup = ({ isClosing, onClose, nickname, message, photoURL 
     >
         <div
             className={cn(
-                "relative w-full max-w-md rounded-2xl bg-gradient-to-br from-purple-600 via-red-500 to-orange-400 p-8 text-white text-center shadow-2xl m-4",
+                "relative w-full max-w-md shining-gold-border-container",
                 isClosing ? "animate-out fade-out-50 zoom-out-95" : "animate-popup-zoom-in"
             )}
             style={{ animationDuration: isClosing ? `${FADE_OUT_DURATION}ms` : undefined }}
             onClick={(e) => e.stopPropagation()}
         >
-            <div className="flex justify-center mb-6">
-                <PartyPopper className="h-24 w-24 text-yellow-300 animate-popper-pop" />
-            </div>
-
-            <h3 className="text-5xl font-bold">{nickname ? `Congratulations, ${nickname}!` : 'Congratulations!'}</h3>
-            
-            {photoURL && (
-                <div className="flex justify-center my-6">
-                    <Image
-                        src={photoURL}
-                        alt={nickname || 'Profile Picture'}
-                        width={100}
-                        height={100}
-                        className="w-[100px] h-[100px] rounded-lg border-4 border-yellow-300 animate-zoom-in-out"
-                    />
-                </div>
-            )}
-
-            <h2 className="text-2xl text-white/80 mb-8">
-                {message ? (
-                    <span>
-                        {message.split('**').map((part, index) =>
-                            index % 2 === 1 ? <strong key={index}>{part}</strong> : part
-                        )}
-                    </span>
-                ) : (
-                    'Amazing work!'
+            <div
+                className={cn(
+                    "w-full rounded-2xl bg-gradient-to-br from-purple-600 via-red-500 to-orange-400 p-8 text-white text-center"
                 )}
-            </h2>
+            >
+                <div className="flex justify-center mb-6">
+                    <PartyPopper className="h-24 w-24 text-yellow-300 animate-popper-pop" />
+                </div>
+
+                <h3 className="text-5xl font-bold">{nickname ? `Congratulations, ${nickname}!` : 'Congratulations!'}</h3>
+                
+                {photoURL && (
+                    <div className="flex justify-center my-6">
+                        <Image
+                            src={photoURL}
+                            alt={nickname || 'Profile Picture'}
+                            width={100}
+                            height={100}
+                            className="w-[100px] h-[100px] rounded-lg border-4 border-yellow-300 animate-zoom-in-out"
+                        />
+                    </div>
+                )}
+
+                <h2 className="text-2xl text-white/80 mb-8">
+                    {message ? (
+                        <span>
+                            {message.split('**').map((part, index) =>
+                                index % 2 === 1 ? <strong key={index}>{part}</strong> : part
+                            )}
+                        </span>
+                    ) : (
+                        'Amazing work!'
+                    )}
+                </h2>
+            </div>
         </div>
     </div>
 );
