@@ -7,7 +7,7 @@ import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 
 type DesignDetails = {
@@ -69,7 +69,7 @@ type Lead = {
 
 export default function JobOrderPrintPage() {
   const params = useParams();
-  const id = params.id as string;
+  const id = React.useMemo(() => (params?.id ? (Array.isArray(params.id) ? params.id[0] : params.id) : ''), [params]);
   const firestore = useFirestore();
   const [lead, setLead] = useState<Lead | null>(null);
   const [isLoading, setIsLoading] = useState(true);

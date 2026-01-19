@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -88,7 +86,13 @@ type EnrichedLead = Lead & {
   totalCustomerQuantity: number;
 };
 
-export function JobOrderTable() {
+// Define the props interface for JobOrderTable
+interface JobOrderTableProps {
+  isReadOnly: boolean;
+}
+
+// Update the component signature to accept the isReadOnly prop
+export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -487,7 +491,8 @@ export function JobOrderTable() {
                             </TableCell>
                             <TableCell className="text-center align-middle py-2">
                                 <div className="relative inline-flex items-center justify-center">
-                                    <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)}>
+                                    {/* Disable upload button if read-only */}
+                                    <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)} disabled={isReadOnly}>
                                         <Upload className="mr-2 h-4 w-4" />
                                         Upload
                                     </Button>
@@ -502,6 +507,7 @@ export function JobOrderTable() {
                             </TableCell>
                             <TableCell className="font-medium text-xs align-middle py-2 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                             <TableCell className="text-center align-middle py-2">
+                               {/* Disable action button if read-only */}
                                <Button 
                                   size="sm" 
                                   className={cn(
@@ -511,7 +517,7 @@ export function JobOrderTable() {
                                   onClick={() => handleProcessJobOrder(lead)}
                                    onMouseEnter={() => setHoveredLeadId(lead.id)}
                                    onMouseLeave={() => setHoveredLeadId(null)}
-                                   disabled={isCompleted}
+                                   disabled={isCompleted || isReadOnly} // Added isReadOnly here
                                 >
                                   {isCompleted ? (
                                     <>
@@ -534,7 +540,7 @@ export function JobOrderTable() {
                                                 setConfirmingPrint(lead);
                                             }
                                         }}
-                                        disabled={!isJoSaved || lead.isJoPrinted}
+                                        disabled={!isJoSaved || lead.isJoPrinted || isReadOnly} // Added isReadOnly here
                                         className={cn(lead.isJoPrinted && "cursor-default data-[state=checked]:opacity-100 data-[state=checked]:bg-primary")}
                                     />
                                     {lead.isJoPrinted && lead.joPrintedTimestamp && (
@@ -561,39 +567,27 @@ export function JobOrderTable() {
             <div className="grid grid-cols-2 gap-6 py-4">
                 <div className="space-y-2">
                 <Label>Logo Left</Label>
-                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setLogoLeftImage)} onDoubleClick={() => logoLeftImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {logoLeftImage ? (<> <Image src={logoLeftImage} alt="Logo Left" layout="fill" objectFit="contain" className="rounded-md" /> {logoLeftImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setLogoLeftImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                    <input type="file" accept="image/*" ref={logoLeftImageUploadRef} onChange={(e) => handleImageUpload(e, setLogoLeftImage)} className="hidden" />
+                <div tabIndex={isReadOnly ? -1 : 0} className={cn("relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none", isReadOnly ? "cursor-not-allowed" : "cursor-pointer")} onPaste={(e) => !isReadOnly && handleImagePaste(e, setLogoLeftImage)} onDoubleClick={() => !isReadOnly && logoLeftImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                    {logoLeftImage ? (<> <Image src={logoLeftImage} alt="Logo Left" layout="fill" objectFit="contain" className="rounded-md" /> {logoLeftImage && !isReadOnly && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setLogoLeftImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{isReadOnly ? "No image uploaded" : "Double-click to upload or paste image"}</p> </div>)}
+                    <input type="file" accept="image/*" ref={logoLeftImageUploadRef} onChange={(e) => handleImageUpload(e, setLogoLeftImage)} className="hidden" disabled={isReadOnly}/>
                 </div>
                 </div>
                 <div className="space-y-2">
                 <Label>Logo Right</Label>
-                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setLogoRightImage)} onDoubleClick={() => logoRightImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {logoRightImage ? (<> <Image src={logoRightImage} alt="Logo Right" layout="fill" objectFit="contain" className="rounded-md" /> {logoRightImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setLogoRightImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                    <input type="file" accept="image/*" ref={logoRightImageUploadRef} onChange={(e) => handleImageUpload(e, setLogoRightImage)} className="hidden" />
+                <div tabIndex={isReadOnly ? -1 : 0} className={cn("relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none", isReadOnly ? "cursor-not-allowed" : "cursor-pointer")} onPaste={(e) => !isReadOnly && handleImagePaste(e, setLogoRightImage)} onDoubleClick={() => !isReadOnly && logoRightImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                    {logoRightImage ? (<> <Image src={logoRightImage} alt="Logo Right" layout="fill" objectFit="contain" className="rounded-md" /> {logoRightImage && !isReadOnly && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setLogoRightImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{isReadOnly ? "No image uploaded" : "Double-click to upload or paste image"}</p> </div>)}
+                    <input type="file" accept="image/*" ref={logoRightImageUploadRef} onChange={(e) => handleImageUpload(e, setLogoRightImage)} className="hidden" disabled={isReadOnly}/>
                 </div>
                 </div>
                 <div className="space-y-2">
                 <Label>Back Logo</Label>
-                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setBackLogoImage)} onDoubleClick={() => backLogoImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {backLogoImage ? (<> <Image src={backLogoImage} alt="Back Logo" layout="fill" objectFit="contain" className="rounded-md" /> {backLogoImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setBackLogoImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                    <input type="file" accept="image/*" ref={backLogoImageUploadRef} onChange={(e) => handleImageUpload(e, setBackLogoImage)} className="hidden" />
+                <div tabIndex={isReadOnly ? -1 : 0} className={cn("relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none", isReadOnly ? "cursor-not-allowed" : "cursor-pointer")} onPaste={(e) => !isReadOnly && handleImagePaste(e, setBackLogoImage)} onDoubleClick={() => !isReadOnly && backLogoImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                    {backLogoImage ? (<> <Image src={backLogoImage} alt="Back Logo" layout="fill" objectFit="contain" className="rounded-md" /> {backLogoImage && !isReadOnly && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setBackLogoImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{isReadOnly ? "No image uploaded" : "Double-click to upload or paste image"}</p> </div>)}
+                    <input type="file" accept="image/*" ref={backLogoImageUploadRef} onChange={(e) => handleImageUpload(e, setBackLogoImage)} className="hidden" disabled={isReadOnly}/>
                 </div>
                 </div>
                 <div className="space-y-2">
                 <Label>Back Design</Label>
-                <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setBackDesignImage)} onDoubleClick={() => backDesignImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
-                    {backDesignImage ? (<> <Image src={backDesignImage} alt="Back Design" layout="fill" objectFit="contain" className="rounded-md" /> {backDesignImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setBackDesignImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                    <input type="file" accept="image/*" ref={backDesignImageUploadRef} onChange={(e) => handleImageUpload(e, setBackDesignImage)} className="hidden" />
-                </div>
-                </div>
-            </div>
-            <DialogFooter>
-                <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                <Button onClick={handleSaveImages} disabled={!logoLeftImage && !logoRightImage && !backLogoImage && !backDesignImage}>Save Images</Button>
-            </DialogFooter>
-        </DialogContent>
-    </Dialog>
-    </Card>
-  );
-}
+                <div tabIndex={isReadOnly ? -1 : 0} className={cn("relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none", isReadOnly ? "cursor-not-allowed" : "cursor-pointer")} onPaste={(e) => !isReadOnly && handleImagePaste(e, setBackDesignImage)} onDoubleClick={() => !isReadOnly && backDesignImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
+                    {backDesignImage ? (<> <Image src={backDesignImage} alt="Back Design" layout="fill" objectFit="contain" className="rounded-md" /> {backDesignImage && !isReadOnly && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setBackDesignImage)}> <Trash2 className="h-4 w-4" /> </Button>}
+</>) : ( <div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p> {isReadOnly ? "No image uploaded" : "Double-click to upload or paste image"} </p> </div> )} <input type="file" accept="image/*" ref={backDesignImageUploadRef} onChange={(e) => handleImageUpload(e, setBackDesignImage)} className="hidden" disabled={isReadOnly}/> </div></div></div><DialogFooter><DialogClose asChild><Button type="button" variant="outline"> Cancel </Button></DialogClose> <Button onClick={handleSaveImages} disabled={!logoLeftImage && !logoRightImage && !backLogoImage && !backDesignImage || isReadOnly}>Save Images </Button></DialogFooter></DialogContent></Dialog></Card> ); }

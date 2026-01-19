@@ -88,7 +88,7 @@
 
     export default function JobOrderPage() {
       const params = useParams();
-      const id = params.id as string;
+      const id = useMemo(() => (params?.id ? (Array.isArray(params.id) ? params.id[0] : params.id) : ''), [params]);
       const firestore = useFirestore();
       const { toast } = useToast();
       const router = useRouter();
