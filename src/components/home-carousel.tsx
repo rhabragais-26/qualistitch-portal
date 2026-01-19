@@ -109,7 +109,7 @@ export function HomeCarousel() {
   // Render Skeleton while loading
   if (isLoading || isUserLoading) {
     return (
-      <div className="w-full max-w-4xl mx-auto h-[80vh]">
+      <div className="w-full h-full">
         <div className="p-1 h-full">
           <Card className="h-full">
             <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg h-full">
@@ -133,7 +133,7 @@ export function HomeCarousel() {
   // Render message if no images were found (after successful fetch, but empty)
   if (imageUrls.length === 0) {
     return (
-        <div className="w-full max-w-4xl mx-auto h-[80vh] flex items-center justify-center bg-gray-100 rounded-lg">
+        <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
             <p className="text-muted-foreground">No images found in the 'Carousel' storage folder.</p>
         </div>
     );
@@ -141,7 +141,7 @@ export function HomeCarousel() {
 
   return (
     <Carousel
-      className="w-full max-w-4xl h-[80vh]"
+      className="w-auto h-full"
       plugins={[Autoplay({ delay: 3000, stopOnInteraction: true })]}
       opts={{ loop: true }}
     >
