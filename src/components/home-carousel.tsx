@@ -5,14 +5,9 @@ import { getStorage, ref, listAll, getDownloadURL, type StorageReference } from 
 import { useFirebaseApp, useUser } from '@/firebase';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel';
-import Autoplay from 'embla-carousel-autoplay';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from './ui/skeleton';
 
 async function listAllRecursive(storageRef: StorageReference): Promise<StorageReference[]> {
@@ -25,12 +20,70 @@ async function listAllRecursive(storageRef: StorageReference): Promise<StorageRe
     return files.concat(...subfolderFiles);
 }
 
+const slideTransition = {
+  type: "spring",
+  stiffness: 400,
+  damping: 40,
+  bounce: 0.2
+};
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? '100%' : '-100%',
+    opacity: 0,
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? '100%' : '-100%',
+    opacity: 0,
+    scale: 0.95,
+    transition: { duration: 0.3 }
+  }),
+};
+
+const imageVariants = {
+  enter: {
+    scale: 0.8,
+  },
+  center: {
+    scale: 1,
+  },
+};
+
+const wrap = (min: number, max: number, v: number) => {
+  const rangeSize = max - min;
+  return ((((v - min) % rangeSize) + rangeSize) % rangeSize) + min;
+};
+
 export function HomeCarousel() {
   const app = useFirebaseApp();
   const { user, isUserLoading } = useUser();
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const [[page, direction], setPage] = useState([0, 0]);
+
+  const imageIndex = imageUrls.length > 0 ? wrap(0, imageUrls.length, page) : 0;
+
+  const paginate = (newDirection: number) => {
+    setPage([page + newDirection, newDirection]);
+  };
+  
+  useEffect(() => {
+    if (imageUrls.length > 1) {
+        const timer = setTimeout(() => {
+            paginate(1);
+        }, 5000);
+        return () => clearTimeout(timer);
+    }
+  }, [page, imageUrls.length]);
+
 
   useEffect(() => {
     if (!app || isUserLoading) {
@@ -129,33 +182,50 @@ export function HomeCarousel() {
   }
 
   return (
-    <Carousel
-      className="w-full max-w-lg mx-auto"
-      plugins={[Autoplay({ delay: 3000, stopOnInteraction: true })]}
-      opts={{ loop: true }}
-    >
-      <CarouselContent>
-        {imageUrls.map((url, index) => (
-          <CarouselItem key={index}>
-            <div className="p-1">
+    <div className="relative w-full max-w-lg mx-auto aspect-[3/4] overflow-hidden">
+      <AnimatePresence initial={false} custom={direction}>
+        <motion.div
+            key={page}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={slideTransition}
+            className="absolute w-full h-full"
+        >
+             <div className="p-1">
               <Card>
-                <CardContent className="relative aspect-[3/4] flex items-center justify-center p-0 overflow-hidden rounded-lg">
-                  <Image
-                    src={url}
-                    alt={`Carousel image ${index + 1}`}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 512px"
-                    className="object-contain"
-                    priority={index === 0}
-                  />
+                <CardContent className="relative aspect-[3/4] flex flex-col items-center justify-center p-0 overflow-hidden rounded-lg">
+                  <motion.div
+                    className="w-full h-full relative"
+                    variants={imageVariants}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <Image
+                        src={imageUrls[imageIndex]}
+                        alt={`Carousel image ${imageIndex + 1}`}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 512px"
+                        className="object-contain"
+                        priority
+                    />
+                  </motion.div>
                 </CardContent>
               </Card>
             </div>
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-      <CarouselPrevious />
-      <CarouselNext />
-    </Carousel>
+        </motion.div>
+      </AnimatePresence>
+       <div className="absolute top-1/2 left-2 -translate-y-1/2 z-10">
+        <Button variant="outline" size="icon" onClick={() => paginate(-1)} className="rounded-full h-8 w-8">
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="absolute top-1/2 right-2 -translate-y-1/2 z-10">
+        <Button variant="outline" size="icon" onClick={() => paginate(1)} className="rounded-full h-8 w-8">
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 }
