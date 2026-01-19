@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -83,9 +83,13 @@ export function RealtimeConfetti() {
       timerRef.current = setTimeout(() => {
         setIsVisible(false);
         setIsClosing(false);
+        // After confetti is done, reset the trigger in Firestore.
+        if (appStateRef) {
+            setDocumentNonBlocking(appStateRef, { showConfetti: false }, { merge: true });
+        }
       }, FADE_OUT_DURATION);
     }
-  }, [isClosing, isVisible]);
+  }, [isClosing, isVisible, appStateRef]);
 
   useEffect(() => {
     if (appState?.showConfetti && appState.confettiTimestamp && appState.confettiTimestamp !== lastTimestamp) {
