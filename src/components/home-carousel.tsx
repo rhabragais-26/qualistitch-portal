@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { getStorage, ref, listAll, getDownloadURL, type StorageReference } from 'firebase/storage';
-import { useFirebaseApp } from '@/firebase';
+import { useFirebaseApp, useUser } from '@/firebase';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -28,12 +28,16 @@ async function listAllRecursive(storageRef: StorageReference): Promise<StorageRe
 
 export function HomeCarousel() {
   const app = useFirebaseApp();
+  const { user, isUserLoading: isAuthLoading } = useUser();
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!app) return;
+    if (!app || isAuthLoading || !user) {
+        // Wait until firebase app and user are fully loaded
+        return;
+    };
     const storage = getStorage(app);
     const fetchImages = async () => {
       setIsLoading(true);
@@ -73,9 +77,9 @@ export function HomeCarousel() {
   };
 
     fetchImages();
-  }, [app]);
+  }, [app, isAuthLoading, user]);
 
-  if (isLoading) {
+  if (isLoading || isAuthLoading) {
     return (
       <div className="w-full h-full">
         <div className="p-1 h-full">
