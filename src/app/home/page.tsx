@@ -14,7 +14,7 @@ export default function HomePage() {
            <h1 className={cn(
               "text-5xl font-bold font-headline bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent shining-metal"
             )}>
-            Welcome back, {userProfile?.firstName || 'User'}!
+            Welcome back, {userProfile?.nickname || 'User'}!
           </h1>
           <p className="text-xl text-muted-foreground mt-2">Here's a quick look at what's happening today.</p>
         </div>
