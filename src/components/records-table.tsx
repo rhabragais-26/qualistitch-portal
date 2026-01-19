@@ -286,7 +286,7 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const { toast } = useToast();
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
   const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, inventoryItemSchema, { listen: false });
@@ -542,4 +542,3 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
     </Card>
   );
 }
-
