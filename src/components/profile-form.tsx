@@ -328,24 +328,30 @@ export function ProfileForm() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
-                  control={form.control}
-                  name="position"
-                  render={({ field }) => (
-                      <FormItem>
-                      <FormLabel>Position</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={!isAdmin}>
-                          <FormControl>
-                          <SelectTrigger>
-                              <SelectValue />
-                          </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                          {positions.map(pos => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
-                          </SelectContent>
-                      </Select>
-                      <FormMessage />
-                      </FormItem>
-                  )}
+                    control={form.control}
+                    name="position"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Position</FormLabel>
+                            {isAdmin ? (
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a position" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {positions.map(pos => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <FormControl>
+                                    <Input readOnly {...field} className="bg-muted" />
+                                </FormControl>
+                            )}
+                            <FormMessage />
+                        </FormItem>
+                    )}
                   />
                   <FormField
                   control={form.control}
