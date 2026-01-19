@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFirestore } from '@/firebase';
@@ -69,7 +68,8 @@ type Lead = {
 };
 
 export default function JobOrderPrintPage() {
-  const { id } = useParams() as { id: string };
+  const params = useParams();
+  const id = params.id as string;
   const firestore = useFirestore();
   const [lead, setLead] = useState<Lead | null>(null);
   const [scesPhotoURL, setScesPhotoURL] = useState<string | null>(null);

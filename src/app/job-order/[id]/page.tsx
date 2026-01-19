@@ -1,4 +1,3 @@
-
 'use client';
 
     import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -88,7 +87,8 @@
 
 
     export default function JobOrderPage() {
-      const { id } = useParams() as { id: string };
+      const params = useParams();
+      const id = params.id as string;
       const firestore = useFirestore();
       const { toast } = useToast();
       const router = useRouter();
