@@ -72,7 +72,6 @@ export default function JobOrderPrintPage() {
   const id = params.id as string;
   const firestore = useFirestore();
   const [lead, setLead] = useState<Lead | null>(null);
-  const [scesPhotoURL, setScesPhotoURL] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -125,17 +124,6 @@ export default function JobOrderPrintPage() {
       if (isMounted) {
         if (leadData) {
           setLead(leadData);
-
-          if (firestore && leadData.salesRepresentative) {
-              const usersRef = collection(firestore, 'users');
-              const q = query(usersRef, where("nickname", "==", leadData.salesRepresentative));
-              const querySnapshot = await getDocs(q);
-              if (!querySnapshot.empty) {
-                  const userProfile = querySnapshot.docs[0].data();
-                  setScesPhotoURL(userProfile.photoURL || null);
-              }
-          }
-
           setIsLoading(false);
           setTimeout(() => window.print(), 500);
         } else {
@@ -216,18 +204,6 @@ export default function JobOrderPrintPage() {
             <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{joNumber}</span></p>
         </div>
         <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
-
-        {scesPhotoURL && (
-            <div className="flex justify-center mb-4">
-                <Image
-                    src={scesPhotoURL}
-                    alt="Sales Representative Photo"
-                    width={48}
-                    height={48}
-                    className="rounded-md"
-                />
-            </div>
-        )}
 
         <div className="grid grid-cols-3 gap-x-8 text-sm mb-6 border-b border-black pb-4">
             <div className="space-y-1">
