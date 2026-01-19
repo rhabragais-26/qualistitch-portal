@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { PartyPopper } from 'lucide-react';
@@ -35,7 +35,7 @@ const CongratulationsPopup = ({ isClosing, onClose }: { isClosing: boolean, onCl
                 <PartyPopper className="h-24 w-24 text-yellow-300 animate-popper-pop" />
             </div>
             
-            <h2 className="text-3xl font-bold mb-4">Congratulations!</h2>
+            <h4 className="text-5xl font-bold mb-4">Congratulations!</h4>
             <p className="text-sm text-white/80 mb-8">
                 Lorem ipsum dolor sit amet, consectetuer
                 adipiscing elit, sed diam nonummy nibh
@@ -75,55 +75,37 @@ export function RealtimeConfetti() {
   const [isClosing, setIsClosing] = useState(false);
   const [lastTimestamp, setLastTimestamp] = useState<string | null>(null);
   
-  const timers = useRef<{ main?: NodeJS.Timeout, animation?: NodeJS.Timeout }>({});
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Centralized function to handle closing the popup
-  const closePopup = () => {
-    // Prevent multiple triggers
-    if (isClosingRef.current || !isVisibleRef.current) return;
-
-    // Clear any existing timers to avoid conflicts
-    clearTimeout(timers.current.main);
-    clearTimeout(timers.current.animation);
-
-    setIsClosing(true);
-    timers.current.animation = setTimeout(() => {
+  const closePopup = useCallback(() => {
+    if (!isClosing) {
+      setIsClosing(true);
+      timerRef.current = setTimeout(() => {
         setIsVisible(false);
         setIsClosing(false);
-    }, FADE_OUT_DURATION);
-  };
-  
-  // Refs to hold current state for access in callbacks without dependency issues
-  const isVisibleRef = useRef(isVisible);
-  const isClosingRef = useRef(isClosing);
-  useEffect(() => {
-    isVisibleRef.current = isVisible;
-    isClosingRef.current = isClosing;
-  }, [isVisible, isClosing]);
+      }, FADE_OUT_DURATION);
+    }
+  }, [isClosing]);
 
   useEffect(() => {
-    // Effect to show the popup based on Firestore data
     if (appState?.showConfetti && appState.confettiTimestamp && appState.confettiTimestamp !== lastTimestamp) {
-      
-      // Clear any lingering timers from previous events
-      clearTimeout(timers.current.main);
-      clearTimeout(timers.current.animation);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
       
       setLastTimestamp(appState.confettiTimestamp);
       setIsVisible(true);
       setIsClosing(false);
       
-      // Set new timer to auto-close the popup
-      timers.current.main = setTimeout(closePopup, CONFETTI_DURATION);
+      timerRef.current = setTimeout(closePopup, CONFETTI_DURATION);
     }
     
-    // Cleanup function runs on unmount or when dependencies change
     return () => {
-      clearTimeout(timers.current.main);
-      clearTimeout(timers.current.animation);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
     };
-  // `closePopup` is defined outside and stable, so not needed as a dependency
-  }, [appState, lastTimestamp]);
+  }, [appState, lastTimestamp, closePopup]);
 
 
   if (!isVisible) {
