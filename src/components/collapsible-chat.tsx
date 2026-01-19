@@ -78,7 +78,7 @@ export function CollapsibleChat() {
         {/* Chat Window */}
         <div
           className={cn(
-            "absolute inset-0 bg-card text-card-foreground border rounded-lg shadow-xl flex flex-col transition-all duration-300 ease-in-out",
+            "absolute inset-0 bg-card text-card-foreground border rounded-t-lg shadow-xl flex flex-col transition-all duration-300 ease-in-out",
             isExpanded ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
           )}
         >
