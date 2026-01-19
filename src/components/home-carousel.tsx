@@ -144,7 +144,7 @@ export function HomeCarousel() {
                     src={url}
                     alt={`Carousel image ${index + 1}`}
                     fill
-                    sizes="(max-width: 768px) 100vw, 672px"
+                    sizes="(max-width: 768px) 100vw, 512px"
                     className="object-contain"
                     priority={index === 0}
                   />
