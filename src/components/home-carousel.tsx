@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { getStorage, ref, listAll, getDownloadURL, type StorageReference } from 'firebase/storage';
-import { useFirebaseApp, useUser } from '@/firebase'; // Assuming '@/firebase' provides useFirebaseApp and useUser
+import { useFirebaseApp, useUser } from '@/firebase';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -109,14 +109,8 @@ export function HomeCarousel() {
   // Render Skeleton while loading
   if (isLoading || isUserLoading) {
     return (
-      <div className="w-full h-full">
-        <div className="p-1 h-full">
-          <Card className="h-full">
-            <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg h-full">
-              <Skeleton className="h-full w-full" />
-            </CardContent>
-          </Card>
-        </div>
+      <div className="w-full h-full flex items-center justify-center">
+        <Skeleton className="h-full w-full" />
       </div>
     );
   }

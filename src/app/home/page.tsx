@@ -5,7 +5,7 @@ import { HomeCarousel } from '@/components/home-carousel';
 export default function HomePage() {
   return (
     <Header>
-      <div className="flex flex-col items-center justify-center h-full p-2">
+      <div className="flex flex-col items-center justify-center h-full p-4">
         <HomeCarousel />
       </div>
     </Header>
