@@ -25,7 +25,7 @@ const CongratulationsPopup = ({ isClosing, onClose }: { isClosing: boolean, onCl
     >
         <div 
             className={cn(
-                "relative w-full max-w-sm rounded-2xl bg-gradient-to-br from-purple-600 via-red-500 to-orange-400 p-8 text-white text-center shadow-2xl m-4 animate-in fade-in zoom-in-75",
+                "relative w-full max-w-md rounded-2xl bg-gradient-to-br from-purple-600 via-red-500 to-orange-400 p-8 text-white text-center shadow-2xl m-4 animate-in fade-in zoom-in-75",
                 isClosing && "animate-out fade-out-50 zoom-out-95"
             )}
             style={{ animationDuration: `${FADE_OUT_DURATION}ms` }}
@@ -35,7 +35,7 @@ const CongratulationsPopup = ({ isClosing, onClose }: { isClosing: boolean, onCl
                 <PartyPopper className="h-24 w-24 text-yellow-300 animate-popper-pop" />
             </div>
             
-            <h4 className="text-5xl font-bold mb-4">Congratulations!</h4>
+            <h4 className="text-5xl font-bold mb-4">Congratulations, Cathy!</h4>
             <p className="text-sm text-white/80 mb-8">
                 Lorem ipsum dolor sit amet, consectetuer
                 adipiscing elit, sed diam nonummy nibh
