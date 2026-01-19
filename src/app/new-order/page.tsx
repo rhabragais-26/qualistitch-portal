@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
@@ -47,7 +48,7 @@ export default function NewOrderPage() {
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: allLeads } = useCollection<LeadType>(leadsQuery);
 
-
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
   const [showItemPrices, setShowItemPrices] = useState(false);
@@ -202,6 +203,7 @@ export default function NewOrderPage() {
     });
     
     handleResetClick();
+    setShowSubmitConfirm(false);
   }
 
   return (
@@ -271,12 +273,10 @@ export default function NewOrderPage() {
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                                 </AlertDialog>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button type="submit" form={formId} size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
-                                            Submit
-                                        </Button>
-                                    </AlertDialogTrigger>
+                                <Button type="button" onClick={formMethods.handleSubmit(() => setShowSubmitConfirm(true))} size="lg" className="shadow-md transition-transform active:scale-95 text-white font-bold">
+                                    Submit
+                                </Button>
+                                <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>Confirm Submission</AlertDialogTitle>
@@ -291,8 +291,8 @@ export default function NewOrderPage() {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction type="submit" form={formId}>
-                                                Confirm &amp; Submit
+                                            <AlertDialogAction onClick={formMethods.handleSubmit(handleNewOrderSubmit)}>
+                                                Continue
                                             </AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
