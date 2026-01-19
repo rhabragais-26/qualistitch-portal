@@ -26,26 +26,39 @@ export function HomeCarousel() {
     const fetchImages = async () => {
       setIsLoading(true);
       try {
-        const carouselRef = ref(storage, 'Carousel');
-        const res = await listAll(carouselRef);
-        const urls = await Promise.all(
-          res.items.map((itemRef) => getDownloadURL(itemRef))
-        );
-        setImageUrls(urls);
+          const carouselRef = ref(storage, 'Carousel');
+          const res = await listAll(carouselRef);
+
+          const results = await Promise.allSettled( // Use Promise.allSettled
+              res.items.map(async (itemRef) => {
+                  try {
+                      return await getDownloadURL(itemRef);
+                  } catch (itemError) {
+                      console.warn(`Failed to get download URL for ${itemRef.fullPath}:`, itemError);
+                      return null; // Return null for failed downloads
+                  }
+              })
+          );
+
+          const urls = results
+              .filter(result => result.status === 'fulfilled' && result.value !== null)
+              .map(result => (result as PromiseFulfilledResult<string>).value);
+
+          setImageUrls(urls);
       } catch (error) {
-        console.error("Error fetching carousel images:", error);
+          console.error("Error fetching carousel images (listAll or Promise.allSettled failed):", error);
       } finally {
-        setIsLoading(false);
+          setIsLoading(false);
       }
-    };
+  };
 
     fetchImages();
   }, [app]);
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-4xl mx-auto">
-        <Skeleton className="h-[60vh] w-full" />
+      <div className="w-full max-w-4xl mx-auto h-full">
+        <Skeleton className="h-full w-full" />
       </div>
     );
   }
