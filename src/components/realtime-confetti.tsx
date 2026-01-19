@@ -15,7 +15,7 @@ type AppState = {
   congratsPhotoURL?: string;
 };
 
-const CONFETTI_DURATION = 4000; // 4 seconds in ms
+const CONFETTI_DURATION = 7000; // 7 seconds in ms
 const FADE_OUT_DURATION = 500; // CSS animation duration
 
 const CongratulationsPopup = ({ isClosing, onClose, nickname, message, photoURL }: { isClosing: boolean, onClose: () => void, nickname?: string, message?: string, photoURL?: string }) => (
@@ -70,14 +70,14 @@ const CongratulationsPopup = ({ isClosing, onClose, nickname, message, photoURL 
 
 const LocalConfetti = () => (
     <div className="fixed inset-0 z-[202] pointer-events-none confetti-container">
-      {Array.from({ length: 300 }).map((_, i) => (
+      {Array.from({ length: 600 }).map((_, i) => (
         <div
           key={i}
           className="confetti-piece"
           style={{
             left: `${Math.random() * 100}vw`,
             animationDelay: `${Math.random() * (CONFETTI_DURATION / 1000 - 1)}s`,
-            animationDuration: `${1 + Math.random() * 2}s`,
+            animationDuration: `${1 + Math.random() * 4}s`,
             backgroundColor: `hsl(${Math.random() * 360}, 90%, 65%)`,
             transform: `rotate(${Math.random() * 360}deg)`,
           }}
