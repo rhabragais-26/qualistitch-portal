@@ -182,50 +182,48 @@ export function HomeCarousel() {
   }
 
   return (
-    <div className="relative w-full max-w-lg mx-auto aspect-[3/4] overflow-hidden">
-      <AnimatePresence initial={false} custom={direction}>
-        <motion.div
-            key={page}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={slideTransition}
-            className="absolute w-full h-full"
-        >
-             <div className="p-1">
-              <Card>
-                <CardContent className="relative aspect-[3/4] flex flex-col items-center justify-center p-0 overflow-hidden rounded-lg">
-                  <motion.div
-                    className="w-full h-full relative"
-                    variants={imageVariants}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <Image
-                        src={imageUrls[imageIndex]}
-                        alt={`Carousel image ${imageIndex + 1}`}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 512px"
-                        className="object-contain"
-                        priority
-                    />
-                  </motion.div>
-                </CardContent>
-              </Card>
-            </div>
-        </motion.div>
-      </AnimatePresence>
-       <div className="absolute top-1/2 left-2 -translate-y-1/2 z-10">
-        <Button variant="outline" size="icon" onClick={() => paginate(-1)} className="rounded-full h-8 w-8">
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
+    <div className="flex items-center justify-center w-full max-w-2xl gap-4">
+      <Button variant="outline" size="icon" onClick={() => paginate(-1)} className="rounded-full h-14 w-14 shrink-0">
+        <ChevronLeft className="h-8 w-8" />
+      </Button>
+      <div className="relative w-full max-w-lg mx-auto aspect-[3/4] overflow-hidden">
+        <AnimatePresence initial={false} custom={direction}>
+          <motion.div
+              key={page}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={slideTransition}
+              className="absolute w-full h-full"
+          >
+              <div className="p-1">
+                <Card>
+                  <CardContent className="relative aspect-[3/4] flex flex-col items-center justify-center p-0 overflow-hidden rounded-lg">
+                    <motion.div
+                      className="w-full h-full relative"
+                      variants={imageVariants}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <Image
+                          src={imageUrls[imageIndex]}
+                          alt={`Carousel image ${imageIndex + 1}`}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 512px"
+                          className="object-contain"
+                          priority
+                      />
+                    </motion.div>
+                  </CardContent>
+                </Card>
+              </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
-      <div className="absolute top-1/2 right-2 -translate-y-1/2 z-10">
-        <Button variant="outline" size="icon" onClick={() => paginate(1)} className="rounded-full h-8 w-8">
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
+      <Button variant="outline" size="icon" onClick={() => paginate(1)} className="rounded-full h-14 w-14 shrink-0">
+        <ChevronRight className="h-8 w-8" />
+      </Button>
     </div>
   );
 }
