@@ -57,10 +57,10 @@ export function HomeCarousel() {
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-4xl mx-auto">
-        <div className="p-1">
-          <Card>
-            <CardContent className="relative flex aspect-[4/5] items-center justify-center p-0 overflow-hidden rounded-lg">
+      <div className="w-full h-full max-w-4xl mx-auto">
+        <div className="p-1 h-full">
+          <Card className="h-full">
+            <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg h-full">
               <Skeleton className="h-full w-full" />
             </CardContent>
           </Card>
@@ -71,7 +71,7 @@ export function HomeCarousel() {
 
   if (imageUrls.length === 0) {
     return (
-        <div className="w-full max-w-4xl mx-auto flex items-center justify-center aspect-[4/5] bg-gray-100 rounded-lg">
+        <div className="w-full max-w-4xl mx-auto flex items-center justify-center h-full bg-gray-100 rounded-lg">
             <p className="text-muted-foreground">No images found in carousel storage.</p>
         </div>
     );
@@ -79,22 +79,22 @@ export function HomeCarousel() {
 
   return (
     <Carousel
-      className="w-full max-w-4xl mx-auto"
+      className="w-full max-w-4xl h-full mx-auto"
       plugins={[Autoplay({ delay: 3000, stopOnInteraction: true })]}
       opts={{ loop: true }}
     >
-      <CarouselContent>
+      <CarouselContent className="h-full">
         {imageUrls.map((url, index) => (
-          <CarouselItem key={index}>
-            <div className="p-1">
-              <Card>
-                <CardContent className="relative flex aspect-[4/5] items-center justify-center p-0 overflow-hidden rounded-lg">
+          <CarouselItem key={index} className="h-full">
+            <div className="p-1 h-full">
+              <Card className="h-full">
+                <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg h-full">
                   <Image
                     src={url}
                     alt={`Carousel image ${index + 1}`}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover"
+                    className="object-contain"
                     priority={index === 0}
                   />
                 </CardContent>
