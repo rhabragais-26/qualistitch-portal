@@ -560,7 +560,7 @@ export function LeadForm({
   }, [isPatches, isClientOwned]);
 
   const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
-    const rawValue = e.target.value.replace(/D/g, '');
+    const rawValue = e.target.value.replace(/\D/g, '');
     if (rawValue.length <= 11) {
       let formattedValue = '';
       if (rawValue.length > 0) {
@@ -577,7 +577,7 @@ export function LeadForm({
   };
 
   const handleLandlineNoChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
-    const rawValue = e.target.value.replace(/D/g, '');
+    const rawValue = e.target.value.replace(/\D/g, '');
     if (rawValue.length <= 10) {
       let formattedValue = '';
       if (rawValue.length > 0) {
