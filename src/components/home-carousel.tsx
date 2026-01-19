@@ -183,9 +183,7 @@ export function HomeCarousel() {
 
   return (
     <div className="flex items-center justify-center w-full max-w-2xl gap-4">
-      <Button variant="outline" size="icon" onClick={() => paginate(-1)} className="rounded-full h-14 w-14 shrink-0">
-        <ChevronLeft className="h-8 w-8" />
-      </Button>
+      <ChevronLeft onClick={() => paginate(-1)} className="h-16 w-16 shrink-0 cursor-pointer text-muted-foreground hover:text-foreground transition-colors" />
       <div className="relative w-full max-w-lg mx-auto aspect-[3/4] overflow-hidden">
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
@@ -221,9 +219,7 @@ export function HomeCarousel() {
           </motion.div>
         </AnimatePresence>
       </div>
-      <Button variant="outline" size="icon" onClick={() => paginate(1)} className="rounded-full h-14 w-14 shrink-0">
-        <ChevronRight className="h-8 w-8" />
-      </Button>
+      <ChevronRight onClick={() => paginate(1)} className="h-16 w-16 shrink-0 cursor-pointer text-muted-foreground hover:text-foreground transition-colors" />
     </div>
   );
 }
