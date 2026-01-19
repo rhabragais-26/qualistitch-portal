@@ -35,7 +35,7 @@ const CongratulationsPopup = ({ isClosing, onClose }: { isClosing: boolean, onCl
                 <PartyPopper className="h-24 w-24 text-yellow-300 animate-popper-pop" />
             </div>
             
-            <h3 className="text-5xl font-bold mb-4">Congratulations, Cathy!</h3>
+            <h3 className="text-5xl font-bold">Congratulations, Cathy!</h3>
             <h2 className="text-2xl text-white/80 mb-8">
                 Amazing work for hitting <strong>100 items</strong> in a single day. Cheers!
             </h2>
@@ -75,7 +75,7 @@ export function RealtimeConfetti() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const closePopup = useCallback(() => {
-    if (!isClosing) {
+    if (isVisible && !isClosing) {
       setIsClosing(true);
       if (timerRef.current) {
         clearTimeout(timerRef.current);
@@ -85,14 +85,14 @@ export function RealtimeConfetti() {
         setIsClosing(false);
       }, FADE_OUT_DURATION);
     }
-  }, [isClosing]);
+  }, [isClosing, isVisible]);
 
   useEffect(() => {
     if (appState?.showConfetti && appState.confettiTimestamp && appState.confettiTimestamp !== lastTimestamp) {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
-        setIsClosing(false); // Reset closing state if a new confetti event comes in
       }
+      setIsClosing(false);
       
       setLastTimestamp(appState.confettiTimestamp);
       setIsVisible(true);
