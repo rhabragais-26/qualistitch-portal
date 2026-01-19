@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { getStorage, ref, listAll, getDownloadURL, type StorageReference } from 'firebase/storage';
-import { useFirebaseApp, useUser } from '@/firebase'; // Assuming '@/firebase' provides useFirebaseApp and useUser
+import { useFirebaseApp, useUser } from '@/firebase';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -15,17 +16,13 @@ import {
 import Autoplay from 'embla-carousel-autoplay';
 import { Skeleton } from './ui/skeleton';
 
-// Helper function to recursively list all files in a storage reference,
-// including those within subfolders.
 async function listAllRecursive(storageRef: StorageReference): Promise<StorageReference[]> {
     const res = await listAll(storageRef);
-    const files = res.items; // Files directly in the current folder
+    const files = res.items;
 
-    // Recursively list files in subfolders (prefixes)
     const promises = res.prefixes.map(folderRef => listAllRecursive(folderRef));
     const subfolderFiles = await Promise.all(promises);
 
-    // Concatenate all files found
     return files.concat(...subfolderFiles);
 }
 
@@ -37,9 +34,6 @@ export function HomeCarousel() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Only proceed if Firebase app is initialized and user loading is complete.
-    // Fetching is allowed even if the user is not authenticated (user is null)
-    // because Storage rules should grant public read for the Carousel path.
     if (!app || isUserLoading) {
       return;
     }
@@ -47,10 +41,9 @@ export function HomeCarousel() {
     const storage = getStorage(app);
     const fetchImages = async () => {
       setIsLoading(true);
-      setError(null); // Clear previous errors
+      setError(null);
       try {
           const carouselRef = ref(storage, 'Carousel');
-          // Use listAllRecursive to find images in 'Carousel' and its subfolders
           const allImageRefs = await listAllRecursive(carouselRef);
           
           if (allImageRefs.length === 0) {
@@ -59,7 +52,6 @@ export function HomeCarousel() {
               return;
           }
 
-          // Fetch all download URLs concurrently
           const results = await Promise.allSettled(
               allImageRefs.map(itemRef => getDownloadURL(itemRef))
           );
@@ -78,7 +70,6 @@ export function HomeCarousel() {
           
           setImageUrls(successfulUrls);
 
-          // Handle any errors encountered during URL fetching
           if (failedReasons.length > 0) {
               const firstError = failedReasons[0];
               let errorMessage = `Failed to load ${failedReasons.length} of ${allImageRefs.length} images.`;
@@ -108,12 +99,11 @@ export function HomeCarousel() {
     fetchImages();
   }, [app, isUserLoading]);
 
-  // Render Skeleton while loading
   if (isLoading || isUserLoading) {
     return (
-      <div className="w-full max-w-4xl mx-auto aspect-[3/4]">
-        <div className="p-1 h-full">
-          <Card className="h-full">
+      <div className="w-full max-w-md mx-auto">
+        <div className="p-1">
+          <Card className="aspect-[3/4]">
             <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg h-full">
               <Skeleton className="h-full w-full" />
             </CardContent>
@@ -123,7 +113,6 @@ export function HomeCarousel() {
     );
   }
   
-  // Render error message if there was a problem fetching images
   if (error) {
     return (
         <div className="w-full h-full flex items-center justify-center bg-destructive/10 rounded-lg p-4">
@@ -132,10 +121,9 @@ export function HomeCarousel() {
     );
   }
 
-  // Render message if no images were found (after successful fetch, but empty)
   if (imageUrls.length === 0) {
     return (
-        <div className="w-full max-w-4xl mx-auto aspect-[3/4] flex items-center justify-center bg-gray-100 rounded-lg">
+        <div className="w-full max-w-md mx-auto aspect-[3/4] flex items-center justify-center bg-gray-100 rounded-lg">
             <p className="text-muted-foreground">No images found in the 'Carousel' storage folder.</p>
         </div>
     );
@@ -143,24 +131,22 @@ export function HomeCarousel() {
 
   return (
     <Carousel
-      // MODIFIED: Changed height to be responsive to viewport height
-      className="w-full h-[75vh]" // Use a percentage of viewport height, e.g., 75%
+      className="w-full max-w-md"
       plugins={[Autoplay({ delay: 3000, stopOnInteraction: true })]}
       opts={{ loop: true }}
     >
-      <CarouselContent className="h-full">
+      <CarouselContent>
         {imageUrls.map((url, index) => (
-          <CarouselItem key={index} className="h-full">
-            <div className="p-1 h-full">
-              <Card className="h-full">
-                {/* Ensure CardContent has a height, using aspect ratio based on your images */}
-                <CardContent className="relative flex items-center justify-center p-0 overflow-hidden rounded-lg aspect-[3/4]">
+          <CarouselItem key={index}>
+            <div className="p-1">
+              <Card>
+                <CardContent className="relative aspect-[3/4] flex items-center justify-center p-0 overflow-hidden rounded-lg">
                   <Image
                     src={url}
                     alt={`Carousel image ${index + 1}`}
                     fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-contain" // Ensures the whole image is visible within the container
+                    sizes="(max-width: 768px) 100vw, 448px"
+                    className="object-contain"
                     priority={index === 0}
                   />
                 </CardContent>
