@@ -16,7 +16,7 @@ export default function HomePage() {
             )}>
             Welcome back, {userProfile?.nickname || 'User'}!
           </h1>
-          <p className="text-xl text-muted-foreground mt-2">Here's a quick look at what's happening today.</p>
+          <p className="text-xl text-muted-foreground mt-2">Here's a quick look on our Company Profile</p>
         </div>
         <div className="w-full max-w-2xl">
           <HomeCarousel />
