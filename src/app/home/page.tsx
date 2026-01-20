@@ -18,7 +18,7 @@ export default function HomePage() {
           </h1>
           <p className="text-sm text-muted-foreground">Here's a quick look on our Company Profile</p>
         </div>
-        <div className="w-full flex-1 flex items-center justify-center">
+        <div className="w-full flex-1 flex items-center justify-center pb-4">
           <HomeCarousel />
         </div>
       </div>
