@@ -321,7 +321,7 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenu>
                 <Button variant="ghost" onClick={() => handleNavigation('/order-status')} className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/order-status']))}>
                   <ListOrdered className="mr-2" />
-                  Overall Order Status
+                  Order's Progress
                 </Button>
               </>
             )}
