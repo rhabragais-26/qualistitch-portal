@@ -603,8 +603,9 @@ export function OrderStatusTable() {
                         </TableRow>
                         {isCollapsibleOpen && (
                           <TableRow>
-                              <TableCell colSpan={11}>
-                              <div className="p-2 bg-gray-50 space-y-4">
+                              <TableCell colSpan={8}>
+                              <div className="p-4 max-w-xl mx-auto bg-gray-50 rounded-md my-2">
+                                <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
                                 <Table>
                                   <TableHeader>
                                     <TableRow>
