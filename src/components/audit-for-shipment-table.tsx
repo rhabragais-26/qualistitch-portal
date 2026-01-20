@@ -350,9 +350,15 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
                           </div>
                         </TableCell>
                         <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
-                        <TableCell className="text-xs text-center font-semibold">{formatCurrency(lead.grandTotal || 0)}</TableCell>
-                        <TableCell className="text-xs text-center">{formatCurrency(lead.paidAmount || 0)}</TableCell>
-                        <TableCell className="text-xs text-center font-bold text-destructive">{formatCurrency(lead.balance || 0)}</TableCell>
+                        <TableCell className={cn("text-xs text-center font-semibold", lead.balance === 0 ? "text-green-700" : "text-black")}>
+                            {formatCurrency(lead.grandTotal || 0)}
+                        </TableCell>
+                        <TableCell className={cn("text-xs text-center", lead.paidAmount == null || lead.paidAmount === 0 ? "text-muted-foreground" : "text-black")}>
+                            {formatCurrency(lead.paidAmount || 0)}
+                        </TableCell>
+                        <TableCell className={cn("text-xs text-center font-bold", lead.balance === 0 ? "text-muted-foreground" : "text-destructive")}>
+                            {formatCurrency(lead.balance || 0)}
+                        </TableCell>
                         <TableCell className="text-xs text-center">{lead.paymentType}</TableCell>
                         <TableCell className="text-center">
                           <RadioGroup
