@@ -115,7 +115,6 @@ export function ProductManagement() {
     setSelectedProductType(newProduct.name);
 
     setNewProduct({ name: '', group: newProduct.group });
-    setIsAddProductOpen(false);
     toast({ title: 'Product Staged', description: `"${newProduct.name}" is ready to be saved.`});
   };
 
@@ -204,63 +203,90 @@ export function ProductManagement() {
             <div className="flex items-center gap-4">
                  <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
                     <DialogTrigger asChild>
-                        <Button variant="outline"><PlusCircle className="mr-2"/> Add Product</Button>
+                        <Button variant="outline"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="max-w-4xl">
                         <DialogHeader>
-                            <DialogTitle>Add New Product</DialogTitle>
+                            <DialogTitle>Manage Products &amp; Categories</DialogTitle>
                             <DialogDescription>
-                                Add a new product to your catalog and assign it to a pricing category.
+                                Add new products or re-categorize existing ones.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="py-4 space-y-4">
-                            <div>
-                                <Label htmlFor="product-name">New Product Name</Label>
-                                <Input id="product-name" value={newProduct.name} onChange={e => setNewProduct(p => ({...p, name: e.target.value}))} placeholder="e.g., New Jacket Model"/>
-                            </div>
-                             <div>
-                                <Label htmlFor="product-category">Category</Label>
-                                <div className="flex items-center gap-2">
-                                    <Select value={newProduct.group} onValueChange={v => setNewProduct(p => ({...p, group: v as ProductGroup}))}>
-                                        <SelectTrigger id="product-category" className="flex-1">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                     <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
-                                        <DialogTrigger asChild>
-                                            <Button variant="outline" size="sm"><PlusCircle className="mr-2"/> New</Button>
-                                        </DialogTrigger>
-                                        <DialogContent>
-                                            <DialogHeader>
-                                                <DialogTitle>Add New Category</DialogTitle>
-                                                <DialogDescription>
-                                                    Create a new pricing category for your products.
-                                                </DialogDescription>
-                                            </DialogHeader>
-                                            <div className="py-4">
-                                                <Label htmlFor="category-name">Category Name</Label>
-                                                <Input
-                                                    id="category-name"
-                                                    value={newCategoryName}
-                                                    onChange={(e) => setNewCategoryName(e.target.value)}
-                                                    placeholder="e.g., Pants"
-                                                />
-                                            </div>
-                                            <DialogFooter>
-                                                <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                                                <Button onClick={handleAddNewCategory}>Add Category</Button>
-                                            </DialogFooter>
-                                        </DialogContent>
-                                    </Dialog>
+                        <div className="grid grid-cols-2 gap-8 py-4">
+                            <div className="space-y-4 border-r pr-8">
+                                <h3 className="text-lg font-semibold">Add New Product</h3>
+                                <div>
+                                    <Label htmlFor="product-name">New Product Name</Label>
+                                    <Input id="product-name" value={newProduct.name} onChange={e => setNewProduct(p => ({...p, name: e.target.value}))} placeholder="e.g., New Jacket Model"/>
                                 </div>
+                                <div>
+                                    <Label htmlFor="product-category">Assign to Category</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Select value={newProduct.group} onValueChange={v => setNewProduct(p => ({...p, group: v as ProductGroup}))}>
+                                            <SelectTrigger id="product-category" className="flex-1">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="sm"><PlusCircle className="mr-2"/> New</Button>
+                                            </DialogTrigger>
+                                            <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
+                                                <DialogHeader>
+                                                    <DialogTitle>Add New Category</DialogTitle>
+                                                    <DialogDescription>
+                                                        Create a new pricing category for your products.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <div className="py-4">
+                                                    <Label htmlFor="category-name">Category Name</Label>
+                                                    <Input
+                                                        id="category-name"
+                                                        value={newCategoryName}
+                                                        onChange={(e) => setNewCategoryName(e.target.value)}
+                                                        placeholder="e.g., Pants"
+                                                    />
+                                                </div>
+                                                <DialogFooter>
+                                                    <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                                                    <Button onClick={handleAddNewCategory}>Add Category</Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                </div>
+                                <Button onClick={handleAddNewProduct} className="w-full">Add Product</Button>
+                            </div>
+
+                            <div>
+                                <h3 className="text-lg font-semibold">Product Categories</h3>
+                                <div className="space-y-2 max-h-96 overflow-y-auto border p-4 rounded-md mt-4">
+                                {Object.entries(config.productGroupMapping).map(([name, group]) => (
+                                    <div key={name} className="flex items-center justify-between">
+                                        <span>{name}</span>
+                                        <div className="flex items-center gap-2">
+                                            <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
+                                                <SelectTrigger className="w-[200px] h-8 text-xs">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveProduct(name)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                              </div>
                             </div>
                         </div>
                         <DialogFooter>
-                            <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                            <Button onClick={handleAddNewProduct}>Add Product</Button>
+                            <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
@@ -338,30 +364,6 @@ export function ProductManagement() {
                  </div>
             ))}
            </div>
-        </section>
-
-        <section>
-            <h3 className="text-lg font-semibold">Product Categories</h3>
-            <div className="space-y-2 max-h-60 overflow-y-auto border p-4 rounded-md mt-4">
-            {Object.entries(config.productGroupMapping).map(([name, group]) => (
-                <div key={name} className="flex items-center justify-between">
-                    <span>{name}</span>
-                    <div className="flex items-center gap-2">
-                        <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
-                            <SelectTrigger className="w-[200px] h-8 text-xs">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveProduct(name)}>
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
-            ))}
-          </div>
         </section>
 
         <div className="flex justify-end pt-4">
