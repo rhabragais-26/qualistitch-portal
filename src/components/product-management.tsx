@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -193,20 +192,28 @@ export function ProductManagement() {
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-                <CardTitle>Product & Pricing Management</CardTitle>
+                <CardTitle>Product &amp; Pricing Management</CardTitle>
                 <CardDescription>
                 Edit product prices, add-ons, and manage product categories.
                 </CardDescription>
             </div>
             <div className="flex items-center gap-4">
                 <Label>Select a Product:</Label>
+                 <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                    <SelectTrigger className="w-[280px]">
+                        <SelectValue placeholder="Select Product to Edit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {productTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                    </SelectContent>
+                </Select>
                  <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
                     <DialogTrigger asChild>
                         <Button variant="outline" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-6xl">
                         <DialogHeader>
-                            <DialogTitle>Manage Products & Categories</DialogTitle>
+                            <DialogTitle>Manage Products &amp; Categories</DialogTitle>
                             <DialogDescription>
                                 Add new products or re-categorize existing ones.
                             </DialogDescription>
@@ -289,14 +296,6 @@ export function ProductManagement() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-                <Select value={selectedProductType} onValueChange={setSelectedProductType}>
-                    <SelectTrigger className="w-[280px]">
-                        <SelectValue placeholder="Select Product to Edit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {productTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
-                    </SelectContent>
-                </Select>
             </div>
         </div>
       </CardHeader>
@@ -329,8 +328,16 @@ export function ProductManagement() {
                               <TableBody>
                                   {config.pricingTiers[selectedProductGroup]?.[embroideryType]?.tiers.map((tier, tierIndex) => (
                                       <TableRow key={tierIndex}>
-                                          <TableCell className="p-1 align-middle text-center"><Input type="number" value={tier.min} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'min', e.target.value)} className="w-20 h-7 text-xs text-center"/></TableCell>
-                                          <TableCell className="p-1 align-middle text-center"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'max', e.target.value)} className="w-20 h-7 text-xs text-center"/></TableCell>
+                                          <TableCell className="p-1 align-middle">
+                                            <div className="flex justify-center">
+                                                <Input type="number" value={tier.min} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'min', e.target.value)} className="w-20 h-7 text-xs text-center"/>
+                                            </div>
+                                          </TableCell>
+                                          <TableCell className="p-1 align-middle">
+                                            <div className="flex justify-center">
+                                                <Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'max', e.target.value)} className="w-20 h-7 text-xs text-center"/>
+                                            </div>
+                                          </TableCell>
                                           <TableCell className="p-1 align-middle">
                                             <div className="relative flex items-center justify-center">
                                                 <span className="absolute left-3 text-muted-foreground">₱</span>
@@ -369,8 +376,16 @@ export function ProductManagement() {
                         <TableBody>
                             {config.addOnPricing[addOn]?.tiers.map((tier, tierIndex) => (
                                 <TableRow key={tierIndex}>
-                                    <TableCell className="p-1 align-middle text-center"><Input type="number" value={tier.min} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'min', e.target.value)} className="w-20 h-7 text-xs text-center"/></TableCell>
-                                    <TableCell className="p-1 align-middle text-center"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleAddOnTierChange(addOn, tierIndex, 'max', e.target.value)} className="w-20 h-7 text-xs text-center"/></TableCell>
+                                     <TableCell className="p-1 align-middle">
+                                        <div className="flex justify-center">
+                                          <Input type="number" value={tier.min} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'min', e.target.value)} className="w-20 h-7 text-xs text-center"/>
+                                        </div>
+                                     </TableCell>
+                                    <TableCell className="p-1 align-middle">
+                                        <div className="flex justify-center">
+                                            <Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleAddOnTierChange(addOn, tierIndex, 'max', e.target.value)} className="w-20 h-7 text-xs text-center"/>
+                                        </div>
+                                    </TableCell>
                                     <TableCell className="p-1 align-middle">
                                         <div className="relative flex items-center justify-center">
                                             <span className="absolute left-2 text-muted-foreground">₱</span>
