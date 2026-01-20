@@ -33,6 +33,7 @@ import { collection, query } from 'firebase/firestore';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Progress } from './ui/progress';
+import Link from 'next/link';
 
 type Order = {
   productType: string;
@@ -113,7 +114,7 @@ type OperationalCase = {
   isDeleted?: boolean;
 };
 
-export function OrderStatusTable() {
+export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONGOING' | 'COMPLETED' }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [overallStatusFilter, setOverallStatusFilter] = useState('All');
@@ -293,6 +294,13 @@ export function OrderStatusTable() {
     const lowercasedSearchTerm = searchTerm.toLowerCase();
 
     const filtered = processedLeads.filter(lead => {
+        if (filterType === 'COMPLETED') {
+            if (lead.shipmentStatus !== 'Delivered') return false;
+        } else { // ONGOING
+            if (lead.shipmentStatus === 'Delivered') return false;
+        }
+
+
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
         (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
@@ -320,7 +328,7 @@ export function OrderStatusTable() {
         return aDeadline.remainingDays - bDeadline.remainingDays;
     });
 
-  }, [processedLeads, searchTerm, joNumberSearch, overallStatusFilter, overdueStatusFilter, formatJoNumber, getOverallStatus, calculateDeadline]);
+  }, [processedLeads, searchTerm, joNumberSearch, overallStatusFilter, overdueStatusFilter, formatJoNumber, getOverallStatus, calculateDeadline, filterType]);
   
   const leadsWithCases = useMemo(() => {
     if (!filteredLeads || !operationalCases) return [];
@@ -365,57 +373,73 @@ export function OrderStatusTable() {
           </div>
         </div>
       )}
-      <CardHeader>
-        <div className="flex justify-between items-center">
+      <CardHeader className="pb-4">
+        <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-black">Overall Order Status & Progress</CardTitle>
+              <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completely Delivered Orders' : 'Overall Order Status &amp; Progress'}</CardTitle>
               <CardDescription className="text-gray-600">
-                Here is the overall status and progress of all customer orders.
+                {filterType === 'COMPLETED'
+                  ? 'Here are all the orders that have been successfully delivered.'
+                  : 'Here is the overall status and progress of all customer orders.'
+                }
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Filter by Overall Status:</span>
-                  <Select value={overallStatusFilter} onValueChange={setOverallStatusFilter}>
-                    <SelectTrigger className="w-auto bg-gray-100 text-black placeholder:text-gray-500">
-                      <SelectValue placeholder="Filter by Overall Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All Statuses</SelectItem>
-                      <SelectItem value="PENDING">Pending</SelectItem>
-                      <SelectItem value="ONGOING">Ongoing</SelectItem>
-                      <SelectItem value="COMPLETED">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Filter by Overdue Status:</span>
-                  <Select value={overdueStatusFilter} onValueChange={setOverdueStatusFilter}>
-                    <SelectTrigger className="w-auto bg-gray-100 text-black placeholder:text-gray-500">
-                      <SelectValue placeholder="Filter by Overdue Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All Overdue Statuses</SelectItem>
-                      <SelectItem value="Overdue">Overdue</SelectItem>
-                      <SelectItem value="Nearly Overdue">Nearly Overdue</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-600">Search:</span>
+                    <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Filter by Overall Status:</span>
+                    <Select value={overallStatusFilter} onValueChange={setOverallStatusFilter}>
+                        <SelectTrigger className="w-auto bg-gray-100 text-black placeholder:text-gray-500">
+                        <SelectValue placeholder="Filter by Overall Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="All">All Statuses</SelectItem>
+                        <SelectItem value="PENDING">Pending</SelectItem>
+                        <SelectItem value="ONGOING">Ongoing</SelectItem>
+                        <SelectItem value="COMPLETED">Completed</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Filter by Overdue Status:</span>
+                    <Select value={overdueStatusFilter} onValueChange={setOverdueStatusFilter}>
+                        <SelectTrigger className="w-auto bg-gray-100 text-black placeholder:text-gray-500">
+                        <SelectValue placeholder="Filter by Overdue Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="All">All Overdue Statuses</SelectItem>
+                        <SelectItem value="Overdue">Overdue</SelectItem>
+                        <SelectItem value="Nearly Overdue">Nearly Overdue</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-600">Search:</span>
+                        <Input
+                            placeholder="J.O. No..."
+                            value={joNumberSearch}
+                            onChange={(e) => setJoNumberSearch(e.target.value)}
+                            className="bg-gray-100 text-black placeholder:text-gray-500 w-40"
+                        />
+                    </div>
                     <Input
-                        placeholder="J.O. No..."
-                        value={joNumberSearch}
-                        onChange={(e) => setJoNumberSearch(e.target.value)}
-                        className="bg-gray-100 text-black placeholder:text-gray-500 w-40"
+                    placeholder="Search customer, company, or contact..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-gray-100 text-black placeholder:text-gray-500"
                     />
                 </div>
-                 <Input
-                  placeholder="Search customer, company, or contact..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-gray-100 text-black placeholder:text-gray-500"
-                />
+                <div className="w-full text-right">
+                  {filterType === 'COMPLETED' ? (
+                    <Link href="/order-status" className="text-sm text-primary hover:underline">
+                      View Ongoing Orders
+                    </Link>
+                  ) : (
+                    <Link href="/order-status/completed" className="text-sm text-primary hover:underline">
+                      View Completely Delivered Orders
+                    </Link>
+                  )}
+                </div>
             </div>
         </div>
       </CardHeader>
