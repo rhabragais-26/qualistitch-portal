@@ -1,19 +1,18 @@
-
 'use client';
 import { Header } from '@/components/header';
-import { ShipmentQueueTable } from '@/components/shipment-queue-table';
+import { ProductionQueueTable } from '@/components/production-queue-table';
 import { useUser } from '@/firebase';
 import { hasEditPermission } from '@/lib/permissions';
 import { usePathname } from 'next/navigation';
 
-export default function ShipmentQueuePage() {
+export default function CompletedProductionPage() {
   const { userProfile } = useUser();
   const pathname = usePathname();
   const canEdit = hasEditPermission(userProfile?.position as any, pathname);
 
   return (
     <Header>
-      <ShipmentQueueTable isReadOnly={!canEdit} filterType="ONGOING"/>
+      <ProductionQueueTable isReadOnly={!canEdit} filterType="COMPLETED" />
     </Header>
   );
 }

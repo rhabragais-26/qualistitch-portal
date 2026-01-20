@@ -33,6 +33,7 @@ import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import Image from 'next/image';
+import Link from 'next/link';
 
 type Order = {
   productType: string;
@@ -488,8 +489,12 @@ const ProductionQueueTableRow = React.memo(({
 });
 ProductionQueueTableRow.displayName = 'ProductionQueueTableRow';
 
+type ProductionQueueTableProps = {
+  isReadOnly: boolean;
+  filterType?: 'ONGOING' | 'COMPLETED';
+};
 
-export function ProductionQueueTable({ isReadOnly }: { isReadOnly: boolean }) {
+export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
@@ -700,9 +705,14 @@ export function ProductionQueueTable({ isReadOnly }: { isReadOnly: boolean }) {
   const productionQueue = useMemo(() => {
     if (!processedLeads) return [];
     
-    const sentToProd = processedLeads.filter(lead => lead.isSentToProduction && !lead.isEndorsedToLogistics && lead.orderType !== 'Stock (Jacket Only)');
+    let relevantLeads;
+    if (filterType === 'COMPLETED') {
+      relevantLeads = processedLeads.filter(lead => lead.isEndorsedToLogistics);
+    } else {
+      relevantLeads = processedLeads.filter(lead => lead.isSentToProduction && !lead.isEndorsedToLogistics && lead.orderType !== 'Stock (Jacket Only)');
+    }
     
-    return sentToProd.filter(lead => {
+    return relevantLeads.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
@@ -716,7 +726,7 @@ export function ProductionQueueTable({ isReadOnly }: { isReadOnly: boolean }) {
       
       return matchesSearch && matchesJo;
     });
-  }, [processedLeads, searchTerm, joNumberSearch]);
+  }, [processedLeads, searchTerm, joNumberSearch, filterType]);
 
   const toggleLeadDetails = useCallback((leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
@@ -766,15 +776,16 @@ export function ProductionQueueTable({ isReadOnly }: { isReadOnly: boolean }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <CardHeader>
-        <div className="flex justify-between items-center">
+      <CardHeader className="pb-4">
+        <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-black">Production Queue</CardTitle>
+            <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Production' : 'Production Queue'}</CardTitle>
             <CardDescription className="text-gray-600">
-              Job orders ready for production.
+              {filterType === 'COMPLETED' ? 'Job orders that have finished production.' : 'Job orders ready for production.'}
             </CardDescription>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-4">
               <div className="w-full max-w-lg">
                 <Input
                   placeholder="Search customer, company and contact number"
@@ -792,6 +803,18 @@ export function ProductionQueueTable({ isReadOnly }: { isReadOnly: boolean }) {
                 />
               </div>
             </div>
+            <div className="w-full text-right">
+              {filterType === 'COMPLETED' ? (
+                <Link href="/production/production-queue" className="text-sm text-primary hover:underline">
+                  View Production Queue
+                </Link>
+              ) : (
+                <Link href="/production/completed-production" className="text-sm text-primary hover:underline">
+                  View Completed Production
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

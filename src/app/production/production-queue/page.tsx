@@ -13,7 +13,7 @@ export default function ProductionQueuePage() {
 
   return (
     <Header>
-      <ProductionQueueTable isReadOnly={!canEdit} />
+      <ProductionQueueTable isReadOnly={!canEdit} filterType="ONGOING" />
     </Header>
   );
 }
