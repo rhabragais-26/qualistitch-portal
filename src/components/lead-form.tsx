@@ -970,7 +970,7 @@ export function LeadForm({
                   <FormItem>
                   <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
+                      <FormControl><SelectTrigger className="text-xs w-full"><SelectValue placeholder="Select Order Type" /></SelectTrigger></FormControl>
                       <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                   </Select>
                   <FormMessage />
@@ -1016,7 +1016,7 @@ export function LeadForm({
                 <FormItem>
                     <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl><SelectTrigger className={cn("text-xs w-full", !field.value && 'text-muted-foreground')}><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
+                    <FormControl><SelectTrigger className="text-xs w-full"><SelectValue placeholder="Select Courier" /></SelectTrigger></FormControl>
                     <SelectContent>{allCourierOptions.map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                     </Select>
                     <FormMessage />

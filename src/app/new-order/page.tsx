@@ -43,6 +43,7 @@ export default function NewOrderPage() {
   const { toast } = useToast();
   const pathname = usePathname();
   const canEdit = hasEditPermission(userProfile?.position as any, pathname);
+  const [formKey, setFormKey] = useState(0);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: allLeads } = useCollection<LeadType>(leadsQuery, undefined, { listen: false });
@@ -108,6 +109,7 @@ export default function NewOrderPage() {
     setGrandTotal(0);
     setBalance(0);
     setOrderType(undefined);
+    setFormKey(prev => prev + 1);
   }
 
   const handleNewOrderSubmit = (values: FormValues) => {
@@ -220,6 +222,7 @@ export default function NewOrderPage() {
                 <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start">
                     <div className="xl:col-span-3">
                         <LeadForm 
+                            key={formKey}
                             onDirtyChange={setIsFormDirty} 
                             stagedOrders={stagedOrders}
                             setStagedOrders={setStagedOrders}
