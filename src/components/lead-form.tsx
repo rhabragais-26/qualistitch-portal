@@ -4,7 +4,7 @@ import * as React from "react"
 import {zodResolver} from '@hookform/resolvers/zod';
 import { useFormContext, useFieldArray, FormProvider, useForm } from 'react-hook-form';
 import * as z from 'zod';
-import {useState, useEffect, useMemo} from 'react';
+import {useState, useEffect, useMemo, useCallback} from 'react';
 
 import {Button} from '@/components/ui/button';
 import {
@@ -137,22 +137,14 @@ export const formSchema = z.object({
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['houseStreet'],
-          message: 'House/Street is required.',
+          message: 'House No., Street, Village, Landmark & Others is required.',
         });
       }
-      if (!data.barangay || data.barangay.trim().length === 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['barangay'],
-          message: 'Barangay is required.',
-        });
+      if (!data.barangay) {
+        // Allow custom barangay, so no check here
       }
-      if (!data.city || data.city.trim().length === 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['city'],
-          message: 'City/Municipality is required.',
-        });
+      if (!data.city) {
+         // Allow custom city
       }
       if (!data.province || data.province.trim().length === 0) {
         ctx.addIssue({
@@ -369,14 +361,12 @@ export function LeadForm({
     setValue('province', city.province, { shouldValidate: true, shouldDirty: true });
     setValue('barangay', '', { shouldDirty: true });
     setActiveAddressField(null);
-    setCitySuggestions([]);
   };
 
   const handleBarangaySuggestionClick = (b: { barangay: string, city: string, province: string }) => {
     setValue('barangay', b.barangay, { shouldValidate: true, shouldDirty: true });
     setValue('city', b.city, { shouldValidate: true, shouldDirty: true });
     setValue('province', b.province, { shouldValidate: true, shouldDirty: true });
-    setBarangaySuggestions([]);
     setActiveAddressField(null);
   };
 
@@ -384,7 +374,6 @@ export function LeadForm({
     setValue('province', province, { shouldValidate: true, shouldDirty: true });
     setValue('city', '', { shouldDirty: true });
     setValue('barangay', '', { shouldDirty: true });
-    setProvinceSuggestions([]);
     setActiveAddressField(null);
   };
 
@@ -402,15 +391,28 @@ export function LeadForm({
   }, [orderTypeValue, onOrderTypeChange]);
 
   const part1 = [houseStreetValue, barangayValue].filter(Boolean).join(' ');
-  const part2 = [cityValue, provinceValue].filter(Boolean).join(' ');
+  const part2 = [cityValue, provinceValue].filter(Boolean).join(', ');
   const concatenatedAddress = [part1, part2].filter(Boolean).join(', ');
 
   useEffect(() => {
     if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
         setSelectedLead(null);
         setManualStatus(null);
+        // If name is cleared entirely, clear other fields
+        if (!customerNameValue) {
+            setValue('companyName', '', { shouldDirty: true });
+            setValue('mobileNo', '', { shouldDirty: true });
+            setValue('landlineNo', '', { shouldDirty: true });
+            setValue('houseStreet', '', { shouldDirty: true });
+            setValue('barangay', '', { shouldDirty: true });
+            setValue('city', '', { shouldDirty: true });
+            setValue('province', '', { shouldDirty: true });
+            setValue('internationalAddress', '', { shouldDirty: true });
+            setCustomerSuggestions([]);
+            setCompanySuggestions([]);
+        }
     }
-  }, [customerNameValue, selectedLead]);
+  }, [customerNameValue, selectedLead, setValue]);
   
   // Effect for setting initial status in edit mode
   useEffect(() => {
@@ -461,7 +463,7 @@ export function LeadForm({
                 self.findIndex((l) => l.customerName.toLowerCase() === lead.customerName.toLowerCase()) === index
         );
         setCustomerSuggestions(uniqueSuggestions);
-    } else {
+    } else if (!customerNameValue) {
         setCustomerSuggestions([]);
     }
   }, [isEditing, customerNameValue, leads, selectedLead]);
@@ -479,7 +481,7 @@ export function LeadForm({
           self.findIndex((l) => l.companyName?.toLowerCase() === lead.companyName?.toLowerCase()) === index
       );
       setCompanySuggestions(uniqueSuggestions);
-    } else {
+    } else if (!companyNameValue) {
       setCompanySuggestions([]);
     }
   }, [isEditing, companyNameValue, leads, selectedLead]);
@@ -830,7 +832,7 @@ export function LeadForm({
                         }}
                       />
                     </FormControl>
-                    {!isEditing && customerSuggestions.length > 0 && (
+                    {!isEditing && customerSuggestions.length > 0 && customerNameValue && (
                       <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                         <CardContent className="p-2 max-h-40 overflow-y-auto">
                           {customerSuggestions.map((lead) => (
@@ -850,7 +852,7 @@ export function LeadForm({
                     <FormControl>
                       <Input {...field} autoComplete="off" onBlur={() => !isEditing && setTimeout(() => setCompanySuggestions([]), 150)} />
                     </FormControl>
-                    {!isEditing && companySuggestions.length > 0 && (
+                    {!isEditing && companySuggestions.length > 0 && companyNameValue && (
                       <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                         <CardContent className="p-2 max-h-40 overflow-y-auto">
                           {companySuggestions.map((lead) => (
@@ -906,7 +908,7 @@ export function LeadForm({
                     <>
                         <FormField control={form.control} name="houseStreet" render={({field}) => (
                         <FormItem>
-                            <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street, Village, Landmark &amp; Others</FormLabel>
+                            <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street, Village, Landmark & Others</FormLabel>
                             <FormControl><Input {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>
@@ -916,7 +918,7 @@ export function LeadForm({
                             <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
                             <FormControl>
-                                <Input {...field} onFocus={() => setActiveAddressField('barangay')} onBlur={() => setTimeout(() => {setBarangaySuggestions([]); setActiveAddressField(null);}, 150)} autoComplete="off" />
+                                <Input {...field} onFocus={() => activeAddressField !== 'barangay' && setActiveAddressField('barangay')} onBlur={() => setTimeout(() => { activeAddressField === 'barangay' && setActiveAddressField(null);}, 150)} autoComplete="off" />
                             </FormControl>
                             {barangayValue && barangaySuggestions.length > 0 && !selectedLead && activeAddressField === 'barangay' && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
@@ -937,7 +939,7 @@ export function LeadForm({
                             <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
                             <FormControl>
-                                <Input {...field} onFocus={() => setActiveAddressField('city')} onBlur={() => setTimeout(() => {setCitySuggestions([]); setActiveAddressField(null);}, 150)} autoComplete="off" />
+                                <Input {...field} onFocus={() => activeAddressField !== 'city' && setActiveAddressField('city')} onBlur={() => setTimeout(() => { activeAddressField === 'city' && setActiveAddressField(null);}, 150)} autoComplete="off" />
                             </FormControl>
                             {cityValue && citySuggestions.length > 0 && !selectedLead && activeAddressField === 'city' && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
@@ -958,7 +960,7 @@ export function LeadForm({
                         <FormField control={form.control} name="province" render={({field}) => (
                           <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
-                            <FormControl><Input {...field} onFocus={() => setActiveAddressField('province')} onBlur={() => setTimeout(() => {setProvinceSuggestions([]); setActiveAddressField(null);}, 150)} autoComplete="off" /></FormControl>
+                            <FormControl><Input {...field} onFocus={() => activeAddressField !== 'province' && setActiveAddressField('province')} onBlur={() => setTimeout(() => { activeAddressField === 'province' && setActiveAddressField(null);}, 150)} autoComplete="off" /></FormControl>
                             {provinceValue && provinceSuggestions.length > 0 && !selectedLead && activeAddressField === 'province' && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
