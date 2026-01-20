@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -101,6 +100,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived' } | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
 
+  const isCompleted = filterType === 'COMPLETED';
 
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
@@ -523,7 +523,8 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                                 <Checkbox
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                disabled={!lead.isJoPrinted || isReadOnly}
+                                disabled={!lead.isJoPrinted || isReadOnly || isCompleted}
+                                className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                                 />
                                 {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                             </div>
@@ -539,8 +540,8 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                                 </div>
                             ) : (
                                 <div className="flex gap-2 justify-center">
-                                    <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold" onClick={() => handleApproveQuality(lead)} disabled={!lead.isJoHardcopyReceived || isReadOnly}>Approve</Button>
-                                    <Button size="sm" variant="destructive" className="h-7 text-xs font-bold" onClick={() => setDisapprovingLead(lead)} disabled={!lead.isJoHardcopyReceived || isReadOnly}>Disapprove</Button>
+                                    <Button size="sm" className={cn("h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => handleApproveQuality(lead)} disabled={!lead.isJoHardcopyReceived || isReadOnly || isCompleted}>Approve</Button>
+                                    <Button size="sm" variant="destructive" className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => setDisapprovingLead(lead)} disabled={!lead.isJoHardcopyReceived || isReadOnly || isCompleted}>Disapprove</Button>
                                 </div>
                             )}
                         </TableCell>
@@ -551,7 +552,8 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                               onCheckedChange={(checked) => {
                                 setPackingLead({ lead, isPacking: !!checked });
                               }}
-                              disabled={!lead.isQualityApproved || isReadOnly}
+                              disabled={!lead.isQualityApproved || isReadOnly || isCompleted}
+                              className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                             />
                             {lead.isPacked && lead.packedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.packedTimestamp).dateTimeShort}</div>}
                           </div>
@@ -568,7 +570,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                                     {lead.salesAuditCompleteTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.salesAuditCompleteTimestamp).dateTimeShort}</div>}
                                 </div>
                            ) : (
-                                <Button size="sm" className="h-7 text-xs font-bold" onClick={() => handleRequestSalesAudit(lead)} disabled={!lead.isPacked || isReadOnly}>
+                                <Button size="sm" className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => handleRequestSalesAudit(lead)} disabled={!lead.isPacked || isReadOnly || isCompleted}>
                                     Request Audit from Sales
                                 </Button>
                            )}
@@ -594,9 +596,9 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                             ) : (
                                 <Button
                                   size="sm"
-                                  className="h-7 text-xs font-bold"
+                                  className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")}
                                   onClick={() => setShippingLead(lead)}
-                                  disabled={!lead.isSalesAuditComplete || isReadOnly}
+                                  disabled={!lead.isSalesAuditComplete || isReadOnly || isCompleted}
                                 >
                                   Ship Now
                                 </Button>
@@ -711,3 +713,5 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     </>
   );
 }
+
+    

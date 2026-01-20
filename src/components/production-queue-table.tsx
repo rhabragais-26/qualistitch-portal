@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
@@ -329,6 +328,7 @@ const ProductionQueueTableRow = React.memo(({
 }) => {
     const isRepeat = lead.orderNumber > 1;
     const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
+    const isCompleted = filterType === 'COMPLETED';
 
     return (
         <>
@@ -397,7 +397,8 @@ const ProductionQueueTableRow = React.memo(({
                         <Checkbox
                         checked={lead.isJoHardcopyReceived || false}
                         onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                        disabled={!lead.isJoPrinted || isReadOnly}
+                        disabled={!lead.isJoPrinted || isReadOnly || isCompleted}
+                        className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                         />
                         {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                     </div>
@@ -407,7 +408,8 @@ const ProductionQueueTableRow = React.memo(({
                     <Checkbox
                         checked={lead.isCutting || false}
                         onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
-                        disabled={!lead.isJoHardcopyReceived || isReadOnly}
+                        disabled={!lead.isJoHardcopyReceived || isReadOnly || isCompleted}
+                        className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                     />
                     {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
                     </div>
@@ -416,9 +418,9 @@ const ProductionQueueTableRow = React.memo(({
                     <Select
                     value={lead.productionType || 'Pending'}
                     onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
-                    disabled={!lead.isCutting || lead.isEmbroideryDone || isReadOnly}
+                    disabled={!lead.isCutting || lead.isEmbroideryDone || isReadOnly || isCompleted}
                     >
-                    <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType))}>
+                    <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType), isReadOnly || isCompleted ? "disabled:opacity-100" : "")}>
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -433,7 +435,8 @@ const ProductionQueueTableRow = React.memo(({
                     <Checkbox
                         checked={lead.isEmbroideryDone || false}
                         onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
-                        disabled={!lead.isCutting || !lead.productionType || lead.productionType === 'Pending' || isReadOnly}
+                        disabled={!lead.isCutting || !lead.productionType || lead.productionType === 'Pending' || isReadOnly || isCompleted}
+                        className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                     />
                     {lead.embroideryDoneTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.embroideryDoneTimestamp).dateTimeShort}</div>}
                     </div>
@@ -442,9 +445,9 @@ const ProductionQueueTableRow = React.memo(({
                     <Select
                     value={lead.sewerType || 'Pending'}
                     onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
-                    disabled={!lead.isEmbroideryDone || lead.isSewing || isReadOnly}
+                    disabled={!lead.isEmbroideryDone || lead.isSewing || isReadOnly || isCompleted}
                     >
-                    <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType))}>
+                    <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType), isReadOnly || isCompleted ? "disabled:opacity-100" : "")}>
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -459,7 +462,8 @@ const ProductionQueueTableRow = React.memo(({
                     <Checkbox
                         checked={lead.isSewing || false}
                         onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
-                        disabled={!lead.isEmbroideryDone || !lead.sewerType || lead.sewerType === 'Pending' || isReadOnly}
+                        disabled={!lead.isEmbroideryDone || !lead.sewerType || lead.sewerType === 'Pending' || isReadOnly || isCompleted}
+                        className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                     />
                     {lead.sewingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
                     </div>
@@ -487,7 +491,8 @@ const ProductionQueueTableRow = React.memo(({
                             onClick={() => handleEndorseToLogistics(lead.id)}
                             disabled={!lead.isDone || isReadOnly}
                             className={cn(
-                                "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
+                                "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105",
+                                isReadOnly && "disabled:opacity-100"
                             )}
                         >
                             <Send className="h-3.5 w-3.5" />
@@ -889,3 +894,5 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     </Card>
   );
 }
+
+    

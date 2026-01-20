@@ -168,9 +168,10 @@ const ItemPreparationTableRowGroup = React.memo(({
                         <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
                         <div className="flex flex-col items-center justify-center gap-1">
                             <Checkbox
-                            checked={lead.isJoHardcopyReceived || false}
-                            onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                            disabled={!lead.isJoPrinted || isReadOnly || isCompleted}
+                                checked={lead.isJoHardcopyReceived || false}
+                                onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
+                                disabled={!lead.isJoPrinted || isReadOnly || isCompleted}
+                                className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                         </div>
@@ -626,3 +627,5 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
+    
