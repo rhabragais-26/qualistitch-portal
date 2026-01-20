@@ -146,11 +146,11 @@ export function HomeCarousel() {
   }
 
   return (
-    <div className="flex items-center justify-center w-full max-w-6xl gap-2">
+    <div className="flex items-center justify-center w-full max-w-7xl gap-2">
       <Button variant="ghost" size="icon" onClick={() => paginate(-1)} className="h-16 w-16 shrink-0" disabled={imageUrls.length <= 1}>
           <ChevronLeft className="h-12 w-12 text-muted-foreground hover:text-foreground transition-colors" />
       </Button>
-      <div className="relative w-full h-[500px] overflow-hidden">
+      <div className="relative w-full h-[700px] overflow-hidden">
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
             key={page}
