@@ -15,7 +15,7 @@ export type PricingConfig = {
   };
 };
 
-export type ProductGroup = 'GroupA' | 'GroupB' | 'GroupC' | 'GroupD' | 'GroupE' | 'GroupF';
+export type ProductGroup = string;
 export type EmbroideryOption = 'logo' | 'logoAndText' | 'name';
 export type AddOnType = 'backLogo' | 'names' | 'programFeeLogo' | 'programFeeBackText' | 'rushFee' | 'plusSize' | 'shippingFee';
 
@@ -41,15 +41,15 @@ export const getUnitPrice = (
   
   const embroideryForPricing = embroidery || 'logo';
 
-  if (orderType === 'MTO' && group === 'GroupD' && quantity < 51) {
+  if (orderType === 'MTO' && group === 'Polo Shirt Type D' && quantity < 51) {
     return embroideryForPricing === 'logo' || embroideryForPricing === 'name' ? 799 : 899;
   }
   
-  if (orderType === 'MTO' && group === 'GroupE' && quantity < 51) {
+  if (orderType === 'MTO' && group === 'Polo Shirt Type E' && quantity < 51) {
     return embroideryForPricing === 'logo' || embroideryForPricing === 'name' ? 699 : 799;
   }
 
-  if (orderType === 'MTO' && group === 'GroupF' && quantity < 51) {
+  if (orderType === 'MTO' && group === 'Polo Shirt Type F' && quantity < 51) {
     return embroideryForPricing === 'logo' || embroideryForPricing === 'name' ? 599 : 699;
   }
 
