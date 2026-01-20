@@ -482,11 +482,7 @@ export function LeadForm({
   }, [isEditing, companyNameValue, leads, selectedLead]);
 
   useEffect(() => {
-    if (isEditing) {
-        setCitySuggestions([]);
-        return;
-    };
-    if (cityValue && !selectedLead) {
+    if (cityValue && !selectedLead && activeAddressField === 'city') {
       const filteredCities = citiesAndMunicipalities.filter(city =>
         city.name.toLowerCase().includes(cityValue.toLowerCase())
       ).slice(0, 10);
@@ -494,59 +490,39 @@ export function LeadForm({
     } else {
       setCitySuggestions([]);
     }
-  }, [isEditing, cityValue, citiesAndMunicipalities, selectedLead]);
-
+  }, [cityValue, citiesAndMunicipalities, selectedLead, activeAddressField]);
+  
   useEffect(() => {
-    if (isEditing) {
-      setBarangaySuggestions([]);
-      return;
-    }
-    if (barangayValue && !selectedLead) {
+    if (barangayValue && !selectedLead && activeAddressField === 'barangay') {
       if (cityValue) {
-        // If city is already selected, search within that city's barangays
         const selectedCityData = citiesAndMunicipalities.find(c => c.name.toLowerCase() === cityValue.toLowerCase() && c.province.toLowerCase() === provinceValue?.toLowerCase());
-        if (selectedCityData && selectedCityData.barangays) {
+        if (selectedCityData?.barangays) {
           const suggestions = selectedCityData.barangays
             .filter(b => b.toLowerCase().includes(barangayValue.toLowerCase()))
-            .map(b => ({
-              barangay: b,
-              city: selectedCityData.name,
-              province: selectedCityData.province,
-              showCity: false,
-            }))
+            .map(b => ({ barangay: b, city: selectedCityData.name, province: selectedCityData.province, showCity: false }))
             .slice(0, 10);
           setBarangaySuggestions(suggestions);
         } else {
-          // City is typed but not valid, so we search globally
-            const suggestions = allBarangays.filter(b => 
-                b.barangay.toLowerCase().includes(barangayValue.toLowerCase())
-            ).slice(0, 10);
-            setBarangaySuggestions(suggestions);
+          const suggestions = allBarangays.filter(b => b.barangay.toLowerCase().includes(barangayValue.toLowerCase())).slice(0, 10);
+          setBarangaySuggestions(suggestions);
         }
       } else {
-        // If no city is selected, search globally for barangays
-        const suggestions = allBarangays.filter(b => 
-            b.barangay.toLowerCase().includes(barangayValue.toLowerCase())
-        ).slice(0, 10);
+        const suggestions = allBarangays.filter(b => b.barangay.toLowerCase().includes(barangayValue.toLowerCase())).slice(0, 10);
         setBarangaySuggestions(suggestions);
       }
     } else {
       setBarangaySuggestions([]);
     }
-  }, [isEditing, barangayValue, cityValue, provinceValue, selectedLead, allBarangays, citiesAndMunicipalities]);
-
+  }, [barangayValue, cityValue, provinceValue, selectedLead, allBarangays, citiesAndMunicipalities, activeAddressField]);
+  
   useEffect(() => {
-    if (isEditing) {
-        setProvinceSuggestions([]);
-        return;
-    }
-    if (provinceValue && !cityValue && !selectedLead) {
+    if (provinceValue && !cityValue && !selectedLead && activeAddressField === 'province') {
         const filteredProvinces = allProvinces.filter(p => p.toLowerCase().includes(provinceValue.toLowerCase())).slice(0, 10);
         setProvinceSuggestions(filteredProvinces);
     } else {
         setProvinceSuggestions([]);
     }
-  }, [isEditing, provinceValue, cityValue, allProvinces, selectedLead]);
+  }, [provinceValue, cityValue, allProvinces, selectedLead, activeAddressField]);
 
 
   useEffect(() => {
@@ -951,9 +927,9 @@ export function LeadForm({
                             <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
                             <FormControl>
-                                <Input {...field} onFocus={() => setActiveAddressField('barangay')} onBlur={() => !isEditing && setTimeout(() => setBarangaySuggestions([]), 150)} autoComplete="off" />
+                                <Input {...field} onFocus={() => setActiveAddressField('barangay')} onBlur={() => setTimeout(() => {setBarangaySuggestions([]); setActiveAddressField(null);}, 150)} autoComplete="off" />
                             </FormControl>
-                            {!isEditing && barangayValue && barangaySuggestions.length > 0 && !selectedLead && activeAddressField === 'barangay' && (
+                            {barangayValue && barangaySuggestions.length > 0 && !selectedLead && activeAddressField === 'barangay' && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {barangaySuggestions.map((b, index) => (
@@ -972,9 +948,9 @@ export function LeadForm({
                             <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
                             <FormControl>
-                                <Input {...field} onFocus={() => setActiveAddressField('city')} onBlur={() => !isEditing && setTimeout(() => setCitySuggestions([]), 150)} autoComplete="off" />
+                                <Input {...field} onFocus={() => setActiveAddressField('city')} onBlur={() => setTimeout(() => {setCitySuggestions([]); setActiveAddressField(null);}, 150)} autoComplete="off" />
                             </FormControl>
-                            {!isEditing && cityValue && citySuggestions.length > 0 && !selectedLead && activeAddressField === 'city' && (
+                            {cityValue && citySuggestions.length > 0 && !selectedLead && activeAddressField === 'city' && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {citySuggestions.map((city, index) => (
@@ -994,8 +970,8 @@ export function LeadForm({
                         <FormField control={form.control} name="province" render={({field}) => (
                           <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
-                            <FormControl><Input {...field} onFocus={() => setActiveAddressField('province')} onBlur={() => !isEditing && setTimeout(() => setProvinceSuggestions([]), 150)} autoComplete="off" /></FormControl>
-                            {!isEditing && provinceValue && provinceSuggestions.length > 0 && !selectedLead && !cityValue && activeAddressField === 'province' && (
+                            <FormControl><Input {...field} onFocus={() => setActiveAddressField('province')} onBlur={() => setTimeout(() => {setProvinceSuggestions([]); setActiveAddressField(null);}, 150)} autoComplete="off" /></FormControl>
+                            {provinceValue && provinceSuggestions.length > 0 && !selectedLead && !cityValue && activeAddressField === 'province' && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {provinceSuggestions.map((province, index) => (
