@@ -100,8 +100,8 @@ const pricingTiers: {
   GroupD: {
     logo: {
       tiers: [
-        { min: 1, max: 3, price: 999 },
-        { min: 4, max: 10, price: 899 },
+        { min: 1, max: 3, price: 899 },
+        { min: 4, max: 10, price: 849 },
         { min: 11, max: 50, price: 799 },
         { min: 51, max: 200, price: 749 },
         { min: 201, max: 300, price: 699 },
@@ -111,8 +111,8 @@ const pricingTiers: {
     },
     logoAndText: {
       tiers: [
-        { min: 1, max: 3, price: 1099 },
-        { min: 4, max: 10, price: 999 },
+        { min: 1, max: 3, price: 999 },
+        { min: 4, max: 10, price: 949 },
         { min: 11, max: 50, price: 899 },
         { min: 51, max: 200, price: 849 },
         { min: 201, max: 300, price: 799 },
@@ -151,6 +151,9 @@ const addOnPricing: {
   rushFee: {
     tiers: [],
   },
+  shippingFee: {
+    tiers: [],
+  }
 };
 
 export const getProductGroup = (productType: string): ProductGroup | null => {
@@ -158,7 +161,13 @@ export const getProductGroup = (productType: string): ProductGroup | null => {
   return productGroupMapping[productType] || null;
 };
 
-export const getUnitPrice = (productType: string, quantity: number, embroidery: EmbroideryOption, patchPrice: number = 0): number => {
+export const getUnitPrice = (
+  productType: string,
+  quantity: number,
+  embroidery: EmbroideryOption,
+  patchPrice: number = 0,
+  orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services'
+): number => {
   if (productType === 'Client Owned') return 0;
   if (productType === 'Patches') return patchPrice;
 
@@ -166,6 +175,15 @@ export const getUnitPrice = (productType: string, quantity: number, embroidery: 
   if (!group) return 0;
   
   const embroideryForPricing = embroidery === 'name' ? 'logo' : (embroidery || 'logo');
+
+  if (orderType === 'MTO' && group === 'GroupD' && quantity < 51) {
+    if (embroideryForPricing === 'logo') {
+      return 799;
+    }
+    if (embroideryForPricing === 'logoAndText') {
+      return 899;
+    }
+  }
 
   const pricing = pricingTiers[group][embroideryForPricing];
   if (!pricing) return 0;
