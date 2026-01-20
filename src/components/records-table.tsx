@@ -113,6 +113,7 @@ const leadSchema = z.object({
   layouts: z.array(layoutSchema).optional(),
   joNumber: z.number().optional(),
   shipmentStatus: z.string().optional(),
+  shippedTimestamp: z.string().optional(),
 });
 
 export type Lead = z.infer<typeof leadSchema>;
@@ -156,6 +157,7 @@ const RecordsTableRow = React.memo(({
     openCustomerDetails,
     isRepeat,
     isReadOnly,
+    filterType,
     getContactDisplay,
     toggleCustomerDetails,
     handleOpenEditLeadDialog,
@@ -167,6 +169,7 @@ const RecordsTableRow = React.memo(({
     openCustomerDetails: string | null;
     isRepeat: boolean;
     isReadOnly: boolean;
+    filterType?: 'COMPLETED' | 'ONGOING';
     getContactDisplay: (lead: Lead) => string | null;
     toggleCustomerDetails: (id: string) => void;
     handleOpenEditLeadDialog: (lead: Lead) => void;
@@ -252,30 +255,38 @@ const RecordsTableRow = React.memo(({
                 {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
               </Button>
             </TableCell>
-            <TableCell className="text-center align-middle py-2">
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)} disabled={isReadOnly}>
-                <Edit className="h-5 w-5" />
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-red-100" disabled={isReadOnly}>
-                    <Trash2 className="h-5 w-5" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the entire recorded orders.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDeleteLead(lead.id)}>Delete Order</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </TableCell>
+            {filterType === 'COMPLETED' ? (
+                <TableCell className="text-xs align-middle text-center py-2 text-black">
+                    {lead.shipmentStatus && ['Shipped', 'Delivered'].includes(lead.shipmentStatus) && lead.shippedTimestamp 
+                        ? formatDateTime(lead.shippedTimestamp).dateTime 
+                        : '-'}
+                </TableCell>
+            ) : (
+                <TableCell className="text-center align-middle py-2">
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-blue-600 hover:bg-gray-200" onClick={() => handleOpenEditLeadDialog(lead)} disabled={isReadOnly}>
+                    <Edit className="h-5 w-5" />
+                </Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-red-100" disabled={isReadOnly}>
+                        <Trash2 className="h-5 w-5" />
+                    </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the entire recorded orders.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteLead(lead.id)}>Delete Order</AlertDialogAction>
+                    </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                </TableCell>
+            )}
         </TableRow>
     );
 });
@@ -385,10 +396,8 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
 
       const overallStatus = getOverallStatus(lead).text;
       let matchesStatus = true;
-      if (filterType === 'COMPLETED') {
-        matchesStatus = overallStatus === 'COMPLETED';
-      } else if (filterType === 'ONGOING') {
-        matchesStatus = overallStatus === 'ONGOING' || overallStatus === 'PENDING';
+      if (filterType) {
+        matchesStatus = overallStatus === filterType;
       }
 
 
@@ -471,62 +480,66 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
               {filterType === 'COMPLETED' ? 'Here are all the completed customer orders.' : 'Here are all the ongoing and pending customer orders.'}
             </CardDescription>
           </div>
-          <div className="flex items-center gap-4">
-            <div className='flex items-center gap-2'>
-                <span className="text-sm font-medium">Filter by Year/Month:</span>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Years</SelectItem>
-                    {availableYears.map(year => (
-                      <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-4">
+                <div className='flex items-center gap-2'>
+                    <span className="text-sm font-medium">Filter by Year/Month:</span>
+                    <Select value={selectedYear} onValueChange={setSelectedYear}>
+                    <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
+                        <SelectValue placeholder="Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="All">All Years</SelectItem>
+                        {availableYears.map(year => (
+                        <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                    <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                        <SelectValue placeholder="Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {months.map(month => (
+                        <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                </div>
+                <div className='flex items-center gap-2'>
+                <span className="text-sm font-medium">Filter by SCES:</span>
+                <Select value={csrFilter} onValueChange={setCsrFilter}>
+                    <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Filter by SCES" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    <SelectItem value="All">All SCES</SelectItem>
+                    {salesRepresentatives.map(csr => (
+                        <SelectItem key={csr} value={csr}>{csr}</SelectItem>
                     ))}
-                  </SelectContent>
+                    </SelectContent>
                 </Select>
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Month" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map(month => (
-                      <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            <div className='flex items-center gap-2'>
-              <span className="text-sm font-medium">Filter by SCES:</span>
-              <Select value={csrFilter} onValueChange={setCsrFilter}>
-                <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Filter by SCES" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All SCES</SelectItem>
-                  {salesRepresentatives.map(csr => (
-                    <SelectItem key={csr} value={csr}>{csr}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                </div>
+                <div className="flex-1 min-w-[300px]">
+                <Input
+                    placeholder="Search customer, company or contact..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+                </div>
             </div>
-            <div className="flex-1 min-w-[300px]">
-              <Input
-                placeholder="Search customer, company or contact..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-gray-100 text-black placeholder:text-gray-500"
-              />
+            <div className="flex justify-end w-full">
+                {filterType === 'COMPLETED' ? (
+                    <Link href="/records" className="text-sm text-primary hover:underline">
+                    View Ongoing Orders
+                    </Link>
+                ) : (
+                    <Link href="/records/completed" className="text-sm text-primary hover:underline">
+                    View Completed Orders
+                    </Link>
+                )}
             </div>
-             {filterType === 'COMPLETED' ? (
-                <Link href="/records" className="text-sm text-primary hover:underline whitespace-nowrap">
-                  View Ongoing Orders
-                </Link>
-              ) : (
-                <Link href="/records/completed" className="text-sm text-primary hover:underline whitespace-nowrap">
-                  View Completed Orders
-                </Link>
-              )}
           </div>
         </div>
       </CardHeader>
@@ -547,7 +560,11 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                     <TableHead className="text-white align-middle text-center">Payment Type</TableHead>
                     <TableHead className="text-white align-middle text-center">Mode of Payment</TableHead>
                     <TableHead className="text-white align-middle text-center">Items</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[140px]">Actions</TableHead>
+                    {filterType === 'COMPLETED' ? (
+                        <TableHead className="text-white align-middle text-center">Date Completed</TableHead>
+                    ) : (
+                        <TableHead className="text-white font-bold align-middle text-center w-[140px]">Actions</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -561,6 +578,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                             openCustomerDetails={openCustomerDetails}
                             isRepeat={isRepeat}
                             isReadOnly={isReadOnly}
+                            filterType={filterType}
                             getContactDisplay={getContactDisplay}
                             toggleCustomerDetails={toggleCustomerDetails}
                             handleOpenEditLeadDialog={() => handleOpenEditLeadDialog(lead)}
@@ -622,5 +640,3 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     </Card>
   );
 }
-
-    
