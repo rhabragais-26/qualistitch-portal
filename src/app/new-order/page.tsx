@@ -107,6 +107,7 @@ export default function NewOrderPage() {
     setPayments({});
     setGrandTotal(0);
     setBalance(0);
+    setOrderType(undefined);
     setResetFormTrigger(prev => prev + 1);
   }
 
