@@ -53,7 +53,7 @@ export function ProductManagement() {
 
   const handleTierChange = (
     group: ProductGroup,
-    embroidery: 'logo' | 'logoAndText',
+    embroidery: 'logo' | 'logoAndText' | 'name',
     tierIndex: number,
     field: 'min' | 'max' | 'price',
     value: string
@@ -171,10 +171,17 @@ export function ProductManagement() {
             </Select>
           </div>
            {selectedProductGroup ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {['logo', 'logoAndText'].map((embroideryType) => (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {['logo', 'name', 'logoAndText'].map((embroideryType) => {
+                      const getEmbroideryLabel = (type: string) => {
+                        if (type === 'logo') return 'Logo Only';
+                        if (type === 'name') return 'Name Only';
+                        if (type === 'logoAndText') return 'Logo + Back Text';
+                        return '';
+                      }
+                      return (
                       <div key={embroideryType}>
-                          <h4 className="font-medium mb-2">{embroideryType === 'logo' ? 'Logo Only / Name Only' : 'Logo + Back Text'}</h4>
+                          <h4 className="font-medium mb-2">{getEmbroideryLabel(embroideryType)}</h4>
                           <Table>
                               <TableHeader>
                                   <TableRow>
@@ -184,17 +191,17 @@ export function ProductManagement() {
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
-                                  {config.pricingTiers[selectedProductGroup][embroideryType as 'logo' | 'logoAndText'].tiers.map((tier, index) => (
+                                  {config.pricingTiers[selectedProductGroup][embroideryType as 'logo' | 'name' | 'logoAndText'].tiers.map((tier, index) => (
                                       <TableRow key={index}>
-                                          <TableCell className="p-2"><Input type="number" value={tier.min} onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'logoAndText', index, 'min', e.target.value)} className="w-20 h-8"/></TableCell>
-                                          <TableCell className="p-2"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'logoAndText', index, 'max', e.target.value)} className="w-20 h-8"/></TableCell>
-                                          <TableCell className="p-2"><Input type="number" value={tier.price} onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'logoAndText', index, 'price', e.target.value)} className="w-20 h-8"/></TableCell>
+                                          <TableCell className="p-1"><Input type="number" value={tier.min} onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'name' | 'logoAndText', index, 'min', e.target.value)} className="w-20 h-8"/></TableCell>
+                                          <TableCell className="p-1"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'name' | 'logoAndText', index, 'max', e.target.value)} className="w-20 h-8"/></TableCell>
+                                          <TableCell className="p-1"><Input type="number" value={tier.price} onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'name' | 'logoAndText', index, 'price', e.target.value)} className="w-20 h-8"/></TableCell>
                                       </TableRow>
                                   ))}
                               </TableBody>
                           </Table>
                       </div>
-                  ))}
+                  )})}
             </div>
            ) : <p>Select a product to see its pricing.</p>}
         </section>
@@ -216,9 +223,9 @@ export function ProductManagement() {
                         <TableBody>
                             {config.addOnPricing[addOn]?.tiers.map((tier, index) => (
                                 <TableRow key={index}>
-                                    <TableCell className="p-2"><Input type="number" value={tier.min} onChange={e => handleAddOnTierChange(addOn, index, 'min', e.target.value)} className="w-20 h-8"/></TableCell>
-                                    <TableCell className="p-2"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleAddOnTierChange(addOn, index, 'max', e.target.value)} className="w-20 h-8"/></TableCell>
-                                    <TableCell className="p-2"><Input type="number" value={tier.price} onChange={e => handleAddOnTierChange(addOn, index, 'price', e.target.value)} className="w-20 h-8"/></TableCell>
+                                    <TableCell className="p-1"><Input type="number" value={tier.min} onChange={e => handleAddOnTierChange(addOn, index, 'min', e.target.value)} className="w-20 h-8"/></TableCell>
+                                    <TableCell className="p-1"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleAddOnTierChange(addOn, index, 'max', e.target.value)} className="w-20 h-8"/></TableCell>
+                                    <TableCell className="p-1"><Input type="number" value={tier.price} onChange={e => handleAddOnTierChange(addOn, index, 'price', e.target.value)} className="w-20 h-8"/></TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

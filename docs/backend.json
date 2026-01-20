@@ -19,7 +19,8 @@
                     "type": "object",
                     "properties": {
                         "logo": { "$ref": "#/entities/PricingConfig/definitions/embroideryPricing" },
-                        "logoAndText": { "$ref": "#/entities/PricingConfig/definitions/embroideryPricing" }
+                        "logoAndText": { "$ref": "#/entities/PricingConfig/definitions/embroideryPricing" },
+                        "name": { "$ref": "#/entities/PricingConfig/definitions/embroideryPricing" }
                     }
                 }
             },

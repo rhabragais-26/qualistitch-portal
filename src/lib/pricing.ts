@@ -5,7 +5,7 @@ export type PricingConfig = {
   productGroupMapping: { [key: string]: ProductGroup };
   pricingTiers: {
     [key in ProductGroup]: {
-      [key in 'logo' | 'logoAndText']: {
+      [key in 'logo' | 'logoAndText' | 'name']: {
         tiers: { min: number; max: number; price: number }[];
       };
     };
@@ -39,18 +39,18 @@ export const getUnitPrice = (
   const group = getProductGroup(productType, pricingConfig);
   if (!group) return 0;
   
-  const embroideryForPricing = embroidery === 'name' ? 'logo' : (embroidery || 'logo');
+  const embroideryForPricing = embroidery || 'logo';
 
   if (orderType === 'MTO' && group === 'GroupD' && quantity < 51) {
-    return embroideryForPricing === 'logo' ? 799 : 899;
+    return embroideryForPricing === 'logo' || embroideryForPricing === 'name' ? 799 : 899;
   }
   
   if (orderType === 'MTO' && group === 'GroupE' && quantity < 51) {
-    return embroideryForPricing === 'logo' ? 699 : 799;
+    return embroideryForPricing === 'logo' || embroideryForPricing === 'name' ? 699 : 799;
   }
 
   if (orderType === 'MTO' && group === 'GroupF' && quantity < 51) {
-    return embroideryForPricing === 'logo' ? 599 : 699;
+    return embroideryForPricing === 'logo' || embroideryForPricing === 'name' ? 599 : 699;
   }
 
   const pricing = pricingConfig.pricingTiers[group]?.[embroideryForPricing];
@@ -76,7 +76,7 @@ export const getTierLabel = (productType: string, quantity: number, embroidery: 
   const group = getProductGroup(productType, pricingConfig);
   if (!group) return '';
 
-  const embroideryForPricing = embroidery === 'name' ? 'logo' : (embroidery || 'logo');
+  const embroideryForPricing = embroidery || 'logo';
   const pricing = pricingConfig.pricingTiers[group]?.[embroideryForPricing];
 
   if (!pricing) return '';
