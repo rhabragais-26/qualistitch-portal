@@ -1,4 +1,3 @@
-
 'use client';
 import { Header } from '@/components/header';
 import { HomeCarousel } from '@/components/home-carousel';
@@ -11,13 +10,6 @@ export default function HomePage() {
   return (
     <Header>
       <div className="flex flex-col items-center flex-1">
-        <div className="px-2 pt-6 pb-2 text-center">
-           <h1 className={cn(
-              "text-2xl font-bold font-headline bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent shining-metal"
-            )}>
-            Welcome back, {userProfile?.nickname || 'User'}! Here's a quick look on our Company Profile.
-          </h1>
-        </div>
         <div className="w-full flex-1 flex items-center justify-center pb-[18px]">
           <HomeCarousel />
         </div>
