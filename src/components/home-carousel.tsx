@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { getStorage, ref, listAll, getDownloadURL, type StorageReference } from 'firebase/storage';
 import { useFirebaseApp, useUser } from '@/firebase';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { Skeleton } from './ui/skeleton';
@@ -20,32 +19,6 @@ async function listAllRecursive(storageRef: StorageReference): Promise<StorageRe
     return files.concat(...subfolderFiles);
 }
 
-const morphTransition = {
-  type: "spring",
-  stiffness: 250,
-  damping: 40,
-};
-
-const morphVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? '100%' : '-100%',
-    opacity: 0,
-    scale: 0.9,
-  }),
-  center: {
-    zIndex: 1,
-    x: 0,
-    opacity: 1,
-    scale: 1,
-  },
-  exit: (direction: number) => ({
-    zIndex: 0,
-    x: direction < 0 ? '100%' : '-100%',
-    opacity: 0,
-    scale: 0.9,
-  }),
-};
-
 const wrap = (min: number, max: number, v: number) => {
   if (max === 0) return 0;
   const rangeSize = max - min;
@@ -59,14 +32,14 @@ export function HomeCarousel() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [[page, direction], setPage] = useState([0, 0]);
+  const [page, setPage] = useState(0);
 
   const imageIndex = wrap(0, imageUrls.length, page);
   const prevIndex = wrap(0, imageUrls.length, page - 1);
   const nextIndex = wrap(0, imageUrls.length, page + 1);
 
   const paginate = (newDirection: number) => {
-    setPage([page + newDirection, newDirection]);
+    setPage(page + newDirection);
   };
   
   useEffect(() => {
@@ -177,62 +150,54 @@ export function HomeCarousel() {
           <ChevronLeft className="h-12 w-12 text-muted-foreground hover:text-foreground transition-colors" />
       </Button>
       <div className="relative w-full h-[400px] overflow-hidden">
-          <AnimatePresence initial={false} custom={direction}>
-              <motion.div
-                  key={page}
-                  custom={direction}
-                  variants={morphVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={morphTransition}
-                  className="absolute inset-0 flex items-center justify-center gap-4"
-              >
-                  {imageUrls.length > 1 ? (
-                      <>
-                          <div className="w-[25%] h-[80%] relative cursor-pointer" onClick={() => paginate(-1)}>
-                              <Image
-                                  src={imageUrls[prevIndex]}
-                                  alt="Previous"
-                                  layout="fill"
-                                  objectFit="cover"
-                                  className="rounded-lg grayscale opacity-50 hover:opacity-100 transition-all"
-                              />
-                          </div>
-                          <div className="w-[45%] h-full relative z-10 shadow-2xl">
-                              <Image
-                                  src={imageUrls[imageIndex]}
-                                  alt={`Carousel image ${imageIndex + 1}`}
-                                  layout="fill"
-                                  objectFit="cover"
-                                  className="rounded-lg"
-                                  priority
-                              />
-                          </div>
-                          <div className="w-[25%] h-[80%] relative cursor-pointer" onClick={() => paginate(1)}>
-                              <Image
-                                  src={imageUrls[nextIndex]}
-                                  alt="Next"
-                                  layout="fill"
-                                  objectFit="cover"
-                                  className="rounded-lg grayscale opacity-50 hover:opacity-100 transition-all"
-                              />
-                          </div>
-                      </>
-                  ) : (
-                      <div className="w-[45%] h-full relative z-10 shadow-2xl">
-                          <Image
-                              src={imageUrls[imageIndex]}
-                              alt={`Carousel image ${imageIndex + 1}`}
-                              layout="fill"
-                              objectFit="cover"
-                              className="rounded-lg"
-                              priority
-                          />
-                      </div>
-                  )}
-              </motion.div>
-          </AnimatePresence>
+        <div
+            key={page}
+            className="absolute inset-0 flex items-center justify-center gap-4"
+        >
+            {imageUrls.length > 1 ? (
+                <>
+                    <div className="w-[25%] h-[80%] relative cursor-pointer" onClick={() => paginate(-1)}>
+                        <Image
+                            src={imageUrls[prevIndex]}
+                            alt="Previous"
+                            layout="fill"
+                            objectFit="cover"
+                            className="rounded-lg grayscale opacity-50 hover:opacity-100 transition-all"
+                        />
+                    </div>
+                    <div className="w-[45%] h-full relative z-10 shadow-2xl">
+                        <Image
+                            src={imageUrls[imageIndex]}
+                            alt={`Carousel image ${imageIndex + 1}`}
+                            layout="fill"
+                            objectFit="cover"
+                            className="rounded-lg"
+                            priority
+                        />
+                    </div>
+                    <div className="w-[25%] h-[80%] relative cursor-pointer" onClick={() => paginate(1)}>
+                        <Image
+                            src={imageUrls[nextIndex]}
+                            alt="Next"
+                            layout="fill"
+                            objectFit="cover"
+                            className="rounded-lg grayscale opacity-50 hover:opacity-100 transition-all"
+                        />
+                    </div>
+                </>
+            ) : (
+                <div className="w-[45%] h-full relative z-10 shadow-2xl">
+                    <Image
+                        src={imageUrls[imageIndex]}
+                        alt={`Carousel image ${imageIndex + 1}`}
+                        layout="fill"
+                        objectFit="cover"
+                        className="rounded-lg"
+                        priority
+                    />
+                </div>
+            )}
+        </div>
       </div>
       <Button variant="ghost" size="icon" onClick={() => paginate(1)} className="h-16 w-16 shrink-0" disabled={imageUrls.length <= 1}>
           <ChevronRight className="h-12 w-12 text-muted-foreground hover:text-foreground transition-colors" />
