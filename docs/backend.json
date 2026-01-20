@@ -1,6 +1,64 @@
 
 {
   "entities": {
+    "PricingConfig": {
+        "title": "PricingConfig",
+        "type": "object",
+        "description": "Stores the entire pricing structure for products and add-ons.",
+        "properties": {
+            "id": { "type": "string" },
+            "productGroupMapping": {
+                "type": "object",
+                "description": "Mapping of product names to pricing groups.",
+                "additionalProperties": { "type": "string" }
+            },
+            "pricingTiers": {
+                "type": "object",
+                "description": "Pricing tiers for different product groups and embroidery types.",
+                "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                        "logo": { "$ref": "#/entities/PricingConfig/definitions/embroideryPricing" },
+                        "logoAndText": { "$ref": "#/entities/PricingConfig/definitions/embroideryPricing" }
+                    }
+                }
+            },
+            "addOnPricing": {
+                "type": "object",
+                "description": "Pricing for various add-ons.",
+                "additionalProperties": { "$ref": "#/entities/PricingConfig/definitions/addOnTier" }
+            }
+        },
+        "definitions": {
+            "embroideryPricing": {
+                "type": "object",
+                "properties": {
+                    "tiers": {
+                        "type": "array",
+                        "items": { "$ref": "#/entities/PricingConfig/definitions/tier" }
+                    }
+                }
+            },
+            "addOnTier": {
+                "type": "object",
+                "properties": {
+                    "tiers": {
+                        "type": "array",
+                        "items": { "$ref": "#/entities/PricingConfig/definitions/tier" }
+                    }
+                }
+            },
+            "tier": {
+                "type": "object",
+                "properties": {
+                    "min": { "type": "number" },
+                    "max": { "type": "number" },
+                    "price": { "type": "number" }
+                },
+                "required": ["min", "max", "price"]
+            }
+        }
+    },
     "AppState": {
         "title": "AppState",
         "type": "object",
@@ -316,7 +374,6 @@
         "isDone": { "type": "boolean", "description": "Indicates if the order is completely done." },
         "doneProductionTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the production is marked as done." },
         "isEndorsedToLogistics": { "type": "boolean", "description": "Indicates if the order has been endorsed to logistics." },
-        "endorsedToLogisticsTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the order was endorsed to logistics." },
         "deliveredTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the order was delivered." },
         "isDigitizingArchived": {
           "type": "boolean",
@@ -806,6 +863,17 @@
         }
       },
       {
+        "path": "/pricing/{configId}",
+        "definition": {
+          "entityName": "PricingConfig",
+          "schema": { "$ref": "#/backend/entities/PricingConfig" },
+          "description": "Stores pricing configuration. A single document with a known ID 'default' is used.",
+          "params": [
+            { "name": "configId", "description": "The document ID, which should be 'default'." }
+          ]
+        }
+      },
+      {
         "path": "/leads/{leadId}",
         "definition": {
           "entityName": "Lead",
@@ -857,6 +925,3 @@
     "reasoning": "The data structure is designed to store lead information collected via the LeadTracker application. To ensure security and efficient data retrieval, leads are stored under a collection called `leads`. This design promotes a flat structure, avoiding nested collections and complex queries, especially considering the app's focus is on data input rather than deeply relational data. Each lead document contains all relevant lead data. This simplifies data access and minimizes the need for complex joins or subqueries, aligning with the app's focus on simplicity and ease of use.\\n\\n**Authorization Independence:** Since there are no explicit user roles, collaborative features, or ownership details mentioned in the requirements, the system assumes open access to leads. If access control becomes a requirement in the future, a `members` map or a separate `/roles` collection would be used in combination with denormalization to achieve authorization independence.\\n\\n**QAPs (Rules are not Filters):** The structure supports secure `list` operations because all lead data is stored within a single, top-level collection. Security rules can be applied at the collection level, ensuring that only authorized users can access lead data, without needing to filter data based on document content. If more sophisticated access controls are required (e.g., restricting access based on CSR assignment), denormalization of CSR assignment directly into the lead documents combined with security rules based on the `request.auth.uid` will ensure that filtering within the rules is not required."
   }
 }
-
-
-  

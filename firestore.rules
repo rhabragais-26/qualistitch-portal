@@ -31,6 +31,11 @@ service cloud.firestore {
     match /sizeCharts/{chartId} {
       allow read, write: if true;
     }
+    
+    match /pricing/{configId} {
+      allow read: if true;
+      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
 
     match /direct_messages/{channelId} {
       // Allow read/write only if the requesting user is a participant
