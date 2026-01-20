@@ -329,7 +329,7 @@ const HeaderMemo = React.memo(function Header({
               {user && userProfile && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2 h-10 rounded-md px-3 text-white hover:bg-accent/90">
+                    <Button variant="ghost" className="flex items-center gap-2 h-10 rounded-md pl-3 text-white hover:bg-accent/90">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={userProfile?.photoURL || ''} alt={userProfile.nickname} />
                         <AvatarFallback className="bg-primary text-primary-foreground font-bold">
