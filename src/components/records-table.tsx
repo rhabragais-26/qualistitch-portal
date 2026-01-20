@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
@@ -470,7 +471,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                  {filterType === 'COMPLETED' ? 'Here are all the completed customer orders.' : 'Here are all the ongoing and pending customer orders.'}
               </CardDescription>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col items-end">
               <div className="flex items-center gap-4 flex-wrap justify-end">
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">Filter by Year/Month:</span>
@@ -519,6 +520,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                   />
                 </div>
               </div>
+              <div className="mt-1">
                {filterType === 'COMPLETED' ? (
                 <Link href="/records" className="text-sm text-primary hover:underline">
                     View Ongoing Orders
@@ -528,6 +530,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                     View Completed Orders
                 </Link>
               )}
+              </div>
             </div>
         </div>
       </CardHeader>
