@@ -480,7 +480,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
               {filterType === 'COMPLETED' ? 'Here are all the completed customer orders.' : 'Here are all the ongoing and pending customer orders.'}
             </CardDescription>
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-end">
             <div className="flex items-center gap-4">
                 <div className='flex items-center gap-2'>
                     <span className="text-sm font-medium">Filter by Year/Month:</span>
@@ -507,18 +507,18 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                     </Select>
                 </div>
                 <div className='flex items-center gap-2'>
-                <span className="text-sm font-medium">Filter by SCES:</span>
-                <Select value={csrFilter} onValueChange={setCsrFilter}>
-                    <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Filter by SCES" />
-                    </SelectTrigger>
-                    <SelectContent>
-                    <SelectItem value="All">All SCES</SelectItem>
-                    {salesRepresentatives.map(csr => (
-                        <SelectItem key={csr} value={csr}>{csr}</SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
+                    <span className="text-sm font-medium">Filter by SCES:</span>
+                    <Select value={csrFilter} onValueChange={setCsrFilter}>
+                        <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                        <SelectValue placeholder="Filter by SCES" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="All">All SCES</SelectItem>
+                        {salesRepresentatives.map(csr => (
+                            <SelectItem key={csr} value={csr}>{csr}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
                 </div>
                 <div className="flex-1 min-w-[300px]">
                 <Input
@@ -529,8 +529,8 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                 />
                 </div>
             </div>
-            <div className="flex justify-end w-full">
-                {filterType === 'COMPLETED' ? (
+            <div className="w-full text-right mt-1">
+                 {filterType === 'COMPLETED' ? (
                     <Link href="/records" className="text-sm text-primary hover:underline">
                     View Ongoing Orders
                     </Link>
