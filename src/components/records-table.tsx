@@ -463,75 +463,75 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
       <CardHeader>
         <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-black">
-                {filterType === 'COMPLETED' ? 'Completed Orders' : 'Ongoing Orders'}
-              </CardTitle>
-              <CardDescription className="text-gray-600">
-                 {filterType === 'COMPLETED' ? 'Here are all the completed customer orders.' : 'Here are all the ongoing and pending customer orders.'}
-              </CardDescription>
-            </div>
-            <div className="flex flex-col items-end">
-              <div className="flex items-center gap-4 flex-wrap justify-end">
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Filter by Year/Month:</span>
-                    <Select value={selectedYear} onValueChange={setSelectedYear}>
-                      <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
-                        <SelectValue placeholder="Year" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All">All Years</SelectItem>
-                        {availableYears.map(year => (
-                          <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                      <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                        <SelectValue placeholder="Month" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {months.map(month => (
-                          <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Filter by SCES:</span>
-                  <Select value={csrFilter} onValueChange={setCsrFilter}>
-                    <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                      <SelectValue placeholder="Filter by SCES" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All SCES</SelectItem>
-                      {salesRepresentatives.map(csr => (
-                        <SelectItem key={csr} value={csr}>{csr}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1 min-w-[300px]">
-                  <Input
-                    placeholder="Search customer, company or contact..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="bg-gray-100 text-black placeholder:text-gray-500"
-                  />
-                </div>
+          <div>
+            <CardTitle className="text-black">
+              {filterType === 'COMPLETED' ? 'Completed Orders' : 'Ongoing Orders'}
+            </CardTitle>
+            <CardDescription className="text-gray-600">
+              {filterType === 'COMPLETED' ? 'Here are all the completed customer orders.' : 'Here are all the ongoing and pending customer orders.'}
+            </CardDescription>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-4 flex-wrap justify-end">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Filter by Year/Month:</span>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Years</SelectItem>
+                    {availableYears.map(year => (
+                      <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map(month => (
+                      <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="mt-1">
-               {filterType === 'COMPLETED' ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Filter by SCES:</span>
+                <Select value={csrFilter} onValueChange={setCsrFilter}>
+                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Filter by SCES" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All SCES</SelectItem>
+                    {salesRepresentatives.map(csr => (
+                      <SelectItem key={csr} value={csr}>{csr}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 min-w-[300px]">
+                <Input
+                  placeholder="Search customer, company or contact..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+              </div>
+            </div>
+            <div>
+              {filterType === 'COMPLETED' ? (
                 <Link href="/records" className="text-sm text-primary hover:underline">
-                    View Ongoing Orders
+                  View Ongoing Orders
                 </Link>
               ) : (
                 <Link href="/records/completed" className="text-sm text-primary hover:underline">
-                    View Completed Orders
+                  View Completed Orders
                 </Link>
               )}
-              </div>
             </div>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto">
@@ -539,7 +539,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white align-middle text-center">Date & Time</TableHead>
+                    <TableHead className="text-white align-middle text-center">Date &amp; Time</TableHead>
                     <TableHead className="text-white align-middle text-center">Customer</TableHead>
                     <TableHead className="text-white align-middle text-center">SCES</TableHead>
                     <TableHead className="text-white align-middle text-center">Priority</TableHead>
@@ -556,7 +556,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                 </TableHeader>
                 <TableBody>
                 {filteredLeads.map((lead) => {
-                  const isRepeat = lead.orderNumber > 1;
+                  const isRepeat = lead.orderNumber &gt; 1;
                   return (
                     <React.Fragment key={lead.id}>
                         <RecordsTableRow 
@@ -595,7 +595,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                                     </TableRow>
                                     ))}
                                 </TableBody>
-                                {lead.orders && lead.orders.length > 1 && (
+                                {lead.orders &amp;&amp; lead.orders.length &gt; 1 &amp;&amp; (
                                   <TableFooter>
                                       <TableRow>
                                       <TableCell colSpan={3} className="text-right font-bold text-black pt-1 px-2">Total Quantity</TableCell>
@@ -615,7 +615,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
             </Table>
           </div>
       </CardContent>
-      {editingLead && (
+      {editingLead &amp;&amp; (
         <EditLeadFullDialog
           isOpen={isEditDialogOpen}
           onClose={() => { setEditingLead(null); setIsEditDialogOpen(false); }}
@@ -626,3 +626,4 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     </Card>
   );
 }
+    
