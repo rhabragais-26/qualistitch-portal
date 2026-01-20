@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -96,9 +97,12 @@ type OperationalCasesFormProps = {
   isReadOnly: boolean;
   setImageInView: (url: string | null) => void;
   initialJoNumber?: string | null;
+  source?: string | null;
 }
 
-const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete, onDirtyChange, isReadOnly, setImageInView, initialJoNumber }: OperationalCasesFormProps) {
+const allCaseTypes = ['Return to Sender (RTS)', 'Quality Errors', 'Replacement'];
+
+const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete, onDirtyChange, isReadOnly, setImageInView, initialJoNumber, source }: OperationalCasesFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const imageUploadRef = useRef<HTMLInputElement>(null);
@@ -132,6 +136,20 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
   const imageValue = watch('image');
 
   const isEditing = !!editingCase;
+  
+  const caseTypes = useMemo(() => {
+    if (source === 'quality_check') {
+        return ['Quality Errors'];
+    }
+    return allCaseTypes;
+  }, [source]);
+
+  useEffect(() => {
+    if (source === 'quality_check' && !isEditing) {
+      setValue('caseType', 'Quality Errors' as any, { shouldValidate: true });
+    }
+  }, [source, isEditing, setValue]);
+
 
   useEffect(() => {
     onDirtyChange(isDirty);
@@ -249,7 +267,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
   const handleFormReset = () => {
     reset({
         joNumber: '',
-        caseType: undefined,
+        caseType: source === 'quality_check' ? 'Quality Errors' : undefined,
         quantity: 0,
         remarks: '',
         image: '',
@@ -414,16 +432,16 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                       <FormLabel className="flex items-center gap-2 text-black">
                         <TriangleAlert className="h-4 w-4 text-primary" /> Case Type
                       </FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={isReadOnly}>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isReadOnly || source === 'quality_check'}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a Case Type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Return to Sender (RTS)">Return to Sender (RTS)</SelectItem>
-                          <SelectItem value="Quality Errors">Quality Errors</SelectItem>
-                          <SelectItem value="Replacement">Replacement</SelectItem>
+                          {caseTypes.map((type) => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />

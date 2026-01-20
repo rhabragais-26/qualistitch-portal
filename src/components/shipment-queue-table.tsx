@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -162,7 +163,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
         });
         
         const joNumber = formatJoNumber(disapprovingLead.joNumber);
-        router.push(`/inventory/operational-cases?joNumber=${joNumber}`);
+        router.push(`/inventory/operational-cases?joNumber=${joNumber}&source=quality_check`);
 
         setDisapprovingLead(null);
         setRemarks('');

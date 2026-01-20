@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Header } from '@/components/header';
@@ -29,6 +30,7 @@ type OperationalCase = {
 function OperationalCasesPageContent() {
   const searchParams = useSearchParams();
   const joNumberFromQuery = searchParams.get('joNumber');
+  const sourceFromQuery = searchParams.get('source');
 
   const [editingCase, setEditingCase] = useState<OperationalCase | null>(null);
   const [isFormDirty, setIsFormDirty] = useState(false);
@@ -85,6 +87,7 @@ function OperationalCasesPageContent() {
                       isReadOnly={!canEdit}
                       setImageInView={setImageInView}
                       initialJoNumber={joNumberFromQuery}
+                      source={sourceFromQuery}
                    />
               </div>
               <div className="lg:col-span-3">
