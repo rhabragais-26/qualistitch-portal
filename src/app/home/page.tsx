@@ -14,9 +14,8 @@ export default function HomePage() {
            <h1 className={cn(
               "text-2xl font-bold font-headline bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent shining-metal"
             )}>
-            Welcome back, {userProfile?.nickname || 'User'}!
+            Welcome back, {userProfile?.nickname || 'User'}! Here's a quick look on our Company Profile.
           </h1>
-          <p className="text-sm text-muted-foreground mb-4">Here's a quick look on our Company Profile</p>
         </div>
         <div className="w-full flex-1 flex items-center justify-center pb-[11px]">
           <HomeCarousel />
