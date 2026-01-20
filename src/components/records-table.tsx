@@ -396,8 +396,10 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
 
       const overallStatus = getOverallStatus(lead).text;
       let matchesStatus = true;
-      if (filterType) {
-        matchesStatus = overallStatus === filterType;
+      if (filterType === 'COMPLETED') {
+        matchesStatus = overallStatus === 'COMPLETED';
+      } else if (filterType === 'ONGOING') {
+        matchesStatus = overallStatus === 'ONGOING' || overallStatus === 'PENDING';
       }
 
 
@@ -470,7 +472,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-4">
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-black">
@@ -529,15 +531,17 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                 />
               </div>
             </div>
-            {filterType === 'COMPLETED' ? (
-              <Link href="/records" className="text-sm text-primary hover:underline">
-                View Ongoing Orders
-              </Link>
-            ) : (
-              <Link href="/records/completed" className="text-sm text-primary hover:underline">
-                View Completed Orders
-              </Link>
-            )}
+            <div className="w-full text-right mt-2">
+                {filterType === 'COMPLETED' ? (
+                  <Link href="/records" className="text-sm text-primary hover:underline">
+                    View Ongoing Orders
+                  </Link>
+                ) : (
+                  <Link href="/records/completed" className="text-sm text-primary hover:underline">
+                    View Completed Orders
+                  </Link>
+                )}
+            </div>
           </div>
         </div>
       </CardHeader>
