@@ -58,6 +58,7 @@ type Lead = {
   deliveryDate?: string;
   priorityType: 'Rush' | 'Regular';
   isEndorsedToLogistics?: boolean;
+  endorsedToLogisticsTimestamp?: string;
   isSalesAuditRequested?: boolean;
   salesAuditRequestedTimestamp?: string;
   isSalesAuditComplete?: boolean;
@@ -70,6 +71,7 @@ type Lead = {
   packedTimestamp?: string;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippedTimestamp?: string;
+  deliveredTimestamp?: string;
   adjustedDeliveryDate?: string | null;
   orderType?: string;
   isJoHardcopyReceived?: boolean;
@@ -96,6 +98,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   const [disapprovingLead, setDisapprovingLead] = useState<Lead | null>(null);
   const [packingLead, setPackingLead] = useState<{lead: Lead, isPacking: boolean} | null>(null);
   const [shippingLead, setShippingLead] = useState<Lead | null>(null);
+  const [deliveringLead, setDeliveringLead] = useState<Lead | null>(null);
   const [remarks, setRemarks] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -273,6 +276,30 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
       });
     } finally {
       setShippingLead(null);
+    }
+  };
+
+  const handleConfirmDelivery = async () => {
+    if (!deliveringLead || !firestore) return;
+    const leadDocRef = doc(firestore, 'leads', deliveringLead.id);
+    try {
+      await updateDoc(leadDocRef, {
+        shipmentStatus: 'Delivered',
+        deliveredTimestamp: new Date().toISOString(),
+      });
+      toast({
+        title: 'Order Delivered',
+        description: `Order for J.O. ${formatJoNumber(deliveringLead.joNumber)} has been marked as delivered.`,
+      });
+    } catch (e: any) {
+      console.error("Error marking as delivered:", e);
+      toast({
+        variant: "destructive",
+        title: "Action Failed",
+        description: e.message || "Could not mark the order as delivered.",
+      });
+    } finally {
+      setDeliveringLead(null);
     }
   };
   
@@ -459,7 +486,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                 <TableHead className="text-white font-bold text-xs">Courier</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Expected Delivery Date</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Status</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Ship Order</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">{filterType === 'COMPLETED' ? 'Delivered?' : 'Ship Order'}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -591,24 +618,39 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                           <Badge variant={status.variant} className={status.className}>{status.text}</Badge>
                         </TableCell>
                         <TableCell className="text-center">
-                           {filterType === 'COMPLETED' ? (
+                          {filterType === 'COMPLETED' ? (
+                            lead.shipmentStatus === 'Delivered' ? (
                                 <div className="flex flex-col items-center justify-center gap-1">
-                                  <div className="flex items-center font-bold text-green-600 text-xs">
-                                    <Check className="h-4 w-4 mr-1" />
-                                    {lead.shipmentStatus}
-                                  </div>
-                                  {lead.shippedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.shippedTimestamp).dateTimeShort}</div>}
+                                    <div className="flex items-center font-bold text-blue-600 text-xs">
+                                        <Check className="h-4 w-4 mr-1" />
+                                        Delivered
+                                    </div>
+                                    {lead.deliveredTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.deliveredTimestamp).dateTimeShort}</div>}
+                                </div>
+                            ) : lead.shipmentStatus === 'Shipped' ? (
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                    <div className="flex items-center font-bold text-green-600 text-xs">
+                                      <Check className="h-4 w-4 mr-1" />
+                                      Shipped
+                                    </div>
+                                    {lead.shippedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.shippedTimestamp).dateTimeShort}</div>}
+                                    <Button size="sm" className="h-7 text-xs font-bold mt-1" onClick={() => setDeliveringLead(lead)} disabled={isReadOnly}>
+                                        Yes
+                                    </Button>
                                 </div>
                             ) : (
-                                <Button
-                                  size="sm"
-                                  className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")}
-                                  onClick={() => setShippingLead(lead)}
-                                  disabled={!lead.isSalesAuditComplete || isReadOnly || isCompleted}
-                                >
-                                  Ship Now
-                                </Button>
-                            )}
+                                <span className="text-muted-foreground text-xs">{status.text}</span>
+                            )
+                          ) : (
+                            <Button
+                              size="sm"
+                              className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")}
+                              onClick={() => setShippingLead(lead)}
+                              disabled={!lead.isSalesAuditComplete || isReadOnly || isCompleted}
+                            >
+                              Ship Now
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                    )
@@ -683,6 +725,24 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleConfirmShip}>
                 Yes, Ship Now
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+      {deliveringLead && (
+        <AlertDialog open={!!deliveringLead} onOpenChange={() => setDeliveringLead(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Delivery</AlertDialogTitle>
+              <AlertDialogDescription>
+                This confirms that the customer has physically received the item. Are you sure you want to mark this order as delivered? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmDelivery}>
+                Yes, Confirm Delivery
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
