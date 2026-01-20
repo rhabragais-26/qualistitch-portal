@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
@@ -24,7 +25,7 @@ import { Badge } from './ui/badge';
 import { addDays, differenceInDays, format } from 'date-fns';
 import { formatDateTime, cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
-import { ChevronDown, Send, FileText, X, Download } from 'lucide-react';
+import { ChevronDown, Send, FileText, X, Download, Check } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -101,6 +102,7 @@ type Lead = {
   isEmbroideryDone?: boolean;
   embroideryDoneTimestamp?: string;
   isEndorsedToLogistics?: boolean;
+  endorsedToLogisticsTimestamp?: string;
   doneProductionTimestamp?: string;
   deliveryDate?: string;
   courier: string;
@@ -310,6 +312,7 @@ const ProductionQueueTableRow = React.memo(({
     handleCheckboxChange,
     handleEndorseToLogistics,
     isReadOnly,
+    filterType,
 }: {
     lead: EnrichedLead;
     deadlineInfo: { text: string; isOverdue: boolean; isUrgent: boolean; remainingDays: number; };
@@ -322,6 +325,7 @@ const ProductionQueueTableRow = React.memo(({
     handleCheckboxChange: (id: string, field: CheckboxField, checked: boolean) => void;
     handleEndorseToLogistics: (id: string) => void;
     isReadOnly: boolean;
+    filterType?: 'ONGOING' | 'COMPLETED';
 }) => {
     const isRepeat = lead.orderNumber > 1;
     const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
@@ -464,17 +468,32 @@ const ProductionQueueTableRow = React.memo(({
                     <Badge variant={productionStatus.variant}>{productionStatus.text}</Badge>
                 </TableCell>
                 <TableCell className="text-center align-middle py-3">
-                    <Button
-                        size="sm"
-                        onClick={() => handleEndorseToLogistics(lead.id)}
-                        disabled={!lead.isDone || isReadOnly}
-                        className={cn(
-                            "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
-                        )}
-                    >
-                        <Send className="h-3.5 w-3.5" />
-                        <span className='whitespace-normal break-words'>Send to Logistics</span>
-                    </Button>
+                    {filterType === 'COMPLETED' ? (
+                         lead.isEndorsedToLogistics && (
+                            <div className="flex flex-col items-center gap-1">
+                                <div className="flex items-center text-sm text-green-600 font-semibold">
+                                    <Check className="mr-2 h-4 w-4" /> Endorsed
+                                </div>
+                                {lead.endorsedToLogisticsTimestamp && (
+                                    <div className="text-xs text-gray-500">
+                                        {formatDateTime(lead.endorsedToLogisticsTimestamp).dateTimeShort}
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    ) : (
+                        <Button
+                            size="sm"
+                            onClick={() => handleEndorseToLogistics(lead.id)}
+                            disabled={!lead.isDone || isReadOnly}
+                            className={cn(
+                                "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105"
+                            )}
+                        >
+                            <Send className="h-3.5 w-3.5" />
+                            <span className='whitespace-normal break-words'>Send to Logistics</span>
+                        </Button>
+                    )}
                 </TableCell>
             </TableRow>
             {openLeadId === lead.id && (
@@ -629,7 +648,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
-        await updateDoc(leadDocRef, { isEndorsedToLogistics: true });
+        await updateDoc(leadDocRef, { isEndorsedToLogistics: true, endorsedToLogisticsTimestamp: new Date().toISOString() });
         toast({
             title: "Endorsed to Logistics",
             description: "The order has been sent to the logistics team.",
@@ -726,7 +745,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
       
       return matchesSearch && matchesJo;
     });
-  }, [processedLeads, searchTerm, joNumberSearch, filterType]);
+  }, [processedLeads, searchTerm, joNumberSearch, filterType, formatJoNumber]);
 
   const toggleLeadDetails = useCallback((leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
@@ -853,6 +872,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                             handleCheckboxChange={handleCheckboxChange}
                             handleEndorseToLogistics={handleEndorseToLogistics}
                             isReadOnly={isReadOnly}
+                            filterType={filterType}
                         />
                     ))
                 ) : (

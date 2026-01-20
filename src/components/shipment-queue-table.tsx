@@ -35,6 +35,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from './ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { addDays, differenceInDays, format } from 'date-fns';
+import Link from 'next/link';
 
 
 type Order = {
@@ -81,7 +82,12 @@ type EnrichedLead = Lead & {
   totalCustomerQuantity: number;
 };
 
-export function ShipmentQueueTable() {
+type ShipmentQueueTableProps = {
+  isReadOnly: boolean;
+  filterType?: 'ONGOING' | 'COMPLETED';
+};
+
+export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: ShipmentQueueTableProps) {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads } = useCollection<Lead>(leadsQuery);
@@ -92,7 +98,6 @@ export function ShipmentQueueTable() {
   const [remarks, setRemarks] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [excludeShipped, setExcludeShipped] = useState(false);
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived' } | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
 
@@ -312,6 +317,9 @@ export function ShipmentQueueTable() {
     if (lead.shipmentStatus === 'Shipped') {
         return { text: "Shipped", variant: "success", className: "bg-green-700 text-white"};
     }
+    if (lead.shipmentStatus === 'Delivered') {
+        return { text: "Delivered", variant: "success", className: "bg-blue-700 text-white"};
+    }
     if (lead.isSalesAuditComplete) {
       return { text: "Ready for Shipment", variant: "success", className: "bg-blue-600 text-white" };
     }
@@ -364,9 +372,14 @@ export function ShipmentQueueTable() {
   const shipmentQueueLeads = useMemo(() => {
     if(!processedLeads) return [];
     
-    const endorsed = processedLeads.filter(lead => lead.isEndorsedToLogistics);
+    let relevantLeads;
+    if (filterType === 'COMPLETED') {
+        relevantLeads = processedLeads.filter(lead => lead.isEndorsedToLogistics && (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered'));
+    } else { // ONGOING
+        relevantLeads = processedLeads.filter(lead => lead.isEndorsedToLogistics && lead.shipmentStatus !== 'Shipped' && lead.shipmentStatus !== 'Delivered');
+    }
 
-    return endorsed.filter(lead => {
+    return relevantLeads.filter(lead => {
         const lowercasedSearchTerm = searchTerm.toLowerCase();
         const matchesSearch = searchTerm ?
             (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
@@ -377,44 +390,51 @@ export function ShipmentQueueTable() {
 
         const joString = formatJoNumber(lead.joNumber);
         const matchesJo = joNumberSearch ? joString.toLowerCase().includes(joNumberSearch.toLowerCase()) : true;
-
-        const matchesShippedFilter = excludeShipped ? lead.shipmentStatus !== 'Shipped' : true;
         
-        return matchesSearch && matchesJo && matchesShippedFilter;
+        return matchesSearch && matchesJo;
     });
-  }, [processedLeads, searchTerm, joNumberSearch, excludeShipped, formatJoNumber]);
+  }, [processedLeads, searchTerm, joNumberSearch, filterType, formatJoNumber]);
 
   return (
     <>
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
-      <CardHeader>
-        <div className="flex justify-between items-center">
+      <CardHeader className="pb-4">
+        <div className="flex justify-between items-start">
             <div>
-                <CardTitle className="text-black">Shipment Queue</CardTitle>
+                <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Shipments' : 'Shipment Queue'}</CardTitle>
                 <CardDescription className="text-gray-600">
-                Track the status of all shipments.
+                {filterType === 'COMPLETED' ? 'Orders that have been shipped or delivered.' : 'Track the status of all shipments.'}
                 </CardDescription>
             </div>
-            <div className="flex items-center gap-4">
-                <div className="w-full max-w-lg">
-                  <Input
-                    placeholder="Search customer, company or contact..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="bg-gray-100 text-black placeholder:text-gray-500"
-                  />
-                </div>
-                <div className="w-full max-w-xs">
+            <div className="flex flex-col items-end gap-2">
+                <div className="flex items-center gap-4">
+                    <div className="w-full max-w-lg">
                     <Input
-                    placeholder="Search by J.O. No..."
-                    value={joNumberSearch}
-                    onChange={(e) => setJoNumberSearch(e.target.value)}
-                    className="bg-gray-100 text-black placeholder:text-gray-500"
+                        placeholder="Search customer, company or contact..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-gray-100 text-black placeholder:text-gray-500"
                     />
+                    </div>
+                    <div className="w-full max-w-xs">
+                        <Input
+                        placeholder="Search by J.O. No..."
+                        value={joNumberSearch}
+                        onChange={(e) => setJoNumberSearch(e.target.value)}
+                        className="bg-gray-100 text-black placeholder:text-gray-500"
+                        />
+                    </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="exclude-shipped" checked={excludeShipped} onCheckedChange={(checked) => setExcludeShipped(!!checked)} />
-                    <Label htmlFor="exclude-shipped" className="text-sm font-medium">Exclude Shipped</Label>
+                 <div className="w-full text-right">
+                    {filterType === 'COMPLETED' ? (
+                        <Link href="/logistics/shipment-queue" className="text-sm text-primary hover:underline">
+                            View Shipment Queue
+                        </Link>
+                    ) : (
+                        <Link href="/logistics/completed-shipments" className="text-sm text-primary hover:underline">
+                            View Completed Shipments
+                        </Link>
+                    )}
                 </div>
             </div>
         </div>
@@ -450,7 +470,7 @@ export function ShipmentQueueTable() {
                        if (overdueDaysAtShipment > 0) {
                            daysOverdue = overdueDaysAtShipment;
                        }
-                   } else if (lead.shipmentStatus !== 'Shipped') {
+                   } else if (lead.shipmentStatus !== 'Shipped' && lead.shipmentStatus !== 'Delivered') {
                        const currentOverdueDays = differenceInDays(new Date(), deliveryDate);
                        if (currentOverdueDays > 0) {
                            daysOverdue = currentOverdueDays;
@@ -503,7 +523,7 @@ export function ShipmentQueueTable() {
                                 <Checkbox
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                disabled={!lead.isJoPrinted}
+                                disabled={!lead.isJoPrinted || isReadOnly}
                                 />
                                 {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                             </div>
@@ -519,8 +539,8 @@ export function ShipmentQueueTable() {
                                 </div>
                             ) : (
                                 <div className="flex gap-2 justify-center">
-                                    <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold" onClick={() => handleApproveQuality(lead)} disabled={!lead.isJoHardcopyReceived}>Approve</Button>
-                                    <Button size="sm" variant="destructive" className="h-7 text-xs font-bold" onClick={() => setDisapprovingLead(lead)} disabled={!lead.isJoHardcopyReceived}>Disapprove</Button>
+                                    <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold" onClick={() => handleApproveQuality(lead)} disabled={!lead.isJoHardcopyReceived || isReadOnly}>Approve</Button>
+                                    <Button size="sm" variant="destructive" className="h-7 text-xs font-bold" onClick={() => setDisapprovingLead(lead)} disabled={!lead.isJoHardcopyReceived || isReadOnly}>Disapprove</Button>
                                 </div>
                             )}
                         </TableCell>
@@ -531,7 +551,7 @@ export function ShipmentQueueTable() {
                               onCheckedChange={(checked) => {
                                 setPackingLead({ lead, isPacking: !!checked });
                               }}
-                              disabled={!lead.isQualityApproved}
+                              disabled={!lead.isQualityApproved || isReadOnly}
                             />
                             {lead.isPacked && lead.packedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.packedTimestamp).dateTimeShort}</div>}
                           </div>
@@ -548,7 +568,7 @@ export function ShipmentQueueTable() {
                                     {lead.salesAuditCompleteTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.salesAuditCompleteTimestamp).dateTimeShort}</div>}
                                 </div>
                            ) : (
-                                <Button size="sm" className="h-7 text-xs font-bold" onClick={() => handleRequestSalesAudit(lead)} disabled={!lead.isPacked}>
+                                <Button size="sm" className="h-7 text-xs font-bold" onClick={() => handleRequestSalesAudit(lead)} disabled={!lead.isPacked || isReadOnly}>
                                     Request Audit from Sales
                                 </Button>
                            )}
@@ -563,11 +583,11 @@ export function ShipmentQueueTable() {
                           <Badge variant={status.variant} className={status.className}>{status.text}</Badge>
                         </TableCell>
                         <TableCell className="text-center">
-                          {lead.shipmentStatus === 'Shipped' ? (
+                          {lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered' ? (
                             <div className="flex flex-col items-center justify-center gap-1">
                               <div className="flex items-center font-bold text-green-600 text-xs">
                                 <Check className="h-4 w-4 mr-1" />
-                                Shipped
+                                {lead.shipmentStatus}
                               </div>
                               {lead.shippedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.shippedTimestamp).dateTimeShort}</div>}
                             </div>
@@ -576,7 +596,7 @@ export function ShipmentQueueTable() {
                               size="sm"
                               className="h-7 text-xs font-bold"
                               onClick={() => setShippingLead(lead)}
-                              disabled={!lead.isSalesAuditComplete}
+                              disabled={!lead.isSalesAuditComplete || isReadOnly}
                             >
                               Ship Now
                             </Button>

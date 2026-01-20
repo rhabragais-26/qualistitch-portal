@@ -316,6 +316,7 @@
         "isDone": { "type": "boolean", "description": "Indicates if the order is completely done." },
         "doneProductionTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the production is marked as done." },
         "isEndorsedToLogistics": { "type": "boolean", "description": "Indicates if the order has been endorsed to logistics." },
+        "endorsedToLogisticsTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the order was endorsed to logistics." },
         "isDigitizingArchived": {
           "type": "boolean",
           "description": "Indicates if the lead is archived and should be hidden from the digitizing queue."
