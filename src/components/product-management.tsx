@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,6 @@ import { Save, PlusCircle, Trash2 } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { isEqual } from 'lodash';
 
-// Define types locally as they might not be exported from pricing.ts
 type Tier = { min: number; max: number; price: number };
 type EmbroideryPricing = { tiers: Tier[] };
 
@@ -31,17 +30,21 @@ export function ProductManagement() {
   const { data: fetchedConfig, isLoading, refetch } = useDoc<PricingConfig>(pricingConfigRef);
 
   const [config, setConfig] = useState<PricingConfig | null>(null);
-  const [selectedProductGroup, setSelectedProductGroup] = useState<ProductGroup>('GroupA');
+  const [productTypes, setProductTypes] = useState<string[]>([]);
+  const [selectedProductType, setSelectedProductType] = useState<string>('');
   const [newProduct, setNewProduct] = useState({ name: '', group: 'GroupA' as ProductGroup });
 
   useEffect(() => {
-    if (fetchedConfig) {
-      setConfig(fetchedConfig);
-    } else if (!isLoading) {
-      // If no config exists in Firestore, use the initial one from code
-      setConfig(initialPricingConfig as PricingConfig);
+    const dataToUse = fetchedConfig || (isLoading ? null : initialPricingConfig as PricingConfig);
+    if (dataToUse) {
+      setConfig(dataToUse);
+      const pTypes = Object.keys(dataToUse.productGroupMapping).sort();
+      setProductTypes(pTypes);
+      if (pTypes.length > 0 && !pTypes.includes(selectedProductType)) {
+        setSelectedProductType(pTypes[0]);
+      }
     }
-  }, [fetchedConfig, isLoading]);
+  }, [fetchedConfig, isLoading, selectedProductType]);
 
   const isDirty = useMemo(() => {
     if (!config || !fetchedConfig) return false;
@@ -86,18 +89,31 @@ export function ProductManagement() {
       toast({ variant: 'destructive', title: 'Error', description: 'Product name cannot be empty.' });
       return;
     }
-    const newConfig = { ...config };
-    newConfig.productGroupMapping[newProduct.name] = newProduct.group;
+    const newConfig = { ...config, productGroupMapping: { ...config.productGroupMapping, [newProduct.name]: newProduct.group } };
     setConfig(newConfig);
+
+    const newProductTypes = [...productTypes, newProduct.name].sort();
+    setProductTypes(newProductTypes);
+    setSelectedProductType(newProduct.name);
+
     setNewProduct({ name: '', group: 'GroupA' });
     toast({ title: 'Product Staged', description: `"${newProduct.name}" is ready to be saved.`});
   };
 
   const handleRemoveProduct = (productName: string) => {
       if (!config) return;
-      const newConfig = { ...config };
-      delete newConfig.productGroupMapping[productName];
+      const newMapping = { ...config.productGroupMapping };
+      delete newMapping[productName];
+      const newConfig = { ...config, productGroupMapping: newMapping };
       setConfig(newConfig);
+
+      const newProductTypes = productTypes.filter(p => p !== productName);
+      setProductTypes(newProductTypes);
+      if (selectedProductType === productName && newProductTypes.length > 0) {
+        setSelectedProductType(newProductTypes[0]);
+      } else if (newProductTypes.length === 0) {
+        setSelectedProductType('');
+      }
   };
 
   const handleSaveChanges = async () => {
@@ -108,7 +124,7 @@ export function ProductManagement() {
         title: 'Success!',
         description: 'Pricing configuration has been updated.',
       });
-      refetch(); // Refetch data to reset dirty state
+      refetch();
     } catch (error: any) {
       console.error('Error saving pricing config:', error);
       toast({
@@ -121,65 +137,68 @@ export function ProductManagement() {
   
   const productGroups = useMemo(() => config ? Object.keys(config.pricingTiers) as ProductGroup[] : [], [config]);
   const addOnTypes = useMemo(() => config ? Object.keys(config.addOnPricing) as AddOnType[] : [], [config]);
-
-  if (isLoading) {
-    return <Skeleton className="h-96 w-full" />;
-  }
   
-  if (!config) {
-      return <div>Loading pricing configuration...</div>
+  const selectedProductGroup = useMemo(() => {
+    if (!config || !selectedProductType) return null;
+    return config.productGroupMapping[selectedProductType] as ProductGroup | undefined;
+  }, [config, selectedProductType]);
+  
+  const displayGroup = (group: string) => group.replace('Group', 'Category ');
+
+  if (isLoading || !config) {
+    return <Skeleton className="h-96 w-full" />;
   }
 
   return (
     <Card className="w-full shadow-xl mt-8">
       <CardHeader>
-        <CardTitle>Product & Pricing Management</CardTitle>
+        <CardTitle>Product &amp; Pricing Management</CardTitle>
         <CardDescription>
-          Edit product prices, add-ons, and manage product groups.
+          Edit product prices, add-ons, and manage product categories.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
-        {/* Product Tiers */}
         <section>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Product Price Tiers</h3>
-            <Select value={selectedProductGroup} onValueChange={(v) => setSelectedProductGroup(v as ProductGroup)}>
-                <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select Product Group" />
+            <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                <SelectTrigger className="w-[280px]">
+                    <SelectValue placeholder="Select Product to Edit" />
                 </SelectTrigger>
                 <SelectContent>
-                    {productGroups.map(group => <SelectItem key={group} value={group}>{group}</SelectItem>)}
+                    {productTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
                 </SelectContent>
             </Select>
           </div>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {['logo', 'logoAndText'].map((embroideryType) => (
-                    <div key={embroideryType}>
-                        <h4 className="font-medium mb-2">{embroideryType === 'logo' ? 'Logo Only / Name Only' : 'Logo + Back Text'}</h4>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Min</TableHead>
-                                    <TableHead>Max</TableHead>
-                                    <TableHead>Price</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {config.pricingTiers[selectedProductGroup][embroideryType as 'logo' | 'logoAndText'].tiers.map((tier, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell><Input type="number" value={tier.min} onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'logoAndText', index, 'min', e.target.value)} className="w-24"/></TableCell>
-                                        <TableCell><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'logoAndText', index, 'max', e.target.value)} className="w-24"/></TableCell>
-                                        <TableCell><Input type="number" value={tier.price} onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'logoAndText', index, 'price', e.target.value)} className="w-24"/></TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                ))}
-           </div>
+           {selectedProductGroup ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {['logo', 'logoAndText'].map((embroideryType) => (
+                      <div key={embroideryType}>
+                          <h4 className="font-medium mb-2">{embroideryType === 'logo' ? 'Logo Only / Name Only' : 'Logo + Back Text'}</h4>
+                          <Table>
+                              <TableHeader>
+                                  <TableRow>
+                                      <TableHead className="py-1 px-2">Min</TableHead>
+                                      <TableHead className="py-1 px-2">Max</TableHead>
+                                      <TableHead className="py-1 px-2">Price</TableHead>
+                                  </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                  {config.pricingTiers[selectedProductGroup][embroideryType as 'logo' | 'logoAndText'].tiers.map((tier, index) => (
+                                      <TableRow key={index}>
+                                          <TableCell className="p-2"><Input type="number" value={tier.min} onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'logoAndText', index, 'min', e.target.value)} className="w-20 h-8"/></TableCell>
+                                          <TableCell className="p-2"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'logoAndText', index, 'max', e.target.value)} className="w-20 h-8"/></TableCell>
+                                          <TableCell className="p-2"><Input type="number" value={tier.price} onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'logoAndText', index, 'price', e.target.value)} className="w-20 h-8"/></TableCell>
+                                      </TableRow>
+                                  ))}
+                              </TableBody>
+                          </Table>
+                      </div>
+                  ))}
+            </div>
+           ) : <p>Select a product to see its pricing.</p>}
         </section>
 
-        {/* Add-ons */}
         <section>
           <h3 className="text-lg font-semibold mb-4">Add-on Pricing</h3>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -189,17 +208,17 @@ export function ProductManagement() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Min Qty</TableHead>
-                                <TableHead>Max Qty</TableHead>
-                                <TableHead>Price</TableHead>
+                                <TableHead className="py-1 px-2">Min Qty</TableHead>
+                                <TableHead className="py-1 px-2">Max Qty</TableHead>
+                                <TableHead className="py-1 px-2">Price</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {config.addOnPricing[addOn]?.tiers.map((tier, index) => (
                                 <TableRow key={index}>
-                                    <TableCell><Input type="number" value={tier.min} onChange={e => handleAddOnTierChange(addOn, index, 'min', e.target.value)} className="w-24"/></TableCell>
-                                    <TableCell><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleAddOnTierChange(addOn, index, 'max', e.target.value)} className="w-24"/></TableCell>
-                                    <TableCell><Input type="number" value={tier.price} onChange={e => handleAddOnTierChange(addOn, index, 'price', e.target.value)} className="w-24"/></TableCell>
+                                    <TableCell className="p-2"><Input type="number" value={tier.min} onChange={e => handleAddOnTierChange(addOn, index, 'min', e.target.value)} className="w-20 h-8"/></TableCell>
+                                    <TableCell className="p-2"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleAddOnTierChange(addOn, index, 'max', e.target.value)} className="w-20 h-8"/></TableCell>
+                                    <TableCell className="p-2"><Input type="number" value={tier.price} onChange={e => handleAddOnTierChange(addOn, index, 'price', e.target.value)} className="w-20 h-8"/></TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -209,9 +228,8 @@ export function ProductManagement() {
            </div>
         </section>
 
-        {/* Product Group Mapping */}
         <section>
-          <h3 className="text-lg font-semibold mb-4">Product Groups</h3>
+          <h3 className="text-lg font-semibold mb-4">Product Categories</h3>
           <div className="space-y-2 max-h-60 overflow-y-auto border p-4 rounded-md">
             {Object.entries(config.productGroupMapping).map(([name, group]) => (
                 <div key={name} className="flex items-center justify-between">
@@ -222,7 +240,7 @@ export function ProductManagement() {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                                {productGroups.map(g => <SelectItem key={g} value={g}>{displayGroup(g)}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveProduct(name)}>
@@ -238,13 +256,13 @@ export function ProductManagement() {
                  <Input value={newProduct.name} onChange={e => setNewProduct(p => ({...p, name: e.target.value}))} placeholder="e.g., New Jacket Model"/>
               </div>
               <div>
-                  <label className="text-sm font-medium">Group</label>
+                  <label className="text-sm font-medium">Category</label>
                  <Select value={newProduct.group} onValueChange={v => setNewProduct(p => ({...p, group: v as ProductGroup}))}>
                      <SelectTrigger className="w-[150px]">
                          <SelectValue />
                      </SelectTrigger>
                      <SelectContent>
-                        {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                        {productGroups.map(g => <SelectItem key={g} value={g}>{displayGroup(g)}</SelectItem>)}
                      </SelectContent>
                  </Select>
               </div>
