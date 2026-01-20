@@ -188,8 +188,8 @@ const productTypes = [
   'Corporate Jacket',
   'Reversible v1',
   'Reversible v2',
-  'Polo Shirt (Coolpass)',
-  'Polo Shirt (Cotton Blend)',
+  'Polo Shirt (Smilee) - Cool Pass',
+  'Polo Shirt (Smilee) - Cotton Blend',
   'Patches',
   'Client Owned',
 ];
@@ -1148,7 +1148,7 @@ export function LeadForm({
                         <div className="flex items-center gap-2">
                           <Label className="whitespace-nowrap">Price per Patch:</Label>
                           <div className="relative w-full">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black opacity-100">₱</span>
                             <Input
                               type="text"
                               value={formattedPrice}

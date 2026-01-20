@@ -38,8 +38,8 @@ const productTypes = [
   'Corporate Jacket',
   'Reversible v1',
   'Reversible v2',
-  'Polo Shirt (Coolpass)',
-  'Polo Shirt (Cotton Blend)',
+  'Polo Shirt (Smilee) - Cool Pass',
+  'Polo Shirt (Smilee) - Cotton Blend',
 ];
 
 const jacketColors = [

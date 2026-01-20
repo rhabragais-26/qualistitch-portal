@@ -11,8 +11,8 @@ const productGroupMapping: { [key: string]: ProductGroup } = {
   'Reversible v1': 'GroupB',
   'Reversible v2': 'GroupB',
   'Corporate Jacket': 'GroupC',
-  'Polo Shirt (Coolpass)': 'GroupD',
-  'Polo Shirt (Cotton Blend)': 'GroupD',
+  'Polo Shirt (Smilee) - Cool Pass': 'GroupD',
+  'Polo Shirt (Smilee) - Cotton Blend': 'GroupD',
 };
 
 const pricingTiers: {
