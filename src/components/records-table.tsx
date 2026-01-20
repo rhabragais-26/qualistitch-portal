@@ -299,10 +299,28 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
     return [...new Set(leads.map(lead => lead.salesRepresentative).filter(Boolean))].sort();
   }, [leads]);
 
+  const availableYears = useMemo(() => {
+    if (!leads) return [];
+    const years = new Set(leads.map(lead => new Date(lead.submissionDateTime).getFullYear()));
+    return Array.from(years).sort((a, b) => b - a);
+  }, [leads]);
+
+  const months = useMemo(() => [
+    { value: 'All', label: 'All Months' }, { value: '1', label: 'January' },
+    { value: '2', label: 'February' }, { value: '3', label: 'March' },
+    { value: '4', label: 'April' }, { value: '5', label: 'May' },
+    { value: '6', label: 'June' }, { value: '7', label: 'July' },
+    { value: '8', label: 'August' }, { value: '9', label: 'September' },
+    { value: '10', label: 'October' }, { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
+  ], []);
+
   const [editingLead, setEditingLead] = useState<(Lead & EnrichedLead) | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [csrFilter, setCsrFilter] = useState('All');
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>('All');
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
@@ -350,10 +368,14 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
         : true;
       
       const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
+      
+      const submissionDate = new Date(lead.submissionDateTime);
+      const matchesYear = selectedYear === 'All' || submissionDate.getFullYear().toString() === selectedYear;
+      const matchesMonth = selectedMonth === 'All' || (submissionDate.getMonth() + 1).toString() === selectedMonth;
 
-      return matchesSearch && matchesCsr;
+      return matchesSearch && matchesCsr && matchesYear && matchesMonth;
     }).sort((a,b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
-  }, [processedLeads, searchTerm, csrFilter]);
+  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth]);
 
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
@@ -429,6 +451,27 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
               </CardDescription>
             </div>
             <div className="flex items-center gap-4">
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Years</SelectItem>
+                  {availableYears.map(year => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                  <SelectValue placeholder="Month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map(month => (
+                    <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Select value={csrFilter} onValueChange={setCsrFilter}>
                 <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
                   <SelectValue placeholder="Filter by SCES" />
