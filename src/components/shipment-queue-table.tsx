@@ -401,7 +401,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start">
             <div>
-                <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Shipments' : 'Shipment Queue'}</CardTitle>
+                <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Shipped Orders' : 'Shipment Queue'}</CardTitle>
                 <CardDescription className="text-gray-600">
                 {filterType === 'COMPLETED' ? 'Orders that have been shipped or delivered.' : 'Track the status of all shipments.'}
                 </CardDescription>
@@ -431,8 +431,8 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                           View Shipment Queue
                       </Link>
                   ) : (
-                      <Link href="/logistics/completed-shipments" className="text-sm text-primary hover:underline">
-                          View Completed Shipments
+                      <Link href="/logistics/shipped-orders" className="text-sm text-primary hover:underline">
+                          View Shipped Orders
                       </Link>
                   )}
                 </div>
