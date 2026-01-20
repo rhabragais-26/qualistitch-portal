@@ -1055,7 +1055,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         </div>
       )}
 
-      <CardHeader>
+      <CardHeader className="pb-4">
         <div className="flex justify-between items-center">
             <div>
               <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Programs' : 'Programming Queue'}</CardTitle>
