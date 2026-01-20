@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { Skeleton } from './ui/skeleton';
 import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
 
 async function listAllRecursive(storageRef: StorageReference): Promise<StorageReference[]> {
     const res = await listAll(storageRef);
@@ -32,14 +33,14 @@ export function HomeCarousel() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [page, setPage] = useState(0);
+  const [[page, direction], setPage] = useState([0, 0]);
 
   const imageIndex = wrap(0, imageUrls.length, page);
   const prevIndex = wrap(0, imageUrls.length, page - 1);
   const nextIndex = wrap(0, imageUrls.length, page + 1);
 
   const paginate = (newDirection: number) => {
-    setPage(page + newDirection);
+    setPage([page + newDirection, newDirection]);
   };
   
   useEffect(() => {
@@ -145,15 +146,21 @@ export function HomeCarousel() {
   }
 
   return (
-    <div className="flex items-center justify-center w-full max-w-5xl gap-2">
+    <div className="flex items-center justify-center w-full max-w-6xl gap-2">
       <Button variant="ghost" size="icon" onClick={() => paginate(-1)} className="h-16 w-16 shrink-0" disabled={imageUrls.length <= 1}>
           <ChevronLeft className="h-12 w-12 text-muted-foreground hover:text-foreground transition-colors" />
       </Button>
-      <div className="relative w-full h-[400px] overflow-hidden">
-        <div
+      <div className="relative w-full h-[500px] overflow-hidden">
+        <AnimatePresence initial={false} custom={direction}>
+          <motion.div
             key={page}
             className="absolute inset-0 flex items-center justify-center gap-4"
-        >
+            custom={direction}
+            initial={{ opacity: 0, x: direction > 0 ? 200 : -200, scale: 0.8 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: direction > 0 ? -200 : 200, scale: 0.8 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
             {imageUrls.length > 1 ? (
                 <>
                     <div className="w-[25%] h-[80%] relative cursor-pointer" onClick={() => paginate(-1)}>
@@ -197,7 +204,8 @@ export function HomeCarousel() {
                     />
                 </div>
             )}
-        </div>
+        </motion.div>
+       </AnimatePresence>
       </div>
       <Button variant="ghost" size="icon" onClick={() => paginate(1)} className="h-16 w-16 shrink-0" disabled={imageUrls.length <= 1}>
           <ChevronRight className="h-12 w-12 text-muted-foreground hover:text-foreground transition-colors" />
