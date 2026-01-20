@@ -10,7 +10,7 @@ export default function HomePage() {
   return (
     <Header>
       <div className="flex flex-col items-center flex-1">
-        <div className="px-2 pt-[3px] text-center">
+        <div className="px-2 pt-6 text-center">
            <h1 className={cn(
               "text-2xl font-bold font-headline bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent shining-metal"
             )}>
