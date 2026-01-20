@@ -11,11 +11,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { ScrollArea } from './ui/scroll-area';
 import { getAddOnPrice } from '@/lib/pricing';
 
-const productTypes = [
+const jacketTypes = [
     'Executive Jacket 1', 'Executive Jacket v2 (with lines)', 'Turtle Neck Jacket',
-    'Reversible v1', 'Reversible v2', 'Corporate Jacket', 'Polo Shirt (Smilee) - Cool Pass', 'Polo Shirt (Smilee) - Cotton Blend',
+    'Reversible v1', 'Reversible v2', 'Corporate Jacket'
+];
+
+const poloShirtTypes = [
+    'Polo Shirt (Smilee) - Cool Pass', 'Polo Shirt (Smilee) - Cotton Blend',
     'Polo Shirt (Lifeline)', 'Polo Shirt (Blue Corner)', 'Polo Shirt (Softex)'
 ];
+
 
 const quantityTiers = [1, 4, 11, 51, 201, 301, 1000];
 const addOnTiers = [1, 4, 11];
@@ -106,7 +111,7 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
         </CardHeader>
         <CardContent className="p-4 flex-1 overflow-hidden">
             <ScrollArea className="h-full pr-4">
-             <h3 className="font-bold text-lg mb-2 text-white uppercase text-center bg-black">Item Prices</h3>
+             <h3 className="font-bold text-lg mb-2 text-white uppercase text-center bg-black">Jacket Prices</h3>
             <Table>
                 <TableHeader>
                     <TableRow className="border-b-gray-600">
@@ -116,7 +121,32 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {productTypes.map(product => (
+                    {jacketTypes.map(product => (
+                        <React.Fragment key={product}>
+                            <TableRow className="border-b-gray-700 hover:bg-gray-600/50 group">
+                                <TableCell rowSpan={2} className="font-bold align-middle group-hover:bg-gray-600/50">{product}</TableCell>
+                                <TableCell>Logo Only</TableCell>
+                                {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logo')}</TableCell>)}
+                            </TableRow>
+                             <TableRow className="border-b-gray-600 hover:bg-gray-600/50 group">
+                                <TableCell>Logo + Back Text</TableCell>
+                                {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logoAndText')}</TableCell>)}
+                            </TableRow>
+                        </React.Fragment>
+                    ))}
+                </TableBody>
+            </Table>
+            <h3 className="font-bold text-lg mt-6 mb-2 text-white uppercase text-center bg-black">Polo Shirt Prices</h3>
+            <Table>
+                <TableHeader>
+                    <TableRow className="border-b-gray-600">
+                        <TableHead className="text-yellow-300">Product Type</TableHead>
+                        <TableHead className="text-yellow-300">Embroidery</TableHead>
+                        {quantityTiers.map(tier => <TableHead key={tier} className="text-yellow-300 text-center">{tier === 1000 ? '1k+' : `${tier}+`}</TableHead>)}
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {poloShirtTypes.map(product => (
                         <React.Fragment key={product}>
                             <TableRow className="border-b-gray-700 hover:bg-gray-600/50 group">
                                 <TableCell rowSpan={2} className="font-bold align-middle group-hover:bg-gray-600/50">{product}</TableCell>
