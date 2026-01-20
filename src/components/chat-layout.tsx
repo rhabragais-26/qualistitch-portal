@@ -263,7 +263,9 @@ export function ChatLayout() {
 
   const sortedUsers = useMemo(() => {
     if (!users || !user) return [];
-    const otherUsers = users.filter(u => u.uid !== user.uid);
+    const otherUsers = users.filter(
+      (u) => u.uid !== user.uid && u.position && u.position !== 'Not Assigned'
+    );
 
     return otherUsers.sort((a, b) => {
         const channelA = channels?.find(c => c.participants.includes(user.uid) && c.participants.includes(a.uid));
