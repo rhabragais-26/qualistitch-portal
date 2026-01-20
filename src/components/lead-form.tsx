@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react"
@@ -259,7 +260,7 @@ export function LeadForm({
   const [singleQuantity, setSingleQuantity] = useState(0);
   const [pricePerPatch, setPricePerPatch] = useState(0);
   const [formattedPrice, setFormattedPrice] = useState('');
-  const [activeAddressField, setActiveAddressField] = useState<string | null>(null);
+  const [activeField, setActiveField] = useState<string | null>(null);
   
   const form = useFormContext<FormValues>();
   const { control, watch, setValue, formState, reset } = form;
@@ -350,6 +351,7 @@ export function LeadForm({
     setValue('city', lead.city ? toTitleCase(lead.city) : '', { shouldDirty: true });
     setValue('province', lead.province ? toTitleCase(lead.province) : '', { shouldDirty: true });
     setManualStatus(null);
+    setActiveField(null);
     setCustomerSuggestions([]);
     setCompanySuggestions([]);
     setCitySuggestions([]);
@@ -359,22 +361,24 @@ export function LeadForm({
   const handleCitySuggestionClick = (city: { name: string; province: string }) => {
     setValue('city', city.name, { shouldValidate: true, shouldDirty: true });
     setValue('province', city.province, { shouldValidate: true, shouldDirty: true });
-    setValue('barangay', '', { shouldDirty: true });
-    setActiveAddressField(null);
+    if (!barangayValue) {
+        setValue('barangay', '', { shouldDirty: true });
+    }
+    setActiveField(null);
   };
 
   const handleBarangaySuggestionClick = (b: { barangay: string, city: string, province: string }) => {
     setValue('barangay', b.barangay, { shouldValidate: true, shouldDirty: true });
     setValue('city', b.city, { shouldValidate: true, shouldDirty: true });
     setValue('province', b.province, { shouldValidate: true, shouldDirty: true });
-    setActiveAddressField(null);
+    setActiveField(null);
   };
 
   const handleProvinceSuggestionClick = (province: string) => {
     setValue('province', province, { shouldValidate: true, shouldDirty: true });
     setValue('city', '', { shouldDirty: true });
     setValue('barangay', '', { shouldDirty: true });
-    setActiveAddressField(null);
+    setActiveField(null);
   };
 
   const customerNameValue = watch('customerName');
@@ -456,24 +460,24 @@ export function LeadForm({
         setCustomerSuggestions([]);
         return;
     };
-    if (customerNameValue && leads && !selectedLead) {
+    if (activeField === 'customerName' && customerNameValue && leads && !selectedLead) {
         const uniqueSuggestions = leads.filter(
             (lead, index, self) =>
                 lead.customerName.toLowerCase().includes(customerNameValue.toLowerCase()) &&
                 self.findIndex((l) => l.customerName.toLowerCase() === lead.customerName.toLowerCase()) === index
         );
         setCustomerSuggestions(uniqueSuggestions);
-    } else if (!customerNameValue) {
+    } else {
         setCustomerSuggestions([]);
     }
-  }, [isEditing, customerNameValue, leads, selectedLead]);
+  }, [isEditing, customerNameValue, leads, selectedLead, activeField]);
 
   useEffect(() => {
      if (isEditing) {
         setCompanySuggestions([]);
         return;
     };
-    if (companyNameValue && leads && !selectedLead) {
+    if (activeField === 'companyName' && companyNameValue && leads && !selectedLead) {
       const uniqueSuggestions = leads.filter(
         (lead, index, self) =>
           lead.companyName &&
@@ -481,13 +485,13 @@ export function LeadForm({
           self.findIndex((l) => l.companyName?.toLowerCase() === lead.companyName?.toLowerCase()) === index
       );
       setCompanySuggestions(uniqueSuggestions);
-    } else if (!companyNameValue) {
+    } else {
       setCompanySuggestions([]);
     }
-  }, [isEditing, companyNameValue, leads, selectedLead]);
+  }, [isEditing, companyNameValue, leads, selectedLead, activeField]);
 
   useEffect(() => {
-    if (cityValue && !selectedLead && activeAddressField === 'city') {
+    if (activeField === 'city' && cityValue && !selectedLead) {
       const filteredCities = citiesAndMunicipalities.filter(city =>
         city.name.toLowerCase().includes(cityValue.toLowerCase())
       ).slice(0, 10);
@@ -495,25 +499,25 @@ export function LeadForm({
     } else {
       setCitySuggestions([]);
     }
-  }, [cityValue, citiesAndMunicipalities, selectedLead, activeAddressField]);
+  }, [cityValue, citiesAndMunicipalities, selectedLead, activeField]);
   
   useEffect(() => {
-    if (barangayValue && !selectedLead && activeAddressField === 'barangay') {
+    if (activeField === 'barangay' && barangayValue && !selectedLead) {
         const suggestions = allBarangays.filter(b => b.barangay.toLowerCase().includes(barangayValue.toLowerCase())).slice(0, 10);
         setBarangaySuggestions(suggestions);
     } else {
       setBarangaySuggestions([]);
     }
-  }, [barangayValue, allBarangays, selectedLead, activeAddressField]);
+  }, [barangayValue, allBarangays, selectedLead, activeField]);
   
   useEffect(() => {
-    if (provinceValue && !selectedLead && activeAddressField === 'province') {
+    if (activeField === 'province' && provinceValue && !selectedLead) {
         const filteredProvinces = allProvinces.filter(p => p.toLowerCase().includes(provinceValue.toLowerCase())).slice(0, 10);
         setProvinceSuggestions(filteredProvinces);
     } else {
         setProvinceSuggestions([]);
     }
-  }, [provinceValue, allProvinces, selectedLead, activeAddressField]);
+  }, [provinceValue, allProvinces, selectedLead, activeField]);
 
 
   useEffect(() => {
@@ -822,7 +826,8 @@ export function LeadForm({
                     <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
                     <FormControl>
                       <Input {...field} autoComplete="off"
-                        onBlur={() => !isEditing && setTimeout(() => setCustomerSuggestions([]), 150)} 
+                        onFocus={() => setActiveField('customerName')}
+                        onBlur={() => setTimeout(() => { if (activeField === 'customerName') setActiveField(null); }, 150)} 
                         onChange={(e) => {
                             field.onChange(e);
                             if (isEditing) return;
@@ -850,7 +855,10 @@ export function LeadForm({
                   <FormItem className="relative">
                     <FormLabel className="flex items-center gap-2 text-black text-xs"><Building className="h-4 w-4 text-primary" />Company Name (Optional)</FormLabel>
                     <FormControl>
-                      <Input {...field} autoComplete="off" onBlur={() => !isEditing && setTimeout(() => setCompanySuggestions([]), 150)} />
+                      <Input {...field} autoComplete="off" 
+                        onFocus={() => setActiveField('companyName')}
+                        onBlur={() => setTimeout(() => { if (activeField === 'companyName') setActiveField(null); }, 150)}
+                      />
                     </FormControl>
                     {!isEditing && companySuggestions.length > 0 && companyNameValue && (
                       <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
@@ -918,9 +926,9 @@ export function LeadForm({
                             <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
                             <FormControl>
-                                <Input {...field} onFocus={() => activeAddressField !== 'barangay' && setActiveAddressField('barangay')} onBlur={() => setTimeout(() => { activeAddressField === 'barangay' && setActiveAddressField(null);}, 150)} autoComplete="off" />
+                                <Input {...field} onFocus={() => setActiveField('barangay')} onBlur={() => setTimeout(() => { if (activeField === 'barangay') setActiveField(null);}, 150)} autoComplete="off" />
                             </FormControl>
-                            {barangayValue && barangaySuggestions.length > 0 && !selectedLead && activeAddressField === 'barangay' && (
+                            {barangayValue && barangaySuggestions.length > 0 && !selectedLead && activeField === 'barangay' && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {barangaySuggestions.map((b, index) => (
@@ -939,9 +947,9 @@ export function LeadForm({
                             <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
                             <FormControl>
-                                <Input {...field} onFocus={() => activeAddressField !== 'city' && setActiveAddressField('city')} onBlur={() => setTimeout(() => { activeAddressField === 'city' && setActiveAddressField(null);}, 150)} autoComplete="off" />
+                                <Input {...field} onFocus={() => setActiveField('city')} onBlur={() => setTimeout(() => { if (activeField === 'city') setActiveField(null);}, 150)} autoComplete="off" />
                             </FormControl>
-                            {cityValue && citySuggestions.length > 0 && !selectedLead && activeAddressField === 'city' && (
+                            {cityValue && citySuggestions.length > 0 && !selectedLead && activeField === 'city' && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {citySuggestions.map((city, index) => (
@@ -960,8 +968,8 @@ export function LeadForm({
                         <FormField control={form.control} name="province" render={({field}) => (
                           <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
-                            <FormControl><Input {...field} onFocus={() => activeAddressField !== 'province' && setActiveAddressField('province')} onBlur={() => setTimeout(() => { activeAddressField === 'province' && setActiveAddressField(null);}, 150)} autoComplete="off" /></FormControl>
-                            {provinceValue && provinceSuggestions.length > 0 && !selectedLead && activeAddressField === 'province' && (
+                            <FormControl><Input {...field} onFocus={() => setActiveField('province')} onBlur={() => setTimeout(() => { if (activeField === 'province') setActiveField(null);}, 150)} autoComplete="off" /></FormControl>
+                            {provinceValue && provinceSuggestions.length > 0 && !selectedLead && activeField === 'province' && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {provinceSuggestions.map((province, index) => (
@@ -1387,3 +1395,5 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
+
+    
