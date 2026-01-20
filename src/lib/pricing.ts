@@ -13,6 +13,9 @@ const productGroupMapping: { [key: string]: ProductGroup } = {
   'Corporate Jacket': 'GroupC',
   'Polo Shirt (Smilee) - Cool Pass': 'GroupD',
   'Polo Shirt (Smilee) - Cotton Blend': 'GroupD',
+  'Polo Shirt (Lifeline)': 'GroupD',
+  'Polo Shirt (Blue Corner)': 'GroupD',
+  'Polo Shirt (Softex)': 'GroupD',
 };
 
 const pricingTiers: {

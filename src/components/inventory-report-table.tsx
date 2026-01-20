@@ -41,6 +41,9 @@ const productTypes = [
   'Reversible v2',
   'Polo Shirt (Smilee) - Cool Pass',
   'Polo Shirt (Smilee) - Cotton Blend',
+  'Polo Shirt (Lifeline)',
+  'Polo Shirt (Blue Corner)',
+  'Polo Shirt (Softex)',
 ];
 
 const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];

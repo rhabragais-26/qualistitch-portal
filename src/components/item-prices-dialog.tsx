@@ -13,7 +13,8 @@ import { getAddOnPrice } from '@/lib/pricing';
 
 const productTypes = [
     'Executive Jacket 1', 'Executive Jacket v2 (with lines)', 'Turtle Neck Jacket',
-    'Reversible v1', 'Reversible v2', 'Corporate Jacket', 'Polo Shirt (Coolpass)', 'Polo Shirt (Cotton Blend)'
+    'Reversible v1', 'Reversible v2', 'Corporate Jacket', 'Polo Shirt (Smilee) - Cool Pass', 'Polo Shirt (Smilee) - Cotton Blend',
+    'Polo Shirt (Lifeline)', 'Polo Shirt (Blue Corner)', 'Polo Shirt (Softex)'
 ];
 
 const quantityTiers = [1, 4, 11, 51, 201, 301, 1000];

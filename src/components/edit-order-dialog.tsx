@@ -26,6 +26,9 @@ const productTypes = [
   'Reversible v2',
   'Polo Shirt (Smilee) - Cool Pass',
   'Polo Shirt (Smilee) - Cotton Blend',
+  'Polo Shirt (Lifeline)',
+  'Polo Shirt (Blue Corner)',
+  'Polo Shirt (Softex)',
   'Patches',
   'Client Owned',
 ];
