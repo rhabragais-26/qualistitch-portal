@@ -462,7 +462,7 @@ export function RecordsTable({ isReadOnly, filterStatus }: { isReadOnly: boolean
                 {filterStatus === 'COMPLETED' ? 'Here are all the completed customer orders.' : 'Here are all the customer orders submitted through the form.'}
               </CardDescription>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col items-end gap-2 -mb-4">
               <div className="flex items-center gap-4 flex-wrap justify-end">
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">Filter by Year/Month:</span>
