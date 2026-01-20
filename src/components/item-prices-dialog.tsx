@@ -125,7 +125,7 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
                         <React.Fragment key={product}>
                             <TableRow className="border-b-gray-700 hover:bg-gray-600/50 group">
                                 <TableCell rowSpan={2} className="font-bold align-middle group-hover:bg-gray-600/50">{product}</TableCell>
-                                <TableCell>Logo Only</TableCell>
+                                <TableCell>Logo Only/Name Only</TableCell>
                                 {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logo')}</TableCell>)}
                             </TableRow>
                              <TableRow className="border-b-gray-600 hover:bg-gray-600/50 group">
@@ -150,7 +150,7 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
                         <React.Fragment key={product}>
                             <TableRow className="border-b-gray-700 hover:bg-gray-600/50 group">
                                 <TableCell rowSpan={2} className="font-bold align-middle group-hover:bg-gray-600/50">{product}</TableCell>
-                                <TableCell>Logo Only</TableCell>
+                                <TableCell>Logo Only/Name Only</TableCell>
                                 {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logo')}</TableCell>)}
                             </TableRow>
                              <TableRow className="border-b-gray-600 hover:bg-gray-600/50 group">
