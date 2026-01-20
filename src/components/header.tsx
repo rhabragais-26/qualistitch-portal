@@ -177,8 +177,8 @@ const HeaderMemo = React.memo(function Header({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-black no-print border-b border-white">
-        <div className="container flex h-14 max-w-screen-2xl items-center pr-0">
+      <header className="sticky top-0 z-40 w-full bg-black no-print border-b border-white relative">
+        <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex items-center">
             <Link href="/home" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/home'); }}>
               <span className={cn("font-bold font-headline flex items-baseline bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-200 bg-clip-text text-transparent shining-metal whitespace-nowrap")}>
@@ -325,53 +325,53 @@ const HeaderMemo = React.memo(function Header({
               </>
             )}
           </nav>
-           <div className="ml-auto flex items-center">
-              {user && userProfile && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2 h-10 rounded-md pl-3 text-white hover:bg-accent/90">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={userProfile?.photoURL || ''} alt={userProfile.nickname} />
-                        <AvatarFallback className="bg-primary text-primary-foreground font-bold">
-                          {getInitials(userProfile.nickname)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col items-start justify-center">
-                        <span className="font-bold text-sm leading-none">{userProfile.nickname}</span>
-                        <span className="text-xs text-gray-400 leading-none">({userProfile.position})</span>
-                      </div>
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onClick={() => router.push('/profile')}>
-                        <User className="mr-2" />
-                        Profile
-                     </DropdownMenuItem>
-                     {isAdmin && (
-                        <DropdownMenuItem onClick={() => router.push('/admin/users')}>
-                            <div className="flex items-center justify-between w-full">
-                                <div className="flex items-center">
-                                    <UserCog className="mr-2" />
-                                    <span>Admin Setting</span>
-                                </div>
-                                {unassignedUsersCount > 0 && (
-                                    <Badge variant="destructive" className="h-5 w-5 justify-center rounded-full p-0 ml-2 text-xs">
-                                        {unassignedUsersCount}
-                                    </Badge>
-                                )}
+        </div>
+        <div className="absolute top-0 right-4 h-14 flex items-center">
+            {user && userProfile && (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2 h-10 rounded-md pl-3 text-white hover:bg-accent/90">
+                    <Avatar className="h-8 w-8">
+                    <AvatarImage src={userProfile?.photoURL || ''} alt={userProfile.nickname} />
+                    <AvatarFallback className="bg-primary text-primary-foreground font-bold">
+                        {getInitials(userProfile.nickname)}
+                    </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col items-start justify-center">
+                    <span className="font-bold text-sm leading-none">{userProfile.nickname}</span>
+                    <span className="text-xs text-gray-400 leading-none">({userProfile.position})</span>
+                    </div>
+                    <ChevronDown className="h-4 w-4" />
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => router.push('/profile')}>
+                    <User className="mr-2" />
+                    Profile
+                </DropdownMenuItem>
+                {isAdmin && (
+                    <DropdownMenuItem onClick={() => router.push('/admin/users')}>
+                        <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center">
+                                <UserCog className="mr-2" />
+                                <span>Admin Setting</span>
                             </div>
-                        </DropdownMenuItem>
-                     )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="mr-2" />
-                      Sign Out
+                            {unassignedUsersCount > 0 && (
+                                <Badge variant="destructive" className="h-5 w-5 justify-center rounded-full p-0 ml-2 text-xs">
+                                    {unassignedUsersCount}
+                                </Badge>
+                            )}
+                        </div>
                     </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2" />
+                    Sign Out
+                </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            )}
         </div>
       </header>
       
