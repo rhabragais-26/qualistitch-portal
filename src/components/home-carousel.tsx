@@ -26,6 +26,27 @@ const wrap = (min: number, max: number, v: number) => {
   return ((((v - min) % rangeSize) + rangeSize) % rangeSize) + min;
 };
 
+const variants = {
+  enter: (direction: number) => {
+    return {
+      x: direction > 0 ? 1000 : -1000,
+      opacity: 0,
+    };
+  },
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => {
+    return {
+      zIndex: 0,
+      x: direction < 0 ? 1000 : -1000,
+      opacity: 0,
+    };
+  },
+};
+
 export function HomeCarousel() {
   const app = useFirebaseApp();
   const { user, isUserLoading } = useUser();
@@ -156,10 +177,14 @@ export function HomeCarousel() {
             key={page}
             className="absolute inset-0 flex items-center justify-center gap-4"
             custom={direction}
-            initial={{ opacity: 0, x: direction > 0 ? 200 : -200, scale: 0.8 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: direction > 0 ? -200 : 200, scale: 0.8, transition: { duration: 0.2 } }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 }
+            }}
           >
             {imageUrls.length > 1 ? (
                 <>
