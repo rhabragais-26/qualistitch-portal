@@ -12,7 +12,7 @@ export default function CompletedRecordsPage() {
 
   return (
     <Header>
-      <RecordsTable isReadOnly={!canEdit} filterStatus="COMPLETED" />
+      <RecordsTable isReadOnly={!canEdit} filterType="COMPLETED" />
     </Header>
   );
 }

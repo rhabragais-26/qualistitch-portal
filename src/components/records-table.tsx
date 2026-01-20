@@ -281,7 +281,7 @@ const RecordsTableRow = React.memo(({
 RecordsTableRow.displayName = 'RecordsTableRow';
 
 
-export function RecordsTable({ isReadOnly, filterStatus }: { isReadOnly: boolean; filterStatus?: 'COMPLETED' }) {
+export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; filterType?: 'COMPLETED' | 'ONGOING' }) {
   const firestore = useFirestore();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -332,7 +332,7 @@ export function RecordsTable({ isReadOnly, filterStatus }: { isReadOnly: boolean
     }
     return { text: 'ONGOING', variant: 'warning' };
   }, []);
-
+  
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
@@ -383,11 +383,17 @@ export function RecordsTable({ isReadOnly, filterStatus }: { isReadOnly: boolean
       const matchesMonth = selectedMonth === 'All' || (submissionDate.getMonth() + 1).toString() === selectedMonth;
 
       const overallStatus = getOverallStatus(lead).text;
-      const matchesStatus = !filterStatus || overallStatus === filterStatus;
+      let matchesStatus = true;
+      if (filterType === 'COMPLETED') {
+        matchesStatus = overallStatus === 'COMPLETED';
+      } else if (filterType === 'ONGOING') {
+        matchesStatus = overallStatus === 'ONGOING' || overallStatus === 'PENDING';
+      }
+
 
       return matchesSearch && matchesCsr && matchesYear && matchesMonth && matchesStatus;
     }).sort((a,b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
-  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, filterStatus, getOverallStatus]);
+  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, filterType, getOverallStatus]);
 
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
@@ -457,12 +463,14 @@ export function RecordsTable({ isReadOnly, filterStatus }: { isReadOnly: boolean
       <CardHeader>
         <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-black">{filterStatus === 'COMPLETED' ? 'Completed Orders' : 'Recorded Orders'}</CardTitle>
+              <CardTitle className="text-black">
+                {filterType === 'COMPLETED' ? 'Completed Orders' : 'Ongoing Orders'}
+              </CardTitle>
               <CardDescription className="text-gray-600">
-                {filterStatus === 'COMPLETED' ? 'Here are all the completed customer orders.' : 'Here are all the customer orders submitted through the form.'}
+                 {filterType === 'COMPLETED' ? 'Here are all the completed customer orders.' : 'Here are all the ongoing and pending customer orders.'}
               </CardDescription>
             </div>
-            <div className="flex flex-col items-end gap-2 -mb-4">
+            <div className="flex flex-col items-end gap-2">
               <div className="flex items-center gap-4 flex-wrap justify-end">
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">Filter by Year/Month:</span>
@@ -511,13 +519,13 @@ export function RecordsTable({ isReadOnly, filterStatus }: { isReadOnly: boolean
                   />
                 </div>
               </div>
-              {filterStatus !== 'COMPLETED' ? (
-                <Link href="/records/completed" className="text-sm text-primary hover:underline">
-                    View Completed Orders
+               {filterType === 'COMPLETED' ? (
+                <Link href="/records" className="text-sm text-primary hover:underline">
+                    View Ongoing Orders
                 </Link>
               ) : (
-                <Link href="/records" className="text-sm text-primary hover:underline">
-                    View All Orders
+                <Link href="/records/completed" className="text-sm text-primary hover:underline">
+                    View Completed Orders
                 </Link>
               )}
             </div>
