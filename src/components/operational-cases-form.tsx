@@ -52,6 +52,8 @@ type Lead = {
   submissionDateTime: string;
   priorityType: 'Rush' | 'Regular';
   orders: LeadOrder[];
+  isEndorsedToLogistics?: boolean;
+  shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
 };
 
 type CaseItem = {
@@ -205,7 +207,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
   }, [initialJoNumber, allLeads, isEditing, setValue, handleSuggestionClick]);
 
 
-  useEffect(() => {
+ useEffect(() => {
     if (!allLeads || !joInput || !showSuggestions || isEditing) {
       setJoSuggestions([]);
       return;
@@ -214,7 +216,14 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
     const searchInput = joInput.toLowerCase().replace(/[^0-9]/g, '');
     
     if(searchInput.length > 0) {
-        const matchedLeads = allLeads.filter(lead => 
+        let leadsToSearch = allLeads;
+
+        // If not coming from a specific source like quality check, filter for shipment queue leads.
+        if (!source) {
+            leadsToSearch = allLeads.filter(lead => lead.isEndorsedToLogistics && lead.shipmentStatus !== 'Shipped' && lead.shipmentStatus !== 'Delivered');
+        }
+
+        const matchedLeads = leadsToSearch.filter(lead => 
             lead.joNumber && 
             (lead.joNumber.toString().padStart(5, '0').includes(searchInput) ||
              formatJoNumber(lead.joNumber).toLowerCase().includes(joInput.toLowerCase()))
@@ -224,7 +233,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
         setJoSuggestions([]);
     }
 
-  }, [joInput, allLeads, showSuggestions, isEditing]);
+  }, [joInput, allLeads, showSuggestions, isEditing, source]);
   
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -289,6 +298,15 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
             variant: 'destructive',
             title: 'Error',
             description: 'Firestore is not available. Please try again later.'
+        });
+        return;
+    }
+
+    if (!isEditing && !foundLead) {
+        toast({
+            variant: 'destructive',
+            title: 'Invalid Job Order',
+            description: 'Please select a valid Job Order from the suggestions.'
         });
         return;
     }
