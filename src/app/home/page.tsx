@@ -12,7 +12,7 @@ export default function HomePage() {
       <div className="flex flex-col items-center flex-1">
         <div className="px-2 pt-2 text-center">
            <h1 className={cn(
-              "text-3xl font-bold font-headline bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent shining-metal"
+              "text-2xl font-bold font-headline bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent shining-metal"
             )}>
             Welcome back, {userProfile?.nickname || 'User'}!
           </h1>
