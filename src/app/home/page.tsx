@@ -1,3 +1,4 @@
+
 'use client';
 import { Header } from '@/components/header';
 import { HomeCarousel } from '@/components/home-carousel';
@@ -17,7 +18,7 @@ export default function HomePage() {
             Welcome back, {userProfile?.nickname || 'User'}! Here's a quick look on our Company Profile.
           </h1>
         </div>
-        <div className="w-full flex-1 flex items-center justify-center pb-[11px]">
+        <div className="w-full flex-1 flex items-center justify-center pb-[18px]">
           <HomeCarousel />
         </div>
       </div>
