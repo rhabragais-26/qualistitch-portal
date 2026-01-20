@@ -1,10 +1,9 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
@@ -96,9 +95,10 @@ type OperationalCasesFormProps = {
   onDirtyChange: (isDirty: boolean) => void;
   isReadOnly: boolean;
   setImageInView: (url: string | null) => void;
+  initialJoNumber?: string | null;
 }
 
-const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete, onDirtyChange, isReadOnly, setImageInView }: OperationalCasesFormProps) {
+const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete, onDirtyChange, isReadOnly, setImageInView, initialJoNumber }: OperationalCasesFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const imageUploadRef = useRef<HTMLInputElement>(null);
@@ -166,6 +166,27 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   };
 
+  const handleSuggestionClick = useCallback((lead: Lead) => {
+    setFoundLead(lead);
+    const fullJoNumber = formatJoNumber(lead.joNumber!);
+    setJoInput(fullJoNumber);
+    setValue('joNumber', fullJoNumber, { shouldValidate: true });
+    setShowSuggestions(false);
+  }, [setValue]);
+
+  useEffect(() => {
+    if (initialJoNumber && allLeads && !isEditing) {
+      const lead = allLeads.find(l => l.joNumber && formatJoNumber(l.joNumber) === initialJoNumber);
+      if (lead) {
+        handleSuggestionClick(lead);
+      } else {
+        setJoInput(initialJoNumber);
+        setValue('joNumber', initialJoNumber, { shouldValidate: true });
+      }
+    }
+  }, [initialJoNumber, allLeads, isEditing, setValue, handleSuggestionClick]);
+
+
   useEffect(() => {
     if (!allLeads || !joInput || !showSuggestions || isEditing) {
       setJoSuggestions([]);
@@ -187,15 +208,6 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
 
   }, [joInput, allLeads, showSuggestions, isEditing]);
   
-  const handleSuggestionClick = (lead: Lead) => {
-    setFoundLead(lead);
-    const fullJoNumber = formatJoNumber(lead.joNumber!);
-    setJoInput(fullJoNumber);
-    setValue('joNumber', fullJoNumber, { shouldValidate: true });
-    setShowSuggestions(false);
-  };
-
-
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {

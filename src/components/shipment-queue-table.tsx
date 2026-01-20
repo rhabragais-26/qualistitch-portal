@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -35,6 +34,7 @@ import { Input } from './ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { addDays, differenceInDays, format } from 'date-fns';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 
 type Order = {
@@ -91,6 +91,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads } = useCollection<Lead>(leadsQuery);
   const { toast } = useToast();
+  const router = useRouter();
   const [disapprovingLead, setDisapprovingLead] = useState<Lead | null>(null);
   const [packingLead, setPackingLead] = useState<{lead: Lead, isPacking: boolean} | null>(null);
   const [shippingLead, setShippingLead] = useState<Lead | null>(null);
@@ -159,6 +160,10 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
             title: 'Order Disapproved',
             description: 'The order has been sent back to production with your remarks.',
         });
+        
+        const joNumber = formatJoNumber(disapprovingLead.joNumber);
+        router.push(`/inventory/operational-cases?joNumber=${joNumber}`);
+
         setDisapprovingLead(null);
         setRemarks('');
 
@@ -713,5 +718,3 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     </>
   );
 }
-
-    

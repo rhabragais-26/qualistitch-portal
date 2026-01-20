@@ -1,12 +1,11 @@
-
 'use client';
 
 import { Header } from '@/components/header';
 import { OperationalCasesForm } from '@/components/operational-cases-form';
 import { RecordedCasesList } from '@/components/recorded-cases-list';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useUser } from '@/firebase';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { hasEditPermission } from '@/lib/permissions';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -27,7 +26,10 @@ type OperationalCase = {
   isDeleted?: boolean;
 };
 
-export default function OperationalCasesPage() {
+function OperationalCasesPageContent() {
+  const searchParams = useSearchParams();
+  const joNumberFromQuery = searchParams.get('joNumber');
+
   const [editingCase, setEditingCase] = useState<OperationalCase | null>(null);
   const [isFormDirty, setIsFormDirty] = useState(false);
   const { userProfile } = useUser();
@@ -82,6 +84,7 @@ export default function OperationalCasesPage() {
                       onDirtyChange={setIsFormDirty}
                       isReadOnly={!canEdit}
                       setImageInView={setImageInView}
+                      initialJoNumber={joNumberFromQuery}
                    />
               </div>
               <div className="lg:col-span-3">
@@ -92,4 +95,12 @@ export default function OperationalCasesPage() {
       </Header>
     </div>
   );
+}
+
+export default function OperationalCasesPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+            <OperationalCasesPageContent />
+        </Suspense>
+    );
 }
