@@ -146,7 +146,7 @@ export function HomeCarousel() {
   }
 
   return (
-    <div className="flex items-center justify-center w-full max-w-7xl gap-2">
+    <div className="flex items-center justify-center w-full max-w-[1330px] gap-2">
       <Button variant="ghost" size="icon" onClick={() => paginate(-1)} className="h-16 w-16 shrink-0" disabled={imageUrls.length <= 1}>
           <ChevronLeft className="h-12 w-12 text-muted-foreground hover:text-foreground transition-colors" />
       </Button>
@@ -158,7 +158,7 @@ export function HomeCarousel() {
             custom={direction}
             initial={{ opacity: 0, x: direction > 0 ? 200 : -200, scale: 0.8 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: direction > 0 ? -200 : 200, scale: 0.8 }}
+            exit={{ opacity: 0, x: direction > 0 ? -200 : 200, scale: 0.8, transition: { duration: 0.2 } }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
             {imageUrls.length > 1 ? (
