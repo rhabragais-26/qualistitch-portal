@@ -368,9 +368,9 @@ export function OrderStatusTable() {
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-black">Overall Order Status</CardTitle>
+              <CardTitle className="text-black">Overall Order Status & Progress</CardTitle>
               <CardDescription className="text-gray-600">
-                Here is the overall status of all customer orders.
+                Here is the overall status and progress of all customer orders.
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
