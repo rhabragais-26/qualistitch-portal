@@ -37,6 +37,7 @@ import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import Link from 'next/link';
 
 type NamedOrder = {
   name: string;
@@ -143,9 +144,10 @@ type FileUploadChecklistItem = {
 
 type DigitizingTableProps = {
   isReadOnly: boolean;
+  filterType?: 'ONGOING' | 'COMPLETED';
 };
 
-const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly }: DigitizingTableProps) {
+const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: DigitizingTableProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -611,11 +613,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly }: 
   const filteredLeads = React.useMemo(() => {
     if (!processedLeads) return [];
     
-    const leadsWithJo = processedLeads.filter(lead => 
-        lead.joNumber && 
-        !lead.isDigitizingArchived &&
-        lead.orderType !== 'Stock (Jacket Only)'
-    );
+    const leadsWithJo = processedLeads.filter(lead => {
+        const matchesFilterType = filterType === 'COMPLETED' ? lead.isDigitizingArchived : !lead.isDigitizingArchived;
+        return lead.joNumber && matchesFilterType && lead.orderType !== 'Stock (Jacket Only)';
+    });
 
     const filtered = leadsWithJo.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -647,7 +648,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly }: 
         return aDeadline.remainingDays - bDeadline.remainingDays;
     });
 
-  }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueFilter, formatJoNumber, calculateDigitizingDeadline]);
+  }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueFilter, formatJoNumber, calculateDigitizingDeadline, filterType]);
 
   const fileChecklistItems: FileUploadChecklistItem[] = useMemo(() => {
     if (!reviewConfirmLead) return [];
@@ -1057,54 +1058,67 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly }: 
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-black">Programming Queue</CardTitle>
+              <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Programs' : 'Programming Queue'}</CardTitle>
               <CardDescription className="text-gray-600">
-                Leads with saved Job Orders ready for digitizing.
+                {filterType === 'COMPLETED' ? 'Job orders with completed program files.' : 'Leads with saved Job Orders ready for digitizing.'}
               </CardDescription>
             </div>
-             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Filter by Priority Type:</span>
-                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Filter by Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Priorities</SelectItem>
-                    <SelectItem value="Rush">Rush</SelectItem>
-                    <SelectItem value="Regular">Regular</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Filter Overdue Status:</span>
-                <Select value={overdueFilter} onValueChange={setOverdueFilter}>
-                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Filter by Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Statuses</SelectItem>
-                    <SelectItem value="Overdue">Overdue</SelectItem>
-                    <SelectItem value="Nearly Overdue">Nearly Overdue</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-full max-w-xs">
-                 <Input
-                  placeholder="Search by J.O. No..."
-                  value={joNumberSearch}
-                  onChange={(e) => setJoNumberSearch(e.target.value)}
-                  className="bg-gray-100 text-black placeholder:text-gray-500"
-                />
-              </div>
-              <div className="w-full max-w-xs">
-                <Input
-                  placeholder="Search customer, company, or contact..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-gray-100 text-black placeholder:text-gray-500"
-                />
-              </div>
+             <div className="flex flex-col items-end gap-2">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Filter by Priority Type:</span>
+                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                      <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                        <SelectValue placeholder="Filter by Priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Priorities</SelectItem>
+                        <SelectItem value="Rush">Rush</SelectItem>
+                        <SelectItem value="Regular">Regular</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Filter Overdue Status:</span>
+                    <Select value={overdueFilter} onValueChange={setOverdueFilter}>
+                      <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                        <SelectValue placeholder="Filter by Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Statuses</SelectItem>
+                        <SelectItem value="Overdue">Overdue</SelectItem>
+                        <SelectItem value="Nearly Overdue">Nearly Overdue</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-full max-w-xs">
+                     <Input
+                      placeholder="Search by J.O. No..."
+                      value={joNumberSearch}
+                      onChange={(e) => setJoNumberSearch(e.target.value)}
+                      className="bg-gray-100 text-black placeholder:text-gray-500"
+                    />
+                  </div>
+                  <div className="w-full max-w-xs">
+                    <Input
+                      placeholder="Search customer, company, or contact..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="bg-gray-100 text-black placeholder:text-gray-500"
+                    />
+                  </div>
+                </div>
+                <div className="w-full text-right">
+                  {filterType === 'COMPLETED' ? (
+                    <Link href="/digitizing/programming-queue" className="text-sm text-primary hover:underline">
+                      View Programming Queue
+                    </Link>
+                  ) : (
+                    <Link href="/digitizing/completed-programs" className="text-sm text-primary hover:underline">
+                      View Completed Programs
+                    </Link>
+                  )}
+                </div>
             </div>
         </div>
       </CardHeader>
@@ -1126,16 +1140,15 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly }: 
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Final Approval</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Final Program</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Details</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center">Review</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">{filterType === 'COMPLETED' ? 'Date Completed' : 'Review'}</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
                 {filteredLeads.map((lead) => {
                   const deadlineInfo = calculateDigitizingDeadline(lead);
-                  const firstLayout = lead.layouts?.[0];
-                  const hasInitialImages = firstLayout?.logoLeftImage || firstLayout?.logoRightImage || firstLayout?.backLogoImage || firstLayout?.backDesignImage;
-                  const hasTestImages = firstLayout?.testLogoLeftImage || firstLayout?.testLogoRightImage || firstLayout?.testBackLogoImage || firstLayout?.testBackDesignImage;
-                  const hasFinalFiles = firstLayout?.finalLogoEmb?.some(f => f) || firstLayout?.finalBackDesignEmb?.some(f => f) || firstLayout?.finalLogoDst?.some(f => f) || firstLayout?.finalBackDesignDst?.some(f => f) || firstLayout?.finalNamesDst?.some(f => f) || firstLayout?.sequenceLogo?.some(f => f) || firstLayout?.sequenceBackDesign?.some(f => f);
+                  const hasInitialImages = lead.layouts?.[0]?.logoLeftImage || lead.layouts?.[0]?.logoRightImage || lead.layouts?.[0]?.backLogoImage || lead.layouts?.[0]?.backDesignImage;
+                  const hasTestImages = lead.layouts?.[0]?.testLogoLeftImage || lead.layouts?.[0]?.testLogoRightImage || lead.layouts?.[0]?.testBackLogoImage || lead.layouts?.[0]?.testBackDesignImage;
+                  const hasFinalFiles = lead.layouts?.[0]?.finalLogoEmb?.some(f => f) || lead.layouts?.[0]?.finalBackDesignEmb?.some(f => f) || lead.layouts?.[0]?.finalLogoDst?.some(f => f) || lead.layouts?.[0]?.finalBackDesignDst?.some(f => f) || lead.layouts?.[0]?.finalNamesDst?.some(f => f) || lead.layouts?.[0]?.sequenceLogo?.some(f => f) || lead.layouts?.[0]?.sequenceBackDesign?.some(f => f);
                   const hasLayoutImages = lead.layouts?.some(l => l.layoutImage);
                   const isRepeat = lead.orderNumber > 1;
                   const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
@@ -1284,13 +1297,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly }: 
                           </Button>
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
-                          {lead.isDigitizingArchived ? (
-                            <div className="text-xs text-gray-500">
-                                <p>Archived</p>
-                                {lead.digitizingArchivedTimestamp && <p>{formatDateTime(lead.digitizingArchivedTimestamp).dateTimeShort}</p>}
-                            </div>
-                          ) : (
-                            <Button
+                           {filterType === 'COMPLETED' ? (
+                                lead.digitizingArchivedTimestamp && (
+                                    <div className="text-xs text-gray-500">
+                                        <p>{formatDateTime(lead.digitizingArchivedTimestamp).dateTime}</p>
+                                    </div>
+                                )
+                           ) : (
+                             <Button
                                 size="sm"
                                 className={cn(
                                     'h-7 px-3 text-white font-bold',
@@ -1301,7 +1315,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly }: 
                             >
                                 Done
                             </Button>
-                          )}
+                           )}
                         </TableCell>
                     </TableRow>
                     {openLeadId === lead.id && (

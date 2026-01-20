@@ -36,6 +36,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/sales/audit-for-shipment': 'sales',
   '/reports': 'sales',
   '/digitizing/programming-queue': 'digitizing',
+  '/digitizing/completed-programs': 'digitizing',
   '/digitizing/program-files-database': 'digitizing',
   '/digitizing/reports': 'digitizing',
   '/inventory/add-items': 'inventory',
