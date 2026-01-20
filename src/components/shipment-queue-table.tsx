@@ -346,22 +346,22 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalQuantity += orderQuantity;
+      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
     });
   
     const enrichedLeads: EnrichedLead[] = [];
   
-    Object.values(customerOrderStats).forEach(({ orders, totalQuantity }) => {
+    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
       orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
       orders.forEach((lead, index) => {
         enrichedLeads.push({
           ...lead,
           orderNumber: index + 1,
-          totalCustomerQuantity: totalQuantity,
+          totalCustomerQuantity,
         });
       });
     });
@@ -425,16 +425,16 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                         />
                     </div>
                 </div>
-                 <div className="w-full text-right">
-                    {filterType === 'COMPLETED' ? (
-                        <Link href="/logistics/shipment-queue" className="text-sm text-primary hover:underline">
-                            View Shipment Queue
-                        </Link>
-                    ) : (
-                        <Link href="/logistics/completed-shipments" className="text-sm text-primary hover:underline">
-                            View Completed Shipments
-                        </Link>
-                    )}
+                <div className="w-full text-right">
+                  {filterType === 'COMPLETED' ? (
+                      <Link href="/logistics/shipment-queue" className="text-sm text-primary hover:underline">
+                          View Shipment Queue
+                      </Link>
+                  ) : (
+                      <Link href="/logistics/completed-shipments" className="text-sm text-primary hover:underline">
+                          View Completed Shipments
+                      </Link>
+                  )}
                 </div>
             </div>
         </div>
@@ -583,24 +583,24 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                           <Badge variant={status.variant} className={status.className}>{status.text}</Badge>
                         </TableCell>
                         <TableCell className="text-center">
-                          {lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered' ? (
-                            <div className="flex flex-col items-center justify-center gap-1">
-                              <div className="flex items-center font-bold text-green-600 text-xs">
-                                <Check className="h-4 w-4 mr-1" />
-                                {lead.shipmentStatus}
-                              </div>
-                              {lead.shippedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.shippedTimestamp).dateTimeShort}</div>}
-                            </div>
-                          ) : (
-                            <Button
-                              size="sm"
-                              className="h-7 text-xs font-bold"
-                              onClick={() => setShippingLead(lead)}
-                              disabled={!lead.isSalesAuditComplete || isReadOnly}
-                            >
-                              Ship Now
-                            </Button>
-                          )}
+                           {filterType === 'COMPLETED' ? (
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                  <div className="flex items-center font-bold text-green-600 text-xs">
+                                    <Check className="h-4 w-4 mr-1" />
+                                    {lead.shipmentStatus}
+                                  </div>
+                                  {lead.shippedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.shippedTimestamp).dateTimeShort}</div>}
+                                </div>
+                            ) : (
+                                <Button
+                                  size="sm"
+                                  className="h-7 text-xs font-bold"
+                                  onClick={() => setShippingLead(lead)}
+                                  disabled={!lead.isSalesAuditComplete || isReadOnly}
+                                >
+                                  Ship Now
+                                </Button>
+                            )}
                         </TableCell>
                       </TableRow>
                    )
