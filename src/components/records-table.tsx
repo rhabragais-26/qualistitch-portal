@@ -190,7 +190,7 @@ const RecordsTableRow = React.memo(({
                   <div className="text-center">
                     <span className='font-bold text-gray-600'>Last Modified:</span>
                     <div>{formatDateTime(lead.lastModified).dateTime}</div>
-                    <div>{formatDateTime(lead.lastModified).dayOfWeek}{lead.lastModifiedBy ? \` (\${lead.lastModifiedBy})\` : ''}</div>
+                    <div>{formatDateTime(lead.lastModified).dayOfWeek}{lead.lastModifiedBy ? ` (${lead.lastModifiedBy})` : ''}</div>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
@@ -433,7 +433,7 @@ export function RecordsTable({ isReadOnly, filterStatus }: { isReadOnly: boolean
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
     if (mobile && landline) {
-      return \`\${mobile} / \${landline}\`;
+      return `${mobile} / ${landline}`;
     }
     return mobile || landline || null;
   }, []);
@@ -598,7 +598,8 @@ export function RecordsTable({ isReadOnly, filterStatus }: { isReadOnly: boolean
                         </TableRow>
                         )}
                     </React.Fragment>
-                  )})}
+                  );
+                })}
                 </TableBody>
             </Table>
           </div>
