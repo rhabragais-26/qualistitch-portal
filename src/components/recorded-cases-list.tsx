@@ -2,9 +2,9 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, deleteDoc, getDocs, where } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from './ui/scroll-area';
 import { Skeleton } from './ui/skeleton';
 import { formatDateTime } from '@/lib/utils';
 import Image from 'next/image';
@@ -124,9 +124,36 @@ const RecordedCasesListMemo = React.memo(function RecordedCasesList({ onEdit, is
         remarks: newRemarks,
       });
 
+      const joNumberInt = parseInt(caseItem.joNumber.split('-')[2], 10);
+      if(!isNaN(joNumberInt)) {
+        const leadsRef = collection(firestore, 'leads');
+        const q = query(leadsRef, where("joNumber", "==", joNumberInt));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const leadDoc = querySnapshot.docs[0];
+          const leadDocRef = doc(firestore, 'leads', leadDoc.id);
+
+          await updateDoc(leadDocRef, {
+            isQualityApproved: false,
+            qualityApprovedTimestamp: null,
+            isPacked: false,
+            packedTimestamp: null,
+            isSalesAuditRequested: false,
+            salesAuditRequestedTimestamp: null,
+            isSalesAuditComplete: false,
+            salesAuditCompleteTimestamp: null,
+            shipmentStatus: 'Pending',
+            shippedTimestamp: null,
+            deliveredTimestamp: null,
+            isRecheckingQuality: true,
+          });
+        }
+      }
+
       toast({
         title: "Case Reopened",
-        description: "The case has been moved back to the active list.",
+        description: "The case has been moved back to the active list and the order returned to the shipment queue.",
       });
     } catch (e: any) {
       console.error("Error reopening case: ", e);

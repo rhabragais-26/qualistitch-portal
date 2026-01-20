@@ -26,7 +26,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { Check, ChevronDown, RefreshCcw } from 'lucide-react';
+import { Check, ChevronDown, RefreshCcw, AlertTriangle } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { cn, formatDateTime } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
@@ -84,6 +84,7 @@ type OperationalCase = {
   joNumber: string;
   caseType: string;
   isArchived?: boolean;
+  isDeleted?: boolean;
 };
 
 type EnrichedLead = Lead & {
@@ -431,6 +432,17 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   
     return enrichedLeads;
   }, [leads]);
+  
+  const activeCasesByJo = useMemo(() => {
+    if (!operationalCases) return new Map();
+    const map = new Map<string, string>();
+    operationalCases.forEach(c => {
+        if (!c.isArchived && !c.isDeleted) {
+            map.set(c.joNumber, c.caseType);
+        }
+    });
+    return map;
+  }, [operationalCases]);
 
   const shipmentQueueLeads = useMemo(() => {
     if(!processedLeads) return [];
@@ -576,10 +588,24 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                           )}
                         </TableCell>
                         <TableCell className="text-xs text-center">
-                          <div>{formatJoNumber(lead.joNumber)}</div>
-                          {lead.orderType === 'Stock (Jacket Only)' && (
-                            <div className="font-bold mt-1">Stocks (Jacket Only)</div>
-                          )}
+                            <div className="flex items-center justify-center gap-2">
+                                <div>{formatJoNumber(lead.joNumber)}</div>
+                                {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                            </div>
+                            {lead.orderType === 'Stock (Jacket Only)' && (
+                                <div className="font-bold mt-1">Stocks (Jacket Only)</div>
+                            )}
                         </TableCell>
                          <TableCell className="text-center align-middle py-2">
                             <div className="flex flex-col items-center justify-center gap-1">
