@@ -293,7 +293,7 @@ const RecordsTableRow = React.memo(({
 RecordsTableRow.displayName = 'RecordsTableRow';
 
 
-export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; filterType?: 'COMPLETED' | 'ONGOING' }) {
+export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; filterType?: 'ONGOING' | 'COMPLETED' }) {
   const firestore = useFirestore();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -470,7 +470,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
-      <CardHeader>
+      <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-black">
@@ -480,66 +480,64 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
               {filterType === 'COMPLETED' ? 'Here are all the completed customer orders.' : 'Here are all the ongoing and pending customer orders.'}
             </CardDescription>
           </div>
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-4">
-                <div className='flex items-center gap-2'>
-                    <span className="text-sm font-medium">Filter by Year/Month:</span>
-                    <Select value={selectedYear} onValueChange={setSelectedYear}>
-                    <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
-                        <SelectValue placeholder="Year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="All">All Years</SelectItem>
-                        {availableYears.map(year => (
-                        <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                        ))}
-                    </SelectContent>
-                    </Select>
-                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                        <SelectValue placeholder="Month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {months.map(month => (
-                        <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
-                        ))}
-                    </SelectContent>
-                    </Select>
-                </div>
-                <div className='flex items-center gap-2'>
-                    <span className="text-sm font-medium">Filter by SCES:</span>
-                    <Select value={csrFilter} onValueChange={setCsrFilter}>
-                        <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                        <SelectValue placeholder="Filter by SCES" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        <SelectItem value="All">All SCES</SelectItem>
-                        {salesRepresentatives.map(csr => (
-                            <SelectItem key={csr} value={csr}>{csr}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="flex-1 min-w-[300px]">
+              <div className='flex items-center gap-2'>
+                <span className="text-sm font-medium">Filter by Year/Month:</span>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Years</SelectItem>
+                    {availableYears.map(year => (
+                      <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map(month => (
+                      <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='flex items-center gap-2'>
+                <span className="text-sm font-medium">Filter by SCES:</span>
+                <Select value={csrFilter} onValueChange={setCsrFilter}>
+                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Filter by SCES" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All SCES</SelectItem>
+                    {salesRepresentatives.map(csr => (
+                      <SelectItem key={csr} value={csr}>{csr}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 min-w-[300px]">
                 <Input
-                    placeholder="Search customer, company or contact..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="bg-gray-100 text-black placeholder:text-gray-500"
+                  placeholder="Search customer, company or contact..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500"
                 />
-                </div>
+              </div>
             </div>
-            <div className="w-full text-right">
-              {filterType === 'COMPLETED' ? (
-                <Link href="/records" className="text-sm text-primary hover:underline">
-                  View Ongoing Orders
-                </Link>
-              ) : (
-                <Link href="/records/completed" className="text-sm text-primary hover:underline">
-                  View Completed Orders
-                </Link>
-              )}
-            </div>
+            {filterType === 'COMPLETED' ? (
+              <Link href="/records" className="text-sm text-primary hover:underline">
+                View Ongoing Orders
+              </Link>
+            ) : (
+              <Link href="/records/completed" className="text-sm text-primary hover:underline">
+                View Completed Orders
+              </Link>
+            )}
           </div>
         </div>
       </CardHeader>
