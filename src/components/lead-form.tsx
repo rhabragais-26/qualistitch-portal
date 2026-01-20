@@ -223,7 +223,6 @@ type LeadFormProps = {
   isEditing?: boolean;
   initialLeadData?: (LeadType & { orderNumber: number; totalCustomerQuantity: number; }) | null;
   onDirtyChange?: (isDirty: boolean) => void;
-  resetFormTrigger?: number;
   isReadOnly?: boolean;
 };
 
@@ -234,7 +233,6 @@ export function LeadForm({
   isEditing = false,
   initialLeadData = null,
   onDirtyChange,
-  resetFormTrigger,
   isReadOnly
 }: LeadFormProps) {
   const {toast} = useToast();
@@ -277,15 +275,6 @@ export function LeadForm({
     }
   }, [formState.isDirty, onDirtyChange]);
   
-  // Handle form reset trigger
-  useEffect(() => {
-    if (resetFormTrigger && resetFormTrigger > 0 && !isEditing) {
-      reset(); // Reset the form
-      setStagedOrders([]);
-      setSelectedLead(null);
-      setManualStatus(null);
-    }
-  }, [resetFormTrigger, reset, isEditing, setStagedOrders]);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

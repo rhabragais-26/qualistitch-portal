@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
@@ -64,7 +63,6 @@ export default function NewOrderPage() {
   const [grandTotal, setGrandTotal] = useState(0);
   const [balance, setBalance] = useState(0);
 
-  const [resetFormTrigger, setResetFormTrigger] = useState(0);
   const formId = "new-lead-form";
 
   const defaultFormValues: FormValues = {
@@ -110,7 +108,6 @@ export default function NewOrderPage() {
     setGrandTotal(0);
     setBalance(0);
     setOrderType(undefined);
-    setResetFormTrigger(prev => prev + 1);
   }
 
   const handleNewOrderSubmit = (values: FormValues) => {
@@ -226,7 +223,6 @@ export default function NewOrderPage() {
                             onDirtyChange={setIsFormDirty} 
                             stagedOrders={stagedOrders}
                             setStagedOrders={setStagedOrders}
-                            resetFormTrigger={resetFormTrigger}
                             onOrderTypeChange={setOrderType}
                             isReadOnly={!canEdit}
                         />
