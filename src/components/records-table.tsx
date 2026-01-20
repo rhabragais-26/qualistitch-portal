@@ -529,16 +529,16 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                 />
                 </div>
             </div>
-            <div className="w-full text-right mt-1">
-                 {filterType === 'COMPLETED' ? (
-                    <Link href="/records" className="text-sm text-primary hover:underline">
-                    View Ongoing Orders
-                    </Link>
-                ) : (
-                    <Link href="/records/completed" className="text-sm text-primary hover:underline">
-                    View Completed Orders
-                    </Link>
-                )}
+            <div className="w-full text-right">
+              {filterType === 'COMPLETED' ? (
+                <Link href="/records" className="text-sm text-primary hover:underline">
+                  View Ongoing Orders
+                </Link>
+              ) : (
+                <Link href="/records/completed" className="text-sm text-primary hover:underline">
+                  View Completed Orders
+                </Link>
+              )}
             </div>
           </div>
         </div>
