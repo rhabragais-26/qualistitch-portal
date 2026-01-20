@@ -163,7 +163,7 @@ export function HomeCarousel() {
           >
             {imageUrls.length > 1 ? (
                 <>
-                    <div className="w-[25%] h-[80%] relative cursor-pointer" onClick={() => paginate(-1)}>
+                    <div className="w-[30%] h-[80%] relative cursor-pointer" onClick={() => paginate(-1)}>
                         <Image
                             src={imageUrls[prevIndex]}
                             alt="Previous"
@@ -172,7 +172,7 @@ export function HomeCarousel() {
                             className="rounded-lg grayscale opacity-50 hover:opacity-100 transition-all"
                         />
                     </div>
-                    <div className="w-[45%] h-full relative z-10 shadow-2xl">
+                    <div className="w-[35%] h-full relative z-10 shadow-2xl">
                         <Image
                             src={imageUrls[imageIndex]}
                             alt={`Carousel image ${imageIndex + 1}`}
@@ -182,7 +182,7 @@ export function HomeCarousel() {
                             priority
                         />
                     </div>
-                    <div className="w-[25%] h-[80%] relative cursor-pointer" onClick={() => paginate(1)}>
+                    <div className="w-[30%] h-[80%] relative cursor-pointer" onClick={() => paginate(1)}>
                         <Image
                             src={imageUrls[nextIndex]}
                             alt="Next"
@@ -193,7 +193,7 @@ export function HomeCarousel() {
                     </div>
                 </>
             ) : (
-                <div className="w-[45%] h-full relative z-10 shadow-2xl">
+                <div className="w-[35%] h-full relative z-10 shadow-2xl">
                     <Image
                         src={imageUrls[imageIndex]}
                         alt={`Carousel image ${imageIndex + 1}`}
