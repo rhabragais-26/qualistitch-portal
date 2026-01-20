@@ -45,6 +45,7 @@ export function ProductManagement() {
   const [productTypes, setProductTypes] = useState<string[]>([]);
   const [selectedProductType, setSelectedProductType] = useState<string>('');
   const [newProduct, setNewProduct] = useState({ name: '', group: '' });
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
@@ -114,6 +115,7 @@ export function ProductManagement() {
     setSelectedProductType(newProduct.name);
 
     setNewProduct({ name: '', group: newProduct.group });
+    setIsAddProductOpen(false);
     toast({ title: 'Product Staged', description: `"${newProduct.name}" is ready to be saved.`});
   };
 
@@ -199,14 +201,79 @@ export function ProductManagement() {
         <section>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Product Price Tiers</h3>
-            <Select value={selectedProductType} onValueChange={setSelectedProductType}>
-                <SelectTrigger className="w-[280px]">
-                    <SelectValue placeholder="Select Product to Edit" />
-                </SelectTrigger>
-                <SelectContent>
-                    {productTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
-                </SelectContent>
-            </Select>
+            <div className="flex items-center gap-4">
+                 <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline"><PlusCircle className="mr-2"/> Add Product</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Add New Product</DialogTitle>
+                            <DialogDescription>
+                                Add a new product to your catalog and assign it to a pricing category.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 space-y-4">
+                            <div>
+                                <Label htmlFor="product-name">New Product Name</Label>
+                                <Input id="product-name" value={newProduct.name} onChange={e => setNewProduct(p => ({...p, name: e.target.value}))} placeholder="e.g., New Jacket Model"/>
+                            </div>
+                             <div>
+                                <Label htmlFor="product-category">Category</Label>
+                                <div className="flex items-center gap-2">
+                                    <Select value={newProduct.group} onValueChange={v => setNewProduct(p => ({...p, group: v as ProductGroup}))}>
+                                        <SelectTrigger id="product-category" className="flex-1">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                     <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" size="sm"><PlusCircle className="mr-2"/> New</Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Add New Category</DialogTitle>
+                                                <DialogDescription>
+                                                    Create a new pricing category for your products.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="py-4">
+                                                <Label htmlFor="category-name">Category Name</Label>
+                                                <Input
+                                                    id="category-name"
+                                                    value={newCategoryName}
+                                                    onChange={(e) => setNewCategoryName(e.target.value)}
+                                                    placeholder="e.g., Pants"
+                                                />
+                                            </div>
+                                            <DialogFooter>
+                                                <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                                                <Button onClick={handleAddNewCategory}>Add Category</Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
+                                </div>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                            <Button onClick={handleAddNewProduct}>Add Product</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+                <Label>Select a Product:</Label>
+                <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                    <SelectTrigger className="w-[280px]">
+                        <SelectValue placeholder="Select Product to Edit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {productTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
           </div>
            {selectedProductGroup ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -274,36 +341,8 @@ export function ProductManagement() {
         </section>
 
         <section>
-            <div className="flex items-center gap-4 mb-4">
-                <h3 className="text-lg font-semibold">Product Categories</h3>
-                 <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant="outline" size="sm"><PlusCircle className="mr-2"/> Add Category</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                        <DialogTitle>Add New Category</DialogTitle>
-                        <DialogDescription>
-                            Create a new pricing category for your products.
-                        </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4">
-                            <Label htmlFor="category-name">Category Name</Label>
-                            <Input
-                                id="category-name"
-                                value={newCategoryName}
-                                onChange={(e) => setNewCategoryName(e.target.value)}
-                                placeholder="e.g., Pants"
-                            />
-                        </div>
-                        <DialogFooter>
-                            <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                            <Button onClick={handleAddNewCategory}>Add</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            </div>
-          <div className="space-y-2 max-h-60 overflow-y-auto border p-4 rounded-md">
+            <h3 className="text-lg font-semibold">Product Categories</h3>
+            <div className="space-y-2 max-h-60 overflow-y-auto border p-4 rounded-md mt-4">
             {Object.entries(config.productGroupMapping).map(([name, group]) => (
                 <div key={name} className="flex items-center justify-between">
                     <span>{name}</span>
@@ -323,24 +362,6 @@ export function ProductManagement() {
                 </div>
             ))}
           </div>
-           <div className="mt-4 flex items-end gap-2 border-t pt-4">
-              <div className="flex-1">
-                 <label className="text-sm font-medium">New Product Name</label>
-                 <Input value={newProduct.name} onChange={e => setNewProduct(p => ({...p, name: e.target.value}))} placeholder="e.g., New Jacket Model"/>
-              </div>
-              <div>
-                  <label className="text-sm font-medium">Category</label>
-                 <Select value={newProduct.group} onValueChange={v => setNewProduct(p => ({...p, group: v as ProductGroup}))}>
-                     <SelectTrigger className="w-[200px]">
-                         <SelectValue />
-                     </SelectTrigger>
-                     <SelectContent>
-                        {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                     </SelectContent>
-                 </Select>
-              </div>
-              <Button onClick={handleAddNewProduct}><PlusCircle className="mr-2"/> Add Product</Button>
-           </div>
         </section>
 
         <div className="flex justify-end pt-4">
