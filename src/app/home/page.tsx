@@ -9,16 +9,16 @@ export default function HomePage() {
 
   return (
     <Header>
-      <div className="px-2 pt-2 flex flex-col items-center text-center">
-        <div>
+      <div className="flex flex-col items-center flex-1">
+        <div className="px-2 pt-2 text-center">
            <h1 className={cn(
               "text-3xl font-bold font-headline bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent shining-metal"
             )}>
             Welcome back, {userProfile?.nickname || 'User'}!
           </h1>
-          <p className="text-base text-muted-foreground">Here's a quick look on our Company Profile</p>
+          <p className="text-sm text-muted-foreground">Here's a quick look on our Company Profile</p>
         </div>
-        <div className="w-full max-w-5xl flex justify-center pt-4">
+        <div className="w-full max-w-5xl flex-1 flex items-center justify-center">
           <HomeCarousel />
         </div>
       </div>
