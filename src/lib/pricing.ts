@@ -1,6 +1,6 @@
 
 
-export type ProductGroup = 'GroupA' | 'GroupB' | 'GroupC' | 'GroupD';
+export type ProductGroup = 'GroupA' | 'GroupB' | 'GroupC' | 'GroupD' | 'GroupE';
 export type EmbroideryOption = 'logo' | 'logoAndText' | 'name';
 export type AddOnType = 'backLogo' | 'names' | 'programFeeLogo' | 'programFeeBackText' | 'rushFee' | 'plusSize';
 
@@ -13,8 +13,8 @@ const productGroupMapping: { [key: string]: ProductGroup } = {
   'Corporate Jacket': 'GroupC',
   'Polo Shirt (Smilee) - Cool Pass': 'GroupD',
   'Polo Shirt (Smilee) - Cotton Blend': 'GroupD',
-  'Polo Shirt (Lifeline)': 'GroupD',
-  'Polo Shirt (Blue Corner)': 'GroupD',
+  'Polo Shirt (Lifeline)': 'GroupE',
+  'Polo Shirt (Blue Corner)': 'GroupE',
   'Polo Shirt (Softex)': 'GroupD',
 };
 
@@ -121,6 +121,30 @@ const pricingTiers: {
       ],
     },
   },
+  GroupE: {
+    logo: {
+      tiers: [
+        { min: 1, max: 3, price: 899 },
+        { min: 4, max: 10, price: 799 },
+        { min: 11, max: 50, price: 699 },
+        { min: 51, max: 200, price: 649 },
+        { min: 201, max: 300, price: 599 },
+        { min: 301, max: 999, price: 549 },
+        { min: 1000, max: Infinity, price: 499 },
+      ],
+    },
+    logoAndText: {
+      tiers: [
+        { min: 1, max: 3, price: 999 },
+        { min: 4, max: 10, price: 899 },
+        { min: 11, max: 50, price: 799 },
+        { min: 51, max: 200, price: 749 },
+        { min: 201, max: 300, price: 699 },
+        { min: 301, max: 999, price: 649 },
+        { min: 1000, max: Infinity, price: 599 },
+      ],
+    },
+  },
 };
 
 const addOnPricing: {
@@ -182,6 +206,15 @@ export const getUnitPrice = (
     }
     if (embroideryForPricing === 'logoAndText') {
       return 899;
+    }
+  }
+  
+  if (orderType === 'MTO' && group === 'GroupE' && quantity < 51) {
+    if (embroideryForPricing === 'logo') {
+      return 699;
+    }
+    if (embroideryForPricing === 'logoAndText') {
+      return 799;
     }
   }
 
