@@ -67,25 +67,27 @@ export default function NewOrderPage() {
   const [resetFormTrigger, setResetFormTrigger] = useState(0);
   const formId = "new-lead-form";
 
+  const defaultFormValues: FormValues = {
+    customerName: "",
+    companyName: "",
+    mobileNo: "",
+    landlineNo: "",
+    isInternational: false,
+    houseStreet: "",
+    barangay: "",
+    city: "",
+    province: "",
+    internationalAddress: "",
+    orderType: undefined,
+    priorityType: "Regular",
+    courier: undefined,
+    orders: [],
+  };
+
   const formMethods = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onSubmit',
-    defaultValues: {
-      customerName: "",
-      companyName: "",
-      mobileNo: "",
-      landlineNo: "",
-      isInternational: false,
-      houseStreet: "",
-      barangay: "",
-      city: "",
-      province: "",
-      internationalAddress: "",
-      orderType: undefined,
-      priorityType: "Regular",
-      courier: undefined,
-      orders: [],
-    }
+    defaultValues: defaultFormValues,
   });
 
 
@@ -100,7 +102,7 @@ export default function NewOrderPage() {
   }
   
   const handleResetClick = () => {
-    formMethods.reset();
+    formMethods.reset(defaultFormValues);
     setStagedOrders([]);
     setAddOns({});
     setDiscounts({});
