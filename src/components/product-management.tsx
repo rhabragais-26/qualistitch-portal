@@ -210,7 +210,7 @@ export function ProductManagement() {
                 </Select>
                  <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
                     <DialogTrigger asChild>
-                        <Button variant="outline"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
+                        <Button variant="default" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-6xl">
                         <DialogHeader>
@@ -276,7 +276,7 @@ export function ProductManagement() {
                                         <span className="whitespace-nowrap">{name}</span>
                                         <div className="flex items-center gap-2">
                                             <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
-                                                <SelectTrigger className="w-[200px] h-8 text-xs flex-shrink-0">
+                                                <SelectTrigger className="w-[170px] h-8 text-xs flex-shrink-0">
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -305,16 +305,19 @@ export function ProductManagement() {
           <h3 className="text-lg font-semibold mb-4">Product Price Tiers</h3>
            {selectedProductGroup ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {['logo', 'name', 'logoAndText'].map((embroideryType) => {
+                  {(['logo', 'name', 'logoAndText'] as const).map((embroideryType, index) => {
                       const getEmbroideryLabel = (type: string) => {
                         if (type === 'logo') return 'Logo Only';
                         if (type === 'name') return 'Name Only';
                         if (type === 'logoAndText') return 'Logo + Back Text';
                         return '';
                       }
+                      const colors = ['bg-sky-600', 'bg-blue-600', 'bg-indigo-600'];
                       return (
-                      <div key={embroideryType}>
-                          <h4 className="font-medium mb-2">{getEmbroideryLabel(embroideryType)}</h4>
+                        <div key={embroideryType} className="border rounded-lg overflow-hidden shadow">
+                           <div className={`p-2 text-center ${colors[index]}`}>
+                                <h4 className="font-semibold text-white">{getEmbroideryLabel(embroideryType)}</h4>
+                            </div>
                           <Table>
                               <TableHeader>
                                   <TableRow>
@@ -324,17 +327,18 @@ export function ProductManagement() {
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
-                                  {config.pricingTiers[selectedProductGroup]?.[embroideryType as 'logo' | 'name' | 'logoAndText']?.tiers.map((tier, index) => (
-                                      <TableRow key={index}>
-                                          <TableCell className="p-1"><Input type="number" value={tier.min} onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'name' | 'logoAndText', index, 'min', e.target.value)} className="w-16 h-7 text-xs"/></TableCell>
-                                          <TableCell className="p-1"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'name' | 'logoAndText', index, 'max', e.target.value)} className="w-16 h-7 text-xs"/></TableCell>
-                                          <TableCell className="p-1"><Input type="number" value={tier.price} onChange={e => handleTierChange(selectedProductGroup, embroideryType as 'logo' | 'name' | 'logoAndText', index, 'price', e.target.value)} className="w-20 h-7 text-xs"/></TableCell>
+                                  {config.pricingTiers[selectedProductGroup]?.[embroideryType]?.tiers.map((tier, tierIndex) => (
+                                      <TableRow key={tierIndex}>
+                                          <TableCell className="p-1"><Input type="number" value={tier.min} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'min', e.target.value)} className="w-16 h-7 text-xs"/></TableCell>
+                                          <TableCell className="p-1"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'max', e.target.value)} className="w-16 h-7 text-xs"/></TableCell>
+                                          <TableCell className="p-1"><Input type="number" value={tier.price} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'price', e.target.value)} className="w-20 h-7 text-xs"/></TableCell>
                                       </TableRow>
                                   ))}
                               </TableBody>
                           </Table>
-                      </div>
-                  )})}
+                        </div>
+                      )
+                  })}
             </div>
            ) : <p>Select a product to see its pricing.</p>}
         </section>
@@ -342,9 +346,13 @@ export function ProductManagement() {
         <section>
           <h3 className="text-lg font-semibold mb-4">Add-on Pricing</h3>
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {addOnTypes.map(addOn => (
-                 <div key={addOn}>
-                    <h4 className="font-medium mb-2 capitalize">{addOn.replace(/([A-Z])/g, ' $1')}</h4>
+            {addOnTypes.map((addOn, index) => {
+              const colors = ['bg-slate-500', 'bg-gray-500', 'bg-zinc-500'];
+              return (
+                 <div key={addOn} className="border rounded-lg overflow-hidden shadow">
+                    <div className={`p-2 text-center ${colors[index % colors.length]}`}>
+                      <h4 className="font-semibold capitalize text-white">{addOn.replace(/([A-Z])/g, ' $1')}</h4>
+                    </div>
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -354,17 +362,18 @@ export function ProductManagement() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {config.addOnPricing[addOn]?.tiers.map((tier, index) => (
-                                <TableRow key={index}>
-                                    <TableCell className="p-1"><Input type="number" value={tier.min} onChange={e => handleAddOnTierChange(addOn, index, 'min', e.target.value)} className="w-16 h-7 text-xs"/></TableCell>
-                                    <TableCell className="p-1"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleAddOnTierChange(addOn, index, 'max', e.target.value)} className="w-16 h-7 text-xs"/></TableCell>
-                                    <TableCell className="p-1"><Input type="number" value={tier.price} onChange={e => handleAddOnTierChange(addOn, index, 'price', e.target.value)} className="w-20 h-7 text-xs"/></TableCell>
+                            {config.addOnPricing[addOn]?.tiers.map((tier, tierIndex) => (
+                                <TableRow key={tierIndex}>
+                                    <TableCell className="p-1"><Input type="number" value={tier.min} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'min', e.target.value)} className="w-16 h-7 text-xs"/></TableCell>
+                                    <TableCell className="p-1"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleAddOnTierChange(addOn, tierIndex, 'max', e.target.value)} className="w-16 h-7 text-xs"/></TableCell>
+                                    <TableCell className="p-1"><Input type="number" value={tier.price} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'price', e.target.value)} className="w-20 h-7 text-xs"/></TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
                  </div>
-            ))}
+              )
+            })}
            </div>
         </section>
 
