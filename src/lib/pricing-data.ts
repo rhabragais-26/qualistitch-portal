@@ -50,8 +50,6 @@ export const initialAddOnPricing = {
   backLogo: { tiers: [ { min: 1, max: 3, price: 200 }, { min: 4, max: 10, price: 100 }, { min: 11, max: Infinity, price: 50 }, ], },
   names: { tiers: [ { min: 1, max: Infinity, price: 100 }, ], },
   plusSize: { tiers: [{ min: 1, max: Infinity, price: 100 }], },
-  programFeeLogo: { tiers: [{ min: 1, max: Infinity, price: 500 }], },
-  programFeeBackText: { tiers: [{ min: 1, max: Infinity, price: 300 }], },
   rushFee: { tiers: [], },
   shippingFee: { tiers: [], }
 };

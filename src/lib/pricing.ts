@@ -17,7 +17,7 @@ export type PricingConfig = {
 
 export type ProductGroup = string;
 export type EmbroideryOption = 'logo' | 'logoAndText' | 'name';
-export type AddOnType = 'backLogo' | 'names' | 'programFeeLogo' | 'programFeeBackText' | 'rushFee' | 'plusSize' | 'shippingFee';
+export type AddOnType = 'backLogo' | 'names' | 'rushFee' | 'plusSize' | 'shippingFee';
 
 
 export const getProductGroup = (productType: string, pricingConfig: PricingConfig): ProductGroup | null => {

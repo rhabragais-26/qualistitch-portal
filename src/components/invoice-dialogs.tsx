@@ -14,8 +14,6 @@ export type AddOns = {
   backLogo: number;
   names: number;
   plusSize: number;
-  programFeeLogo: number;
-  programFeeBackText: number;
   rushFee: number;
   shippingFee: number;
 };
@@ -44,24 +42,22 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
   isReadOnly?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [localAddOns, setLocalAddOns] = useState<AddOns>({ backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 });
+  const [localAddOns, setLocalAddOns] = useState<AddOns>({ backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0 });
 
   useEffect(() => {
     if (isOpen) {
-      setLocalAddOns({ backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 });
+      setLocalAddOns({ backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0 });
     }
   }, [isOpen]);
 
   const handleSave = () => {
     setAddOns(prev => {
-      const existingAddOns = prev[groupKey] || { backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 };
+      const existingAddOns = prev[groupKey] || { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0 };
       
       const newAddOns: AddOns = {
         backLogo: existingAddOns.backLogo + localAddOns.backLogo,
         names: existingAddOns.names + localAddOns.names,
         plusSize: existingAddOns.plusSize + localAddOns.plusSize,
-        programFeeLogo: localAddOns.programFeeLogo > 0 ? localAddOns.programFeeLogo : existingAddOns.programFeeLogo,
-        programFeeBackText: localAddOns.programFeeBackText > 0 ? localAddOns.programFeeBackText : existingAddOns.programFeeBackText,
         rushFee: localAddOns.rushFee > 0 ? localAddOns.rushFee : existingAddOns.rushFee,
         shippingFee: localAddOns.shippingFee > 0 ? localAddOns.shippingFee : existingAddOns.shippingFee,
       };
@@ -119,21 +115,6 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleNumericChange('plusSize', String(Math.max(0, localAddOns.plusSize - 1)))}><Minus className="h-4 w-4" /></Button>
               <Input id="plusSize" type="number" value={localAddOns.plusSize} onChange={(e) => handleNumericChange('plusSize', e.target.value)} className="w-16 text-center" />
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleNumericChange('plusSize', String(localAddOns.plusSize + 1))}><Plus className="h-4 w-4" /></Button>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <Label htmlFor="programFeeLogo" className="text-base">Program Fee (Logo)</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
-              <Input id="programFeeLogo" value={localAddOns.programFeeLogo || ''} onChange={(e) => handleNumericChange('programFeeLogo', e.target.value)} className="w-32 pl-7" placeholder="0" />
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="programFeeBackText" className="text-base">Program Fee (Back Text)</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
-              <Input id="programFeeBackText" value={localAddOns.programFeeBackText || ''} onChange={(e) => handleNumericChange('programFeeBackText', e.target.value)} className="w-32 pl-7" placeholder="0" />
             </div>
           </div>
           <div className="flex items-center justify-between">

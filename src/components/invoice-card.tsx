@@ -76,7 +76,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       let subtotal = group.totalQuantity * unitPrice;
 
       
-      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 };
+      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0 };
       const groupDiscount = discounts[groupKey];
       const itemTotalQuantity = group.totalQuantity;
 
@@ -87,8 +87,6 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       subtotal += groupAddOns.backLogo * backLogoPrice;
       subtotal += groupAddOns.names * namesPrice;
       subtotal += groupAddOns.plusSize * plusSizePrice;
-      subtotal += groupAddOns.programFeeLogo;
-      subtotal += groupAddOns.programFeeBackText;
       subtotal += groupAddOns.rushFee;
       subtotal += groupAddOns.shippingFee;
       
@@ -126,7 +124,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     const { groupKey, addOnType } = removingAddOn;
     setAddOns(prev => {
       const newGroupAddOns = {
-        ...(prev[groupKey] || { backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 }),
+        ...(prev[groupKey] || { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0 }),
         [addOnType]: 0,
       };
       return {
@@ -180,7 +178,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned, orderType);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
-                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, programFeeLogo: 0, programFeeBackText: 0, rushFee: 0, shippingFee: 0 };
+                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0 };
                 const groupDiscount = discounts[groupKey];
                 const itemTotalQuantity = groupData.totalQuantity;
 
@@ -198,7 +196,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const finalLogoFee = !isLogoFeeRemoved ? logoFee : 0;
                 const finalBackTextFee = !isBackTextFeeRemoved ? backTextFee : 0;
 
-                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + plusSizeTotal + groupAddOns.programFeeLogo + groupAddOns.programFeeBackText + groupAddOns.rushFee + groupAddOns.shippingFee + finalLogoFee + finalBackTextFee;
+                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + plusSizeTotal + groupAddOns.rushFee + groupAddOns.shippingFee + finalLogoFee + finalBackTextFee;
 
                 let discountAmount = 0;
                 if(groupDiscount) {
@@ -294,38 +292,6 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.plusSize}</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
                                      {formatCurrency(plusSizeTotal)}
-                                </TableCell>
-                            </TableRow>
-                           )}
-                            {groupAddOns.programFeeLogo > 0 && (
-                            <TableRow className="group">
-                                <TableCell className="py-2 px-3 text-xs text-black align-middle">
-                                    <div className="flex items-center gap-2">
-                                        <span>Add On: Program Fee (Logo)</span>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'programFeeLogo' })}>
-                                            <X className="h-3 w-3" />
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle" colSpan={3}></TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
-                                    {formatCurrency(groupAddOns.programFeeLogo)}
-                                </TableCell>
-                            </TableRow>
-                           )}
-                            {groupAddOns.programFeeBackText > 0 && (
-                            <TableRow className="group">
-                                <TableCell className="py-2 px-3 text-xs text-black align-middle">
-                                    <div className="flex items-center gap-2">
-                                        <span>Add On: Program Fee (Back Text)</span>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'programFeeBackText' })}>
-                                            <X className="h-3 w-3" />
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle" colSpan={3}></TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
-                                    {formatCurrency(groupAddOns.programFeeBackText)}
                                 </TableCell>
                             </TableRow>
                            )}
@@ -466,8 +432,6 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 removingAddOn?.addOnType === 'backLogo' ? 'Back Logo' : 
                 removingAddOn?.addOnType === 'names' ? 'Names' :
                 removingAddOn?.addOnType === 'plusSize' ? 'Plus Size' :
-                removingAddOn?.addOnType === 'programFeeLogo' ? 'Program Fee (Logo)' : 
-                removingAddOn?.addOnType === 'programFeeBackText' ? 'Program Fee (Back Text)' :
                 removingAddOn?.addOnType === 'shippingFee' ? 'Shipping Fee' : 'Rush Fee'
               }" add-on from this group.
             </AlertDialogDescription>
