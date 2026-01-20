@@ -293,8 +293,8 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
               <TableRow>
                 <TableHead className="text-white font-bold text-xs text-center">Customer</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Grand Total</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Payment</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Total Amount</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Paid Amount</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Balance</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Payment Type</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Customer Asked for Specific Delivery Date</TableHead>
@@ -431,6 +431,3 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
     </Card>
   );
 }
-
-
-  

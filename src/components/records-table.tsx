@@ -556,7 +556,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                     <TableHead className="text-white align-middle text-center">Priority</TableHead>
                     <TableHead className="text-white align-middle text-center">Order Type</TableHead>
                     <TableHead className="text-white align-middle text-center">Courier</TableHead>
-                    <TableHead className="text-white align-middle text-center">Grand Total</TableHead>
+                    <TableHead className="text-white align-middle text-center">Total Amount</TableHead>
                     <TableHead className="text-white align-middle text-center">Paid Amount</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Balance</TableHead>
                     <TableHead className="text-white align-middle text-center">Payment Type</TableHead>
