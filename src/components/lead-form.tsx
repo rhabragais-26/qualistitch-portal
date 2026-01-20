@@ -399,22 +399,27 @@ export function LeadForm({
   const concatenatedAddress = [part1, part2].filter(Boolean).join(', ');
 
   useEffect(() => {
+    // If a lead was selected, but the name is edited, deselect the lead.
     if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
         setSelectedLead(null);
         setManualStatus(null);
-        // If name is cleared entirely, clear other fields
-        if (!customerNameValue) {
-            setValue('companyName', '', { shouldDirty: true });
-            setValue('mobileNo', '', { shouldDirty: true });
-            setValue('landlineNo', '', { shouldDirty: true });
-            setValue('houseStreet', '', { shouldDirty: true });
-            setValue('barangay', '', { shouldDirty: true });
-            setValue('city', '', { shouldDirty: true });
-            setValue('province', '', { shouldDirty: true });
-            setValue('internationalAddress', '', { shouldDirty: true });
-            setCustomerSuggestions([]);
-            setCompanySuggestions([]);
-        }
+    }
+    
+    // If the customer name field is completely cleared, reset all related fields.
+    // This should happen regardless of whether a lead was previously selected.
+    if (!customerNameValue) {
+        setSelectedLead(null); // Ensure selectedLead is also cleared
+        setManualStatus(null);
+        setValue('companyName', '', { shouldDirty: true });
+        setValue('mobileNo', '', { shouldDirty: true });
+        setValue('landlineNo', '', { shouldDirty: true });
+        setValue('houseStreet', '', { shouldDirty: true });
+        setValue('barangay', '', { shouldDirty: true });
+        setValue('city', '', { shouldDirty: true });
+        setValue('province', '', { shouldDirty: true });
+        setValue('internationalAddress', '', { shouldDirty: true });
+        setCustomerSuggestions([]);
+        setCompanySuggestions([]);
     }
   }, [customerNameValue, selectedLead, setValue]);
   
@@ -1395,5 +1400,7 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
+
+    
 
     
