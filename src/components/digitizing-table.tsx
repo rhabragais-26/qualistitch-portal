@@ -202,6 +202,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [reviewConfirmLead, setReviewConfirmLead] = useState<Lead | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
   
+  const isViewOnly = isReadOnly || filterType === 'COMPLETED';
+
   const updateStatus = useCallback(async (leadId: string, field: CheckboxField | 'isJoHardcopyReceived', value: boolean, showToast: boolean = true) => {
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
@@ -1215,7 +1217,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             <Checkbox
                               checked={lead.isJoHardcopyReceived || false}
                               onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                              disabled={!lead.isJoPrinted || isReadOnly}
+                              disabled={!lead.isJoPrinted || isViewOnly}
+                              className={isViewOnly ? "disabled:opacity-100" : ""}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                           </div>
@@ -1225,7 +1228,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             <Checkbox
                               checked={lead.isUnderProgramming || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isUnderProgramming', !!checked)}
-                              disabled={!lead.isJoHardcopyReceived || isReadOnly}
+                              disabled={!lead.isJoHardcopyReceived || isViewOnly}
+                              className={isViewOnly ? "disabled:opacity-100" : ""}
                             />
                             {lead.underProgrammingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.underProgrammingTimestamp).dateTimeShort}</div>}
                           </div>
@@ -1235,7 +1239,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             <Checkbox
                               checked={lead.isInitialApproval || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isInitialApproval', !!checked)}
-                              disabled={!lead.isUnderProgramming || isReadOnly}
+                              disabled={!lead.isUnderProgramming || isViewOnly}
+                              className={isViewOnly ? "disabled:opacity-100" : ""}
                             />
                             {lead.initialApprovalTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.initialApprovalTimestamp).dateTimeShort}</div>}
                           </div>
@@ -1245,7 +1250,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             <Checkbox
                               checked={lead.isLogoTesting || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isLogoTesting', !!checked)}
-                              disabled={!lead.isInitialApproval || isReadOnly}
+                              disabled={!lead.isInitialApproval || isViewOnly}
+                              className={isViewOnly ? "disabled:opacity-100" : ""}
                             />
                             {lead.logoTestingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.logoTestingTimestamp).dateTimeShort}</div>}
                           </div>
@@ -1255,8 +1261,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             <Checkbox
                               checked={lead.isRevision || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isRevision', !!checked)}
-                              disabled={!lead.isLogoTesting || lead.isFinalApproval || isReadOnly}
-                              className={cn(lead.isFinalApproval && "disabled:opacity-100")}
+                              disabled={!lead.isLogoTesting || lead.isFinalApproval || isViewOnly}
+                              className={cn((lead.isFinalApproval || isViewOnly) && "disabled:opacity-100")}
                             />
                             {lead.revisionTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.revisionTimestamp).dateTimeShort}</div>}
                           </div>
@@ -1266,7 +1272,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             <Checkbox
                               checked={lead.isFinalApproval || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isFinalApproval', !!checked)}
-                              disabled={!lead.isLogoTesting || isReadOnly}
+                              disabled={!lead.isLogoTesting || isViewOnly}
+                              className={isViewOnly ? "disabled:opacity-100" : ""}
                             />
                             {lead.finalApprovalTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.finalApprovalTimestamp).dateTimeShort}</div>}
                           </div>
@@ -1276,7 +1283,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             <Checkbox
                               checked={lead.isFinalProgram || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isFinalProgram', !!checked)}
-                              disabled={!lead.isFinalApproval || isReadOnly}
+                              disabled={!lead.isFinalApproval || isViewOnly}
+                              className={isViewOnly ? "disabled:opacity-100" : ""}
                             />
                             {lead.finalProgramTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.finalProgramTimestamp).dateTimeShort}</div>}
                           </div>
