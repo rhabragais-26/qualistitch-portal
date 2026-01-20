@@ -307,29 +307,29 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalQuantity: number } } = {};
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
     // First, group orders and calculate total quantities for each customer
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-      customerOrderStats[name].totalQuantity += orderQuantity;
+      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
     });
   
     const enrichedLeads: EnrichedLead[] = [];
   
     // Now, create the enriched lead objects with order numbers
-    Object.values(customerOrderStats).forEach(({ orders, totalQuantity }) => {
+    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
       orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
       orders.forEach((lead, index) => {
         enrichedLeads.push({
           ...lead,
           orderNumber: index + 1,
-          totalCustomerQuantity: totalQuantity,
+          totalCustomerQuantity: totalCustomerQuantity,
         });
       });
     });

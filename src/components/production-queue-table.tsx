@@ -655,7 +655,7 @@ export function ProductionQueueTable({ isReadOnly }: { isReadOnly: boolean }) {
     const submissionDate = new Date(lead.submissionDateTime);
     const deadlineDays = lead.priorityType === 'Rush' ? 6 : 10;
     const deadlineDate = addDays(submissionDate, deadlineDays);
-    const remainingDays = differenceInDays(deadlineDate, new Date());
+    const remainingDays = differenceInDays(new Date(), deadlineDate);
     
     if (remainingDays < 0) {
       return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
@@ -674,22 +674,22 @@ export function ProductionQueueTable({ isReadOnly }: { isReadOnly: boolean }) {
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalQuantity: 0 };
+        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
       const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalQuantity += orderQuantity;
+      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
     });
   
     const enrichedLeads: EnrichedLead[] = [];
   
-    Object.values(customerOrderStats).forEach(({ orders, totalQuantity }) => {
+    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
       orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
       orders.forEach((lead, index) => {
         enrichedLeads.push({
           ...lead,
           orderNumber: index + 1,
-          totalCustomerQuantity: totalQuantity,
+          totalCustomerQuantity: totalCustomerQuantity,
         });
       });
     });

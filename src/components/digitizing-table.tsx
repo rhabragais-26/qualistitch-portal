@@ -1048,7 +1048,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly }: 
                 className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
             >
                 <X className="h-6 w-6" />
-                <span className="sr-only">Close image view</span>
+                <span className="sr-only">Close</span>
             </Button>
           </div>
         </div>
