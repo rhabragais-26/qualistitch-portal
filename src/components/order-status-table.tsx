@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -272,13 +273,13 @@ export function OrderStatusTable() {
   
     const enrichedLeads: EnrichedLead[] = [];
   
-    Object.values(customerOrderStats).forEach(({ orders, totalQuantity }) => {
+    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
       orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
       orders.forEach((lead, index) => {
         enrichedLeads.push({
           ...lead,
           orderNumber: index + 1,
-          totalCustomerQuantity: totalQuantity,
+          totalCustomerQuantity: totalCustomerQuantity,
         });
       });
     });
@@ -333,7 +334,7 @@ export function OrderStatusTable() {
     return (
       <div className="space-y-2 p-4">
         {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full bg-gray-200" />
+          <Skeleton key={i} className="h-16 w-full" />
         ))}
       </div>
     );
@@ -359,7 +360,7 @@ export function OrderStatusTable() {
                 className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
             >
                 <X className="h-6 w-6" />
-                <span className="sr-only">Close image view</span>
+                <span className="sr-only">Close</span>
             </Button>
           </div>
         </div>
