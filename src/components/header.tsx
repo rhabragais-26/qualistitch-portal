@@ -243,7 +243,7 @@ const HeaderMemo = React.memo(function Header({
                       <ClipboardList className="mr-2" />
                       Programming Queue
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigation('/digitizing/completed-programs')}>
+                     <DropdownMenuItem onClick={() => handleNavigation('/digitizing/completed-programs')}>
                         <FileCheck className="mr-2" />
                         Completed Programs
                     </DropdownMenuItem>
