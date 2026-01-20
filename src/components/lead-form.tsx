@@ -267,6 +267,7 @@ export function LeadForm({
   const [singleQuantity, setSingleQuantity] = useState(0);
   const [pricePerPatch, setPricePerPatch] = useState(0);
   const [formattedPrice, setFormattedPrice] = useState('');
+  const [activeAddressField, setActiveAddressField] = useState<string | null>(null);
   
   const form = useFormContext<FormValues>();
   const { control, watch, setValue, formState, reset } = form;
@@ -366,6 +367,7 @@ export function LeadForm({
   const handleCitySuggestionClick = (city: { name: string; province: string }) => {
     setValue('city', city.name, { shouldValidate: true, shouldDirty: true });
     setValue('province', city.province, { shouldValidate: true, shouldDirty: true });
+    setValue('barangay', '', { shouldDirty: true });
     setCitySuggestions([]);
   };
 
@@ -378,6 +380,8 @@ export function LeadForm({
 
   const handleProvinceSuggestionClick = (province: string) => {
     setValue('province', province, { shouldValidate: true, shouldDirty: true });
+    setValue('city', '', { shouldDirty: true });
+    setValue('barangay', '', { shouldDirty: true });
     setProvinceSuggestions([]);
   };
 
@@ -947,9 +951,9 @@ export function LeadForm({
                             <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
                             <FormControl>
-                                <Input {...field} onBlur={() => !isEditing && setTimeout(() => setBarangaySuggestions([]), 150)} autoComplete="off" />
+                                <Input {...field} onFocus={() => setActiveAddressField('barangay')} onBlur={() => !isEditing && setTimeout(() => setBarangaySuggestions([]), 150)} autoComplete="off" />
                             </FormControl>
-                            {!isEditing && barangayValue && barangaySuggestions.length > 0 && !selectedLead && (
+                            {!isEditing && barangayValue && barangaySuggestions.length > 0 && !selectedLead && activeAddressField === 'barangay' && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {barangaySuggestions.map((b, index) => (
@@ -968,9 +972,9 @@ export function LeadForm({
                             <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
                             <FormControl>
-                                <Input {...field} onBlur={() => !isEditing && setTimeout(() => setCitySuggestions([]), 150)} autoComplete="off" />
+                                <Input {...field} onFocus={() => setActiveAddressField('city')} onBlur={() => !isEditing && setTimeout(() => setCitySuggestions([]), 150)} autoComplete="off" />
                             </FormControl>
-                            {!isEditing && cityValue && citySuggestions.length > 0 && !selectedLead && (
+                            {!isEditing && cityValue && citySuggestions.length > 0 && !selectedLead && activeAddressField === 'city' && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {citySuggestions.map((city, index) => (
@@ -990,8 +994,8 @@ export function LeadForm({
                         <FormField control={form.control} name="province" render={({field}) => (
                           <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
-                            <FormControl><Input {...field} onBlur={() => !isEditing && setTimeout(() => setProvinceSuggestions([]), 150)} autoComplete="off" /></FormControl>
-                            {!isEditing && provinceValue && provinceSuggestions.length > 0 && !selectedLead && !cityValue && (
+                            <FormControl><Input {...field} onFocus={() => setActiveAddressField('province')} onBlur={() => !isEditing && setTimeout(() => setProvinceSuggestions([]), 150)} autoComplete="off" /></FormControl>
+                            {!isEditing && provinceValue && provinceSuggestions.length > 0 && !selectedLead && !cityValue && activeAddressField === 'province' && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {provinceSuggestions.map((province, index) => (
