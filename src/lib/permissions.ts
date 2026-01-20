@@ -41,6 +41,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/digitizing/reports': 'digitizing',
   '/inventory/add-items': 'inventory',
   '/inventory/item-preparation-for-production': 'inventory',
+  '/inventory/completed-endorsement': 'inventory',
   '/inventory/summary': 'inventory',
   '/inventory/reports': 'inventory',
   '/inventory/operational-cases': 'inventory',

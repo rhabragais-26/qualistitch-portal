@@ -32,6 +32,7 @@ import { Label } from './ui/label';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
+import Link from 'next/link';
 
 type Order = {
   productType: string;
@@ -80,6 +81,11 @@ const programmingStatusOptions = [
     'Pending Initial Program'
 ];
 
+type ItemPreparationTableProps = {
+  isReadOnly: boolean;
+  filterType?: 'ONGOING' | 'COMPLETED';
+};
+
 const ItemPreparationTableRowGroup = React.memo(({
     lead,
     getProgrammingStatus,
@@ -89,6 +95,7 @@ const ItemPreparationTableRowGroup = React.memo(({
     handleOpenPreparedDialog,
     setLeadToSend,
     isReadOnly,
+    filterType,
 }: {
     lead: EnrichedLead;
     getProgrammingStatus: (lead: Lead) => { text: string; variant: "success" | "destructive" | "warning" | "default" | "secondary"; };
@@ -98,12 +105,14 @@ const ItemPreparationTableRowGroup = React.memo(({
     handleOpenPreparedDialog: (lead: Lead) => void;
     setLeadToSend: (lead: Lead) => void;
     isReadOnly: boolean;
+    filterType?: 'ONGOING' | 'COMPLETED';
 }) => {
     const isRepeat = lead.orderNumber > 1;
     const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
     const numOrders = lead.orders.length;
     const programmingStatus = getProgrammingStatus(lead);
     const isStockJacketOnly = lead.orderType === 'Stock (Jacket Only)';
+    const isCompleted = filterType === 'COMPLETED';
 
     return (
         <React.Fragment>
@@ -161,7 +170,7 @@ const ItemPreparationTableRowGroup = React.memo(({
                             <Checkbox
                             checked={lead.isJoHardcopyReceived || false}
                             onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                            disabled={!lead.isJoPrinted || isReadOnly}
+                            disabled={!lead.isJoPrinted || isReadOnly || isCompleted}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                         </div>
@@ -182,7 +191,7 @@ const ItemPreparationTableRowGroup = React.memo(({
                                     size="sm"
                                     onClick={() => handleOpenPreparedDialog(lead)}
                                     className="h-7 px-2"
-                                    disabled={(!isStockJacketOnly && programmingStatus.text !== 'Final Program Uploaded') || isReadOnly}
+                                    disabled={(!isStockJacketOnly && programmingStatus.text !== 'Final Program Uploaded') || isReadOnly || isCompleted}
                                 >
                                     Prepared
                                 </Button>
@@ -204,7 +213,7 @@ const ItemPreparationTableRowGroup = React.memo(({
                                 <Button
                                     size="sm"
                                     onClick={() => setLeadToSend(lead)}
-                                    disabled={!lead.isPreparedForProduction || !lead.isJoHardcopyReceived || isReadOnly}
+                                    disabled={!lead.isPreparedForProduction || !lead.isJoHardcopyReceived || isReadOnly || isCompleted}
                                     className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
                                 >
                                     <Send className="mr-2 h-4 w-4" /> 
@@ -225,7 +234,7 @@ const ItemPreparationTableRowGroup = React.memo(({
 ItemPreparationTableRowGroup.displayName = 'ItemPreparationTableRowGroup';
 
 
-const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isReadOnly }: { isReadOnly: boolean }) {
+const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isReadOnly, filterType = 'ONGOING' }: ItemPreparationTableProps) {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
@@ -393,12 +402,16 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
   const jobOrders = React.useMemo(() => {
     if (!processedLeads) return [];
     
-    const leadsInQueue = processedLeads.filter(lead => 
-        (lead.joNumber && 
-        !lead.isSentToProduction && 
-        !lead.isEndorsedToLogistics) || 
-        (lead.orderType === 'Stock (Jacket Only)' && lead.joNumber && !lead.isEndorsedToLogistics)
-    );
+    const leadsInQueue = processedLeads.filter(lead => {
+        if (filterType === 'COMPLETED') {
+            return (lead.isSentToProduction || lead.isEndorsedToLogistics);
+        }
+        // ONGOING logic
+        return (
+            (lead.joNumber && !lead.isSentToProduction && !lead.isEndorsedToLogistics) || 
+            (lead.orderType === 'Stock (Jacket Only)' && lead.joNumber && !lead.isEndorsedToLogistics)
+        );
+    });
     
     return leadsInQueue.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -420,7 +433,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
       
       return (matchesSearch && matchesJo && matchesStatus);
     });
-  }, [processedLeads, searchTerm, joNumberSearch, statusFilter, formatJoNumber, getProgrammingStatus]);
+  }, [processedLeads, searchTerm, joNumberSearch, statusFilter, formatJoNumber, getProgrammingStatus, filterType]);
 
   if (isLoading) {
     return (
@@ -517,43 +530,56 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
       </AlertDialog>
       
 
-      <CardHeader>
-        <div className="flex justify-between items-center">
+      <CardHeader className="pb-4">
+        <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-black">Item Preparation</CardTitle>
+            <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Endorsements' : 'Item Preparation'}</CardTitle>
             <CardDescription className="text-gray-600">
-              Job orders ready for item preparation.
+              {filterType === 'COMPLETED' ? 'Job orders that have been endorsed.' : 'Job orders ready for item preparation.'}
             </CardDescription>
           </div>
-          <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Filter Program Status:</span>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[200px] bg-gray-100 text-black placeholder:text-gray-500">
-                      <SelectValue placeholder="Filter by Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      {programmingStatusOptions.map(status => (
-                          <SelectItem key={status} value={status}>{status}</SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Filter Program Status:</span>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[200px] bg-gray-100 text-black placeholder:text-gray-500">
+                        <SelectValue placeholder="Filter by Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {programmingStatusOptions.map(status => (
+                            <SelectItem key={status} value={status}>{status}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-full max-w-xs">
+                  <Input
+                    placeholder="Search customer, company, contact..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-gray-100 text-black placeholder:text-gray-500"
+                  />
+                </div>
+                <div className="w-full max-w-xs">
+                   <Input
+                    placeholder="Search by J.O. No..."
+                    value={joNumberSearch}
+                    onChange={(e) => setJoNumberSearch(e.target.value)}
+                    className="bg-gray-100 text-black placeholder:text-gray-500"
+                  />
+                </div>
               </div>
-              <div className="w-full max-w-xs">
-                <Input
-                  placeholder="Search customer, company, contact..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-gray-100 text-black placeholder:text-gray-500"
-                />
-              </div>
-              <div className="w-full max-w-xs">
-                 <Input
-                  placeholder="Search by J.O. No..."
-                  value={joNumberSearch}
-                  onChange={(e) => setJoNumberSearch(e.target.value)}
-                  className="bg-gray-100 text-black placeholder:text-gray-500"
-                />
+              <div className="w-full text-right mt-2">
+                {filterType === 'COMPLETED' ? (
+                  <Link href="/inventory/item-preparation-for-production" className="text-sm text-primary hover:underline">
+                    View Item Preparation Queue
+                  </Link>
+                ) : (
+                  <Link href="/inventory/completed-endorsement" className="text-sm text-primary hover:underline">
+                    View Completed Endorsements
+                  </Link>
+                )}
               </div>
             </div>
         </div>
@@ -587,6 +613,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
                         handleOpenPreparedDialog={handleOpenPreparedDialog}
                         setLeadToSend={setLeadToSend}
                         isReadOnly={isReadOnly}
+                        filterType={filterType}
                     />
                 ))}
                 </TableBody>
