@@ -343,21 +343,21 @@ const ProductionQueueTableRow = React.memo(({
                     </Collapsible>
                     {isRepeat ? (
                         <TooltipProvider>
-                            <Tooltip>
+                        <Tooltip>
                             <TooltipTrigger asChild>
-                                <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
+                            <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
                                 <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                 <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                    {lead.orderNumber}
+                                {lead.orderNumber}
                                 </span>
-                                </div>
+                            </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                            <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
                             </TooltipContent>
-                            </Tooltip>
+                        </Tooltip>
                         </TooltipProvider>
-                        ) : (
+                    ) : (
                         <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                     )}
                 </TableCell>
