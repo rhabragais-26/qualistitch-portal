@@ -455,6 +455,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="text-white font-bold align-middle w-[250px]">Customer</TableHead>
+                    <TableHead className="text-white font-bold align-middle w-[150px] text-center">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle w-[150px] text-center">SCES</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[150px]">Priority Type</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[150px]">Ordered Items</TableHead>
@@ -484,7 +485,6 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                         <TableRow className="border-b-2 border-gray-300">
                             <TableCell className="font-medium align-middle py-3 text-black text-sm">
                                 <div className="font-bold">{lead.customerName}</div>
-                                <p className="text-xs text-gray-500 font-normal">{formatJoNumber(lead.joNumber)}</p>
                                 {isRepeat ? (
                                     <TooltipProvider>
                                       <Tooltip>
@@ -508,6 +508,9 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                     {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
                                     {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                 </div>
+                            </TableCell>
+                            <TableCell className="text-xs align-middle text-center py-2 text-black">
+                                {formatJoNumber(lead.joNumber)}
                             </TableCell>
                             <TableCell className="text-center align-middle py-3 text-sm">{lead.salesRepresentative}</TableCell>
                             <TableCell className="text-center align-middle py-3">
@@ -632,7 +635,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                         </TableRow>
                         {isCollapsibleOpen && (
                           <TableRow>
-                              <TableCell colSpan={8}>
+                              <TableCell colSpan={9}>
                               <div className="p-4 max-w-xl mx-auto bg-gray-50 rounded-md my-2">
                                 <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
                                 <Table>
@@ -687,3 +690,4 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     </Card>
   );
 }
+
