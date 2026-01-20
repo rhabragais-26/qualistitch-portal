@@ -18,13 +18,13 @@ import {
 } from '@/components/ui/card';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useState, useEffect } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
-import { cn, formatDateTime } from '@/lib/utils';
+import { cn, formatDateTime, formatCurrency } from '@/lib/utils';
 import { Input } from './ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
@@ -51,6 +51,11 @@ type Lead = {
   isSalesAuditComplete?: boolean;
   salesAuditCompleteTimestamp?: string;
   isWaybillPrinted?: boolean;
+  waybillNumber?: string;
+  grandTotal?: number;
+  paidAmount?: number;
+  balance?: number;
+  paymentType?: string;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   adjustedDeliveryDate?: string | null;
 }
@@ -74,6 +79,26 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   const [adjustmentStates, setAdjustmentStates] = useState<Record<string, AdjustmentState>>({});
+  const [waybillNumbers, setWaybillNumbers] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if(leads) {
+        const initialAdjustments: Record<string, AdjustmentState> = {};
+        const initialWaybills: Record<string, string> = {};
+        leads.forEach(lead => {
+            if (lead.adjustedDeliveryDate) {
+                initialAdjustments[lead.id] = { status: 'Yes', date: format(new Date(lead.adjustedDeliveryDate), 'yyyy-MM-dd') };
+            } else if (lead.isSalesAuditComplete) {
+                initialAdjustments[lead.id] = { status: 'No' };
+            }
+            if (lead.waybillNumber) {
+                initialWaybills[lead.id] = lead.waybillNumber;
+            }
+        });
+        setAdjustmentStates(initialAdjustments);
+        setWaybillNumbers(initialWaybills);
+    }
+  }, [leads]);
 
   const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
@@ -87,6 +112,10 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
             ...updates,
         }
     }));
+  }, []);
+  
+  const handleWaybillNumberChange = useCallback((leadId: string, value: string) => {
+    setWaybillNumbers(prev => ({ ...prev, [leadId]: value }));
   }, []);
 
   const getContactDisplay = useCallback((lead: Lead) => {
@@ -136,16 +165,23 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
         return;
     }
 
+    const waybillNo = waybillNumbers[lead.id];
+    if (lead.isWaybillPrinted && !waybillNo) {
+        toast({ variant: 'destructive', title: 'Action Required', description: 'Please enter the Waybill Number.' });
+        return;
+    }
+
+
     const leadDocRef = doc(firestore, 'leads', lead.id);
     try {
       const updateData: any = {
         isSalesAuditRequested: false, // Remove from audit queue
         isSalesAuditComplete: true,
         salesAuditCompleteTimestamp: new Date().toISOString(),
+        waybillNumber: waybillNo || null,
       };
 
       if (leadAdjustmentState.status === 'Yes' && leadAdjustmentState.date) {
-        // Assuming date is in 'yyyy-MM-dd' from the input, convert to ISO string
         updateData.adjustedDeliveryDate = new Date(leadAdjustmentState.date).toISOString();
       } else if (leadAdjustmentState.status === 'No') {
         updateData.adjustedDeliveryDate = null;
@@ -257,9 +293,14 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
               <TableRow>
                 <TableHead className="text-white font-bold text-xs text-center">Customer</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Grand Total</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Payment</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Balance</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Payment Type</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Customer Asked for Specific Delivery Date</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Set Adjusted Date of Delivery</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Waybill Printed</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Waybill No.</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -269,7 +310,8 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
                    const isRepeat = lead.orderNumber > 1;
                    const leadAdjustmentState = adjustmentStates[lead.id] || { status: 'NotSelected' };
                    const isWaybillDisabled = leadAdjustmentState.status === 'NotSelected' || (leadAdjustmentState.status === 'Yes' && !leadAdjustmentState.date);
-                   const isProceedDisabled = !lead.isWaybillPrinted || isWaybillDisabled;
+                   const isProceedDisabled = !lead.isWaybillPrinted || isWaybillDisabled || (lead.isWaybillPrinted && !waybillNumbers[lead.id]);
+
                    return (
                       <TableRow key={lead.id}>
                         <TableCell className="text-xs text-center">
@@ -308,6 +350,10 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
                           </div>
                         </TableCell>
                         <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
+                        <TableCell className="text-xs text-center font-semibold">{formatCurrency(lead.grandTotal || 0)}</TableCell>
+                        <TableCell className="text-xs text-center">{formatCurrency(lead.paidAmount || 0)}</TableCell>
+                        <TableCell className="text-xs text-center font-bold text-destructive">{formatCurrency(lead.balance || 0)}</TableCell>
+                        <TableCell className="text-xs text-center">{lead.paymentType}</TableCell>
                         <TableCell className="text-center">
                           <RadioGroup
                               value={leadAdjustmentState.status}
@@ -341,6 +387,15 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
                                 disabled={isWaybillDisabled || isReadOnly}
                              />
                         </TableCell>
+                        <TableCell>
+                            <Input 
+                                placeholder="Enter Waybill No."
+                                className="text-xs"
+                                value={waybillNumbers[lead.id] || ''}
+                                onChange={(e) => handleWaybillNumberChange(lead.id, e.target.value)}
+                                disabled={!lead.isWaybillPrinted || isReadOnly}
+                            />
+                        </TableCell>
                         <TableCell className="text-center">
                           {lead.isSalesAuditComplete ? (
                             <div className="flex flex-col items-center justify-center text-sm text-green-600 font-semibold">
@@ -364,7 +419,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground text-xs">
+                  <TableCell colSpan={11} className="text-center text-muted-foreground text-xs">
                     No items in the audit queue.
                   </TableCell>
                 </TableRow>
@@ -376,3 +431,6 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
     </Card>
   );
 }
+
+
+  
