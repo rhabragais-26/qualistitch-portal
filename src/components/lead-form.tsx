@@ -361,9 +361,7 @@ export function LeadForm({
   const handleCitySuggestionClick = (city: { name: string; province: string }) => {
     setValue('city', city.name, { shouldValidate: true, shouldDirty: true });
     setValue('province', city.province, { shouldValidate: true, shouldDirty: true });
-    if (!barangayValue) {
-        setValue('barangay', '', { shouldDirty: true });
-    }
+    setValue('barangay', '', { shouldDirty: true });
     setActiveField(null);
   };
 
@@ -390,6 +388,13 @@ export function LeadForm({
   const isInternational = watch('isInternational');
   const orderTypeValue = watch('orderType');
 
+  const filteredProductTypes = useMemo(() => {
+    if (orderTypeValue === 'Services') {
+      return ['Client Owned', 'Patches'];
+    }
+    return productTypes;
+  }, [orderTypeValue]);
+
   useEffect(() => {
     onOrderTypeChange(orderTypeValue);
   }, [orderTypeValue, onOrderTypeChange]);
@@ -399,28 +404,28 @@ export function LeadForm({
   const concatenatedAddress = [part1, part2].filter(Boolean).join(', ');
 
   useEffect(() => {
-    // If a lead was selected, but the name is edited, deselect the lead.
-    if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
-        setSelectedLead(null);
-        setManualStatus(null);
+    const handleCustomerNameChange = () => {
+        if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
+            setSelectedLead(null);
+            setManualStatus(null);
+        }
+        
+        if (!customerNameValue) {
+            setSelectedLead(null);
+            setManualStatus(null);
+            setValue('companyName', '', { shouldDirty: true });
+            setValue('mobileNo', '', { shouldDirty: true });
+            setValue('landlineNo', '', { shouldDirty: true });
+            setValue('houseStreet', '', { shouldDirty: true });
+            setValue('barangay', '', { shouldDirty: true });
+            setValue('city', '', { shouldDirty: true });
+            setValue('province', '', { shouldDirty: true });
+            setValue('internationalAddress', '', { shouldDirty: true });
+            setCustomerSuggestions([]);
+            setCompanySuggestions([]);
+        }
     }
-    
-    // If the customer name field is completely cleared, reset all related fields.
-    // This should happen regardless of whether a lead was previously selected.
-    if (!customerNameValue) {
-        setSelectedLead(null); // Ensure selectedLead is also cleared
-        setManualStatus(null);
-        setValue('companyName', '', { shouldDirty: true });
-        setValue('mobileNo', '', { shouldDirty: true });
-        setValue('landlineNo', '', { shouldDirty: true });
-        setValue('houseStreet', '', { shouldDirty: true });
-        setValue('barangay', '', { shouldDirty: true });
-        setValue('city', '', { shouldDirty: true });
-        setValue('province', '', { shouldDirty: true });
-        setValue('internationalAddress', '', { shouldDirty: true });
-        setCustomerSuggestions([]);
-        setCompanySuggestions([]);
-    }
+    handleCustomerNameChange();
   }, [customerNameValue, selectedLead, setValue]);
   
   // Effect for setting initial status in edit mode
@@ -501,7 +506,7 @@ export function LeadForm({
         city.name.toLowerCase().includes(cityValue.toLowerCase())
       ).slice(0, 10);
       setCitySuggestions(filteredCities);
-    } else {
+    } else if (activeField !== 'city') {
       setCitySuggestions([]);
     }
   }, [cityValue, citiesAndMunicipalities, selectedLead, activeField]);
@@ -510,7 +515,7 @@ export function LeadForm({
     if (activeField === 'barangay' && barangayValue && !selectedLead) {
         const suggestions = allBarangays.filter(b => b.barangay.toLowerCase().includes(barangayValue.toLowerCase())).slice(0, 10);
         setBarangaySuggestions(suggestions);
-    } else {
+    } else if (activeField !== 'barangay') {
       setBarangaySuggestions([]);
     }
   }, [barangayValue, allBarangays, selectedLead, activeField]);
@@ -519,7 +524,7 @@ export function LeadForm({
     if (activeField === 'province' && provinceValue && !selectedLead) {
         const filteredProvinces = allProvinces.filter(p => p.toLowerCase().includes(provinceValue.toLowerCase())).slice(0, 10);
         setProvinceSuggestions(filteredProvinces);
-    } else {
+    } else if (activeField !== 'province') {
         setProvinceSuggestions([]);
     }
   }, [provinceValue, allProvinces, selectedLead, activeField]);
@@ -842,7 +847,7 @@ export function LeadForm({
                         }}
                       />
                     </FormControl>
-                    {!isEditing && customerSuggestions.length > 0 && customerNameValue && (
+                    {!isEditing && customerSuggestions.length > 0 && customerNameValue && activeField === 'customerName' && (
                       <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                         <CardContent className="p-2 max-h-40 overflow-y-auto">
                           {customerSuggestions.map((lead) => (
@@ -865,7 +870,7 @@ export function LeadForm({
                         onBlur={() => setTimeout(() => { if (activeField === 'companyName') setActiveField(null); }, 150)}
                       />
                     </FormControl>
-                    {!isEditing && companySuggestions.length > 0 && companyNameValue && (
+                    {!isEditing && companySuggestions.length > 0 && companyNameValue && activeField === 'companyName' && (
                       <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                         <CardContent className="p-2 max-h-40 overflow-y-auto">
                           {companySuggestions.map((lead) => (
@@ -1109,7 +1114,7 @@ export function LeadForm({
                         <Label>Product Type:</Label>
                         <Select onValueChange={setNewOrderProductType} value={newOrderProductType}>
                           <SelectTrigger><SelectValue placeholder="Select a Product Type" /></SelectTrigger>
-                          <SelectContent>{productTypes.map((type) => (<SelectItem key={type} value={type}>{type}</SelectItem>))}</SelectContent>
+                          <SelectContent>{filteredProductTypes.map((type) => (<SelectItem key={type} value={type}>{type}</SelectItem>))}</SelectContent>
                         </Select>
                       </div>
                       {!isPatches && (
@@ -1143,7 +1148,7 @@ export function LeadForm({
                         <div className="flex items-center gap-2">
                           <Label className="whitespace-nowrap">Price per Patch:</Label>
                           <div className="relative w-full">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₱</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
                             <Input
                               type="text"
                               value={formattedPrice}
