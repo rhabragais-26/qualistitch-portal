@@ -82,6 +82,7 @@ type Lead = {
   operationalCase?: OperationalCase;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   shippedTimestamp?: string;
+  deliveredTimestamp?: string;
   isSalesAuditRequested?: boolean;
   isQualityApproved?: boolean;
   isRecheckingQuality?: boolean;
@@ -144,9 +145,12 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     let isOverdue = false;
     let isUrgent = false;
 
-    if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
+    if (lead.shipmentStatus === 'Delivered' && lead.deliveredTimestamp) {
+        statusText = <><span className="font-bold">Delivered:</span> {formatDateTime(lead.deliveredTimestamp).dateTimeShort}</>;
+        remainingDays = Infinity;
+    } else if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
         statusText = <><span className="font-bold">Shipped:</span> {formatDateTime(lead.shippedTimestamp).dateTimeShort}</>;
-        remainingDays = Infinity; // Consider it not "overdue" in the same way
+        remainingDays = Infinity;
     } else {
         remainingDays = differenceInDays(deadlineDate, new Date());
         if (remainingDays < 0) {
@@ -205,6 +209,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   }, []);
 
   const getShipmentStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success" } => {
+    if (lead.shipmentStatus === 'Delivered') return { text: 'Delivered', variant: 'success' };
     if (lead.shipmentStatus === 'Shipped') return { text: 'Shipped', variant: 'success' };
     if (lead.isPacked) return { text: "Already Packed", variant: "default" };
     if (lead.isSalesAuditRequested) return { text: "On-going Audit", variant: "warning" };
@@ -214,7 +219,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   }
 
   const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
-    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
+    if (lead.shipmentStatus === 'Delivered') {
         return { text: 'COMPLETED', variant: 'success' };
     }
     if (!lead.joNumber) {
