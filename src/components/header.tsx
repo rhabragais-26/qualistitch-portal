@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -232,7 +233,7 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenu>
                 <DropdownMenu open={openMenu === 'digitizing'} onOpenChange={(isOpen) => handleMenuOpenChange('digitizing', isOpen)}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports', '/digitizing/program-files-database', '/digitizing/completed-programs']))}>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/digitizing/programming-queue', '/digitizing/reports', '/digitizing/program-files-database']))}>
                         <ScanLine className="mr-2" />
                         Digitizing
                         <ChevronDown className="ml-2 h-4 w-4" />
@@ -242,10 +243,6 @@ const HeaderMemo = React.memo(function Header({
                     <DropdownMenuItem onClick={() => handleNavigation('/digitizing/programming-queue')}>
                       <ClipboardList className="mr-2" />
                       Programming Queue
-                    </DropdownMenuItem>
-                     <DropdownMenuItem onClick={() => handleNavigation('/digitizing/completed-programs')}>
-                        <FileCheck className="mr-2" />
-                        Completed Programs
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/digitizing/program-files-database')}>
                       <FolderKanban className="mr-2" />
