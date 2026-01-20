@@ -1,16 +1,37 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { collection, query, orderBy, addDoc, serverTimestamp, setDoc, doc, getDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import {
+  collection,
+  query,
+  orderBy,
+  addDoc,
+  serverTimestamp,
+  setDoc,
+  doc,
+  getDoc,
+  updateDoc,
+  arrayUnion,
+  increment,
+  limit,
+  startAfter,
+  getDocs,
+  onSnapshot,
+  where,
+  QueryDocumentSnapshot,
+  DocumentData,
+} from 'firebase/firestore';
+import { useUser, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/firestore-writes';
+import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Send, ArrowLeft } from 'lucide-react';
+import { Send, ArrowLeft, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
-import { format, isToday, isThisWeek, differenceInMinutes } from 'date-fns';
+import { format, isThisWeek, differenceInMinutes } from 'date-fns';
 
 interface UserProfile {
   uid: string;
@@ -43,50 +64,62 @@ export interface DirectMessageChannel {
 export function ChatLayout() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [message, setMessage] = useState('');
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users'), orderBy('nickname', 'asc')) : null, [firestore]);
   const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
-  const channelsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'direct_messages'), orderBy('lastMessage.timestamp', 'desc')) : null, [firestore]);
+  const channelsQuery = useMemoFirebase(() => {
+      if (!firestore || !user) return null;
+      return query(collection(firestore, 'direct_messages'), where('participants', 'array-contains', user.uid));
+  }, [firestore, user]);
   const { data: channels } = useCollection<DirectMessageChannel>(channelsQuery);
 
   const channelId = useMemo(() => {
     if (!user || !selectedUser) return null;
     return [user.uid, selectedUser.uid].sort().join('_');
   }, [user, selectedUser]);
-
-  const messagesQuery = useMemoFirebase(() => {
-    if (!firestore || !channelId) return null;
-    return query(collection(firestore, `direct_messages/${channelId}/messages`), orderBy('timestamp', 'asc'));
-  }, [firestore, channelId]);
-  const { data: messages, isLoading: messagesLoading } = useCollection<ChatMessage>(messagesQuery);
   
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  // State for paginated messages
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(true);
+  const [moreMessagesLoading, setMoreMessagesLoading] = useState(false);
+  const [lastMessageDoc, setLastMessageDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
+
+  // Auto-scroll to bottom for new messages, but only if user is already near the bottom
+  useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    if (scrollContainer) {
+        const isScrolledToBottom = scrollContainer.scrollHeight - scrollContainer.clientHeight <= scrollContainer.scrollTop + 100; // 100px threshold
+        if (isScrolledToBottom) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+  }, [messages.length, messages[messages.length - 1]?.id]);
+
+
+  // Read status update
   useEffect(() => {
     if (selectedUser && channelId && firestore && user) {
         const channelRef = doc(firestore, 'direct_messages', channelId);
-        
         const updateReadStatus = async () => {
             const docSnap = await getDoc(channelRef);
             if (docSnap.exists()) {
                 const data = docSnap.data() as DirectMessageChannel;
                 const updates: {[key: string]: any} = {};
-
                 if (data.lastMessage && data.lastMessage.senderId !== user.uid && !data.lastMessage.readBy?.includes(user.uid)) {
                     updates['lastMessage.readBy'] = arrayUnion(user.uid);
                 }
-                
                 if (data.unreadCount && data.unreadCount[user.uid] > 0) {
                     updates[`unreadCount.${user.uid}`] = 0;
                 }
-
                 if (Object.keys(updates).length > 0) {
                     await updateDoc(channelRef, updates);
                 }
@@ -94,63 +127,112 @@ export function ChatLayout() {
         };
         updateReadStatus();
     }
-  }, [selectedUser, channelId, firestore, user]);
+  }, [selectedUser, channelId, firestore, user, messages]);
 
+  // Textarea auto-resize
   useEffect(() => {
     if (messageInputRef.current) {
       messageInputRef.current.style.height = 'auto';
       const scrollHeight = messageInputRef.current.scrollHeight;
-      const maxHeight = 60; // max height of ~2-3 lines
+      const maxHeight = 60;
       messageInputRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
     }
   }, [message]);
+  
+  const messagesRef = useMemoFirebase(() => {
+    if (!firestore || !channelId) return null;
+    return collection(firestore, `direct_messages/${channelId}/messages`);
+  }, [firestore, channelId]);
 
-  const sendMessage = async () => {
-    if (!message.trim() || !user || !channelId || !firestore || !selectedUser) {
-        return;
+  // Initial fetch and real-time listener for new messages
+  useEffect(() => {
+    if (!messagesRef) return;
+    setMessagesLoading(true);
+    setHasMore(true);
+    const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(20));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const newMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage)).reverse();
+        
+        setMessages(newMessages);
+
+        const lastVisible = snapshot.docs[snapshot.docs.length - 1];
+        setLastMessageDoc(lastVisible);
+        setHasMore(snapshot.docs.length >= 20);
+        setMessagesLoading(false);
+    }, (error) => {
+        console.error("Error fetching messages:", error);
+        setMessagesLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [messagesRef]);
+
+  const loadOlderMessages = async () => {
+    if (!messagesRef || !lastMessageDoc || !hasMore || moreMessagesLoading) return;
+
+    setMoreMessagesLoading(true);
+    const q = query(
+        messagesRef,
+        orderBy('timestamp', 'desc'),
+        startAfter(lastMessageDoc),
+        limit(20)
+    );
+    
+    try {
+        const documentSnapshots = await getDocs(q);
+        const olderMessages = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage)).reverse();
+
+        const scrollContainer = scrollRef.current;
+        const oldScrollHeight = scrollContainer?.scrollHeight || 0;
+        const oldScrollTop = scrollContainer?.scrollTop || 0;
+
+        setMessages(prevMessages => [...olderMessages, ...prevMessages]);
+        
+        const lastVisible = documentSnapshots.docs[documentSnapshots.docs.length - 1];
+        setLastMessageDoc(lastVisible);
+        setHasMore(documentSnapshots.docs.length >= 20);
+
+        if (scrollContainer) {
+            requestAnimationFrame(() => {
+                scrollContainer.scrollTop = oldScrollTop + (scrollContainer.scrollHeight - oldScrollHeight);
+            });
+        }
+    } catch (error) {
+        console.error("Error loading older messages:", error);
+    } finally {
+        setMoreMessagesLoading(false);
     }
+  };
+  
+  const sendMessage = async () => {
+    if (!message.trim() || !user || !channelId || !firestore || !selectedUser) return;
 
     const channelRef = doc(firestore, 'direct_messages', channelId);
-    const messagesRef = collection(channelRef, 'messages');
-
-    const messageData = {
-        senderId: user.uid,
-        text: message,
-        timestamp: serverTimestamp(),
-    };
+    const messagesCollectionRef = collection(channelRef, 'messages');
     
-    const lastMessageData = {
-        senderId: user.uid,
-        text: message,
-        timestamp: serverTimestamp(),
-        readBy: [user.uid]
-    };
+    const messageData = { senderId: user.uid, text: message, timestamp: serverTimestamp() };
+    const lastMessageData = { senderId: user.uid, text: message, timestamp: serverTimestamp(), readBy: [user.uid] };
+    
+    const currentMessageText = message;
+    setMessage('');
 
     try {
       const otherUserId = selectedUser.uid;
       const channelSnap = await getDoc(channelRef);
 
       if (channelSnap.exists()) {
-          await updateDoc(channelRef, {
-              lastMessage: lastMessageData,
-              [`unreadCount.${otherUserId}`]: increment(1)
-          });
+          const updateData = { lastMessage: lastMessageData, [`unreadCount.${otherUserId}`]: increment(1) };
+          updateDocumentNonBlocking(channelRef, updateData);
       } else {
-          await setDoc(channelRef, {
-              participants: [user.uid, selectedUser.uid],
-              lastMessage: lastMessageData,
-              unreadCount: {
-                  [user.uid]: 0,
-                  [otherUserId]: 1,
-              },
-          });
+          const newChannelData = { participants: [user.uid, otherUserId], lastMessage: lastMessageData, unreadCount: { [user.uid]: 0, [otherUserId]: 1 } };
+          setDocumentNonBlocking(channelRef, newChannelData, {});
       }
-      
-      await addDoc(messagesRef, messageData);
-
-      setMessage('');
+      addDocumentNonBlocking(messagesCollectionRef, messageData);
     } catch (error) {
       console.error("Error sending message:", error);
+      setMessage(currentMessageText);
+      toast({ variant: 'destructive', title: 'Message not sent', description: 'Could not send your message. Please try again.' });
     }
   };
 
@@ -301,9 +383,21 @@ export function ChatLayout() {
                 <span className="text-black/70">{isOnline(selectedUser.lastSeen) ? "Active" : "Inactive"}</span>
             </div>
         </div>
-        <ScrollArea className="flex-1 p-4">
-            <div>
-            {messagesLoading && !messages ? (
+        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+            <div className="space-y-1">
+                {moreMessagesLoading && (
+                    <div className="flex justify-center my-2">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                )}
+                {hasMore && !moreMessagesLoading && (
+                    <div className="text-center">
+                        <Button variant="link" onClick={loadOlderMessages} className="text-xs h-6 p-0">
+                            See older messages
+                        </Button>
+                    </div>
+                )}
+            {messagesLoading ? (
                 <div className="flex justify-center items-center h-full">
                     <p>Loading messages...</p>
                 </div>
