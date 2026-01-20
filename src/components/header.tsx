@@ -337,7 +337,7 @@ const HeaderMemo = React.memo(function Header({
                           {getInitials(userProfile.nickname)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex flex-col items-center justify-center">
+                      <div className="flex flex-col items-start justify-center">
                         <span className="font-bold text-sm leading-none">{userProfile.nickname}</span>
                         <span className="text-xs text-gray-400 leading-none">({userProfile.position})</span>
                       </div>
