@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
@@ -22,7 +21,7 @@ import {
 import { Badge } from './ui/badge';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, PlusCircle, Edit, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +46,13 @@ import { z, ZodError } from 'zod';
 import { EditOrderDialog } from './edit-order-dialog';
 import { EditLeadFullDialog } from './edit-lead-full-dialog';
 import { FieldErrors } from 'react-hook-form';
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { format } from "date-fns"
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
@@ -321,6 +327,7 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const [csrFilter, setCsrFilter] = useState('All');
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>('All');
+  const [selectedDate, setSelectedDate] = useState<Date>();
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
@@ -372,10 +379,12 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
       const submissionDate = new Date(lead.submissionDateTime);
       const matchesYear = selectedYear === 'All' || submissionDate.getFullYear().toString() === selectedYear;
       const matchesMonth = selectedMonth === 'All' || (submissionDate.getMonth() + 1).toString() === selectedMonth;
+      const matchesDate = !selectedDate || format(submissionDate, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
 
-      return matchesSearch && matchesCsr && matchesYear && matchesMonth;
+
+      return matchesSearch && matchesCsr && matchesYear && matchesMonth && matchesDate;
     }).sort((a,b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
-  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth]);
+  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, selectedDate]);
 
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
@@ -450,40 +459,74 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
                 Here are all the customer orders submitted through the form.
               </CardDescription>
             </div>
-            <div className="flex items-center gap-4">
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Year" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All Years</SelectItem>
-                  {availableYears.map(year => (
-                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Month" />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map(month => (
-                    <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={csrFilter} onValueChange={setCsrFilter}>
-                <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Filter by SCES" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All SCES</SelectItem>
-                  {salesRepresentatives.map(csr => (
-                    <SelectItem key={csr} value={csr}>{csr}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="w-full max-w-lg">
+            <div className="flex items-center gap-4 flex-wrap justify-end">
+              <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Filter by Year/Month/Date:</span>
+                  <Select value={selectedYear} onValueChange={(value) => { setSelectedYear(value); setSelectedDate(undefined); }}>
+                    <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
+                      <SelectValue placeholder="Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Years</SelectItem>
+                      {availableYears.map(year => (
+                        <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={selectedMonth} onValueChange={(value) => { setSelectedMonth(value); setSelectedDate(undefined); }}>
+                    <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                      <SelectValue placeholder="Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {months.map(month => (
+                        <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                   <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-[240px] justify-start text-left font-normal bg-gray-100 text-black",
+                          !selectedDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => {
+                          setSelectedDate(date as Date | undefined);
+                          if (date) {
+                              setSelectedYear(date.getFullYear().toString());
+                              setSelectedMonth((date.getMonth() + 1).toString());
+                          }
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Filter by SCES:</span>
+                <Select value={csrFilter} onValueChange={setCsrFilter}>
+                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                    <SelectValue placeholder="Filter by SCES" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All SCES</SelectItem>
+                    {salesRepresentatives.map(csr => (
+                      <SelectItem key={csr} value={csr}>{csr}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 min-w-[300px]">
                 <Input
                   placeholder="Search customer, company or contact..."
                   value={searchTerm}
