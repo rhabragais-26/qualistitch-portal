@@ -368,6 +368,7 @@ export function LeadForm({
     setValue('city', city.name, { shouldValidate: true, shouldDirty: true });
     setValue('province', city.province, { shouldValidate: true, shouldDirty: true });
     setValue('barangay', '', { shouldDirty: true });
+    setActiveAddressField(null);
     setCitySuggestions([]);
   };
 
@@ -376,6 +377,7 @@ export function LeadForm({
     setValue('city', b.city, { shouldValidate: true, shouldDirty: true });
     setValue('province', b.province, { shouldValidate: true, shouldDirty: true });
     setBarangaySuggestions([]);
+    setActiveAddressField(null);
   };
 
   const handleProvinceSuggestionClick = (province: string) => {
@@ -383,6 +385,7 @@ export function LeadForm({
     setValue('city', '', { shouldDirty: true });
     setValue('barangay', '', { shouldDirty: true });
     setProvinceSuggestions([]);
+    setActiveAddressField(null);
   };
 
   const customerNameValue = watch('customerName');
@@ -494,35 +497,21 @@ export function LeadForm({
   
   useEffect(() => {
     if (barangayValue && !selectedLead && activeAddressField === 'barangay') {
-      if (cityValue) {
-        const selectedCityData = citiesAndMunicipalities.find(c => c.name.toLowerCase() === cityValue.toLowerCase() && c.province.toLowerCase() === provinceValue?.toLowerCase());
-        if (selectedCityData?.barangays) {
-          const suggestions = selectedCityData.barangays
-            .filter(b => b.toLowerCase().includes(barangayValue.toLowerCase()))
-            .map(b => ({ barangay: b, city: selectedCityData.name, province: selectedCityData.province, showCity: false }))
-            .slice(0, 10);
-          setBarangaySuggestions(suggestions);
-        } else {
-          const suggestions = allBarangays.filter(b => b.barangay.toLowerCase().includes(barangayValue.toLowerCase())).slice(0, 10);
-          setBarangaySuggestions(suggestions);
-        }
-      } else {
         const suggestions = allBarangays.filter(b => b.barangay.toLowerCase().includes(barangayValue.toLowerCase())).slice(0, 10);
         setBarangaySuggestions(suggestions);
-      }
     } else {
       setBarangaySuggestions([]);
     }
-  }, [barangayValue, cityValue, provinceValue, selectedLead, allBarangays, citiesAndMunicipalities, activeAddressField]);
+  }, [barangayValue, allBarangays, selectedLead, activeAddressField]);
   
   useEffect(() => {
-    if (provinceValue && !cityValue && !selectedLead && activeAddressField === 'province') {
+    if (provinceValue && !selectedLead && activeAddressField === 'province') {
         const filteredProvinces = allProvinces.filter(p => p.toLowerCase().includes(provinceValue.toLowerCase())).slice(0, 10);
         setProvinceSuggestions(filteredProvinces);
     } else {
         setProvinceSuggestions([]);
     }
-  }, [provinceValue, cityValue, allProvinces, selectedLead, activeAddressField]);
+  }, [provinceValue, allProvinces, selectedLead, activeAddressField]);
 
 
   useEffect(() => {
@@ -917,7 +906,7 @@ export function LeadForm({
                     <>
                         <FormField control={form.control} name="houseStreet" render={({field}) => (
                         <FormItem>
-                            <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street &amp; Others</FormLabel>
+                            <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street, Village, Landmark &amp; Others</FormLabel>
                             <FormControl><Input {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>
@@ -962,7 +951,6 @@ export function LeadForm({
                                 </CardContent>
                                 </Card>
                             )}
-                            {cityValue && citySuggestions.length === 0 && !citiesAndMunicipalities.some(c => c.name.toLowerCase() === cityValue.toLowerCase()) && <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"><CardContent className='p-2'><p className='text-muted-foreground'>No results found</p></CardContent></Card>}
                             <FormMessage />
                             </FormItem>
                         )}/>
@@ -971,7 +959,7 @@ export function LeadForm({
                           <FormItem className="relative">
                             <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
                             <FormControl><Input {...field} onFocus={() => setActiveAddressField('province')} onBlur={() => setTimeout(() => {setProvinceSuggestions([]); setActiveAddressField(null);}, 150)} autoComplete="off" /></FormControl>
-                            {provinceValue && provinceSuggestions.length > 0 && !selectedLead && !cityValue && activeAddressField === 'province' && (
+                            {provinceValue && provinceSuggestions.length > 0 && !selectedLead && activeAddressField === 'province' && (
                                 <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                                 <CardContent className="p-2 max-h-40 overflow-y-auto">
                                     {provinceSuggestions.map((province, index) => (
