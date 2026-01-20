@@ -376,7 +376,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completely Delivered Orders' : 'Overall Order Status &amp; Progress'}</CardTitle>
+              <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completely Delivered Orders' : 'Overall Order Status & Progress'}</CardTitle>
               <CardDescription className="text-gray-600">
                 {filterType === 'COMPLETED'
                   ? 'Here are all the orders that have been successfully delivered.'
