@@ -170,7 +170,7 @@ const ItemPreparationTableRowGroup = React.memo(({
                             <Checkbox
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                disabled={!lead.isJoPrinted || isReadOnly || isCompleted}
+                                disabled={isStockJacketOnly ? !lead.isJoPrinted : (!lead.isFinalProgram || isReadOnly || isCompleted)}
                                 className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}

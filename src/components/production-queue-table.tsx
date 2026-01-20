@@ -315,7 +315,7 @@ const ProductionQueueTableRow = React.memo(({
     filterType,
 }: {
     lead: EnrichedLead;
-    deadlineInfo: { text: string; isOverdue: boolean; isUrgent: boolean; remainingDays: number; };
+    deadlineInfo: { text: React.ReactNode; isOverdue: boolean; isUrgent: boolean; remainingDays: number; };
     productionStatus: { text: string; variant: "success" | "warning" | "secondary" | "default" | "destructive"; };
     openLeadId: string | null;
     toggleLeadDetails: (id: string) => void;
@@ -398,7 +398,7 @@ const ProductionQueueTableRow = React.memo(({
                         <Checkbox
                         checked={lead.isJoHardcopyReceived || false}
                         onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                        disabled={!lead.isJoPrinted || isReadOnly || isCompleted}
+                        disabled={!lead.isSentToProduction || isReadOnly || isCompleted}
                         className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                         />
                         {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
@@ -684,31 +684,37 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   }, [firestore, toast]);
   
   const calculateProductionDeadline = useCallback((lead: Lead) => {
+    const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
+    
+    let statusText: React.ReactNode;
+    let remainingDays: number;
+    let isOverdue = false;
+    let isUrgent = false;
+
     if (lead.isDone && lead.doneProductionTimestamp) {
-        const submissionDate = new Date(lead.submissionDateTime);
-        const deadlineDays = lead.priorityType === 'Rush' ? 6 : 10;
-        const deadlineDate = addDays(submissionDate, deadlineDays);
         const doneDate = new Date(lead.doneProductionTimestamp);
-        const remainingDays = differenceInDays(deadlineDate, doneDate);
-        if (remainingDays < 0) {
-            return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
+        remainingDays = differenceInDays(deliveryDate, doneDate);
+         if (remainingDays < 0) {
+            statusText = <><span className="font-bold">{Math.abs(remainingDays)} day(s)</span> overdue</>;
+            isOverdue = true;
+        } else {
+             statusText = <><span className="font-bold">{remainingDays} day(s)</span> remaining</>;
         }
-        return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
-    }
-    
-    const submissionDate = new Date(lead.submissionDateTime);
-    const deadlineDays = lead.priorityType === 'Rush' ? 6 : 10;
-    const deadlineDate = addDays(submissionDate, deadlineDays);
-    const remainingDays = differenceInDays(new Date(), deadlineDate);
-    
-    if (remainingDays < 0) {
-      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
-    } else if (remainingDays <= 2) {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
     } else {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
+        remainingDays = differenceInDays(deliveryDate, new Date());
+        if (remainingDays < 0) {
+            isOverdue = true;
+            statusText = <><span className="font-bold">{Math.abs(remainingDays)} day(s)</span> overdue</>;
+        } else if (remainingDays <= 3) {
+            isUrgent = true;
+            statusText = <><span className="font-bold">{remainingDays} day(s)</span> remaining</>;
+        } else {
+            statusText = <><span className="font-bold">{remainingDays} day(s)</span> remaining</>;
+        }
     }
-  }, []);
+
+    return { text: statusText, isOverdue, isUrgent, remainingDays };
+}, []);
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];

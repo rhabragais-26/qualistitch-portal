@@ -17,7 +17,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { collection, query, doc, updateDoc, setDoc, getDocs, where } from 'firebase/firestore';
 import { useMemo, useCallback, useState } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Button } from './ui/button';
@@ -77,6 +77,7 @@ type Lead = {
   isJoHardcopyReceived?: boolean;
   joHardcopyReceivedTimestamp?: string;
   isJoPrinted?: boolean;
+  isDone?: boolean;
 }
 
 type OperationalCase = {
@@ -612,7 +613,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                                 <Checkbox
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                disabled={!lead.isJoPrinted || isReadOnly || isCompleted}
+                                disabled={!lead.isEndorsedToLogistics || isReadOnly || isCompleted}
                                 className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                                 />
                                 {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
