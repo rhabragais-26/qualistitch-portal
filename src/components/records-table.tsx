@@ -46,13 +46,7 @@ import { z, ZodError } from 'zod';
 import { EditOrderDialog } from './edit-order-dialog';
 import { EditLeadFullDialog } from './edit-lead-full-dialog';
 import { FieldErrors } from 'react-hook-form';
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { format } from "date-fns"
+import Link from 'next/link';
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
@@ -117,6 +111,7 @@ const leadSchema = z.object({
   productType: z.string().optional(),
   layouts: z.array(layoutSchema).optional(),
   joNumber: z.number().optional(),
+  shipmentStatus: z.string().optional(),
 });
 
 export type Lead = z.infer<typeof leadSchema>;
@@ -195,7 +190,7 @@ const RecordsTableRow = React.memo(({
                   <div className="text-center">
                     <span className='font-bold text-gray-600'>Last Modified:</span>
                     <div>{formatDateTime(lead.lastModified).dateTime}</div>
-                    <div>{formatDateTime(lead.lastModified).dayOfWeek}{lead.lastModifiedBy ? ` (${lead.lastModifiedBy})` : ''}</div>
+                    <div>{formatDateTime(lead.lastModified).dayOfWeek}{lead.lastModifiedBy ? \` (\${lead.lastModifiedBy})\` : ''}</div>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
@@ -286,13 +281,13 @@ const RecordsTableRow = React.memo(({
 RecordsTableRow.displayName = 'RecordsTableRow';
 
 
-export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
+export function RecordsTable({ isReadOnly, filterStatus }: { isReadOnly: boolean; filterStatus?: 'COMPLETED' }) {
   const firestore = useFirestore();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema, { listen: false });
   
   const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
   const { data: inventoryItems, isLoading: isInventoryLoading, error: inventoryError } = useCollection<InventoryItem>(inventoryQuery, inventoryItemSchema, { listen: false });
@@ -327,13 +322,22 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const [csrFilter, setCsrFilter] = useState('All');
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>('All');
+  
+  const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
+    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
+        return { text: 'COMPLETED', variant: 'success' };
+    }
+    if (!lead.joNumber) {
+        return { text: 'PENDING', variant: 'secondary' };
+    }
+    return { text: 'ONGOING', variant: 'warning' };
+  }, []);
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
     const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
-    // First, group orders and calculate total quantities for each customer
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
       if (!customerOrderStats[name]) {
@@ -346,7 +350,6 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
   
     const enrichedLeads: EnrichedLead[] = [];
   
-    // Now, create the enriched lead objects with order numbers
     Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
       orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
       orders.forEach((lead, index) => {
@@ -379,9 +382,12 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
       const matchesYear = selectedYear === 'All' || submissionDate.getFullYear().toString() === selectedYear;
       const matchesMonth = selectedMonth === 'All' || (submissionDate.getMonth() + 1).toString() === selectedMonth;
 
-      return matchesSearch && matchesCsr && matchesYear && matchesMonth;
+      const overallStatus = getOverallStatus(lead).text;
+      const matchesStatus = !filterStatus || overallStatus === filterStatus;
+
+      return matchesSearch && matchesCsr && matchesYear && matchesMonth && matchesStatus;
     }).sort((a,b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
-  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth]);
+  }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, filterStatus, getOverallStatus]);
 
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
@@ -427,7 +433,7 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
     if (mobile && landline) {
-      return `${mobile} / ${landline}`;
+      return \`\${mobile} / \${landline}\`;
     }
     return mobile || landline || null;
   }, []);
@@ -449,60 +455,71 @@ export function RecordsTable({ isReadOnly }: { isReadOnly: boolean }) {
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-black">Recorded Orders</CardTitle>
+              <CardTitle className="text-black">{filterStatus === 'COMPLETED' ? 'Completed Orders' : 'Recorded Orders'}</CardTitle>
               <CardDescription className="text-gray-600">
-                Here are all the customer orders submitted through the form.
+                {filterStatus === 'COMPLETED' ? 'Here are all the completed customer orders.' : 'Here are all the customer orders submitted through the form.'}
               </CardDescription>
             </div>
-            <div className="flex items-center gap-4 flex-wrap justify-end">
-              <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Filter by Year/Month:</span>
-                  <Select value={selectedYear} onValueChange={setSelectedYear}>
-                    <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
-                      <SelectValue placeholder="Year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All Years</SelectItem>
-                      {availableYears.map(year => (
-                        <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-4 flex-wrap justify-end">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Filter by Year/Month:</span>
+                    <Select value={selectedYear} onValueChange={setSelectedYear}>
+                      <SelectTrigger className="w-[120px] bg-gray-100 text-black placeholder:text-gray-500">
+                        <SelectValue placeholder="Year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Years</SelectItem>
+                        {availableYears.map(year => (
+                          <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                      <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                        <SelectValue placeholder="Month" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {months.map(month => (
+                          <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Filter by SCES:</span>
+                  <Select value={csrFilter} onValueChange={setCsrFilter}>
                     <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                      <SelectValue placeholder="Month" />
+                      <SelectValue placeholder="Filter by SCES" />
                     </SelectTrigger>
                     <SelectContent>
-                      {months.map(month => (
-                        <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                      <SelectItem value="All">All SCES</SelectItem>
+                      {salesRepresentatives.map(csr => (
+                        <SelectItem key={csr} value={csr}>{csr}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="flex-1 min-w-[300px]">
+                  <Input
+                    placeholder="Search customer, company or contact..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-gray-100 text-black placeholder:text-gray-500"
+                  />
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Filter by SCES:</span>
-                <Select value={csrFilter} onValueChange={setCsrFilter}>
-                  <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                    <SelectValue placeholder="Filter by SCES" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All SCES</SelectItem>
-                    {salesRepresentatives.map(csr => (
-                      <SelectItem key={csr} value={csr}>{csr}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1 min-w-[300px]">
-                <Input
-                  placeholder="Search customer, company or contact..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-gray-100 text-black placeholder:text-gray-500"
-                />
-              </div>
+              {filterStatus !== 'COMPLETED' ? (
+                <Link href="/records/completed" className="text-sm text-primary hover:underline">
+                    View Completed Orders
+                </Link>
+              ) : (
+                <Link href="/records" className="text-sm text-primary hover:underline">
+                    View All Orders
+                </Link>
+              )}
             </div>
         </div>
       </CardHeader>

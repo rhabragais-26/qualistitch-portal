@@ -30,6 +30,7 @@ type UserPermissions = {
 
 const pageGroupMapping: { [key: string]: PageGroup } = {
   '/new-order': 'sales',
+  '/records/completed': 'sales',
   '/records': 'sales',
   '/job-order': 'sales',
   '/sales/audit-for-shipment': 'sales',
