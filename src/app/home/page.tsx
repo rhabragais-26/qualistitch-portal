@@ -10,7 +10,7 @@ export default function HomePage() {
   return (
     <Header>
       <div className="flex flex-col items-center flex-1 pt-[8px]">
-        <div className="w-full flex-1 flex items-center justify-center pb-[18px]">
+        <div className="w-full flex-1 flex items-center justify-center pb-[14px]">
           <HomeCarousel />
         </div>
       </div>
