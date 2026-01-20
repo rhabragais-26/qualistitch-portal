@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -169,8 +168,8 @@ export function HomeCarousel() {
 
   return (
     <div className="flex items-center justify-center w-full max-w-[1780px]">
-      <Button variant="ghost" size="icon" onClick={() => paginate(-1)} className="h-16 w-16 shrink-0" disabled={imageUrls.length <= 1}>
-          <ChevronLeft className="h-12 w-12 text-muted-foreground transition-colors" />
+      <Button variant="ghost" size="icon" onClick={() => paginate(-1)} className="h-24 w-24 shrink-0 hover:bg-transparent" disabled={imageUrls.length <= 1}>
+          <ChevronLeft className="h-20 w-20 text-muted-foreground" />
       </Button>
       <div className="relative w-full h-[700px] overflow-hidden">
         <AnimatePresence initial={false} custom={direction}>
@@ -233,8 +232,8 @@ export function HomeCarousel() {
         </motion.div>
        </AnimatePresence>
       </div>
-      <Button variant="ghost" size="icon" onClick={() => paginate(1)} className="h-16 w-16 shrink-0" disabled={imageUrls.length <= 1}>
-          <ChevronRight className="h-12 w-12 text-muted-foreground transition-colors" />
+      <Button variant="ghost" size="icon" onClick={() => paginate(1)} className="h-24 w-24 shrink-0 hover:bg-transparent" disabled={imageUrls.length <= 1}>
+          <ChevronRight className="h-20 w-20 text-muted-foreground" />
       </Button>
     </div>
   );
