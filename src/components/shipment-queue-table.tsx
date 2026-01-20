@@ -79,6 +79,13 @@ type Lead = {
   isJoPrinted?: boolean;
 }
 
+type OperationalCase = {
+  id: string;
+  joNumber: string;
+  caseType: string;
+  isArchived?: boolean;
+};
+
 type EnrichedLead = Lead & {
   orderNumber: number;
   totalCustomerQuantity: number;
@@ -93,6 +100,10 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads } = useCollection<Lead>(leadsQuery);
+
+  const operationalCasesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'operationalCases')) : null, [firestore]);
+  const { data: operationalCases } = useCollection<OperationalCase>(operationalCasesQuery);
+
   const { toast } = useToast();
   const router = useRouter();
   const [disapprovingLead, setDisapprovingLead] = useState<Lead | null>(null);
@@ -216,6 +227,25 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
         title: 'Quality Approved',
         description: `Order for J.O. ${formatJoNumber(lead.joNumber)} has been approved.`,
       });
+
+      if (lead.isRecheckingQuality) {
+        const formattedJo = formatJoNumber(lead.joNumber);
+        const matchingCase = operationalCases?.find(
+          c => c.joNumber === formattedJo && c.caseType === 'Quality Errors' && !c.isArchived
+        );
+
+        if (matchingCase) {
+          const caseDocRef = doc(firestore, 'operationalCases', matchingCase.id);
+          await updateDoc(caseDocRef, {
+            isArchived: true,
+          });
+          toast({
+            title: 'Case Resolved',
+            description: `The related "Quality Errors" case has been automatically resolved and archived.`,
+          });
+        }
+      }
+
     } catch (e: any) {
       console.error("Error approving quality:", e);
       toast({
@@ -781,3 +811,5 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
 }
 
   
+
+    
