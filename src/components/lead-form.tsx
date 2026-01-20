@@ -952,7 +952,7 @@ export function LeadForm({
                                 </FormControl>
                                 <div className="space-y-1 leading-none">
                                     <FormLabel className="text-xs">
-                                    Is this order for delivery outside the Philippines? (Check the box to add a custom address.)
+                                        Is this order for delivery outside the Philippines? <span className="italic text-muted-foreground">(Check the box to add a custom address.)</span>
                                     </FormLabel>
                                 </div>
                             </FormItem>
