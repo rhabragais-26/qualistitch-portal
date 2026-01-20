@@ -200,17 +200,9 @@ export function ProductManagement() {
             </div>
             <div className="flex items-center gap-4">
                 <Label>Select a Product:</Label>
-                <Select value={selectedProductType} onValueChange={setSelectedProductType}>
-                    <SelectTrigger className="w-[280px]">
-                        <SelectValue placeholder="Select Product to Edit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {productTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
-                    </SelectContent>
-                </Select>
                  <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
                     <DialogTrigger asChild>
-                        <Button variant="default" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
+                        <Button variant="outline" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-6xl">
                         <DialogHeader>
@@ -297,6 +289,14 @@ export function ProductManagement() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+                <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                    <SelectTrigger className="w-[280px]">
+                        <SelectValue placeholder="Select Product to Edit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {productTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                    </SelectContent>
+                </Select>
             </div>
         </div>
       </CardHeader>
@@ -321,17 +321,22 @@ export function ProductManagement() {
                           <Table>
                               <TableHeader>
                                   <TableRow>
-                                      <TableHead className="py-1 px-2 text-xs">Min</TableHead>
-                                      <TableHead className="py-1 px-2 text-xs">Max</TableHead>
-                                      <TableHead className="py-1 px-2 text-xs">Price</TableHead>
+                                      <TableHead className="py-1 px-2 text-xs text-center">Min</TableHead>
+                                      <TableHead className="py-1 px-2 text-xs text-center">Max</TableHead>
+                                      <TableHead className="py-1 px-2 text-xs text-center">Price</TableHead>
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
                                   {config.pricingTiers[selectedProductGroup]?.[embroideryType]?.tiers.map((tier, tierIndex) => (
                                       <TableRow key={tierIndex}>
-                                          <TableCell className="p-1"><Input type="number" value={tier.min} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'min', e.target.value)} className="w-16 h-7 text-xs"/></TableCell>
-                                          <TableCell className="p-1"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'max', e.target.value)} className="w-16 h-7 text-xs"/></TableCell>
-                                          <TableCell className="p-1"><Input type="number" value={tier.price} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'price', e.target.value)} className="w-20 h-7 text-xs"/></TableCell>
+                                          <TableCell className="p-1 align-middle text-center"><Input type="number" value={tier.min} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'min', e.target.value)} className="w-20 h-7 text-xs text-center"/></TableCell>
+                                          <TableCell className="p-1 align-middle text-center"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'max', e.target.value)} className="w-20 h-7 text-xs text-center"/></TableCell>
+                                          <TableCell className="p-1 align-middle">
+                                            <div className="relative flex items-center justify-center">
+                                                <span className="absolute left-3 text-muted-foreground">₱</span>
+                                                <Input type="number" value={tier.price} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'price', e.target.value)} className="w-24 h-7 text-xs pl-6 text-center"/>
+                                            </div>
+                                          </TableCell>
                                       </TableRow>
                                   ))}
                               </TableBody>
@@ -356,17 +361,22 @@ export function ProductManagement() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="py-1 px-2 text-xs">Min Qty</TableHead>
-                                <TableHead className="py-1 px-2 text-xs">Max Qty</TableHead>
-                                <TableHead className="py-1 px-2 text-xs">Price</TableHead>
+                                <TableHead className="py-1 px-2 text-xs text-center">Min Qty</TableHead>
+                                <TableHead className="py-1 px-2 text-xs text-center">Max Qty</TableHead>
+                                <TableHead className="py-1 px-2 text-xs text-center">Price</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {config.addOnPricing[addOn]?.tiers.map((tier, tierIndex) => (
                                 <TableRow key={tierIndex}>
-                                    <TableCell className="p-1"><Input type="number" value={tier.min} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'min', e.target.value)} className="w-16 h-7 text-xs"/></TableCell>
-                                    <TableCell className="p-1"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleAddOnTierChange(addOn, tierIndex, 'max', e.target.value)} className="w-16 h-7 text-xs"/></TableCell>
-                                    <TableCell className="p-1"><Input type="number" value={tier.price} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'price', e.target.value)} className="w-20 h-7 text-xs"/></TableCell>
+                                    <TableCell className="p-1 align-middle text-center"><Input type="number" value={tier.min} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'min', e.target.value)} className="w-20 h-7 text-xs text-center"/></TableCell>
+                                    <TableCell className="p-1 align-middle text-center"><Input type="number" value={tier.max === Infinity ? '' : tier.max} placeholder="Infinity" onChange={e => handleAddOnTierChange(addOn, tierIndex, 'max', e.target.value)} className="w-20 h-7 text-xs text-center"/></TableCell>
+                                    <TableCell className="p-1 align-middle">
+                                        <div className="relative flex items-center justify-center">
+                                            <span className="absolute left-2 text-muted-foreground">₱</span>
+                                            <Input type="number" value={tier.price} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'price', e.target.value)} className="w-24 h-7 text-xs pl-6 text-center"/>
+                                        </div>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
