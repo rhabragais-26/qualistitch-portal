@@ -24,7 +24,7 @@ import { Badge } from './ui/badge';
 import { addDays, differenceInDays, format } from 'date-fns';
 import { formatDateTime, cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
-import { ChevronDown, Send, FileText, X, Download, Check } from 'lucide-react';
+import { ChevronDown, Send, FileText, X, Download, Check, AlertTriangle } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -113,6 +113,7 @@ type Lead = {
   isJoHardcopyReceived?: boolean;
   joHardcopyReceivedTimestamp?: string;
   isJoPrinted?: boolean;
+  isRecheckingQuality?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -472,33 +473,47 @@ const ProductionQueueTableRow = React.memo(({
                     <Badge variant={productionStatus.variant}>{productionStatus.text}</Badge>
                 </TableCell>
                 <TableCell className="text-center align-middle py-3">
-                    {filterType === 'COMPLETED' ? (
-                         lead.isEndorsedToLogistics && (
-                            <div className="flex flex-col items-center gap-1">
-                                <div className="flex items-center text-sm text-green-600 font-semibold">
-                                    <Check className="mr-2 h-4 w-4" /> Endorsed
-                                </div>
-                                {lead.endorsedToLogisticsTimestamp && (
-                                    <div className="text-xs text-gray-500">
-                                        {formatDateTime(lead.endorsedToLogisticsTimestamp).dateTimeShort}
+                    <div className="flex items-center justify-center gap-2">
+                        {lead.isRecheckingQuality && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Quality Error</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                        {filterType === 'COMPLETED' ? (
+                            lead.isEndorsedToLogistics && (
+                                <div className="flex flex-col items-center gap-1">
+                                    <div className="flex items-center text-sm text-green-600 font-semibold">
+                                        <Check className="mr-2 h-4 w-4" /> Endorsed
                                     </div>
+                                    {lead.endorsedToLogisticsTimestamp && (
+                                        <div className="text-xs text-gray-500">
+                                            {formatDateTime(lead.endorsedToLogisticsTimestamp).dateTimeShort}
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        ) : (
+                            <Button
+                                size="sm"
+                                onClick={() => handleEndorseToLogistics(lead.id)}
+                                disabled={!lead.isDone || isReadOnly}
+                                className={cn(
+                                    "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105",
+                                    isReadOnly && "disabled:opacity-100"
                                 )}
-                            </div>
-                        )
-                    ) : (
-                        <Button
-                            size="sm"
-                            onClick={() => handleEndorseToLogistics(lead.id)}
-                            disabled={!lead.isDone || isReadOnly}
-                            className={cn(
-                                "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105",
-                                isReadOnly && "disabled:opacity-100"
-                            )}
-                        >
-                            <Send className="h-3.5 w-3.5" />
-                            <span className='whitespace-normal break-words'>Send to Logistics</span>
-                        </Button>
-                    )}
+                            >
+                                <Send className="h-3.5 w-3.5" />
+                                <span className='whitespace-normal break-words'>Send to Logistics</span>
+                            </Button>
+                        )}
+                    </div>
                 </TableCell>
             </TableRow>
             {openLeadId === lead.id && (
@@ -653,7 +668,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     if (!firestore) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
-        await updateDoc(leadDocRef, { isEndorsedToLogistics: true, endorsedToLogisticsTimestamp: new Date().toISOString() });
+        await updateDoc(leadDocRef, { isEndorsedToLogistics: true, endorsedToLogisticsTimestamp: new Date().toISOString(), isRecheckingQuality: false });
         toast({
             title: "Endorsed to Logistics",
             description: "The order has been sent to the logistics team.",
@@ -895,4 +910,4 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   );
 }
 
-    
+  
