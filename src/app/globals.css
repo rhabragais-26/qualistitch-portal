@@ -148,6 +148,23 @@
       scrollbar-width: none;  /* Firefox */
   }
 
+  .modern-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .modern-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .modern-scrollbar::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 10px;
+    border: 2px solid hsl(var(--card));
+  }
+  .modern-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) hsl(var(--card));
+  }
+
   @keyframes confetti-fall {
     0% {
       transform: translateY(-10vh) rotateZ(0deg) rotateY(0deg);

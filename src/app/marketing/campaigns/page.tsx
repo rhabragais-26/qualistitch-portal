@@ -288,23 +288,15 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
   
   useEffect(() => {
     if (editingInquiry && campaigns) {
-        const adAccount = editingInquiry.adAccount;
-        form.setValue('adAccount', adAccount, { shouldValidate: true });
-
-        // This effect will re-run when adAccountValue changes.
-        // We wait for the filteredCampaigns to be updated before setting the campaign.
-        const relevantCampaigns = campaigns.filter(c => c.adAccount === adAccount);
-        if (relevantCampaigns.length > 0) {
-             form.reset({
-                date: new Date(editingInquiry.date),
-                adAccount: editingInquiry.adAccount,
-                adCampaign: editingInquiry.adCampaign,
-                smallTicketInquiries: editingInquiry.smallTicketInquiries || 0,
-                mediumTicketInquiries: editingInquiry.mediumTicketInquiries || 0,
-                largeTicketInquiries: editingInquiry.largeTicketInquiries || 0,
-                highTicketInquiries: editingInquiry.highTicketInquiries || 0,
-            });
-        }
+        form.reset({
+            date: new Date(editingInquiry.date),
+            adAccount: editingInquiry.adAccount,
+            adCampaign: editingInquiry.adCampaign,
+            smallTicketInquiries: editingInquiry.smallTicketInquiries || 0,
+            mediumTicketInquiries: editingInquiry.mediumTicketInquiries || 0,
+            largeTicketInquiries: editingInquiry.largeTicketInquiries || 0,
+            highTicketInquiries: editingInquiry.highTicketInquiries || 0,
+        });
     } else if (!isEditing) {
         form.reset({
             date: new Date(),
@@ -436,7 +428,7 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                         <FormLabel>AD Account</FormLabel>
                         <Select 
                           onValueChange={(value) => {
-                            form.setValue('adAccount', value);
+                            field.onChange(value);
                             form.setValue('adCampaign', '', { shouldValidate: true });
                           }}
                           value={field.value}>
@@ -663,7 +655,7 @@ function CampaignInquiriesTable({ tableKey, onEdit, onDelete, isModifyMode, onTo
         </div>
       </CardHeader>
       <CardContent>
-        <div className="border rounded-md max-h-[calc(100vh-20rem)] overflow-y-auto">
+        <div className="border rounded-md h-[75vh] overflow-y-auto modern-scrollbar">
           <Table>
             <TableHeader className="sticky top-0 bg-neutral-800 z-10">
               <TableRow>
