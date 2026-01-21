@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { useFirestore, useUser, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { doc, collection, query, orderBy, deleteDoc } from 'firebase/firestore';
+import { doc, collection, query, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/header';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Cog, Edit, Trash2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -141,29 +142,22 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
 }
 
 // --- Form Component ---
-function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
+function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { onFormSubmit: () => void, editingInquiry: CampaignInquiry | null, onCancelEdit: () => void }) {
   const firestore = useFirestore();
   const { userProfile } = useUser();
   const { toast } = useToast();
   const [isManageOpen, setIsManageOpen] = useState(false);
-  
+  const isEditing = !!editingInquiry;
+
   const campaignsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'adCampaigns'), orderBy('name')) : null, [firestore]);
   const { data: campaigns, refetch: refetchCampaigns } = useCollection<AdCampaign>(campaignsQuery);
 
   const [maxDate, setMaxDate] = useState('');
-  const [initialDate, setInitialDate] = useState<Date | undefined>(undefined);
-
-  useEffect(() => {
-    // This effect runs only on the client, after hydration
-    setInitialDate(new Date());
-    setMaxDate(format(new Date(), 'yyyy-MM-dd'));
-  }, []);
-
-
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: undefined, // Initialize as undefined
+      date: new Date(),
       adAccount: '',
       adCampaign: '',
       smallTicketInquiries: undefined,
@@ -172,13 +166,35 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
       highTicketInquiries: undefined,
     },
   });
-
-  // Set the default date once the initialDate is available on the client
+  
   useEffect(() => {
-      if (initialDate && !form.getValues('date')) {
-          form.setValue('date', initialDate);
-      }
-  }, [initialDate, form]);
+    // This effect runs only on the client, after hydration
+    setMaxDate(format(new Date(), 'yyyy-MM-dd'));
+  }, []);
+
+  useEffect(() => {
+    if (editingInquiry) {
+        form.reset({
+            date: new Date(editingInquiry.date),
+            adAccount: editingInquiry.adAccount,
+            adCampaign: editingInquiry.adCampaign,
+            smallTicketInquiries: editingInquiry.smallTicketInquiries || undefined,
+            mediumTicketInquiries: editingInquiry.mediumTicketInquiries || undefined,
+            largeTicketInquiries: editingInquiry.largeTicketInquiries || undefined,
+            highTicketInquiries: editingInquiry.highTicketInquiries || undefined,
+        });
+    } else {
+        form.reset({
+            date: new Date(),
+            adAccount: '',
+            adCampaign: '',
+            smallTicketInquiries: undefined,
+            mediumTicketInquiries: undefined,
+            largeTicketInquiries: undefined,
+            highTicketInquiries: undefined,
+        });
+    }
+  }, [editingInquiry, form]);
 
 
   async function onSubmit(values: FormValues) {
@@ -186,12 +202,8 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
         toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to submit inquiries.' });
         return;
     }
-
-    const docId = `${format(values.date, 'yyyy-MM-dd')}_${userProfile.nickname}_${values.adAccount}_${values.adCampaign}`;
-    const inquiryRef = doc(firestore, 'campaign_inquiries', docId);
-
-    const data = {
-        id: docId,
+    
+    const dataToSave = {
         date: values.date.toISOString(),
         adAccount: values.adAccount,
         adCampaign: values.adCampaign,
@@ -202,32 +214,40 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
         submittedBy: userProfile.nickname,
         timestamp: new Date().toISOString(),
     };
-    
-    setDocumentNonBlocking(inquiryRef, data, { merge: true });
 
-    toast({
-        title: 'Success!',
-        description: `Inquiries for ${format(values.date, 'PPP')} have been saved.`,
-    });
+    if (isEditing && editingInquiry) {
+        const inquiryRef = doc(firestore, 'campaign_inquiries', editingInquiry.id);
+        await updateDoc(inquiryRef, dataToSave);
+        toast({ title: 'Success!', description: 'Inquiry has been updated.' });
+    } else {
+        const docId = `${format(values.date, 'yyyy-MM-dd')}_${userProfile.nickname}_${values.adAccount}_${values.adCampaign}`;
+        const inquiryRef = doc(firestore, 'campaign_inquiries', docId);
+        setDocumentNonBlocking(inquiryRef, { ...dataToSave, id: docId }, { merge: true });
+        toast({
+            title: 'Success!',
+            description: `Inquiries for ${format(values.date, 'PPP')} have been saved.`,
+        });
+    }
     
     form.reset({
-      date: new Date(),
-      adAccount: values.adAccount,
-      adCampaign: values.adCampaign,
-      smallTicketInquiries: undefined,
-      mediumTicketInquiries: undefined,
-      largeTicketInquiries: undefined,
-      highTicketInquiries: undefined,
+        date: new Date(),
+        adAccount: values.adAccount,
+        adCampaign: '',
+        smallTicketInquiries: undefined,
+        mediumTicketInquiries: undefined,
+        largeTicketInquiries: undefined,
+        highTicketInquiries: undefined,
     });
     onFormSubmit();
+    onCancelEdit();
   }
 
   return (
     <>
-      <Card className="max-w-md">
+      <Card className="max-w-md mx-auto">
         <CardHeader>
-          <CardTitle>Log Daily Ad Inquiries</CardTitle>
-          <CardDescription>Enter the number of inquiries received for each ad ticket size per day.</CardDescription>
+          <CardTitle>{isEditing ? 'Edit Inquiry' : 'Log Daily Ad Inquiries'}</CardTitle>
+          <CardDescription>{isEditing ? 'Update the inquiry details below.' : 'Enter the number of inquiries received for each ad ticket size per day.'}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -397,8 +417,10 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
                 )}
               />
             </div>
-
-              <Button type="submit" className="w-full">Save Inquiries</Button>
+              <div className="flex justify-end gap-2">
+                {isEditing && <Button type="button" variant="outline" onClick={onCancelEdit}>Cancel</Button>}
+                <Button type="submit" className="w-full">{isEditing ? 'Save Changes' : 'Save Inquiries'}</Button>
+              </div>
             </form>
           </Form>
         </CardContent>
@@ -409,7 +431,7 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
 }
 
 // --- Table Component ---
-function CampaignInquiriesTable({ tableKey }: { tableKey: number }) { 
+function CampaignInquiriesTable({ tableKey, onEdit, onDelete }: { tableKey: number, onEdit: (inquiry: CampaignInquiry) => void, onDelete: (inquiry: CampaignInquiry) => void }) { 
   const firestore = useFirestore();
   const inquiriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'campaign_inquiries'), orderBy('timestamp', 'desc')) : null, [firestore]);
   const { data: inquiries, isLoading, error } = useCollection<CampaignInquiry>(inquiriesQuery);
@@ -434,20 +456,21 @@ function CampaignInquiriesTable({ tableKey }: { tableKey: number }) {
                 <TableHead className="text-center">Large</TableHead>
                 <TableHead className="text-center">High</TableHead>
                 <TableHead className="text-center">Total</TableHead>
+                <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 [...Array(5)].map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={9}>
+                    <TableCell colSpan={10}>
                       <Skeleton className="h-8 w-full" />
                     </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-destructive">
+                  <TableCell colSpan={10} className="text-center text-destructive">
                     Error loading data: {error.message}
                   </TableCell>
                 </TableRow>
@@ -456,7 +479,7 @@ function CampaignInquiriesTable({ tableKey }: { tableKey: number }) {
                     const total = (inquiry.smallTicketInquiries || 0) + (inquiry.mediumTicketInquiries || 0) + (inquiry.largeTicketInquiries || 0) + (inquiry.highTicketInquiries || 0);
                     return (
                         <TableRow key={inquiry.id}>
-                            <TableCell className="text-center">{format(new Date(inquiry.date), 'PPP')}</TableCell>
+                            <TableCell className="text-center">{format(new Date(inquiry.date), 'MMM d, yyyy')}</TableCell>
                             <TableCell className="text-center">{inquiry.adAccount}</TableCell>
                             <TableCell className="text-center">{inquiry.adCampaign}</TableCell>
                             <TableCell className="text-center">{inquiry.submittedBy}</TableCell>
@@ -465,12 +488,20 @@ function CampaignInquiriesTable({ tableKey }: { tableKey: number }) {
                             <TableCell className="text-center">{inquiry.largeTicketInquiries || 0}</TableCell>
                             <TableCell className="text-center">{inquiry.highTicketInquiries || 0}</TableCell>
                             <TableCell className="text-center font-bold">{total}</TableCell>
+                            <TableCell className="text-center">
+                                <Button variant="ghost" size="icon" onClick={() => onEdit(inquiry)}>
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => onDelete(inquiry)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </TableCell>
                         </TableRow>
                     )
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground">
                     No inquiry data has been logged yet.
                   </TableCell>
                 </TableRow>
@@ -487,21 +518,74 @@ function CampaignInquiriesTable({ tableKey }: { tableKey: number }) {
 // --- Main Page Component ---
 export default function CampaignsPage() {
   const [tableKey, setTableKey] = useState(0);
+  const [editingInquiry, setEditingInquiry] = useState<CampaignInquiry | null>(null);
+  const [deletingInquiry, setDeletingInquiry] = useState<CampaignInquiry | null>(null);
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
   const handleFormSubmit = () => {
     setTableKey(prev => prev + 1);
   };
+
+  const handleEdit = (inquiry: CampaignInquiry) => {
+    setEditingInquiry(inquiry);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingInquiry(null);
+  }
+
+  const handleDelete = (inquiry: CampaignInquiry) => {
+    setDeletingInquiry(inquiry);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingInquiry || !firestore) return;
+    try {
+        const inquiryRef = doc(firestore, 'campaign_inquiries', deletingInquiry.id);
+        await deleteDoc(inquiryRef);
+        toast({
+            title: 'Success!',
+            description: 'Inquiry has been deleted.',
+        });
+        setDeletingInquiry(null);
+        handleFormSubmit();
+    } catch (e: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: e.message || 'Failed to delete inquiry.',
+        });
+    }
+  };
+
   return (
     <Header>
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 xl:grid-cols-[auto_1fr] gap-8 items-start">
             <div>
-                <CampaignInquiryForm onFormSubmit={handleFormSubmit} />
+                <CampaignInquiryForm onFormSubmit={handleFormSubmit} editingInquiry={editingInquiry} onCancelEdit={handleCancelEdit} />
             </div>
             <div>
-                <CampaignInquiriesTable key={tableKey} />
+                <CampaignInquiriesTable key={tableKey} onEdit={handleEdit} onDelete={handleDelete} />
             </div>
         </div>
       </main>
+      <AlertDialog open={!!deletingInquiry} onOpenChange={() => setDeletingInquiry(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the inquiry record.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmDelete}>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Header>
   );
 }
