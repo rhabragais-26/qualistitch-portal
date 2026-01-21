@@ -513,8 +513,8 @@ function CampaignInquiriesTable({ tableKey, onEdit, onDelete }: { tableKey: numb
                 <CardTitle>Recent Inquiry Logs</CardTitle>
                 <CardDescription>A log of recently submitted daily inquiries.</CardDescription>
             </div>
-            <Button variant="outline" onClick={() => setIsModifyMode(prev => !prev)}>
-                {isModifyMode ? 'Done' : 'Modify'}
+            <Button variant={isModifyMode ? "destructive" : "outline"} onClick={() => setIsModifyMode(prev => !prev)}>
+                {isModifyMode ? 'Change to View Mode' : 'Change to Edit Mode'}
             </Button>
         </div>
       </CardHeader>
