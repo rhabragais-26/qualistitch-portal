@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -424,15 +425,15 @@ function CampaignInquiriesTable({ tableKey }: { tableKey: number }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>AD Account</TableHead>
-                <TableHead>AD Campaign</TableHead>
-                <TableHead>Submitted By</TableHead>
-                <TableHead className="text-right">Small</TableHead>
-                <TableHead className="text-right">Medium</TableHead>
-                <TableHead className="text-right">Large</TableHead>
-                <TableHead className="text-right">High</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="text-center">Date</TableHead>
+                <TableHead className="text-center">AD Account</TableHead>
+                <TableHead className="text-center">AD Campaign</TableHead>
+                <TableHead className="text-center">Submitted By</TableHead>
+                <TableHead className="text-center">Small</TableHead>
+                <TableHead className="text-center">Medium</TableHead>
+                <TableHead className="text-center">Large</TableHead>
+                <TableHead className="text-center">High</TableHead>
+                <TableHead className="text-center">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -455,15 +456,15 @@ function CampaignInquiriesTable({ tableKey }: { tableKey: number }) {
                     const total = (inquiry.smallTicketInquiries || 0) + (inquiry.mediumTicketInquiries || 0) + (inquiry.largeTicketInquiries || 0) + (inquiry.highTicketInquiries || 0);
                     return (
                         <TableRow key={inquiry.id}>
-                            <TableCell>{format(new Date(inquiry.date), 'PPP')}</TableCell>
-                            <TableCell>{inquiry.adAccount}</TableCell>
-                            <TableCell>{inquiry.adCampaign}</TableCell>
-                            <TableCell>{inquiry.submittedBy}</TableCell>
-                            <TableCell className="text-right">{inquiry.smallTicketInquiries || 0}</TableCell>
-                            <TableCell className="text-right">{inquiry.mediumTicketInquiries || 0}</TableCell>
-                            <TableCell className="text-right">{inquiry.largeTicketInquiries || 0}</TableCell>
-                            <TableCell className="text-right">{inquiry.highTicketInquiries || 0}</TableCell>
-                            <TableCell className="text-right font-bold">{total}</TableCell>
+                            <TableCell className="text-center">{format(new Date(inquiry.date), 'PPP')}</TableCell>
+                            <TableCell className="text-center">{inquiry.adAccount}</TableCell>
+                            <TableCell className="text-center">{inquiry.adCampaign}</TableCell>
+                            <TableCell className="text-center">{inquiry.submittedBy}</TableCell>
+                            <TableCell className="text-center">{inquiry.smallTicketInquiries || 0}</TableCell>
+                            <TableCell className="text-center">{inquiry.mediumTicketInquiries || 0}</TableCell>
+                            <TableCell className="text-center">{inquiry.largeTicketInquiries || 0}</TableCell>
+                            <TableCell className="text-center">{inquiry.highTicketInquiries || 0}</TableCell>
+                            <TableCell className="text-center font-bold">{total}</TableCell>
                         </TableRow>
                     )
                 })
