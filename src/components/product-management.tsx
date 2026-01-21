@@ -472,15 +472,15 @@ export function ProductManagement() {
                     <DialogTrigger asChild>
                         <Button variant="outline" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-7xl">
-                        <DialogHeader>
+                    <DialogContent className="max-w-7xl px-0">
+                        <DialogHeader className="px-6">
                             <DialogTitle>Manage Products &amp; Categories</DialogTitle>
                             <DialogDescription>
                                 Add new products or re-categorize existing ones.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="grid grid-cols-12 gap-8 py-4">
-                            <div className="col-span-4 space-y-4 border-r pr-8">
+                        <div className="grid grid-cols-12 gap-8 py-4 px-6">
+                            <div className="col-span-2 space-y-4 border-r pr-8">
                                 <h3 className="text-lg font-semibold">Add New Product</h3>
                                 <div>
                                     <Label htmlFor="product-name">New Product Name</Label>
@@ -528,7 +528,7 @@ export function ProductManagement() {
                                 <Button onClick={handleAddNewProduct} className="w-full">Add Product</Button>
                             </div>
 
-                             <section className="col-span-4 border-r pr-8">
+                             <section className="col-span-6 border-r pr-8">
                                 <h3 className="text-lg font-semibold">Product Categories</h3>
                                 <div className="space-y-2 max-h-96 overflow-y-auto border p-4 rounded-md mt-4">
                                 {Object.entries(config.productGroupMapping).map(([name, group]) => (
@@ -585,7 +585,7 @@ export function ProductManagement() {
                                 </div>
                               </section>
                         </div>
-                        <DialogFooter>
+                        <DialogFooter className="px-6">
                             <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
                         </DialogFooter>
                     </DialogContent>
