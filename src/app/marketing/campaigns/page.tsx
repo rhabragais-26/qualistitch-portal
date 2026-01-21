@@ -26,7 +26,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Cog, Edit, Trash2 } from 'lucide-react';
+import { Cog, Edit, Trash2, CalendarDays } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 // --- Data Types ---
@@ -169,7 +169,9 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
   
   useEffect(() => {
     // This effect runs only on the client, after hydration
-    setMaxDate(format(new Date(), 'yyyy-MM-dd'));
+    if (typeof window !== 'undefined') {
+        setMaxDate(format(new Date(), 'yyyy-MM-dd'));
+    }
   }, []);
 
   useEffect(() => {
@@ -258,18 +260,22 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Date</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        className="w-full"
-                        value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                        onChange={(e) => {
-                          const dateValue = e.target.value;
-                          field.onChange(dateValue ? new Date(`${dateValue}T00:00:00`) : undefined);
-                        }}
-                        max={maxDate}
-                      />
-                    </FormControl>
+                    <div className="flex items-center gap-2">
+                        <FormControl>
+                        <Input
+                            type="date"
+                            className="w-auto"
+                            value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                            onChange={(e) => {
+                                const dateValue = e.target.value;
+                                // Handle date selection, allowing clear
+                                field.onChange(dateValue ? new Date(`${dateValue}T00:00:00`) : undefined);
+                            }}
+                            max={maxDate}
+                        />
+                        </FormControl>
+                        <CalendarDays className="h-5 w-5 text-muted-foreground" />
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
