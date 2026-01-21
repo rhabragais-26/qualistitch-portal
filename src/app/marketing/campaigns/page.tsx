@@ -28,7 +28,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Cog, Edit, Trash2, Upload } from 'lucide-react';
+import { Cog, Edit, Trash2, Upload, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import Image from 'next/image';
 import { Label } from '@/components/ui/label';
@@ -75,7 +75,7 @@ const adAccountOptions = ["Personal Account", "AD Account 101", "AD Account 102"
 function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open: boolean, onOpenChange: (open: boolean) => void, onCampaignsUpdate: () => void }) {
     const firestore = useFirestore();
     const { toast } = useToast();
-    const campaignsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'adCampaigns'), orderBy('name')) : null, [firestore]);
+    const campaignsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'adCampaigns')) : null, [firestore]);
     const { data: campaigns, refetch } = useCollection<AdCampaign>(campaignsQuery);
     
     const [selectedAdAccount, setSelectedAdAccount] = useState(adAccountOptions[0]);
@@ -239,11 +239,12 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
   const [isManageOpen, setIsManageOpen] = useState(false);
   const isEditing = !!editingInquiry;
 
-  const campaignsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'adCampaigns'), orderBy('name')) : null, [firestore]);
+  const campaignsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'adCampaigns')) : null, [firestore]);
   const { data: campaigns, refetch: refetchCampaigns } = useCollection<AdCampaign>(campaignsQuery);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onSubmit',
     defaultValues: {
       adAccount: '',
       adCampaign: '',
@@ -415,8 +416,8 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
                   render={({ field }) => (
                     <FormItem>
                        {selectedCampaign?.imageUrl && (
-                        <div className="mb-2 p-1 rounded-md mx-auto border w-fit">
-                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} className="w-auto h-auto object-contain rounded-md" />
+                        <div className="mb-2 p-1 rounded-md mx-auto border w-fit h-40">
+                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} className="w-auto h-full object-contain rounded-md" />
                         </div>
                       )}
                       <div className="flex justify-between items-center">
@@ -506,10 +507,17 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
 }
 
 // --- Table Component ---
-function CampaignInquiriesTable({ tableKey, onEdit, onDelete, isModifyMode, onToggleModifyMode }: { tableKey: number, onEdit: (inquiry: CampaignInquiry) => void, onDelete: (inquiry: CampaignInquiry) => void, isModifyMode: boolean, onToggleModifyMode: () => void }) { 
+function CampaignInquiriesTable({ tableKey, onEdit, onDelete, isModifyMode, onToggleModifyMode, setImageInView }: { tableKey: number, onEdit: (inquiry: CampaignInquiry) => void, onDelete: (inquiry: CampaignInquiry) => void, isModifyMode: boolean, onToggleModifyMode: () => void, setImageInView: (url: string | null) => void }) { 
   const firestore = useFirestore();
   const inquiriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'campaign_inquiries'), orderBy('timestamp', 'desc')) : null, [firestore]);
   const { data: inquiries, isLoading, error } = useCollection<CampaignInquiry>(inquiriesQuery);
+  const campaignsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'adCampaigns')) : null, [firestore]);
+  const { data: campaigns } = useCollection<AdCampaign>(campaignsQuery);
+
+  const campaignsMap = useMemo(() => {
+    if (!campaigns) return new Map<string, string | undefined>();
+    return new Map(campaigns.map(c => [`${c.adAccount}-${c.name}`, c.imageUrl]));
+  }, [campaigns]);
   
   return (
     <Card>
@@ -532,6 +540,7 @@ function CampaignInquiriesTable({ tableKey, onEdit, onDelete, isModifyMode, onTo
                 <TableHead className="text-center">Date</TableHead>
                 <TableHead className="text-center">AD Account</TableHead>
                 <TableHead className="text-center">AD Campaign</TableHead>
+                <TableHead className="text-center">AD Thumbnail</TableHead>
                 <TableHead className="text-center">Submitted By</TableHead>
                 <TableHead className="text-center">Small</TableHead>
                 <TableHead className="text-center">Medium</TableHead>
@@ -545,25 +554,44 @@ function CampaignInquiriesTable({ tableKey, onEdit, onDelete, isModifyMode, onTo
               {isLoading ? (
                 [...Array(5)].map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={isModifyMode ? 10 : 9}>
+                    <TableCell colSpan={isModifyMode ? 11 : 10}>
                       <Skeleton className="h-8 w-full" />
                     </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={isModifyMode ? 10 : 9} className="text-center text-destructive">
+                  <TableCell colSpan={isModifyMode ? 11 : 10} className="text-center text-destructive">
                     Error loading data: {error.message}
                   </TableCell>
                 </TableRow>
               ) : inquiries && inquiries.length > 0 ? (
                 inquiries.map(inquiry => {
                     const total = (inquiry.smallTicketInquiries || 0) + (inquiry.mediumTicketInquiries || 0) + (inquiry.largeTicketInquiries || 0) + (inquiry.highTicketInquiries || 0);
+                    const imageUrl = campaignsMap.get(`${inquiry.adAccount}-${inquiry.adCampaign}`);
                     return (
                         <TableRow key={inquiry.id}>
                             <TableCell className="text-center">{format(new Date(inquiry.date), 'MMM d, yyyy')}</TableCell>
                             <TableCell className="text-center">{inquiry.adAccount}</TableCell>
                             <TableCell className="text-center">{inquiry.adCampaign}</TableCell>
+                            <TableCell className="text-center align-middle">
+                                {imageUrl ? (
+                                    <div
+                                        className="relative h-10 w-16 mx-auto cursor-pointer"
+                                        onClick={() => setImageInView(imageUrl)}
+                                    >
+                                        <Image
+                                            src={imageUrl}
+                                            alt={inquiry.adCampaign}
+                                            layout="fill"
+                                            objectFit="contain"
+                                            className="rounded-sm"
+                                        />
+                                    </div>
+                                ) : (
+                                    <span className="text-xs text-muted-foreground">-</span>
+                                )}
+                            </TableCell>
                             <TableCell className="text-center">{inquiry.submittedBy}</TableCell>
                             <TableCell className="text-center">{inquiry.smallTicketInquiries || 0}</TableCell>
                             <TableCell className="text-center">{inquiry.mediumTicketInquiries || 0}</TableCell>
@@ -585,7 +613,7 @@ function CampaignInquiriesTable({ tableKey, onEdit, onDelete, isModifyMode, onTo
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={isModifyMode ? 10 : 9} className="text-center text-muted-foreground">
+                  <TableCell colSpan={isModifyMode ? 11 : 10} className="text-center text-muted-foreground">
                     No inquiry data has been logged yet.
                   </TableCell>
                 </TableRow>
@@ -610,6 +638,7 @@ export default function CampaignsPage() {
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [isModifyMode, setIsModifyMode] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [imageInView, setImageInView] = useState<string | null>(null);
 
   const handleFormSubmit = () => {
     setTableKey(prev => prev + 1);
@@ -664,13 +693,39 @@ export default function CampaignsPage() {
 
   return (
     <Header>
+      {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close image view</span>
+            </Button>
+          </div>
+        </div>
+      )}
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 xl:grid-cols-[auto_1fr] gap-8 items-start">
             <div>
                 <CampaignInquiryForm onFormSubmit={handleFormSubmit} editingInquiry={editingInquiry} onCancelEdit={handleCancelEdit} onDirtyChange={setIsFormDirty} />
             </div>
             <div>
-                <CampaignInquiriesTable key={tableKey} onEdit={handleEdit} onDelete={handleDelete} isModifyMode={isModifyMode} onToggleModifyMode={handleToggleModifyMode} />
+                <CampaignInquiriesTable 
+                    key={tableKey} 
+                    onEdit={handleEdit} 
+                    onDelete={handleDelete} 
+                    isModifyMode={isModifyMode} 
+                    onToggleModifyMode={handleToggleModifyMode}
+                    setImageInView={setImageInView} 
+                />
             </div>
         </div>
       </main>
@@ -706,5 +761,7 @@ export default function CampaignsPage() {
     </Header>
   );
 }
+
+    
 
     
