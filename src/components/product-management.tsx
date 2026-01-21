@@ -77,14 +77,15 @@ export function ProductManagement() {
   ) => {
     if (!config) return;
 
-    const numValue = parseInt(value, 10);
-    if (field === 'min' && isNaN(numValue)) return;
+    const numValue = value === '' ? 0 : parseInt(value, 10);
+    if(isNaN(numValue)) return;
 
-    if (!isNaN(numValue)) {
-      const newConfig = JSON.parse(JSON.stringify(config));
-      const tiers = newConfig.pricingTiers[group][embroidery].tiers;
-      
-      if (field === 'min') {
+
+    const newConfig = JSON.parse(JSON.stringify(config));
+    const tiers = newConfig.pricingTiers[group][embroidery].tiers;
+    
+    if (field === 'min') {
+      if (numValue > 0) {
         if (tierIndex > 0 && numValue <= tiers[tierIndex - 1].min) {
             toast({ variant: 'destructive', title: 'Invalid Minimum', description: 'Must be greater than previous tier\'s minimum.' });
             return;
@@ -93,12 +94,12 @@ export function ProductManagement() {
             toast({ variant: 'destructive', title: 'Invalid Minimum', description: 'Must be less than next tier\'s minimum.' });
             return;
         }
-        tiers[tierIndex].min = numValue;
-      } else { 
-        tiers[tierIndex].price = numValue;
       }
-      setConfig(newConfig);
+      tiers[tierIndex].min = numValue;
+    } else { 
+      tiers[tierIndex].price = numValue;
     }
+    setConfig(newConfig);
   };
 
   const handleAddOnTierChange = (
@@ -109,14 +110,14 @@ export function ProductManagement() {
   ) => {
     if (!config) return;
 
-    const numValue = parseInt(value, 10);
-    if (field === 'min' && isNaN(numValue)) return;
+    const numValue = value === '' ? 0 : parseInt(value, 10);
+    if(isNaN(numValue)) return;
+
+    const newConfig = JSON.parse(JSON.stringify(config));
+    const tiers = newConfig.addOnPricing[addOn].tiers;
     
-    if (!isNaN(numValue)) {
-      const newConfig = JSON.parse(JSON.stringify(config));
-      const tiers = newConfig.addOnPricing[addOn].tiers;
-      
-      if (field === 'min') {
+    if (field === 'min') {
+      if(numValue > 0) {
         if (tierIndex > 0 && numValue <= tiers[tierIndex - 1].min) {
             toast({ variant: 'destructive', title: 'Invalid Minimum', description: 'Must be greater than previous tier\'s minimum.' });
             return;
@@ -125,12 +126,12 @@ export function ProductManagement() {
             toast({ variant: 'destructive', title: 'Invalid Minimum', description: 'Must be less than next tier\'s minimum.' });
             return;
         }
-        tiers[tierIndex].min = numValue;
-      } else { 
-        tiers[tierIndex].price = numValue;
       }
-      setConfig(newConfig);
+      tiers[tierIndex].min = numValue;
+    } else { 
+      tiers[tierIndex].price = numValue;
     }
+    setConfig(newConfig);
   };
 
 
@@ -276,7 +277,7 @@ export function ProductManagement() {
             </div>
             <div className="flex items-center gap-4">
                 <Label>Select a Product:</Label>
-                 <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                <Select value={selectedProductType} onValueChange={setSelectedProductType}>
                     <SelectTrigger className="w-[280px]">
                         <SelectValue placeholder="Select Product to Edit" />
                     </SelectTrigger>
@@ -412,7 +413,7 @@ export function ProductManagement() {
                                           <TableRow key={tierIndex}>
                                               <TableCell className="p-1 align-middle">
                                                 <div className="flex justify-center">
-                                                    <Input type="number" value={tier.min} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'min', e.target.value)} className="w-20 h-7 text-xs text-center"/>
+                                                    <Input type="text" value={tier.min === 0 && tiers.length > 1 ? '' : tier.min} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'min', e.target.value.replace(/[^0-9]/g, ''))} className="w-20 h-7 text-xs text-center"/>
                                                 </div>
                                               </TableCell>
                                               <TableCell className="p-1 align-middle">
@@ -423,7 +424,7 @@ export function ProductManagement() {
                                               <TableCell className="p-1 align-middle">
                                                 <div className="relative flex items-center justify-center">
                                                     <span className="absolute left-3 text-muted-foreground">₱</span>
-                                                    <Input type="number" value={tier.price} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'price', e.target.value)} className="w-24 h-7 text-xs pl-6 text-center"/>
+                                                    <Input type="text" value={tier.price === 0 ? '' : tier.price} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'price', e.target.value.replace(/[^0-9]/g, ''))} className="w-24 h-7 text-xs pl-6 text-center"/>
                                                 </div>
                                               </TableCell>
                                               <TableCell className="p-1 align-middle">
@@ -476,7 +477,7 @@ export function ProductManagement() {
                                     <TableRow key={tierIndex}>
                                         <TableCell className="p-1 align-middle">
                                             <div className="flex justify-center">
-                                            <Input type="number" value={tier.min} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'min', e.target.value)} className="w-20 h-7 text-xs text-center"/>
+                                            <Input type="text" value={tier.min === 0 && tiers.length > 1 ? '' : tier.min} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'min', e.target.value.replace(/[^0-9]/g, ''))} className="w-20 h-7 text-xs text-center"/>
                                             </div>
                                         </TableCell>
                                         <TableCell className="p-1 align-middle">
@@ -486,8 +487,8 @@ export function ProductManagement() {
                                         </TableCell>
                                         <TableCell className="p-1 align-middle">
                                             <div className="relative flex items-center justify-center">
-                                                <span className="absolute left-2 text-muted-foreground">₱</span>
-                                                <Input type="number" value={tier.price} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'price', e.target.value)} className="w-24 h-7 text-xs pl-6 text-center"/>
+                                                <span className="absolute left-3 text-muted-foreground">₱</span>
+                                                <Input type="text" value={tier.price === 0 ? '' : tier.price} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'price', e.target.value.replace(/[^0-9]/g, ''))} className="w-24 h-7 text-xs pl-6 text-center"/>
                                             </div>
                                         </TableCell>
                                         <TableCell className="p-1 align-middle">
