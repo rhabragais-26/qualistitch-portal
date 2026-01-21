@@ -8,6 +8,8 @@ export type UserPosition =
   | 'Production Head'
   | 'Logistics Officer'
   | 'Operations Manager'
+  | 'Operations Head'
+  | 'Digitizer'
   | 'HR'
   | 'Finance'
   | 'CEO'
@@ -61,8 +63,9 @@ const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'Sales Supervisor': ['sales'],
   'Sales Manager': ['sales'],
   'Inventory Officer': ['inventory'],
+  'Digitizer': ['digitizing'],
   'Production Line Leader': ['production'],
-  'Production Head': ['production'],
+  'Production Head': ['inventory', 'logistics'],
   'Logistics Officer': ['logistics'],
   'Operations Manager': ['inventory', 'production', 'logistics'],
   'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'admin', 'profile'],

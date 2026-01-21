@@ -43,11 +43,13 @@ const positions: UserPosition[] = [
     'SCES',
     'Sales Supervisor',
     'Sales Manager',
+    'Digitizer',
     'Inventory Officer',
     'Production Line Leader',
     'Production Head',
     'Logistics Officer',
     'Operations Manager',
+    'Operations Head',
     'HR',
     'Finance',
     'Page Admin'
