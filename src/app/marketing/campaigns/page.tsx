@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -213,7 +212,7 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
 
   return (
     <>
-      <Card>
+      <Card className="max-w-xl mx-auto">
         <CardHeader>
           <CardTitle>Log Daily Ad Inquiries</CardTitle>
           <CardDescription>Enter the number of inquiries received for each ad ticket size per day.</CardDescription>
