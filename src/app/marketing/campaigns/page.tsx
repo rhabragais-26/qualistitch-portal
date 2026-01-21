@@ -36,7 +36,7 @@ type CampaignInquiry = {
     smallTicketInquiries: number;
     mediumTicketInquiries: number;
     largeTicketInquiries: number;
-    xlTicketInquiries: number;
+    highTicketInquiries: number;
     submittedBy: string;
     timestamp: string;
 };
@@ -53,10 +53,10 @@ const formSchema = z.object({
   }),
   adAccount: z.string().min(1, 'AD Account is required.'),
   adCampaign: z.string().min(1, 'AD Campaign is required.'),
-  smallTicketInquiries: z.coerce.number().min(0, "Cannot be negative."),
-  mediumTicketInquiries: z.coerce.number().min(0, "Cannot be negative."),
-  largeTicketInquiries: z.coerce.number().min(0, "Cannot be negative."),
-  xlTicketInquiries: z.coerce.number().min(0, "Cannot be negative."),
+  smallTicketInquiries: z.coerce.number().min(0, "Cannot be negative.").default(0),
+  mediumTicketInquiries: z.coerce.number().min(0, "Cannot be negative.").default(0),
+  largeTicketInquiries: z.coerce.number().min(0, "Cannot be negative.").default(0),
+  highTicketInquiries: z.coerce.number().min(0, "Cannot be negative.").default(0),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -165,10 +165,10 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
       date: undefined, // Initialize as undefined
       adAccount: '',
       adCampaign: '',
-      smallTicketInquiries: 0,
-      mediumTicketInquiries: 0,
-      largeTicketInquiries: 0,
-      xlTicketInquiries: 0,
+      smallTicketInquiries: undefined,
+      mediumTicketInquiries: undefined,
+      largeTicketInquiries: undefined,
+      highTicketInquiries: undefined,
     },
   });
 
@@ -194,10 +194,10 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
         date: values.date.toISOString(),
         adAccount: values.adAccount,
         adCampaign: values.adCampaign,
-        smallTicketInquiries: values.smallTicketInquiries,
-        mediumTicketInquiries: values.mediumTicketInquiries,
-        largeTicketInquiries: values.largeTicketInquiries,
-        xlTicketInquiries: values.xlTicketInquiries,
+        smallTicketInquiries: values.smallTicketInquiries || 0,
+        mediumTicketInquiries: values.mediumTicketInquiries || 0,
+        largeTicketInquiries: values.largeTicketInquiries || 0,
+        highTicketInquiries: values.highTicketInquiries || 0,
         submittedBy: userProfile.nickname,
         timestamp: new Date().toISOString(),
     };
@@ -213,10 +213,10 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
       date: new Date(),
       adAccount: values.adAccount,
       adCampaign: values.adCampaign,
-      smallTicketInquiries: 0,
-      mediumTicketInquiries: 0,
-      largeTicketInquiries: 0,
-      xlTicketInquiries: 0,
+      smallTicketInquiries: undefined,
+      mediumTicketInquiries: undefined,
+      largeTicketInquiries: undefined,
+      highTicketInquiries: undefined,
     });
     onFormSubmit();
   }
@@ -304,12 +304,13 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
                 name="smallTicketInquiries"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Small Ticket (1-10)</FormLabel>
+                    <FormLabel>Small Ticket (1-9)</FormLabel>
                     <FormControl>
                         <Input 
                             type="text"
                             inputMode="numeric"
                             {...field} 
+                             value={field.value || ''}
                             onChange={(e) => {
                                 const { value } = e.target;
                                 if (/^\d*$/.test(value)) {
@@ -327,12 +328,13 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
                 name="mediumTicketInquiries"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Medium Ticket (11-50)</FormLabel>
+                    <FormLabel>Medium Ticket (10-49)</FormLabel>
                      <FormControl>
                         <Input 
                             type="text"
                             inputMode="numeric"
                             {...field} 
+                             value={field.value || ''}
                             onChange={(e) => {
                                 const { value } = e.target;
                                 if (/^\d*$/.test(value)) {
@@ -350,12 +352,13 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
                 name="largeTicketInquiries"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Large Ticket (51-300)</FormLabel>
+                    <FormLabel>Large Ticket (50-199)</FormLabel>
                      <FormControl>
                         <Input 
                             type="text"
                             inputMode="numeric"
                             {...field} 
+                             value={field.value || ''}
                             onChange={(e) => {
                                 const { value } = e.target;
                                 if (/^\d*$/.test(value)) {
@@ -370,15 +373,16 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
               />
               <FormField
                 control={form.control}
-                name="xlTicketInquiries"
+                name="highTicketInquiries"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>XL Ticket (301+)</FormLabel>
+                    <FormLabel>High Ticket (200+)</FormLabel>
                      <FormControl>
                         <Input 
                             type="text"
                             inputMode="numeric"
                             {...field} 
+                             value={field.value || ''}
                             onChange={(e) => {
                                 const { value } = e.target;
                                 if (/^\d*$/.test(value)) {
@@ -427,7 +431,7 @@ function CampaignInquiriesTable({ tableKey }: { tableKey: number }) {
                 <TableHead className="text-right">Small</TableHead>
                 <TableHead className="text-right">Medium</TableHead>
                 <TableHead className="text-right">Large</TableHead>
-                <TableHead className="text-right">XL</TableHead>
+                <TableHead className="text-right">High</TableHead>
                 <TableHead className="text-right">Total</TableHead>
               </TableRow>
             </TableHeader>
@@ -448,7 +452,7 @@ function CampaignInquiriesTable({ tableKey }: { tableKey: number }) {
                 </TableRow>
               ) : inquiries && inquiries.length > 0 ? (
                 inquiries.map(inquiry => {
-                    const total = inquiry.smallTicketInquiries + inquiry.mediumTicketInquiries + inquiry.largeTicketInquiries + inquiry.xlTicketInquiries;
+                    const total = inquiry.smallTicketInquiries + inquiry.mediumTicketInquiries + inquiry.largeTicketInquiries + inquiry.highTicketInquiries;
                     return (
                         <TableRow key={inquiry.id}>
                             <TableCell>{format(new Date(inquiry.date), 'PPP')}</TableCell>
@@ -458,7 +462,7 @@ function CampaignInquiriesTable({ tableKey }: { tableKey: number }) {
                             <TableCell className="text-right">{inquiry.smallTicketInquiries}</TableCell>
                             <TableCell className="text-right">{inquiry.mediumTicketInquiries}</TableCell>
                             <TableCell className="text-right">{inquiry.largeTicketInquiries}</TableCell>
-                            <TableCell className="text-right">{inquiry.xlTicketInquiries}</TableCell>
+                            <TableCell className="text-right">{inquiry.highTicketInquiries}</TableCell>
                             <TableCell className="text-right font-bold">{total}</TableCell>
                         </TableRow>
                     )
