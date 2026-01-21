@@ -102,16 +102,28 @@ export function ProductManagement() {
 
     if (isCurrentlyEditing && config) {
       let tiers: EditableTier[];
+      let configPath: any;
 
       if (key.includes('-addon')) {
         const addOn = key.replace('-addon', '') as AddOnType;
         tiers = config.addOnPricing[addOn].tiers;
+        configPath = (c: EditablePricingConfig) => c.addOnPricing[addOn];
       } else {
         const [group, embroidery] = key.split('-') as [ProductGroup, 'logo' | 'logoAndText' | 'name'];
         tiers = config.pricingTiers[group]?.[embroidery]?.tiers || [];
+        configPath = (c: EditablePricingConfig) => c.pricingTiers[group][embroidery];
       }
 
-      // 1. Check for blank fields
+      // Filter out entirely blank new tiers silently
+      const nonEmptyTiers = tiers.filter(t => t.min !== '' || t.price !== '');
+      if(nonEmptyTiers.length !== tiers.length) {
+          const newConfig = JSON.parse(JSON.stringify(config));
+          configPath(newConfig).tiers = nonEmptyTiers;
+          setConfig(newConfig);
+          tiers = nonEmptyTiers; // Continue validation with the filtered tiers
+      }
+
+      // 1. Check for partially blank fields
       for (const tier of tiers) {
         if (tier.min === '' || tier.price === '') {
           toast({
@@ -138,20 +150,6 @@ export function ProductManagement() {
           return; // Don't exit edit mode
         }
       }
-      
-      const newConfig = JSON.parse(JSON.stringify(config));
-      
-      const nonEmptyTiers = tiers.filter(t => t.min !== '' && t.price !== '');
-      
-      if (key.includes('-addon')) {
-        const addOn = key.replace('-addon', '') as AddOnType;
-        newConfig.addOnPricing[addOn].tiers = nonEmptyTiers;
-      } else {
-        const [group, embroidery] = key.split('-') as [ProductGroup, 'logo' | 'logoAndText' | 'name'];
-        newConfig.pricingTiers[group][embroidery].tiers = nonEmptyTiers;
-      }
-      
-      setConfig(newConfig);
     }
 
     setEditModes(prev => ({ ...prev, [key]: !prev[key] }));
@@ -173,7 +171,7 @@ export function ProductManagement() {
         tiers[tierIndex][field] = '';
     } else {
         const numValue = parseInt(value, 10);
-        if (!isNaN(numValue)) {
+        if (!isNaN(numValue) && numValue >= 0) {
             tiers[tierIndex][field] = numValue;
         }
     }
@@ -195,7 +193,7 @@ export function ProductManagement() {
         tiers[tierIndex][field] = '';
     } else {
         const numValue = parseInt(value, 10);
-        if (!isNaN(numValue)) {
+        if (!isNaN(numValue) && numValue >= 0) {
             tiers[tierIndex][field] = numValue;
         }
     }
@@ -479,14 +477,14 @@ export function ProductManagement() {
                                 Add new products or re-categorize existing ones.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="grid grid-cols-10 gap-x-8 py-4 px-6 h-full overflow-hidden">
-                            <div className="col-span-4 space-y-4 border-r pr-8">
+                        <div className="grid grid-cols-10 h-full overflow-hidden">
+                            <div className="col-span-4 space-y-4 border-r p-6">
                                 <h3 className="text-lg font-semibold">Add New Product</h3>
-                                <div>
+                                <div className="space-y-2">
                                     <Label htmlFor="product-name">New Product Name</Label>
                                     <Input id="product-name" value={newProduct.name} onChange={e => setNewProduct(p => ({...p, name: e.target.value}))} placeholder="e.g., New Jacket Model"/>
                                 </div>
-                                <div>
+                                <div className="space-y-2">
                                     <Label htmlFor="product-category">Assign to Category</Label>
                                     <div className="flex items-center gap-2">
                                         <Select value={newProduct.group} onValueChange={v => setNewProduct(p => ({...p, group: v as ProductGroup}))}>
@@ -527,10 +525,10 @@ export function ProductManagement() {
                                 </div>
                                 <Button onClick={handleAddNewProduct} className="w-full">Add Product</Button>
                             </div>
-                            <div className="col-span-6 space-y-6">
+                            <div className="col-span-6 space-y-6 p-6 overflow-y-auto">
                                 <section>
                                     <h3 className="text-lg font-semibold">Manage Product Categories</h3>
-                                    <div className="space-y-2 max-h-48 overflow-y-auto border p-4 rounded-md mt-4 text-sm">
+                                    <div className="space-y-2 max-h-48 overflow-y-auto border p-2 rounded-md mt-2 text-sm">
                                         {productGroups.map((group) => (
                                         <div key={group} className="flex items-center justify-between gap-4">
                                             {editingCategory?.oldName === group ? (
@@ -562,7 +560,7 @@ export function ProductManagement() {
                                 </section>
                                 <section>
                                     <h3 className="text-lg font-semibold">Product List</h3>
-                                    <div className="space-y-2 max-h-48 overflow-y-auto border p-4 rounded-md mt-4 text-sm">
+                                    <div className="space-y-2 max-h-48 overflow-y-auto border p-2 rounded-md mt-2 text-sm">
                                         {Object.entries(config.productGroupMapping).map(([name, group]) => (
                                             <div key={name} className="flex items-center justify-between gap-4">
                                                 <span className="whitespace-nowrap flex-1">{name}</span>
@@ -585,7 +583,7 @@ export function ProductManagement() {
                                 </section>
                             </div>
                         </div>
-                        <DialogFooter className="px-6 pb-6">
+                        <DialogFooter className="px-6 pb-6 border-t pt-4">
                             <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
                         </DialogFooter>
                     </DialogContent>
