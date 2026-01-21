@@ -1,15 +1,18 @@
-
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardFooter } from './ui/card';
 import { X, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getUnitPrice } from '@/lib/pricing';
+import { getUnitPrice, type PricingConfig } from '@/lib/pricing';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { ScrollArea } from './ui/scroll-area';
 import { getAddOnPrice } from '@/lib/pricing';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { initialPricingConfig } from '@/lib/pricing-data';
+
 
 const jacketTypes = [
     'Executive Jacket 1', 'Executive Jacket v2 (with lines)', 'Turtle Neck Jacket',
@@ -31,6 +34,18 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
+  
+  const firestore = useFirestore();
+  const pricingConfigRef = useMemoFirebase(
+      () => (firestore ? doc(firestore, 'pricing', 'default') : null),
+      [firestore]
+  );
+  const { data: fetchedConfig } = useDoc<PricingConfig>(pricingConfigRef);
+
+  const pricingConfig = useMemo(() => {
+      if (fetchedConfig) return fetchedConfig;
+      return initialPricingConfig as PricingConfig;
+  }, [fetchedConfig]);
 
   useEffect(() => {
     onDraggingChange(isDragging);
@@ -126,11 +141,11 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
                             <TableRow className="border-b-gray-700 hover:bg-gray-600/50 group">
                                 <TableCell rowSpan={2} className="font-bold align-middle group-hover:bg-gray-600/50">{product}</TableCell>
                                 <TableCell>Logo Only/Name Only</TableCell>
-                                {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logo')}</TableCell>)}
+                                {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logo', pricingConfig)}</TableCell>)}
                             </TableRow>
                              <TableRow className="border-b-gray-600 hover:bg-gray-600/50 group">
                                 <TableCell>Logo + Back Text</TableCell>
-                                {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logoAndText')}</TableCell>)}
+                                {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logoAndText', pricingConfig)}</TableCell>)}
                             </TableRow>
                         </React.Fragment>
                     ))}
@@ -151,11 +166,11 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
                             <TableRow className="border-b-gray-700 hover:bg-gray-600/50 group">
                                 <TableCell rowSpan={2} className="font-bold align-middle group-hover:bg-gray-600/50">{product}</TableCell>
                                 <TableCell>Logo Only/Name Only</TableCell>
-                                {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logo')}</TableCell>)}
+                                {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logo', pricingConfig)}</TableCell>)}
                             </TableRow>
                              <TableRow className="border-b-gray-600 hover:bg-gray-600/50 group">
                                 <TableCell>Logo + Back Text</TableCell>
-                                {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logoAndText')}</TableCell>)}
+                                {quantityTiers.map(tier => <TableCell key={tier} className="text-center">{getUnitPrice(product, tier, 'logoAndText', pricingConfig)}</TableCell>)}
                             </TableRow>
                         </React.Fragment>
                     ))}
@@ -172,11 +187,11 @@ export function ItemPricesDialog({ onClose, onDraggingChange }: { onClose: () =>
                 <TableBody>
                     <TableRow className="border-b-gray-700">
                         <TableCell className="font-bold">Back Logo</TableCell>
-                        {addOnTiers.map(tier => <TableCell key={tier} className="text-center">{getAddOnPrice('backLogo', tier)}</TableCell>)}
+                        {addOnTiers.map(tier => <TableCell key={tier} className="text-center">{getAddOnPrice('backLogo', tier, pricingConfig)}</TableCell>)}
                     </TableRow>
                     <TableRow className="border-b-gray-600">
                         <TableCell className="font-bold">Names</TableCell>
-                        {addOnTiers.map(tier => <TableCell key={tier} className="text-center">{getAddOnPrice('names', tier)}</TableCell>)}
+                        {addOnTiers.map(tier => <TableCell key={tier} className="text-center">{getAddOnPrice('names', tier, pricingConfig)}</TableCell>)}
                     </TableRow>
                 </TableBody>
              </Table>
