@@ -268,13 +268,6 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
   const adAccountValue = form.watch('adAccount');
   const adCampaignValue = form.watch('adCampaign');
 
-  useEffect(() => {
-    // When adAccount changes, reset the adCampaign field
-    if (form.formState.isDirty) {
-        form.setValue('adCampaign', '');
-    }
-  }, [adAccountValue, form]);
-
   const filteredCampaigns = useMemo(() => {
       if (!campaigns || !adAccountValue) return [];
       return campaigns
@@ -432,7 +425,10 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>AD Account</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={(value) => {
+                            field.onChange(value);
+                            form.setValue('adCampaign', ''); // Reset campaign when account changes
+                        }} value={field.value}>
                             <FormControl>
                               <SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger>
                             </FormControl>
@@ -452,7 +448,7 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                   render={({ field }) => (
                     <FormItem>
                        {selectedCampaign?.imageUrl && (
-                        <div className="mb-2 p-1 rounded-md mx-auto border w-full h-40 relative">
+                        <div className="mb-2 p-1 rounded-md mx-auto border w-full h-auto aspect-[4/3] relative">
                             <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} layout="fill" objectFit="contain" className="rounded-md" />
                         </div>
                       )}
@@ -795,14 +791,14 @@ export default function CampaignsPage() {
       {imageInView && (
         <div
           className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
-          onClick={() => setImageInView(null)}
+          onClick={()={() => setImageInView(null)}}
         >
           <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
             <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
              <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setImageInView(null)}
+                onClick={()={() => setImageInView(null)}}
                 className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
             >
                 <X className="h-6 w-6" />
@@ -837,7 +833,7 @@ export default function CampaignsPage() {
             </div>
         </div>
       </main>
-      <AlertDialog open={!!deletingInquiry} onOpenChange={() => setDeletingInquiry(null)}>
+      <AlertDialog open={!!deletingInquiry} onOpenChange={()={() => setDeletingInquiry(null)}}>
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -852,7 +848,7 @@ export default function CampaignsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+      <AlertDialog open={showDiscardDialog} onOpenChange={() => setShowDiscardDialog}>
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>Discard Changes?</AlertDialogTitle>
@@ -869,12 +865,5 @@ export default function CampaignsPage() {
     </Header>
   );
 }
-
-    
-
-    
-
-    
-
 
     
