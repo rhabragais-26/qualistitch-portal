@@ -304,7 +304,7 @@ export function ProductManagement() {
         <section>
           <h3 className="text-lg font-semibold mb-4">Product Price Tiers</h3>
            {selectedProductGroup ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
                   {(['logo', 'name', 'logoAndText'] as const).map((embroideryType, index) => {
                       const getEmbroideryLabel = (type: string) => {
                         if (type === 'logo') return 'Logo Only';
@@ -358,7 +358,7 @@ export function ProductManagement() {
 
         <section>
           <h3 className="text-lg font-semibold mb-4">Add-on Pricing</h3>
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
             {addOnTypes.map((addOn, index) => {
               const colors = ['bg-slate-500', 'bg-gray-500', 'bg-zinc-500'];
               return (
