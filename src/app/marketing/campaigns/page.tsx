@@ -275,15 +275,6 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
   }, [campaigns, adAccountValue]);
 
-  useEffect(() => {
-    if (adAccountValue && adCampaignValue) {
-      const isCurrentCampaignValid = filteredCampaigns.some(c => c.name === adCampaignValue);
-      if (!isCurrentCampaignValid) {
-        form.setValue('adCampaign', '');
-      }
-    }
-  }, [adAccountValue, adCampaignValue, filteredCampaigns, form]);
-
   const selectedCampaign = useMemo(() => 
     filteredCampaigns?.find(c => c.name === adCampaignValue)
   , [adCampaignValue, filteredCampaigns]);
@@ -434,7 +425,12 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>AD Account</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select 
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            form.setValue('adCampaign', '');
+                          }} 
+                          value={field.value}>
                             <FormControl>
                               <SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger>
                             </FormControl>
