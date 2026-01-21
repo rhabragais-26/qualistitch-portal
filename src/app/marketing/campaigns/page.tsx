@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -487,13 +488,15 @@ export default function CampaignsPage() {
   };
   return (
     <Header>
-      <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start">
-            <div className="xl:col-span-2">
-                <CampaignInquiryForm onFormSubmit={handleFormSubmit} />
-            </div>
-            <div className="xl:col-span-3">
-                <CampaignInquiriesTable key={tableKey} />
+      <main className="flex-1 w-full py-4 sm:py-6 lg:py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start">
+                <div className="xl:col-span-2">
+                    <CampaignInquiryForm onFormSubmit={handleFormSubmit} />
+                </div>
+                <div className="xl:col-span-3">
+                    <CampaignInquiriesTable key={tableKey} />
+                </div>
             </div>
         </div>
       </main>
