@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -8,13 +7,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Order } from './lead-form';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
-import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, getTierLabel } from '@/lib/pricing';
+import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, getTierLabel, type PricingConfig } from '@/lib/pricing';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { AddOns, Discount, Payment } from "./invoice-dialogs";
 import { AddOnsDialog, DiscountDialog, AddPaymentDialog } from './invoice-dialogs';
 import { formatCurrency } from '@/lib/utils';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { initialPricingConfig } from '@/lib/pricing-data';
 
 type InvoiceCardProps = {
   orders: Order[];
@@ -32,6 +34,20 @@ type InvoiceCardProps = {
 
 export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, setDiscounts, payments, setPayments, onGrandTotalChange, onBalanceChange, isReadOnly }: InvoiceCardProps) {
   
+  const firestore = useFirestore();
+  const pricingConfigRef = useMemoFirebase(
+      () => (firestore ? doc(firestore, 'pricing', 'default') : null),
+      [firestore]
+  );
+  const { data: fetchedConfig } = useDoc<PricingConfig>(pricingConfigRef);
+
+  const pricingConfig = useMemo(() => {
+      if (fetchedConfig) return fetchedConfig;
+      // The useDoc hook might initially return null while loading, so we use a default.
+      // Once fetchedData is available, this will re-run and use it.
+      return initialPricingConfig as PricingConfig;
+  }, [fetchedConfig]);
+
   const [removingAddOn, setRemovingAddOn] = useState<{ groupKey: string; addOnType: keyof AddOns; } | null>(null);
   const [removedFees, setRemovedFees] = useState<Record<string, { logo?: boolean; backText?: boolean }>>({});
 
@@ -39,7 +55,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     return orders.reduce((acc, order) => {
       const isClientOwned = order.productType === 'Client Owned';
       const isPatches = order.productType === 'Patches';
-      const productGroup = getProductGroup(order.productType);
+      const productGroup = getProductGroup(order.productType, pricingConfig);
       
       if (!productGroup && !isClientOwned && order.productType !== 'Patches') return acc;
 
@@ -56,7 +72,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       acc[groupKey].totalQuantity += order.quantity;
       return acc;
     }, {} as Record<string, { productType: string; embroidery: EmbroideryOption; orders: Order[], totalQuantity: number }>);
-  }, [orders]);
+  }, [orders, pricingConfig]);
 
   const grandTotal = useMemo(() => {
     let total = 0;
@@ -64,7 +80,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const isClientOwned = group.productType === 'Client Owned';
       const isPatches = group.productType === 'Patches';
       const patchPrice = isPatches ? group.orders[0]?.pricePerPatch || 0 : 0;
-      const unitPrice = getUnitPrice(group.productType, group.totalQuantity, group.embroidery, patchPrice, orderType);
+      const unitPrice = getUnitPrice(group.productType, group.totalQuantity, group.embroidery, pricingConfig, patchPrice, orderType);
       const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery, isClientOwned, orderType);
       
       const isLogoFeeRemoved = removedFees[groupKey]?.logo;
@@ -80,9 +96,9 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const groupDiscount = discounts[groupKey];
       const itemTotalQuantity = group.totalQuantity;
 
-      const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity);
-      const namesPrice = getAddOnPrice('names', itemTotalQuantity);
-      const plusSizePrice = getAddOnPrice('plusSize', itemTotalQuantity);
+      const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity, pricingConfig);
+      const namesPrice = getAddOnPrice('names', itemTotalQuantity, pricingConfig);
+      const plusSizePrice = getAddOnPrice('plusSize', itemTotalQuantity, pricingConfig);
 
       subtotal += groupAddOns.backLogo * backLogoPrice;
       subtotal += groupAddOns.names * namesPrice;
@@ -103,7 +119,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       total += subtotal;
     });
     return total;
-  }, [groupedOrders, addOns, discounts, orderType, removedFees]);
+  }, [groupedOrders, addOns, discounts, orderType, removedFees, pricingConfig]);
   
   const totalPaid = useMemo(() => {
     return Object.values(payments).flat().reduce((sum, payment) => sum + payment.amount, 0);
@@ -172,9 +188,9 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
               {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
                 const isClientOwned = groupData.productType === 'Client Owned';
                 const isPatches = groupData.productType === 'Patches';
-                const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery);
+                const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery, pricingConfig);
                 const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
-                const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery, patchPrice, orderType);
+                const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery, pricingConfig, patchPrice, orderType);
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned, orderType);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
@@ -182,9 +198,9 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const groupDiscount = discounts[groupKey];
                 const itemTotalQuantity = groupData.totalQuantity;
 
-                const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity);
-                const namesPrice = getAddOnPrice('names', itemTotalQuantity);
-                const plusSizePrice = getAddOnPrice('plusSize', itemTotalQuantity);
+                const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity, pricingConfig);
+                const namesPrice = getAddOnPrice('names', itemTotalQuantity, pricingConfig);
+                const plusSizePrice = getAddOnPrice('plusSize', itemTotalQuantity, pricingConfig);
 
                 const backLogoTotal = groupAddOns.backLogo * backLogoPrice;
                 const namesTotal = groupAddOns.names * namesPrice;
@@ -447,3 +463,5 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     </Card>
   );
 }
+
+    

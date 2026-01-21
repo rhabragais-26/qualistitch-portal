@@ -1,5 +1,4 @@
 
-
 // This type represents the structure of the pricing configuration stored in Firestore.
 export type PricingConfig = {
   productGroupMapping: { [key: string]: ProductGroup };
@@ -22,6 +21,7 @@ export type AddOnType = 'backLogo' | 'names' | 'rushFee' | 'plusSize' | 'shippin
 
 export const getProductGroup = (productType: string, pricingConfig: PricingConfig): ProductGroup | null => {
   if (productType === 'Patches') return null; // Patches do not belong to a group for tier pricing
+  if (!pricingConfig || !pricingConfig.productGroupMapping) return null;
   return pricingConfig.productGroupMapping[productType] || null;
 };
 
@@ -122,3 +122,5 @@ export const getProgrammingFees = (
   }
   return { logoFee: 0, backTextFee: 0 };
 };
+
+    
