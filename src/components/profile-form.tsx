@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -336,22 +335,9 @@ export function ProfileForm() {
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Position</FormLabel>
-                            {isAdmin ? (
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a position" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    {positions.map(pos => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            ) : (
-                                <FormControl>
-                                    <Input readOnly {...field} className="bg-muted" />
-                                </FormControl>
-                            )}
+                            <FormControl>
+                                <Input readOnly {...field} className="bg-muted" />
+                            </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
