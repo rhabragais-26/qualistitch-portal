@@ -21,6 +21,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
   DialogClose,
   DialogFooter,
 } from "@/components/ui/dialog"
@@ -469,7 +470,7 @@ export function ProductManagement() {
                     <DialogTrigger asChild>
                         <Button variant="outline" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-4xl h-[600px] px-0">
+                    <DialogContent className="max-w-4xl h-[700px] px-0">
                         <DialogHeader className="px-6">
                             <DialogTitle>Manage Products & Categories</DialogTitle>
                             <DialogDescription>
@@ -588,7 +589,7 @@ export function ProductManagement() {
                                 </section>
                             </div>
                         </div>
-                        <DialogFooter className="px-6 border-t py-4">
+                        <DialogFooter className="px-6 border-t pt-4 pb-4 items-center">
                             <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
                         </DialogFooter>
                     </DialogContent>
