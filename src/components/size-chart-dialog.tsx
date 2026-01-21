@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardFooter } from './ui/card';
 import { X, GripVertical, Upload, Trash2, Save } from 'lucide-react';
@@ -62,6 +61,11 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   const corporateJacketInputRef = useRef<HTMLInputElement>(null);
 
   const [deletingTab, setDeletingTab] = useState<TabValue | null>(null);
+  
+  const canEditSizeChart = useMemo(() => {
+    if (!userProfile) return false;
+    return isAdmin || userProfile.position === 'Sales Supervisor' || userProfile.position === 'Sales Manager';
+  }, [isAdmin, userProfile]);
 
   const fileInputRefs: Record<TabValue, React.RefObject<HTMLInputElement>> = {
     bomberJacket: bomberJacketInputRef,
@@ -160,7 +164,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const handleImageUpload = (file: File, tab: TabValue) => {
-    if (!isAdmin) return;
+    if (!canEditSizeChart) return;
     const reader = new FileReader();
     reader.onload = (e) => {
       setSizeChartData(prev => ({
@@ -183,7 +187,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   };
 
   const onPaste = (e: React.ClipboardEvent<HTMLDivElement>, tab: TabValue) => {
-    if (!isAdmin) return;
+    if (!canEditSizeChart) return;
     const items = e.clipboardData.items;
     for (const item of items) {
         if (item.type.indexOf('image') !== -1) {
@@ -194,7 +198,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   };
 
   const removeImage = (tab: TabValue) => {
-    if (!isAdmin) return;
+    if (!canEditSizeChart) return;
     setSizeChartData(prev => ({
       ...prev,
       [tab]: { image: null, uploadTime: null, uploadedBy: null }
@@ -261,7 +265,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   
   const renderUploadBox = (tab: TabValue) => {
     const data = sizeChartData[tab];
-    const canEdit = isAdmin;
+    const canEdit = canEditSizeChart;
     const fileInputRef = fileInputRefs[tab];
 
     return (
@@ -367,7 +371,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
               </TabsContent>
             </Tabs>
           </CardContent>
-          {isAdmin && (
+          {canEditSizeChart && (
             <CardFooter className="p-4 flex justify-center">
                 <Button 
                   onClick={handleSave} 
