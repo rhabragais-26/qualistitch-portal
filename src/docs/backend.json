@@ -1,6 +1,65 @@
 
 {
   "entities": {
+    "PricingConfig": {
+        "title": "PricingConfig",
+        "type": "object",
+        "description": "Stores the entire pricing structure for products and add-ons.",
+        "properties": {
+            "id": { "type": "string" },
+            "productGroupMapping": {
+                "type": "object",
+                "description": "Mapping of product names to pricing groups.",
+                "additionalProperties": { "type": "string" }
+            },
+            "pricingTiers": {
+                "type": "object",
+                "description": "Pricing tiers for different product groups and embroidery types.",
+                "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                        "logo": { "$ref": "#/entities/PricingConfig/definitions/embroideryPricing" },
+                        "logoAndText": { "$ref": "#/entities/PricingConfig/definitions/embroideryPricing" },
+                        "name": { "$ref": "#/entities/PricingConfig/definitions/embroideryPricing" }
+                    }
+                }
+            },
+            "addOnPricing": {
+                "type": "object",
+                "description": "Pricing for various add-ons.",
+                "additionalProperties": { "$ref": "#/entities/PricingConfig/definitions/addOnTier" }
+            }
+        },
+        "definitions": {
+            "embroideryPricing": {
+                "type": "object",
+                "properties": {
+                    "tiers": {
+                        "type": "array",
+                        "items": { "$ref": "#/entities/PricingConfig/definitions/tier" }
+                    }
+                }
+            },
+            "addOnTier": {
+                "type": "object",
+                "properties": {
+                    "tiers": {
+                        "type": "array",
+                        "items": { "$ref": "#/entities/PricingConfig/definitions/tier" }
+                    }
+                }
+            },
+            "tier": {
+                "type": "object",
+                "properties": {
+                    "min": { "type": "number" },
+                    "max": { "type": "number" },
+                    "price": { "type": "number" }
+                },
+                "required": ["min", "max", "price"]
+            }
+        }
+    },
     "AppState": {
         "title": "AppState",
         "type": "object",
@@ -9,7 +68,8 @@
           "showConfetti": { "type": "boolean", "description": "Flag to trigger confetti animation." },
           "confettiTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for the confetti event." },
           "congratsNickname": { "type": "string", "description": "The nickname of the SCES to congratulate." },
-          "congratsMessage": { "type": "string", "description": "The message to display in the popup." }
+          "congratsMessage": { "type": "string", "description": "The message to display in the popup." },
+          "congratsPhotoURL": { "type": "string", "format": "uri", "description": "URL to the user's profile picture." }
         }
     },
     "UserProfile": {
@@ -65,6 +125,11 @@
               "type": "array",
               "items": { "type": "string" },
               "description": "An array of participant UIDs who have read the last message."
+            },
+            "deliveredTo": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "An array of participant UIDs to whom the last message has been delivered."
             }
           }
         },
@@ -315,6 +380,7 @@
         "isDone": { "type": "boolean", "description": "Indicates if the order is completely done." },
         "doneProductionTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the production is marked as done." },
         "isEndorsedToLogistics": { "type": "boolean", "description": "Indicates if the order has been endorsed to logistics." },
+        "deliveredTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the order was delivered." },
         "isDigitizingArchived": {
           "type": "boolean",
           "description": "Indicates if the lead is archived and should be hidden from the digitizing queue."
@@ -360,6 +426,10 @@
         "isWaybillPrinted": {
           "type": "boolean",
           "description": "Indicates if the waybill for the order has been printed."
+        },
+        "waybillNumber": {
+          "type": "string",
+          "description": "The waybill number for the shipment."
         },
         "isQualityApproved": {
           "type": "boolean",
@@ -708,6 +778,39 @@
         "isDeleted": { "type": "boolean", "description": "Indicates if the case is soft-deleted." }
       },
       "required": ["id", "joNumber", "caseType", "remarks", "submissionDateTime", "caseItems"]
+    },
+    "CampaignInquiry": {
+      "title": "CampaignInquiry",
+      "type": "object",
+      "description": "Represents daily inquiry counts from marketing campaigns.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time", "description": "The date for which the inquiries are recorded." },
+        "adAccount": { "type": "string", "description": "The ad account used for the campaign." },
+        "adCampaign": { "type": "string", "description": "The name of the ad campaign." },
+        "smallTicketInquiries": { "type": "number", "description": "Number of inquiries for small ticket ads (1-9 pcs)." },
+        "mediumTicketInquiries": { "type": "number", "description": "Number of inquiries for medium ticket ads (10-49 pcs)." },
+        "largeTicketInquiries": { "type": "number", "description": "Number of inquiries for large ticket ads (50-199 pcs)." },
+        "highTicketInquiries": { "type": "number", "description": "Number of inquiries for high ticket ads (200+ pcs)." },
+        "submittedBy": { "type": "string", "description": "Nickname of the user who submitted the entry." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Timestamp of the submission." }
+      },
+      "required": ["id", "date", "adAccount", "adCampaign", "smallTicketInquiries", "mediumTicketInquiries", "largeTicketInquiries", "highTicketInquiries", "submittedBy", "timestamp"]
+    },
+    "AdCampaign": {
+      "title": "AdCampaign",
+      "type": "object",
+      "description": "Represents a configurable ad campaign name.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "description": "The name of the ad campaign." },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the uploaded campaign image."
+        }
+      },
+      "required": ["id", "name"]
     }
   },
   "auth": {
@@ -799,6 +902,17 @@
         }
       },
       {
+        "path": "/pricing/{configId}",
+        "definition": {
+          "entityName": "PricingConfig",
+          "schema": { "$ref": "#/entities/PricingConfig" },
+          "description": "Stores pricing configuration. A single document with a known ID 'default' is used.",
+          "params": [
+            { "name": "configId", "description": "The document ID, which should be 'default'." }
+          ]
+        }
+      },
+      {
         "path": "/leads/{leadId}",
         "definition": {
           "entityName": "Lead",
@@ -842,6 +956,38 @@
             {
               "name": "caseId",
               "description": "Unique identifier for the operational case."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/campaign_inquiries/{inquiryId}",
+        "definition": {
+          "entityName": "CampaignInquiry",
+          "schema": {
+            "$ref": "#/backend/entities/CampaignInquiry"
+          },
+          "description": "Stores daily inquiry data from marketing campaigns.",
+          "params": [
+            {
+              "name": "inquiryId",
+              "description": "Unique identifier for the inquiry document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/adCampaigns/{campaignId}",
+        "definition": {
+          "entityName": "AdCampaign",
+          "schema": {
+            "$ref": "#/backend/entities/AdCampaign"
+          },
+          "description": "Stores the names of ad campaigns for the dropdown.",
+          "params": [
+            {
+              "name": "campaignId",
+              "description": "Unique identifier for the ad campaign."
             }
           ]
         }

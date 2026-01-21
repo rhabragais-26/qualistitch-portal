@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,12 +22,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Header } from '@/components/header';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Cog, Edit, Trash2, CalendarDays } from 'lucide-react';
+import { Cog, Edit, Trash2, Upload } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
+import Image from 'next/image';
 
 // --- Data Types ---
 type CampaignInquiry = {
@@ -45,6 +47,7 @@ type CampaignInquiry = {
 type AdCampaign = {
     id: string;
     name: string;
+    imageUrl?: string;
 };
 
 // --- Form Schema ---
@@ -72,14 +75,31 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
     const { data: campaigns, refetch } = useCollection<AdCampaign>(campaignsQuery);
     
     const [newCampaignName, setNewCampaignName] = useState('');
+    const [newCampaignImage, setNewCampaignImage] = useState<string | null>(null);
+    const imageUploadRef = useRef<HTMLInputElement>(null);
     const [editingCampaign, setEditingCampaign] = useState<AdCampaign | null>(null);
 
+    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setImage(e.target?.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleAddCampaign = async () => {
-        if (!newCampaignName.trim() || !firestore) return;
+        if (!newCampaignName.trim() || !newCampaignImage || !firestore) return;
         const id = uuidv4();
         const campaignRef = doc(firestore, 'adCampaigns', id);
-        await setDocumentNonBlocking(campaignRef, { id, name: newCampaignName.trim() }, {});
+        await setDocumentNonBlocking(campaignRef, { id, name: newCampaignName.trim(), imageUrl: newCampaignImage }, {});
         setNewCampaignName('');
+        setNewCampaignImage(null);
+        if (imageUploadRef.current) {
+            imageUploadRef.current.value = '';
+        }
         onCampaignsUpdate();
         toast({ title: "Campaign added!" });
     };
@@ -108,9 +128,23 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
                     <DialogTitle>Manage AD Campaigns</DialogTitle>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
-                    <div className="flex gap-2">
-                        <Input value={newCampaignName} onChange={(e) => setNewCampaignName(e.target.value)} placeholder="New campaign name" />
-                        <Button onClick={handleAddCampaign}>Add</Button>
+                    <div className="space-y-2">
+                        <div className="flex gap-2">
+                            <Input value={newCampaignName} onChange={(e) => setNewCampaignName(e.target.value)} placeholder="New campaign name" />
+                            <Button onClick={handleAddCampaign} disabled={!newCampaignName.trim() || !newCampaignImage}>Add</Button>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                            {newCampaignImage && (
+                                <div className="relative h-10 w-10 flex-shrink-0">
+                                    <Image src={newCampaignImage} alt="New campaign preview" layout="fill" objectFit="cover" className="rounded-md" />
+                                </div>
+                            )}
+                            <Button type="button" variant="outline" className="w-full" onClick={() => imageUploadRef.current?.click()}>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Upload Image
+                            </Button>
+                            <input type="file" ref={imageUploadRef} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, setNewCampaignImage)} />
+                        </div>
                     </div>
                     <div className="border rounded-md max-h-60 overflow-y-auto">
                         {campaigns?.map(campaign => (
@@ -118,7 +152,14 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
                                 {editingCampaign?.id === campaign.id ? (
                                     <Input value={editingCampaign.name} onChange={(e) => setEditingCampaign({ ...editingCampaign, name: e.target.value })} />
                                 ) : (
-                                    <span>{campaign.name}</span>
+                                    <div className="flex items-center gap-2">
+                                        {campaign.imageUrl && (
+                                            <div className="relative h-8 w-8 flex-shrink-0">
+                                                <Image src={campaign.imageUrl} alt={campaign.name} layout="fill" objectFit="cover" className="rounded-md" />
+                                            </div>
+                                        )}
+                                        <span>{campaign.name}</span>
+                                    </div>
                                 )}
                                 <div className="flex gap-2">
                                     {editingCampaign?.id === campaign.id ? (
@@ -140,6 +181,7 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
     );
 }
 
+
 // --- Form Component ---
 function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { onFormSubmit: () => void, editingInquiry: CampaignInquiry | null, onCancelEdit: () => void }) {
   const firestore = useFirestore();
@@ -151,48 +193,39 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
   const campaignsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'adCampaigns'), orderBy('name')) : null, [firestore]);
   const { data: campaigns, refetch: refetchCampaigns } = useCollection<AdCampaign>(campaignsQuery);
 
-  const [maxDate, setMaxDate] = useState('');
-  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: new Date(),
       adAccount: '',
       adCampaign: '',
-      smallTicketInquiries: undefined,
-      mediumTicketInquiries: undefined,
-      largeTicketInquiries: undefined,
-      highTicketInquiries: undefined,
+      smallTicketInquiries: 0,
+      mediumTicketInquiries: 0,
+      largeTicketInquiries: 0,
+      highTicketInquiries: 0,
     },
   });
   
-  useEffect(() => {
-    // This effect runs only on the client, after hydration
-    if (typeof window !== 'undefined') {
-        setMaxDate(format(new Date(), 'yyyy-MM-dd'));
-    }
-  }, []);
-
   useEffect(() => {
     if (editingInquiry) {
         form.reset({
             date: new Date(editingInquiry.date),
             adAccount: editingInquiry.adAccount,
             adCampaign: editingInquiry.adCampaign,
-            smallTicketInquiries: editingInquiry.smallTicketInquiries || undefined,
-            mediumTicketInquiries: editingInquiry.mediumTicketInquiries || undefined,
-            largeTicketInquiries: editingInquiry.largeTicketInquiries || undefined,
-            highTicketInquiries: editingInquiry.highTicketInquiries || undefined,
+            smallTicketInquiries: editingInquiry.smallTicketInquiries || 0,
+            mediumTicketInquiries: editingInquiry.mediumTicketInquiries || 0,
+            largeTicketInquiries: editingInquiry.largeTicketInquiries || 0,
+            highTicketInquiries: editingInquiry.highTicketInquiries || 0,
         });
     } else {
         form.reset({
             date: new Date(),
             adAccount: '',
             adCampaign: '',
-            smallTicketInquiries: undefined,
-            mediumTicketInquiries: undefined,
-            largeTicketInquiries: undefined,
-            highTicketInquiries: undefined,
+            smallTicketInquiries: 0,
+            mediumTicketInquiries: 0,
+            largeTicketInquiries: 0,
+            highTicketInquiries: 0,
         });
     }
   }, [editingInquiry, form]);
@@ -234,10 +267,10 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
         date: new Date(),
         adAccount: values.adAccount,
         adCampaign: '',
-        smallTicketInquiries: undefined,
-        mediumTicketInquiries: undefined,
-        largeTicketInquiries: undefined,
-        highTicketInquiries: undefined,
+        smallTicketInquiries: 0,
+        mediumTicketInquiries: 0,
+        largeTicketInquiries: 0,
+        highTicketInquiries: 0,
     });
     onFormSubmit();
     onCancelEdit();
@@ -259,21 +292,17 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Date</FormLabel>
-                    <div className="flex items-center gap-2">
-                        <FormControl>
-                        <Input
-                            type="date"
-                            className="w-auto"
-                            value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                            onChange={(e) => {
-                                const dateValue = e.target.value;
-                                // Handle date selection, allowing clear
-                                field.onChange(dateValue ? new Date(`${dateValue}T00:00:00`) : undefined);
-                            }}
-                            max={maxDate}
-                        />
-                        </FormControl>
-                    </div>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        className="w-full"
+                        value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => {
+                            const dateValue = e.target.value;
+                            field.onChange(dateValue ? new Date(`${dateValue}T00:00:00`) : undefined);
+                        }}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -331,18 +360,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                   <FormItem>
                     <FormLabel>Small Ticket (1-9)</FormLabel>
                     <FormControl>
-                        <Input 
-                            type="text"
-                            inputMode="numeric"
-                            {...field} 
-                             value={field.value || ''}
-                            onChange={(e) => {
-                                const { value } = e.target;
-                                if (/^\d*$/.test(value)) {
-                                    field.onChange(value);
-                                }
-                            }}
-                        />
+                      <Input type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -354,19 +372,8 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Medium Ticket (10-49)</FormLabel>
-                     <FormControl>
-                        <Input 
-                            type="text"
-                            inputMode="numeric"
-                            {...field} 
-                             value={field.value || ''}
-                            onChange={(e) => {
-                                const { value } = e.target;
-                                if (/^\d*$/.test(value)) {
-                                    field.onChange(value);
-                                }
-                            }}
-                        />
+                    <FormControl>
+                      <Input type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -378,19 +385,8 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Large Ticket (50-199)</FormLabel>
-                     <FormControl>
-                        <Input 
-                            type="text"
-                            inputMode="numeric"
-                            {...field} 
-                             value={field.value || ''}
-                            onChange={(e) => {
-                                const { value } = e.target;
-                                if (/^\d*$/.test(value)) {
-                                    field.onChange(value);
-                                }
-                            }}
-                        />
+                    <FormControl>
+                      <Input type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -402,19 +398,8 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>High Ticket (200+)</FormLabel>
-                     <FormControl>
-                        <Input 
-                            type="text"
-                            inputMode="numeric"
-                            {...field} 
-                             value={field.value || ''}
-                            onChange={(e) => {
-                                const { value } = e.target;
-                                if (/^\d*$/.test(value)) {
-                                    field.onChange(value);
-                                }
-                            }}
-                        />
+                    <FormControl>
+                      <Input type="number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -593,3 +578,4 @@ export default function CampaignsPage() {
     </Header>
   );
 }
+
