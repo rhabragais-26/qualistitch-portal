@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -469,95 +470,101 @@ export function ProductManagement() {
                     <DialogTrigger asChild>
                         <Button variant="outline" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-4xl h-[500px] px-0">
+                    <DialogContent className="max-w-4xl h-[600px] px-0">
                         <DialogHeader className="px-6">
-                            <DialogTitle>Manage Products &amp; Categories</DialogTitle>
+                            <DialogTitle>Manage Products & Categories</DialogTitle>
                             <DialogDescription>
                                 Add new products or re-categorize existing ones.
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid grid-cols-10 h-full overflow-hidden">
-                            <div className="col-span-4 space-y-4 border-r p-6">
-                                <h3 className="text-lg font-semibold">Add New Product</h3>
-                                <div className="space-y-3">
-                                    <Label htmlFor="product-name">New Product Name</Label>
-                                    <Input id="product-name" value={newProduct.name} onChange={e => setNewProduct(p => ({...p, name: e.target.value}))} placeholder="e.g., New Jacket Model"/>
-                                </div>
-                                <div className="space-y-3">
-                                    <Label htmlFor="product-category">Assign to Category</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Select value={newProduct.group} onValueChange={v => setNewProduct(p => ({...p, group: v as ProductGroup}))}>
-                                            <SelectTrigger id="product-category" className="flex-1">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                        <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" size="sm"><PlusCircle className="mr-2"/> New</Button>
-                                            </DialogTrigger>
-                                            <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
-                                                <DialogHeader>
-                                                    <DialogTitle>Add New Category</DialogTitle>
-                                                    <DialogDescription>
-                                                        Create a new pricing category for your products.
-                                                    </DialogDescription>
-                                                </DialogHeader>
-                                                <div className="py-4">
-                                                    <Label htmlFor="category-name">Category Name</Label>
-                                                    <Input
-                                                        id="category-name"
-                                                        value={newCategoryName}
-                                                        onChange={(e) => setNewCategoryName(e.target.value)}
-                                                        placeholder="e.g., Pants"
-                                                    />
-                                                </div>
-                                                <DialogFooter>
-                                                    <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                                                    <Button onClick={handleAddNewCategory}>Add Category</Button>
-                                                </DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </div>
-                                </div>
-                                <Button onClick={handleAddNewProduct} className="w-full">Add Product</Button>
-                            </div>
-                            <div className="col-span-6 space-y-4 p-6 overflow-y-auto">
-                               <section>
-                                    <h3 className="text-lg font-semibold">Manage Product Categories</h3>
-                                    <div className="space-y-2 max-h-32 overflow-y-auto border p-2 rounded-md mt-2 text-sm">
-                                        {productGroups.map((group) => (
-                                        <div key={group} className="flex items-center justify-between gap-4">
-                                            {editingCategory?.oldName === group ? (
-                                            <div className="flex items-center gap-2 flex-1">
-                                                <Input 
-                                                value={editingCategory.newName} 
-                                                onChange={(e) => setEditingCategory({ ...editingCategory, newName: e.target.value })}
-                                                className="h-8"
-                                                />
-                                                <Button size="icon" className="h-8 w-8" onClick={handleSaveCategoryName}><Save className="h-4 w-4" /></Button>
-                                                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingCategory(null)}><X className="h-4 w-4" /></Button>
-                                            </div>
-                                            ) : (
-                                            <>
-                                                <span className="whitespace-nowrap flex-1">{group}</span>
-                                                <div className="flex items-center gap-2">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingCategory({ oldName: group, newName: group })}>
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeletingCategory(group)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                                </div>
-                                            </>
-                                            )}
-                                        </div>
-                                        ))}
-                                    </div>
-                                </section>
+                             <div className="col-span-4 space-y-6 border-r p-6">
                                 <section>
+                                <h3 className="text-lg font-semibold">Add New Product</h3>
+                                <div className="space-y-4 mt-2">
+                                    <div>
+                                        <Label htmlFor="product-name" className="text-sm">New Product Name</Label>
+                                        <Input id="product-name" value={newProduct.name} onChange={e => setNewProduct(p => ({...p, name: e.target.value}))} placeholder="e.g., New Jacket Model" className="h-9 mt-1"/>
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="product-category" className="text-sm">Assign to Category</Label>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <Select value={newProduct.group} onValueChange={v => setNewProduct(p => ({...p, group: v as ProductGroup}))}>
+                                                <SelectTrigger id="product-category" className="flex-1 h-9">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                    <Button onClick={handleAddNewProduct} className="w-full">Add Product</Button>
+                                </div>
+                                </section>
+                            </div>
+                            <div className="col-span-6 space-y-6 p-6 overflow-y-auto">
+                                <section>
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-lg font-semibold">Manage Product Categories</h3>
+                                    <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" size="sm"><PlusCircle className="mr-2"/> New Category</Button>
+                                        </DialogTrigger>
+                                        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
+                                            <DialogHeader>
+                                                <DialogTitle>Add New Category</DialogTitle>
+                                                <DialogDescription>
+                                                    Create a new pricing category for your products.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="py-4">
+                                                <Label htmlFor="category-name">Category Name</Label>
+                                                <Input
+                                                    id="category-name"
+                                                    value={newCategoryName}
+                                                    onChange={(e) => setNewCategoryName(e.target.value)}
+                                                    placeholder="e.g., Pants"
+                                                />
+                                            </div>
+                                            <DialogFooter>
+                                                <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                                                <Button onClick={handleAddNewCategory}>Add Category</Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
+                                </div>
+                                <div className="space-y-2 max-h-32 overflow-y-auto border p-2 rounded-md mt-2 text-sm">
+                                    {productGroups.map((group) => (
+                                    <div key={group} className="flex items-center justify-between gap-4">
+                                        {editingCategory?.oldName === group ? (
+                                        <div className="flex items-center gap-2 flex-1">
+                                            <Input 
+                                            value={editingCategory.newName} 
+                                            onChange={(e) => setEditingCategory({ ...editingCategory, newName: e.target.value })}
+                                            className="h-8"
+                                            />
+                                            <Button size="icon" className="h-8 w-8" onClick={handleSaveCategoryName}><Save className="h-4 w-4" /></Button>
+                                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingCategory(null)}><X className="h-4 w-4" /></Button>
+                                        </div>
+                                        ) : (
+                                        <>
+                                            <span className="whitespace-nowrap flex-1">{group}</span>
+                                            <div className="flex items-center gap-2">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingCategory({ oldName: group, newName: group })}>
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeletingCategory(group)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                            </div>
+                                        </>
+                                        )}
+                                    </div>
+                                    ))}
+                                </div>
+                                </section>
+                                 <section>
                                     <h3 className="text-lg font-semibold">Product List</h3>
                                     <div className="space-y-2 max-h-40 overflow-y-auto border p-2 rounded-md mt-2 text-sm">
                                         {Object.entries(config.productGroupMapping).map(([name, group]) => (
@@ -582,7 +589,7 @@ export function ProductManagement() {
                                 </section>
                             </div>
                         </div>
-                        <DialogFooter className="px-6 border-t">
+                        <DialogFooter className="px-6 border-t pt-0 pb-0">
                             <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
                         </DialogFooter>
                     </DialogContent>
@@ -777,3 +784,5 @@ export function ProductManagement() {
     </>
   );
 }
+
+    
