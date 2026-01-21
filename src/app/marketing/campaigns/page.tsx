@@ -628,21 +628,21 @@ function CampaignInquiriesTable({ tableKey, onEdit, onDelete, isModifyMode, onTo
         </div>
       </CardHeader>
       <CardContent>
-        <div className="border rounded-md">
+        <div className="border rounded-md max-h-[calc(100vh-24rem)] overflow-y-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 bg-neutral-800 z-10">
               <TableRow>
-                <TableHead className="text-center">Date</TableHead>
-                <TableHead className="text-center">AD Account</TableHead>
-                <TableHead className="text-center">AD Campaign</TableHead>
-                <TableHead className="text-center">AD Thumbnail</TableHead>
-                <TableHead className="text-center">Submitted By</TableHead>
-                <TableHead className="text-center">Small</TableHead>
-                <TableHead className="text-center">Medium</TableHead>
-                <TableHead className="text-center">Large</TableHead>
-                <TableHead className="text-center">High</TableHead>
-                <TableHead className="text-center">Total</TableHead>
-                {isModifyMode && <TableHead className="text-center">Actions</TableHead>}
+                <TableHead className="text-center text-white font-bold">Date</TableHead>
+                <TableHead className="text-center text-white font-bold">AD Account</TableHead>
+                <TableHead className="text-center text-white font-bold">AD Campaign</TableHead>
+                <TableHead className="text-center text-white font-bold">AD Thumbnail</TableHead>
+                <TableHead className="text-center text-white font-bold">Submitted By</TableHead>
+                <TableHead className="text-center text-white font-bold">Small</TableHead>
+                <TableHead className="text-center text-white font-bold">Medium</TableHead>
+                <TableHead className="text-center text-white font-bold">Large</TableHead>
+                <TableHead className="text-center text-white font-bold">High</TableHead>
+                <TableHead className="text-center text-white font-bold">Total</TableHead>
+                {isModifyMode && <TableHead className="text-center text-white font-bold">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
