@@ -174,10 +174,10 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
 
   // Set the default date once the initialDate is available on the client
   useEffect(() => {
-      if (initialDate) {
+      if (initialDate && !form.getValues('date')) {
           form.setValue('date', initialDate);
       }
-  }, [initialDate, form.setValue]);
+  }, [initialDate, form]);
 
 
   async function onSubmit(values: FormValues) {
@@ -305,7 +305,19 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Small Ticket (1-10)</FormLabel>
-                    <FormControl><Input type="number" {...field} /></FormControl>
+                    <FormControl>
+                        <Input 
+                            type="text"
+                            inputMode="numeric"
+                            {...field} 
+                            onChange={(e) => {
+                                const { value } = e.target;
+                                if (/^\d*$/.test(value)) {
+                                    field.onChange(value);
+                                }
+                            }}
+                        />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -316,7 +328,19 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Medium Ticket (11-50)</FormLabel>
-                    <FormControl><Input type="number" {...field} /></FormControl>
+                     <FormControl>
+                        <Input 
+                            type="text"
+                            inputMode="numeric"
+                            {...field} 
+                            onChange={(e) => {
+                                const { value } = e.target;
+                                if (/^\d*$/.test(value)) {
+                                    field.onChange(value);
+                                }
+                            }}
+                        />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -327,7 +351,19 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Large Ticket (51-300)</FormLabel>
-                    <FormControl><Input type="number" {...field} /></FormControl>
+                     <FormControl>
+                        <Input 
+                            type="text"
+                            inputMode="numeric"
+                            {...field} 
+                            onChange={(e) => {
+                                const { value } = e.target;
+                                if (/^\d*$/.test(value)) {
+                                    field.onChange(value);
+                                }
+                            }}
+                        />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -338,7 +374,19 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>XL Ticket (301+)</FormLabel>
-                    <FormControl><Input type="number" {...field} /></FormControl>
+                     <FormControl>
+                        <Input 
+                            type="text"
+                            inputMode="numeric"
+                            {...field} 
+                            onChange={(e) => {
+                                const { value } = e.target;
+                                if (/^\d*$/.test(value)) {
+                                    field.onChange(value);
+                                }
+                            }}
+                        />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
