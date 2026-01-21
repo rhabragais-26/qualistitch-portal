@@ -125,6 +125,11 @@
               "type": "array",
               "items": { "type": "string" },
               "description": "An array of participant UIDs who have read the last message."
+            },
+            "deliveredTo": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "An array of participant UIDs to whom the last message has been delivered."
             }
           }
         },
@@ -867,7 +872,7 @@
         "path": "/pricing/{configId}",
         "definition": {
           "entityName": "PricingConfig",
-          "schema": { "$ref": "#/backend/entities/PricingConfig" },
+          "schema": { "$ref": "#/entities/PricingConfig" },
           "description": "Stores pricing configuration. A single document with a known ID 'default' is used.",
           "params": [
             { "name": "configId", "description": "The document ID, which should be 'default'." }

@@ -55,6 +55,7 @@ export interface DirectMessageChannel {
         text: string;
         timestamp: any;
         readBy: string[];
+        deliveredTo?: string[];
     };
     unreadCount?: {
         [key: string]: number;
@@ -205,6 +206,14 @@ export function ChatLayout() {
     }
   };
   
+  const isOnline = (lastSeen?: string) => {
+    if (!lastSeen) return false;
+    const lastSeenDate = new Date(lastSeen);
+    const now = new Date();
+    const diffInMinutes = (now.getTime() - lastSeenDate.getTime()) / (1000 * 60);
+    return diffInMinutes < 2;
+  };
+
   const sendMessage = async () => {
     if (!message.trim() || !user || !channelId || !firestore || !selectedUser) return;
 
@@ -212,7 +221,18 @@ export function ChatLayout() {
     const messagesCollectionRef = collection(channelRef, 'messages');
     
     const messageData = { senderId: user.uid, text: message, timestamp: serverTimestamp() };
-    const lastMessageData = { senderId: user.uid, text: message, timestamp: serverTimestamp(), readBy: [user.uid] };
+
+    const deliveredToArray: string[] = [];
+    if (isOnline(selectedUser.lastSeen)) {
+        deliveredToArray.push(selectedUser.uid);
+    }
+    const lastMessageData = { 
+        senderId: user.uid, 
+        text: message, 
+        timestamp: serverTimestamp(), 
+        readBy: [user.uid],
+        deliveredTo: deliveredToArray,
+    };
     
     const currentMessageText = message;
     setMessage('');
@@ -225,7 +245,11 @@ export function ChatLayout() {
           const updateData = { lastMessage: lastMessageData, [`unreadCount.${otherUserId}`]: increment(1) };
           updateDocumentNonBlocking(channelRef, updateData);
       } else {
-          const newChannelData = { participants: [user.uid, otherUserId], lastMessage: lastMessageData, unreadCount: { [user.uid]: 0, [otherUserId]: 1 } };
+          const newChannelData = { 
+              participants: [user.uid, otherUserId], 
+              lastMessage: lastMessageData, 
+              unreadCount: { [user.uid]: 0, [otherUserId]: 1 } 
+          };
           setDocumentNonBlocking(channelRef, newChannelData, {});
       }
       addDocumentNonBlocking(messagesCollectionRef, messageData);
@@ -248,14 +272,6 @@ export function ChatLayout() {
     }
   };
 
-  const isOnline = (lastSeen?: string) => {
-    if (!lastSeen) return false;
-    const lastSeenDate = new Date(lastSeen);
-    const now = new Date();
-    const diffInMinutes = (now.getTime() - lastSeenDate.getTime()) / (1000 * 60);
-    return diffInMinutes < 2;
-  };
-  
   const getInitials = (nickname: string | undefined) => {
     if (!nickname) return '';
     return nickname.charAt(0).toUpperCase();
@@ -424,6 +440,9 @@ export function ChatLayout() {
                     }
                   }
 
+                  const isLastMessage = index === messages.length - 1;
+                  const isMyMessage = msg.senderId === user?.uid;
+                  
                   return (
                     <React.Fragment key={msg.id}>
                       {showTimestamp && (
@@ -452,6 +471,27 @@ export function ChatLayout() {
                             >
                                 <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                             </div>
+                             {isLastMessage && isMyMessage && (
+                                <div className="text-xs font-bold text-muted-foreground text-right mt-1 px-1">
+                                    {(() => {
+                                        const recipientId = selectedUser?.uid;
+                                        const channel = channels?.find(c => c.id === channelId);
+                                        const lastMessageInfo = channel?.lastMessage;
+
+                                        if (!lastMessageInfo || !recipientId || lastMessageInfo.senderId !== user?.uid || lastMessageInfo.text !== msg.text) {
+                                            return null;
+                                        }
+
+                                        if (lastMessageInfo.readBy?.includes(recipientId)) {
+                                            return 'Seen';
+                                        }
+                                        if (lastMessageInfo.deliveredTo?.includes(recipientId)) {
+                                            return 'Delivered';
+                                        }
+                                        return 'Sent';
+                                    })()}
+                                </div>
+                            )}
                         </div>
                       </div>
                     </React.Fragment>
