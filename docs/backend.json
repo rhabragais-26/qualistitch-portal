@@ -803,9 +803,15 @@
       "description": "Represents a configurable ad campaign name.",
       "properties": {
         "id": { "type": "string" },
-        "name": { "type": "string", "description": "The name of the ad campaign." }
+        "name": { "type": "string", "description": "The name of the ad campaign." },
+        "adAccount": { "type": "string", "description": "The ad account this campaign belongs to." },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the uploaded campaign image."
+        }
       },
-      "required": ["id", "name"]
+      "required": ["id", "name", "adAccount"]
     }
   },
   "auth": {

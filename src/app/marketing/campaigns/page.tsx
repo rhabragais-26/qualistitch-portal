@@ -50,6 +50,7 @@ type AdCampaign = {
     id: string;
     name: string;
     imageUrl?: string;
+    adAccount: string;
 };
 
 // --- Form Schema ---
@@ -76,19 +77,25 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
     const campaignsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'adCampaigns'), orderBy('name')) : null, [firestore]);
     const { data: campaigns, refetch } = useCollection<AdCampaign>(campaignsQuery);
     
+    const [selectedAdAccount, setSelectedAdAccount] = useState(adAccountOptions[0]);
     const [newCampaignName, setNewCampaignName] = useState('');
-    const [newCampaignFile, setNewCampaignFile] = useState<File | null>(null); // Store the File object
-    const [newCampaignImagePreview, setNewCampaignImagePreview] = useState<string | null>(null); // For image preview
+    const [newCampaignFile, setNewCampaignFile] = useState<File | null>(null);
+    const [newCampaignImagePreview, setNewCampaignImagePreview] = useState<string | null>(null);
     const imageUploadRef = useRef<HTMLInputElement>(null);
     const [editingCampaign, setEditingCampaign] = useState<AdCampaign | null>(null);
+
+    const filteredCampaigns = useMemo(() => {
+        if (!campaigns) return [];
+        return campaigns.filter(c => c.adAccount === selectedAdAccount);
+    }, [campaigns, selectedAdAccount]);
 
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            setNewCampaignFile(file); // Store the actual file
+            setNewCampaignFile(file);
             const reader = new FileReader();
             reader.onload = (e) => {
-                setNewCampaignImagePreview(e.target?.result as string); // For preview only
+                setNewCampaignImagePreview(e.target?.result as string);
             };
             reader.readAsDataURL(file);
         } else {
@@ -101,20 +108,21 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
         if (!newCampaignName.trim() || !newCampaignFile || !firestore) return;
         
         try {
-            const campaignId = uuidv4(); // Generate ID for both Firestore doc and Storage path
+            const campaignId = uuidv4();
 
-            // 1. Upload image to Firebase Storage
             const storage = getStorage();
-            // Use a unique path for the image, e.g., adCampaigns-images/campaignId/filename
             const storageRef = ref(storage, `adCampaigns-images/${campaignId}/${newCampaignFile.name}`);
             const uploadResult = await uploadBytes(storageRef, newCampaignFile);
             
-            // 2. Get the download URL
             const imageUrl = await getDownloadURL(uploadResult.ref);
 
-            // 3. Save campaign data with image URL to Firestore
             const campaignDocRef = doc(firestore, 'adCampaigns', campaignId);
-            await setDocumentNonBlocking(campaignDocRef, { id: campaignId, name: newCampaignName.trim(), imageUrl: imageUrl }, {});
+            await setDocumentNonBlocking(campaignDocRef, { 
+                id: campaignId, 
+                name: newCampaignName.trim(), 
+                imageUrl: imageUrl,
+                adAccount: selectedAdAccount
+            }, {});
             
             setNewCampaignName('');
             setNewCampaignFile(null);
@@ -142,7 +150,6 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
 
     const handleDeleteCampaign = async (id: string) => {
         if (!firestore) return;
-        // TODO: Optionally, delete the image from Firebase Storage as well
         const campaignRef = doc(firestore, 'adCampaigns', id);
         await deleteDoc(campaignRef);
         onCampaignsUpdate();
@@ -157,12 +164,23 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
                 </DialogHeader>
                 <div className="py-4 space-y-4">
                     <div className="space-y-2">
+                        <Label>AD Account</Label>
+                        <Select value={selectedAdAccount} onValueChange={setSelectedAdAccount}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {adAccountOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
                         <div className="flex gap-2">
                             <Input value={newCampaignName} onChange={(e) => setNewCampaignName(e.target.value)} placeholder="New campaign name" />
                             <Button onClick={handleAddCampaign} disabled={!newCampaignName.trim() || !newCampaignFile}>Add</Button>
                         </div>
                         <div className="flex items-center gap-2 mt-2">
-                            {newCampaignImagePreview && ( // Use preview state for display
+                            {newCampaignImagePreview && (
                                 <div className="relative h-10 w-10 flex-shrink-0">
                                     <Image src={newCampaignImagePreview} alt="New campaign preview" layout="fill" objectFit="cover" className="rounded-md" />
                                 </div>
@@ -175,7 +193,7 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
                         </div>
                     </div>
                     <div className="border rounded-md max-h-60 overflow-y-auto">
-                        {campaigns?.map(campaign => (
+                        {filteredCampaigns?.map(campaign => (
                             <div key={campaign.id} className="flex items-center justify-between p-2 border-b">
                                 {editingCampaign?.id === campaign.id ? (
                                     <Input value={editingCampaign.name} onChange={(e) => setEditingCampaign({ ...editingCampaign, name: e.target.value })} />
@@ -233,8 +251,26 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
     },
   });
 
+  const adAccountValue = form.watch('adAccount');
+  const adCampaignValue = form.watch('adCampaign');
+
   useEffect(() => {
-    // Set date on client-side to avoid hydration mismatch
+    // When adAccount changes, reset the adCampaign field
+    if (form.formState.isDirty) {
+        form.setValue('adCampaign', '');
+    }
+  }, [adAccountValue, form]);
+
+  const filteredCampaigns = useMemo(() => {
+      if (!campaigns || !adAccountValue) return [];
+      return campaigns.filter(c => c.adAccount === adAccountValue);
+  }, [campaigns, adAccountValue]);
+
+  const selectedCampaign = useMemo(() => 
+    filteredCampaigns?.find(c => c.name === adCampaignValue)
+  , [adCampaignValue, filteredCampaigns]);
+
+  useEffect(() => {
     if (!form.getValues('date')) {
       form.setValue('date', new Date());
     }
@@ -263,12 +299,6 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
         });
     }
   }, [editingInquiry, form]);
-
-  const adCampaignValue = form.watch('adCampaign');
-  const selectedCampaign = useMemo(() => 
-    campaigns?.find(c => c.name === adCampaignValue)
-  , [adCampaignValue, campaigns]);
-
 
   async function onSubmit(values: FormValues) {
     if (!firestore || !userProfile) {
@@ -374,7 +404,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                     <FormItem>
                        {selectedCampaign?.imageUrl && (
                         <div className="mb-2 flex justify-center border p-1 rounded-md w-fit mx-auto">
-                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} className="h-[150px] w-auto rounded-md" />
+                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} className="h-auto w-[200px] rounded-md" />
                         </div>
                       )}
                       <div className="flex justify-between items-center">
@@ -383,12 +413,12 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                           <Cog className="h-4 w-4"/> Manage
                         </Button>
                       </div>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={!adAccountValue}>
                           <FormControl>
                             <SelectTrigger><SelectValue placeholder="Select Campaign" /></SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                              {campaigns?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                              {filteredCampaigns?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                           </SelectContent>
                       </Select>
                       <FormMessage />
@@ -404,7 +434,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                   <FormItem>
                     <FormLabel>Small Ticket (1-9)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(e.target.value === '' ? 0 : parseInt(e.target.value))} />
+                      <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -417,7 +447,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                   <FormItem>
                     <FormLabel>Medium Ticket (10-49)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(e.target.value === '' ? 0 : parseInt(e.target.value))} />
+                       <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -430,7 +460,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                   <FormItem>
                     <FormLabel>Large Ticket (50-199)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(e.target.value === '' ? 0 : parseInt(e.target.value))} />
+                       <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -443,7 +473,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                   <FormItem>
                     <FormLabel>High Ticket (200+)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(e.target.value === '' ? 0 : parseInt(e.target.value))} />
+                       <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
