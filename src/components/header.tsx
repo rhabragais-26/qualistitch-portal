@@ -197,25 +197,6 @@ const HeaderMemo = React.memo(function Header({
           <nav className="flex items-end gap-2 h-full flex-1">
             {isClient && (
               <>
-                <DropdownMenu open={openMenu === 'marketing'} onOpenChange={(isOpen) => handleMenuOpenChange('marketing', isOpen)}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/marketing']))}>
-                      <Megaphone className="mr-2" />
-                      Marketing
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleNavigation('/marketing/campaigns')}>
-                      <Target className="mr-2" />
-                      Campaigns
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigation('/marketing/analytics')}>
-                      <LineChart className="mr-2" />
-                      Analytics
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
                 <DropdownMenu open={openMenu === 'finance'} onOpenChange={(isOpen) => handleMenuOpenChange('finance', isOpen)}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/finance']))}>
@@ -236,6 +217,25 @@ const HeaderMemo = React.memo(function Header({
                     <DropdownMenuItem onClick={() => handleNavigation('/finance/reports')}>
                       <BarChart className="mr-2" />
                       Reports
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu open={openMenu === 'marketing'} onOpenChange={(isOpen) => handleMenuOpenChange('marketing', isOpen)}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/marketing']))}>
+                      <Megaphone className="mr-2" />
+                      Marketing
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleNavigation('/marketing/campaigns')}>
+                      <Target className="mr-2" />
+                      Inquiries per Ticket Size
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/marketing/analytics')}>
+                      <LineChart className="mr-2" />
+                      Analytics
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
