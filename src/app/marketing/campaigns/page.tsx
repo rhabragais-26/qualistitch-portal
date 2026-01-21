@@ -150,8 +150,11 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
   const { data: campaigns, refetch: refetchCampaigns } = useCollection<AdCampaign>(campaignsQuery);
 
   const [maxDate, setMaxDate] = useState('');
+  const [initialDate, setInitialDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
+    // This effect runs only on the client, after hydration
+    setInitialDate(new Date());
     setMaxDate(format(new Date(), 'yyyy-MM-dd'));
   }, []);
 
@@ -159,7 +162,7 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: new Date(),
+      date: undefined, // Initialize as undefined
       adAccount: '',
       adCampaign: '',
       smallTicketInquiries: 0,
@@ -168,6 +171,14 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
       xlTicketInquiries: 0,
     },
   });
+
+  // Set the default date once the initialDate is available on the client
+  useEffect(() => {
+      if (initialDate) {
+          form.setValue('date', initialDate);
+      }
+  }, [initialDate, form.setValue]);
+
 
   async function onSubmit(values: FormValues) {
     if (!firestore || !userProfile) {
@@ -212,7 +223,7 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
 
   return (
     <>
-      <Card className="max-w-xl mx-auto">
+      <Card className="max-w-md mx-auto">
         <CardHeader>
           <CardTitle>Log Daily Ad Inquiries</CardTitle>
           <CardDescription>Enter the number of inquiries received for each ad ticket size per day.</CardDescription>
