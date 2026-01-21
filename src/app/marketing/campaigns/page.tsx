@@ -18,6 +18,8 @@ import { format } from 'date-fns';
 import { useFirestore, useUser, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { doc, collection, query, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
+// Import Firebase Storage functions
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/header';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -75,33 +77,58 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
     const { data: campaigns, refetch } = useCollection<AdCampaign>(campaignsQuery);
     
     const [newCampaignName, setNewCampaignName] = useState('');
-    const [newCampaignImage, setNewCampaignImage] = useState<string | null>(null);
+    const [newCampaignFile, setNewCampaignFile] = useState<File | null>(null); // Store the File object
+    const [newCampaignImagePreview, setNewCampaignImagePreview] = useState<string | null>(null); // For image preview
     const imageUploadRef = useRef<HTMLInputElement>(null);
     const [editingCampaign, setEditingCampaign] = useState<AdCampaign | null>(null);
 
-    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
+    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
+            setNewCampaignFile(file); // Store the actual file
             const reader = new FileReader();
             reader.onload = (e) => {
-                setImage(e.target?.result as string);
+                setNewCampaignImagePreview(e.target?.result as string); // For preview only
             };
             reader.readAsDataURL(file);
+        } else {
+            setNewCampaignFile(null);
+            setNewCampaignImagePreview(null);
         }
     };
 
     const handleAddCampaign = async () => {
-        if (!newCampaignName.trim() || !newCampaignImage || !firestore) return;
-        const id = uuidv4();
-        const campaignRef = doc(firestore, 'adCampaigns', id);
-        await setDocumentNonBlocking(campaignRef, { id, name: newCampaignName.trim(), imageUrl: newCampaignImage }, {});
-        setNewCampaignName('');
-        setNewCampaignImage(null);
-        if (imageUploadRef.current) {
-            imageUploadRef.current.value = '';
+        if (!newCampaignName.trim() || !newCampaignFile || !firestore) return;
+        
+        try {
+            const campaignId = uuidv4(); // Generate ID for both Firestore doc and Storage path
+
+            // 1. Upload image to Firebase Storage
+            const storage = getStorage();
+            // Use a unique path for the image, e.g., adCampaigns-images/campaignId/filename
+            const storageRef = ref(storage, `adCampaigns-images/${campaignId}/${newCampaignFile.name}`);
+            const uploadResult = await uploadBytes(storageRef, newCampaignFile);
+            
+            // 2. Get the download URL
+            const imageUrl = await getDownloadURL(uploadResult.ref);
+
+            // 3. Save campaign data with image URL to Firestore
+            const campaignDocRef = doc(firestore, 'adCampaigns', campaignId);
+            await setDocumentNonBlocking(campaignDocRef, { id: campaignId, name: newCampaignName.trim(), imageUrl: imageUrl }, {});
+            
+            setNewCampaignName('');
+            setNewCampaignFile(null);
+            setNewCampaignImagePreview(null);
+            if (imageUploadRef.current) {
+                imageUploadRef.current.value = '';
+            }
+            onCampaignsUpdate();
+            toast({ title: "Campaign added!", description: "Image uploaded and campaign details saved." });
+
+        } catch (error: any) {
+            console.error("Error adding campaign:", error);
+            toast({ variant: "destructive", title: "Failed to add campaign", description: error.message || "An unknown error occurred." });
         }
-        onCampaignsUpdate();
-        toast({ title: "Campaign added!" });
     };
 
     const handleUpdateCampaign = async () => {
@@ -115,6 +142,7 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
 
     const handleDeleteCampaign = async (id: string) => {
         if (!firestore) return;
+        // TODO: Optionally, delete the image from Firebase Storage as well
         const campaignRef = doc(firestore, 'adCampaigns', id);
         await deleteDoc(campaignRef);
         onCampaignsUpdate();
@@ -131,19 +159,19 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
                     <div className="space-y-2">
                         <div className="flex gap-2">
                             <Input value={newCampaignName} onChange={(e) => setNewCampaignName(e.target.value)} placeholder="New campaign name" />
-                            <Button onClick={handleAddCampaign} disabled={!newCampaignName.trim() || !newCampaignImage}>Add</Button>
+                            <Button onClick={handleAddCampaign} disabled={!newCampaignName.trim() || !newCampaignFile}>Add</Button>
                         </div>
                         <div className="flex items-center gap-2 mt-2">
-                            {newCampaignImage && (
+                            {newCampaignImagePreview && ( // Use preview state for display
                                 <div className="relative h-10 w-10 flex-shrink-0">
-                                    <Image src={newCampaignImage} alt="New campaign preview" layout="fill" objectFit="cover" className="rounded-md" />
+                                    <Image src={newCampaignImagePreview} alt="New campaign preview" layout="fill" objectFit="cover" className="rounded-md" />
                                 </div>
                             )}
                             <Button type="button" variant="outline" className="w-full" onClick={() => imageUploadRef.current?.click()}>
                                 <Upload className="mr-2 h-4 w-4" />
                                 Upload Image
                             </Button>
-                            <input type="file" ref={imageUploadRef} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, setNewCampaignImage)} />
+                            <input type="file" ref={imageUploadRef} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e)} />
                         </div>
                     </div>
                     <div className="border rounded-md max-h-60 overflow-y-auto">
@@ -196,7 +224,6 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: new Date(),
       adAccount: '',
       adCampaign: '',
       smallTicketInquiries: 0,
@@ -205,6 +232,13 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
       highTicketInquiries: 0,
     },
   });
+
+  useEffect(() => {
+    // Set date on client-side to avoid hydration mismatch
+    if (!form.getValues('date')) {
+      form.setValue('date', new Date());
+    }
+  }, [form]);
   
   useEffect(() => {
     if (editingInquiry) {
@@ -229,6 +263,11 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
         });
     }
   }, [editingInquiry, form]);
+
+  const adCampaignValue = form.watch('adCampaign');
+  const selectedCampaign = useMemo(() => 
+    campaigns?.find(c => c.name === adCampaignValue)
+  , [adCampaignValue, campaigns]);
 
 
   async function onSubmit(values: FormValues) {
@@ -286,52 +325,58 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        className="w-full"
-                        value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
-                        onChange={(e) => {
-                            const dateValue = e.target.value;
-                            field.onChange(dateValue ? new Date(`${dateValue}T00:00:00`) : undefined);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+               <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            className="w-full"
+                            value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                            onChange={(e) => {
+                                const dateValue = e.target.value;
+                                field.onChange(dateValue ? new Date(`${dateValue}T00:00:00`) : undefined);
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="adAccount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>AD Account</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {adAccountOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+               </div>
               
-              <div className="grid grid-cols-2 gap-4">
                 <FormField
-                  control={form.control}
-                  name="adAccount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>AD Account</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                              {adAccountOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                          </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
                   control={form.control}
                   name="adCampaign"
                   render={({ field }) => (
                     <FormItem>
+                       {selectedCampaign?.imageUrl && (
+                        <div className="relative h-24 w-full mb-2">
+                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} layout="fill" objectFit="contain" className="rounded-md border p-1" />
+                        </div>
+                      )}
                       <div className="flex justify-between items-center">
                         <FormLabel>AD Campaign</FormLabel>
                         <Button type="button" variant="ghost" size="sm" className="h-7 gap-1" onClick={() => setIsManageOpen(true)}>
@@ -350,7 +395,6 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                     </FormItem>
                   )}
                 />
-              </div>
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -578,4 +622,3 @@ export default function CampaignsPage() {
     </Header>
   );
 }
-
