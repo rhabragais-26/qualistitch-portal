@@ -150,6 +150,13 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
   const campaignsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'adCampaigns'), orderBy('name')) : null, [firestore]);
   const { data: campaigns, refetch: refetchCampaigns } = useCollection<AdCampaign>(campaignsQuery);
 
+  const [maxDate, setMaxDate] = useState('');
+
+  useEffect(() => {
+    setMaxDate(format(new Date(), 'yyyy-MM-dd'));
+  }, []);
+
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -229,7 +236,7 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
                           const dateValue = e.target.value;
                           field.onChange(dateValue ? new Date(`${dateValue}T00:00:00`) : undefined);
                         }}
-                        max={format(new Date(), 'yyyy-MM-dd')}
+                        max={maxDate}
                       />
                     </FormControl>
                     <FormMessage />
@@ -339,7 +346,7 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
 }
 
 // --- Table Component ---
-function CampaignInquiriesTable({ tableKey }: { tableKey: number }) { // Changed 'key' to 'tableKey'
+function CampaignInquiriesTable({ tableKey }: { tableKey: number }) { 
   const firestore = useFirestore();
   const inquiriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'campaign_inquiries'), orderBy('timestamp', 'desc')) : null, [firestore]);
   const { data: inquiries, isLoading, error } = useCollection<CampaignInquiry>(inquiriesQuery);
