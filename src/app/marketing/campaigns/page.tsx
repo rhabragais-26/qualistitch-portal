@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { useFirestore, useUser, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { doc, collection, query, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, collection, query, orderBy, deleteDoc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 // Import Firebase Storage functions
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -232,7 +232,7 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
 
 
 // --- Form Component ---
-function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDirtyChange }: { onFormSubmit: () => void, editingInquiry: CampaignInquiry | null, onCancelEdit: () => void, onDirtyChange: (isDirty: boolean) => void }) {
+function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancelEdit, onDirtyChange }: { inquiries: CampaignInquiry[] | null, onFormSubmit: () => void, editingInquiry: CampaignInquiry | null, onCancelEdit: () => void, onDirtyChange: (isDirty: boolean) => void }) {
   const firestore = useFirestore();
   const { userProfile } = useUser();
   const { toast } = useToast();
@@ -242,16 +242,19 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
   const campaignsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'adCampaigns')) : null, [firestore]);
   const { data: campaigns, refetch: refetchCampaigns } = useCollection<AdCampaign>(campaignsQuery);
 
+  const [showReplaceDialog, setShowReplaceDialog] = useState(false);
+  const [valuesToSave, setValuesToSave] = useState<FormValues | null>(null);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onSubmit',
     defaultValues: {
       adAccount: '',
       adCampaign: '',
-      smallTicketInquiries: '' as any,
-      mediumTicketInquiries: '' as any,
-      largeTicketInquiries: '' as any,
-      highTicketInquiries: '' as any,
+      smallTicketInquiries: 0,
+      mediumTicketInquiries: 0,
+      largeTicketInquiries: 0,
+      highTicketInquiries: 0,
     },
   });
   
@@ -295,25 +298,25 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
             date: new Date(editingInquiry.date),
             adAccount: editingInquiry.adAccount,
             adCampaign: editingInquiry.adCampaign,
-            smallTicketInquiries: editingInquiry.smallTicketInquiries || '' as any,
-            mediumTicketInquiries: editingInquiry.mediumTicketInquiries || '' as any,
-            largeTicketInquiries: editingInquiry.largeTicketInquiries || '' as any,
-            highTicketInquiries: editingInquiry.highTicketInquiries || '' as any,
+            smallTicketInquiries: editingInquiry.smallTicketInquiries || 0,
+            mediumTicketInquiries: editingInquiry.mediumTicketInquiries || 0,
+            largeTicketInquiries: editingInquiry.largeTicketInquiries || 0,
+            highTicketInquiries: editingInquiry.highTicketInquiries || 0,
         });
     } else {
         form.reset({
             date: new Date(),
             adAccount: '',
             adCampaign: '',
-            smallTicketInquiries: '' as any,
-            mediumTicketInquiries: '' as any,
-            largeTicketInquiries: '' as any,
-            highTicketInquiries: '' as any,
+            smallTicketInquiries: 0,
+            mediumTicketInquiries: 0,
+            largeTicketInquiries: 0,
+            highTicketInquiries: 0,
         });
     }
   }, [editingInquiry, form]);
 
-  async function onSubmit(values: FormValues) {
+  const handleActualSubmit = async (values: FormValues) => {
     if (!firestore || !userProfile) {
         toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to submit inquiries.' });
         return;
@@ -323,39 +326,72 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
         date: values.date.toISOString(),
         adAccount: values.adAccount,
         adCampaign: values.adCampaign,
-        smallTicketInquiries: values.smallTicketInquiries,
-        mediumTicketInquiries: values.mediumTicketInquiries,
-        largeTicketInquiries: values.largeTicketInquiries,
-        highTicketInquiries: values.highTicketInquiries,
+        smallTicketInquiries: values.smallTicketInquiries || 0,
+        mediumTicketInquiries: values.mediumTicketInquiries || 0,
+        largeTicketInquiries: values.largeTicketInquiries || 0,
+        highTicketInquiries: values.highTicketInquiries || 0,
         submittedBy: userProfile.nickname,
         timestamp: new Date().toISOString(),
     };
 
-    if (isEditing && editingInquiry) {
-        const inquiryRef = doc(firestore, 'campaign_inquiries', editingInquiry.id);
-        await updateDoc(inquiryRef, dataToSave);
-        toast({ title: 'Success!', description: 'Inquiry has been updated.' });
-    } else {
-        const docId = `${format(values.date, 'yyyy-MM-dd')}_${userProfile.nickname}_${values.adAccount}_${values.adCampaign}`;
-        const inquiryRef = doc(firestore, 'campaign_inquiries', docId);
-        setDocumentNonBlocking(inquiryRef, { ...dataToSave, id: docId }, { merge: true });
-        toast({
-            title: 'Success!',
-            description: `Inquiries for ${format(values.date, 'PPP')} have been saved.`,
+    try {
+        if (isEditing && editingInquiry) {
+            const inquiryRef = doc(firestore, 'campaign_inquiries', editingInquiry.id);
+            await updateDoc(inquiryRef, dataToSave);
+            toast({ title: 'Success!', description: 'Inquiry has been updated.' });
+        } else {
+            const docId = `${format(values.date, 'yyyy-MM-dd')}_${userProfile.nickname}_${values.adAccount}_${values.adCampaign}`;
+            const inquiryRef = doc(firestore, 'campaign_inquiries', docId);
+            await setDoc(inquiryRef, { ...dataToSave, id: docId });
+            toast({
+                title: 'Success!',
+                description: `Inquiries for ${format(values.date, 'PPP')} have been saved/replaced.`,
+            });
+        }
+        
+        form.reset({
+            date: new Date(),
+            adAccount: values.adAccount,
+            adCampaign: '',
+            smallTicketInquiries: 0,
+            mediumTicketInquiries: 0,
+            largeTicketInquiries: 0,
+            highTicketInquiries: 0,
         });
+        onFormSubmit();
+        onCancelEdit();
+    } catch (e: any) {
+        console.error("Error saving inquiry:", e);
+        toast({
+            variant: "destructive",
+            title: "Save Failed",
+            description: e.message || "An unknown error occurred.",
+        });
+    } finally {
+        setValuesToSave(null);
+        setShowReplaceDialog(false);
     }
+  }
+
+  async function onSubmit(values: FormValues) {
+    if (!userProfile || !firestore) return;
+
+    if (isEditing) {
+        await handleActualSubmit(values);
+        return;
+    }
+
+    const docId = `${format(values.date, 'yyyy-MM-dd')}_${userProfile.nickname}_${values.adAccount}_${values.adCampaign}`;
+    const inquiryRef = doc(firestore, 'campaign_inquiries', docId);
     
-    form.reset({
-        date: new Date(),
-        adAccount: values.adAccount,
-        adCampaign: '',
-        smallTicketInquiries: '' as any,
-        mediumTicketInquiries: '' as any,
-        largeTicketInquiries: '' as any,
-        highTicketInquiries: '' as any,
-    });
-    onFormSubmit();
-    onCancelEdit();
+    const docSnap = await getDoc(inquiryRef);
+
+    if (docSnap.exists()) {
+        setValuesToSave(values);
+        setShowReplaceDialog(true);
+    } else {
+        await handleActualSubmit(values);
+    }
   }
 
   return (
@@ -416,8 +452,8 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
                   render={({ field }) => (
                     <FormItem>
                        {selectedCampaign?.imageUrl && (
-                        <div className="mb-2 p-1 rounded-md mx-auto border w-fit h-40">
-                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} className="w-auto h-full object-contain rounded-md" />
+                        <div className="mb-2 p-1 rounded-md mx-auto border w-full h-40 relative">
+                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} layout="fill" objectFit="contain" className="rounded-md" />
                         </div>
                       )}
                       <div className="flex justify-between items-center">
@@ -522,15 +558,27 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
         </CardContent>
       </Card>
       <ManageCampaignsDialog open={isManageOpen} onOpenChange={setIsManageOpen} onCampaignsUpdate={refetchCampaigns}/>
+       <AlertDialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Record Exists</AlertDialogTitle>
+                <AlertDialogDescription>
+                    An inquiry for this date, account, and campaign already exists. Do you want to replace it with the new data?
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setValuesToSave(null)}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => valuesToSave && handleActualSubmit(valuesToSave)}>Replace</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
 
 // --- Table Component ---
-function CampaignInquiriesTable({ tableKey, onEdit, onDelete, isModifyMode, onToggleModifyMode, setImageInView }: { tableKey: number, onEdit: (inquiry: CampaignInquiry) => void, onDelete: (inquiry: CampaignInquiry) => void, isModifyMode: boolean, onToggleModifyMode: () => void, setImageInView: (url: string | null) => void }) { 
+function CampaignInquiriesTable({ tableKey, onEdit, onDelete, isModifyMode, onToggleModifyMode, setImageInView, inquiries, isLoading, error }: { tableKey: number, onEdit: (inquiry: CampaignInquiry) => void, onDelete: (inquiry: CampaignInquiry) => void, isModifyMode: boolean, onToggleModifyMode: () => void, setImageInView: (url: string | null) => void, inquiries: CampaignInquiry[] | null, isLoading: boolean, error: Error | null }) { 
   const firestore = useFirestore();
-  const inquiriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'campaign_inquiries'), orderBy('timestamp', 'desc')) : null, [firestore]);
-  const { data: inquiries, isLoading, error } = useCollection<CampaignInquiry>(inquiriesQuery);
   const campaignsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'adCampaigns')) : null, [firestore]);
   const { data: campaigns } = useCollection<AdCampaign>(campaignsQuery);
 
@@ -687,8 +735,12 @@ export default function CampaignsPage() {
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [imageInView, setImageInView] = useState<string | null>(null);
 
+  const inquiriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'campaign_inquiries'), orderBy('timestamp', 'desc')) : null, [firestore]);
+  const { data: inquiries, isLoading, error, refetch: refetchInquiries } = useCollection<CampaignInquiry>(inquiriesQuery);
+
   const handleFormSubmit = () => {
     setTableKey(prev => prev + 1);
+    refetchInquiries();
   };
 
   const handleEdit = (inquiry: CampaignInquiry) => {
@@ -762,11 +814,20 @@ export default function CampaignsPage() {
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 xl:grid-cols-[auto_1fr] gap-8 items-start">
             <div>
-                <CampaignInquiryForm onFormSubmit={handleFormSubmit} editingInquiry={editingInquiry} onCancelEdit={handleCancelEdit} onDirtyChange={setIsFormDirty} />
+                <CampaignInquiryForm 
+                    inquiries={inquiries}
+                    onFormSubmit={handleFormSubmit} 
+                    editingInquiry={editingInquiry} 
+                    onCancelEdit={handleCancelEdit} 
+                    onDirtyChange={setIsFormDirty} 
+                />
             </div>
             <div>
                 <CampaignInquiriesTable 
                     key={tableKey} 
+                    inquiries={inquiries}
+                    isLoading={isLoading}
+                    error={error}
                     onEdit={handleEdit} 
                     onDelete={handleDelete} 
                     isModifyMode={isModifyMode} 
@@ -812,5 +873,8 @@ export default function CampaignsPage() {
     
 
     
+
+    
+
 
     
