@@ -31,6 +31,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Cog, Edit, Trash2, Upload } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import Image from 'next/image';
+import { Label } from '@/components/ui/label';
 
 // --- Data Types ---
 type CampaignInquiry = {
