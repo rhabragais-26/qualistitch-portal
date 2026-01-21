@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -320,8 +321,8 @@ export function ProductManagement() {
                           <Table>
                               <TableHeader>
                                   <TableRow>
-                                      <TableHead className="py-1 px-2 text-xs text-center">Min</TableHead>
-                                      <TableHead className="py-1 px-2 text-xs text-center">Max</TableHead>
+                                      <TableHead className="py-1 px-2 text-xs text-center">Min Qty</TableHead>
+                                      <TableHead className="py-1 px-2 text-xs text-center">Max Qty</TableHead>
                                       <TableHead className="py-1 px-2 text-xs text-center">Price</TableHead>
                                   </TableRow>
                               </TableHeader>
