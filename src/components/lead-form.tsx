@@ -82,6 +82,7 @@ import type { Lead as LeadType } from './records-table';
 import { getTierLabel } from '@/lib/pricing';
 import { toTitleCase, formatCurrency } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
 
 // Define the form schema using Zod
@@ -816,15 +817,24 @@ export function LeadForm({
                             />
                          </div>
                       ) : (
-                        <div onClick={() => customerStatus === 'New' && !isEditing && setIsStatusDialogOpen(true)} className={customerStatus === 'New' && !isEditing ? 'cursor-pointer' : ''}>
-                            <StatusBanner
-                            text="New Customer"
-                            backgroundColor="#FFFFFF"
-                            textColorClassName="text-black font-bold"
-                            borderClassName="shining-black-border"
-                            className='w-36'
-                            />
-                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div onClick={() => customerStatus === 'New' && !isEditing && setIsStatusDialogOpen(true)} className={customerStatus === 'New' && !isEditing ? 'cursor-pointer' : ''}>
+                                  <StatusBanner
+                                  text="New Customer"
+                                  backgroundColor="#FFFFFF"
+                                  textColorClassName="text-black font-bold"
+                                  borderClassName="shining-black-border"
+                                  className='w-36'
+                                  />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Click if the customer have already ordered before to tag as Repeat Buyer</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                        {customerStatus === 'Repeat' && orderCount > 0 && (
                           <div className="flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-black text-xs font-bold">
