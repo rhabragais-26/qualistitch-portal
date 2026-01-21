@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -224,7 +223,7 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
 
   return (
     <>
-      <Card className="max-w-md mx-auto">
+      <Card className="max-w-md">
         <CardHeader>
           <CardTitle>Log Daily Ad Inquiries</CardTitle>
           <CardDescription>Enter the number of inquiries received for each ad ticket size per day.</CardDescription>
@@ -488,15 +487,13 @@ export default function CampaignsPage() {
   };
   return (
     <Header>
-      <main className="flex-1 w-full py-4 sm:py-6 lg:py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start">
-                <div className="xl:col-span-2">
-                    <CampaignInquiryForm onFormSubmit={handleFormSubmit} />
-                </div>
-                <div className="xl:col-span-3">
-                    <CampaignInquiriesTable key={tableKey} />
-                </div>
+      <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
+        <div className="grid grid-cols-1 xl:grid-cols-[auto_1fr] gap-8 items-start">
+            <div>
+                <CampaignInquiryForm onFormSubmit={handleFormSubmit} />
+            </div>
+            <div>
+                <CampaignInquiriesTable key={tableKey} />
             </div>
         </div>
       </main>
