@@ -28,7 +28,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Cog, Edit, Trash2, Upload, X } from 'lucide-react';
+import { Cog, Edit, Trash2, Upload, X, Ticket } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import Image from 'next/image';
 import { Label } from '@/components/ui/label';
@@ -249,12 +249,13 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
     resolver: zodResolver(formSchema),
     mode: 'onSubmit',
     defaultValues: {
+      date: new Date(),
       adAccount: '',
       adCampaign: '',
-      smallTicketInquiries: undefined,
-      mediumTicketInquiries: undefined,
-      largeTicketInquiries: undefined,
-      highTicketInquiries: undefined,
+      smallTicketInquiries: 0,
+      mediumTicketInquiries: 0,
+      largeTicketInquiries: 0,
+      highTicketInquiries: 0,
     },
   });
   
@@ -287,24 +288,32 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
   
   useEffect(() => {
     if (editingInquiry && campaigns) {
-        form.reset({
-            date: new Date(editingInquiry.date),
-            adAccount: editingInquiry.adAccount,
-            adCampaign: editingInquiry.adCampaign,
-            smallTicketInquiries: editingInquiry.smallTicketInquiries || undefined,
-            mediumTicketInquiries: editingInquiry.mediumTicketInquiries || undefined,
-            largeTicketInquiries: editingInquiry.largeTicketInquiries || undefined,
-            highTicketInquiries: editingInquiry.highTicketInquiries || undefined,
-        });
+        const adAccount = editingInquiry.adAccount;
+        form.setValue('adAccount', adAccount, { shouldValidate: true });
+
+        // This effect will re-run when adAccountValue changes.
+        // We wait for the filteredCampaigns to be updated before setting the campaign.
+        const relevantCampaigns = campaigns.filter(c => c.adAccount === adAccount);
+        if (relevantCampaigns.length > 0) {
+             form.reset({
+                date: new Date(editingInquiry.date),
+                adAccount: editingInquiry.adAccount,
+                adCampaign: editingInquiry.adCampaign,
+                smallTicketInquiries: editingInquiry.smallTicketInquiries || 0,
+                mediumTicketInquiries: editingInquiry.mediumTicketInquiries || 0,
+                largeTicketInquiries: editingInquiry.largeTicketInquiries || 0,
+                highTicketInquiries: editingInquiry.highTicketInquiries || 0,
+            });
+        }
     } else if (!isEditing) {
         form.reset({
             date: new Date(),
             adAccount: '',
             adCampaign: '',
-            smallTicketInquiries: undefined,
-            mediumTicketInquiries: undefined,
-            largeTicketInquiries: undefined,
-            highTicketInquiries: undefined,
+            smallTicketInquiries: 0,
+            mediumTicketInquiries: 0,
+            largeTicketInquiries: 0,
+            highTicketInquiries: 0,
         });
     }
   }, [editingInquiry, campaigns, form, isEditing]);
@@ -346,10 +355,10 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
             date: new Date(),
             adAccount: values.adAccount,
             adCampaign: '',
-            smallTicketInquiries: undefined,
-            mediumTicketInquiries: undefined,
-            largeTicketInquiries: undefined,
-            highTicketInquiries: undefined,
+            smallTicketInquiries: 0,
+            mediumTicketInquiries: 0,
+            largeTicketInquiries: 0,
+            highTicketInquiries: 0,
         });
         onFormSubmit();
         onCancelEdit();
@@ -427,9 +436,9 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                         <FormLabel>AD Account</FormLabel>
                         <Select 
                           onValueChange={(value) => {
-                            field.onChange(value);
-                            form.setValue('adCampaign', '');
-                          }} 
+                            form.setValue('adAccount', value);
+                            form.setValue('adCampaign', '', { shouldValidate: true });
+                          }}
                           value={field.value}>
                             <FormControl>
                               <SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger>
@@ -654,7 +663,7 @@ function CampaignInquiriesTable({ tableKey, onEdit, onDelete, isModifyMode, onTo
         </div>
       </CardHeader>
       <CardContent>
-        <div className="border rounded-md max-h-[calc(100vh-24rem)] overflow-y-auto">
+        <div className="border rounded-md max-h-[calc(100vh-20rem)] overflow-y-auto">
           <Table>
             <TableHeader className="sticky top-0 bg-neutral-800 z-10">
               <TableRow>
