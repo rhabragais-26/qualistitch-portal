@@ -275,6 +275,15 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
   }, [campaigns, adAccountValue]);
 
+  useEffect(() => {
+    if (adAccountValue && adCampaignValue) {
+      const isCurrentCampaignValid = filteredCampaigns.some(c => c.name === adCampaignValue);
+      if (!isCurrentCampaignValid) {
+        form.setValue('adCampaign', '');
+      }
+    }
+  }, [adAccountValue, adCampaignValue, filteredCampaigns, form]);
+
   const selectedCampaign = useMemo(() => 
     filteredCampaigns?.find(c => c.name === adCampaignValue)
   , [adCampaignValue, filteredCampaigns]);
@@ -296,7 +305,7 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
             largeTicketInquiries: editingInquiry.largeTicketInquiries || undefined,
             highTicketInquiries: editingInquiry.highTicketInquiries || undefined,
         });
-    } else if (!editingInquiry) {
+    } else if (!isEditing) {
         form.reset({
             date: new Date(),
             adAccount: '',
@@ -307,7 +316,7 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
             highTicketInquiries: undefined,
         });
     }
-  }, [editingInquiry, form, campaigns]);
+  }, [editingInquiry, campaigns, form, isEditing]);
 
   const handleActualSubmit = async (values: FormValues) => {
     if (!firestore || !userProfile) {
@@ -425,10 +434,7 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>AD Account</FormLabel>
-                        <Select onValueChange={(value) => {
-                            field.onChange(value);
-                            form.setValue('adCampaign', '');
-                        }} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger>
                             </FormControl>
