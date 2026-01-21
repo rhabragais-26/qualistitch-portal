@@ -87,7 +87,9 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
 
     const filteredCampaigns = useMemo(() => {
         if (!campaigns) return [];
-        return campaigns.filter(c => c.adAccount === selectedAdAccount);
+        return campaigns
+            .filter(c => c.adAccount === selectedAdAccount)
+            .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
     }, [campaigns, selectedAdAccount]);
 
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -264,7 +266,9 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
 
   const filteredCampaigns = useMemo(() => {
       if (!campaigns || !adAccountValue) return [];
-      return campaigns.filter(c => c.adAccount === adAccountValue);
+      return campaigns
+        .filter(c => c.adAccount === adAccountValue)
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   }, [campaigns, adAccountValue]);
 
   const selectedCampaign = useMemo(() => 
@@ -405,7 +409,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                     <FormItem>
                        {selectedCampaign?.imageUrl && (
                         <div className="mb-2 border p-1 rounded-md w-fit mx-auto">
-                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} className="w-[200px] h-auto rounded-md" />
+                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} className="w-auto h-[150px] rounded-md" />
                         </div>
                       )}
                       <div className="flex justify-between items-center">
