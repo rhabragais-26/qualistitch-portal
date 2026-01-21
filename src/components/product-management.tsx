@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { initialPricingConfig } from '@/lib/pricing-data';
 import type { PricingConfig, ProductGroup, AddOnType } from '@/lib/pricing';
-import { Save, PlusCircle, Trash2, Edit } from 'lucide-react';
+import { Save, PlusCircle, Trash2, Edit, X } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { isEqual } from 'lodash';
 import {
@@ -25,6 +25,16 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Label } from './ui/label';
 import { cn } from '@/lib/utils';
 
@@ -63,6 +73,9 @@ export function ProductManagement() {
 
   // State to manage edit mode for each table
   const [editModes, setEditModes] = useState<Record<string, boolean>>({});
+  
+  const [editingCategory, setEditingCategory] = useState<{ oldName: string; newName: string } | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState<string | null>(null);
 
   useEffect(() => {
     const dataToUse = fetchedConfig || (isLoading ? null : initialPricingConfig as PricingConfig);
@@ -128,22 +141,17 @@ export function ProductManagement() {
       
       const newConfig = JSON.parse(JSON.stringify(config));
       
-      let setTiersInConfig: (newTiers: EditableTier[]) => void;
+      const nonEmptyTiers = tiers.filter(t => t.min !== '' && t.price !== '');
       
       if (key.includes('-addon')) {
         const addOn = key.replace('-addon', '') as AddOnType;
-        setTiersInConfig = (newTiers) => { newConfig.addOnPricing[addOn].tiers = newTiers.filter(t => t.min !== '' && t.price !== ''); };
+        newConfig.addOnPricing[addOn].tiers = nonEmptyTiers;
       } else {
         const [group, embroidery] = key.split('-') as [ProductGroup, 'logo' | 'logoAndText' | 'name'];
-        setTiersInConfig = (newTiers) => { newConfig.pricingTiers[group][embroidery].tiers = newTiers.filter(t => t.min !== '' && t.price !== ''); };
+        newConfig.pricingTiers[group][embroidery].tiers = nonEmptyTiers;
       }
       
-      const nonEmptyTiers = numericTiers.filter(t => t.min !== '' && t.price !== '');
-      setTiersInConfig(nonEmptyTiers);
       setConfig(newConfig);
-
-      setEditModes(prev => ({ ...prev, [key]: !prev[key] }));
-      return;
     }
 
     setEditModes(prev => ({ ...prev, [key]: !prev[key] }));
@@ -160,12 +168,14 @@ export function ProductManagement() {
 
     const newConfig = JSON.parse(JSON.stringify(config));
     const tiers: EditableTier[] = newConfig.pricingTiers[group][embroidery].tiers;
-    const numValue = parseInt(value, 10);
-
+    
     if (value === '') {
         tiers[tierIndex][field] = '';
-    } else if (!isNaN(numValue)) {
-        tiers[tierIndex][field] = numValue;
+    } else {
+        const numValue = parseInt(value, 10);
+        if (!isNaN(numValue)) {
+            tiers[tierIndex][field] = numValue;
+        }
     }
     
     setConfig(newConfig);
@@ -180,12 +190,14 @@ export function ProductManagement() {
     if (!config) return;
     const newConfig = JSON.parse(JSON.stringify(config));
     const tiers: EditableTier[] = newConfig.addOnPricing[addOn].tiers;
-    const numValue = parseInt(value, 10);
-
+    
     if (value === '') {
         tiers[tierIndex][field] = '';
-    } else if (!isNaN(numValue)) {
-        tiers[tierIndex][field] = numValue;
+    } else {
+        const numValue = parseInt(value, 10);
+        if (!isNaN(numValue)) {
+            tiers[tierIndex][field] = numValue;
+        }
     }
 
     setConfig(newConfig);
@@ -277,6 +289,61 @@ export function ProductManagement() {
     setIsAddCategoryOpen(false);
     toast({ title: 'Category Added', description: `"${newCategoryName.trim()}" is ready to be configured and used.`});
   };
+
+  const handleSaveCategoryName = () => {
+    if (!editingCategory || !config) return;
+    const { oldName, newName } = editingCategory;
+
+    if (!newName.trim()) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Category name cannot be empty.' });
+        return;
+    }
+    if (newName.trim() !== oldName && config.pricingTiers[newName.trim()]) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Category name already exists.' });
+        return;
+    }
+
+    const newConfig = JSON.parse(JSON.stringify(config));
+
+    // Rename in pricingTiers
+    newConfig.pricingTiers[newName.trim()] = newConfig.pricingTiers[oldName];
+    delete newConfig.pricingTiers[oldName];
+
+    // Update productGroupMapping
+    for (const product in newConfig.productGroupMapping) {
+        if (newConfig.productGroupMapping[product] === oldName) {
+            newConfig.productGroupMapping[product] = newName.trim();
+        }
+    }
+    
+    setConfig(newConfig);
+    setEditingCategory(null);
+    toast({ title: 'Category Renamed', description: `"${oldName}" was renamed to "${newName.trim()}".`});
+  };
+
+  const handleConfirmDeleteCategory = () => {
+    if (!deletingCategory || !config) return;
+
+    const isCategoryInUse = Object.values(config.productGroupMapping).some(group => group === deletingCategory);
+
+    if (isCategoryInUse) {
+        toast({
+            variant: 'destructive',
+            title: 'Deletion Failed',
+            description: `Cannot delete category "${deletingCategory}" as it is still assigned to one or more products. Please re-assign them first.`,
+            duration: 5000,
+        });
+        setDeletingCategory(null);
+        return;
+    }
+
+    const newConfig = JSON.parse(JSON.stringify(config));
+    delete newConfig.pricingTiers[deletingCategory];
+    setConfig(newConfig);
+    setDeletingCategory(null);
+    toast({ title: 'Category Deleted', description: `Category "${deletingCategory}" has been deleted.`});
+  };
+
 
   const handleSaveChanges = async () => {
     if (!config || !pricingConfigRef) return;
@@ -381,6 +448,7 @@ export function ProductManagement() {
   }
 
   return (
+    <>
     <Card className="w-full shadow-xl mt-8">
       <CardHeader>
         <div className="flex justify-between items-center">
@@ -404,15 +472,15 @@ export function ProductManagement() {
                     <DialogTrigger asChild>
                         <Button variant="outline" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-5xl">
+                    <DialogContent className="max-w-7xl">
                         <DialogHeader>
                             <DialogTitle>Manage Products &amp; Categories</DialogTitle>
                             <DialogDescription>
                                 Add new products or re-categorize existing ones.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="grid grid-cols-3 gap-8 py-4">
-                            <div className="space-y-4 border-r pr-8">
+                        <div className="grid grid-cols-12 gap-8 py-4">
+                            <div className="col-span-4 space-y-4 border-r pr-8">
                                 <h3 className="text-lg font-semibold">Add New Product</h3>
                                 <div>
                                     <Label htmlFor="product-name">New Product Name</Label>
@@ -460,7 +528,7 @@ export function ProductManagement() {
                                 <Button onClick={handleAddNewProduct} className="w-full">Add Product</Button>
                             </div>
 
-                             <section className="col-span-2">
+                             <section className="col-span-4 border-r pr-8">
                                 <h3 className="text-lg font-semibold">Product Categories</h3>
                                 <div className="space-y-2 max-h-96 overflow-y-auto border p-4 rounded-md mt-4">
                                 {Object.entries(config.productGroupMapping).map(([name, group]) => (
@@ -483,6 +551,39 @@ export function ProductManagement() {
                                 ))}
                                 </div>
                             </section>
+                            
+                             <section className="col-span-4">
+                                <h3 className="text-lg font-semibold">Manage Pricing Categories</h3>
+                                <div className="space-y-2 max-h-96 overflow-y-auto border p-4 rounded-md mt-4">
+                                  {productGroups.map((group) => (
+                                    <div key={group} className="flex items-center justify-between gap-4">
+                                      {editingCategory?.oldName === group ? (
+                                        <div className="flex items-center gap-2 flex-1">
+                                          <Input 
+                                            value={editingCategory.newName} 
+                                            onChange={(e) => setEditingCategory({ ...editingCategory, newName: e.target.value })}
+                                            className="h-8"
+                                          />
+                                          <Button size="icon" className="h-8 w-8" onClick={handleSaveCategoryName}><Save className="h-4 w-4" /></Button>
+                                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingCategory(null)}><X className="h-4 w-4" /></Button>
+                                        </div>
+                                      ) : (
+                                        <>
+                                          <span className="whitespace-nowrap flex-1">{group}</span>
+                                          <div className="flex items-center gap-2">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingCategory({ oldName: group, newName: group })}>
+                                              <Edit className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeletingCategory(group)}>
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </section>
                         </div>
                         <DialogFooter>
                             <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
@@ -531,7 +632,7 @@ export function ProductManagement() {
                                             <TableRow key={tierIndex}>
                                                 <TableCell className="p-1 align-middle">
                                                   <div className="flex justify-center">
-                                                      <Input type="text" value={tier.min} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'min', e.target.value.replace(/[^0-9]/g, ''))} className="w-20 h-7 text-xs text-center" readOnly={!isEditing}/>
+                                                      <Input type="text" value={tier.min} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'min', e.target.value)} className="w-20 h-7 text-xs text-center" readOnly={!isEditing}/>
                                                   </div>
                                                 </TableCell>
                                                 <TableCell className="p-1 align-middle">
@@ -542,7 +643,7 @@ export function ProductManagement() {
                                                 <TableCell className="p-1 align-middle">
                                                   <div className="relative flex items-center justify-center">
                                                       <span className="absolute left-3 text-muted-foreground">₱</span>
-                                                      <Input type="text" value={tier.price} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'price', e.target.value.replace(/[^0-9]/g, ''))} className="w-24 h-7 text-xs pl-6 text-center" readOnly={!isEditing}/>
+                                                      <Input type="text" value={tier.price} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'price', e.target.value)} className="w-24 h-7 text-xs pl-6 text-center" readOnly={!isEditing}/>
                                                   </div>
                                                 </TableCell>
                                                 <TableCell className="p-1 align-middle">
@@ -609,7 +710,7 @@ export function ProductManagement() {
                                       <TableRow key={tierIndex}>
                                           <TableCell className="p-1 align-middle">
                                               <div className="flex justify-center">
-                                              <Input type="text" value={tier.min} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'min', e.target.value.replace(/[^0-9]/g, ''))} className="w-20 h-7 text-xs text-center" readOnly={!isEditing}/>
+                                              <Input type="text" value={tier.min} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'min', e.target.value)} className="w-20 h-7 text-xs text-center" readOnly={!isEditing}/>
                                               </div>
                                           </TableCell>
                                           <TableCell className="p-1 align-middle">
@@ -620,7 +721,7 @@ export function ProductManagement() {
                                           <TableCell className="p-1 align-middle">
                                               <div className="relative flex items-center justify-center">
                                                   <span className="absolute left-3 text-muted-foreground">₱</span>
-                                                  <Input type="text" value={tier.price} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'price', e.target.value.replace(/[^0-9]/g, ''))} className="w-24 h-7 text-xs pl-6 text-center" readOnly={!isEditing}/>
+                                                  <Input type="text" value={tier.price} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'price', e.target.value)} className="w-24 h-7 text-xs pl-6 text-center" readOnly={!isEditing}/>
                                               </div>
                                           </TableCell>
                                           <TableCell className="p-1 align-middle">
@@ -662,5 +763,20 @@ export function ProductManagement() {
         </div>
       </CardContent>
     </Card>
+    <AlertDialog open={!!deletingCategory} onOpenChange={(isOpen) => !isOpen && setDeletingCategory(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure you want to delete this category?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    You can only delete a category if no products are assigned to it. This action cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmDeleteCategory} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
