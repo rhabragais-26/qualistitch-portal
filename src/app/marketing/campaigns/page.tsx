@@ -291,10 +291,10 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
             date: new Date(editingInquiry.date),
             adAccount: editingInquiry.adAccount,
             adCampaign: editingInquiry.adCampaign,
-            smallTicketInquiries: editingInquiry.smallTicketInquiries || undefined,
-            mediumTicketInquiries: editingInquiry.mediumTicketInquiries || undefined,
-            largeTicketInquiries: editingInquiry.largeTicketInquiries || undefined,
-            highTicketInquiries: editingInquiry.highTicketInquiries || undefined,
+            smallTicketInquiries: editingInquiry.smallTicketInquiries,
+            mediumTicketInquiries: editingInquiry.mediumTicketInquiries,
+            largeTicketInquiries: editingInquiry.largeTicketInquiries,
+            highTicketInquiries: editingInquiry.highTicketInquiries,
         });
     } else {
         form.reset({
@@ -426,10 +426,8 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                       <FormItem>
                         <FormLabel>AD Account</FormLabel>
                         <Select onValueChange={(value) => {
-                            if (form.getValues('adCampaign') && adAccountValue !== value) {
-                              form.setValue('adCampaign', ''); // Reset campaign when account changes
-                            }
                             field.onChange(value);
+                            form.setValue('adCampaign', '');
                         }} value={field.value}>
                             <FormControl>
                               <SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger>
