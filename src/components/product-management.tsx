@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -87,7 +88,6 @@ export function ProductManagement() {
     const isCurrentlyEditing = editModes[key];
 
     if (isCurrentlyEditing && config) {
-      // This is the "Done" button click logic
       let tiers: EditableTier[];
 
       if (key.includes('-addon')) {
@@ -125,25 +125,23 @@ export function ProductManagement() {
           return; // Don't exit edit mode
         }
       }
-
-      // If validation passes, sort the tiers in the actual config state before exiting edit mode
+      
       const newConfig = JSON.parse(JSON.stringify(config));
       
       let setTiersInConfig: (newTiers: EditableTier[]) => void;
       
       if (key.includes('-addon')) {
         const addOn = key.replace('-addon', '') as AddOnType;
-        setTiersInConfig = (newTiers) => { newConfig.addOnPricing[addOn].tiers = newTiers; };
+        setTiersInConfig = (newTiers) => { newConfig.addOnPricing[addOn].tiers = newTiers.filter(t => t.min !== '' && t.price !== ''); };
       } else {
         const [group, embroidery] = key.split('-') as [ProductGroup, 'logo' | 'logoAndText' | 'name'];
-        setTiersInConfig = (newTiers) => { newConfig.pricingTiers[group][embroidery].tiers = newTiers; };
+        setTiersInConfig = (newTiers) => { newConfig.pricingTiers[group][embroidery].tiers = newTiers.filter(t => t.min !== '' && t.price !== ''); };
       }
       
       const nonEmptyTiers = numericTiers.filter(t => t.min !== '' && t.price !== '');
       setTiersInConfig(nonEmptyTiers);
       setConfig(newConfig);
 
-      // Now exit edit mode
       setEditModes(prev => ({ ...prev, [key]: !prev[key] }));
       return;
     }
@@ -413,7 +411,7 @@ export function ProductManagement() {
                                 Add new products or re-categorize existing ones.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="grid grid-cols-2 gap-8 py-4">
+                        <div className="grid grid-cols-3 gap-8 py-4">
                             <div className="space-y-4 border-r pr-8">
                                 <h3 className="text-lg font-semibold">Add New Product</h3>
                                 <div>
@@ -462,7 +460,7 @@ export function ProductManagement() {
                                 <Button onClick={handleAddNewProduct} className="w-full">Add Product</Button>
                             </div>
 
-                             <section>
+                             <section className="col-span-2">
                                 <h3 className="text-lg font-semibold">Product Categories</h3>
                                 <div className="space-y-2 max-h-96 overflow-y-auto border p-4 rounded-md mt-4">
                                 {Object.entries(config.productGroupMapping).map(([name, group]) => (
@@ -637,29 +635,19 @@ export function ProductManagement() {
                       </Table>
                     </div>
                      <div className={`p-2 flex justify-center items-center gap-2 ${colors[index % colors.length]}`}>
-                        {isEditing ? (
-                          <>
+                        {isEditing && (
                             <Button variant="outline" size="sm" onClick={() => handleAddOnAddTier(addOn)}>
                                 <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
                             </Button>
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => toggleEditMode(key)}
-                                className="bg-teal-600 hover:bg-teal-700 text-white"
-                            >
-                                Done
-                            </Button>
-                          </>
-                        ) : (
-                           <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => toggleEditMode(key)}
-                            >
-                               <><Edit className="mr-2 h-4 w-4"/> Edit</>
-                            </Button>
                         )}
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => toggleEditMode(key)}
+                            className={cn(isEditing && "bg-teal-600 hover:bg-teal-700 text-white")}
+                        >
+                            {isEditing ? 'Done' : <><Edit className="mr-2 h-4 w-4"/> Edit</>}
+                        </Button>
                     </div>
                  </div>
               )
