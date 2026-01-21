@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -274,7 +273,6 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                             max={maxDate}
                         />
                         </FormControl>
-                        <CalendarDays className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <FormMessage />
                   </FormItem>
