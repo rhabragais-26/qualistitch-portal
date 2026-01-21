@@ -339,7 +339,7 @@ function CampaignInquiryForm({ onFormSubmit }: { onFormSubmit: () => void }) {
 }
 
 // --- Table Component ---
-function CampaignInquiriesTable({ key }: { key: number }) {
+function CampaignInquiriesTable({ tableKey }: { tableKey: number }) { // Changed 'key' to 'tableKey'
   const firestore = useFirestore();
   const inquiriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'campaign_inquiries'), orderBy('timestamp', 'desc')) : null, [firestore]);
   const { data: inquiries, isLoading, error } = useCollection<CampaignInquiry>(inquiriesQuery);
@@ -435,5 +435,3 @@ export default function CampaignsPage() {
     </Header>
   );
 }
-
-    
