@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -140,7 +139,8 @@ export function ProductManagement() {
         setTiersInConfig = (newTiers) => { newConfig.pricingTiers[group][embroidery].tiers = newTiers; };
       }
       
-      setTiersInConfig(numericTiers);
+      const nonEmptyTiers = numericTiers.filter(t => t.min !== '' && t.price !== '');
+      setTiersInConfig(nonEmptyTiers);
       setConfig(newConfig);
 
       // Now exit edit mode
@@ -406,7 +406,7 @@ export function ProductManagement() {
                     <DialogTrigger asChild>
                         <Button variant="outline" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-4xl">
+                    <DialogContent className="max-w-5xl">
                         <DialogHeader>
                             <DialogTitle>Manage Products &amp; Categories</DialogTitle>
                             <DialogDescription>
@@ -637,19 +637,29 @@ export function ProductManagement() {
                       </Table>
                     </div>
                      <div className={`p-2 flex justify-center items-center gap-2 ${colors[index % colors.length]}`}>
-                        {isEditing && (
+                        {isEditing ? (
+                          <>
                             <Button variant="outline" size="sm" onClick={() => handleAddOnAddTier(addOn)}>
                                 <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
                             </Button>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => toggleEditMode(key)}
+                                className="bg-teal-600 hover:bg-teal-700 text-white"
+                            >
+                                Done
+                            </Button>
+                          </>
+                        ) : (
+                           <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => toggleEditMode(key)}
+                            >
+                               <><Edit className="mr-2 h-4 w-4"/> Edit</>
+                            </Button>
                         )}
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => toggleEditMode(key)}
-                            className={cn(isEditing && "bg-teal-600 hover:bg-teal-700 text-white")}
-                        >
-                            {isEditing ? 'Done' : <><Edit className="mr-2 h-4 w-4"/> Edit</>}
-                        </Button>
                     </div>
                  </div>
               )
