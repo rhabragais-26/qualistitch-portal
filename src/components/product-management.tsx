@@ -480,7 +480,7 @@ export function ProductManagement() {
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid grid-cols-12 gap-8 py-4 px-6">
-                            <div className="col-span-2 space-y-4 border-r pr-8">
+                            <div className="col-span-3 space-y-4 border-r pr-8">
                                 <h3 className="text-lg font-semibold">Add New Product</h3>
                                 <div>
                                     <Label htmlFor="product-name">New Product Name</Label>
@@ -527,63 +527,63 @@ export function ProductManagement() {
                                 </div>
                                 <Button onClick={handleAddNewProduct} className="w-full">Add Product</Button>
                             </div>
-
-                             <section className="col-span-6 border-r pr-8">
-                                <h3 className="text-lg font-semibold">Product Categories</h3>
-                                <div className="space-y-2 max-h-96 overflow-y-auto border p-4 rounded-md mt-4">
-                                {Object.entries(config.productGroupMapping).map(([name, group]) => (
-                                    <div key={name} className="flex items-center justify-between gap-4">
-                                        <span className="whitespace-nowrap flex-1">{name}</span>
-                                        <div className="flex items-center gap-2">
-                                            <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
-                                                <SelectTrigger className="w-[170px] h-8 text-xs flex-shrink-0">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                                                </SelectContent>
-                                            </Select>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveProduct(name)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                                </div>
-                            </section>
-                            
-                             <section className="col-span-4">
-                                <h3 className="text-lg font-semibold">Manage Pricing Categories</h3>
-                                <div className="space-y-2 max-h-96 overflow-y-auto border p-4 rounded-md mt-4">
-                                  {productGroups.map((group) => (
-                                    <div key={group} className="flex items-center justify-between gap-4">
-                                      {editingCategory?.oldName === group ? (
-                                        <div className="flex items-center gap-2 flex-1">
-                                          <Input 
-                                            value={editingCategory.newName} 
-                                            onChange={(e) => setEditingCategory({ ...editingCategory, newName: e.target.value })}
-                                            className="h-8"
-                                          />
-                                          <Button size="icon" className="h-8 w-8" onClick={handleSaveCategoryName}><Save className="h-4 w-4" /></Button>
-                                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingCategory(null)}><X className="h-4 w-4" /></Button>
-                                        </div>
-                                      ) : (
-                                        <>
-                                          <span className="whitespace-nowrap flex-1">{group}</span>
-                                          <div className="flex items-center gap-2">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingCategory({ oldName: group, newName: group })}>
-                                              <Edit className="h-4 w-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeletingCategory(group)}>
-                                              <Trash2 className="h-4 w-4" />
-                                            </Button>
+                            <div className="col-span-9">
+                                <section>
+                                  <h3 className="text-lg font-semibold">Manage Product Categories</h3>
+                                  <div className="space-y-2 max-h-96 overflow-y-auto border p-4 rounded-md mt-4">
+                                    {productGroups.map((group) => (
+                                      <div key={group} className="flex items-center justify-between gap-4">
+                                        {editingCategory?.oldName === group ? (
+                                          <div className="flex items-center gap-2 flex-1">
+                                            <Input 
+                                              value={editingCategory.newName} 
+                                              onChange={(e) => setEditingCategory({ ...editingCategory, newName: e.target.value })}
+                                              className="h-8"
+                                            />
+                                            <Button size="icon" className="h-8 w-8" onClick={handleSaveCategoryName}><Save className="h-4 w-4" /></Button>
+                                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingCategory(null)}><X className="h-4 w-4" /></Button>
                                           </div>
-                                        </>
-                                      )}
+                                        ) : (
+                                          <>
+                                            <span className="whitespace-nowrap flex-1">{group}</span>
+                                            <div className="flex items-center gap-2">
+                                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingCategory({ oldName: group, newName: group })}>
+                                                <Edit className="h-4 w-4" />
+                                              </Button>
+                                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeletingCategory(group)}>
+                                                <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                            </div>
+                                          </>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </section>
+                                <section className="mt-8">
+                                    <h3 className="text-lg font-semibold">Product Categories</h3>
+                                    <div className="space-y-2 max-h-96 overflow-y-auto border p-4 rounded-md mt-4">
+                                    {Object.entries(config.productGroupMapping).map(([name, group]) => (
+                                        <div key={name} className="flex items-center justify-between gap-4">
+                                            <span className="whitespace-nowrap flex-1">{name}</span>
+                                            <div className="flex items-center gap-2">
+                                                <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
+                                                    <SelectTrigger className="w-[170px] h-8 text-xs flex-shrink-0">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveProduct(name)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
                                     </div>
-                                  ))}
-                                </div>
-                              </section>
+                                </section>
+                            </div>
                         </div>
                         <DialogFooter className="px-6">
                             <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
