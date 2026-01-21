@@ -232,7 +232,7 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
 
 
 // --- Form Component ---
-function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { onFormSubmit: () => void, editingInquiry: CampaignInquiry | null, onCancelEdit: () => void }) {
+function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDirtyChange }: { onFormSubmit: () => void, editingInquiry: CampaignInquiry | null, onCancelEdit: () => void, onDirtyChange: (isDirty: boolean) => void }) {
   const firestore = useFirestore();
   const { userProfile } = useUser();
   const { toast } = useToast();
@@ -253,6 +253,13 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
       highTicketInquiries: 0,
     },
   });
+  
+  const { formState: { isDirty } } = form;
+
+  useEffect(() => {
+    onDirtyChange(isDirty);
+  }, [isDirty, onDirtyChange]);
+
 
   const adAccountValue = form.watch('adAccount');
   const adCampaignValue = form.watch('adCampaign');
@@ -409,7 +416,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                     <FormItem>
                        {selectedCampaign?.imageUrl && (
                         <div className="mb-2 p-1 rounded-md mx-auto border w-fit">
-                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} className="w-auto h-[150px] object-contain rounded-md" />
+                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} className="w-auto h-auto object-contain rounded-md" />
                         </div>
                       )}
                       <div className="flex justify-between items-center">
@@ -499,12 +506,11 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
 }
 
 // --- Table Component ---
-function CampaignInquiriesTable({ tableKey, onEdit, onDelete }: { tableKey: number, onEdit: (inquiry: CampaignInquiry) => void, onDelete: (inquiry: CampaignInquiry) => void }) { 
+function CampaignInquiriesTable({ tableKey, onEdit, onDelete, isModifyMode, onToggleModifyMode }: { tableKey: number, onEdit: (inquiry: CampaignInquiry) => void, onDelete: (inquiry: CampaignInquiry) => void, isModifyMode: boolean, onToggleModifyMode: () => void }) { 
   const firestore = useFirestore();
   const inquiriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'campaign_inquiries'), orderBy('timestamp', 'desc')) : null, [firestore]);
   const { data: inquiries, isLoading, error } = useCollection<CampaignInquiry>(inquiriesQuery);
-  const [isModifyMode, setIsModifyMode] = useState(false);
-
+  
   return (
     <Card>
       <CardHeader>
@@ -513,7 +519,7 @@ function CampaignInquiriesTable({ tableKey, onEdit, onDelete }: { tableKey: numb
                 <CardTitle>Recent Inquiry Logs</CardTitle>
                 <CardDescription>A log of recently submitted daily inquiries.</CardDescription>
             </div>
-            <Button variant={isModifyMode ? "destructive" : "outline"} onClick={() => setIsModifyMode(prev => !prev)}>
+            <Button variant={isModifyMode ? "destructive" : "outline"} onClick={onToggleModifyMode}>
                 {isModifyMode ? 'Change to View Mode' : 'Change to Edit Mode'}
             </Button>
         </div>
@@ -601,6 +607,10 @@ export default function CampaignsPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
+  const [isFormDirty, setIsFormDirty] = useState(false);
+  const [isModifyMode, setIsModifyMode] = useState(false);
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+
   const handleFormSubmit = () => {
     setTableKey(prev => prev + 1);
   };
@@ -613,6 +623,20 @@ export default function CampaignsPage() {
   const handleCancelEdit = () => {
     setEditingInquiry(null);
   }
+
+  const handleToggleModifyMode = () => {
+    if (isModifyMode && editingInquiry && isFormDirty) {
+      setShowDiscardDialog(true);
+    } else {
+      setIsModifyMode(prev => !prev);
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    handleCancelEdit();
+    setIsModifyMode(false);
+    setShowDiscardDialog(false);
+  };
 
   const handleDelete = (inquiry: CampaignInquiry) => {
     setDeletingInquiry(inquiry);
@@ -643,10 +667,10 @@ export default function CampaignsPage() {
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 xl:grid-cols-[auto_1fr] gap-8 items-start">
             <div>
-                <CampaignInquiryForm onFormSubmit={handleFormSubmit} editingInquiry={editingInquiry} onCancelEdit={handleCancelEdit} />
+                <CampaignInquiryForm onFormSubmit={handleFormSubmit} editingInquiry={editingInquiry} onCancelEdit={handleCancelEdit} onDirtyChange={setIsFormDirty} />
             </div>
             <div>
-                <CampaignInquiriesTable key={tableKey} onEdit={handleEdit} onDelete={handleDelete} />
+                <CampaignInquiriesTable key={tableKey} onEdit={handleEdit} onDelete={handleDelete} isModifyMode={isModifyMode} onToggleModifyMode={handleToggleModifyMode} />
             </div>
         </div>
       </main>
@@ -661,6 +685,21 @@ export default function CampaignsPage() {
             <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={confirmDelete}>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Discard Changes?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    You have unsaved changes. Are you sure you want to discard them and exit edit mode?
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmDiscard}>Discard</AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
