@@ -184,8 +184,8 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
                         </div>
                         <div className="flex items-center gap-2 mt-2">
                             {newCampaignImagePreview && (
-                                <div className="relative h-10 w-10 flex-shrink-0">
-                                    <Image src={newCampaignImagePreview} alt="New campaign preview" layout="fill" objectFit="cover" className="rounded-md" />
+                                <div className="relative h-10 w-auto flex-shrink-0">
+                                    <Image src={newCampaignImagePreview} alt="New campaign preview" layout="fill" objectFit="contain" className="rounded-md" />
                                 </div>
                             )}
                             <Button type="button" variant="outline" className="w-full" onClick={() => imageUploadRef.current?.click()}>
@@ -251,10 +251,10 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
     defaultValues: {
       adAccount: '',
       adCampaign: '',
-      smallTicketInquiries: 0,
-      mediumTicketInquiries: 0,
-      largeTicketInquiries: 0,
-      highTicketInquiries: 0,
+      smallTicketInquiries: undefined,
+      mediumTicketInquiries: undefined,
+      largeTicketInquiries: undefined,
+      highTicketInquiries: undefined,
     },
   });
   
@@ -291,20 +291,20 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
             date: new Date(editingInquiry.date),
             adAccount: editingInquiry.adAccount,
             adCampaign: editingInquiry.adCampaign,
-            smallTicketInquiries: editingInquiry.smallTicketInquiries || 0,
-            mediumTicketInquiries: editingInquiry.mediumTicketInquiries || 0,
-            largeTicketInquiries: editingInquiry.largeTicketInquiries || 0,
-            highTicketInquiries: editingInquiry.highTicketInquiries || 0,
+            smallTicketInquiries: editingInquiry.smallTicketInquiries || undefined,
+            mediumTicketInquiries: editingInquiry.mediumTicketInquiries || undefined,
+            largeTicketInquiries: editingInquiry.largeTicketInquiries || undefined,
+            highTicketInquiries: editingInquiry.highTicketInquiries || undefined,
         });
     } else {
         form.reset({
             date: new Date(),
             adAccount: '',
             adCampaign: '',
-            smallTicketInquiries: 0,
-            mediumTicketInquiries: 0,
-            largeTicketInquiries: 0,
-            highTicketInquiries: 0,
+            smallTicketInquiries: undefined,
+            mediumTicketInquiries: undefined,
+            largeTicketInquiries: undefined,
+            highTicketInquiries: undefined,
         });
     }
   }, [editingInquiry, form]);
@@ -346,10 +346,10 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
             date: new Date(),
             adAccount: values.adAccount,
             adCampaign: '',
-            smallTicketInquiries: 0,
-            mediumTicketInquiries: 0,
-            largeTicketInquiries: 0,
-            highTicketInquiries: 0,
+            smallTicketInquiries: undefined,
+            mediumTicketInquiries: undefined,
+            largeTicketInquiries: undefined,
+            highTicketInquiries: undefined,
         });
         onFormSubmit();
         onCancelEdit();
@@ -791,14 +791,14 @@ export default function CampaignsPage() {
       {imageInView && (
         <div
           className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
-          onClick={()={() => setImageInView(null)}}
+          onClick={() => setImageInView(null)}
         >
           <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
             <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
              <Button
                 variant="ghost"
                 size="icon"
-                onClick={()={() => setImageInView(null)}}
+                onClick={() => setImageInView(null)}
                 className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
             >
                 <X className="h-6 w-6" />
@@ -833,7 +833,7 @@ export default function CampaignsPage() {
             </div>
         </div>
       </main>
-      <AlertDialog open={!!deletingInquiry} onOpenChange={()={() => setDeletingInquiry(null)}}>
+      <AlertDialog open={!!deletingInquiry} onOpenChange={() => setDeletingInquiry(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -848,7 +848,7 @@ export default function CampaignsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={showDiscardDialog} onOpenChange={() => setShowDiscardDialog}>
+      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>Discard Changes?</AlertDialogTitle>
@@ -865,5 +865,3 @@ export default function CampaignsPage() {
     </Header>
   );
 }
-
-    
