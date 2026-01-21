@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { initialPricingConfig } from '@/lib/pricing-data';
 import type { PricingConfig, ProductGroup, AddOnType } from '@/lib/pricing';
-import { Save, PlusCircle, Trash2 } from 'lucide-react';
+import { Save, PlusCircle, Trash2, Edit } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { isEqual } from 'lodash';
 import {
@@ -88,33 +88,66 @@ export function ProductManagement() {
     const isCurrentlyEditing = editModes[key];
 
     if (isCurrentlyEditing && config) {
-      // This is the "Done" button click, so we clean up empty new tiers
-      const newConfig = JSON.parse(JSON.stringify(config));
-      
+      // This is the "Done" button click logic
       let tiers: EditableTier[];
-      let setTiers: (newTiers: EditableTier[]) => void;
 
       if (key.includes('-addon')) {
         const addOn = key.replace('-addon', '') as AddOnType;
-        tiers = newConfig.addOnPricing[addOn].tiers;
-        setTiers = (newTiers) => { newConfig.addOnPricing[addOn].tiers = newTiers; };
+        tiers = config.addOnPricing[addOn].tiers;
       } else {
         const [group, embroidery] = key.split('-') as [ProductGroup, 'logo' | 'logoAndText' | 'name'];
-        if (newConfig.pricingTiers[group]?.[embroidery]) {
-          tiers = newConfig.pricingTiers[group][embroidery].tiers;
-          setTiers = (newTiers) => { newConfig.pricingTiers[group][embroidery].tiers = newTiers; };
-        } else {
-          // This case should not happen if the key is correct
-          tiers = [];
-          setTiers = () => {};
+        tiers = config.pricingTiers[group]?.[embroidery]?.tiers || [];
+      }
+
+      // 1. Check for blank fields
+      for (const tier of tiers) {
+        if (tier.min === '' || tier.price === '') {
+          toast({
+            variant: 'destructive',
+            title: 'Invalid Tier',
+            description: 'Min Qty and Price fields cannot be blank. Please fill all fields or remove the empty tier.',
+          });
+          return; // Don't exit edit mode
+        }
+      }
+      
+      const numericTiers = tiers
+        .map(t => ({...t, min: Number(t.min)}))
+        .sort((a, b) => a.min - b.min);
+
+      // 2. Check for correct sequence
+      for (let i = 1; i < numericTiers.length; i++) {
+        if (numericTiers[i].min <= numericTiers[i - 1].min) {
+           toast({
+            variant: 'destructive',
+            title: 'Invalid Tier Order',
+            description: `A tier with Min Qty ${numericTiers[i].min} cannot be less than or equal to the previous tier's Min Qty ${numericTiers[i - 1].min}.`,
+          });
+          return; // Don't exit edit mode
         }
       }
 
-      const cleanedTiers = tiers.filter(tier => tier.min !== '' && tier.price !== '');
-      setTiers(cleanedTiers);
+      // If validation passes, sort the tiers in the actual config state before exiting edit mode
+      const newConfig = JSON.parse(JSON.stringify(config));
+      
+      let setTiersInConfig: (newTiers: EditableTier[]) => void;
+      
+      if (key.includes('-addon')) {
+        const addOn = key.replace('-addon', '') as AddOnType;
+        setTiersInConfig = (newTiers) => { newConfig.addOnPricing[addOn].tiers = newTiers; };
+      } else {
+        const [group, embroidery] = key.split('-') as [ProductGroup, 'logo' | 'logoAndText' | 'name'];
+        setTiersInConfig = (newTiers) => { newConfig.pricingTiers[group][embroidery].tiers = newTiers; };
+      }
+      
+      setTiersInConfig(numericTiers);
       setConfig(newConfig);
+
+      // Now exit edit mode
+      setEditModes(prev => ({ ...prev, [key]: !prev[key] }));
+      return;
     }
-    
+
     setEditModes(prev => ({ ...prev, [key]: !prev[key] }));
   };
   
@@ -361,6 +394,14 @@ export function ProductManagement() {
             </div>
             <div className="flex items-center gap-4">
                 <Label>Select a Product:</Label>
+                <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                    <SelectTrigger className="w-[280px]">
+                        <SelectValue placeholder="Select Product to Edit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {productTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                    </SelectContent>
+                </Select>
                 <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
                     <DialogTrigger asChild>
                         <Button variant="outline" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
@@ -450,14 +491,6 @@ export function ProductManagement() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-                <Select value={selectedProductType} onValueChange={setSelectedProductType}>
-                    <SelectTrigger className="w-[280px]">
-                        <SelectValue placeholder="Select Product to Edit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {productTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
-                    </SelectContent>
-                </Select>
             </div>
         </div>
       </CardHeader>
@@ -537,7 +570,7 @@ export function ProductManagement() {
                                 onClick={() => toggleEditMode(key)}
                                 className={cn(isEditing && "bg-teal-600 hover:bg-teal-700 text-white")}
                             >
-                                {isEditing ? 'Done' : 'Edit'}
+                                {isEditing ? 'Done' : <><Edit className="mr-2 h-4 w-4"/> Edit</>}
                             </Button>
                           </div>
                         </div>
@@ -615,7 +648,7 @@ export function ProductManagement() {
                             onClick={() => toggleEditMode(key)}
                             className={cn(isEditing && "bg-teal-600 hover:bg-teal-700 text-white")}
                         >
-                            {isEditing ? 'Done' : 'Edit'}
+                            {isEditing ? 'Done' : <><Edit className="mr-2 h-4 w-4"/> Edit</>}
                         </Button>
                     </div>
                  </div>
