@@ -23,7 +23,6 @@ import {
   DialogTitle,
   DialogClose,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -451,7 +450,7 @@ export function ProductManagement() {
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-                <CardTitle>Product &amp; Pricing Management</CardTitle>
+                <CardTitle>Product & Pricing Management</CardTitle>
                 <CardDescription>
                 Edit product prices, add-ons, and manage product categories.
                 </CardDescription>
@@ -589,7 +588,7 @@ export function ProductManagement() {
                                 </section>
                             </div>
                         </div>
-                        <DialogFooter className="px-6 border-t pt-0 pb-0">
+                        <DialogFooter className="px-6 border-t py-4">
                             <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
                         </DialogFooter>
                     </DialogContent>
@@ -784,5 +783,3 @@ export function ProductManagement() {
     </>
   );
 }
-
-    
