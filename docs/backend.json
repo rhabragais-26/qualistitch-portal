@@ -778,6 +778,22 @@
         "isDeleted": { "type": "boolean", "description": "Indicates if the case is soft-deleted." }
       },
       "required": ["id", "joNumber", "caseType", "remarks", "submissionDateTime", "caseItems"]
+    },
+    "CampaignInquiry": {
+      "title": "CampaignInquiry",
+      "type": "object",
+      "description": "Represents daily inquiry counts from marketing campaigns.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time", "description": "The date for which the inquiries are recorded." },
+        "smallTicketInquiries": { "type": "number", "description": "Number of inquiries for small ticket ads." },
+        "mediumTicketInquiries": { "type": "number", "description": "Number of inquiries for medium ticket ads." },
+        "largeTicketInquiries": { "type": "number", "description": "Number of inquiries for large ticket ads." },
+        "xlTicketInquiries": { "type": "number", "description": "Number of inquiries for XL ticket ads." },
+        "submittedBy": { "type": "string", "description": "Nickname of the user who submitted the entry." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Timestamp of the submission." }
+      },
+      "required": ["id", "date", "smallTicketInquiries", "mediumTicketInquiries", "largeTicketInquiries", "xlTicketInquiries", "submittedBy", "timestamp"]
     }
   },
   "auth": {
@@ -923,6 +939,22 @@
             {
               "name": "caseId",
               "description": "Unique identifier for the operational case."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/campaign_inquiries/{inquiryId}",
+        "definition": {
+          "entityName": "CampaignInquiry",
+          "schema": {
+            "$ref": "#/backend/entities/CampaignInquiry"
+          },
+          "description": "Stores daily inquiry data from marketing campaigns.",
+          "params": [
+            {
+              "name": "inquiryId",
+              "description": "Unique identifier for the inquiry document."
             }
           ]
         }
