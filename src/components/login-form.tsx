@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -26,7 +26,15 @@ import { Label } from '@/components/ui/label';
 
 
 const formSchema = z.object({
-  email: z.string().min(1, { message: 'Email or Nickname is required.' }),
+  email: z.string().min(1, { message: 'Email or Nickname is required.' }).refine((val) => {
+    const value = val.trim();
+    if (value.includes('@')) {
+      // If it looks like an email, validate it as one.
+      return z.string().email({ message: "Invalid email address format." }).safeParse(value).success;
+    }
+    // If it doesn't have '@', we assume it's a nickname.
+    return true;
+  }),
   password: z.string().min(1, { message: 'Password is required.' }),
 });
 
@@ -54,9 +62,10 @@ export function LoginForm() {
 
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
-    let emailToUse = values.email;
+    const loginIdentifier = values.email.trim();
+    let emailToUse = loginIdentifier;
 
-    if (!values.email.includes('@')) {
+    if (!loginIdentifier.includes('@')) {
       // It's a nickname, look it up.
       if (!firestore) {
         toast({
@@ -70,7 +79,7 @@ export function LoginForm() {
 
       try {
         const usersRef = collection(firestore, 'users');
-        const q = query(usersRef, where("nickname", "==", values.email));
+        const q = query(usersRef, where("nickname", "==", loginIdentifier));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
@@ -83,7 +92,17 @@ export function LoginForm() {
           return;
         }
 
-        emailToUse = querySnapshot.docs[0].data().email;
+        const userData = querySnapshot.docs[0].data();
+        if (!userData.email || typeof userData.email !== 'string') {
+            toast({
+              variant: "destructive",
+              title: "Login Error",
+              description: "Associated email for this nickname is missing or invalid. Please log in with your email address.",
+            });
+            setIsLoading(false);
+            return;
+        }
+        emailToUse = userData.email;
 
       } catch (error) {
         console.error("Error looking up nickname:", error);
@@ -115,10 +134,14 @@ export function LoginForm() {
       // The redirect is handled by the page component
     } catch (error: any) {
       console.error('Login Error:', error);
+      let description = 'Invalid credentials. Please check your email and password.';
+      if (error.code === 'auth/invalid-email') {
+        description = 'The email address is not valid. Please check for typos.';
+      }
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: 'Invalid credentials. Please check your email and password.',
+        description: description,
       });
       setIsLoading(false);
     }
