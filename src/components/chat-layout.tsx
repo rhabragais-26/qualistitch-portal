@@ -472,7 +472,7 @@ export function ChatLayout() {
                                 <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                             </div>
                              {isLastMessage && isMyMessage && (
-                                <div className="text-xs font-bold text-muted-foreground text-right mt-1 px-1">
+                                <div className="text-xs font-bold text-muted-foreground text-right px-1">
                                     {(() => {
                                         const recipientId = selectedUser?.uid;
                                         const channel = channels?.find(c => c.id === channelId);
@@ -525,3 +525,5 @@ export function ChatLayout() {
     </div>
   );
 }
+
+    
