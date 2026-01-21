@@ -248,10 +248,10 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
     defaultValues: {
       adAccount: '',
       adCampaign: '',
-      smallTicketInquiries: 0,
-      mediumTicketInquiries: 0,
-      largeTicketInquiries: 0,
-      highTicketInquiries: 0,
+      smallTicketInquiries: '' as any,
+      mediumTicketInquiries: '' as any,
+      largeTicketInquiries: '' as any,
+      highTicketInquiries: '' as any,
     },
   });
   
@@ -295,20 +295,20 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
             date: new Date(editingInquiry.date),
             adAccount: editingInquiry.adAccount,
             adCampaign: editingInquiry.adCampaign,
-            smallTicketInquiries: editingInquiry.smallTicketInquiries || 0,
-            mediumTicketInquiries: editingInquiry.mediumTicketInquiries || 0,
-            largeTicketInquiries: editingInquiry.largeTicketInquiries || 0,
-            highTicketInquiries: editingInquiry.highTicketInquiries || 0,
+            smallTicketInquiries: editingInquiry.smallTicketInquiries || '' as any,
+            mediumTicketInquiries: editingInquiry.mediumTicketInquiries || '' as any,
+            largeTicketInquiries: editingInquiry.largeTicketInquiries || '' as any,
+            highTicketInquiries: editingInquiry.highTicketInquiries || '' as any,
         });
     } else {
         form.reset({
             date: new Date(),
             adAccount: '',
             adCampaign: '',
-            smallTicketInquiries: 0,
-            mediumTicketInquiries: 0,
-            largeTicketInquiries: 0,
-            highTicketInquiries: 0,
+            smallTicketInquiries: '' as any,
+            mediumTicketInquiries: '' as any,
+            largeTicketInquiries: '' as any,
+            highTicketInquiries: '' as any,
         });
     }
   }, [editingInquiry, form]);
@@ -323,10 +323,10 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
         date: values.date.toISOString(),
         adAccount: values.adAccount,
         adCampaign: values.adCampaign,
-        smallTicketInquiries: values.smallTicketInquiries || 0,
-        mediumTicketInquiries: values.mediumTicketInquiries || 0,
-        largeTicketInquiries: values.largeTicketInquiries || 0,
-        highTicketInquiries: values.highTicketInquiries || 0,
+        smallTicketInquiries: values.smallTicketInquiries,
+        mediumTicketInquiries: values.mediumTicketInquiries,
+        largeTicketInquiries: values.largeTicketInquiries,
+        highTicketInquiries: values.highTicketInquiries,
         submittedBy: userProfile.nickname,
         timestamp: new Date().toISOString(),
     };
@@ -349,10 +349,10 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
         date: new Date(),
         adAccount: values.adAccount,
         adCampaign: '',
-        smallTicketInquiries: 0,
-        mediumTicketInquiries: 0,
-        largeTicketInquiries: 0,
-        highTicketInquiries: 0,
+        smallTicketInquiries: '' as any,
+        mediumTicketInquiries: '' as any,
+        largeTicketInquiries: '' as any,
+        highTicketInquiries: '' as any,
     });
     onFormSubmit();
     onCancelEdit();
@@ -447,7 +447,12 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
                   <FormItem>
                     <FormLabel>Small Ticket (1-9)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                      <Input type="text" inputMode="numeric" pattern="[0-9]*" {...field} onChange={e => {
+                        const { value } = e.target;
+                        if (/^\d*$/.test(value)) {
+                            field.onChange(value);
+                        }
+                      }} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -460,7 +465,12 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
                   <FormItem>
                     <FormLabel>Medium Ticket (10-49)</FormLabel>
                     <FormControl>
-                       <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                       <Input type="text" inputMode="numeric" pattern="[0-9]*" {...field} onChange={e => {
+                        const { value } = e.target;
+                        if (/^\d*$/.test(value)) {
+                            field.onChange(value);
+                        }
+                      }} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -473,7 +483,12 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
                   <FormItem>
                     <FormLabel>Large Ticket (50-199)</FormLabel>
                     <FormControl>
-                       <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                       <Input type="text" inputMode="numeric" pattern="[0-9]*" {...field} onChange={e => {
+                        const { value } = e.target;
+                        if (/^\d*$/.test(value)) {
+                            field.onChange(value);
+                        }
+                      }} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -486,7 +501,12 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit, onDir
                   <FormItem>
                     <FormLabel>High Ticket (200+)</FormLabel>
                     <FormControl>
-                       <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />
+                       <Input type="text" inputMode="numeric" pattern="[0-9]*" {...field} onChange={e => {
+                        const { value } = e.target;
+                        if (/^\d*$/.test(value)) {
+                            field.onChange(value);
+                        }
+                      }} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -761,6 +781,8 @@ export default function CampaignsPage() {
     </Header>
   );
 }
+
+    
 
     
 
