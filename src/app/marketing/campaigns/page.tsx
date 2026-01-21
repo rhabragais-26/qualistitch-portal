@@ -539,6 +539,33 @@ function CampaignInquiriesTable({ tableKey, onEdit, onDelete, isModifyMode, onTo
     return new Map(campaigns.map(c => [`${c.adAccount}-${c.name}`, c.imageUrl]));
   }, [campaigns]);
   
+  const sortedInquiries = useMemo(() => {
+    if (!inquiries) return [];
+    
+    return [...inquiries].sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+
+        // Set time to 0 to compare dates only for grouping purposes
+        dateA.setHours(0, 0, 0, 0);
+        dateB.setHours(0, 0, 0, 0);
+
+        // Primary sort: Date descending
+        if (dateA.getTime() !== dateB.getTime()) {
+            return dateB.getTime() - dateA.getTime();
+        }
+
+        // Secondary sort: AD Account alphabetically
+        const accountCompare = a.adAccount.localeCompare(b.adAccount);
+        if (accountCompare !== 0) {
+            return accountCompare;
+        }
+
+        // Tertiary sort: AD Campaign naturally
+        return a.adCampaign.localeCompare(b.adCampaign, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [inquiries]);
+  
   return (
     <Card>
       <CardHeader>
@@ -585,8 +612,8 @@ function CampaignInquiriesTable({ tableKey, onEdit, onDelete, isModifyMode, onTo
                     Error loading data: {error.message}
                   </TableCell>
                 </TableRow>
-              ) : inquiries && inquiries.length > 0 ? (
-                inquiries.map(inquiry => {
+              ) : sortedInquiries && sortedInquiries.length > 0 ? (
+                sortedInquiries.map(inquiry => {
                     const total = (inquiry.smallTicketInquiries || 0) + (inquiry.mediumTicketInquiries || 0) + (inquiry.largeTicketInquiries || 0) + (inquiry.highTicketInquiries || 0);
                     const imageUrl = campaignsMap.get(`${inquiry.adAccount}-${inquiry.adCampaign}`);
                     return (
