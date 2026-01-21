@@ -180,6 +180,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             barangay: formValuesToSave.barangay ? toTitleCase(formValuesToSave.barangay) : '', 
             city: formValuesToSave.city ? toTitleCase(formValuesToSave.city) : '',
             province: formValuesToSave.province ? toTitleCase(formValuesToSave.province) : '',
+            courier: formValuesToSave.courier || '-',
             orders: stagedOrders,
             productType: [...new Set(stagedOrders.map(o => o.productType))].join(', '),
             addOns,
