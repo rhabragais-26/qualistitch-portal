@@ -373,8 +373,8 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                   render={({ field }) => (
                     <FormItem>
                        {selectedCampaign?.imageUrl && (
-                        <div className="relative h-24 w-full mb-2">
-                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} layout="fill" objectFit="contain" className="rounded-md border p-1" />
+                        <div className="mb-2 flex justify-center">
+                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} objectFit="contain" className="rounded-md border p-1" />
                         </div>
                       )}
                       <div className="flex justify-between items-center">
