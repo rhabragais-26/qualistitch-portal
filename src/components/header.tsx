@@ -32,6 +32,12 @@ import {
   UserCog,
   MessageSquare,
   Home,
+  Megaphone,
+  Banknote,
+  Target,
+  LayoutDashboard,
+  Receipt,
+  BarChart,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -191,6 +197,48 @@ const HeaderMemo = React.memo(function Header({
           <nav className="flex items-end gap-2 h-full flex-1">
             {isClient && (
               <>
+                <DropdownMenu open={openMenu === 'marketing'} onOpenChange={(isOpen) => handleMenuOpenChange('marketing', isOpen)}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/marketing']))}>
+                      <Megaphone className="mr-2" />
+                      Marketing
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleNavigation('/marketing/campaigns')}>
+                      <Target className="mr-2" />
+                      Campaigns
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/marketing/analytics')}>
+                      <LineChart className="mr-2" />
+                      Analytics
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu open={openMenu === 'finance'} onOpenChange={(isOpen) => handleMenuOpenChange('finance', isOpen)}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/finance']))}>
+                      <Banknote className="mr-2" />
+                      Finance
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleNavigation('/finance/dashboard')}>
+                      <LayoutDashboard className="mr-2" />
+                      Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/finance/transactions')}>
+                      <Receipt className="mr-2" />
+                      Transactions
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/finance/reports')}>
+                      <BarChart className="mr-2" />
+                      Reports
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment']))}>
