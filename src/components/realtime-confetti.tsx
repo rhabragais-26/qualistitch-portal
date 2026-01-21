@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useDoc, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -94,6 +93,7 @@ const LocalConfetti = () => (
 );
 
 export function RealtimeConfetti() {
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const appStateRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'appState', 'global') : null),
@@ -151,6 +151,9 @@ export function RealtimeConfetti() {
     }
   }, [visibility, appStateRef]);
 
+  if (isUserLoading || !user) {
+    return null;
+  }
 
   if (visibility === 'hidden') {
     return null;
