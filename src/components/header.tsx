@@ -34,7 +34,7 @@ import {
   Home,
   Megaphone,
   Banknote,
-  Target,
+  Ticket,
   LayoutDashboard,
   Receipt,
   BarChart,
@@ -230,7 +230,7 @@ const HeaderMemo = React.memo(function Header({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => handleNavigation('/marketing/campaigns')}>
-                      <Target className="mr-2" />
+                      <Ticket className="mr-2" />
                       Inquiries per Ticket Size
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/marketing/analytics')}>
