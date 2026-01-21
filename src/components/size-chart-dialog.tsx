@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -115,8 +114,8 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
         const centerY = window.innerHeight / 2 - offsetHeight / 2;
         setPosition({ x: centerX, y: centerY });
     } else {
-        const centerX = window.innerWidth / 2 - 325; // approx half-width
-        const centerY = window.innerHeight / 2 - 400; // approx half-height
+        const centerX = window.innerWidth / 2 - 275; // approx half-width
+        const centerY = window.innerHeight / 2 - 350; // approx half-height
         setPosition({ x: centerX, y: centerY });
     }
   }, []);
@@ -278,14 +277,14 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
             className={cn("fixed z-50")}
             style={{ left: `${position.x}px`, top: `${position.y}px` }}
          >
-             <Card className="w-[650px] h-[800px] shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
+             <Card className="w-[550px] h-[700px] shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
                 <CardHeader className="p-2">
                      <div className="h-8 w-full bg-gray-700 rounded-md"></div>
                 </CardHeader>
                 <CardContent className="p-4 flex-1">
                     <div className="space-y-4">
                         <div className="h-10 bg-gray-700 rounded-md"></div>
-                        <div className="h-[600px] bg-gray-700 rounded-md"></div>
+                        <div className="h-[500px] bg-gray-700 rounded-md"></div>
                     </div>
                 </CardContent>
                 <CardFooter className="p-4 flex justify-center">
@@ -301,10 +300,10 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
       <div
         ref={cardRef}
         className={cn("fixed z-50 w-auto", isDragging && "select-none")}
-        style={{ left: `${position.x}px`, top: `${position.y}px`, height: `800px` }}
+        style={{ left: `${position.x}px`, top: `${position.y}px`, height: `700px` }}
         onMouseDown={handleMouseDown}
       >
-        <Card className="w-[650px] h-full shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
+        <Card className="w-[550px] h-full shadow-2xl bg-gray-800 text-white border-gray-700 flex flex-col">
           <CardHeader 
               ref={headerRef}
               className={cn("flex flex-row items-center justify-between p-2 cursor-move", isDragging && "cursor-grabbing")}

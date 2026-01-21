@@ -142,14 +142,15 @@ export function RealtimeConfetti() {
       const cleanupTimer = setTimeout(() => {
         setVisibility('hidden');
         // Reset the trigger in Firestore now that it's fully hidden
-        if (appStateRef) {
+        // ONLY if the user is signed in to prevent permission errors for unauthenticated users.
+        if (appStateRef && user) { // <-- MODIFICATION HERE: Added '&& user'
           setDocumentNonBlocking(appStateRef, { showConfetti: false, congratsMessage: null, congratsNickname: null, congratsPhotoURL: null }, { merge: true });
         }
       }, FADE_OUT_DURATION);
 
       return () => clearTimeout(cleanupTimer);
     }
-  }, [visibility, appStateRef]);
+  }, [visibility, appStateRef, user]); // <-- MODIFICATION HERE: Added 'user' to dependency array
 
   if (isUserLoading || !user) {
     return null;
