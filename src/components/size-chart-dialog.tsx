@@ -9,12 +9,13 @@ import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { isEqual } from 'lodash';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { Skeleton } from './ui/skeleton';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 type SizeChartInfo = {
   image: string | null;
@@ -47,9 +48,10 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   
   const firestore = useFirestore();
   const sizeChartRef = useMemoFirebase(() => firestore ? doc(firestore, 'sizeCharts', 'default') : null, [firestore]);
-  const { data: fetchedData, isLoading } = useDoc<SizeChartData>(sizeChartRef, undefined, { listen: false });
+  const { data: fetchedData, isLoading, refetch } = useDoc<SizeChartData>(sizeChartRef, undefined, { listen: false });
 
   const [sizeChartData, setSizeChartData] = useState<SizeChartData>(initialSizeChartData);
+  const [filesToUpload, setFilesToUpload] = useState<Record<TabValue, File | null>>({ bomberJacket: null, poloShirt: null, corporateJacket: null });
   const [isDirty, setIsDirty] = useState(false);
   const [imageInView, setImageInView] = useState<string | null>(null);
   
@@ -64,7 +66,6 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
     poloShirt: poloShirtInputRef,
     corporateJacket: corporateJacketInputRef,
   };
-
 
   useEffect(() => {
     if (fetchedData) {
@@ -89,7 +90,6 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
 
     setIsDirty(!isEqual(sizeChartData, initialCompareState));
   }, [sizeChartData, fetchedData, isLoading]);
-
 
   useEffect(() => {
     onDraggingChange(isDragging);
@@ -165,12 +165,13 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
         ...prev,
         [tab]: {
           image: e.target?.result as string,
-          uploadTime: new Date().toISOString()
+          uploadTime: prev[tab]?.uploadTime || new Date().toISOString()
         }
       }));
     };
     reader.readAsDataURL(file);
-  }
+    setFilesToUpload(prev => ({ ...prev, [tab]: file }));
+  };
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>, tab: TabValue) => {
     if (e.target.files?.[0]) {
@@ -184,7 +185,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
     for (const item of items) {
         if (item.type.indexOf('image') !== -1) {
             const blob = item.getAsFile();
-            if(blob) handleImageUpload(blob, tab);
+            if(blob) handleImageUpload(blob as File, tab);
         }
     }
   };
@@ -195,6 +196,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
       ...prev,
       [tab]: { image: null, uploadTime: null }
     }));
+    setFilesToUpload(prev => ({ ...prev, [tab]: null }));
     const fileInput = fileInputRefs[tab].current;
     if (fileInput) fileInput.value = '';
   }
@@ -207,24 +209,53 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   };
 
   const handleSave = async () => {
-    if (!sizeChartRef) return;
-    
-    setDoc(sizeChartRef, { ...sizeChartData, id: 'default' }, { merge: true })
-      .then(() => {
-        toast({
-          title: 'Success',
-          description: 'Size charts have been saved successfully.',
-        });
-        setIsDirty(false);
-      })
-      .catch((error) => {
-        const permissionError = new FirestorePermissionError({
-          path: sizeChartRef.path,
-          operation: 'write',
-          requestResourceData: sizeChartData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
+    if (!sizeChartRef || !firestore) return;
+  
+    try {
+      const storage = getStorage();
+      const dataToSave: SizeChartData = JSON.parse(JSON.stringify(sizeChartData));
+      
+      const tabsWithNewFiles = (Object.keys(filesToUpload) as TabValue[]).filter(tab => filesToUpload[tab]);
+
+      // Upload new files
+      for (const tab of tabsWithNewFiles) {
+        const file = filesToUpload[tab]!;
+        const storageRef = ref(storage, `sizeCharts/${tab}/${file.name}`);
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        dataToSave[tab] = {
+          image: downloadURL,
+          uploadTime: new Date().toISOString()
+        };
+      }
+      
+      // Handle deletions (image is null in local state but was present in fetched data)
+      (Object.keys(dataToSave) as TabValue[]).forEach(tab => {
+        if (dataToSave[tab].image === null && fetchedData?.[tab]?.image) {
+           dataToSave[tab] = { image: null, uploadTime: null };
+        }
       });
+
+      await setDoc(sizeChartRef, { ...dataToSave, id: 'default' }, { merge: true });
+  
+      toast({
+        title: 'Success',
+        description: 'Size charts have been saved successfully.',
+      });
+      
+      setFilesToUpload({ bomberJacket: null, poloShirt: null, corporateJacket: null });
+      refetch(); // Refetch data to sync state with new URLs
+      setIsDirty(false);
+
+    } catch (error: any) {
+      console.error('Error saving size charts:', error);
+      const permissionError = new FirestorePermissionError({
+        path: sizeChartRef.path,
+        operation: 'write',
+        requestResourceData: sizeChartData,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    }
   };
   
   const renderUploadBox = (tab: TabValue) => {
