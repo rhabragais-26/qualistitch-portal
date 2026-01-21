@@ -786,6 +786,8 @@
       "properties": {
         "id": { "type": "string" },
         "date": { "type": "string", "format": "date-time", "description": "The date for which the inquiries are recorded." },
+        "adAccount": { "type": "string", "description": "The ad account used for the campaign." },
+        "adCampaign": { "type": "string", "description": "The name of the ad campaign." },
         "smallTicketInquiries": { "type": "number", "description": "Number of inquiries for small ticket ads." },
         "mediumTicketInquiries": { "type": "number", "description": "Number of inquiries for medium ticket ads." },
         "largeTicketInquiries": { "type": "number", "description": "Number of inquiries for large ticket ads." },
@@ -793,7 +795,17 @@
         "submittedBy": { "type": "string", "description": "Nickname of the user who submitted the entry." },
         "timestamp": { "type": "string", "format": "date-time", "description": "Timestamp of the submission." }
       },
-      "required": ["id", "date", "smallTicketInquiries", "mediumTicketInquiries", "largeTicketInquiries", "xlTicketInquiries", "submittedBy", "timestamp"]
+      "required": ["id", "date", "adAccount", "adCampaign", "smallTicketInquiries", "mediumTicketInquiries", "largeTicketInquiries", "xlTicketInquiries", "submittedBy", "timestamp"]
+    },
+    "AdCampaign": {
+      "title": "AdCampaign",
+      "type": "object",
+      "description": "Represents a configurable ad campaign name.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "description": "The name of the ad campaign." }
+      },
+      "required": ["id", "name"]
     }
   },
   "auth": {
@@ -958,8 +970,27 @@
             }
           ]
         }
+      },
+      {
+        "path": "/adCampaigns/{campaignId}",
+        "definition": {
+          "entityName": "AdCampaign",
+          "schema": {
+            "$ref": "#/backend/entities/AdCampaign"
+          },
+          "description": "Stores the names of ad campaigns for the dropdown.",
+          "params": [
+            {
+              "name": "campaignId",
+              "description": "Unique identifier for the ad campaign."
+            }
+          ]
+        }
       }
     ],
     "reasoning": "The data structure is designed to store lead information collected via the LeadTracker application. To ensure security and efficient data retrieval, leads are stored under a collection called `leads`. This design promotes a flat structure, avoiding nested collections and complex queries, especially considering the app's focus is on data input rather than deeply relational data. Each lead document contains all relevant lead data. This simplifies data access and minimizes the need for complex joins or subqueries, aligning with the app's focus on simplicity and ease of use.\\n\\n**Authorization Independence:** Since there are no explicit user roles, collaborative features, or ownership details mentioned in the requirements, the system assumes open access to leads. If access control becomes a requirement in the future, a `members` map or a separate `/roles` collection would be used in combination with denormalization to achieve authorization independence.\\n\\n**QAPs (Rules are not Filters):** The structure supports secure `list` operations because all lead data is stored within a single, top-level collection. Security rules can be applied at the collection level, ensuring that only authorized users can access lead data, without needing to filter data based on document content. If more sophisticated access controls are required (e.g., restricting access based on CSR assignment), denormalization of CSR assignment directly into the lead documents combined with security rules based on the `request.auth.uid` will ensure that filtering within the rules is not required."
   }
 }
+
+
+    
