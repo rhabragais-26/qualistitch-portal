@@ -13,7 +13,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Calendar } from "@/components/ui/calendar"
 import { format } from 'date-fns';
 import { useFirestore, useUser, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Header } from '@/components/header';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
 // --- Form Schema and Type ---
 const formSchema = z.object({
@@ -54,7 +53,6 @@ function CampaignInquiryForm() {
   const firestore = useFirestore();
   const { userProfile } = useUser();
   const { toast } = useToast();
-  const [isClient, setIsClient] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -68,9 +66,10 @@ function CampaignInquiryForm() {
   });
 
   useEffect(() => {
-    setIsClient(true);
+    // Set default date to today, only on the client side after mount to avoid hydration errors.
     form.setValue('date', new Date());
-  }, [form]);
+  }, []); // Empty dependency array ensures this runs once on mount.
+
 
   async function onSubmit(values: FormValues) {
     if (!firestore || !userProfile) {
@@ -99,7 +98,13 @@ function CampaignInquiryForm() {
         description: `Inquiries for ${format(values.date, 'PPP')} have been saved.`,
     });
     
-    form.reset();
+    form.reset({
+      date: new Date(),
+      smallTicketInquiries: 0,
+      mediumTicketInquiries: 0,
+      largeTicketInquiries: 0,
+      xlTicketInquiries: 0,
+    });
   }
 
   return (
@@ -115,18 +120,18 @@ function CampaignInquiryForm() {
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem className="flex flex-col items-center">
+                <FormItem>
                   <FormLabel>Date</FormLabel>
                   <FormControl>
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => {
-                        if (!isClient) return true;
-                        return date > new Date() || date < new Date("1900-01-01")
+                    <Input
+                      type="date"
+                      className="w-full"
+                      value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                      onChange={(e) => {
+                        const dateValue = e.target.value;
+                        field.onChange(dateValue ? new Date(`${dateValue}T00:00:00`) : undefined);
                       }}
-                      className="rounded-md border"
+                      max={format(new Date(), 'yyyy-MM-dd')}
                     />
                   </FormControl>
                   <FormMessage />
