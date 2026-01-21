@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react"
@@ -392,6 +391,29 @@ export function LeadForm({
   const isInternational = watch('isInternational');
   const orderTypeValue = watch('orderType');
 
+  // Debounced state
+  const [debouncedCity, setDebouncedCity] = useState(cityValue);
+  const [debouncedBarangay, setDebouncedBarangay] = useState(barangayValue);
+  const [debouncedProvince, setDebouncedProvince] = useState(provinceValue);
+
+  // Debounce city input
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedCity(cityValue), 300);
+    return () => clearTimeout(handler);
+  }, [cityValue]);
+
+  // Debounce barangay input
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedBarangay(barangayValue), 300);
+    return () => clearTimeout(handler);
+  }, [barangayValue]);
+  
+  // Debounce province input
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedProvince(provinceValue), 300);
+    return () => clearTimeout(handler);
+  }, [provinceValue]);
+
   const filteredProductTypes = useMemo(() => {
     if (orderTypeValue === 'Services') {
       return ['Client Owned', 'Patches'];
@@ -505,33 +527,33 @@ export function LeadForm({
   }, [isEditing, companyNameValue, leads, selectedLead, activeField]);
 
   useEffect(() => {
-    if (activeField === 'city' && cityValue && !selectedLead) {
+    if (activeField === 'city' && debouncedCity && !selectedLead) {
       const filteredCities = citiesAndMunicipalities.filter(city =>
-        city.name.toLowerCase().includes(cityValue.toLowerCase())
+        city.name.toLowerCase().includes(debouncedCity.toLowerCase())
       ).slice(0, 10);
       setCitySuggestions(filteredCities);
     } else if (activeField !== 'city') {
       setCitySuggestions([]);
     }
-  }, [cityValue, citiesAndMunicipalities, selectedLead, activeField]);
+  }, [debouncedCity, citiesAndMunicipalities, selectedLead, activeField]);
   
   useEffect(() => {
-    if (activeField === 'barangay' && barangayValue && !selectedLead) {
-        const suggestions = allBarangays.filter(b => b.barangay.toLowerCase().includes(barangayValue.toLowerCase())).slice(0, 10);
+    if (activeField === 'barangay' && debouncedBarangay && !selectedLead) {
+        const suggestions = allBarangays.filter(b => b.barangay.toLowerCase().includes(debouncedBarangay.toLowerCase())).slice(0, 10);
         setBarangaySuggestions(suggestions);
     } else if (activeField !== 'barangay') {
       setBarangaySuggestions([]);
     }
-  }, [barangayValue, allBarangays, selectedLead, activeField]);
+  }, [debouncedBarangay, allBarangays, selectedLead, activeField]);
   
   useEffect(() => {
-    if (activeField === 'province' && provinceValue && !selectedLead) {
-        const filteredProvinces = allProvinces.filter(p => p.toLowerCase().includes(provinceValue.toLowerCase())).slice(0, 10);
+    if (activeField === 'province' && debouncedProvince && !selectedLead) {
+        const filteredProvinces = allProvinces.filter(p => p.toLowerCase().includes(debouncedProvince.toLowerCase())).slice(0, 10);
         setProvinceSuggestions(filteredProvinces);
     } else if (activeField !== 'province') {
         setProvinceSuggestions([]);
     }
-  }, [provinceValue, allProvinces, selectedLead, activeField]);
+  }, [debouncedProvince, allProvinces, selectedLead, activeField]);
 
 
   useEffect(() => {
@@ -1418,7 +1440,5 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
-
-    
 
     
