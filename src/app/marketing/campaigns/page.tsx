@@ -408,7 +408,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                   render={({ field }) => (
                     <FormItem>
                        {selectedCampaign?.imageUrl && (
-                        <div className="mb-2 p-1 rounded-md w-fit mx-auto border">
+                        <div className="mb-2 p-1 rounded-md mx-auto border w-fit">
                             <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} className="w-auto h-[150px] object-contain rounded-md" />
                         </div>
                       )}
@@ -503,12 +503,20 @@ function CampaignInquiriesTable({ tableKey, onEdit, onDelete }: { tableKey: numb
   const firestore = useFirestore();
   const inquiriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'campaign_inquiries'), orderBy('timestamp', 'desc')) : null, [firestore]);
   const { data: inquiries, isLoading, error } = useCollection<CampaignInquiry>(inquiriesQuery);
+  const [isModifyMode, setIsModifyMode] = useState(false);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Inquiry Logs</CardTitle>
-        <CardDescription>A log of recently submitted daily inquiries.</CardDescription>
+        <div className="flex justify-between items-center">
+            <div>
+                <CardTitle>Recent Inquiry Logs</CardTitle>
+                <CardDescription>A log of recently submitted daily inquiries.</CardDescription>
+            </div>
+            <Button variant="outline" onClick={() => setIsModifyMode(prev => !prev)}>
+                {isModifyMode ? 'Done' : 'Modify'}
+            </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="border rounded-md">
@@ -524,21 +532,21 @@ function CampaignInquiriesTable({ tableKey, onEdit, onDelete }: { tableKey: numb
                 <TableHead className="text-center">Large</TableHead>
                 <TableHead className="text-center">High</TableHead>
                 <TableHead className="text-center">Total</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
+                {isModifyMode && <TableHead className="text-center">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 [...Array(5)].map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={10}>
+                    <TableCell colSpan={isModifyMode ? 10 : 9}>
                       <Skeleton className="h-8 w-full" />
                     </TableCell>
                   </TableRow>
                 ))
               ) : error ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-destructive">
+                  <TableCell colSpan={isModifyMode ? 10 : 9} className="text-center text-destructive">
                     Error loading data: {error.message}
                   </TableCell>
                 </TableRow>
@@ -556,20 +564,22 @@ function CampaignInquiriesTable({ tableKey, onEdit, onDelete }: { tableKey: numb
                             <TableCell className="text-center">{inquiry.largeTicketInquiries || 0}</TableCell>
                             <TableCell className="text-center">{inquiry.highTicketInquiries || 0}</TableCell>
                             <TableCell className="text-center font-bold">{total}</TableCell>
-                            <TableCell className="text-center">
-                                <Button variant="ghost" size="icon" onClick={() => onEdit(inquiry)}>
-                                    <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => onDelete(inquiry)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </TableCell>
+                            {isModifyMode && (
+                                <TableCell className="text-center">
+                                    <Button variant="ghost" size="icon" onClick={() => onEdit(inquiry)}>
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => onDelete(inquiry)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </TableCell>
+                            )}
                         </TableRow>
                     )
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground">
+                  <TableCell colSpan={isModifyMode ? 10 : 9} className="text-center text-muted-foreground">
                     No inquiry data has been logged yet.
                   </TableCell>
                 </TableRow>
