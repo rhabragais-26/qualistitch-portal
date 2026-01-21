@@ -26,6 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from './ui/label';
+import { cn } from '@/lib/utils';
 
 // New types to allow empty strings for editing
 type EditableTier = { min: number | ''; max: number | ''; price: number | '' };
@@ -84,6 +85,36 @@ export function ProductManagement() {
   }, [config, fetchedConfig]);
 
   const toggleEditMode = (key: string) => {
+    const isCurrentlyEditing = editModes[key];
+
+    if (isCurrentlyEditing && config) {
+      // This is the "Done" button click, so we clean up empty new tiers
+      const newConfig = JSON.parse(JSON.stringify(config));
+      
+      let tiers: EditableTier[];
+      let setTiers: (newTiers: EditableTier[]) => void;
+
+      if (key.includes('-addon')) {
+        const addOn = key.replace('-addon', '') as AddOnType;
+        tiers = newConfig.addOnPricing[addOn].tiers;
+        setTiers = (newTiers) => { newConfig.addOnPricing[addOn].tiers = newTiers; };
+      } else {
+        const [group, embroidery] = key.split('-') as [ProductGroup, 'logo' | 'logoAndText' | 'name'];
+        if (newConfig.pricingTiers[group]?.[embroidery]) {
+          tiers = newConfig.pricingTiers[group][embroidery].tiers;
+          setTiers = (newTiers) => { newConfig.pricingTiers[group][embroidery].tiers = newTiers; };
+        } else {
+          // This case should not happen if the key is correct
+          tiers = [];
+          setTiers = () => {};
+        }
+      }
+
+      const cleanedTiers = tiers.filter(tier => tier.min !== '' && tier.price !== '');
+      setTiers(cleanedTiers);
+      setConfig(newConfig);
+    }
+    
     setEditModes(prev => ({ ...prev, [key]: !prev[key] }));
   };
   
@@ -141,10 +172,6 @@ export function ProductManagement() {
     if (!config) return;
     const newConfig = JSON.parse(JSON.stringify(config));
     const tiers = newConfig.pricingTiers[group][embroidery].tiers;
-    if (tiers.length <= 1) {
-        toast({ variant: 'destructive', title: 'Cannot Remove Tier', description: 'At least one pricing tier is required.' });
-        return;
-    }
     tiers.splice(tierIndex, 1);
     setConfig(newConfig);
   };
@@ -161,10 +188,6 @@ export function ProductManagement() {
     if (!config) return;
     const newConfig = JSON.parse(JSON.stringify(config));
     const tiers = newConfig.addOnPricing[addOn].tiers;
-    if (tiers.length <= 1) {
-        toast({ variant: 'destructive', title: 'Cannot Remove Tier', description: 'At least one pricing tier is required.' });
-        return;
-    }
     tiers.splice(tierIndex, 1);
     setConfig(newConfig);
   };
@@ -256,6 +279,11 @@ export function ProductManagement() {
     for (const group of Object.keys(validatedConfig.pricingTiers)) {
       for (const embroidery of ['logo', 'name', 'logoAndText']) {
         const tiers = validatedConfig.pricingTiers[group][embroidery].tiers;
+        if (tiers.length === 0) {
+          toast({ variant: 'destructive', title: `Invalid Pricing`, description: `The category "${group}" under "${embroidery}" must have at least one pricing tier.` });
+          isValid = false;
+          break;
+        }
         const context = `${group} - ${embroidery}`;
         const validated = validateTiers(tiers, context);
         if (!validated) {
@@ -274,6 +302,11 @@ export function ProductManagement() {
     for (const addOn of Object.keys(validatedConfig.addOnPricing)) {
       if (addOn === 'rushFee' || addOn === 'shippingFee') continue;
       const tiers = validatedConfig.addOnPricing[addOn].tiers;
+      if (tiers.length === 0) {
+        toast({ variant: 'destructive', title: `Invalid Pricing`, description: `The add-on "${addOn}" must have at least one pricing tier.` });
+        isValid = false;
+        break;
+      }
       const validated = validateTiers(tiers, addOn);
       if (!validated) {
         isValid = false;
@@ -328,15 +361,7 @@ export function ProductManagement() {
             </div>
             <div className="flex items-center gap-4">
                 <Label>Select a Product:</Label>
-                <Select value={selectedProductType} onValueChange={setSelectedProductType}>
-                    <SelectTrigger className="w-[280px]">
-                        <SelectValue placeholder="Select Product to Edit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {productTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-                 <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
+                <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
                     <DialogTrigger asChild>
                         <Button variant="outline" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
                     </DialogTrigger>
@@ -400,8 +425,8 @@ export function ProductManagement() {
                                 <h3 className="text-lg font-semibold">Product Categories</h3>
                                 <div className="space-y-2 max-h-96 overflow-y-auto border p-4 rounded-md mt-4">
                                 {Object.entries(config.productGroupMapping).map(([name, group]) => (
-                                    <div key={name} className="flex items-center justify-between">
-                                        <span className="whitespace-nowrap">{name}</span>
+                                    <div key={name} className="flex items-center justify-between gap-4">
+                                        <span className="whitespace-nowrap flex-1">{name}</span>
                                         <div className="flex items-center gap-2">
                                             <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
                                                 <SelectTrigger className="w-[170px] h-8 text-xs flex-shrink-0">
@@ -425,6 +450,14 @@ export function ProductManagement() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+                <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                    <SelectTrigger className="w-[280px]">
+                        <SelectValue placeholder="Select Product to Edit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {productTypes.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                    </SelectContent>
+                </Select>
             </div>
         </div>
       </CardHeader>
@@ -482,7 +515,7 @@ export function ProductManagement() {
                                                   </div>
                                                 </TableCell>
                                                 <TableCell className="p-1 align-middle">
-                                                  {isEditing && <Button variant="ghost" size="icon" onClick={() => handleRemoveTier(selectedProductGroup!, embroideryType, tierIndex)} disabled={tiers.length === 1} className="h-7 w-7 text-destructive">
+                                                  {isEditing && <Button variant="ghost" size="icon" onClick={() => handleRemoveTier(selectedProductGroup!, embroideryType, tierIndex)} className="h-7 w-7 text-destructive">
                                                       <Trash2 className="h-4 w-4" />
                                                   </Button>}
                                                 </TableCell>
@@ -492,15 +525,20 @@ export function ProductManagement() {
                                 </TableBody>
                             </Table>
                           </div>
-                          <div className={`p-2 flex justify-center items-center gap-2 ${colors[index]}`}>
-                            <Button variant="outline" size="sm" onClick={() => toggleEditMode(key)}>
-                                {isEditing ? 'Done' : 'Edit'}
-                            </Button>
+                           <div className={`p-2 flex justify-center items-center gap-2 ${colors[index]}`}>
                             {isEditing && (
                                 <Button variant="outline" size="sm" onClick={() => handleAddTier(selectedProductGroup!, embroideryType)}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
                                 </Button>
                             )}
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => toggleEditMode(key)}
+                                className={cn(isEditing && "bg-teal-600 hover:bg-teal-700 text-white")}
+                            >
+                                {isEditing ? 'Done' : 'Edit'}
+                            </Button>
                           </div>
                         </div>
                       )
@@ -555,7 +593,7 @@ export function ProductManagement() {
                                               </div>
                                           </TableCell>
                                           <TableCell className="p-1 align-middle">
-                                          {isEditing && <Button variant="ghost" size="icon" onClick={() => handleAddOnRemoveTier(addOn, tierIndex)} disabled={tiers.length === 1} className="h-7 w-7 text-destructive">
+                                          {isEditing && <Button variant="ghost" size="icon" onClick={() => handleAddOnRemoveTier(addOn, tierIndex)} className="h-7 w-7 text-destructive">
                                               <Trash2 className="h-4 w-4" />
                                           </Button>}
                                           </TableCell>
@@ -566,14 +604,19 @@ export function ProductManagement() {
                       </Table>
                     </div>
                      <div className={`p-2 flex justify-center items-center gap-2 ${colors[index % colors.length]}`}>
-                        <Button variant="outline" size="sm" onClick={() => toggleEditMode(key)}>
-                            {isEditing ? 'Done' : 'Edit'}
-                        </Button>
                         {isEditing && (
                             <Button variant="outline" size="sm" onClick={() => handleAddOnAddTier(addOn)}>
                                 <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
                             </Button>
                         )}
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => toggleEditMode(key)}
+                            className={cn(isEditing && "bg-teal-600 hover:bg-teal-700 text-white")}
+                        >
+                            {isEditing ? 'Done' : 'Edit'}
+                        </Button>
                     </div>
                  </div>
               )
