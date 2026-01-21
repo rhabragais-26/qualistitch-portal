@@ -409,7 +409,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                     <FormItem>
                        {selectedCampaign?.imageUrl && (
                         <div className="mb-2 p-1 rounded-md w-fit mx-auto border">
-                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} className="w-[200px] h-[150px] object-contain rounded-md" />
+                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} className="w-auto h-[150px] object-contain rounded-md" />
                         </div>
                       )}
                       <div className="flex justify-between items-center">
@@ -657,3 +657,5 @@ export default function CampaignsPage() {
     </Header>
   );
 }
+
+    
