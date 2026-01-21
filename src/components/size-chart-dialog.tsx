@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -9,7 +10,7 @@ import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { isEqual } from 'lodash';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -20,6 +21,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 type SizeChartInfo = {
   image: string | null;
   uploadTime: string | null;
+  uploadedBy?: string | null;
 };
 
 type SizeChartData = {
@@ -30,9 +32,9 @@ type SizeChartData = {
 };
 
 const initialSizeChartData: SizeChartData = {
-  bomberJacket: { image: null, uploadTime: null },
-  poloShirt: { image: null, uploadTime: null },
-  corporateJacket: { image: null, uploadTime: null },
+  bomberJacket: { image: null, uploadTime: null, uploadedBy: null },
+  poloShirt: { image: null, uploadTime: null, uploadedBy: null },
+  corporateJacket: { image: null, uploadTime: null, uploadedBy: null },
 };
 
 type TabValue = keyof Omit<SizeChartData, 'id'>;
@@ -44,7 +46,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const { toast } = useToast();
-  const { user, isAdmin, isUserLoading: isAuthLoading } = useUser();
+  const { user, userProfile, isAdmin, isUserLoading: isAuthLoading } = useUser();
   
   const firestore = useFirestore();
   const sizeChartRef = useMemoFirebase(() => firestore ? doc(firestore, 'sizeCharts', 'default') : null, [firestore]);
@@ -70,9 +72,9 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   useEffect(() => {
     if (fetchedData) {
       const dataToSet = {
-        bomberJacket: fetchedData.bomberJacket || { image: null, uploadTime: null },
-        poloShirt: fetchedData.poloShirt || { image: null, uploadTime: null },
-        corporateJacket: fetchedData.corporateJacket || { image: null, uploadTime: null },
+        bomberJacket: fetchedData.bomberJacket || { image: null, uploadTime: null, uploadedBy: null },
+        poloShirt: fetchedData.poloShirt || { image: null, uploadTime: null, uploadedBy: null },
+        corporateJacket: fetchedData.corporateJacket || { image: null, uploadTime: null, uploadedBy: null },
       };
       setSizeChartData(dataToSet);
     }
@@ -82,9 +84,9 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
     if (isLoading) return;
     const initialCompareState = fetchedData 
       ? {
-          bomberJacket: fetchedData.bomberJacket || { image: null, uploadTime: null },
-          poloShirt: fetchedData.poloShirt || { image: null, uploadTime: null },
-          corporateJacket: fetchedData.corporateJacket || { image: null, uploadTime: null },
+          bomberJacket: fetchedData.bomberJacket || { image: null, uploadTime: null, uploadedBy: null },
+          poloShirt: fetchedData.poloShirt || { image: null, uploadTime: null, uploadedBy: null },
+          corporateJacket: fetchedData.corporateJacket || { image: null, uploadTime: null, uploadedBy: null },
         } 
       : initialSizeChartData;
 
@@ -165,7 +167,8 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
         ...prev,
         [tab]: {
           image: e.target?.result as string,
-          uploadTime: prev[tab]?.uploadTime || new Date().toISOString()
+          uploadTime: new Date().toISOString(),
+          uploadedBy: userProfile?.nickname || null,
         }
       }));
     };
@@ -194,7 +197,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
     if (!isAdmin) return;
     setSizeChartData(prev => ({
       ...prev,
-      [tab]: { image: null, uploadTime: null }
+      [tab]: { image: null, uploadTime: null, uploadedBy: null }
     }));
     setFilesToUpload(prev => ({ ...prev, [tab]: null }));
     const fileInput = fileInputRefs[tab].current;
@@ -209,7 +212,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
   };
 
   const handleSave = async () => {
-    if (!sizeChartRef || !firestore) return;
+    if (!sizeChartRef || !firestore || !userProfile) return;
   
     try {
       const storage = getStorage();
@@ -223,16 +226,14 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
         const storageRef = ref(storage, `sizeCharts/${tab}/${file.name}`);
         const snapshot = await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(snapshot.ref);
-        dataToSave[tab] = {
-          image: downloadURL,
-          uploadTime: new Date().toISOString()
-        };
+        dataToSave[tab].image = downloadURL;
+        // uploadedBy and uploadTime are already set in local state by handleImageUpload
       }
       
-      // Handle deletions (image is null in local state but was present in fetched data)
+      // Handle deletions (image is null in local state)
       (Object.keys(dataToSave) as TabValue[]).forEach(tab => {
-        if (dataToSave[tab].image === null && fetchedData?.[tab]?.image) {
-           dataToSave[tab] = { image: null, uploadTime: null };
+        if (dataToSave[tab].image === null) {
+           dataToSave[tab] = { image: null, uploadTime: null, uploadedBy: null };
         }
       });
 
@@ -244,7 +245,7 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
       });
       
       setFilesToUpload({ bomberJacket: null, poloShirt: null, corporateJacket: null });
-      refetch(); // Refetch data to sync state with new URLs
+      refetch();
       setIsDirty(false);
 
     } catch (error: any) {
@@ -295,7 +296,8 @@ export function SizeChartDialog({ onClose, onDraggingChange }: { onClose: () => 
         </div>
         {data && data.uploadTime && (
             <p className="text-xs text-center text-gray-500 mt-2">
-                Uploaded on: {new Date(data.uploadTime).toLocaleString()}
+              Uploaded on: {new Date(data.uploadTime).toLocaleString()}
+              {data.uploadedBy && ` by ${data.uploadedBy}`}
             </p>
         )}
       </div>

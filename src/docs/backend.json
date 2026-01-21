@@ -165,21 +165,24 @@
           "type": "object",
           "properties": {
             "image": { "type": ["string", "null"] },
-            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
+            "uploadTime": { "type": ["string", "null"], "format": "date-time" },
+            "uploadedBy": { "type": ["string", "null"] }
           }
         },
         "poloShirt": {
           "type": "object",
           "properties": {
             "image": { "type": ["string", "null"] },
-            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
+            "uploadTime": { "type": ["string", "null"], "format": "date-time" },
+            "uploadedBy": { "type": ["string", "null"] }
           }
         },
         "corporateJacket": {
           "type": "object",
           "properties": {
             "image": { "type": ["string", "null"] },
-            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
+            "uploadTime": { "type": ["string", "null"], "format": "date-time" },
+            "uploadedBy": { "type": ["string", "null"] }
           }
         }
       }
@@ -804,13 +807,14 @@
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string", "description": "The name of the ad campaign." },
+        "adAccount": { "type": "string", "description": "The ad account this campaign belongs to." },
         "imageUrl": {
           "type": "string",
           "format": "uri",
           "description": "URL of the uploaded campaign image."
         }
       },
-      "required": ["id", "name"]
+      "required": ["id", "name", "adAccount"]
     }
   },
   "auth": {
