@@ -452,17 +452,17 @@ function CampaignInquiriesTable({ tableKey }: { tableKey: number }) {
                 </TableRow>
               ) : inquiries && inquiries.length > 0 ? (
                 inquiries.map(inquiry => {
-                    const total = inquiry.smallTicketInquiries + inquiry.mediumTicketInquiries + inquiry.largeTicketInquiries + inquiry.highTicketInquiries;
+                    const total = (inquiry.smallTicketInquiries || 0) + (inquiry.mediumTicketInquiries || 0) + (inquiry.largeTicketInquiries || 0) + (inquiry.highTicketInquiries || 0);
                     return (
                         <TableRow key={inquiry.id}>
                             <TableCell>{format(new Date(inquiry.date), 'PPP')}</TableCell>
                             <TableCell>{inquiry.adAccount}</TableCell>
                             <TableCell>{inquiry.adCampaign}</TableCell>
                             <TableCell>{inquiry.submittedBy}</TableCell>
-                            <TableCell className="text-right">{inquiry.smallTicketInquiries}</TableCell>
-                            <TableCell className="text-right">{inquiry.mediumTicketInquiries}</TableCell>
-                            <TableCell className="text-right">{inquiry.largeTicketInquiries}</TableCell>
-                            <TableCell className="text-right">{inquiry.highTicketInquiries}</TableCell>
+                            <TableCell className="text-right">{inquiry.smallTicketInquiries || 0}</TableCell>
+                            <TableCell className="text-right">{inquiry.mediumTicketInquiries || 0}</TableCell>
+                            <TableCell className="text-right">{inquiry.largeTicketInquiries || 0}</TableCell>
+                            <TableCell className="text-right">{inquiry.highTicketInquiries || 0}</TableCell>
                             <TableCell className="text-right font-bold">{total}</TableCell>
                         </TableRow>
                     )
