@@ -82,10 +82,16 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
       onSignupSuccess();
     } catch (error: any) {
       console.error('Signup Error:', error);
+      let description = 'An unknown error occurred.';
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'This email address is already in use. Please use a different email or log in.';
+      } else {
+        description = error.message || description;
+      }
       toast({
         variant: 'destructive',
         title: 'Signup Failed',
-        description: error.message || 'An unknown error occurred.',
+        description: description,
       });
     } finally {
       setIsLoading(false);
