@@ -82,6 +82,9 @@ export function ProductManagement() {
     if (!isNaN(numValue)) {
       (newConfig.pricingTiers[group][embroidery].tiers[tierIndex] as any)[field] = numValue;
       setConfig(newConfig);
+    } else if (field === 'max' && value === '') {
+        (newConfig.pricingTiers[group][embroidery].tiers[tierIndex] as any)[field] = Infinity;
+        setConfig(newConfig);
     }
   };
 
@@ -99,7 +102,90 @@ export function ProductManagement() {
             (newConfig.addOnPricing[addOn].tiers[tierIndex] as any)[field] = numValue;
             setConfig(newConfig);
         }
+    } else if (field === 'max' && value === '') {
+        if (newConfig.addOnPricing[addOn] && newConfig.addOnPricing[addOn].tiers[tierIndex]) {
+            (newConfig.addOnPricing[addOn].tiers[tierIndex] as any)[field] = Infinity;
+            setConfig(newConfig);
+        }
     }
+  };
+
+  const handleAddTier = (group: ProductGroup, embroidery: 'logo' | 'logoAndText' | 'name') => {
+    if (!config) return;
+    const newConfig = JSON.parse(JSON.stringify(config));
+    const tiers = newConfig.pricingTiers[group][embroidery].tiers;
+    const lastTier = tiers[tiers.length - 1];
+
+    if (lastTier && lastTier.max === Infinity) {
+        toast({
+            variant: 'destructive',
+            title: 'Cannot Add Tier',
+            description: 'Please set a maximum quantity for the last tier before adding a new one.',
+        });
+        return;
+    }
+    
+    const newMin = lastTier ? lastTier.max + 1 : 1;
+    
+    tiers.push({ min: newMin, max: Infinity, price: 0 });
+    setConfig(newConfig);
+  };
+
+  const handleRemoveTier = (group: ProductGroup, embroidery: 'logo' | 'logoAndText' | 'name', tierIndex: number) => {
+    if (!config) return;
+    const newConfig = JSON.parse(JSON.stringify(config));
+    const tiers = newConfig.pricingTiers[group][embroidery].tiers;
+
+    if (tiers.length <= 1) {
+        toast({
+            variant: 'destructive',
+            title: 'Cannot Remove Tier',
+            description: 'At least one pricing tier is required.',
+        });
+        return;
+    }
+    
+    tiers.splice(tierIndex, 1);
+    setConfig(newConfig);
+  };
+  
+  const handleAddOnAddTier = (addOn: AddOnType) => {
+    if (!config) return;
+    const newConfig = JSON.parse(JSON.stringify(config));
+    const tiers = newConfig.addOnPricing[addOn].tiers;
+    const lastTier = tiers[tiers.length - 1];
+
+    if (lastTier && lastTier.max === Infinity) {
+        toast({
+            variant: 'destructive',
+            title: 'Cannot Add Tier',
+            description: 'Please set a maximum quantity for the last tier before adding a new one.',
+        });
+        return;
+    }
+
+    const newMin = lastTier ? lastTier.max + 1 : 1;
+
+    tiers.push({ min: newMin, max: Infinity, price: 0 });
+    setConfig(newConfig);
+  };
+
+  const handleAddOnRemoveTier = (addOn: AddOnType, tierIndex: number) => {
+    if (!config) return;
+    const newConfig = JSON.parse(JSON.stringify(config));
+    const tiers = newConfig.addOnPricing[addOn].tiers;
+
+    if (tiers.length <= 1) {
+        toast({
+            variant: 'destructive',
+            title: 'Cannot Remove Tier',
+            description: 'At least one pricing tier is required.',
+        });
+        return;
+    }
+
+    tiers.splice(tierIndex, 1);
+    setConfig(newConfig);
   };
   
   const handleAddNewProduct = () => {
@@ -198,7 +284,7 @@ export function ProductManagement() {
                 Edit product prices, add-ons, and manage product categories.
                 </CardDescription>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
                 <Label>Select a Product:</Label>
                  <Select value={selectedProductType} onValueChange={setSelectedProductType}>
                     <SelectTrigger className="w-[280px]">
@@ -324,6 +410,7 @@ export function ProductManagement() {
                                       <TableHead className="py-1 px-2 text-xs text-center">Min Qty</TableHead>
                                       <TableHead className="py-1 px-2 text-xs text-center">Max Qty</TableHead>
                                       <TableHead className="py-1 px-2 text-xs text-center">Price</TableHead>
+                                      <TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
@@ -345,10 +432,20 @@ export function ProductManagement() {
                                                 <Input type="number" value={tier.price} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'price', e.target.value)} className="w-24 h-7 text-xs pl-6 text-center"/>
                                             </div>
                                           </TableCell>
+                                          <TableCell className="p-1 align-middle">
+                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveTier(selectedProductGroup!, embroideryType, tierIndex)} disabled={config.pricingTiers[selectedProductGroup]?.[embroideryType]?.tiers.length === 1} className="h-7 w-7 text-destructive">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </TableCell>
                                       </TableRow>
                                   ))}
                               </TableBody>
                           </Table>
+                          <div className="p-2 flex justify-center">
+                            <Button variant="outline" size="sm" onClick={() => handleAddTier(selectedProductGroup!, embroideryType)}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
+                            </Button>
+                          </div>
                         </div>
                       )
                   })}
@@ -372,6 +469,7 @@ export function ProductManagement() {
                                 <TableHead className="py-1 px-2 text-xs text-center">Min Qty</TableHead>
                                 <TableHead className="py-1 px-2 text-xs text-center">Max Qty</TableHead>
                                 <TableHead className="py-1 px-2 text-xs text-center">Price</TableHead>
+                                <TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -393,10 +491,20 @@ export function ProductManagement() {
                                             <Input type="number" value={tier.price} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'price', e.target.value)} className="w-24 h-7 text-xs pl-6 text-center"/>
                                         </div>
                                     </TableCell>
+                                    <TableCell className="p-1 align-middle">
+                                      <Button variant="ghost" size="icon" onClick={() => handleAddOnRemoveTier(addOn, tierIndex)} disabled={config.addOnPricing[addOn]?.tiers.length === 1} className="h-7 w-7 text-destructive">
+                                          <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
+                     <div className="p-2 flex justify-center">
+                        <Button variant="outline" size="sm" onClick={() => handleAddOnAddTier(addOn)}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
+                        </Button>
+                    </div>
                  </div>
               )
             })}
