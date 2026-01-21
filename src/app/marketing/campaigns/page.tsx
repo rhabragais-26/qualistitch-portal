@@ -373,8 +373,8 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                   render={({ field }) => (
                     <FormItem>
                        {selectedCampaign?.imageUrl && (
-                        <div className="mb-2 flex justify-center">
-                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} objectFit="contain" className="rounded-md border p-1" />
+                        <div className="mb-2 flex justify-center border p-1 rounded-md w-fit mx-auto">
+                            <Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} width={200} height={150} className="h-[150px] w-auto rounded-md" />
                         </div>
                       )}
                       <div className="flex justify-between items-center">
@@ -404,7 +404,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                   <FormItem>
                     <FormLabel>Small Ticket (1-9)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input type="number" {...field} onChange={e => field.onChange(e.target.value === '' ? 0 : parseInt(e.target.value))} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -417,7 +417,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                   <FormItem>
                     <FormLabel>Medium Ticket (10-49)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input type="number" {...field} onChange={e => field.onChange(e.target.value === '' ? 0 : parseInt(e.target.value))} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -430,7 +430,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                   <FormItem>
                     <FormLabel>Large Ticket (50-199)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input type="number" {...field} onChange={e => field.onChange(e.target.value === '' ? 0 : parseInt(e.target.value))} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -443,7 +443,7 @@ function CampaignInquiryForm({ onFormSubmit, editingInquiry, onCancelEdit }: { o
                   <FormItem>
                     <FormLabel>High Ticket (200+)</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input type="number" {...field} onChange={e => field.onChange(e.target.value === '' ? 0 : parseInt(e.target.value))} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
