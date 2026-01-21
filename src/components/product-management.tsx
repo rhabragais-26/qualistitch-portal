@@ -453,7 +453,7 @@ export function ProductManagement() {
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-                <CardTitle>Product &amp; Pricing Management</CardTitle>
+                <CardTitle>Product & Pricing Management</CardTitle>
                 <CardDescription>
                 Edit product prices, add-ons, and manage product categories.
                 </CardDescription>
@@ -472,15 +472,15 @@ export function ProductManagement() {
                     <DialogTrigger asChild>
                         <Button variant="outline" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-6xl">
-                        <DialogHeader>
-                            <DialogTitle>Manage Products &amp; Categories</DialogTitle>
+                    <DialogContent className="max-w-4xl h-[600px] px-0">
+                        <DialogHeader className="px-6">
+                            <DialogTitle>Manage Products & Categories</DialogTitle>
                             <DialogDescription>
                                 Add new products or re-categorize existing ones.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
-                            <div className="space-y-4 border-r pr-8">
+                        <div className="grid grid-cols-10 gap-x-8 py-4 px-6 h-full overflow-hidden">
+                            <div className="col-span-4 space-y-4 border-r pr-8">
                                 <h3 className="text-lg font-semibold">Add New Product</h3>
                                 <div>
                                     <Label htmlFor="product-name">New Product Name</Label>
@@ -527,10 +527,10 @@ export function ProductManagement() {
                                 </div>
                                 <Button onClick={handleAddNewProduct} className="w-full">Add Product</Button>
                             </div>
-                            <div className="space-y-6">
+                            <div className="col-span-6 space-y-6">
                                 <section>
                                     <h3 className="text-lg font-semibold">Manage Product Categories</h3>
-                                    <div className="space-y-2 max-h-80 overflow-y-auto border p-4 rounded-md mt-4 text-sm">
+                                    <div className="space-y-2 max-h-48 overflow-y-auto border p-4 rounded-md mt-4 text-sm">
                                         {productGroups.map((group) => (
                                         <div key={group} className="flex items-center justify-between gap-4">
                                             {editingCategory?.oldName === group ? (
@@ -561,8 +561,8 @@ export function ProductManagement() {
                                     </div>
                                 </section>
                                 <section>
-                                    <h3 className="text-lg font-semibold">Product Categories</h3>
-                                    <div className="space-y-2 max-h-80 overflow-y-auto border p-4 rounded-md mt-4 text-sm">
+                                    <h3 className="text-lg font-semibold">Product List</h3>
+                                    <div className="space-y-2 max-h-48 overflow-y-auto border p-4 rounded-md mt-4 text-sm">
                                         {Object.entries(config.productGroupMapping).map(([name, group]) => (
                                             <div key={name} className="flex items-center justify-between gap-4">
                                                 <span className="whitespace-nowrap flex-1">{name}</span>
@@ -585,7 +585,7 @@ export function ProductManagement() {
                                 </section>
                             </div>
                         </div>
-                        <DialogFooter>
+                        <DialogFooter className="px-6 pb-6">
                             <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
                         </DialogFooter>
                     </DialogContent>
