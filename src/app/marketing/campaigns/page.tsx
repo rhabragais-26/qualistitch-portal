@@ -286,17 +286,17 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
   }, [form]);
   
   useEffect(() => {
-    if (editingInquiry) {
+    if (editingInquiry && campaigns) {
         form.reset({
             date: new Date(editingInquiry.date),
             adAccount: editingInquiry.adAccount,
             adCampaign: editingInquiry.adCampaign,
-            smallTicketInquiries: editingInquiry.smallTicketInquiries,
-            mediumTicketInquiries: editingInquiry.mediumTicketInquiries,
-            largeTicketInquiries: editingInquiry.largeTicketInquiries,
-            highTicketInquiries: editingInquiry.highTicketInquiries,
+            smallTicketInquiries: editingInquiry.smallTicketInquiries || undefined,
+            mediumTicketInquiries: editingInquiry.mediumTicketInquiries || undefined,
+            largeTicketInquiries: editingInquiry.largeTicketInquiries || undefined,
+            highTicketInquiries: editingInquiry.highTicketInquiries || undefined,
         });
-    } else {
+    } else if (!editingInquiry) {
         form.reset({
             date: new Date(),
             adAccount: '',
@@ -307,7 +307,7 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
             highTicketInquiries: undefined,
         });
     }
-  }, [editingInquiry, form]);
+  }, [editingInquiry, form, campaigns]);
 
   const handleActualSubmit = async (values: FormValues) => {
     if (!firestore || !userProfile) {
@@ -830,7 +830,7 @@ export default function CampaignsPage() {
                 className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
             >
                 <X className="h-6 w-6" />
-                <span className="sr-only">Close image view</span>
+                <span className="sr-only">Close</span>
             </Button>
           </div>
         </div>
