@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -26,8 +27,19 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from './ui/label';
 
-type Tier = { min: number; max: number; price: number };
-type EmbroideryPricing = { tiers: Tier[] };
+// New types to allow empty strings for editing
+type EditableTier = { min: number | ''; max: number | ''; price: number | '' };
+type EditableEmbroideryPricing = { tiers: EditableTier[] };
+type EditablePricingConfig = Omit<PricingConfig, 'pricingTiers' | 'addOnPricing'> & {
+  pricingTiers: {
+    [key in ProductGroup]: {
+      [key in 'logo' | 'logoAndText' | 'name']: EditableEmbroideryPricing;
+    };
+  };
+  addOnPricing: {
+    [key in AddOnType]: { tiers: EditableTier[] };
+  };
+};
 
 export function ProductManagement() {
   const firestore = useFirestore();
@@ -40,7 +52,7 @@ export function ProductManagement() {
 
   const { data: fetchedConfig, isLoading, refetch } = useDoc<PricingConfig>(pricingConfigRef);
 
-  const [config, setConfig] = useState<PricingConfig | null>(null);
+  const [config, setConfig] = useState<EditablePricingConfig | null>(null);
   const [productTypes, setProductTypes] = useState<string[]>([]);
   const [selectedProductType, setSelectedProductType] = useState<string>('');
   const [newProduct, setNewProduct] = useState({ name: '', group: '' });
@@ -48,10 +60,13 @@ export function ProductManagement() {
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
+  // State to manage edit mode for each table
+  const [editModes, setEditModes] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     const dataToUse = fetchedConfig || (isLoading ? null : initialPricingConfig as PricingConfig);
     if (dataToUse) {
-      setConfig(dataToUse);
+      setConfig(dataToUse as unknown as EditablePricingConfig);
       const pTypes = Object.keys(dataToUse.productGroupMapping).sort();
       setProductTypes(pTypes);
       if (pTypes.length > 0 && !pTypes.includes(selectedProductType)) {
@@ -68,6 +83,10 @@ export function ProductManagement() {
     return !isEqual(config, fetchedConfig);
   }, [config, fetchedConfig]);
 
+  const toggleEditMode = (key: string) => {
+    setEditModes(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+  
   const handleTierChange = (
     group: ProductGroup,
     embroidery: 'logo' | 'logoAndText' | 'name',
@@ -77,28 +96,16 @@ export function ProductManagement() {
   ) => {
     if (!config) return;
 
-    const numValue = value === '' ? 0 : parseInt(value, 10);
-    if(isNaN(numValue)) return;
-
-
     const newConfig = JSON.parse(JSON.stringify(config));
-    const tiers = newConfig.pricingTiers[group][embroidery].tiers;
-    
-    if (field === 'min') {
-      if (numValue > 0) {
-        if (tierIndex > 0 && numValue <= tiers[tierIndex - 1].min) {
-            toast({ variant: 'destructive', title: 'Invalid Minimum', description: 'Must be greater than previous tier\'s minimum.' });
-            return;
-        }
-        if (tiers[tierIndex + 1] && numValue >= tiers[tierIndex + 1].min) {
-            toast({ variant: 'destructive', title: 'Invalid Minimum', description: 'Must be less than next tier\'s minimum.' });
-            return;
-        }
-      }
-      tiers[tierIndex].min = numValue;
-    } else { 
-      tiers[tierIndex].price = numValue;
+    const tiers: EditableTier[] = newConfig.pricingTiers[group][embroidery].tiers;
+    const numValue = parseInt(value, 10);
+
+    if (value === '') {
+        tiers[tierIndex][field] = '';
+    } else if (!isNaN(numValue)) {
+        tiers[tierIndex][field] = numValue;
     }
+    
     setConfig(newConfig);
   };
 
@@ -109,39 +116,24 @@ export function ProductManagement() {
     value: string
   ) => {
     if (!config) return;
-
-    const numValue = value === '' ? 0 : parseInt(value, 10);
-    if(isNaN(numValue)) return;
-
     const newConfig = JSON.parse(JSON.stringify(config));
-    const tiers = newConfig.addOnPricing[addOn].tiers;
-    
-    if (field === 'min') {
-      if(numValue > 0) {
-        if (tierIndex > 0 && numValue <= tiers[tierIndex - 1].min) {
-            toast({ variant: 'destructive', title: 'Invalid Minimum', description: 'Must be greater than previous tier\'s minimum.' });
-            return;
-        }
-        if (tiers[tierIndex + 1] && numValue >= tiers[tierIndex + 1].min) {
-            toast({ variant: 'destructive', title: 'Invalid Minimum', description: 'Must be less than next tier\'s minimum.' });
-            return;
-        }
-      }
-      tiers[tierIndex].min = numValue;
-    } else { 
-      tiers[tierIndex].price = numValue;
+    const tiers: EditableTier[] = newConfig.addOnPricing[addOn].tiers;
+    const numValue = parseInt(value, 10);
+
+    if (value === '') {
+        tiers[tierIndex][field] = '';
+    } else if (!isNaN(numValue)) {
+        tiers[tierIndex][field] = numValue;
     }
+
     setConfig(newConfig);
   };
-
-
+  
   const handleAddTier = (group: ProductGroup, embroidery: 'logo' | 'logoAndText' | 'name') => {
     if (!config) return;
     const newConfig = JSON.parse(JSON.stringify(config));
     const tiers = newConfig.pricingTiers[group][embroidery].tiers;
-    const lastTier = tiers[tiers.length - 1];
-    const newMin = lastTier ? lastTier.min + 1 : 1;
-    tiers.push({ min: newMin, max: Infinity, price: 0 });
+    tiers.push({ min: '', max: Infinity, price: '' });
     setConfig(newConfig);
   };
 
@@ -161,9 +153,7 @@ export function ProductManagement() {
     if (!config) return;
     const newConfig = JSON.parse(JSON.stringify(config));
     const tiers = newConfig.addOnPricing[addOn].tiers;
-    const lastTier = tiers[tiers.length - 1];
-    const newMin = lastTier ? lastTier.min + 1 : 1;
-    tiers.push({ min: newMin, max: Infinity, price: 0 });
+    tiers.push({ min: '', max: Infinity, price: '' });
     setConfig(newConfig);
   };
 
@@ -236,13 +226,74 @@ export function ProductManagement() {
 
   const handleSaveChanges = async () => {
     if (!config || !pricingConfigRef) return;
+  
+    const validateTiers = (tiers: EditableTier[], context: string) => {
+      const numericTiers: { min: number; price: number }[] = [];
+  
+      for (let i = 0; i < tiers.length; i++) {
+        const tier = tiers[i];
+        if (tier.min === '' || tier.price === '') {
+          toast({ variant: 'destructive', title: `Invalid Pricing in ${context}`, description: `Tier ${i + 1} has an empty minimum quantity or price. Please fill all fields.` });
+          return null;
+        }
+        numericTiers.push({ min: Number(tier.min), price: Number(tier.price) });
+      }
+  
+      numericTiers.sort((a, b) => a.min - b.min);
+  
+      for (let i = 1; i < numericTiers.length; i++) {
+        if (numericTiers[i].min <= numericTiers[i-1].min) {
+          toast({ variant: 'destructive', title: `Invalid Pricing in ${context}`, description: `Tier minimum quantities must be in increasing order and not have duplicates.` });
+          return null;
+        }
+      }
+      return numericTiers;
+    };
+  
+    const validatedConfig = JSON.parse(JSON.stringify(config));
+    let isValid = true;
+  
+    for (const group of Object.keys(validatedConfig.pricingTiers)) {
+      for (const embroidery of ['logo', 'name', 'logoAndText']) {
+        const tiers = validatedConfig.pricingTiers[group][embroidery].tiers;
+        const context = `${group} - ${embroidery}`;
+        const validated = validateTiers(tiers, context);
+        if (!validated) {
+          isValid = false;
+          break;
+        }
+        validatedConfig.pricingTiers[group][embroidery].tiers = validated.map((t, index) => ({
+            ...t,
+            max: index === validated.length - 1 ? Infinity : validated[index + 1].min - 1
+        }));
+      }
+      if (!isValid) break;
+    }
+    if (!isValid) return;
+  
+    for (const addOn of Object.keys(validatedConfig.addOnPricing)) {
+      if (addOn === 'rushFee' || addOn === 'shippingFee') continue;
+      const tiers = validatedConfig.addOnPricing[addOn].tiers;
+      const validated = validateTiers(tiers, addOn);
+      if (!validated) {
+        isValid = false;
+        break;
+      }
+      validatedConfig.addOnPricing[addOn].tiers = validated.map((t, index) => ({
+        ...t,
+        max: index === validated.length - 1 ? Infinity : validated[index + 1].min - 1
+      }));
+    }
+    if (!isValid) return;
+  
     try {
-      await setDoc(pricingConfigRef, config, { merge: true });
+      await setDoc(pricingConfigRef, validatedConfig, { merge: true });
       toast({
         title: 'Success!',
         description: 'Pricing configuration has been updated.',
       });
       refetch();
+      setEditModes({});
     } catch (error: any) {
       console.error('Error saving pricing config:', error);
       toast({
@@ -390,57 +441,66 @@ export function ProductManagement() {
                         return '';
                       }
                       const colors = ['bg-sky-600', 'bg-blue-600', 'bg-indigo-600'];
+                      const key = `${selectedProductGroup}-${embroideryType}`;
+                      const isEditing = !!editModes[key];
                       const tiers = config.pricingTiers[selectedProductGroup]?.[embroideryType]?.tiers || [];
                       return (
-                        <div key={embroideryType} className="border rounded-lg overflow-hidden shadow">
+                        <div key={embroideryType} className="border rounded-lg overflow-hidden shadow flex flex-col">
                            <div className={`p-2 text-center ${colors[index]}`}>
                                 <h4 className="font-semibold text-white">{getEmbroideryLabel(embroideryType)}</h4>
                             </div>
-                          <Table>
-                              <TableHeader>
-                                  <TableRow>
-                                      <TableHead className="py-1 px-2 text-xs text-center">Min Qty</TableHead>
-                                      <TableHead className="py-1 px-2 text-xs text-center">Max Qty</TableHead>
-                                      <TableHead className="py-1 px-2 text-xs text-center">Price</TableHead>
-                                      <TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>
-                                  </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                  {tiers.map((tier, tierIndex) => {
-                                      const nextTier = tiers[tierIndex + 1];
-                                      const maxQty = nextTier ? nextTier.min - 1 : Infinity;
-                                      return (
-                                          <TableRow key={tierIndex}>
-                                              <TableCell className="p-1 align-middle">
-                                                <div className="flex justify-center">
-                                                    <Input type="text" value={tier.min === 0 && tiers.length > 1 ? '' : tier.min} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'min', e.target.value.replace(/[^0-9]/g, ''))} className="w-20 h-7 text-xs text-center"/>
-                                                </div>
-                                              </TableCell>
-                                              <TableCell className="p-1 align-middle">
-                                                <div className="flex justify-center">
-                                                    <Input type="text" value={maxQty === Infinity ? '' : maxQty} placeholder="Infinity" readOnly className="w-20 h-7 text-xs text-center bg-muted"/>
-                                                </div>
-                                              </TableCell>
-                                              <TableCell className="p-1 align-middle">
-                                                <div className="relative flex items-center justify-center">
-                                                    <span className="absolute left-3 text-muted-foreground">₱</span>
-                                                    <Input type="text" value={tier.price === 0 ? '' : tier.price} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'price', e.target.value.replace(/[^0-9]/g, ''))} className="w-24 h-7 text-xs pl-6 text-center"/>
-                                                </div>
-                                              </TableCell>
-                                              <TableCell className="p-1 align-middle">
-                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveTier(selectedProductGroup!, embroideryType, tierIndex)} disabled={tiers.length === 1} className="h-7 w-7 text-destructive">
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                              </TableCell>
-                                          </TableRow>
-                                      )
-                                  })}
-                              </TableBody>
-                          </Table>
-                          <div className="p-2 flex justify-center">
-                            <Button variant="outline" size="sm" onClick={() => handleAddTier(selectedProductGroup!, embroideryType)}>
-                                <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
+                          <div className="flex-grow">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="py-1 px-2 text-xs text-center">Min Qty</TableHead>
+                                        <TableHead className="py-1 px-2 text-xs text-center">Max Qty</TableHead>
+                                        <TableHead className="py-1 px-2 text-xs text-center">Price</TableHead>
+                                        <TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {tiers.map((tier, tierIndex) => {
+                                        const nextTier = tiers[tierIndex + 1];
+                                        const maxQty = nextTier ? (typeof nextTier.min === 'number' ? nextTier.min - 1 : '...') : Infinity;
+                                        return (
+                                            <TableRow key={tierIndex}>
+                                                <TableCell className="p-1 align-middle">
+                                                  <div className="flex justify-center">
+                                                      <Input type="text" value={tier.min} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'min', e.target.value.replace(/[^0-9]/g, ''))} className="w-20 h-7 text-xs text-center" readOnly={!isEditing}/>
+                                                  </div>
+                                                </TableCell>
+                                                <TableCell className="p-1 align-middle">
+                                                  <div className="flex justify-center">
+                                                      <Input type="text" value={maxQty === Infinity ? '' : maxQty} placeholder="Infinity" readOnly className="w-20 h-7 text-xs text-center bg-muted"/>
+                                                  </div>
+                                                </TableCell>
+                                                <TableCell className="p-1 align-middle">
+                                                  <div className="relative flex items-center justify-center">
+                                                      <span className="absolute left-3 text-muted-foreground">₱</span>
+                                                      <Input type="text" value={tier.price} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'price', e.target.value.replace(/[^0-9]/g, ''))} className="w-24 h-7 text-xs pl-6 text-center" readOnly={!isEditing}/>
+                                                  </div>
+                                                </TableCell>
+                                                <TableCell className="p-1 align-middle">
+                                                  {isEditing && <Button variant="ghost" size="icon" onClick={() => handleRemoveTier(selectedProductGroup!, embroideryType, tierIndex)} disabled={tiers.length === 1} className="h-7 w-7 text-destructive">
+                                                      <Trash2 className="h-4 w-4" />
+                                                  </Button>}
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    })}
+                                </TableBody>
+                            </Table>
+                          </div>
+                          <div className={`p-2 flex justify-center items-center gap-2 ${colors[index]}`}>
+                            <Button variant="outline" size="sm" onClick={() => toggleEditMode(key)}>
+                                {isEditing ? 'Done' : 'Edit'}
                             </Button>
+                            {isEditing && (
+                                <Button variant="outline" size="sm" onClick={() => handleAddTier(selectedProductGroup!, embroideryType)}>
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
+                                </Button>
+                            )}
                           </div>
                         </div>
                       )
@@ -454,57 +514,66 @@ export function ProductManagement() {
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
             {addOnTypes.map((addOn, index) => {
               const colors = ['bg-slate-500', 'bg-gray-500', 'bg-zinc-500'];
+              const key = `${addOn}-addon`;
+              const isEditing = !!editModes[key];
               const tiers = config.addOnPricing[addOn]?.tiers || [];
               return (
-                 <div key={addOn} className="border rounded-lg overflow-hidden shadow">
+                 <div key={addOn} className="border rounded-lg overflow-hidden shadow flex flex-col">
                     <div className={`p-2 text-center ${colors[index % colors.length]}`}>
                       <h4 className="font-semibold capitalize text-white">{addOn.replace(/([A-Z])/g, ' $1')}</h4>
                     </div>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="py-1 px-2 text-xs text-center">Min Qty</TableHead>
-                                <TableHead className="py-1 px-2 text-xs text-center">Max Qty</TableHead>
-                                <TableHead className="py-1 px-2 text-xs text-center">Price</TableHead>
-                                <TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {tiers.map((tier, tierIndex) => {
-                                const nextTier = tiers[tierIndex + 1];
-                                const maxQty = nextTier ? nextTier.min - 1 : Infinity;
-                                return (
-                                    <TableRow key={tierIndex}>
-                                        <TableCell className="p-1 align-middle">
-                                            <div className="flex justify-center">
-                                            <Input type="text" value={tier.min === 0 && tiers.length > 1 ? '' : tier.min} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'min', e.target.value.replace(/[^0-9]/g, ''))} className="w-20 h-7 text-xs text-center"/>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="p-1 align-middle">
-                                            <div className="flex justify-center">
-                                                <Input type="text" value={maxQty === Infinity ? '' : maxQty} placeholder="Infinity" readOnly className="w-20 h-7 text-xs text-center bg-muted"/>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="p-1 align-middle">
-                                            <div className="relative flex items-center justify-center">
-                                                <span className="absolute left-3 text-muted-foreground">₱</span>
-                                                <Input type="text" value={tier.price === 0 ? '' : tier.price} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'price', e.target.value.replace(/[^0-9]/g, ''))} className="w-24 h-7 text-xs pl-6 text-center"/>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="p-1 align-middle">
-                                        <Button variant="ghost" size="icon" onClick={() => handleAddOnRemoveTier(addOn, tierIndex)} disabled={tiers.length === 1} className="h-7 w-7 text-destructive">
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            )}
-                        </TableBody>
-                    </Table>
-                     <div className="p-2 flex justify-center">
-                        <Button variant="outline" size="sm" onClick={() => handleAddOnAddTier(addOn)}>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
+                    <div className="flex-grow">
+                      <Table>
+                          <TableHeader>
+                              <TableRow>
+                                  <TableHead className="py-1 px-2 text-xs text-center">Min Qty</TableHead>
+                                  <TableHead className="py-1 px-2 text-xs text-center">Max Qty</TableHead>
+                                  <TableHead className="py-1 px-2 text-xs text-center">Price</TableHead>
+                                  <TableHead className="w-10"><span className="sr-only">Actions</span></TableHead>
+                              </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                              {tiers.map((tier, tierIndex) => {
+                                  const nextTier = tiers[tierIndex + 1];
+                                  const maxQty = nextTier ? (typeof nextTier.min === 'number' ? nextTier.min - 1 : '...') : Infinity;
+                                  return (
+                                      <TableRow key={tierIndex}>
+                                          <TableCell className="p-1 align-middle">
+                                              <div className="flex justify-center">
+                                              <Input type="text" value={tier.min} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'min', e.target.value.replace(/[^0-9]/g, ''))} className="w-20 h-7 text-xs text-center" readOnly={!isEditing}/>
+                                              </div>
+                                          </TableCell>
+                                          <TableCell className="p-1 align-middle">
+                                              <div className="flex justify-center">
+                                                  <Input type="text" value={maxQty === Infinity ? '' : maxQty} placeholder="Infinity" readOnly className="w-20 h-7 text-xs text-center bg-muted"/>
+                                              </div>
+                                          </TableCell>
+                                          <TableCell className="p-1 align-middle">
+                                              <div className="relative flex items-center justify-center">
+                                                  <span className="absolute left-3 text-muted-foreground">₱</span>
+                                                  <Input type="text" value={tier.price} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'price', e.target.value.replace(/[^0-9]/g, ''))} className="w-24 h-7 text-xs pl-6 text-center" readOnly={!isEditing}/>
+                                              </div>
+                                          </TableCell>
+                                          <TableCell className="p-1 align-middle">
+                                          {isEditing && <Button variant="ghost" size="icon" onClick={() => handleAddOnRemoveTier(addOn, tierIndex)} disabled={tiers.length === 1} className="h-7 w-7 text-destructive">
+                                              <Trash2 className="h-4 w-4" />
+                                          </Button>}
+                                          </TableCell>
+                                      </TableRow>
+                                  )}
+                              )}
+                          </TableBody>
+                      </Table>
+                    </div>
+                     <div className={`p-2 flex justify-center items-center gap-2 ${colors[index % colors.length]}`}>
+                        <Button variant="outline" size="sm" onClick={() => toggleEditMode(key)}>
+                            {isEditing ? 'Done' : 'Edit'}
                         </Button>
+                        {isEditing && (
+                            <Button variant="outline" size="sm" onClick={() => handleAddOnAddTier(addOn)}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
+                            </Button>
+                        )}
                     </div>
                  </div>
               )
