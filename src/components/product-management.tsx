@@ -451,7 +451,7 @@ export function ProductManagement() {
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-                <CardTitle>Product & Pricing Management</CardTitle>
+                <CardTitle>Product &amp; Pricing Management</CardTitle>
                 <CardDescription>
                 Edit product prices, add-ons, and manage product categories.
                 </CardDescription>
@@ -470,14 +470,14 @@ export function ProductManagement() {
                     <DialogTrigger asChild>
                         <Button variant="outline" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-4xl h-[700px] px-0">
+                    <DialogContent className="max-w-4xl h-[700px] px-0 flex flex-col">
                         <DialogHeader className="px-6">
-                            <DialogTitle>Manage Products & Categories</DialogTitle>
+                            <DialogTitle>Manage Products &amp; Categories</DialogTitle>
                             <DialogDescription>
                                 Add new products or re-categorize existing ones.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="grid grid-cols-10 h-full overflow-hidden">
+                        <div className="grid grid-cols-10 flex-1 h-full overflow-hidden">
                              <div className="col-span-4 space-y-6 border-r p-6">
                                 <section>
                                 <h3 className="text-lg font-semibold">Add New Product</h3>
@@ -589,7 +589,7 @@ export function ProductManagement() {
                                 </section>
                             </div>
                         </div>
-                        <DialogFooter className="px-6 border-t pt-4 pb-4 items-center">
+                        <DialogFooter className="flex items-center justify-center px-6 border-t pt-2">
                             <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
                         </DialogFooter>
                     </DialogContent>
