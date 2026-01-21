@@ -185,7 +185,7 @@ function ManageCampaignsDialog({ open, onOpenChange, onCampaignsUpdate }: { open
                         <div className="flex items-center gap-2 mt-2">
                             {newCampaignImagePreview && (
                                 <div className="relative h-10 w-auto flex-shrink-0">
-                                    <Image src={newCampaignImagePreview} alt="New campaign preview" layout="fill" objectFit="contain" className="rounded-md" />
+                                    <Image src={newCampaignImagePreview} alt="New campaign preview" width={40} height={40} className="rounded-md h-10 w-auto object-contain" />
                                 </div>
                             )}
                             <Button type="button" variant="outline" className="w-full" onClick={() => imageUploadRef.current?.click()}>
@@ -426,8 +426,10 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                       <FormItem>
                         <FormLabel>AD Account</FormLabel>
                         <Select onValueChange={(value) => {
+                            if (form.getValues('adCampaign') && adAccountValue !== value) {
+                              form.setValue('adCampaign', ''); // Reset campaign when account changes
+                            }
                             field.onChange(value);
-                            form.setValue('adCampaign', ''); // Reset campaign when account changes
                         }} value={field.value}>
                             <FormControl>
                               <SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger>
@@ -479,12 +481,19 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                   <FormItem>
                     <FormLabel>Small Ticket (1-9)</FormLabel>
                     <FormControl>
-                      <Input type="text" inputMode="numeric" pattern="[0-9]*" {...field} onChange={e => {
-                        const { value } = e.target;
-                        if (/^\d*$/.test(value)) {
-                            field.onChange(value);
-                        }
-                      }} />
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => {
+                            const { value } = e.target;
+                            if (/^\d*$/.test(value)) {
+                                field.onChange(value);
+                            }
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -497,12 +506,19 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                   <FormItem>
                     <FormLabel>Medium Ticket (10-49)</FormLabel>
                     <FormControl>
-                       <Input type="text" inputMode="numeric" pattern="[0-9]*" {...field} onChange={e => {
-                        const { value } = e.target;
-                        if (/^\d*$/.test(value)) {
-                            field.onChange(value);
-                        }
-                      }} />
+                       <Input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => {
+                            const { value } = e.target;
+                            if (/^\d*$/.test(value)) {
+                                field.onChange(value);
+                            }
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -515,12 +531,19 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                   <FormItem>
                     <FormLabel>Large Ticket (50-199)</FormLabel>
                     <FormControl>
-                       <Input type="text" inputMode="numeric" pattern="[0-9]*" {...field} onChange={e => {
-                        const { value } = e.target;
-                        if (/^\d*$/.test(value)) {
-                            field.onChange(value);
-                        }
-                      }} />
+                       <Input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => {
+                            const { value } = e.target;
+                            if (/^\d*$/.test(value)) {
+                                field.onChange(value);
+                            }
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -533,12 +556,19 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                   <FormItem>
                     <FormLabel>High Ticket (200+)</FormLabel>
                     <FormControl>
-                       <Input type="text" inputMode="numeric" pattern="[0-9]*" {...field} onChange={e => {
-                        const { value } = e.target;
-                        if (/^\d*$/.test(value)) {
-                            field.onChange(value);
-                        }
-                      }} />
+                       <Input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => {
+                            const { value } = e.target;
+                            if (/^\d*$/.test(value)) {
+                                field.onChange(value);
+                            }
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
