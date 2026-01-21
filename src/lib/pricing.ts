@@ -33,6 +33,7 @@ export const getUnitPrice = (
   patchPrice: number = 0,
   orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services'
 ): number => {
+  if (!pricingConfig) return 0;
   if (productType === 'Client Owned') return 0;
   if (productType === 'Patches') return patchPrice;
 
@@ -61,6 +62,7 @@ export const getUnitPrice = (
 };
 
 export const getAddOnPrice = (addOnType: AddOnType, quantity: number, pricingConfig: PricingConfig): number => {
+  if (!pricingConfig || !pricingConfig.addOnPricing) return 0;
   const pricing = pricingConfig.addOnPricing[addOnType];
   if (!pricing) return 0;
   const tier = pricing.tiers.find(t => quantity >= t.min && quantity <= t.max);
@@ -69,6 +71,7 @@ export const getAddOnPrice = (addOnType: AddOnType, quantity: number, pricingCon
 
 
 export const getTierLabel = (productType: string, quantity: number, embroidery: EmbroideryOption, pricingConfig: PricingConfig): string => {
+  if (!pricingConfig) return 'N/A';
   if (productType === 'Client Owned' || productType === 'Patches') {
       return 'N/A';
   }
@@ -122,5 +125,3 @@ export const getProgrammingFees = (
   }
   return { logoFee: 0, backTextFee: 0 };
 };
-
-    

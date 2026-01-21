@@ -134,12 +134,11 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   
   // MODIFIED: Directly call handleConfirmSave
   const onValidSubmit = () => {
-    console.log("DEBUG: Form submitted (valid), directly calling handleConfirmSave.");
     handleConfirmSave();
   };
 
   const onInvalidSubmit = (errors: FieldErrors<FormValues>) => {
-    console.warn("DEBUG: Form has validation errors:", errors);
+    console.warn("Form has validation errors:", errors);
     toast({
       variant: "destructive",
       title: "Invalid Input",
@@ -148,10 +147,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   };
 
   const handleConfirmSave = useCallback(async () => {
-    console.log("DEBUG: handleConfirmSave called. (Firebase update attempt)");
-    console.log("DEBUG: Current user in handleConfirmSave:", user?.uid);
     if (!firestore || !lead) {
-        console.warn("DEBUG: Firestore or lead is not available. Cannot save.");
         toast({
             variant: "destructive",
             title: "Update Failed",
@@ -161,7 +157,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     }
 
     const formValuesToSave = formMethods.getValues();
-    console.log("DEBUG: Form values to save:", formValuesToSave);
 
     try {
         const paidAmount = Object.values(payments).flat().reduce((sum, p) => sum + p.amount, 0);
@@ -199,12 +194,9 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
             lastModifiedBy: userProfile?.nickname,
         };
         
-        console.log("DEBUG: Data to update:", dataToUpdate);
-
         const leadDocRef = doc(firestore, 'leads', lead.id);
         await updateDoc(leadDocRef, dataToUpdate);
         
-        console.log("DEBUG: Document updated successfully in Firestore.");
         toast({
             title: "Lead Updated!",
             description: "The lead details have been successfully updated.",
@@ -212,33 +204,14 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         handleUpdate();
         onClose(); // Close the main Dialog after successful save
     } catch (e: any) {
-        console.error("DEBUG: Error updating lead: ", e);
-        console.error("DEBUG: Error details (code, message):", e.code, e.message);
+        console.error("Error updating lead: ", e);
         toast({
             variant: "destructive",
             title: "Update Failed",
             description: e.message || "Could not update the lead.",
         });
-    } finally {
-        console.log("DEBUG: Finally block: Update process finished.");
-        // No longer need to setIsConfirmSaveOpen(false) as AlertDialog is removed
     }
-  }, [firestore, lead, handleUpdate, onClose, toast, formMethods, stagedOrders, addOns, discounts, payments, grandTotal, balance, user, userProfile]);
-
-  // Debugging logs for dialog states - AlertDialog logs are removed
-  useEffect(() => {
-    console.log("DEBUG: Main Dialog isOpen state:", isOpen);
-  }, [isOpen]);
-
-  // useEffect(() => {
-  //   console.log("DEBUG: AlertDialog isConfirmSaveOpen state:", isConfirmSaveOpen);
-  //   if (isConfirmSaveOpen) {
-  //     console.log("DEBUG: AlertDialog is now OPEN.");
-  //   } else {
-  //     console.log("DEBUG: AlertDialog is now CLOSED.");
-  //   }
-  // }, [isConfirmSaveOpen]);
-
+  }, [firestore, lead, handleUpdate, onClose, toast, formMethods, stagedOrders, addOns, discounts, payments, grandTotal, balance, userProfile]);
 
   return (
     <>
@@ -283,14 +256,10 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
                 
                 <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
                     <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                    {/* The Save Changes button will now directly trigger form submission and update */}
                     <Button 
                       type="button" 
                       form={`edit-lead-form-${lead?.id}`} 
-                      onClick={() => {
-                        console.log("DEBUG: Main Dialog 'Save Changes' button clicked (will manually trigger form validation and direct save).");
-                        handleSubmit(onValidSubmit, onInvalidSubmit)();
-                      }}
+                      onClick={handleSubmit(onValidSubmit, onInvalidSubmit)}
                     >
                       Save Changes
                     </Button>
@@ -299,7 +268,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
         </FormProvider>
       </DialogContent>
     </Dialog>
-    {/* AlertDialog component removed from here */}
     </>
   );
 }
