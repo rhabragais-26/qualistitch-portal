@@ -142,7 +142,7 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
     try {
         const grandTotal = lead.grandTotal || 0;
         const payments = lead.payments || [];
-        const totalPaid = payments.reduce((sum, p) => sum.amount + p.amount, 0);
+        const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
 
         const updatedPayment: any = {
             type: 'full',
@@ -187,6 +187,12 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
   const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
   }, [openCustomerDetails]);
+  
+  const formatJoNumber = useCallback((joNumber: number | undefined) => {
+    if (!joNumber) return 'N/A';
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+  }, []);
 
   if (areLeadsLoading) {
     return (
@@ -240,10 +246,12 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
                     <TableHead className="text-white align-middle text-center">Date & Time</TableHead>
                     <TableHead className="text-white align-middle text-center">Customer</TableHead>
                     <TableHead className="text-white align-middle text-center">SCES</TableHead>
+                    <TableHead className="text-white align-middle text-center">J.O. Number</TableHead>
                     <TableHead className="text-white align-middle text-center">Total Amount</TableHead>
                     <TableHead className="text-white align-middle text-center">Paid Amount</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Balance</TableHead>
                     <TableHead className="text-white align-middle text-center">Payment Type</TableHead>
+                    <TableHead className="text-white align-middle text-center">Mode of Payment</TableHead>
                     <TableHead className="text-white align-middle text-center">Items</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[160px]">Action</TableHead>
                 </TableRow>
@@ -289,10 +297,12 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
                                 </div>
                             </TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.salesRepresentative}</TableCell>
+                            <TableCell className="text-xs align-middle text-center py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 font-bold text-destructive">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType}</TableCell>
+                            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType === 'COD' ? 'CASH' : (lead.modeOfPayment || '-')}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">
                               <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
                                 View
@@ -307,7 +317,7 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
                         </TableRow>
                         {openLeadId === lead.id && (
                              <TableRow>
-                                <TableCell colSpan={9} className="p-0">
+                                <TableCell colSpan={11} className="p-0">
                                     <div className="p-4 max-w-xl mx-auto bg-blue-50 rounded-md my-2">
                                         <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
                                         <Table>
