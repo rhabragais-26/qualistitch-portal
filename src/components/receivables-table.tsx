@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
@@ -262,12 +263,6 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
             </div>
              <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center gap-4">
-                    <Input
-                        placeholder="Search by J.O. No..."
-                        value={joNumberSearch}
-                        onChange={(e) => setJoNumberSearch(e.target.value)}
-                        className="bg-gray-100 text-black placeholder:text-gray-500 w-48"
-                    />
                     <Select value={csrFilter} onValueChange={setCsrFilter}>
                         <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
                         <SelectValue placeholder="Filter by SCES" />
@@ -277,6 +272,12 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                         {salesRepresentatives.map(csr => (<SelectItem key={csr} value={csr}>{csr}</SelectItem>))}
                         </SelectContent>
                     </Select>
+                    <Input
+                        placeholder="Search by J.O. No..."
+                        value={joNumberSearch}
+                        onChange={(e) => setJoNumberSearch(e.target.value)}
+                        className="bg-gray-100 text-black placeholder:text-gray-500 w-48"
+                    />
                     <div className="flex-1 min-w-[300px]">
                         <Input
                         placeholder="Search customer, company or contact..."
@@ -393,7 +394,7 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                         </TableRow>
                         {openLeadId === lead.id && (
                              <TableRow>
-                                <TableCell colSpan={filterType === 'RECEIVABLES' ? 12 : 11} className="p-0">
+                                <TableCell colSpan={filterType === 'RECEIVABLES' ? 13 : 12} className="p-0">
                                     <div className="p-4 max-w-xl mx-auto bg-blue-50 rounded-md my-2">
                                         <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
                                         <Table>
