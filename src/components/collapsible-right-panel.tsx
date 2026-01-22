@@ -18,6 +18,7 @@ export function CollapsibleRightPanel() {
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ y: 0 });
   const wasDragged = useRef(false);
+  const animationFrameId = useRef<number | null>(null);
 
 
   useEffect(() => {
@@ -35,6 +36,9 @@ export function CollapsibleRightPanel() {
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
     };
   }, []);
 
@@ -48,16 +52,25 @@ export function CollapsibleRightPanel() {
   }, [yPosition]);
   
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (isDragging) {
+    if (!isDragging) return;
+    
+    if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+    }
+    
+    animationFrameId.current = requestAnimationFrame(() => {
         wasDragged.current = true;
         // Clamp position to be within viewport. h-24 is 96px.
         const newY = Math.max(0, Math.min(window.innerHeight - 96, e.clientY - dragStartPos.current.y)); 
         setYPosition(newY);
-    }
+    });
   }, [isDragging]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+    if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+    }
   }, []);
 
   useEffect(() => {
@@ -132,8 +145,8 @@ export function CollapsibleRightPanel() {
       <div
         ref={buttonRef}
         className={cn(
-          "fixed z-50 no-print transition-transform duration-300 ease-in-out",
-          isExpanded ? "right-[24rem]" : "right-0" // w-96 is 24rem
+          "fixed z-50 no-print right-0 transition-transform duration-300 ease-in-out",
+          isExpanded && "translate-x-[-24rem]" // w-96 is 24rem
         )}
         style={{ top: `${yPosition}px` }}
       >
@@ -146,7 +159,7 @@ export function CollapsibleRightPanel() {
                 onMouseDown={handleMouseDown}
                 className={cn(
                     "relative h-24 w-9 p-1 rounded-r-none rounded-l-lg text-white flex items-center justify-center transition-colors",
-                    isExpanded
+                     isExpanded
                         ? "bg-[#81cdc6] hover:bg-[#81cdc6]"
                         : "bg-[#81cdc6] hover:bg-[#69bab2]"
                 )}
