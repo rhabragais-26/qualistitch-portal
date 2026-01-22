@@ -9,6 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from '@/components/ui/table';
 import {
   Card,
@@ -30,6 +31,8 @@ import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { z } from 'zod';
+import Link from 'next/link';
+import { Label } from './ui/label';
 
 const leadSchema = z.object({
   id: z.string(),
@@ -62,7 +65,22 @@ type EnrichedLead = Lead & {
   totalCustomerQuantity: number;
 };
 
-export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
+const remittanceOptions = [
+    "J&T Remittance",
+    "LBC Remittance",
+    "CASH",
+    "GCash (Jam)",
+    "GCash (Jonathan)",
+    "GCash (Jhun)",
+    "GCash (Jays)",
+    "GCash (Tantan)",
+    "Paymaya",
+    "Bank Transfer to BDO",
+    "Bank Transfer to BPI",
+    "Bank Transfer to ChinaBank",
+];
+
+export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { isReadOnly: boolean; filterType?: 'RECEIVABLES' | 'FULLY_PAID' }) {
   const firestore = useFirestore();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -72,7 +90,9 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, leadSchema);
 
   const [confirmingLead, setConfirmingLead] = useState<Lead | null>(null);
+  const [remittanceMode, setRemittanceMode] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [joNumberSearch, setJoNumberSearch] = useState('');
   const [csrFilter, setCsrFilter] = useState('All');
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
@@ -104,7 +124,7 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
         enrichedLeads.push({
           ...lead,
           orderNumber: index + 1,
-          totalCustomerQuantity: totalCustomerQuantity,
+          totalCustomerQuantity,
         });
       });
     });
@@ -112,14 +132,21 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
     return enrichedLeads;
   }, [leads]);
 
+  const formatJoNumber = useCallback((joNumber: number | undefined) => {
+    if (!joNumber) return 'N/A';
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+  }, []);
+
   const filteredLeads = useMemo(() => {
     if (!processedLeads) return [];
 
     return processedLeads.filter(lead => {
-      const hasBalance = lead.balance !== undefined && lead.balance > 0;
-      const isNotFullyPaid = lead.paymentType !== 'Fully Paid';
-      
-      if (!hasBalance && isNotFullyPaid) return false;
+      if (filterType === 'RECEIVABLES') {
+        if (lead.balance === undefined || lead.balance <= 0) return false;
+      } else { // 'FULLY_PAID'
+        if (lead.paymentType !== 'Fully Paid' || (lead.balance !== undefined && lead.balance > 0)) return false;
+      }
 
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ? 
@@ -130,14 +157,32 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
         : true;
       
       const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
+      
+      const lowercasedJoSearch = joNumberSearch.toLowerCase();
+      const matchesJo = joNumberSearch ? 
+        (lead.joNumber && (
+            formatJoNumber(lead.joNumber).toLowerCase().includes(lowercasedJoSearch) ||
+            lead.joNumber.toString().padStart(5, '0').slice(-5) === lowercasedJoSearch.slice(-5)
+        ))
+        : true;
 
-      return matchesSearch && matchesCsr;
+      return matchesSearch && matchesCsr && matchesJo;
     }).sort((a,b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
-  }, [processedLeads, searchTerm, csrFilter]);
+  }, [processedLeads, searchTerm, csrFilter, joNumberSearch, filterType, formatJoNumber]);
 
-  const handleMarkAsFullyPaid = async (lead: Lead) => {
-    if (!firestore || !userProfile) return;
+  const handleMarkAsFullyPaid = async () => {
+    if (!confirmingLead || !firestore || !userProfile || !remittanceMode) {
+        if (!remittanceMode) {
+            toast({
+                variant: 'destructive',
+                title: 'Payment Mode Required',
+                description: 'Please select a mode of payment.',
+            });
+        }
+        return;
+    }
 
+    const lead = confirmingLead;
     const leadDocRef = doc(firestore, 'leads', lead.id);
     try {
         const grandTotal = lead.grandTotal || 0;
@@ -147,7 +192,7 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
         const updatedPayment: any = {
             type: 'full',
             amount: grandTotal - totalPaid,
-            mode: 'Remittance Verification'
+            mode: remittanceMode,
         }
 
         await updateDoc(leadDocRef, {
@@ -171,6 +216,7 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
         });
     } finally {
         setConfirmingLead(null);
+        setRemittanceMode('');
     }
   };
 
@@ -188,12 +234,6 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
   }, [openCustomerDetails]);
   
-  const formatJoNumber = useCallback((joNumber: number | undefined) => {
-    if (!joNumber) return 'N/A';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-  }, []);
-
   if (areLeadsLoading) {
     return (
       <div className="space-y-2 p-4">
@@ -212,28 +252,47 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-black">Receivables</CardTitle>
+              <CardTitle className="text-black">{filterType === 'RECEIVABLES' ? 'Receivables' : 'Fully Paid Orders'}</CardTitle>
               <CardDescription className="text-gray-600">
-                Manage and track outstanding payments from customers.
+                {filterType === 'RECEIVABLES' ? 'Manage and track outstanding payments from customers.' : 'A record of all fully paid orders.'}
               </CardDescription>
             </div>
-            <div className="flex items-center gap-4">
-              <Select value={csrFilter} onValueChange={setCsrFilter}>
-                <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Filter by SCES" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All SCES</SelectItem>
-                  {salesRepresentatives.map(csr => (<SelectItem key={csr} value={csr}>{csr}</SelectItem>))}
-                </SelectContent>
-              </Select>
-              <div className="flex-1 min-w-[300px]">
-                <Input
-                  placeholder="Search customer, company or contact..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-gray-100 text-black placeholder:text-gray-500"
-                />
+             <div className="flex flex-col items-end gap-2">
+                <div className="flex items-center gap-4">
+                    <Input
+                        placeholder="Search by J.O. No..."
+                        value={joNumberSearch}
+                        onChange={(e) => setJoNumberSearch(e.target.value)}
+                        className="bg-gray-100 text-black placeholder:text-gray-500 w-48"
+                    />
+                    <Select value={csrFilter} onValueChange={setCsrFilter}>
+                        <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                        <SelectValue placeholder="Filter by SCES" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="All">All SCES</SelectItem>
+                        {salesRepresentatives.map(csr => (<SelectItem key={csr} value={csr}>{csr}</SelectItem>))}
+                        </SelectContent>
+                    </Select>
+                    <div className="flex-1 min-w-[300px]">
+                        <Input
+                        placeholder="Search customer, company or contact..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-gray-100 text-black placeholder:text-gray-500"
+                        />
+                    </div>
+                </div>
+                <div className="w-full text-right">
+                {filterType === 'RECEIVABLES' ? (
+                  <Link href="/finance/fully-paid-orders" className="text-sm text-primary hover:underline">
+                    View Fully Paid Orders
+                  </Link>
+                ) : (
+                  <Link href="/finance/receivables" className="text-sm text-primary hover:underline">
+                    View Receivables
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -253,7 +312,7 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
                     <TableHead className="text-white align-middle text-center">Payment Type</TableHead>
                     <TableHead className="text-white align-middle text-center">Mode of Payment</TableHead>
                     <TableHead className="text-white align-middle text-center">Items</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[160px]">Action</TableHead>
+                    {filterType === 'RECEIVABLES' && <TableHead className="text-white font-bold align-middle text-center w-[160px]">Action</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -309,15 +368,17 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
                                 {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
                               </Button>
                             </TableCell>
-                            <TableCell className="text-center align-middle py-2">
-                                <Button size="sm" className="h-7" onClick={() => setConfirmingLead(lead)} disabled={isReadOnly}>
-                                    Mark as Fully Paid
-                                </Button>
-                            </TableCell>
+                            {filterType === 'RECEIVABLES' && (
+                                <TableCell className="text-center align-middle py-2">
+                                    <Button size="sm" className="h-7" onClick={() => setConfirmingLead(lead)} disabled={isReadOnly}>
+                                        Mark as Fully Paid
+                                    </Button>
+                                </TableCell>
+                            )}
                         </TableRow>
                         {openLeadId === lead.id && (
                              <TableRow>
-                                <TableCell colSpan={11} className="p-0">
+                                <TableCell colSpan={filterType === 'RECEIVABLES' ? 11 : 10} className="p-0">
                                     <div className="p-4 max-w-xl mx-auto bg-blue-50 rounded-md my-2">
                                         <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
                                         <Table>
@@ -339,6 +400,14 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
                                                 </TableRow>
                                                 ))}
                                             </TableBody>
+                                            {lead.orders && lead.orders.length > 1 && (
+                                              <TableFooter>
+                                                  <TableRow>
+                                                  <TableCell colSpan={3} className="text-right font-bold text-black pt-1 px-2">Total Quantity</TableCell>
+                                                  <TableCell className="font-bold text-black text-center pt-1 px-2">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
+                                                  </TableRow>
+                                              </TableFooter>
+                                            )}
                                         </Table>
                                     </div>
                                 </TableCell>
@@ -358,12 +427,25 @@ export function ReceivablesTable({ isReadOnly }: { isReadOnly: boolean }) {
                 <AlertDialogHeader>
                     <AlertDialogTitle>Confirm Full Payment</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Are you sure you want to mark this order for <strong>{confirmingLead.customerName}</strong> as fully paid? This action cannot be undone.
+                        Confirm payment for <strong>{confirmingLead.customerName}</strong>. Select the mode of payment for the remaining balance of <strong>{formatCurrency(confirmingLead.balance || 0)}</strong>.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
+                <div className="py-4">
+                    <Label htmlFor="remittance-mode">Mode of Payment</Label>
+                    <Select onValueChange={setRemittanceMode} value={remittanceMode}>
+                        <SelectTrigger id="remittance-mode">
+                            <SelectValue placeholder="Select a mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                           {remittanceOptions.map(option => (
+                               <SelectItem key={option} value={option}>{option}</SelectItem>
+                           ))}
+                        </SelectContent>
+                    </Select>
+                </div>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleMarkAsFullyPaid(confirmingLead)}>Confirm</AlertDialogAction>
+                    <AlertDialogCancel onClick={() => { setConfirmingLead(null); setRemittanceMode(''); }}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleMarkAsFullyPaid} disabled={!remittanceMode}>Confirm</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

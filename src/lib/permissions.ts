@@ -28,10 +28,6 @@ export const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
     { id: 'finance', label: 'Finance', path: '/finance' },
 ];
 
-type UserPermissions = {
-  [key in PageGroup]?: boolean;
-};
-
 const pageGroupMapping: { [key: string]: PageGroup } = {
   '/new-order': 'sales',
   '/records/completed': 'sales',
@@ -59,6 +55,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/profile': 'profile',
   '/order-status': 'order-status',
   '/finance/receivables': 'finance',
+  '/finance/fully-paid-orders': 'finance',
   '/finance/operational-expenses': 'finance',
   '/finance/cost-of-goods': 'finance',
   '/finance/capital-expenses': 'finance',
