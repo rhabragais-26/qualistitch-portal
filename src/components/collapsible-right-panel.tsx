@@ -304,13 +304,6 @@ export function CollapsibleRightPanel() {
         const panelBeingEdited = panels.find(p => p.id === editingPanelId);
         if (panelBeingEdited && !panelBeingEdited.title.trim() && panelBeingEdited.id !== 'jo-notes') {
             removePanel(editingPanelId);
-        } else if (panelBeingEdited && !panelBeingEdited.title.trim() && panelBeingEdited.id !== 'jo-notes') {
-             toast({
-                variant: 'destructive',
-                title: 'Panel Name Required',
-                description: 'Please enter a name for the panel.',
-            });
-            return;
         }
     }
     setEditingPanelId(null);
