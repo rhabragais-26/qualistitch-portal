@@ -23,6 +23,7 @@ import {
   Cell,
   LineChart,
   Line,
+  LabelList,
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
