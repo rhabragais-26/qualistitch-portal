@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -104,13 +103,13 @@ const HeaderMemo = React.memo(function Header({
     () => (firestore ? query(collection(firestore, 'leads')) : null),
     [firestore]
   );
-  const { data: leads } = useCollection<Lead>(leadsQuery);
+  const { data: leads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
   const usersQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'users')) : null),
     [firestore]
   );
-  const { data: usersData } = useCollection<UserProfileInfo>(usersQuery);
+  const { data: usersData } = useCollection<UserProfileInfo>(usersQuery, undefined, { listen: false });
 
   const auditQueueCount = useMemo(() => {
     if (!leads) return 0;
@@ -208,16 +207,20 @@ const HeaderMemo = React.memo(function Header({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleNavigation('/finance/receivables')}>
+                      <Receipt className="mr-2" />
+                      Receivables
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/finance/operational-expenses')}>
                       <FileText className="mr-2" />
                       Operational Expenses
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/finance/cost-of-goods')}>
-                      <Package className="mr-2" />
+                      <ShoppingCart className="mr-2" />
                       Cost of Goods
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/finance/capital-expenses')}>
-                      <Home className="mr-2" />
+                      <Building className="mr-2" />
                       Capital Expenses
                     </DropdownMenuItem>
                   </DropdownMenuContent>

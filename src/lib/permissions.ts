@@ -1,4 +1,3 @@
-
 export type UserPosition = 
   | 'SCES'
   | 'Sales Supervisor'
@@ -18,7 +17,7 @@ export type UserPosition =
   | 'Page Admin'
   | 'Not Assigned';
 
-export type PageGroup = 'sales' | 'digitizing' | 'inventory' | 'production' | 'logistics' | 'admin' | 'profile' | 'order-status';
+export type PageGroup = 'sales' | 'digitizing' | 'inventory' | 'production' | 'logistics' | 'admin' | 'profile' | 'order-status' | 'finance' | 'marketing';
 
 export const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
     { id: 'sales', label: 'Sales', path: '/records' },
@@ -26,6 +25,7 @@ export const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
     { id: 'inventory', label: 'Inventory', path: '/inventory/summary' },
     { id: 'production', label: 'Production', path: '/production/production-queue' },
     { id: 'logistics', label: 'Logistics', path: '/logistics/shipment-queue' },
+    { id: 'finance', label: 'Finance', path: '/finance' },
 ];
 
 type UserPermissions = {
@@ -58,13 +58,19 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/admin/users': 'admin',
   '/profile': 'profile',
   '/order-status': 'order-status',
+  '/finance/receivables': 'finance',
+  '/finance/operational-expenses': 'finance',
+  '/finance/cost-of-goods': 'finance',
+  '/finance/capital-expenses': 'finance',
+  '/marketing/campaigns': 'marketing',
+  '/marketing/analytics': 'marketing',
 };
 
 const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
-  'SCES': ['sales'],
-  'Sales Supervisor': ['sales'],
-  'Sales Manager': ['sales'],
-  'S.E Officer': ['sales'],
+  'SCES': ['sales', 'marketing'],
+  'Sales Supervisor': ['sales', 'marketing'],
+  'Sales Manager': ['sales', 'marketing'],
+  'S.E Officer': ['sales', 'marketing'],
   'Inventory Officer': ['inventory'],
   'Digitizer': ['digitizing'],
   'E.D Coordinator': ['digitizing'],
@@ -72,7 +78,8 @@ const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'Production Head': ['inventory', 'logistics'],
   'Logistics Officer': ['logistics'],
   'Operations Manager': ['inventory', 'production', 'logistics'],
-  'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'admin', 'profile'],
+  'Finance': ['finance'],
+  'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'admin', 'profile', 'finance', 'marketing'],
 };
 
 export function hasEditPermission(position: UserPosition | undefined, pathname: string, customPermissions?: UserPermissions): boolean {
@@ -97,7 +104,7 @@ export function hasEditPermission(position: UserPosition | undefined, pathname: 
   }
   
   // Fallback to default position-based permissions
-  if (position === 'Page Admin') {
+  if (position === 'Page Admin' || position === 'CEO') {
     return true;
   }
 
