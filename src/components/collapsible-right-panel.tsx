@@ -79,8 +79,8 @@ export function CollapsibleRightPanel() {
         {/* PANEL Button */}
         <div
           className={cn(
-            "absolute inset-0 transition-opacity duration-300",
-            !isExpanded ? "opacity-100" : "opacity-0 pointer-events-none"
+            "absolute transition-all duration-300 ease-in-out",
+            isExpanded ? "top-1/2 -translate-y-1/2 -left-9" : "inset-0"
           )}
         >
           <TooltipProvider>
@@ -88,14 +88,14 @@ export function CollapsibleRightPanel() {
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
-                  onClick={() => setIsExpanded(true)}
+                  onClick={() => setIsExpanded(!isExpanded)}
                   className="relative h-24 w-9 p-1 rounded-r-none rounded-l-lg bg-[#81cdc6] text-white hover:bg-[#69bab2] hover:text-white flex items-center justify-center"
                 >
                   <span className="[writing-mode:vertical-rl] font-bold tracking-wider">PANEL</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="left">
-                <p>Open Panel</p>
+                <p>{isExpanded ? "Close Panel" : "Open Panel"}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
