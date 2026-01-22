@@ -23,8 +23,8 @@ export function CollapsibleRightPanel() {
 
   useEffect(() => {
     setIsMounted(true);
-    // Set initial position to be vertically centered. 96 is height of button (h-24)
-    setYPosition(window.innerHeight / 2 - 48); 
+    // Set initial position to be vertically centered. 192 is height of button (h-48)
+    setYPosition(window.innerHeight / 2 - 96); 
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -60,8 +60,8 @@ export function CollapsibleRightPanel() {
     
     animationFrameId.current = requestAnimationFrame(() => {
         wasDragged.current = true;
-        // Clamp position to be within viewport. h-24 is 96px.
-        const newY = Math.max(0, Math.min(window.innerHeight - 96, e.clientY - dragStartPos.current.y)); 
+        // Clamp position to be within viewport. h-48 is 192px.
+        const newY = Math.max(0, Math.min(window.innerHeight - 192, e.clientY - dragStartPos.current.y)); 
         setYPosition(newY);
     });
   }, [isDragging]);
@@ -127,7 +127,7 @@ export function CollapsibleRightPanel() {
       {/* Panel Window */}
       <div
         className={cn(
-          "fixed z-40 top-0 right-0 w-96 h-screen no-print transition-transform duration-300 ease-in-out bg-card border-l border-t border-b rounded-l-lg shadow-xl flex flex-col",
+          "fixed z-40 top-0 right-0 w-96 h-full no-print transition-transform duration-300 ease-in-out bg-card border-l border-t border-b rounded-l-lg shadow-xl flex flex-col",
           isExpanded ? "translate-x-0" : "translate-x-full"
         )}
       >
@@ -157,14 +157,9 @@ export function CollapsibleRightPanel() {
                 variant="ghost"
                 onClick={handleButtonClick}
                 onMouseDown={handleMouseDown}
-                className={cn(
-                    "relative h-24 w-9 p-1 rounded-r-none rounded-l-lg text-white flex items-center justify-center transition-colors",
-                     isExpanded
-                        ? "bg-[#81cdc6] hover:bg-[#81cdc6]"
-                        : "bg-[#81cdc6] hover:bg-[#69bab2]"
-                )}
+                className="relative h-48 w-9 p-1 rounded-r-none rounded-l-lg bg-[#81cdc6] text-white hover:bg-[#69bab2] hover:text-white flex items-center justify-center"
               >
-                <span className="[writing-mode:vertical-rl] font-bold tracking-wider">PANEL</span>
+                <span className="[writing-mode:vertical-rl] rotate-180 font-bold tracking-wider">PERSONAL NOTES</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent side="left">
