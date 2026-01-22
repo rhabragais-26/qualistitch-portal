@@ -332,6 +332,7 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                     <TableHead className="text-white align-middle text-center">Est. Delivery Date</TableHead>
                     <TableHead className="text-white align-middle text-center">Shipment Status</TableHead>
                     {filterType === 'RECEIVABLES' && <TableHead className="text-white font-bold align-middle text-center w-[160px]">Action</TableHead>}
+                    {filterType === 'FULLY_PAID' && <TableHead className="text-white align-middle text-center">Mode of Balance Payment</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -408,10 +409,15 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                                     </Button>
                                 </TableCell>
                             )}
+                            {filterType === 'FULLY_PAID' && (
+                                <TableCell className="text-xs align-middle text-center py-2 text-black">
+                                    {lead.payments && lead.payments.length > 0 ? lead.payments[lead.payments.length - 1].mode : '-'}
+                                </TableCell>
+                            )}
                         </TableRow>
                         {openLeadId === lead.id && (
                              <TableRow>
-                                <TableCell colSpan={filterType === 'RECEIVABLES' ? 12 : 11} className="p-0">
+                                <TableCell colSpan={12} className="p-0">
                                     <div className="p-4 max-w-xl mx-auto bg-blue-50 rounded-md my-2">
                                         <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
                                         <Table>
