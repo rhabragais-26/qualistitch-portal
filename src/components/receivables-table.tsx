@@ -1,6 +1,6 @@
 'use client';
 
-import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
+import { useFirestore, useMemoFirebase, useCollection, useUser, useDoc } from '@/firebase';
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
 import {
   Table,
@@ -34,6 +34,9 @@ import { z } from 'zod';
 import Link from 'next/link';
 import { Label } from './ui/label';
 import { addDays, format } from 'date-fns';
+import { initialPricingConfig } from '@/lib/pricing-data';
+import type { PricingConfig, AddOnType } from '@/lib/pricing';
+import { getAddOnPrice } from '@/lib/pricing';
 
 const leadSchema = z.object({
   id: z.string(),
@@ -64,6 +67,8 @@ const leadSchema = z.object({
   isSalesAuditRequested: z.boolean().optional(),
   isQualityApproved: z.boolean().optional(),
   isRecheckingQuality: z.boolean().optional(),
+  addOns: z.any().optional(),
+  discounts: z.any().optional(),
 });
 
 type Lead = z.infer<typeof leadSchema>;
@@ -100,7 +105,6 @@ const getShipmentStatus = (lead: Lead): { text: string; variant: "default" | "se
 
 export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { isReadOnly: boolean; filterType?: 'RECEIVABLES' | 'FULLY_PAID' }) {
   const firestore = useFirestore();
-  const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const { toast } = useToast();
   const { userProfile } = useUser();
 
@@ -324,11 +328,11 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                     <TableHead className="text-white align-middle text-center">SCES</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">J.O. Number</TableHead>
                     <TableHead className="text-white align-middle text-center">Total Amount</TableHead>
+                    <TableHead className="text-white align-middle text-center">Discount/Add Ons</TableHead>
                     <TableHead className="text-white align-middle text-center">Paid Amount</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Balance</TableHead>
                     <TableHead className="text-white align-middle text-center">Payment Type</TableHead>
                     <TableHead className="text-white align-middle text-center">Mode of Payment</TableHead>
-                    <TableHead className="text-white align-middle text-center">Items</TableHead>
                     <TableHead className="text-white align-middle text-center">Est. Delivery Date</TableHead>
                     <TableHead className="text-white align-middle text-center">Shipment Status</TableHead>
                     {filterType === 'RECEIVABLES' && <TableHead className="text-white font-bold align-middle text-center w-[160px]">Action</TableHead>}
@@ -339,6 +343,9 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                 {filteredLeads.map((lead) => {
                   const isRepeat = lead.orderNumber > 1;
                   const shipmentStatus = getShipmentStatus(lead);
+                  const hasAddOns = lead.addOns && Object.values(lead.addOns).flat().some((group: any) => Object.values(group).some(val => Number(val) > 0));
+                  const hasDiscounts = lead.discounts && Object.values(lead.discounts).some((discount: any) => discount.value > 0);
+
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow>
@@ -378,16 +385,56 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.salesRepresentative}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
+                            <TableCell className="text-xs align-middle text-center py-2 text-black">
+                                {hasAddOns || hasDiscounts ? (
+                                    <Collapsible>
+                                        <CollapsibleTrigger asChild>
+                                            <Button variant="secondary" size="sm" className="h-8 px-2 text-black hover:bg-gray-200">
+                                                View <ChevronDown className="h-4 w-4 ml-1" />
+                                            </Button>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent>
+                                            <div className="p-2 text-left text-xs bg-gray-50 border rounded-md mt-1 w-52 absolute z-10 shadow-lg">
+                                                {hasDiscounts && Object.entries(lead.discounts).map(([groupKey, discount]: [string, any]) => {
+                                                    if (discount.value > 0) {
+                                                        return (
+                                                            <div key={groupKey} className="mb-1">
+                                                                <p className="font-bold underline">Discount:</p>
+                                                                <p>
+                                                                    {discount.type === 'percentage' ? `${discount.value}%` : formatCurrency(discount.value)}
+                                                                    {discount.reason && ` (${discount.reason})`}
+                                                                </p>
+                                                            </div>
+                                                        )
+                                                    }
+                                                    return null;
+                                                })}
+                                                {hasAddOns && Object.entries(lead.addOns).map(([groupKey, groupAddOns]: [string, any]) => {
+                                                    const addOnEntries = Object.entries(groupAddOns).filter(([_, value]: [string, any]) => value > 0);
+                                                    if (addOnEntries.length === 0) return null;
+
+                                                    return (
+                                                        <div key={groupKey} className="mt-1">
+                                                            <p className="font-bold underline">Add-Ons:</p>
+                                                            {addOnEntries.map(([type, value]: [string, any]) => (
+                                                                <p key={type}>
+                                                                    {toTitleCase(type.replace(/([A-Z])/g, ' $1'))}: {type === 'rushFee' || type === 'shippingFee' ? formatCurrency(value) : `${value} item(s)`}
+                                                                </p>
+                                                            ))}
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        </CollapsibleContent>
+                                    </Collapsible>
+                                ) : (
+                                    <span>-</span>
+                                )}
+                            </TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 font-bold text-destructive">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType === 'COD' ? 'CASH' : (lead.modeOfPayment || '-')}</TableCell>
-                            <TableCell className="text-xs align-middle text-center py-2 text-black">
-                              <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
-                                View
-                                {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
-                              </Button>
-                            </TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">
                                 {format(
                                     lead.adjustedDeliveryDate 
@@ -415,43 +462,6 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                                 </TableCell>
                             )}
                         </TableRow>
-                        {openLeadId === lead.id && (
-                             <TableRow>
-                                <TableCell colSpan={12} className="p-0">
-                                    <div className="p-4 max-w-xl mx-auto bg-blue-50 rounded-md my-2">
-                                        <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                <TableHead className="py-1 px-2 text-black font-bold text-center align-middle">Product Type</TableHead>
-                                                <TableHead className="py-1 px-2 text-black font-bold text-center align-middle">Color</TableHead>
-                                                <TableHead className="py-1 px-2 text-black font-bold text-center align-middle">Size</TableHead>
-                                                <TableHead className="py-1 px-2 text-black font-bold text-center align-middle">Quantity</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {lead.orders?.map((order: any, index: number) => (
-                                                <TableRow key={order.id || index} className="border-0">
-                                                    <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.productType}</TableCell>
-                                                    <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.color}</TableCell>
-                                                    <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.size}</TableCell>
-                                                    <TableCell className="py-1 px-2 text-xs text-black text-center align-middle">{order.quantity}</TableCell>
-                                                </TableRow>
-                                                ))}
-                                            </TableBody>
-                                            {lead.orders && lead.orders.length > 1 && (
-                                              <TableFooter>
-                                                  <TableRow>
-                                                  <TableCell colSpan={3} className="text-right font-bold text-black pt-1 px-2">Total Quantity</TableCell>
-                                                  <TableCell className="font-bold text-black text-center pt-1 px-2">{lead.orders?.reduce((sum, order) => sum + order.quantity, 0)}</TableCell>
-                                                  </TableRow>
-                                              </TableFooter>
-                                            )}
-                                        </Table>
-                                    </div>
-                                </TableCell>
-                             </TableRow>
-                        )}
                     </React.Fragment>
                   )
                 })}
