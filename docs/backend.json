@@ -165,21 +165,24 @@
           "type": "object",
           "properties": {
             "image": { "type": ["string", "null"] },
-            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
+            "uploadTime": { "type": ["string", "null"], "format": "date-time" },
+            "uploadedBy": { "type": ["string", "null"] }
           }
         },
         "poloShirt": {
           "type": "object",
           "properties": {
             "image": { "type": ["string", "null"] },
-            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
+            "uploadTime": { "type": ["string", "null"], "format": "date-time" },
+            "uploadedBy": { "type": ["string", "null"] }
           }
         },
         "corporateJacket": {
           "type": "object",
           "properties": {
             "image": { "type": ["string", "null"] },
-            "uploadTime": { "type": ["string", "null"], "format": "date-time" }
+            "uploadTime": { "type": ["string", "null"], "format": "date-time" },
+            "uploadedBy": { "type": ["string", "null"] }
           }
         }
       }
@@ -485,6 +488,11 @@
               "layoutImage": {
                 "type": ["string", "null"],
                 "description": "Data URL of the uploaded layout image."
+              },
+              "layoutImageUploadTime": {
+                "type": ["string", "null"],
+                "format": "date-time",
+                "description": "Timestamp for when the layout image was uploaded."
               },
               "logoLeftImage": {
                 "type": ["string", "null"],
