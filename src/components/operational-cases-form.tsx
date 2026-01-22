@@ -73,6 +73,7 @@ type OperationalCase = {
   image?: string;
   submissionDateTime: string;
   customerName: string;
+  companyName?: string;
   contactNumber?: string;
   landlineNumber?: string;
   caseItems: CaseItem[];

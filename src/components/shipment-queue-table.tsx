@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -28,7 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { Check, ChevronDown, RefreshCcw, AlertTriangle } from 'lucide-react';
 import { Badge } from './ui/badge';
-import { cn, formatDateTime } from '@/lib/utils';
+import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Input } from './ui/input';
@@ -378,29 +379,14 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     }, [uncheckConfirmation, firestore, toast]);
 
 
-  const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success", className?: string } => {
-    if (lead.shipmentStatus === 'Shipped') {
-        return { text: "Shipped", variant: "success", className: "bg-green-700 text-white"};
-    }
-    if (lead.shipmentStatus === 'Delivered') {
-        return { text: "Delivered", variant: "success", className: "bg-blue-700 text-white"};
-    }
-    if (lead.isSalesAuditComplete) {
-      return { text: "Ready for Shipment", variant: "success", className: "bg-blue-600 text-white" };
-    }
-    if (lead.isPacked) {
-      return { text: "Already Packed", variant: "success", className: "bg-teal-600 text-white" };
-    }
-    if (lead.isSalesAuditRequested) {
-      return { text: "On-going Audit", variant: "warning", className: "bg-amber-500 text-white" };
-    }
-    if (lead.isQualityApproved) {
-      return { text: "Approved Quality", variant: "success", className: "bg-green-600 text-white" };
-    }
-    if (lead.isRecheckingQuality) {
-        return { text: "Re-checking Quality", variant: "destructive", className: "bg-red-600 text-white" };
-    }
-    return { text: "Pending", variant: "secondary" };
+  const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success" } => {
+    if (lead.shipmentStatus === 'Delivered') return { text: 'Delivered', variant: 'success' };
+    if (lead.shipmentStatus === 'Shipped') return { text: 'Shipped', variant: 'success' };
+    if (lead.isPacked) return { text: "Already Packed", variant: "default" };
+    if (lead.isSalesAuditRequested) return { text: "On-going Audit", variant: "warning" };
+    if (lead.isQualityApproved) return { text: "Approved Quality", variant: "default" };
+    if (lead.isRecheckingQuality) return { text: "Re-checking Quality", variant: "destructive" };
+    return { text: lead.shipmentStatus || 'Pending', variant: 'secondary' };
   }
 
   const processedLeads = useMemo(() => {
@@ -564,7 +550,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                                   </div>
                               </CollapsibleTrigger>
                               <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-[11px] font-normal">
-                                  {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                                  {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
                                   {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                               </CollapsibleContent>
                           </Collapsible>
@@ -572,7 +558,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-1.5 cursor-pointer ml-5 mt-1">
+                                  <div className="flex items-center gap-1.5 cursor-pointer mt-1 ml-5">
                                     <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                     <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
                                       {lead.orderNumber}

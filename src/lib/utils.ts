@@ -31,7 +31,12 @@ export const toTitleCase = (str: string) => {
     if (!str) return '';
     return str
         .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .map(word => {
+            if (word.length > 1 && word === word.toUpperCase()) {
+                return word;
+            }
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        })
         .join(' ');
 };
 

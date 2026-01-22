@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
@@ -22,7 +23,7 @@ import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays, format } from 'date-fns';
-import { formatDateTime, cn } from '@/lib/utils';
+import { formatDateTime, cn, toTitleCase } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
 import { ChevronDown, Send, FileText, X, Download, Check, AlertTriangle } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
@@ -338,12 +339,12 @@ const ProductionQueueTableRow = React.memo(({
                     <Collapsible>
                         <CollapsibleTrigger asChild>
                             <div className="flex items-center justify-center cursor-pointer">
-                                <span>{lead.customerName}</span>
+                                <span>{toTitleCase(lead.customerName)}</span>
                                 <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
                             </div>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
-                            {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
+                            {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {toTitleCase(lead.companyName)}</div>}
                             {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
                         </CollapsibleContent>
                     </Collapsible>
@@ -654,11 +655,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         });
     } catch (e: any) {
         console.error("Error updating J.O. receipt status:", e);
-        toast({
-            variant: "destructive",
-            title: "Update Failed",
-            description: e.message || "Could not update the status.",
-        });
+        toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
     } finally {
         setJoReceivedConfirmation(null);
     }

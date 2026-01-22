@@ -24,7 +24,7 @@ import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { differenceInDays, addDays, format } from 'date-fns';
-import { cn, formatDateTime } from '@/lib/utils';
+import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import Image from 'next/image';
@@ -484,7 +484,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                     <React.Fragment key={lead.id}>
                         <TableRow className="border-b-2 border-gray-300">
                             <TableCell className="font-medium align-middle py-3 text-black text-sm">
-                                <div className="font-bold">{lead.customerName}</div>
+                                <div className="font-bold">{toTitleCase(lead.customerName)}</div>
                                 {isRepeat ? (
                                     <TooltipProvider>
                                       <Tooltip>
@@ -505,7 +505,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                     <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                                   )}
                                 <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
-                                    {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                                    {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
                                     {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                 </div>
                             </TableCell>
@@ -690,4 +690,3 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     </Card>
   );
 }
-

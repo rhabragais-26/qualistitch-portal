@@ -26,6 +26,7 @@ import { Download, X } from 'lucide-react';
 import { Input } from './ui/input';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { toTitleCase } from '@/lib/utils';
 
 type FileObject = {
   name: string;
@@ -196,8 +197,8 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                   filteredLeads.map(lead => (
                     <TableRow key={lead.id}>
                       <TableCell className="align-middle py-3 text-center">
-                        <div className="font-bold">{lead.customerName}</div>
-                        <div className="text-xs text-gray-500">{lead.companyName && lead.companyName !== '-' ? lead.companyName : ''}</div>
+                        <div className="font-bold">{toTitleCase(lead.customerName)}</div>
+                        <div className="text-xs text-gray-500">{lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : ''}</div>
                         <div className="text-xs text-gray-500">{getContactDisplay(lead)}</div>
                       </TableCell>
                       <TableCell className="align-middle py-3 text-center text-xs">{formatJoNumber(lead.joNumber)}</TableCell>
