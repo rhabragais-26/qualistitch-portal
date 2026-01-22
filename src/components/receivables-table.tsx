@@ -33,6 +33,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collap
 import { z } from 'zod';
 import Link from 'next/link';
 import { Label } from './ui/label';
+import { addDays, format } from 'date-fns';
 
 const leadSchema = z.object({
   id: z.string(),
@@ -56,6 +57,8 @@ const leadSchema = z.object({
   shipmentStatus: z.string().optional(),
   payments: z.array(z.any()).optional(),
   courier: z.string().optional(),
+  deliveryDate: z.string().optional().nullable(),
+  adjustedDeliveryDate: z.string().optional().nullable(),
 });
 
 type Lead = z.infer<typeof leadSchema>;
@@ -249,7 +252,7 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
   return (
     <>
       <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
-        <CardHeader>
+        <CardHeader className="pb-4">
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-black">{filterType === 'RECEIVABLES' ? 'Receivables' : 'Fully Paid Orders'}</CardTitle>
@@ -305,13 +308,14 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                     <TableHead className="text-white align-middle text-center">Date & Time</TableHead>
                     <TableHead className="text-white align-middle text-center">Customer</TableHead>
                     <TableHead className="text-white align-middle text-center">SCES</TableHead>
-                    <TableHead className="text-white align-middle text-center">J.O. Number</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">J.O. Number</TableHead>
                     <TableHead className="text-white align-middle text-center">Total Amount</TableHead>
                     <TableHead className="text-white align-middle text-center">Paid Amount</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Balance</TableHead>
                     <TableHead className="text-white align-middle text-center">Payment Type</TableHead>
                     <TableHead className="text-white align-middle text-center">Mode of Payment</TableHead>
                     <TableHead className="text-white align-middle text-center">Items</TableHead>
+                    <TableHead className="text-white align-middle text-center">Est. Delivery Date</TableHead>
                     {filterType === 'RECEIVABLES' && <TableHead className="text-white font-bold align-middle text-center w-[160px]">Action</TableHead>}
                 </TableRow>
               </TableHeader>
@@ -368,6 +372,17 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                                 {openLeadId === lead.id ? <ChevronUp className="h-4 w-4 ml-1" /> : <ChevronDown className="h-4 w-4 ml-1" />}
                               </Button>
                             </TableCell>
+                            <TableCell className="text-xs align-middle text-center py-2 text-black">
+                                {format(
+                                    lead.adjustedDeliveryDate 
+                                        ? new Date(lead.adjustedDeliveryDate) 
+                                        : (lead.deliveryDate 
+                                            ? new Date(lead.deliveryDate) 
+                                            : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22)),
+                                    "MMM dd, yyyy"
+                                )}
+                                {lead.adjustedDeliveryDate && <div className="text-gray-500 text-[10px]">(Adjusted)</div>}
+                            </TableCell>
                             {filterType === 'RECEIVABLES' && (
                                 <TableCell className="text-center align-middle py-2">
                                     <Button size="sm" className="h-7" onClick={() => setConfirmingLead(lead)} disabled={isReadOnly}>
@@ -378,7 +393,7 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                         </TableRow>
                         {openLeadId === lead.id && (
                              <TableRow>
-                                <TableCell colSpan={filterType === 'RECEIVABLES' ? 11 : 10} className="p-0">
+                                <TableCell colSpan={filterType === 'RECEIVABLES' ? 12 : 11} className="p-0">
                                     <div className="p-4 max-w-xl mx-auto bg-blue-50 rounded-md my-2">
                                         <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
                                         <Table>
