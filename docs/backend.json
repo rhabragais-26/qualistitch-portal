@@ -1,6 +1,54 @@
 
 {
   "entities": {
+    "OperationalExpense": {
+      "title": "OperationalExpense",
+      "type": "object",
+      "description": "Represents a single operational expense record.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "submittedBy": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "date", "category", "description", "amount", "submittedBy", "timestamp"]
+    },
+    "CostOfGoods": {
+      "title": "CostOfGoods",
+      "type": "object",
+      "description": "Represents a single cost of goods record.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "itemDescription": { "type": "string" },
+        "supplier": { "type": "string" },
+        "quantity": { "type": "number" },
+        "unitCost": { "type": "number" },
+        "totalCost": { "type": "number" },
+        "submittedBy": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "date", "itemDescription", "supplier", "quantity", "unitCost", "totalCost", "submittedBy", "timestamp"]
+    },
+    "CapitalExpense": {
+      "title": "CapitalExpense",
+      "type": "object",
+      "description": "Represents a single capital expense record.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "assetName": { "type": "string" },
+        "description": { "type": "string" },
+        "cost": { "type": "number" },
+        "lifespanInYears": { "type": "number" },
+        "submittedBy": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "date", "assetName", "description", "cost", "submittedBy", "timestamp"]
+    },
     "PricingConfig": {
         "title": "PricingConfig",
         "type": "object",
@@ -830,6 +878,30 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/operational_expenses/{expenseId}",
+        "definition": {
+          "entityName": "OperationalExpense",
+          "schema": { "$ref": "#/backend/entities/OperationalExpense" },
+          "description": "Stores operational expense records."
+        }
+      },
+      {
+        "path": "/cost_of_goods/{cogsId}",
+        "definition": {
+          "entityName": "CostOfGoods",
+          "schema": { "$ref": "#/backend/entities/CostOfGoods" },
+          "description": "Stores cost of goods records."
+        }
+      },
+      {
+        "path": "/capital_expenses/{capitalExpenseId}",
+        "definition": {
+          "entityName": "CapitalExpense",
+          "schema": { "$ref": "#/backend/entities/CapitalExpense" },
+          "description": "Stores capital expense records."
+        }
+      },
       {
         "path": "/appState/{stateId}",
         "definition": {

@@ -38,6 +38,8 @@ import {
   LayoutDashboard,
   Receipt,
   BarChart,
+  ShoppingCart,
+  Building,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -206,17 +208,17 @@ const HeaderMemo = React.memo(function Header({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleNavigation('/finance/dashboard')}>
-                      <LayoutDashboard className="mr-2" />
-                      Dashboard
+                    <DropdownMenuItem onClick={() => handleNavigation('/finance/operational-expenses')}>
+                      <FileText className="mr-2" />
+                      Operational Expenses
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigation('/finance/transactions')}>
-                      <Receipt className="mr-2" />
-                      Transactions
+                    <DropdownMenuItem onClick={() => handleNavigation('/finance/cost-of-goods')}>
+                      <Package className="mr-2" />
+                      Cost of Goods
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigation('/finance/reports')}>
-                      <BarChart className="mr-2" />
-                      Reports
+                    <DropdownMenuItem onClick={() => handleNavigation('/finance/capital-expenses')}>
+                      <Home className="mr-2" />
+                      Capital Expenses
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
