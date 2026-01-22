@@ -170,6 +170,8 @@ export function CollapsibleRightPanel() {
   const [panels, setPanels] = useState<Panel[]>([{ id: 'jo-notes', title: 'JO Notes', type: 'jo-notes' }]);
   const [activeTab, setActiveTab] = useState('jo-notes');
   const [textareaContents, setTextareaContents] = useState<Record<string, string>>({});
+  const [editingPanelId, setEditingPanelId] = useState<string | null>(null);
+
 
   const buttonRef = useRef<HTMLDivElement>(null);
   const [yPosition, setYPosition] = useState(0);
@@ -256,7 +258,7 @@ export function CollapsibleRightPanel() {
   
   const addPanel = () => {
     if (panels.length < 3) {
-      const newPanelId = `panel-${panels.length}`;
+      const newPanelId = `panel-${panels.length + 1}`;
       setPanels([...panels, { id: newPanelId, title: `Panel ${panels.length + 1}`, type: 'textarea' }]);
       setTextareaContents(prev => ({...prev, [newPanelId]: ''}));
       setActiveTab(newPanelId);
@@ -275,6 +277,15 @@ export function CollapsibleRightPanel() {
         return newContents;
     });
   };
+
+  const handleTitleChange = (panelId: string, newTitle: string) => {
+    setPanels(panels.map(p => (p.id === panelId ? { ...p, title: newTitle } : p)));
+  };
+  
+  const handleTitleSave = () => {
+    setEditingPanelId(null);
+  };
+
 
   if (!isMounted || isUserLoading || !user || user.isAnonymous) {
     return null;
@@ -297,14 +308,36 @@ export function CollapsibleRightPanel() {
                     </Button>
                     <TabsList className="grid w-full grid-cols-3">
                         {panels.map((panel) => (
-                           <TabsTrigger key={panel.id} value={panel.id} className="relative group">
-                                {panel.title}
-                                {panel.type !== 'jo-notes' && (
-                                    <Button asChild variant="ghost" size="icon" className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100">
-                                        <div onClick={(e) => {e.stopPropagation(); removePanel(panel.id); }}>
-                                            <X className="h-3 w-3" />
-                                        </div>
-                                    </Button>
+                           <TabsTrigger key={panel.id} value={panel.id} className="relative group" onDoubleClick={() => panel.type !== 'jo-notes' && setEditingPanelId(panel.id)}>
+                                {editingPanelId === panel.id ? (
+                                    <Input
+                                        type="text"
+                                        value={panel.title}
+                                        onChange={(e) => handleTitleChange(panel.id, e.target.value)}
+                                        onBlur={handleTitleSave}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === 'Escape') {
+                                                handleTitleSave();
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                            }
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                        autoFocus
+                                        className="h-6 text-center bg-background text-foreground"
+                                    />
+                                ) : (
+                                    <>
+                                        {panel.title}
+                                        {panel.type !== 'jo-notes' && (
+                                            <div
+                                                onClick={(e) => { e.stopPropagation(); removePanel(panel.id); }}
+                                                className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                            </TabsTrigger>
                         ))}
