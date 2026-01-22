@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -225,10 +224,6 @@ export function CollapsibleRightPanel() {
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     
-    if (animationFrameId.current) {
-      cancelAnimationFrame(animationFrameId.current);
-    }
-    
     animationFrameId.current = requestAnimationFrame(() => {
         wasDragged.current = true;
         const newY = Math.max(0, Math.min(window.innerHeight - 192, e.clientY - dragStartPos.current.y)); 
@@ -303,6 +298,11 @@ export function CollapsibleRightPanel() {
     if (editingPanelId) {
         const panelBeingEdited = panels.find(p => p.id === editingPanelId);
         if (panelBeingEdited && !panelBeingEdited.title.trim() && panelBeingEdited.id !== 'jo-notes') {
+            toast({
+              variant: 'destructive',
+              title: 'Panel Name Required',
+              description: "Please provide a name for the panel or it will be removed."
+            })
             removePanel(editingPanelId);
         }
     }
@@ -331,7 +331,8 @@ export function CollapsibleRightPanel() {
                     </Button>
                     <TabsList className="grid w-full grid-cols-3">
                         {panels.map((panel) => (
-                           <TabsTrigger key={panel.id} value={panel.id} className="relative group" onDoubleClick={() => panel.type !== 'jo-notes' && setEditingPanelId(panel.id)}>
+                           <div key={panel.id} className="relative group">
+                             <TabsTrigger value={panel.id} className="w-full" onDoubleClick={() => panel.type !== 'jo-notes' && setEditingPanelId(panel.id)}>
                                 {editingPanelId === panel.id ? (
                                     <Input
                                         type="text"
@@ -351,20 +352,19 @@ export function CollapsibleRightPanel() {
                                     />
                                 ) : (
                                   <>
-                                    {panel.title}
-                                    {panel.type !== 'jo-notes' && (
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={(e) => { e.stopPropagation(); removePanel(panel.id); }}
-                                        className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100"
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </Button>
-                                    )}
+                                    {panel.title || 'Untitled'}
                                   </>
                                 )}
                            </TabsTrigger>
+                            {panel.type !== 'jo-notes' && editingPanelId !== panel.id && (
+                                <div
+                                  onClick={(e) => { e.stopPropagation(); removePanel(panel.id); }}
+                                  className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer"
+                                >
+                                  <X className="h-3 w-3" />
+                                </div>
+                            )}
+                           </div>
                         ))}
                     </TabsList>
                 </CardHeader>
