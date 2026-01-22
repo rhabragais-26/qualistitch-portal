@@ -11,7 +11,7 @@ import { Skeleton } from './ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Save, Trash2, ChevronDown } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
@@ -87,7 +87,7 @@ const AdminUserTableRow = React.memo(({
           value={editedUser.position || user.position}
           onValueChange={(newPosition: string) => onFieldChange(user.uid, 'position', newPosition)}
         >
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className={cn("w-[200px]", (editedUser.position || user.position) === 'Not Assigned' && 'text-destructive font-bold')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
