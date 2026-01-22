@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -23,7 +24,7 @@ import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
-import { cn, formatDateTime } from '@/lib/utils';
+import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
@@ -623,8 +624,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const filtered = leadsWithJo.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
-        (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-        (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
+        (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
+        (lead.companyName && toTitleCase(lead.companyName).toLowerCase().includes(lowercasedSearchTerm)) ||
         (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
         (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
         : true;
@@ -1163,7 +1164,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                             </Button>
                             <div className='flex flex-col items-center'>
-                                <span className="font-medium">{lead.customerName}</span>
+                                <span className="font-medium">{toTitleCase(lead.customerName)}</span>
                                 {isRepeat ? (
                                     <TooltipProvider>
                                       <Tooltip>
@@ -1185,7 +1186,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                   )}
                                 {openCustomerDetails === lead.id && (
                                     <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
-                                    {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                                    {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
                                     {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                     </div>
                                 )}
@@ -1329,7 +1330,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
                         <TableCell colSpan={14} className="p-4 border-t-2 border-gray-300">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="flex flex-wrap gap-6">
                                 {hasInitialImages && (
                                     <Card className="bg-white">
                                         <CardHeader><CardTitle className="text-base">Reference Images</CardTitle></CardHeader>
