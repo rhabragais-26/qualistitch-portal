@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -24,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Label } from './ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 
 type Panel = {
@@ -176,6 +178,7 @@ function JoNotesPanel() {
 
 export function CollapsibleRightPanel() {
   const { user, isUserLoading } = useUser();
+  const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   
@@ -270,10 +273,12 @@ export function CollapsibleRightPanel() {
   
   const addPanel = () => {
     if (panels.length < 3) {
-      const newPanelId = `panel-${panels.length + 1}`;
-      setPanels([...panels, { id: newPanelId, title: `Panel ${panels.length + 1}`, type: 'textarea' }]);
+      const newPanelId = `panel-${Date.now()}`;
+      const newPanel: Panel = { id: newPanelId, title: '', type: 'textarea' };
+      setPanels(prev => [...prev, newPanel]);
       setTextareaContents(prev => ({...prev, [newPanelId]: ''}));
       setActiveTab(newPanelId);
+      setEditingPanelId(newPanelId);
     }
   };
 
@@ -295,6 +300,19 @@ export function CollapsibleRightPanel() {
   };
   
   const handleTitleSave = () => {
+    if (editingPanelId) {
+        const panelBeingEdited = panels.find(p => p.id === editingPanelId);
+        if (panelBeingEdited && !panelBeingEdited.title.trim() && panelBeingEdited.id !== 'jo-notes') {
+            removePanel(editingPanelId);
+        } else if (panelBeingEdited && !panelBeingEdited.title.trim() && panelBeingEdited.id !== 'jo-notes') {
+             toast({
+                variant: 'destructive',
+                title: 'Panel Name Required',
+                description: 'Please enter a name for the panel.',
+            });
+            return;
+        }
+    }
     setEditingPanelId(null);
   };
 
@@ -307,8 +325,8 @@ export function CollapsibleRightPanel() {
     <>
       <div
         className={cn(
-          "fixed z-40 top-0 right-0 h-full w-96 no-print transition-transform duration-300 ease-in-out",
-          !isExpanded && "translate-x-full"
+          "fixed z-40 top-0 h-full w-96 no-print transition-transform duration-300 ease-in-out",
+          isExpanded ? "right-0" : "right-[-24rem]"
         )}
       >
         <Card className="w-96 h-full shadow-xl rounded-none rounded-l-lg flex flex-col">
