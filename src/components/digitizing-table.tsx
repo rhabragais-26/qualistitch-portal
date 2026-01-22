@@ -164,9 +164,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
-  
-  const [displayedLeads, setDisplayedLeads] = useState<EnrichedLead[]>([]);
 
+  const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
+  
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [uploadLeadId, setUploadLeadId] = useState<string | null>(null);
   const [uploadField, setUploadField] = useState<CheckboxField | null>(null);
@@ -250,6 +250,113 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         throw e; // Re-throw to be caught by the caller for UI reversal
     });
   }, [firestore, toast]);
+  
+  const processedLeads = useMemo(() => {
+    if (!leads) return [];
+  
+    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
+  
+    leads.forEach(lead => {
+      const name = lead.customerName.toLowerCase();
+      if (!customerOrderStats[name]) {
+        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
+      }
+      customerOrderStats[name].orders.push(lead);
+      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
+    });
+  
+    const enrichedLeads: EnrichedLead[] = [];
+  
+    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
+      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+      orders.forEach((lead, index) => {
+        enrichedLeads.push({
+          ...lead,
+          orderNumber: index + 1,
+          totalCustomerQuantity: totalCustomerQuantity,
+        });
+      });
+    });
+  
+    return enrichedLeads;
+  }, [leads]);
+  
+  const formatJoNumber = useCallback((joNumber: number | undefined) => {
+    if (!joNumber) return '';
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+  }, []);
+
+  const calculateDigitizingDeadline = useCallback((lead: Lead) => {
+    if (lead.isFinalProgram) {
+        const finalProgramTime = lead.finalProgramTimestamp ? new Date(lead.finalProgramTimestamp) : new Date();
+        const remainingDays = differenceInDays(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 2 : 6), finalProgramTime);
+        if (remainingDays < 0) {
+            return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
+        }
+        return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
+    }
+    const submissionDate = new Date(lead.submissionDateTime);
+    const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
+    const deadlineDate = addDays(submissionDate, deadlineDays);
+    const remainingDays = differenceInDays(deadlineDate, new Date());
+    
+    if (remainingDays < 0) {
+      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
+    } else if (remainingDays <= 2) {
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
+    } else {
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
+    }
+  }, []);
+
+  const filteredLeads = React.useMemo(() => {
+    if (!processedLeads) return [];
+    
+    const leadsWithJo = processedLeads.filter(lead => {
+        const matchesFilterType = filterType === 'COMPLETED' ? lead.isDigitizingArchived : !lead.isDigitizingArchived;
+        return lead.joNumber && matchesFilterType && lead.orderType !== 'Stock (Jacket Only)';
+    });
+
+    const filtered = leadsWithJo.filter(lead => {
+      const lowercasedSearchTerm = searchTerm.toLowerCase();
+      const matchesSearch = searchTerm ?
+        (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
+        (lead.companyName && toTitleCase(lead.companyName).toLowerCase().includes(lowercasedSearchTerm)) ||
+        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
+        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
+        : true;
+      
+      const joString = formatJoNumber(lead.joNumber);
+      const matchesJo = joNumberSearch ? 
+        (joString.toLowerCase().includes(joNumberSearch.toLowerCase()))
+        : true;
+      
+      const matchesPriority = priorityFilter === 'All' || lead.priorityType === priorityFilter;
+
+      const deadlineInfo = calculateDigitizingDeadline(lead);
+      const matchesOverdue = overdueFilter === 'All' ||
+        (overdueFilter === 'Overdue' && deadlineInfo.isOverdue) ||
+        (overdueFilter === 'Nearly Overdue' && !deadlineInfo.isOverdue && deadlineInfo.isUrgent);
+
+      return matchesSearch && matchesJo && matchesPriority && matchesOverdue;
+    });
+
+    return filtered.sort((a, b) => {
+        const aDeadline = calculateDigitizingDeadline(a);
+        const bDeadline = calculateDigitizingDeadline(b);
+        return aDeadline.remainingDays - bDeadline.remainingDays;
+    });
+
+  }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueFilter, formatJoNumber, calculateDigitizingDeadline, filterType]);
+
+  const displayedLeads = useMemo(() => {
+    if (!filteredLeads) return [];
+    return filteredLeads.map(lead => {
+      return { ...lead, ...(optimisticChanges[lead.id] || {}) };
+    });
+  }, [filteredLeads, optimisticChanges]);
 
   const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, checked: boolean) => {
     const lead = displayedLeads?.find((l) => l.id === leadId);
@@ -262,7 +369,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       if (field === 'isUnderProgramming' || field === 'isLogoTesting' || field === 'isFinalProgram') {
           setUploadLeadId(leadId);
           setUploadField(field);
-          // Pre-fill state for dialogs
           if (field === 'isUnderProgramming' || field === 'isLogoTesting') {
             const layout = lead.layouts?.[0];
             const isTest = field === 'isLogoTesting';
@@ -270,11 +376,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             setLogoRightImage(isTest ? layout?.testLogoRightImage || '' : layout?.logoRightImage || '');
             setBackLogoImage(isTest ? layout?.testBackLogoImage || '' : layout?.backLogoImage || '');
             setBackDesignImage(isTest ? layout?.testBackDesignImage || '' : layout?.backDesignImage || '');
-          } else { // isFinalProgram
+          } else { 
             const layout = lead.layouts?.[0];
-            setFinalLogoEmb(layout?.finalLogoEmb?.length ? layout?.finalLogoEmb : [null]);
-            setFinalBackDesignEmb(layout?.finalBackDesignEmb?.length ? layout?.finalBackDesignEmb : [null]);
-            setFinalLogoDst(layout?.finalLogoDst?.length ? layout?.finalLogoDst : [null]);
+            setFinalLogoEmb(layout?.finalLogoEmb?.length ? layout.finalLogoEmb : [null]);
+            setFinalBackDesignEmb(layout?.finalBackDesignEmb?.length ? layout.finalBackDesignEmb : [null]);
+            setFinalLogoDst(layout?.finalLogoDst?.length ? layout.finalLogoDst : [null]);
             setFinalBackDesignDst(layout?.finalBackDesignDst?.length ? layout.finalBackDesignDst : [null]);
             setFinalNamesDst(layout?.finalNamesDst || []);
             setSequenceLogo(layout?.sequenceLogo?.length ? layout.sequenceLogo : [null]);
@@ -284,12 +390,18 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           }
           setIsUploadDialogOpen(true);
       } else {
-        const originalLeads = displayedLeads;
-        setDisplayedLeads(prev => prev.map(l => l.id === leadId ? { ...l, [field]: true, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() } : l));
-        updateStatus(leadId, field, true).catch(() => setDisplayedLeads(originalLeads));
+        const optimisticUpdate = { [field]: true, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() };
+        setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...optimisticUpdate } }));
+        updateStatus(leadId, field, true).catch(() => {
+             toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
+             setOptimisticChanges(prev => {
+                const { [field]: _removed, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: _removed_ts, ...rest } = prev[leadId] || {};
+                return { ...prev, [leadId]: rest };
+             });
+        });
       }
     }
-  }, [displayedLeads, updateStatus]);
+  }, [displayedLeads, updateStatus, toast]);
 
   const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
     const lead = displayedLeads?.find((l) => l.id === leadId);
@@ -306,12 +418,20 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const confirmJoReceived = useCallback(() => {
     if (joReceivedConfirmation) {
       const leadId = joReceivedConfirmation;
-      const originalLeads = displayedLeads;
-      setDisplayedLeads(prev => prev.map(l => l.id === leadId ? { ...l, isJoHardcopyReceived: true, joHardcopyReceivedTimestamp: new Date().toISOString() } : l));
+      const optimisticUpdate = { isJoHardcopyReceived: true, joHardcopyReceivedTimestamp: new Date().toISOString() };
+      setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...optimisticUpdate } }));
+      
       setJoReceivedConfirmation(null);
-      updateStatus(leadId, 'isJoHardcopyReceived', true).catch(() => setDisplayedLeads(originalLeads));
+
+      updateStatus(leadId, 'isJoHardcopyReceived', true).catch(() => {
+          toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
+          setOptimisticChanges(prev => {
+            const { isJoHardcopyReceived: _r, joHardcopyReceivedTimestamp: _t, ...rest } = prev[leadId] || {};
+            return { ...prev, [leadId]: rest };
+          });
+      });
     }
-  }, [joReceivedConfirmation, updateStatus, displayedLeads]);
+  }, [joReceivedConfirmation, updateStatus, toast]);
 
   const handleUploadDialogSave = useCallback(async () => {
     if (!uploadLeadId || !uploadField || !firestore || !leads) return;
@@ -388,9 +508,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     
     const newLayouts = [updatedFirstLayout, ...currentLayouts.slice(1)];
     
-    const originalLeads = displayedLeads;
-    // Optimistic UI update
-    setDisplayedLeads(prev => prev.map(l => l.id === uploadLeadId ? { ...l, layouts: newLayouts, [uploadField]: true, [`${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: now } : l));
+    const optimisticUpdate = { layouts: newLayouts, [uploadField]: true, [`${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: now };
+    setOptimisticChanges(prev => ({ ...prev, [uploadLeadId]: { ...prev[uploadLeadId], ...optimisticUpdate } }));
+
     setIsUploadDialogOpen(false);
     
     try {
@@ -398,7 +518,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       await updateDoc(leadDocRef, { layouts: newLayouts });
       await updateStatus(uploadLeadId, uploadField, true);
       
-      // Reset local state after successful save
       setLogoLeftImage('');
       setLogoRightImage('');
       setBackLogoImage('');
@@ -412,9 +531,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       setSequenceBackDesign([]);
       setFinalProgrammedLogo([null]);
       setFinalProgrammedBackDesign([]);
+      setIsNamesOnly(false);
       setUploadLeadId(null);
       setUploadField(null);
-      setIsNamesOnly(false);
     } catch (e: any) {
       console.error('Error saving images or status:', e);
       toast({
@@ -422,15 +541,16 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         title: 'Save Failed',
         description: e.message || 'Could not save the images and update status.',
       });
-      // Revert UI
-      setDisplayedLeads(originalLeads);
+      setOptimisticChanges(prev => {
+        const { [uploadField]: _uf, [`${uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _ts, layouts: _l, ...rest } = prev[uploadLeadId] || {};
+        return { ...prev, [uploadLeadId]: rest };
+      });
     }
-  }, [uploadLeadId, uploadField, firestore, leads, updateStatus, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, displayedLeads]);
+  }, [uploadLeadId, uploadField, firestore, leads, updateStatus, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign]);
 
   const confirmUncheck = useCallback(() => {
     if (uncheckConfirmation) {
       const { leadId, field } = uncheckConfirmation;
-      const originalLeads = displayedLeads;
       
       const updatedData: { [key: string]: any } = { [field]: false, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: null };
 
@@ -448,13 +568,20 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             }
         }
       }
-
-      setDisplayedLeads(prev => prev.map(l => l.id === leadId ? { ...l, ...updatedData } : l));
+      
+      setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...updatedData } }));
       setUncheckConfirmation(null);
       
-      updateStatus(leadId, field, false).catch(() => setDisplayedLeads(originalLeads));
+      updateStatus(leadId, field, false).catch(() => {
+        toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
+        setOptimisticChanges(prev => {
+            const { [field]: _removed, ...rest } = prev[leadId] || {};
+            // Simplified revert, real-time listener will fix it.
+            return { ...prev, [leadId]: rest };
+        });
+      });
     }
-  }, [uncheckConfirmation, updateStatus, displayedLeads]);
+  }, [uncheckConfirmation, updateStatus, toast]);
 
   const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, imageSetter: React.Dispatch<React.SetStateAction<string>> | ((index: number, value: FileObject) => void), index?: number) => {
     const items = event.clipboardData.items;
@@ -566,35 +693,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     setOpenLeadId(openLeadId === leadId ? null : leadId);
   }, [openLeadId]);
   
-  const formatJoNumber = useCallback((joNumber: number | undefined) => {
-    if (!joNumber) return '';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-  }, []);
-
-  const calculateDigitizingDeadline = useCallback((lead: Lead) => {
-    if (lead.isFinalProgram) {
-        const finalProgramTime = lead.finalProgramTimestamp ? new Date(lead.finalProgramTimestamp) : new Date();
-        const remainingDays = differenceInDays(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 2 : 6), finalProgramTime);
-        if (remainingDays < 0) {
-            return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
-        }
-        return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
-    }
-    const submissionDate = new Date(lead.submissionDateTime);
-    const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
-    const deadlineDate = addDays(submissionDate, deadlineDays);
-    const remainingDays = differenceInDays(deadlineDate, new Date());
-    
-    if (remainingDays < 0) {
-      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
-    } else if (remainingDays <= 2) {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
-    } else {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
-    }
-  }, []);
-
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
@@ -609,86 +707,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
   }, [openCustomerDetails]);
   
-  const processedLeads = useMemo(() => {
-    if (!leads) return [];
-  
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
-  
-    // First, group orders and calculate total quantities for each customer
-    leads.forEach(lead => {
-      const name = lead.customerName.toLowerCase();
-      if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
-      }
-      customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
-    });
-  
-    const enrichedLeads: EnrichedLead[] = [];
-  
-    // Now, create the enriched lead objects with order numbers
-    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
-      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-      orders.forEach((lead, index) => {
-        enrichedLeads.push({
-          ...lead,
-          orderNumber: index + 1,
-          totalCustomerQuantity: totalCustomerQuantity,
-        });
-      });
-    });
-  
-    return enrichedLeads;
-  }, [leads]);
-
-  const filteredLeads = React.useMemo(() => {
-    if (!processedLeads) return [];
-    
-    const leadsWithJo = processedLeads.filter(lead => {
-        const matchesFilterType = filterType === 'COMPLETED' ? lead.isDigitizingArchived : !lead.isDigitizingArchived;
-        return lead.joNumber && matchesFilterType && lead.orderType !== 'Stock (Jacket Only)';
-    });
-
-    const filtered = leadsWithJo.filter(lead => {
-      const lowercasedSearchTerm = searchTerm.toLowerCase();
-      const matchesSearch = searchTerm ?
-        (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
-        (lead.companyName && toTitleCase(lead.companyName).toLowerCase().includes(lowercasedSearchTerm)) ||
-        (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
-        (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
-        : true;
-      
-      const joString = formatJoNumber(lead.joNumber);
-      const matchesJo = joNumberSearch ? 
-        (joString.toLowerCase().includes(joNumberSearch.toLowerCase()))
-        : true;
-      
-      const matchesPriority = priorityFilter === 'All' || lead.priorityType === priorityFilter;
-
-      const deadlineInfo = calculateDigitizingDeadline(lead);
-      const matchesOverdue = overdueFilter === 'All' ||
-        (overdueFilter === 'Overdue' && deadlineInfo.isOverdue) ||
-        (overdueFilter === 'Nearly Overdue' && !deadlineInfo.isOverdue && deadlineInfo.isUrgent);
-
-      return matchesSearch && matchesJo && matchesPriority && matchesOverdue;
-    });
-
-    return filtered.sort((a, b) => {
-        const aDeadline = calculateDigitizingDeadline(a);
-        const bDeadline = calculateDigitizingDeadline(b);
-        return aDeadline.remainingDays - bDeadline.remainingDays;
-    });
-
-  }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueFilter, formatJoNumber, calculateDigitizingDeadline, filterType]);
-
-  useEffect(() => {
-    if (filteredLeads) {
-        setDisplayedLeads(filteredLeads);
-    }
-  }, [filteredLeads]);
-
-
   const fileChecklistItems: FileUploadChecklistItem[] = useMemo(() => {
     if (!reviewConfirmLead) return [];
     const layout = reviewConfirmLead.layouts?.[0];
@@ -1057,14 +1075,16 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             setFinalProgrammedLogo([null]);
             setFinalProgrammedBackDesign([]);
             setIsNamesOnly(false);
-            if (uploadLeadId && uploadField && isUploadDialogOpen) { // Check isUploadDialogOpen to prevent race condition
+            if (uploadLeadId && uploadField && isUploadDialogOpen) { 
               const lead = displayedLeads?.find(l => l.id === uploadLeadId);
               if (lead) {
                 const currentStatus = lead[uploadField];
                 if (currentStatus) {
-                  const originalLeads = displayedLeads;
-                  setDisplayedLeads(prev => prev.map(l => l.id === uploadLeadId ? {...l, [uploadField]: false, [`${uploadField.replace('is','').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: null} : l));
-                  updateStatus(uploadLeadId, uploadField, false).catch(() => setDisplayedLeads(originalLeads));
+                  setOptimisticChanges(prev => {
+                    const { [uploadField!]: _uf, [`${uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _ts, ...rest } = prev[uploadLeadId] || {};
+                    return { ...prev, [uploadLeadId]: rest };
+                  });
+                  updateStatus(uploadLeadId, uploadField, false);
                 }
               }
             }
@@ -1368,11 +1388,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
                         <TableCell colSpan={14} className="p-0">
-                          <div className="flex flex-wrap gap-4 p-4">
+                           <div className="flex flex-wrap gap-4 p-4 items-start">
                                 {hasInitialImages && (
                                     <Card className="bg-white">
                                         <CardHeader className="p-2"><CardTitle className="text-sm text-center">Reference Images</CardTitle></CardHeader>
-                                        <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs p-2">
+                                        <CardContent className="flex gap-4 text-xs p-2">
                                             {lead.layouts?.[0]?.logoLeftImage && (
                                               <div className="flex flex-col items-center text-center"> 
                                                 <p className="font-semibold text-gray-500 mb-2">Logo Left</p> 
@@ -1407,7 +1427,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                  {hasTestImages && (
                                     <Card className="bg-white">
                                         <CardHeader className="p-2"><CardTitle className="text-sm text-center">Tested Images</CardTitle></CardHeader>
-                                        <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs p-2">
+                                        <CardContent className="flex gap-4 text-xs p-2">
                                           {lead.layouts?.[0]?.testLogoLeftImage && (
                                             <div className="flex flex-col items-center text-center">
                                               <p className="font-semibold text-gray-500 mb-2">Logo Left</p>
@@ -1474,7 +1494,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 {hasLayoutImages && (
                                     <Card className="bg-white">
                                         <CardHeader className="p-2"><CardTitle className="text-sm text-center">Layout Designs</CardTitle></CardHeader>
-                                        <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs p-2">
+                                        <CardContent className="flex gap-4 text-xs p-2 items-start">
                                             {lead.layouts?.map((layout, index) => (
                                                 layout.layoutImage && (
                                                     <div className="flex flex-col items-center text-center" key={index}>
@@ -1503,3 +1523,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
+
+    
