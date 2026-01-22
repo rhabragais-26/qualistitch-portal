@@ -1329,7 +1329,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={14} className="p-4 pr-0 border-t-2 border-gray-300">
+                        <TableCell colSpan={14} className="border-t-2 border-gray-300">
                             <div className="flex flex-wrap gap-6">
                                 {hasInitialImages && (
                                     <Card className="bg-white w-auto">
