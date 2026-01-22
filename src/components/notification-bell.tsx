@@ -14,7 +14,7 @@ export function NotificationBell() {
       <PopoverTrigger asChild>
         <div
           role="button"
-          className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-white hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-background"
+          className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-background"
         >
           <Bell className="h-6 w-6" />
           {unreadCount > 0 && (
