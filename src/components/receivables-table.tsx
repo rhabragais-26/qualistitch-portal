@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
@@ -48,6 +47,7 @@ const leadSchema = z.object({
   orders: z.array(z.any()),
   submissionDateTime: z.string(),
   lastModified: z.string(),
+  lastModifiedBy: z.string().optional(),
   grandTotal: z.number().optional(),
   paidAmount: z.number().optional(),
   paymentType: z.string().optional(),
@@ -60,6 +60,10 @@ const leadSchema = z.object({
   courier: z.string().optional(),
   deliveryDate: z.string().optional().nullable(),
   adjustedDeliveryDate: z.string().optional().nullable(),
+  isPacked: z.boolean().optional(),
+  isSalesAuditRequested: z.boolean().optional(),
+  isQualityApproved: z.boolean().optional(),
+  isRecheckingQuality: z.boolean().optional(),
 });
 
 type Lead = z.infer<typeof leadSchema>;
@@ -83,6 +87,16 @@ const remittanceOptions = [
     "Bank Transfer to BPI",
     "Bank Transfer to ChinaBank",
 ];
+
+const getShipmentStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success" } => {
+    if (lead.shipmentStatus === 'Delivered') return { text: 'Delivered', variant: 'success' };
+    if (lead.shipmentStatus === 'Shipped') return { text: 'Shipped', variant: 'success' };
+    if (lead.isPacked) return { text: "Already Packed", variant: "default" };
+    if (lead.isSalesAuditRequested) return { text: "On-going Audit", variant: "warning" };
+    if (lead.isQualityApproved) return { text: "Approved Quality", variant: "default" };
+    if (lead.isRecheckingQuality) return { text: "Re-checking Quality", variant: "destructive" };
+    return { text: lead.shipmentStatus || 'Pending', variant: 'secondary' };
+}
 
 export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { isReadOnly: boolean; filterType?: 'RECEIVABLES' | 'FULLY_PAID' }) {
   const firestore = useFirestore();
@@ -306,7 +320,6 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
             <Table>
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
-                    <TableHead className="text-white align-middle text-center">Date & Time</TableHead>
                     <TableHead className="text-white align-middle text-center">Customer</TableHead>
                     <TableHead className="text-white align-middle text-center">SCES</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">J.O. Number</TableHead>
@@ -317,16 +330,17 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                     <TableHead className="text-white align-middle text-center">Mode of Payment</TableHead>
                     <TableHead className="text-white align-middle text-center">Items</TableHead>
                     <TableHead className="text-white align-middle text-center">Est. Delivery Date</TableHead>
+                    <TableHead className="text-white align-middle text-center">Shipment Status</TableHead>
                     {filterType === 'RECEIVABLES' && <TableHead className="text-white font-bold align-middle text-center w-[160px]">Action</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredLeads.map((lead) => {
                   const isRepeat = lead.orderNumber > 1;
+                  const shipmentStatus = getShipmentStatus(lead);
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow>
-                            <TableCell className="text-xs align-middle text-center py-2 text-black">{formatDateTime(lead.submissionDateTime).dateTime}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">
                                <div className="flex items-center justify-center">
                                     <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
@@ -384,6 +398,9 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                                 )}
                                 {lead.adjustedDeliveryDate && <div className="text-gray-500 text-[10px]">(Adjusted)</div>}
                             </TableCell>
+                             <TableCell className="text-xs align-middle text-center py-2 text-black">
+                                <Badge variant={shipmentStatus.variant}>{shipmentStatus.text}</Badge>
+                            </TableCell>
                             {filterType === 'RECEIVABLES' && (
                                 <TableCell className="text-center align-middle py-2">
                                     <Button size="sm" className="h-7" onClick={() => setConfirmingLead(lead)} disabled={isReadOnly}>
@@ -394,7 +411,7 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                         </TableRow>
                         {openLeadId === lead.id && (
                              <TableRow>
-                                <TableCell colSpan={filterType === 'RECEIVABLES' ? 13 : 12} className="p-0">
+                                <TableCell colSpan={filterType === 'RECEIVABLES' ? 12 : 11} className="p-0">
                                     <div className="p-4 max-w-xl mx-auto bg-blue-50 rounded-md my-2">
                                         <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
                                         <Table>
