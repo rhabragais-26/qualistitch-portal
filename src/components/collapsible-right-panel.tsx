@@ -132,7 +132,7 @@ export function CollapsibleRightPanel() {
       <div
         ref={buttonRef}
         className={cn(
-          "fixed z-50 no-print transition-all duration-300 ease-in-out",
+          "fixed z-50 no-print transition-transform duration-300 ease-in-out",
           isExpanded ? "right-[24rem]" : "right-0" // w-96 is 24rem
         )}
         style={{ top: `${yPosition}px` }}
