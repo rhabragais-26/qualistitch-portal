@@ -228,13 +228,13 @@ export function CollapsibleRightPanel() {
 
   useEffect(() => {
     if (isDragging) {
+      document.body.style.userSelect = 'none';
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = 'none';
     } else {
+      document.body.style.userSelect = 'auto';
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = 'auto';
     }
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
@@ -284,20 +284,26 @@ export function CollapsibleRightPanel() {
     <>
       <div
         className={cn(
-          "fixed z-40 top-0 right-0 h-full no-print transition-transform duration-300 ease-in-out",
-          isExpanded ? "translate-x-0" : "translate-x-full"
+          "fixed z-40 top-0 h-full no-print transition-transform duration-300 ease-in-out",
+          isExpanded ? "right-0" : "right-[-24rem]" // w-96 is 24rem
         )}
       >
         <Card className="w-96 h-full shadow-xl rounded-none rounded-l-lg flex flex-col">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-                <CardHeader>
+                <CardHeader className="p-2 border-b space-y-2">
+                    <Button onClick={addPanel} disabled={panels.length >= 3} variant="outline" className="w-full">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Panel
+                    </Button>
                     <TabsList className="grid w-full grid-cols-3">
                         {panels.map((panel) => (
                            <TabsTrigger key={panel.id} value={panel.id} className="relative group">
                                 {panel.title}
                                 {panel.type !== 'jo-notes' && (
-                                    <Button variant="ghost" size="icon" className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100" onClick={(e) => {e.stopPropagation(); removePanel(panel.id); }}>
-                                        <X className="h-3 w-3" />
+                                    <Button asChild variant="ghost" size="icon" className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100">
+                                        <div onClick={(e) => {e.stopPropagation(); removePanel(panel.id); }}>
+                                            <X className="h-3 w-3" />
+                                        </div>
                                     </Button>
                                 )}
                            </TabsTrigger>
@@ -320,12 +326,6 @@ export function CollapsibleRightPanel() {
                         </TabsContent>
                     ))}
                 </CardContent>
-                <CardFooter className="p-2 border-t">
-                    <Button onClick={addPanel} disabled={panels.length >= 3} variant="outline" className="w-full">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Panel
-                    </Button>
-                </CardFooter>
             </Tabs>
         </Card>
       </div>
@@ -333,10 +333,10 @@ export function CollapsibleRightPanel() {
       <div
         ref={buttonRef}
         className={cn(
-          "fixed z-50 no-print right-0 transition-transform duration-300 ease-in-out",
+          "fixed z-50 no-print transition-transform duration-300 ease-in-out",
           isExpanded && "translate-x-[-24rem]" // w-96 is 24rem
         )}
-        style={{ top: `${yPosition}px` }}
+        style={{ top: `${yPosition}px`, right: 0 }}
       >
         <TooltipProvider>
           <Tooltip>
