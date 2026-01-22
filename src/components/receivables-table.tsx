@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser, useDoc } from '@/firebase';
@@ -29,7 +30,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { formatDateTime, toTitleCase, formatCurrency } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { z } from 'zod';
 import Link from 'next/link';
 import { Label } from './ui/label';
@@ -37,6 +38,7 @@ import { addDays, format } from 'date-fns';
 import { initialPricingConfig } from '@/lib/pricing-data';
 import type { PricingConfig, AddOnType } from '@/lib/pricing';
 import { getAddOnPrice } from '@/lib/pricing';
+import { ScrollArea } from './ui/scroll-area';
 
 const leadSchema = z.object({
   id: z.string(),
@@ -271,7 +273,7 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
   return (
     <>
       <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
-        <CardHeader className="pb-4">
+        <CardHeader className="pb-0">
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-black">{filterType === 'RECEIVABLES' ? 'Receivables' : 'Fully Paid Orders'}</CardTitle>
@@ -319,8 +321,8 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
             </div>
           </div>
         </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto">
-          <div className="border rounded-md relative">
+        <CardContent className="flex-1 overflow-hidden pt-4">
+          <ScrollArea className="h-[calc(100vh-18rem)] border rounded-md">
             <Table>
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
@@ -387,46 +389,54 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">
                                 {hasAddOns || hasDiscounts ? (
-                                    <Collapsible>
-                                        <CollapsibleTrigger asChild>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
                                             <Button variant="secondary" size="sm" className="h-8 px-2 text-black hover:bg-gray-200">
                                                 View <ChevronDown className="h-4 w-4 ml-1" />
                                             </Button>
-                                        </CollapsibleTrigger>
-                                        <CollapsibleContent>
-                                            <div className="p-2 text-left text-xs bg-gray-50 border rounded-md mt-1 w-52 absolute z-10 shadow-lg">
-                                                {hasDiscounts && Object.entries(lead.discounts).map(([groupKey, discount]: [string, any]) => {
-                                                    if (discount.value > 0) {
-                                                        return (
-                                                            <div key={groupKey} className="mb-1">
-                                                                <p className="font-bold underline">Discount:</p>
-                                                                <p>
-                                                                    {discount.type === 'percentage' ? `${discount.value}%` : formatCurrency(discount.value)}
-                                                                    {discount.reason && ` (${discount.reason})`}
-                                                                </p>
-                                                            </div>
-                                                        )
-                                                    }
-                                                    return null;
-                                                })}
-                                                {hasAddOns && Object.entries(lead.addOns).map(([groupKey, groupAddOns]: [string, any]) => {
-                                                    const addOnEntries = Object.entries(groupAddOns).filter(([_, value]: [string, any]) => value > 0);
-                                                    if (addOnEntries.length === 0) return null;
-
-                                                    return (
-                                                        <div key={groupKey} className="mt-1">
-                                                            <p className="font-bold underline">Add-Ons:</p>
-                                                            {addOnEntries.map(([type, value]: [string, any]) => (
-                                                                <p key={type}>
-                                                                    {toTitleCase(type.replace(/([A-Z])/g, ' $1'))}: {type === 'rushFee' || type === 'shippingFee' ? formatCurrency(value) : `${value} item(s)`}
-                                                                </p>
-                                                            ))}
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <div className="p-4 space-y-4">
+                                                {hasDiscounts && (
+                                                    <div>
+                                                        <h4 className="font-bold mb-2 border-b pb-1">Discounts</h4>
+                                                        {Object.entries(lead.discounts).map(([groupKey, discount]: [string, any]) => {
+                                                            if (discount.value > 0) {
+                                                                return (
+                                                                    <div key={groupKey} className="text-sm">
+                                                                        <p className="flex justify-between">
+                                                                            <span>
+                                                                                {discount.reason ? toTitleCase(discount.reason) : 'Discount'}
+                                                                                ({discount.type === 'percentage' ? `${discount.value}%` : formatCurrency(discount.value)})
+                                                                            </span>
+                                                                        </p>
+                                                                    </div>
+                                                                )
+                                                            }
+                                                            return null;
+                                                        })}
+                                                    </div>
+                                                )}
+                                                {hasAddOns && (
+                                                    <div>
+                                                        <h4 className="font-bold mb-2 border-b pb-1">Add-Ons</h4>
+                                                        <div className="space-y-1">
+                                                            {Object.entries(lead.addOns).flatMap(([groupKey, groupAddOns]: [string, any]) => {
+                                                                const addOnEntries = Object.entries(groupAddOns).filter(([_, value]: [string, any]) => value > 0);
+                                                                if (addOnEntries.length === 0) return [];
+                                                                return addOnEntries.map(([type, value]: [string, any]) => (
+                                                                    <p key={`${groupKey}-${type}`} className="text-sm flex justify-between gap-4">
+                                                                        <span>{toTitleCase(type.replace(/([A-Z])/g, ' $1'))}:</span>
+                                                                        <span className="font-medium">{type === 'rushFee' || type === 'shippingFee' ? formatCurrency(value) : `${value} item(s)`}</span>
+                                                                    </p>
+                                                                ));
+                                                            })}
                                                         </div>
-                                                    )
-                                                })}
+                                                    </div>
+                                                )}
                                             </div>
-                                        </CollapsibleContent>
-                                    </Collapsible>
+                                        </PopoverContent>
+                                    </Popover>
                                 ) : (
                                     <span>-</span>
                                 )}
@@ -467,7 +477,7 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                 })}
               </TableBody>
             </Table>
-          </div>
+          </ScrollArea>
         </CardContent>
       </Card>
       {confirmingLead && (
