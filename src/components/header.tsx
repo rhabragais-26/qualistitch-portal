@@ -209,6 +209,10 @@ const HeaderMemo = React.memo(function Header({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                     <DropdownMenuItem onClick={() => handleNavigation('/finance/dashboard')}>
+                      <LayoutDashboard className="mr-2" />
+                      Dashboard
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/finance/receivables')}>
                       <Receipt className="mr-2" />
                       Receivables

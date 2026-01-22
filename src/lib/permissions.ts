@@ -54,6 +54,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/admin/users': 'admin',
   '/profile': 'profile',
   '/order-status': 'order-status',
+  '/finance/dashboard': 'finance',
   '/finance/receivables': 'finance',
   '/finance/fully-paid-orders': 'finance',
   '/finance/operational-expenses': 'finance',
@@ -107,3 +108,7 @@ export function hasEditPermission(position: UserPosition | undefined, pathname: 
 
   return defaultPermissions[position]?.includes(group) ?? false;
 }
+
+type UserPermissions = {
+  [key in PageGroup]?: boolean;
+};
