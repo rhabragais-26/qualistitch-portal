@@ -1,3 +1,4 @@
+
 'use client';
 
     import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -47,6 +48,7 @@
     type Layout = {
       id: string;
       layoutImage?: string;
+      layoutImageUploadTime?: string | null;
       dstLogoLeft?: string;
       dstLogoRight?: string;
       dstBackLogo?: string;
@@ -143,6 +145,7 @@
             layouts: (l.layouts || []).map(layout => ({
                 id: layout.id,
                 layoutImage: layout.layoutImage || '',
+                layoutImageUploadTime: layout.layoutImageUploadTime || null,
                 dstLogoLeft: layout.dstLogoLeft || '',
                 dstLogoRight: layout.dstLogoRight || '',
                 dstBackLogo: layout.dstBackLogo || '',
@@ -188,8 +191,8 @@
           }));
           
           const initializedLayouts = fetchedLead.layouts && fetchedLead.layouts.length > 0 
-            ? fetchedLead.layouts.map(l => ({ ...l, namedOrders: l.namedOrders || [], id: l.id || uuidv4() }))
-            : [{ id: uuidv4(), layoutImage: '', dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
+            ? fetchedLead.layouts.map(l => ({ ...l, namedOrders: l.namedOrders || [], id: l.id || uuidv4(), layoutImageUploadTime: l.layoutImageUploadTime || null }))
+            : [{ id: uuidv4(), layoutImage: '', layoutImageUploadTime: null, dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
 
           setLead({ ...fetchedLead, orders: initializedOrders, courier: fetchedLead.courier || 'Pick-up', layouts: initializedLayouts });
 
@@ -353,7 +356,15 @@
       const handleLayoutChange = (layoutIndex: number, field: keyof Layout, value: any) => {
         if (lead && lead.layouts) {
           const newLayouts = [...lead.layouts];
-          (newLayouts[layoutIndex] as any)[field] = value;
+          const updatedLayout = { ...newLayouts[layoutIndex] };
+          (updatedLayout as any)[field] = value;
+          
+          if (field === 'layoutImage') {
+            updatedLayout.layoutImageUploadTime = value ? new Date().toISOString() : null;
+          }
+
+          newLayouts[layoutIndex] = updatedLayout;
+
           setLead({ ...lead, layouts: newLayouts });
         }
       };
@@ -396,7 +407,7 @@
 
       const addLayout = () => {
         if (lead) {
-          const newLayouts = [...(lead.layouts || []), { id: uuidv4(), layoutImage: '', dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
+          const newLayouts = [...(lead.layouts || []), { id: uuidv4(), layoutImage: '', layoutImageUploadTime: null, dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
           setLead({ ...lead, layouts: newLayouts });
           setCurrentPage(newLayouts.length);
         }

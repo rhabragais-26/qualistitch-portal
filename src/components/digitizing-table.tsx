@@ -1330,12 +1330,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={14} className="p-0">
-                            <div className="flex flex-wrap gap-6 p-4">
+                        <TableCell colSpan={14} className="p-2">
+                            <div className="flex flex-wrap gap-4 p-2">
                                 {hasInitialImages && (
-                                    <Card className="bg-white w-auto">
-                                        <CardHeader><CardTitle className="text-base text-center">Reference Images</CardTitle></CardHeader>
-                                        <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs">
+                                    <Card className="bg-white">
+                                        <CardHeader className="p-2"><CardTitle className="text-sm text-center">Reference Images</CardTitle></CardHeader>
+                                        <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs p-2">
                                             {lead.layouts?.[0]?.logoLeftImage && (
                                               <div className="flex flex-col items-center text-center"> 
                                                 <p className="font-semibold text-gray-500 mb-2">Logo Left</p> 
@@ -1368,9 +1368,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                     </Card>
                                 )}
                                  {hasTestImages && (
-                                    <Card className="bg-white w-auto">
-                                        <CardHeader><CardTitle className="text-base text-center">Tested Images</CardTitle></CardHeader>
-                                        <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs">
+                                    <Card className="bg-white">
+                                        <CardHeader className="p-2"><CardTitle className="text-sm text-center">Tested Images</CardTitle></CardHeader>
+                                        <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs p-2">
                                           {lead.layouts?.[0]?.testLogoLeftImage && (
                                             <div className="flex flex-col items-center text-center">
                                               <p className="font-semibold text-gray-500 mb-2">Logo Left</p>
@@ -1403,9 +1403,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                     </Card>
                                  )}
                                  {hasFinalFiles && (
-                                    <Card className="bg-white w-auto">
-                                        <CardHeader><CardTitle className="text-base text-center">Final Program Files</CardTitle></CardHeader>
-                                        <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs">
+                                    <Card className="bg-white">
+                                        <CardHeader className="p-2"><CardTitle className="text-sm text-center">Final Program Files</CardTitle></CardHeader>
+                                        <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs p-2">
                                           {lead.layouts?.[0]?.finalLogoEmb?.map((file, index) => file && (<div className="flex flex-col items-center text-center" key={`final-logo-emb-${index}`}><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100 w-full'>{file.name}</p>{lead.layouts?.[0]?.finalLogoEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoEmbUploadTimes![index]!).dateTime}</p>}</div>))}
                                           {lead.layouts?.[0]?.finalBackDesignEmb?.map((file, index) => file && <div className="flex flex-col items-center text-center" key={`final-back-emb-${index}`}><p className="font-semibold text-gray-500 mb-2">Back Design {index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100 w-full'>{file.name}</p>{lead.layouts[0].finalBackDesignEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignEmbUploadTimes![index]!).dateTime}</p>}</div>)}
                                           {lead.layouts?.[0]?.finalLogoDst?.map((file, index) => file && (<div className="flex flex-col items-center text-center" key={`final-logo-dst-${index}`}><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100 w-full'>{file.name}</p>{lead.layouts?.[0]?.finalLogoDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoDstUploadTimes![index]!).dateTime}</p>}</div>))}
@@ -1435,13 +1435,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                     </Card>
                                   )}
                                 {hasLayoutImages && (
-                                    <Card className="bg-white w-auto">
-                                        <CardHeader><CardTitle className="text-base text-center">Layout Designs</CardTitle></CardHeader>
-                                        <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs text-center">
+                                    <Card className="bg-white">
+                                        <CardHeader className="p-2"><CardTitle className="text-sm text-center">Layout Designs</CardTitle></CardHeader>
+                                        <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs p-2">
                                             {lead.layouts?.map((layout, index) => (
                                                 layout.layoutImage && (
-                                                    <div className="flex flex-col items-center" key={index}>
-                                                        {lead.layouts.length > 1 && <p className="font-semibold text-gray-500 mb-2">Layout {index + 1}</p>}
+                                                    <div className="flex flex-col items-center text-center" key={index}>
+                                                        <p className="font-semibold text-gray-500 mb-2">Layout {index + 1}</p>
                                                         <ImagePreview src={layout.layoutImage} alt={`Layout ${index + 1}`} className="w-32 h-24"/>
                                                         {layout.layoutImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(layout.layoutImageUploadTime).dateTime}</p>}
                                                     </div>
