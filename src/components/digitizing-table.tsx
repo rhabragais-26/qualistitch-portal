@@ -18,7 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { ChangeEvent, useMemo, useState, useCallback, useRef } from 'react';
+import React, { ChangeEvent, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X } from 'lucide-react';
@@ -164,6 +164,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+  
+  const [displayedLeads, setDisplayedLeads] = useState<EnrichedLead[]>([]);
 
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [uploadLeadId, setUploadLeadId] = useState<string | null>(null);
@@ -206,8 +208,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   
   const isViewOnly = isReadOnly || filterType === 'COMPLETED';
 
-  const updateStatus = useCallback(async (leadId: string, field: CheckboxField | 'isJoHardcopyReceived', value: boolean, showToast: boolean = true) => {
-    if (!firestore) return;
+  const updateStatus = useCallback((leadId: string, field: CheckboxField | 'isJoHardcopyReceived', value: boolean) => {
+    if (!firestore) return Promise.reject(new Error("Firestore not available"));
     const leadDocRef = doc(firestore, 'leads', leadId);
     const now = new Date().toISOString();
 
@@ -238,62 +240,59 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         // Do not uncheck revision, just disable it
     }
 
-    try {
-      await updateDoc(leadDocRef, updateData);
-    } catch (e) {
+    return updateDoc(leadDocRef, updateData).catch(e => {
         console.error('Error updating status:', e);
-        if (e instanceof Error) {
-            toast({
-                variant: 'destructive',
-                title: 'Update Failed',
-                description: e.message || 'Could not update the status.',
-            });
-        }
-    }
+        toast({
+            variant: 'destructive',
+            title: 'Update Failed',
+            description: e.message || 'Could not update the status.',
+        });
+        throw e; // Re-throw to be caught by the caller for UI reversal
+    });
   }, [firestore, toast]);
 
   const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, checked: boolean) => {
-    const lead = leads?.find((l) => l.id === leadId);
-    const isCurrentlyChecked = lead ? lead[field] : false;
+    const lead = displayedLeads?.find((l) => l.id === leadId);
+    if (!lead) return;
+    const isCurrentlyChecked = lead[field] as boolean | undefined || false;
 
     if (!checked && isCurrentlyChecked) {
       setUncheckConfirmation({ leadId, field });
     } else if (checked && !isCurrentlyChecked) {
-      setUploadLeadId(leadId);
-      setUploadField(field);
-
-      if (field === 'isUnderProgramming') {
-        setLogoLeftImage(lead?.layouts?.[0]?.logoLeftImage || '');
-        setLogoRightImage(lead?.layouts?.[0]?.logoRightImage || '');
-        setBackLogoImage(lead?.layouts?.[0]?.backLogoImage || '');
-        setBackDesignImage(lead?.layouts?.[0]?.backDesignImage || '');
-        setIsUploadDialogOpen(true);
-      } else if (field === 'isLogoTesting') {
-        setLogoLeftImage(lead?.layouts?.[0]?.testLogoLeftImage || '');
-        setLogoRightImage(lead?.layouts?.[0]?.testLogoRightImage || '');
-        setBackLogoImage(lead?.layouts?.[0]?.testBackLogoImage || '');
-        setBackDesignImage(lead?.layouts?.[0]?.testBackDesignImage || '');
-        setIsUploadDialogOpen(true);
-      } else if (field === 'isFinalProgram') {
-        setFinalLogoEmb(lead?.layouts?.[0]?.finalLogoEmb?.length ? lead?.layouts?.[0]?.finalLogoEmb : [null]);
-        setFinalBackDesignEmb(lead?.layouts?.[0]?.finalBackDesignEmb?.length ? lead?.layouts?.[0]?.finalBackDesignEmb : [null]);
-        setFinalLogoDst(lead?.layouts?.[0]?.finalLogoDst?.length ? lead?.layouts?.[0]?.finalLogoDst : [null]);
-        setFinalBackDesignDst(lead?.layouts?.[0]?.finalBackDesignDst?.length ? lead.layouts[0].finalBackDesignDst : [null]);
-        setFinalNamesDst(lead?.layouts?.[0]?.finalNamesDst || []);
-        setSequenceLogo(lead?.layouts?.[0]?.sequenceLogo?.length ? lead.layouts[0].sequenceLogo : [null]);
-        setSequenceBackDesign(lead?.layouts?.[0]?.sequenceBackDesign?.length ? lead.layouts[0].sequenceBackDesign : [null]);
-        setFinalProgrammedLogo(lead?.layouts?.[0]?.finalProgrammedLogo?.length ? lead.layouts[0].finalProgrammedLogo : [null]);
-        setFinalProgrammedBackDesign(lead?.layouts?.[0]?.finalProgrammedBackDesign?.length ? lead.layouts[0].finalProgrammedBackDesign : [null]);
-        setIsUploadDialogOpen(true);
-      }
-      else {
-        updateStatus(leadId, field, true);
+      if (field === 'isUnderProgramming' || field === 'isLogoTesting' || field === 'isFinalProgram') {
+          setUploadLeadId(leadId);
+          setUploadField(field);
+          // Pre-fill state for dialogs
+          if (field === 'isUnderProgramming' || field === 'isLogoTesting') {
+            const layout = lead.layouts?.[0];
+            const isTest = field === 'isLogoTesting';
+            setLogoLeftImage(isTest ? layout?.testLogoLeftImage || '' : layout?.logoLeftImage || '');
+            setLogoRightImage(isTest ? layout?.testLogoRightImage || '' : layout?.logoRightImage || '');
+            setBackLogoImage(isTest ? layout?.testBackLogoImage || '' : layout?.backLogoImage || '');
+            setBackDesignImage(isTest ? layout?.testBackDesignImage || '' : layout?.backDesignImage || '');
+          } else { // isFinalProgram
+            const layout = lead.layouts?.[0];
+            setFinalLogoEmb(layout?.finalLogoEmb?.length ? layout?.finalLogoEmb : [null]);
+            setFinalBackDesignEmb(layout?.finalBackDesignEmb?.length ? layout?.finalBackDesignEmb : [null]);
+            setFinalLogoDst(layout?.finalLogoDst?.length ? layout?.finalLogoDst : [null]);
+            setFinalBackDesignDst(layout?.finalBackDesignDst?.length ? layout.finalBackDesignDst : [null]);
+            setFinalNamesDst(layout?.finalNamesDst || []);
+            setSequenceLogo(layout?.sequenceLogo?.length ? layout.sequenceLogo : [null]);
+            setSequenceBackDesign(layout?.sequenceBackDesign?.length ? layout.sequenceBackDesign : [null]);
+            setFinalProgrammedLogo(layout?.finalProgrammedLogo?.length ? layout.finalProgrammedLogo : [null]);
+            setFinalProgrammedBackDesign(layout?.finalProgrammedBackDesign?.length ? layout.finalProgrammedBackDesign : [null]);
+          }
+          setIsUploadDialogOpen(true);
+      } else {
+        const originalLeads = displayedLeads;
+        setDisplayedLeads(prev => prev.map(l => l.id === leadId ? { ...l, [field]: true, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() } : l));
+        updateStatus(leadId, field, true).catch(() => setDisplayedLeads(originalLeads));
       }
     }
-  }, [leads, updateStatus]);
+  }, [displayedLeads, updateStatus]);
 
   const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
-    const lead = leads?.find((l) => l.id === leadId);
+    const lead = displayedLeads?.find((l) => l.id === leadId);
     if (!lead) return;
     const isCurrentlyChecked = lead.isJoHardcopyReceived || false;
 
@@ -302,14 +301,17 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     } else if (checked && !isCurrentlyChecked) {
       setJoReceivedConfirmation(leadId);
     }
-  }, [leads]);
+  }, [displayedLeads]);
   
   const confirmJoReceived = useCallback(() => {
     if (joReceivedConfirmation) {
-      updateStatus(joReceivedConfirmation, 'isJoHardcopyReceived', true);
+      const leadId = joReceivedConfirmation;
+      const originalLeads = displayedLeads;
+      setDisplayedLeads(prev => prev.map(l => l.id === leadId ? { ...l, isJoHardcopyReceived: true, joHardcopyReceivedTimestamp: new Date().toISOString() } : l));
       setJoReceivedConfirmation(null);
+      updateStatus(leadId, 'isJoHardcopyReceived', true).catch(() => setDisplayedLeads(originalLeads));
     }
-  }, [joReceivedConfirmation, updateStatus]);
+  }, [joReceivedConfirmation, updateStatus, displayedLeads]);
 
   const handleUploadDialogSave = useCallback(async () => {
     if (!uploadLeadId || !uploadField || !firestore || !leads) return;
@@ -385,15 +387,18 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     }
     
     const newLayouts = [updatedFirstLayout, ...currentLayouts.slice(1)];
-  
+    
+    const originalLeads = displayedLeads;
+    // Optimistic UI update
+    setDisplayedLeads(prev => prev.map(l => l.id === uploadLeadId ? { ...l, layouts: newLayouts, [uploadField]: true, [`${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: now } : l));
+    setIsUploadDialogOpen(false);
+    
     try {
       const leadDocRef = doc(firestore, 'leads', uploadLeadId);
-      await updateDoc(leadDocRef, {
-        layouts: newLayouts
-      });
-
-      await updateStatus(uploadLeadId, uploadField, true, false);
+      await updateDoc(leadDocRef, { layouts: newLayouts });
+      await updateStatus(uploadLeadId, uploadField, true);
       
+      // Reset local state after successful save
       setLogoLeftImage('');
       setLogoRightImage('');
       setBackLogoImage('');
@@ -407,7 +412,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       setSequenceBackDesign([]);
       setFinalProgrammedLogo([null]);
       setFinalProgrammedBackDesign([]);
-      setIsUploadDialogOpen(false);
       setUploadLeadId(null);
       setUploadField(null);
       setIsNamesOnly(false);
@@ -418,15 +422,39 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         title: 'Save Failed',
         description: e.message || 'Could not save the images and update status.',
       });
+      // Revert UI
+      setDisplayedLeads(originalLeads);
     }
-  }, [uploadLeadId, uploadField, firestore, leads, updateStatus, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign]);
+  }, [uploadLeadId, uploadField, firestore, leads, updateStatus, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, displayedLeads]);
 
   const confirmUncheck = useCallback(() => {
     if (uncheckConfirmation) {
-      updateStatus(uncheckConfirmation.leadId, uncheckConfirmation.field, false);
+      const { leadId, field } = uncheckConfirmation;
+      const originalLeads = displayedLeads;
+      
+      const updatedData: { [key: string]: any } = { [field]: false, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: null };
+
+      if (field !== 'isJoHardcopyReceived') {
+        const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
+        const currentIndex = sequence.indexOf(field);
+        if (currentIndex > -1) {
+            for (let i = currentIndex + 1; i < sequence.length; i++) {
+                const nextField = sequence[i];
+                if (nextField) {
+                  updatedData[nextField] = false;
+                  const nextTimestampField = `${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
+                  updatedData[nextTimestampField] = null;
+                }
+            }
+        }
+      }
+
+      setDisplayedLeads(prev => prev.map(l => l.id === leadId ? { ...l, ...updatedData } : l));
       setUncheckConfirmation(null);
+      
+      updateStatus(leadId, field, false).catch(() => setDisplayedLeads(originalLeads));
     }
-  }, [uncheckConfirmation, updateStatus]);
+  }, [uncheckConfirmation, updateStatus, displayedLeads]);
 
   const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, imageSetter: React.Dispatch<React.SetStateAction<string>> | ((index: number, value: FileObject) => void), index?: number) => {
     const items = event.clipboardData.items;
@@ -653,6 +681,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     });
 
   }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueFilter, formatJoNumber, calculateDigitizingDeadline, filterType]);
+
+  useEffect(() => {
+    if (filteredLeads) {
+        setDisplayedLeads(filteredLeads);
+    }
+  }, [filteredLeads]);
+
 
   const fileChecklistItems: FileUploadChecklistItem[] = useMemo(() => {
     if (!reviewConfirmLead) return [];
@@ -1023,11 +1058,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             setFinalProgrammedBackDesign([]);
             setIsNamesOnly(false);
             if (uploadLeadId && uploadField && isUploadDialogOpen) { // Check isUploadDialogOpen to prevent race condition
-              const lead = leads?.find(l => l.id === uploadLeadId);
+              const lead = displayedLeads?.find(l => l.id === uploadLeadId);
               if (lead) {
                 const currentStatus = lead[uploadField];
                 if (currentStatus) {
-                  updateStatus(uploadLeadId, uploadField, false, false);
+                  const originalLeads = displayedLeads;
+                  setDisplayedLeads(prev => prev.map(l => l.id === uploadLeadId ? {...l, [uploadField]: false, [`${uploadField.replace('is','').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: null} : l));
+                  updateStatus(uploadLeadId, uploadField, false).catch(() => setDisplayedLeads(originalLeads));
                 }
               }
             }
@@ -1148,7 +1185,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {filteredLeads.map((lead) => {
+                {displayedLeads.map((lead) => {
                   const deadlineInfo = calculateDigitizingDeadline(lead);
                   const hasInitialImages = lead.layouts?.[0]?.logoLeftImage || lead.layouts?.[0]?.logoRightImage || lead.layouts?.[0]?.backLogoImage || lead.layouts?.[0]?.backDesignImage;
                   const hasTestImages = lead.layouts?.[0]?.testLogoLeftImage || lead.layouts?.[0]?.testLogoRightImage || lead.layouts?.[0]?.testBackLogoImage || lead.layouts?.[0]?.testBackDesignImage;
@@ -1330,8 +1367,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={14} className="p-2">
-                            <div className="flex flex-wrap gap-4 p-2">
+                        <TableCell colSpan={14} className="p-0">
+                          <div className="flex flex-wrap gap-4 p-4">
                                 {hasInitialImages && (
                                     <Card className="bg-white">
                                         <CardHeader className="p-2"><CardTitle className="text-sm text-center">Reference Images</CardTitle></CardHeader>
