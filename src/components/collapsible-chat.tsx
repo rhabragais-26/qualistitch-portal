@@ -111,7 +111,7 @@ export function CollapsibleChat() {
                       {totalUnreadCount}
                     </Badge>
                   )}
-                  <span className="[writing-mode:vertical-rl] rotate-180 font-bold tracking-wider">CHAT</span>
+                  <span className="[writing-mode:vertical-rl] font-bold tracking-wider">CHAT</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
