@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -68,6 +69,7 @@ import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth } from '
 import { collection, query, doc, getDoc } from 'firebase/firestore';
 import { Badge } from './ui/badge';
 import { signOut } from 'firebase/auth';
+import { NotificationBell } from './notification-bell';
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
@@ -381,6 +383,7 @@ const HeaderMemo = React.memo(function Header({
           </nav>
         </div>
         <div className="absolute top-0 right-4 h-14 flex items-center">
+            <NotificationBell />
             {user && userProfile && (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
