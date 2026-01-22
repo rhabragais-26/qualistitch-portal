@@ -195,6 +195,7 @@ export function HomeCarousel() {
                             layout="fill"
                             objectFit="cover"
                             className="rounded-lg grayscale opacity-50 hover:opacity-100 transition-all"
+                            priority
                         />
                     </div>
                     <div className="w-[35%] h-full relative z-10 shadow-2xl">
@@ -214,6 +215,7 @@ export function HomeCarousel() {
                             layout="fill"
                             objectFit="cover"
                             className="rounded-lg grayscale opacity-50 hover:opacity-100 transition-all"
+                            priority
                         />
                     </div>
                 </>
