@@ -4,6 +4,7 @@ import './globals.css';
 import { FirebaseClientProvider } from '@/firebase';
 import { CollapsibleChat } from '@/components/collapsible-chat';
 import { RealtimeConfetti } from '@/components/realtime-confetti';
+import { CollapsibleRightPanel } from '@/components/collapsible-right-panel';
 
 export const metadata: Metadata = {
   title: 'Qualistitch Inc.',
@@ -32,6 +33,7 @@ export default function RootLayout({
             {children}
           </div>
           <CollapsibleChat />
+          <CollapsibleRightPanel />
           <Toaster />
         </FirebaseClientProvider>
       </body>
