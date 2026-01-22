@@ -36,6 +36,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose, DialogFooter } from "@/components/ui/dialog"
 import Image from 'next/image';
 import { Label } from './ui/label';
+import { toTitleCase } from '@/lib/utils';
 
 type Order = {
   productType: string;
@@ -45,6 +46,7 @@ type Order = {
 }
 
 type Layout = {
+  layoutImage?: string | null;
   logoLeftImage?: string | null;
   logoLeftImageUploadTime?: string | null;
   logoRightImage?: string | null;
@@ -217,8 +219,8 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     return processedLeads.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
-        (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-        (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
+        (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
+        (lead.companyName && toTitleCase(lead.companyName).toLowerCase().includes(lowercasedSearchTerm)) ||
         (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
         (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
         : true;
@@ -404,12 +406,12 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                     <TableRow>
                       <TableHead className="text-white font-bold align-middle text-center">Order Created</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Customer Name</TableHead>
-                      <TableHead className="text-white font-bold align-middle text-center">Contact No.</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">SCES</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">J.O. No.</TableHead>
                       <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
+                      <TableHead className="text-white font-bold align-middle text-center w-[120px]"><span className="block w-[100px] break-words">Uploaded Layout</span></TableHead>
                       <TableHead className="text-center text-white font-bold align-middle">Printed</TableHead>
                       <TableHead className="text-white font-bold align-middle text-center">J.O. Status</TableHead>
                     </TableRow>
@@ -442,9 +444,11 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                                 </CollapsibleTrigger>
                                 <div className="text-gray-500 text-center">{creationDate.dayOfWeek}</div>
                                 <CollapsibleContent className="pt-1 text-gray-500 text-xs text-center">
+                                  <div className="text-center">
                                     <span className='font-bold text-gray-600'>Last Modified:</span>
                                     <div>{modifiedDate.dateTime}</div>
                                     <div>{modifiedDate.dayOfWeek}{lead.lastModifiedBy ? ` (${lead.lastModifiedBy})` : ''}</div>
+                                  </div>
                                 </CollapsibleContent>
                               </Collapsible>
                             </TableCell>
@@ -454,7 +458,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                                     {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                     </Button>
                                     <div className='flex flex-col items-center'>
-                                    <span className="font-medium">{lead.customerName}</span>
+                                    <span className="font-medium">{toTitleCase(lead.customerName)}</span>
                                     {isRepeat ? (
                                         <TooltipProvider>
                                           <Tooltip>
@@ -476,14 +480,13 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                                       )}
                                     {openCustomerDetails === lead.id && (
                                         <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
-                                        {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                                        {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
                                         {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                         </div>
                                     )}
                                     </div>
                                 </div>
                             </TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black text-center">{getContactDisplay(lead)}</TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.salesRepresentative}</TableCell>
                             <TableCell className="align-middle py-2 text-center">
                                <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
@@ -531,6 +534,16 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                                     'Process J.O.'
                                   )}
                                 </Button>
+                            </TableCell>
+                             <TableCell className="text-xs align-middle text-center py-2">
+                                {(() => {
+                                    const layoutImageCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
+                                    if (layoutImageCount > 0) {
+                                        return <span className="text-black font-medium">{layoutImageCount} Layout{layoutImageCount > 1 ? 's' : ''} Uploaded</span>;
+                                    } else {
+                                        return <span className="text-red-500 font-bold">No Uploaded Layout</span>;
+                                    }
+                                })()}
                             </TableCell>
                              <TableCell className="text-center align-middle py-2">
                                 <div className="flex flex-col items-center justify-center gap-1">
