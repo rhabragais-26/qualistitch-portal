@@ -4,6 +4,7 @@
 import { Header } from '@/components/header';
 import { AdminUsersTable } from '@/components/admin-users-table';
 import { ProductManagement } from '@/components/product-management';
+import { DataMigration } from '@/components/data-migration';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -27,6 +28,7 @@ export default function AdminUsersPage() {
         <div className="p-4 sm:p-6 lg:p-8 space-y-8">
           <AdminUsersTable />
           <ProductManagement />
+          <DataMigration />
         </div>
       </Header>
   );
