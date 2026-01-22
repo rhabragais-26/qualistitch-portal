@@ -10,9 +10,21 @@ import { collection, query } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import { PlusCircle, Trash2, X } from 'lucide-react';
+import { PlusCircle, Trash2, X, Edit, Save } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { toTitleCase } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Label } from './ui/label';
+
 
 type Panel = {
   id: string;
@@ -295,8 +307,8 @@ export function CollapsibleRightPanel() {
     <>
       <div
         className={cn(
-          "fixed z-40 top-0 h-full no-print transition-transform duration-300 ease-in-out",
-          isExpanded ? "right-0" : "right-[-24rem]" // w-96 is 24rem
+          "fixed z-40 top-0 right-0 h-full w-96 no-print transition-transform duration-300 ease-in-out",
+          !isExpanded && "translate-x-full"
         )}
       >
         <Card className="w-96 h-full shadow-xl rounded-none rounded-l-lg flex flex-col">
@@ -327,17 +339,19 @@ export function CollapsibleRightPanel() {
                                         className="h-6 text-center bg-background text-foreground"
                                     />
                                 ) : (
-                                    <>
-                                        {panel.title}
-                                        {panel.type !== 'jo-notes' && (
-                                            <div
-                                                onClick={(e) => { e.stopPropagation(); removePanel(panel.id); }}
-                                                className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer"
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </div>
-                                        )}
-                                    </>
+                                  <>
+                                    {panel.title}
+                                    {panel.type !== 'jo-notes' && (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={(e) => { e.stopPropagation(); removePanel(panel.id); }}
+                                        className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    )}
+                                  </>
                                 )}
                            </TabsTrigger>
                         ))}
