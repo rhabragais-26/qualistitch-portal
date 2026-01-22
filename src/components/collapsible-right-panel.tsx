@@ -64,19 +64,16 @@ export function CollapsibleRightPanel() {
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'ns-resize';
       document.body.style.userSelect = 'none';
     } else {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'default';
       document.body.style.userSelect = 'auto';
     }
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'default';
       document.body.style.userSelect = 'auto';
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
@@ -148,8 +145,10 @@ export function CollapsibleRightPanel() {
                 onClick={handleButtonClick}
                 onMouseDown={handleMouseDown}
                 className={cn(
-                    "relative h-24 w-9 p-1 rounded-r-none rounded-l-lg bg-[#81cdc6] text-white hover:bg-[#69bab2] hover:text-white flex items-center justify-center",
-                    isDragging && "cursor-ns-resize"
+                    "relative h-24 w-9 p-1 rounded-r-none rounded-l-lg text-white flex items-center justify-center transition-colors",
+                    isExpanded
+                        ? "bg-[#81cdc6] hover:bg-[#81cdc6]"
+                        : "bg-[#81cdc6] hover:bg-[#69bab2]"
                 )}
               >
                 <span className="[writing-mode:vertical-rl] font-bold tracking-wider">PANEL</span>
