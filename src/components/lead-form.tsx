@@ -45,7 +45,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import {RadioGroup, RadioGroupItem} from './ui/radio-group';
-import { cn } from '@/lib/utils';
+import { cn, toTitleCase } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,7 +79,7 @@ import { Textarea } from './ui/textarea';
 import { EditOrderDialog } from './edit-order-dialog';
 import type { Lead as LeadType } from './records-table';
 import { getTierLabel } from '@/lib/pricing';
-import { toTitleCase, formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
@@ -551,7 +551,7 @@ export function LeadForm({
         const filteredProvinces = allProvinces.filter(p => p.toLowerCase().includes(debouncedProvince.toLowerCase())).slice(0, 10);
         setProvinceSuggestions(filteredProvinces);
     } else if (activeField !== 'province') {
-        setProvinceSuggestions([]);
+      setProvinceSuggestions([]);
     }
   }, [debouncedProvince, allProvinces, selectedLead, activeField]);
 

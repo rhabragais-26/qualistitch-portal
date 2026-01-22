@@ -34,6 +34,7 @@ import { collection, doc, query, setDoc, updateDoc } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { addDays, format } from 'date-fns';
 import { QuantityDialog } from './quantity-dialog';
+import { toTitleCase } from '@/lib/utils';
 
 type LeadOrder = {
   productType: string;
@@ -336,8 +337,8 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
             const fullData = {
                 id: caseId,
                 ...submissionData,
-                customerName: foundLead?.customerName,
-                companyName: foundLead?.companyName,
+                customerName: toTitleCase(foundLead?.customerName || ''),
+                companyName: toTitleCase(foundLead?.companyName || ''),
                 contactNumber: foundLead?.contactNumber || '',
                 landlineNumber: foundLead?.landlineNumber || '',
                 submissionDateTime: new Date().toISOString(),
@@ -431,7 +432,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                                         className="p-2 cursor-pointer hover:bg-gray-100"
                                         onClick={() => handleSuggestionClick(lead)}
                                     >
-                                    {formatJoNumber(lead.joNumber!)} - {lead.customerName}
+                                    {formatJoNumber(lead.joNumber!)} - {toTitleCase(lead.customerName)}
                                     </div>
                                 ))}
                                 </CardContent>
@@ -481,12 +482,12 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                         <div className='flex items-center gap-2'>
                            <User className="h-4 w-4 text-gray-500" />
                            <span className="font-medium text-gray-600">Customer:</span>
-                           <span className="text-black">{foundLead.customerName}</span>
+                           <span className="text-black">{toTitleCase(foundLead.customerName)}</span>
                         </div>
                         <div className='flex items-center gap-2'>
                            <Building className="h-4 w-4 text-gray-500" />
                            <span className="font-medium text-gray-600">Company:</span>
-                           <span className="text-black">{foundLead.companyName && foundLead.companyName !== '-' ? foundLead.companyName : 'N/A'}</span>
+                           <span className="text-black">{foundLead.companyName && foundLead.companyName !== '-' ? toTitleCase(foundLead.companyName) : 'N/A'}</span>
                         </div>
                          <div className='flex items-center gap-2'>
                            <Phone className="h-4 w-4 text-gray-500" />

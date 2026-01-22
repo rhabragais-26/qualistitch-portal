@@ -37,7 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, toTitleCase } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { collection, query } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
@@ -205,7 +205,7 @@ const RecordsTableRow = React.memo(({
                   {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </Button>
                 <div className='flex flex-col items-center'>
-                  <span className="font-medium">{lead.customerName}</span>
+                  <span className="font-medium">{toTitleCase(lead.customerName)}</span>
                   {isRepeat ? (
                     <TooltipProvider>
                       <Tooltip>
@@ -227,7 +227,7 @@ const RecordsTableRow = React.memo(({
                   )}
                   {openCustomerDetails === lead.id && (
                     <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
-                      {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                      {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
                       {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                     </div>
                   )}
@@ -382,8 +382,8 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     return processedLeads.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ? 
-        (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-        (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
+        (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
+        (lead.companyName && toTitleCase(lead.companyName).toLowerCase().includes(lowercasedSearchTerm)) ||
         (lead.contactNumber && lead.contactNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))) ||
         (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
         : true;
