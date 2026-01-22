@@ -25,6 +25,7 @@ import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { UserPosition } from '@/lib/permissions';
 import Image from 'next/image';
+import { toTitleCase } from '@/lib/utils';
 
 const positions: UserPosition[] = [
     'Not Assigned',
@@ -157,9 +158,9 @@ export function ProfileForm() {
         const { dirtyFields } = form.formState;
 
         const profileDataToUpdate: Partial<FormValues> = {};
-        if (dirtyFields.firstName) profileDataToUpdate.firstName = values.firstName;
-        if (dirtyFields.lastName) profileDataToUpdate.lastName = values.lastName;
-        if (dirtyFields.nickname) profileDataToUpdate.nickname = values.nickname;
+        if (dirtyFields.firstName) profileDataToUpdate.firstName = toTitleCase(values.firstName);
+        if (dirtyFields.lastName) profileDataToUpdate.lastName = toTitleCase(values.lastName);
+        if (dirtyFields.nickname) profileDataToUpdate.nickname = toTitleCase(values.nickname);
         if (dirtyFields.position) profileDataToUpdate.position = values.position;
         if (dirtyFields.phoneNumber) profileDataToUpdate.phoneNumber = values.phoneNumber;
         if (dirtyFields.photoURL) profileDataToUpdate.photoURL = values.photoURL;

@@ -13,7 +13,7 @@
     import { Textarea } from '@/components/ui/textarea';
     import { useToast } from '@/hooks/use-toast';
     import { Input } from '@/components/ui/input';
-    import { cn } from '@/lib/utils';
+    import { cn, toTitleCase } from '@/lib/utils';
     import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
     import Image from 'next/image';
     import { v4 as uuidv4 } from 'uuid';
@@ -460,7 +460,7 @@
       
       const scesProfile = users?.find(u => u.nickname === lead.salesRepresentative);
       const scesNickname = scesProfile ? scesProfile.nickname : lead.salesRepresentative;
-      const scesFullName = scesProfile ? `${scesProfile.firstName} ${scesProfile.lastName}`.toUpperCase() : lead.salesRepresentative.toUpperCase();
+      const scesFullName = scesProfile ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
 
       const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
       
@@ -686,7 +686,7 @@
             </div>
              <div className="space-y-1">
                 <p className="font-bold italic">Noted by:</p>
-                <p className="pt-8 border-b border-black text-center font-semibold">MYREZA BANAWON</p>
+                <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
                 <p className="text-center font-bold">Sales Head</p>
                 <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>

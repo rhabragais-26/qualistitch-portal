@@ -148,7 +148,7 @@ export default function NewOrderPage() {
       courier: values.courier || '-',
       paymentType: paymentType,
       salesRepresentative: userProfile.nickname,
-      scesFullName: `${userProfile.firstName} ${userProfile.lastName}`,
+      scesFullName: toTitleCase(`${userProfile.firstName} ${userProfile.lastName}`),
       orderType: values.orderType,
       priorityType: values.priorityType,
       productType: values.orders.map(o => o.productType).join(', '),

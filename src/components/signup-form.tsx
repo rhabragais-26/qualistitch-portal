@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -12,6 +12,8 @@ import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { toTitleCase } from '@/lib/utils';
+
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: 'First name is required.' }),
@@ -54,15 +56,15 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
       
       // Update the user's profile in Firebase Auth
       await updateProfile(user, {
-        displayName: values.nickname,
+        displayName: toTitleCase(values.nickname),
       });
 
       // 2. Save additional user details to Firestore
       await setDoc(doc(firestore, 'users', user.uid), {
         uid: user.uid,
-        firstName: values.firstName,
-        lastName: values.lastName,
-        nickname: values.nickname,
+        firstName: toTitleCase(values.firstName),
+        lastName: toTitleCase(values.lastName),
+        nickname: toTitleCase(values.nickname),
         email: user.email,
         role: 'user',
         position: 'Not Assigned',

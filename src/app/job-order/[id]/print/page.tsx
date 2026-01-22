@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
+import { toTitleCase } from '@/lib/utils';
 
 
 type DesignDetails = {
@@ -283,13 +284,13 @@ export default function JobOrderPrintPage() {
         <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
             <div className="space-y-1">
                 <p className="font-bold italic">Prepared by:</p>
-                <p className="pt-8 border-b border-black text-center font-semibold">{(lead.scesFullName || lead.salesRepresentative).toUpperCase()}</p>
+                <p className="pt-8 border-b border-black text-center font-semibold">{toTitleCase(lead.scesFullName || lead.salesRepresentative)}</p>
                 <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
                 <p className="text-center">(Name & Signature, Date)</p>
             </div>
              <div className="space-y-1">
                 <p className="font-bold italic">Noted by:</p>
-                <p className="pt-8 border-b border-black text-center font-semibold">MYREZA BANAWON</p>
+                <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
                 <p className="text-center font-bold">Sales Head</p>
                 <p className="text-center">(Name & Signature, Date)</p>
             </div>

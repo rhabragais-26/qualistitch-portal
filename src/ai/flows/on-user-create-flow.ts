@@ -9,6 +9,14 @@ if (getApps().length === 0) {
   initializeApp();
 }
 
+const toTitleCase = (str: string) => {
+    if (!str) return '';
+    return str
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+};
+
 /**
  * A Cloud Function that triggers when a new Firebase Authentication user is created.
  * It creates a corresponding user profile document in the 'users' Firestore collection.
@@ -22,8 +30,8 @@ export const createuserprofile = onUserCreate(async (event) => {
 
   // Extract first and last name from displayName if available
   const nameParts = displayName?.split(' ') || [];
-  const firstName = nameParts[0] || '';
-  const lastName = nameParts.slice(1).join(' ') || '';
+  const firstName = toTitleCase(nameParts[0] || '');
+  const lastName = toTitleCase(nameParts.slice(1).join(' ') || '');
 
   try {
     await userRef.set({
@@ -31,7 +39,7 @@ export const createuserprofile = onUserCreate(async (event) => {
       email,
       firstName,
       lastName,
-      nickname: displayName || '', // Use displayName as a fallback for nickname
+      nickname: toTitleCase(displayName || ''), // Use displayName as a fallback for nickname
       role: 'user', // Assign a default role
       position: 'Not Assigned', // Assign a default position
       createdAt: new Date().toISOString(),
