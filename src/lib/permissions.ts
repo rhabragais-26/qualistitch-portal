@@ -3,6 +3,7 @@ export type UserPosition =
   | 'SCES'
   | 'Sales Supervisor'
   | 'Sales Manager'
+  | 'S.E Officer'
   | 'Inventory Officer'
   | 'Production Line Leader'
   | 'Production Head'
@@ -10,6 +11,7 @@ export type UserPosition =
   | 'Operations Manager'
   | 'Operations Head'
   | 'Digitizer'
+  | 'E.D Coordinator'
   | 'HR'
   | 'Finance'
   | 'CEO'
@@ -62,8 +64,10 @@ const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'SCES': ['sales'],
   'Sales Supervisor': ['sales'],
   'Sales Manager': ['sales'],
+  'S.E Officer': ['sales'],
   'Inventory Officer': ['inventory'],
   'Digitizer': ['digitizing'],
+  'E.D Coordinator': ['digitizing'],
   'Production Line Leader': ['production'],
   'Production Head': ['inventory', 'logistics'],
   'Logistics Officer': ['logistics'],
