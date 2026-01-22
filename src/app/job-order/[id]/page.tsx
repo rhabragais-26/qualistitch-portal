@@ -102,7 +102,7 @@
       const [imageInView, setImageInView] = useState<string | null>(null);
 
       const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-      const { data: allLeads, isLoading: areAllLeadsLoading } = useCollection<Lead>(leadsQuery);
+      const { data: allLeads, isLoading: areAllLeadsLoading } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
       
       const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
       const { data: users, isLoading: areUsersLoading } = useCollection<UserProfileInfo>(usersQuery);

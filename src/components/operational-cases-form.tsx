@@ -122,7 +122,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
     () => (firestore ? query(collection(firestore, 'leads')) : null),
     [firestore]
   );
-  const { data: allLeads, isLoading: areLeadsLoading } = useCollection<Lead>(leadsQuery);
+  const { data: allLeads, isLoading: areLeadsLoading } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

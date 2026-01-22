@@ -66,7 +66,7 @@ const OperationalCasesSummaryMemo = React.memo(function OperationalCasesSummary(
     return query(collection(firestore, 'operationalCases'));
   }, [firestore, user]);
 
-  const { data: cases, isLoading: areCasesLoading, error } = useCollection<OperationalCase>(casesQuery);
+  const { data: cases, isLoading: areCasesLoading, error } = useCollection<OperationalCase>(casesQuery, undefined, { listen: false });
 
   const { openCasesData, resolvedCasesData } = useMemo(() => {
     if (!cases) return { openCasesData: [], resolvedCasesData: [] };
