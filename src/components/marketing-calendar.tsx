@@ -323,18 +323,18 @@ export function MarketingCalendar() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                         <div className="w-full px-1 text-center">
+                         <ul className="w-full px-2 text-left list-disc list-inside">
                             {dayEvents.slice(0, 2).map((event) => (
-                                <p key={event.id} className="text-xs text-foreground truncate text-center mt-1 first:mt-0">
-                                    {event.content}
-                                </p>
+                                <li key={event.id} className="text-xs text-foreground truncate mt-1 first:mt-0">
+                                    <span>{event.content}</span>
+                                </li>
                             ))}
                             {dayEvents.length > 2 && (
-                                <p className="text-xs text-muted-foreground mt-1 text-center">
+                                <li className="text-xs text-muted-foreground mt-1 list-none text-center">
                                     + {dayEvents.length - 2} more
-                                </p>
+                                </li>
                             )}
-                        </div>
+                        </ul>
                       </TooltipTrigger>
                        <TooltipContent className="p-0">
                         <ScrollArea className="max-h-60 w-80 modern-scrollbar">
