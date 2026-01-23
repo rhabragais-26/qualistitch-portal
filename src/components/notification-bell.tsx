@@ -22,6 +22,7 @@ type JoNoteNotification = {
   noteContent: string;
   notifyAt: string; // ISO string
   isRead: boolean;
+  contactNumber?: string;
 };
 
 type GlobalAnnouncement = {
@@ -357,8 +358,12 @@ export function NotificationBell() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-sm font-bold">{isAnnouncement ? 'Non-Urgent Announcement' : notification.joNumber}</p>
-                                    <p className="text-xs text-muted-foreground">from {notification.joNumber}</p>
-                                    <p className={cn("text-xs mt-1", !notification.isRead ? "text-foreground font-semibold" : "text-muted-foreground")}>"{notification.noteContent}"</p>
+                                    {isAnnouncement ? (
+                                        <p className="text-xs text-muted-foreground">from {notification.joNumber}</p>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground">{(notification as JoNoteNotification).customerName} | {(notification as JoNoteNotification).contactNumber}</p>
+                                    )}
+                                    <p className={cn("text-base mt-1 font-bold", !notification.isRead ? "text-foreground" : "text-muted-foreground")}>"{notification.noteContent}"</p>
                                 </div>
                                 {isAnnouncement 
                                     ? <Badge variant="warning" className="ml-2 bg-yellow-200 text-yellow-800">Announcement</Badge> 

@@ -59,6 +59,7 @@ type Notification = {
   noteContent: string;
   notifyAt: string; // ISO string
   isRead: boolean;
+  contactNumber?: string;
 };
 
 function JoNotesPanel() {
@@ -236,6 +237,7 @@ function JoNotesPanel() {
             noteContent: notificationPopover.noteContent,
             notifyAt: notifyAt.toISOString(),
             isRead: false,
+            contactNumber: getContactDisplay(notificationPopover.lead) || undefined,
         };
 
         const updatedNotifications = [...notifications];
