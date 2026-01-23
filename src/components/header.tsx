@@ -124,13 +124,13 @@ const HeaderMemo = React.memo(function Header({
     () => (firestore ? query(collection(firestore, 'leads')) : null),
     [firestore]
   );
-  const { data: leads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads } = useCollection<Lead>(leadsQuery);
   
   const usersQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'users')) : null),
     [firestore]
   );
-  const { data: usersData } = useCollection<UserProfileInfo>(usersQuery, undefined, { listen: false });
+  const { data: usersData } = useCollection<UserProfileInfo>(usersQuery);
 
   const auditQueueCount = useMemo(() => {
     if (!leads) return 0;
@@ -470,17 +470,13 @@ const HeaderMemo = React.memo(function Header({
                       <span>Announcement</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/admin/users')}>
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center">
-                            <UserCog className="mr-2" />
-                            <span>Admin Setting</span>
-                        </div>
-                        {unassignedUsersCount > 0 && (
-                            <Badge variant="destructive" className="h-5 w-5 justify-center rounded-full p-0 ml-auto text-xs">
-                                {unassignedUsersCount}
-                            </Badge>
-                        )}
-                      </div>
+                      <UserCog className="mr-2" />
+                      <span>Admin Setting</span>
+                      {unassignedUsersCount > 0 && (
+                          <Badge variant="destructive" className="h-5 w-5 shrink-0 justify-center rounded-full p-0 ml-auto">
+                              {unassignedUsersCount}
+                          </Badge>
+                      )}
                   </DropdownMenuItem>
                   </>
                 )}
