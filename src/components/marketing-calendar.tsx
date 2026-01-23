@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -142,6 +141,7 @@ export function MarketingCalendar() {
   const [dialogView, setDialogView] = useState<'list' | 'form'>('list');
   const [currentEvent, setCurrentEvent] = useState<Partial<MarketingEvent> | null>(null);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+  const [imageInView, setImageInView] = useState<string | null>(null);
 
 
   const canEdit = useMemo(() => {
@@ -249,6 +249,25 @@ export function MarketingCalendar() {
 
   return (
     <>
+       {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col w-full border rounded-lg h-auto">
         <header className="flex items-center justify-between px-6 py-4 border-b">
           <h2 className="text-2xl font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
@@ -266,7 +285,7 @@ export function MarketingCalendar() {
         </header>
         <div className="flex-1 grid grid-cols-7 grid-rows-6">
           {weekDays.map(day => (
-            <div key={day} className="flex items-center justify-center font-bold border-b border-r">
+            <div key={day} className="flex items-center justify-center font-bold border-b border-r py-2">
               {day}
             </div>
           ))}
@@ -307,15 +326,29 @@ export function MarketingCalendar() {
                           {dayEvents.length > 1 && <p className="text-xs text-muted-foreground mt-1">+ {dayEvents.length - 1} more</p>}
                         </div>
                       </TooltipTrigger>
-                       <TooltipContent>
-                        <div className="flex flex-col gap-2 p-2 max-w-xs">
-                          {dayEvents.map(event => (
-                            <div key={event.id} className="flex items-start gap-2 border-b last:border-b-0 pb-2 last:pb-0">
-                              {event.imageUrl && <Image src={event.imageUrl} alt="Event" width={40} height={40} className="rounded-md" />}
-                              <p className="text-sm">{event.content}</p>
+                       <TooltipContent className="p-0">
+                        <ScrollArea className="max-h-60 w-80 modern-scrollbar">
+                            <div className="p-4">
+                                <ul className="list-disc pl-5 space-y-2">
+                                    {dayEvents.map(event => (
+                                        <li key={event.id} className="text-sm">
+                                            {event.content}
+                                            {event.imageUrl && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setImageInView(event.imageUrl!);
+                                                    }}
+                                                    className="ml-2 text-blue-500 hover:underline text-xs"
+                                                >
+                                                    (view photo)
+                                                </button>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
-                          ))}
-                        </div>
+                        </ScrollArea>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
