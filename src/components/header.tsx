@@ -479,6 +479,10 @@ const HeaderMemo = React.memo(function Header({
                     <User className="mr-2" />
                     Profile
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation('/personal-calendar')}>
+                    <CalendarIcon className="mr-2" />
+                    Personal Calendar
+                </DropdownMenuItem>
                 {canSendAnnouncement && (
                   <DropdownMenuItem onSelect={() => { onOpenChange?.(false); setIsAnnouncementDialogOpen(true); }}>
                       <Megaphone className="mr-2" />

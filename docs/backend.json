@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "OperationalExpense": {
@@ -80,6 +81,17 @@
         "date",
         "content"
       ]
+    },
+    "PersonalCalendarEvent": {
+      "title": "PersonalCalendarEvent",
+      "type": "object",
+      "description": "Represents a personal event on a user's calendar.",
+      "properties": {
+          "id": { "type": "string" },
+          "date": { "type": "string", "format": "date-time" },
+          "content": { "type": "string" }
+      },
+      "required": ["id", "date", "content"]
     },
     "PricingConfig": {
         "title": "PricingConfig",
@@ -930,6 +942,26 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/users/{userId}/personalCalendar/{eventId}",
+        "definition": {
+          "entityName": "PersonalCalendarEvent",
+          "schema": {
+            "$ref": "#/backend/entities/PersonalCalendarEvent"
+          },
+          "description": "Stores personal calendar events for a specific user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The UID of the user."
+            },
+            {
+              "name": "eventId",
+              "description": "A unique ID for the event."
+            }
+          ]
+        }
+      },
       {
         "path": "/marketingCalendar/{eventId}",
         "definition": {
