@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -55,6 +56,7 @@ function JoNotesPanel() {
     const [currentNote, setCurrentNote] = useState('');
     const [allNotes, setAllNotes] = useState<Record<string, { lead: Lead; notes: Note[] }>>({});
     const [suggestions, setSuggestions] = useState<Lead[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(true);
     const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
 
     const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -131,6 +133,7 @@ function JoNotesPanel() {
         
         setCurrentNote('');
         setSelectedLead(null);
+        setSearchTerm('');
     };
 
     const handleDeleteNote = (leadId: string, noteId: string) => {
@@ -177,7 +180,7 @@ function JoNotesPanel() {
     }, [allNotes, searchTerm]);
 
     useEffect(() => {
-        if (!searchTerm || !allLeads) {
+        if (!searchTerm || !allLeads || !showSuggestions) {
             setSuggestions([]);
             return;
         }
@@ -189,12 +192,16 @@ function JoNotesPanel() {
             (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm))
         );
 
-        const leadsWithoutNotes = matchingLeads.filter(lead => !allNotes[lead.id]);
-        setSuggestions(leadsWithoutNotes.slice(0, 5));
+        setSuggestions(matchingLeads.slice(0, 5));
 
-    }, [searchTerm, allLeads, allNotes]);
+    }, [searchTerm, allLeads, showSuggestions]);
 
-
+    const handleSuggestionClick = (lead: Lead) => {
+        setSelectedLead(lead);
+        setSearchTerm(lead.joNumber ? formatJoNumber(lead.joNumber) : toTitleCase(lead.customerName));
+        setShowSuggestions(false);
+    };
+    
     return (
         <div className="flex flex-col h-full">
             <div className="relative p-2">
@@ -202,15 +209,16 @@ function JoNotesPanel() {
                     placeholder="Search notes, or find lead to add note..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    onBlur={() => setTimeout(() => setSuggestions([]), 150)}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     className="h-9"
                 />
-                {suggestions.length > 0 && (
+                {showSuggestions && suggestions.length > 0 && (
                     <Card className="absolute z-10 w-[calc(100%-1rem)] mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                         <CardHeader className="p-2 text-xs font-bold text-muted-foreground">Select a lead to add notes</CardHeader>
                         <CardContent className="p-0">
                             {suggestions.map((lead) => (
-                                <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100 text-sm" onClick={() => { setSelectedLead(lead); setSearchTerm(''); setSuggestions([]); }}>
+                                <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100 text-sm" onClick={() => handleSuggestionClick(lead)}>
                                     <p className="font-semibold">{toTitleCase(lead.customerName)}</p>
                                     <p className="text-xs text-gray-500">{lead.joNumber ? formatJoNumber(lead.joNumber) : (lead.companyName || '')}</p>
                                 </div>
@@ -282,8 +290,8 @@ function JoNotesPanel() {
             {selectedLead && (
                 <div className="p-2 mt-auto border-t animate-in slide-in-from-bottom-2 bg-white">
                     <div className="flex justify-between items-center mb-1">
-                        <p className="text-xs font-medium">Adding note for: <span className="font-bold">{toTitleCase(selectedLead.customerName)}</span> ({formatJoNumber(selectedLead.joNumber)})</p>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedLead(null)}><X className="h-4 w-4"/></Button>
+                        <p className="text-xs font-medium">Adding note for: <span className="font-bold">{toTitleCase(selectedLead.customerName)}</span> ({selectedLead.joNumber ? formatJoNumber(selectedLead.joNumber) : 'No J.O. yet'})</p>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setSelectedLead(null); setSearchTerm(''); }}><X className="h-4 w-4"/></Button>
                     </div>
                     <Textarea 
                         placeholder="Type your new note here..."
