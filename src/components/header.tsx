@@ -449,7 +449,7 @@ const HeaderMemo = React.memo(function Header({
                     <Avatar className="h-8 w-8">
                     <AvatarImage src={userProfile?.photoURL || ''} alt={userProfile.nickname} />
                     <AvatarFallback className="bg-primary text-primary-foreground font-bold">
-                        {getInitials(userProfile.nickname)}
+                        {getInitials(userProfile?.nickname)}
                     </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col items-start justify-center">
@@ -465,18 +465,22 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenuItem>
                 {isAdmin && (
                   <>
-                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsAnnouncementDialogOpen(true); }}>
+                  <DropdownMenuItem onSelect={() => setIsAnnouncementDialogOpen(true)}>
                       <Megaphone className="mr-2" />
                       <span>Announcement</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/admin/users')}>
-                      <UserCog className="mr-2" />
-                      <span>Admin Setting</span>
-                      {unassignedUsersCount > 0 && (
-                          <Badge variant="destructive" className="h-5 w-5 justify-center rounded-full p-0 ml-auto text-xs">
-                              {unassignedUsersCount}
-                          </Badge>
-                      )}
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                            <UserCog className="mr-2" />
+                            <span>Admin Setting</span>
+                        </div>
+                        {unassignedUsersCount > 0 && (
+                            <Badge variant="destructive" className="h-5 w-5 justify-center rounded-full p-0 ml-auto text-xs">
+                                {unassignedUsersCount}
+                            </Badge>
+                        )}
+                      </div>
                   </DropdownMenuItem>
                   </>
                 )}
