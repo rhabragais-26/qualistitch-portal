@@ -414,11 +414,39 @@ export function ProductManagement() {
   const handleConfirmDeleteCategory = async () => {
     if (!deletingCategory || !config) return;
 
+    const currentCategories = Object.keys(config.pricingTiers);
+    if (currentCategories.length <= 1) {
+        toast({
+            variant: 'destructive',
+            title: 'Cannot Delete Last Category',
+            description: 'You must have at least one product category.',
+        });
+        setDeletingCategory(null);
+        return;
+    }
+
     const newConfig = JSON.parse(JSON.stringify(config));
+    
+    // Find a category to reassign products to
+    const fallbackCategory = currentCategories.find(c => c !== deletingCategory);
+    if (!fallbackCategory) {
+       toast({ variant: 'destructive', title: 'Error', description: 'Could not find a category to reassign products to.' });
+       setDeletingCategory(null);
+       return;
+    }
+
+    // Re-assign products from the deleted category to the fallback category
+    for (const productName in newConfig.productGroupMapping) {
+      if (newConfig.productGroupMapping[productName] === deletingCategory) {
+        newConfig.productGroupMapping[productName] = fallbackCategory;
+      }
+    }
+    
+    // Delete the category itself
     delete newConfig.pricingTiers[deletingCategory];
     
     setDeletingCategory(null);
-    await saveConfiguration(newConfig, `Category "${deletingCategory}" has been deleted.`);
+    await saveConfiguration(newConfig, `Category "${deletingCategory}" deleted. Its products have been moved to "${fallbackCategory}".`);
   };
 
 
@@ -436,7 +464,7 @@ export function ProductManagement() {
 
   return (
     <>
-    <Card className="w-full shadow-xl mt-8">
+    <Card className="w-full shadow-xl">
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
@@ -761,7 +789,7 @@ export function ProductManagement() {
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure you want to delete this category?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    This will permanently delete the category. Any products assigned to this category will have their pricing reset to zero. This action cannot be undone.
+                    This will permanently delete the category. Any products assigned to this category will be automatically reassigned to another existing category. This action cannot be undone.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -774,4 +802,3 @@ export function ProductManagement() {
   );
 }
 
-    
