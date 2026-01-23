@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Bell, Check, Trash2 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -24,6 +24,8 @@ type Notification = {
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showAll, setShowAll] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const prevUnreadCountRef = useRef(0);
 
   const loadNotifications = () => {
     const storedNotifications = JSON.parse(localStorage.getItem('jo-notifications') || '[]') as Notification[];
@@ -39,6 +41,15 @@ export function NotificationBell() {
   }, []);
 
   const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
+
+  useEffect(() => {
+    if (unreadCount > prevUnreadCountRef.current) {
+      setIsAnimating(true);
+      const timer = setTimeout(() => setIsAnimating(false), 500); // Duration of the animation
+      return () => clearTimeout(timer);
+    }
+    prevUnreadCountRef.current = unreadCount;
+  }, [unreadCount]);
 
   const handleMarkAsRead = (notificationId: string) => {
     const allStoredNotifications: Notification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
@@ -74,7 +85,7 @@ export function NotificationBell() {
           role="button"
           className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-background"
         >
-          <Bell className="h-6 w-6" />
+          <Bell className={cn("h-6 w-6", isAnimating && "animate-buzz")} />
           {unreadCount > 0 && (
             <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center rounded-full p-0">
               {unreadCount}
