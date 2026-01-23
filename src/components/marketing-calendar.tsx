@@ -269,18 +269,25 @@ export function MarketingCalendar() {
         </div>
       )}
       <div className="flex flex-col w-full border rounded-lg h-auto">
-        <header className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-2xl font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>
-              Today
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+        <header className="grid grid-cols-3 items-center px-6 py-4 border-b">
+          <div className="justify-self-start">
+            <h2 className="text-2xl font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
+          </div>
+          <div className="justify-self-center">
+            <h2 className="text-2xl font-bold">Marketing Calendar</h2>
+          </div>
+          <div className="justify-self-end">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>
+                Today
+              </Button>
+              <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </header>
         <div className="flex-1 grid grid-cols-7">
