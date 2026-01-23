@@ -61,6 +61,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/finance/cost-of-goods': 'finance',
   '/finance/capital-expenses': 'finance',
   '/marketing/campaigns': 'marketing',
+  '/marketing/ads-vs-inquiries': 'marketing',
   '/marketing/analytics': 'marketing',
 };
 

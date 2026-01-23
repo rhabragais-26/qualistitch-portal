@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -303,6 +304,10 @@ const HeaderMemo = React.memo(function Header({
                     <DropdownMenuItem onClick={() => handleNavigation('/marketing/campaigns')}>
                       <Ticket className="mr-2" />
                       Inquiries per Ticket Size
+                    </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => handleNavigation('/marketing/ads-vs-inquiries')}>
+                      <Banknote className="mr-2" />
+                      Ads Spent vs Inquiries Generated
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/marketing/analytics')}>
                       <LineChart className="mr-2" />
