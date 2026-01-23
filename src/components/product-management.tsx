@@ -380,7 +380,7 @@ export function ProductManagement() {
 
   const handleSaveChanges = async () => {
     if (!config) return;
-    await saveConfiguration(config, 'Product and category changes have been saved.');
+    saveConfiguration(config, 'Product and category changes have been saved.');
   };
   
   const handleSaveCategoryName = async () => {
@@ -407,7 +407,7 @@ export function ProductManagement() {
         }
     }
     
-    await saveConfiguration(newConfig, `Category "${oldName}" renamed to "${newName.trim()}".`);
+    setConfig(newConfig);
     setEditingCategory(null);
   };
 
@@ -442,7 +442,7 @@ export function ProductManagement() {
     
     delete newConfig.pricingTiers[deletingCategory];
     
-    await saveConfiguration(newConfig, `Category "${deletingCategory}" deleted. Products moved to "${fallbackCategory}".`);
+    setConfig(newConfig);
     setDeletingCategory(null);
   };
 
@@ -581,9 +581,9 @@ export function ProductManagement() {
                                     <h3 className="text-lg font-semibold">Product List</h3>
                                     <div className="space-y-2 overflow-y-auto border p-2 rounded-md mt-2 text-sm">
                                         {Object.entries(config.productGroupMapping).map(([name, group]) => (
-                                            <div key={name} className="flex items-center justify-between gap-4">
-                                                <span className="whitespace-nowrap flex-1">{name}</span>
-                                                <div className="flex items-center gap-2">
+                                            <div key={name} className="flex items-start justify-between gap-4">
+                                                <span className="whitespace-nowrap flex-1 pt-1.5">{name}</span>
+                                                <div className="flex items-start gap-2">
                                                     <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
                                                         <SelectTrigger className="w-[170px] h-8 text-xs flex-shrink-0">
                                                             <SelectValue />
