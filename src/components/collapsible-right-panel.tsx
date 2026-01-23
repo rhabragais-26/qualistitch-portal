@@ -383,14 +383,13 @@ function JoNotesPanel() {
                                                     <Popover open={notificationPopover?.noteId === note.id} onOpenChange={(isOpen) => {
                                                         if (isOpen) {
                                                             setNotificationPopover({ noteId: note.id, noteContent: note.content, lead });
-                                                            const tomorrow = new Date();
-                                                            tomorrow.setDate(tomorrow.getDate() + 1);
-                                                            tomorrow.setHours(9, 0, 0, 0);
-                                                            const yyyy = tomorrow.getFullYear();
-                                                            const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
-                                                            const dd = String(tomorrow.getDate()).padStart(2, '0');
-                                                            const hh = String(tomorrow.getHours()).padStart(2, '0');
-                                                            const min = String(tomorrow.getMinutes()).padStart(2, '0');
+                                                            const today = new Date();
+                                                            today.setHours(9, 0, 0, 0);
+                                                            const yyyy = today.getFullYear();
+                                                            const mm = String(today.getMonth() + 1).padStart(2, '0');
+                                                            const dd = String(today.getDate()).padStart(2, '0');
+                                                            const hh = String(today.getHours()).padStart(2, '0');
+                                                            const min = String(today.getMinutes()).padStart(2, '0');
                                                             setNotificationDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}`);
                                                         } else {
                                                             setNotificationPopover(null);
@@ -790,3 +789,4 @@ export function CollapsibleRightPanel() {
     </>
   );
 }
+
