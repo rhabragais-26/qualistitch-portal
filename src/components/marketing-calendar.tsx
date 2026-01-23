@@ -1,8 +1,18 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { format } from 'date-fns';
-import { Calendar } from '@/components/ui/calendar';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+  isToday,
+  startOfWeek,
+  endOfWeek,
+  addMonths,
+  subMonths,
+} from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +25,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Upload, Trash2 } from 'lucide-react';
+import { Upload, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, collection, query } from 'firebase/firestore';
@@ -23,6 +33,7 @@ import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage'
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 type MarketingEvent = {
   id: string; // YYYY-MM-DD
@@ -64,10 +75,8 @@ export function MarketingCalendar() {
   const handleDateSelect = (date: Date | undefined) => {
     if (!date || !canEdit) return;
     
-    const adjustedDate = new Date(date.getTime() - date.getTimezoneOffset() * -60000);
-
-    setSelectedDate(adjustedDate);
-    const dateKey = format(adjustedDate, 'yyyy-MM-dd');
+    setSelectedDate(date);
+    const dateKey = format(date, 'yyyy-MM-dd');
     const existingEvent = eventsMap.get(dateKey);
 
     setDialogContent(existingEvent?.content || '');
@@ -118,34 +127,15 @@ export function MarketingCalendar() {
         toast({ variant: 'destructive', title: 'Save Failed', description: e.message });
     }
   };
-
-  const DayWithDot: React.FC<{ date: Date }> = ({ date }) => {
-    const dateKey = format(date, 'yyyy-MM-dd');
-    const hasEvent = eventsMap.has(dateKey);
-    const event = eventsMap.get(dateKey);
-
-    return (
-      <div className="relative w-full h-full flex items-center justify-center">
-        <span>{date.getDate()}</span>
-        {hasEvent && (
-           <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <div className="absolute bottom-1 w-2 h-2 rounded-full bg-primary" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <div className="flex flex-col gap-2 p-2 max-w-xs">
-                    {event?.imageUrl && <Image src={event.imageUrl} alt="Event" width={100} height={100} className="rounded-md" />}
-                    <p className="text-sm font-semibold">{event?.content}</p>
-                  </div>
-                </TooltipContent>
-            </Tooltip>
-           </TooltipProvider>
-        )}
-      </div>
-    );
-  };
   
+  const days = useMemo(() => {
+    const start = startOfWeek(startOfMonth(currentMonth));
+    const end = endOfWeek(endOfMonth(currentMonth));
+    return eachDayOfInterval({ start, end });
+  }, [currentMonth]);
+  
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
   if(isLoading) {
     return <Skeleton className="w-full h-[600px]" />;
   }
@@ -156,32 +146,77 @@ export function MarketingCalendar() {
 
   return (
     <>
-      <Calendar
-        mode="single"
-        selected={selectedDate}
-        onSelect={handleDateSelect}
-        month={currentMonth}
-        onMonthChange={setCurrentMonth}
-        className="rounded-md border p-0 w-full h-full"
-        classNames={{
-            root: "h-full flex flex-col",
-            months: "flex flex-col sm:flex-row flex-1",
-            month: "space-y-4 flex-1 flex flex-col p-4",
-            table: "flex-1",
-            tbody: "h-full",
-            head_row: "flex",
-            head_cell: "text-muted-foreground rounded-md w-full basis-0 flex-1 justify-center items-center font-normal text-[0.8rem]",
-            row: "flex w-full mt-2",
-            cell: "text-center text-sm p-0 relative basis-0 flex-1 aspect-square [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-            day: "h-full w-full p-0 font-normal aria-selected:opacity-100",
-            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-            day_today: "bg-accent text-accent-foreground",
-        }}
-        components={{
-          DayContent: (props) => <DayWithDot {...props} />,
-        }}
-        disabled={!canEdit}
-      />
+      <div className="flex flex-col h-[calc(100vh-10rem)] w-full border rounded-lg">
+        <header className="flex items-center justify-between px-6 py-4 border-b">
+          <h2 className="text-2xl font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>
+              Today
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </header>
+        <div className="flex-1 grid grid-cols-7 grid-rows-6">
+          {weekDays.map(day => (
+            <div key={day} className="text-center font-medium text-muted-foreground py-2 border-b border-r">
+              {day}
+            </div>
+          ))}
+          {days.map(day => {
+            const dateKey = format(day, 'yyyy-MM-dd');
+            const event = eventsMap.get(dateKey);
+            return (
+              <div
+                key={day.toString()}
+                onClick={() => handleDateSelect(day)}
+                className={cn(
+                  "relative p-2 border-r border-b flex flex-col",
+                  isSameMonth(day, currentMonth) ? 'bg-background' : 'bg-muted/50 text-muted-foreground',
+                  canEdit && 'cursor-pointer hover:bg-accent/20 transition-colors',
+                  "overflow-hidden"
+                )}
+              >
+                <time
+                  dateTime={format(day, 'yyyy-MM-dd')}
+                  className={cn(
+                    "text-sm font-medium",
+                    isToday(day) && "flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground"
+                  )}
+                >
+                  {format(day, 'd')}
+                </time>
+                {event && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                         <div className="flex-1 mt-2 overflow-hidden">
+                          {event.imageUrl && (
+                            <div className="relative w-full h-16 mb-2">
+                              <Image src={event.imageUrl} alt={event.content} layout="fill" objectFit="cover" className="rounded-md"/>
+                            </div>
+                          )}
+                          <p className="text-xs text-foreground truncate">{event.content}</p>
+                        </div>
+                      </TooltipTrigger>
+                       <TooltipContent>
+                        <div className="flex flex-col gap-2 p-2 max-w-xs">
+                          {event.imageUrl && <Image src={event.imageUrl} alt="Event" width={100} height={100} className="rounded-md" />}
+                          <p className="text-sm font-semibold">{event.content}</p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
       
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
