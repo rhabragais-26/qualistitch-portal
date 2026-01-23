@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -194,7 +193,7 @@ function JoNotesPanel() {
             localStorage.setItem(`notes_${leadId}`, JSON.stringify(updatedNotes));
         }
 
-        const currentNotifications = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
+        const currentNotifications = JSON.parse(localStorage.getItem('jo-notifications') || '[]') as Notification[];
         const newNotifications = currentNotifications.filter((n: Notification) => n.id !== noteId);
         localStorage.setItem('jo-notifications', JSON.stringify(newNotifications));
         setNotifications(newNotifications);
@@ -693,7 +692,7 @@ export function CollapsibleRightPanel() {
                     onClick={handleButtonClick}
                     className={cn(
                         "relative h-48 w-9 p-1 rounded-r-none rounded-l-lg flex items-center justify-center transition-colors",
-                        isExpanded ? 'bg-[#81cdc6]' : 'bg-[#81cdc6] hover:bg-[#69bab2]',
+                        isExpanded ? 'bg-[#81cdc6]' : 'bg-[#81cdc6] hover:bg-[#69bab2] hover:text-white',
                         "text-white"
                     )}
                   >
@@ -791,4 +790,3 @@ export function CollapsibleRightPanel() {
     </>
   );
 }
-
