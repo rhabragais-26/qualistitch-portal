@@ -28,6 +28,7 @@ type AppState = {
   announcementText?: string;
   announcementType?: 'banner' | 'notification';
   announcementTimestamp?: string;
+  announcementSender?: string;
 };
 
 export function NotificationBell() {
@@ -61,8 +62,8 @@ export function NotificationBell() {
         const announcementNotif: Notification = {
             id: `global-${appState.announcementTimestamp}`,
             leadId: 'global',
-            customerName: 'System Announcement',
-            joNumber: '',
+            customerName: 'Non-Urgent Announcement',
+            joNumber: appState.announcementSender || 'Admin',
             noteContent: appState.announcementText,
             notifyAt: appState.announcementTimestamp,
             isRead: !isNew
@@ -168,9 +169,10 @@ export function NotificationBell() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-sm font-bold text-primary">{globalAnnouncement.customerName}</p>
+                                    <p className="text-xs text-muted-foreground">from {globalAnnouncement.joNumber}</p>
                                     <p className={cn("text-xs mt-1", !globalAnnouncement.isRead ? "text-foreground" : "text-muted-foreground")}>"{globalAnnouncement.noteContent}"</p>
                                 </div>
-                                <Badge variant="destructive">NEW</Badge>
+                                <Badge variant="warning">Announcement</Badge>
                             </div>
                             <p className={cn("text-xs mt-2", !globalAnnouncement.isRead ? "text-blue-600" : "text-muted-foreground")}>
                               {format(new Date(globalAnnouncement.notifyAt), 'MMM dd, yyyy @ h:mm a')}
@@ -220,5 +222,3 @@ export function NotificationBell() {
     </Popover>
   );
 }
-
-  
