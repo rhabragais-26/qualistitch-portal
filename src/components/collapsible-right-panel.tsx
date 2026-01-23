@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -185,6 +186,7 @@ export function CollapsibleRightPanel() {
   const [activeTab, setActiveTab] = useState('jo-notes');
   const [textareaContents, setTextareaContents] = useState<Record<string, string>>({});
   const [editingPanelId, setEditingPanelId] = useState<string | null>(null);
+  const [deletingPanelId, setDeletingPanelId] = useState<string | null>(null);
 
 
   const buttonRef = useRef<HTMLDivElement>(null);
@@ -277,17 +279,24 @@ export function CollapsibleRightPanel() {
     }
   };
 
-  const removePanel = (idToRemove: string) => {
+  const handleConfirmDelete = () => {
+    if (!deletingPanelId) return;
+    const idToRemove = deletingPanelId;
+
     const newPanels = panels.filter(p => p.id !== idToRemove);
     setPanels(newPanels);
-    if(activeTab === idToRemove) {
+
+    if (activeTab === idToRemove) {
       setActiveTab(newPanels[0]?.id || 'jo-notes');
     }
+
     setTextareaContents(prev => {
-        const newContents = {...prev};
-        delete newContents[idToRemove];
-        return newContents;
+      const newContents = { ...prev };
+      delete newContents[idToRemove];
+      return newContents;
     });
+
+    setDeletingPanelId(null);
   };
 
   const handleTitleChange = (panelId: string, newTitle: string) => {
@@ -303,7 +312,12 @@ export function CollapsibleRightPanel() {
               title: 'Panel Name Required',
               description: "Please provide a name for the panel or it will be removed."
             })
-            removePanel(editingPanelId);
+            // This is a temporary removal for UX, it won't be saved until confirmed
+            const newPanels = panels.filter(p => p.id !== editingPanelId);
+            setPanels(newPanels);
+            if (activeTab === editingPanelId) {
+                setActiveTab(newPanels[0]?.id || 'jo-notes');
+            }
         }
     }
     setEditingPanelId(null);
@@ -356,12 +370,12 @@ export function CollapsibleRightPanel() {
                                   </>
                                 )}
                            </TabsTrigger>
-                            {panel.type !== 'jo-notes' && editingPanelId !== panel.id && (
+                           {panel.type !== 'jo-notes' && (
                                 <div
-                                  onClick={(e) => { e.stopPropagation(); removePanel(panel.id); }}
-                                  className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer"
+                                onClick={(e) => { e.stopPropagation(); setDeletingPanelId(panel.id); }}
+                                className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer"
                                 >
-                                  <X className="h-3 w-3" />
+                                <X className="h-3 w-3" />
                                 </div>
                             )}
                            </div>
@@ -417,6 +431,23 @@ export function CollapsibleRightPanel() {
           </Tooltip>
         </TooltipProvider>
       </div>
+      <AlertDialog open={!!deletingPanelId} onOpenChange={(isOpen) => !isOpen && setDeletingPanelId(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This will permanently delete this panel and all its content. This action cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive hover:bg-destructive/90">
+                    Delete
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
+
