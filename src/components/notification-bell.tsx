@@ -247,7 +247,7 @@ export function NotificationBell() {
   };
 
   const handleMarkAllAsRead = () => {
-    const allStoredJoNotes: JoNoteNotification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
+    const allStoredJoNotes: JoNoteNotification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]') as JoNoteNotification[];
     const newStoredJoNotes = allStoredJoNotes.map(n => ({...n, isRead: true}));
     localStorage.setItem('jo-notifications', JSON.stringify(newStoredJoNotes));
     loadLocalNotifications();
@@ -330,12 +330,14 @@ export function NotificationBell() {
                                         </div>
                                         <Badge variant={notification.isDisapproved ? 'destructive' : 'success'}>Progress</Badge>
                                     </div>
-                                    <p className={cn("text-sm mt-2 w-full", !notification.isRead ? "text-foreground" : "text-muted-foreground")}>
-                                        {notification.message}
-                                    </p>
-                                    <p className={cn("text-xs mt-1", notification.isDisapproved ? "text-destructive font-bold" : "text-gray-500")}>
-                                        {notification.overdueStatus}
-                                    </p>
+                                    <div className="mt-2 w-full">
+                                      <p className={cn("text-sm", !notification.isRead ? "text-foreground" : "text-muted-foreground")}>
+                                          {notification.message}
+                                      </p>
+                                      <p className={cn("text-xs mt-1", notification.isDisapproved ? "text-destructive font-bold" : "text-gray-500")}>
+                                          {notification.overdueStatus}
+                                      </p>
+                                    </div>
                                     <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
                                         {format(new Date(notification.timestamp), 'MMM dd, yyyy @ h:mm a')}
                                     </p>
@@ -344,6 +346,8 @@ export function NotificationBell() {
                         }
 
                         const notification = n as JoNoteNotification | GlobalAnnouncement;
+                        const title = isAnnouncement ? 'Important Notice!' : 'Reminder';
+                        
                         return (
                          <div 
                           key={notification.id} 
@@ -357,21 +361,16 @@ export function NotificationBell() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-sm font-bold text-gray-800">{notification.joNumber}</p>
-                                    {isAnnouncement ? (
-                                        <p className="text-xs text-muted-foreground">from {notification.joNumber}</p>
-                                    ) : (
+                                    {!isAnnouncement && (
                                         <p className="text-xs text-muted-foreground">
-                                          {notification.customerName}
-                                          {(notification as JoNoteNotification).contactNumber && ` | ${(notification as JoNoteNotification).contactNumber}`}
+                                            {notification.customerName}
+                                            {(notification as JoNoteNotification).contactNumber && ` | ${(notification as JoNoteNotification).contactNumber}`}
                                         </p>
                                     )}
                                 </div>
-                                {isAnnouncement 
-                                    ? <Badge variant="warning" className="ml-2 bg-yellow-200 text-yellow-800">Important Notice!</Badge> 
-                                    : <span className="ml-2 text-destructive text-xs font-semibold whitespace-nowrap">Reminder</span>
-                                }
+                                <Badge variant={isAnnouncement ? 'warning' : 'destructive'} className={cn(isAnnouncement && 'bg-yellow-200 text-yellow-800')}>{title}</Badge> 
                             </div>
-                            <p className="text-base mt-1 text-black pl-4">"{notification.noteContent}"</p>
+                            <p className="text-sm mt-1 pl-4 text-black">"{notification.noteContent}"</p>
                             <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
                               {format(new Date(notification.notifyAt), 'MMM dd, yyyy @ h:mm a')}
                             </p>
