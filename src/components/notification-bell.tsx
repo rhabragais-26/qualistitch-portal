@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { Bell, Check, Trash2 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
 import { format, isPast } from 'date-fns';
@@ -24,6 +23,7 @@ type Notification = {
 
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showAll, setShowAll] = useState(false);
 
   const loadNotifications = () => {
     const storedNotifications = JSON.parse(localStorage.getItem('jo-notifications') || '[]') as Notification[];
@@ -56,17 +56,19 @@ export function NotificationBell() {
     loadNotifications();
   };
 
-  const handleClearAll = () => {
-      localStorage.setItem('jo-notifications', '[]');
-      loadNotifications();
-  };
-
   const sortedNotifications = useMemo(() => {
     return [...notifications].sort((a,b) => new Date(b.notifyAt).getTime() - new Date(a.notifyAt).getTime());
   }, [notifications]);
+  
+  const displayedNotifications = useMemo(() => {
+      if (showAll) {
+          return sortedNotifications;
+      }
+      return sortedNotifications.slice(0, 5);
+  }, [sortedNotifications, showAll]);
 
   return (
-    <Popover>
+    <Popover onOpenChange={(isOpen) => { if (!isOpen) setShowAll(false); }}>
       <PopoverTrigger asChild>
         <div
           role="button"
@@ -91,10 +93,6 @@ export function NotificationBell() {
                         <Check className="mr-1 h-4 w-4"/>
                         Mark all as read
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={handleClearAll}>
-                        <Trash2 className="mr-1 h-4 w-4"/>
-                        Clear all
-                    </Button>
                   </div>
               )}
             </div>
@@ -105,9 +103,9 @@ export function NotificationBell() {
                     No new notifications.
                 </div>
             ) : (
-                <ScrollArea className="h-80">
+                <ScrollArea className="h-80 modern-scrollbar">
                   <div className="p-2 space-y-1">
-                    {sortedNotifications.map(n => (
+                    {displayedNotifications.map(n => (
                         <div 
                           key={n.id} 
                           className={cn(
@@ -116,8 +114,13 @@ export function NotificationBell() {
                           )}
                           onClick={() => handleMarkAsRead(n.id)}
                         >
-                            <p className="text-sm">{n.customerName} ({n.joNumber})</p>
-                            <p className={cn("text-xs mt-1", !n.isRead ? "text-foreground" : "text-muted-foreground")}>"{n.noteContent}"</p>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-sm">{n.customerName} ({n.joNumber})</p>
+                                    <p className={cn("text-xs mt-1", !n.isRead ? "text-foreground" : "text-muted-foreground")}>"{n.noteContent}"</p>
+                                </div>
+                                <Badge variant="secondary" className="ml-2 bg-yellow-200 text-yellow-800">JO Notes</Badge>
+                            </div>
                             <p className={cn("text-xs mt-2", !n.isRead ? "text-blue-600" : "text-gray-500")}>
                               {format(new Date(n.notifyAt), 'MMM dd, yyyy @ h:mm a')}
                             </p>
@@ -127,6 +130,13 @@ export function NotificationBell() {
                 </ScrollArea>
             )}
           </CardContent>
+          {notifications.length > 5 && !showAll && (
+              <CardFooter className="p-2 border-t justify-center">
+                  <Button variant="link" className="text-sm h-auto p-0" onClick={() => setShowAll(true)}>
+                      Load older notifications
+                  </Button>
+              </CardFooter>
+          )}
         </Card>
       </PopoverContent>
     </Popover>
