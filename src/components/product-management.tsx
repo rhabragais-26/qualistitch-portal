@@ -414,19 +414,6 @@ export function ProductManagement() {
   const handleConfirmDeleteCategory = async () => {
     if (!deletingCategory || !config) return;
 
-    const isCategoryInUse = Object.values(config.productGroupMapping).some(group => group === deletingCategory);
-
-    if (isCategoryInUse) {
-        toast({
-            variant: 'destructive',
-            title: 'Deletion Failed',
-            description: `Cannot delete category "${deletingCategory}" as it is still assigned to one or more products. Please re-assign them first.`,
-            duration: 5000,
-        });
-        setDeletingCategory(null);
-        return;
-    }
-
     const newConfig = JSON.parse(JSON.stringify(config));
     delete newConfig.pricingTiers[deletingCategory];
     
@@ -774,7 +761,7 @@ export function ProductManagement() {
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure you want to delete this category?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    You can only delete a category if no products are assigned to it. This action cannot be undone.
+                    This will permanently delete the category. Any products assigned to this category will have their pricing reset to zero. This action cannot be undone.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -786,3 +773,5 @@ export function ProductManagement() {
     </>
   );
 }
+
+    
