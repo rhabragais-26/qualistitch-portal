@@ -190,9 +190,9 @@ function JoNotesPanel() {
             (lead.joNumber && formatJoNumber(lead.joNumber).toLowerCase().includes(lowercasedSearchTerm)) ||
             lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
             (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm))
-        );
+        ).slice(0, 5);
 
-        setSuggestions(matchingLeads.slice(0, 5));
+        setSuggestions(matchingLeads);
 
     }, [searchTerm, allLeads, showSuggestions]);
 
@@ -266,9 +266,9 @@ function JoNotesPanel() {
                                         </TooltipProvider>
                                     </div>
                                 </div>
-                                <div className="mt-2 space-y-2 pl-4 border-l-2 ml-1">
+                                <div className="mt-2 space-y-2 pl-4 border-l-2 border-dotted ml-1">
                                     {notes.map(note => (
-                                        <div key={note.id} className="group relative py-2 pl-2 pr-8 text-sm border rounded-md bg-yellow-50">
+                                        <div key={note.id} className="group relative py-2 pr-8 pl-2 text-sm border rounded-md bg-yellow-50">
                                             <p className="whitespace-pre-wrap">{note.content}</p>
                                             <p className="text-xs text-gray-400 mt-1">{new Date(note.timestamp).toLocaleString()}</p>
                                             <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteNote(leadId, note.id)}>
@@ -515,7 +515,7 @@ export function CollapsibleRightPanel() {
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Panel
                     </Button>
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className={cn("grid w-full", `grid-cols-${panels.length}`)}>
                         {panels.map((panel) => (
                            <div key={panel.id} className="relative group">
                              <TabsTrigger value={panel.id} className="w-full" onDoubleClick={() => panel.type !== 'jo-notes' && setEditingPanelId(panel.id)}>
@@ -543,12 +543,12 @@ export function CollapsibleRightPanel() {
                                 )}
                            </TabsTrigger>
                            {panel.type !== 'jo-notes' && (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); setDeletingPanelId(panel.id); }}
-                                className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer"
-                            >
-                                <X className="h-3 w-3" />
-                            </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setDeletingPanelId(panel.id); }}
+                                    className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer"
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
                            )}
                            </div>
                         ))}
@@ -579,8 +579,9 @@ export function CollapsibleRightPanel() {
         className="fixed z-50 no-print"
         style={{ 
             top: `${yPosition}px`, 
-            right: isExpanded ? '24rem' : '0',
-            transition: 'right 0.3s ease-in-out',
+            transform: `translateX(${isExpanded ? '-24rem' : '0px'})`,
+            right: 0,
+            transition: 'transform 0.3s ease-in-out',
         }}
       >
         <TooltipProvider>
