@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -120,7 +119,7 @@ export function NotificationBell() {
                                     <p className="text-sm">{n.customerName} ({n.joNumber})</p>
                                     <p className={cn("text-xs mt-1", !n.isRead ? "text-foreground" : "text-muted-foreground")}>"{n.noteContent}"</p>
                                 </div>
-                                <span className="ml-2 text-yellow-800 text-xs font-semibold whitespace-nowrap">JO Notes</span>
+                                <span className="ml-2 text-destructive text-xs font-semibold whitespace-nowrap">Reminder</span>
                             </div>
                             <p className={cn("text-xs mt-2", !n.isRead ? "text-blue-600" : "text-muted-foreground")}>
                               {format(new Date(n.notifyAt), 'MMM dd, yyyy @ h:mm a')}
