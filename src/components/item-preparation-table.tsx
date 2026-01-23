@@ -24,7 +24,7 @@ import { Badge } from './ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { cn, formatDateTime } from '@/lib/utils';
+import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Checkbox } from './ui/checkbox';
@@ -63,6 +63,8 @@ type Lead = {
   isSentToProduction?: boolean;
   isEndorsedToLogistics?: boolean;
   sentToProductionTimestamp?: string;
+  priorityType: 'Rush' | 'Regular';
+  deliveryDate?: string;
 }
 
 type EnrichedLead = Lead & {
@@ -284,6 +286,16 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
     setConfirmingLead(lead);
     setCheckedItems({});
   }, []);
+  
+  const calculateDeadline = useCallback((lead: Lead) => {
+    const deadlineDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
+    const remainingDays = differenceInDays(deadlineDate, new Date());
+    let text = `${remainingDays} day(s) remaining`;
+    if (remainingDays < 0) {
+      text = `${Math.abs(remainingDays)} day(s) overdue`;
+    }
+    return text;
+  }, []);
 
   const handleUpdateStatus = useCallback(async (leadId: string, field: 'isPreparedForProduction' | 'isSentToProduction' | 'isEndorsedToLogistics' | 'isJoHardcopyReceived', value: boolean) => {
     if (!firestore) return;
@@ -358,8 +370,26 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
   const handleConfirmSendToProd = useCallback(async () => {
     if (!leadToSend) return;
     await handleUpdateStatus(leadToSend.id, 'isSentToProduction', true);
+        const notification = {
+        id: `progress-${leadToSend.id}-${new Date().toISOString()}`,
+        type: 'progress',
+        leadId: leadToSend.id,
+        joNumber: formatJoNumber(leadToSend.joNumber),
+        customerName: toTitleCase(leadToSend.customerName),
+        companyName: leadToSend.companyName,
+        contactNumber: getContactDisplay(leadToSend),
+        message: `Order endorsed to Production.`,
+        overdueStatus: calculateDeadline(leadToSend), // Overdue status is not calculated here, can be added if needed
+        isRead: false,
+        timestamp: new Date().toISOString(),
+        isDisapproved: false
+    };
+    const existingNotifications = JSON.parse(localStorage.getItem('progress-notifications') || '[]');
+    localStorage.setItem('progress-notifications', JSON.stringify([...existingNotifications, notification]));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'progress-notifications' }));
+    
     setLeadToSend(null);
-  }, [leadToSend, handleUpdateStatus]);
+  }, [leadToSend, handleUpdateStatus, formatJoNumber, getContactDisplay, calculateDeadline]);
   
   const handleConfirmSendToLogistics = useCallback(async () => {
     if (!leadToSend) return;
@@ -571,7 +601,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
                   />
                 </div>
               </div>
-              <div className="w-full text-right mt-2">
+              <div className="w-full text-right">
                 {filterType === 'COMPLETED' ? (
                   <Link href="/inventory/item-preparation-for-production" className="text-sm text-primary hover:underline">
                     View Item Preparation Queue

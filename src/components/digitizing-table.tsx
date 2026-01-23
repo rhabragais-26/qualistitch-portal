@@ -673,6 +673,28 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           isDigitizingArchived: true,
           digitizingArchivedTimestamp: new Date().toISOString(),
         });
+        
+        // Create and save notification
+        const deadlineInfo = calculateDigitizingDeadline(reviewConfirmLead);
+        const notification = {
+            id: `progress-${reviewConfirmLead.id}-${new Date().toISOString()}`,
+            type: 'progress',
+            leadId: reviewConfirmLead.id,
+            joNumber: formatJoNumber(reviewConfirmLead.joNumber),
+            customerName: toTitleCase(reviewConfirmLead.customerName),
+            companyName: reviewConfirmLead.companyName,
+            contactNumber: getContactDisplay(reviewConfirmLead),
+            message: `Order endorsed to Inventory for item preparation.`,
+            overdueStatus: deadlineInfo.text,
+            isRead: false,
+            timestamp: new Date().toISOString(),
+            isDisapproved: false
+        };
+        const existingNotifications = JSON.parse(localStorage.getItem('progress-notifications') || '[]');
+        localStorage.setItem('progress-notifications', JSON.stringify([...existingNotifications, notification]));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'progress-notifications' }));
+
+
         toast({
             title: "Project Sent to Production",
             description: "The project has been moved to the Item Preparation queue.",
@@ -686,7 +708,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             description: e.message || 'Could not send the project to production.',
         });
     }
-  }, [reviewConfirmLead, firestore, toast]);
+  }, [reviewConfirmLead, firestore, toast, calculateDigitizingDeadline, getContactDisplay]);
 
 
   const toggleLeadDetails = useCallback((leadId: string) => {

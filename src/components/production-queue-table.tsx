@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
@@ -394,7 +392,7 @@ const ProductionQueueTableRow = React.memo(({
                     <ChevronDown className={cn("h-4 w-4 transition-transform", openLeadId === lead.id && "rotate-180")} />
                     </Button>
                 </TableCell>
-                <TableCell className="text-center align-middle py-2">
+                 <TableCell className="text-center align-middle py-2">
                     <div className="flex flex-col items-center justify-center gap-1">
                         <Checkbox
                         checked={lead.isJoHardcopyReceived || false}
@@ -662,10 +660,33 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   }, [joReceivedConfirmation, firestore, toast]);
   
   const handleEndorseToLogistics = useCallback(async (leadId: string) => {
-    if (!firestore) return;
+    if (!firestore || !leads) return;
+    const lead = leads.find(l => l.id === leadId);
+    if (!lead) return;
+
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
         await updateDoc(leadDocRef, { isEndorsedToLogistics: true, endorsedToLogisticsTimestamp: new Date().toISOString(), isRecheckingQuality: false });
+        
+        const deadlineInfo = calculateProductionDeadline(lead);
+        const notification = {
+            id: `progress-${lead.id}-${new Date().toISOString()}`,
+            type: 'progress',
+            leadId: lead.id,
+            joNumber: formatJoNumber(lead.joNumber),
+            customerName: toTitleCase(lead.customerName),
+            companyName: lead.companyName,
+            contactNumber: getContactDisplay(lead),
+            message: `Order endorsed to Logistics.`,
+            overdueStatus: deadlineInfo.text,
+            isRead: false,
+            timestamp: new Date().toISOString(),
+            isDisapproved: false
+        };
+        const existingNotifications = JSON.parse(localStorage.getItem('progress-notifications') || '[]');
+        localStorage.setItem('progress-notifications', JSON.stringify([...existingNotifications, notification]));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'progress-notifications' }));
+        
         toast({
             title: "Endorsed to Logistics",
             description: "The order has been sent to the logistics team.",
@@ -678,7 +699,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         description: e.message || "Could not endorse the order.",
       });
     }
-  }, [firestore, toast]);
+  }, [firestore, toast, leads, getContactDisplay]);
   
   const calculateProductionDeadline = useCallback((lead: Lead) => {
     const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
@@ -912,5 +933,3 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     </Card>
   );
 }
-
-  

@@ -14,15 +14,42 @@ import { Separator } from './ui/separator';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
-type Notification = {
+type JoNoteNotification = {
   id: string; // noteId or global announcement timestamp
   leadId: string;
   customerName: string;
-  joNumber: string; // For JO notes, this is JO number. For announcements, it's sender.
+  joNumber: string; // For JO notes, this is JO number.
   noteContent: string;
   notifyAt: string; // ISO string
   isRead: boolean;
 };
+
+type GlobalAnnouncement = {
+  id: string; 
+  leadId: 'global';
+  customerName: string; // Title like 'Non-Urgent Announcement'
+  joNumber: string; // Sender
+  noteContent: string;
+  notifyAt: string; // ISO string
+  isRead: boolean;
+}
+
+type ProgressNotification = {
+    id: string;
+    leadId: string;
+    joNumber: string;
+    customerName: string;
+    companyName?: string;
+    contactNumber?: string;
+    message: string;
+    overdueStatus: React.ReactNode;
+    isRead: boolean;
+    timestamp: string;
+    isDisapproved: boolean;
+};
+
+type Notification = JoNoteNotification | GlobalAnnouncement | ProgressNotification;
+
 
 type AppState = {
   announcementText?: string;
@@ -32,8 +59,10 @@ type AppState = {
 };
 
 export function NotificationBell() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [globalAnnouncements, setGlobalAnnouncements] = useState<Notification[]>([]);
+  const [joNoteNotifications, setJoNoteNotifications] = useState<JoNoteNotification[]>([]);
+  const [globalAnnouncements, setGlobalAnnouncements] = useState<GlobalAnnouncement[]>([]);
+  const [progressNotifications, setProgressNotifications] = useState<ProgressNotification[]>([]);
+
   const [showAll, setShowAll] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const prevUnreadCountRef = useRef(0);
@@ -42,14 +71,17 @@ export function NotificationBell() {
   const { data: appState } = useDoc<AppState>(appStateRef);
 
   const loadLocalNotifications = () => {
-    const storedNotifications = JSON.parse(localStorage.getItem('jo-notifications') || '[]') as Notification[];
+    const storedJoNotes = JSON.parse(localStorage.getItem('jo-notifications') || '[]') as JoNoteNotification[];
     const now = new Date();
-    const triggered = storedNotifications.filter(n => isPast(new Date(n.notifyAt)));
-    setNotifications(triggered);
+    const triggeredJoNotes = storedJoNotes.filter(n => isPast(new Date(n.notifyAt)));
+    setJoNoteNotifications(triggeredJoNotes);
+
+    const storedProgress = JSON.parse(localStorage.getItem('progress-notifications') || '[]') as ProgressNotification[];
+    setProgressNotifications(storedProgress);
   };
 
   const loadGlobalAnnouncements = () => {
-    const stored = JSON.parse(localStorage.getItem('global-announcements') || '[]') as Notification[];
+    const stored = JSON.parse(localStorage.getItem('global-announcements') || '[]') as GlobalAnnouncement[];
     setGlobalAnnouncements(stored);
   };
 
@@ -59,7 +91,7 @@ export function NotificationBell() {
     const interval = setInterval(loadLocalNotifications, 30000); // Check every 30 seconds
     
     const handleStorageChange = (event: StorageEvent) => {
-        if (event.key === 'jo-notifications') {
+        if (event.key === 'jo-notifications' || event.key === 'progress-notifications') {
             loadLocalNotifications();
         }
         if (event.key === 'global-announcements') {
@@ -76,19 +108,18 @@ export function NotificationBell() {
   
   useEffect(() => {
     if (appState?.announcementType === 'notification' && appState.announcementText && appState.announcementTimestamp) {
-        const existingAnnouncements = JSON.parse(localStorage.getItem('global-announcements') || '[]') as Notification[];
+        const existingAnnouncements = JSON.parse(localStorage.getItem('global-announcements') || '[]') as GlobalAnnouncement[];
         const newAnnouncementId = `global-${appState.announcementTimestamp}`;
 
-        // Check if this announcement already exists
         if (!existingAnnouncements.some(a => a.id === newAnnouncementId)) {
-            const newAnnouncement: Notification = {
+            const newAnnouncement: GlobalAnnouncement = {
                 id: newAnnouncementId,
                 leadId: 'global',
                 customerName: 'Non-Urgent Announcement',
                 joNumber: appState.announcementSender || 'Admin',
                 noteContent: appState.announcementText,
                 notifyAt: appState.announcementTimestamp,
-                isRead: false // Always new when it comes from appState
+                isRead: false
             };
             const updatedAnnouncements = [...existingAnnouncements, newAnnouncement];
             localStorage.setItem('global-announcements', JSON.stringify(updatedAnnouncements));
@@ -110,10 +141,11 @@ export function NotificationBell() {
   };
 
   const unreadCount = useMemo(() => {
-    const localUnread = notifications.filter(n => !n.isRead).length;
+    const localUnread = joNoteNotifications.filter(n => !n.isRead).length;
     const globalUnread = globalAnnouncements.filter(n => !n.isRead).length;
-    return localUnread + globalUnread;
-  }, [notifications, globalAnnouncements]);
+    const progressUnread = progressNotifications.filter(n => !n.isRead).length;
+    return localUnread + globalUnread + progressUnread;
+  }, [joNoteNotifications, globalAnnouncements, progressNotifications]);
 
   useEffect(() => {
     if (unreadCount > prevUnreadCountRef.current) {
@@ -129,8 +161,13 @@ export function NotificationBell() {
         const updatedAnnouncements = globalAnnouncements.map(n => n.id === notificationId ? { ...n, isRead: true } : n);
         localStorage.setItem('global-announcements', JSON.stringify(updatedAnnouncements));
         setGlobalAnnouncements(updatedAnnouncements);
-    } else {
-        const allStoredNotifications: Notification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
+    } else if (notificationId.startsWith('progress-')) {
+        const updatedProgress = progressNotifications.map(n => n.id === notificationId ? { ...n, isRead: true } : n);
+        localStorage.setItem('progress-notifications', JSON.stringify(updatedProgress));
+        setProgressNotifications(updatedProgress);
+    }
+    else {
+        const allStoredNotifications: JoNoteNotification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
         const newStoredNotifications = allStoredNotifications.map(n => 
             n.id === notificationId ? { ...n, isRead: true } : n
         );
@@ -140,19 +177,28 @@ export function NotificationBell() {
   };
 
   const handleMarkAllAsRead = () => {
-    const allStoredNotifications: Notification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
-    const newStoredNotifications = allStoredNotifications.map(n => ({...n, isRead: true}));
-    localStorage.setItem('jo-notifications', JSON.stringify(newStoredNotifications));
+    const allStoredJoNotes: JoNoteNotification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
+    const newStoredJoNotes = allStoredJoNotes.map(n => ({...n, isRead: true}));
+    localStorage.setItem('jo-notifications', JSON.stringify(newStoredJoNotes));
     loadLocalNotifications();
 
     const updatedAnnouncements = globalAnnouncements.map(a => ({...a, isRead: true}));
     localStorage.setItem('global-announcements', JSON.stringify(updatedAnnouncements));
     setGlobalAnnouncements(updatedAnnouncements);
+
+    const updatedProgress = progressNotifications.map(n => ({...n, isRead: true}));
+    localStorage.setItem('progress-notifications', JSON.stringify(updatedProgress));
+    setProgressNotifications(updatedProgress);
   };
   
   const sortedNotifications = useMemo(() => {
-    return [...notifications, ...globalAnnouncements].sort((a,b) => new Date(b.notifyAt).getTime() - new Date(a.notifyAt).getTime());
-  }, [notifications, globalAnnouncements]);
+    const allNotifs = [
+        ...joNoteNotifications, 
+        ...globalAnnouncements, 
+        ...progressNotifications.map(p => ({ ...p, notifyAt: p.timestamp }))
+    ];
+    return allNotifs.sort((a,b) => new Date(b.notifyAt).getTime() - new Date(a.notifyAt).getTime());
+  }, [joNoteNotifications, globalAnnouncements, progressNotifications]);
 
   const displayedNotifications = useMemo(() => {
       if (showAll) {
@@ -196,29 +242,68 @@ export function NotificationBell() {
                 <ScrollArea className="h-80 modern-scrollbar">
                   <div className="p-2 space-y-1">
                     {displayedNotifications.map(n => {
-                        const isAnnouncement = n.leadId === 'global';
+                        const isAnnouncement = 'leadId' in n && n.leadId === 'global';
+                        const isProgress = 'message' in n;
+                        const isNote = !isAnnouncement && !isProgress;
+
+                        if (isProgress) {
+                            const notification = n as ProgressNotification;
+                            return (
+                                <div 
+                                    key={notification.id} 
+                                    className={cn(
+                                        'p-3 rounded-lg cursor-pointer hover:bg-accent/50',
+                                        !notification.isRead && 'bg-blue-50'
+                                    )}
+                                    onClick={() => handleMarkAsRead(notification.id)}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-sm font-bold">{notification.joNumber}</p>
+                                            <div className="text-xs text-muted-foreground mt-1">
+                                                <p>{notification.customerName}</p>
+                                                {notification.companyName && notification.companyName !== '-' && <p>{notification.companyName}</p>}
+                                                {notification.contactNumber && <p>{notification.contactNumber}</p>}
+                                            </div>
+                                            <p className={cn("text-sm mt-2", !notification.isRead ? "text-foreground font-semibold" : "text-muted-foreground")}>
+                                                {notification.message}
+                                            </p>
+                                            <p className={cn("text-xs mt-1", notification.isDisapproved ? "text-destructive font-bold" : "text-gray-500")}>
+                                                {notification.overdueStatus}
+                                            </p>
+                                        </div>
+                                        <Badge variant={notification.isDisapproved ? 'destructive' : 'success'}>Progress</Badge>
+                                    </div>
+                                    <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
+                                        {format(new Date(notification.timestamp), 'MMM dd, yyyy @ h:mm a')}
+                                    </p>
+                                </div>
+                            )
+                        }
+
+                        const notification = n as JoNoteNotification | GlobalAnnouncement;
                         return (
                          <div 
-                          key={n.id} 
+                          key={notification.id} 
                           className={cn(
                             'p-3 rounded-lg cursor-pointer hover:bg-accent/50',
-                            !n.isRead && (isAnnouncement ? 'bg-primary/10' : 'bg-blue-50')
+                            !notification.isRead && (isAnnouncement ? 'bg-primary/10' : 'bg-blue-50')
                           )}
-                          onClick={() => handleMarkAsRead(n.id)}
+                          onClick={() => handleMarkAsRead(notification.id)}
                         >
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-sm font-bold">{n.customerName}</p>
-                                    <p className="text-xs text-muted-foreground">from {n.joNumber}</p>
-                                    <p className={cn("text-xs mt-1", !n.isRead ? "text-foreground font-semibold" : "text-muted-foreground")}>"{n.noteContent}"</p>
+                                    <p className="text-sm font-bold">{isAnnouncement ? notification.customerName : notification.joNumber}</p>
+                                    <p className="text-xs text-muted-foreground">from {notification.joNumber}</p>
+                                    <p className={cn("text-xs mt-1", !notification.isRead ? "text-foreground font-semibold" : "text-muted-foreground")}>"{notification.noteContent}"</p>
                                 </div>
                                 {isAnnouncement 
                                     ? <Badge variant="warning" className="ml-2 bg-yellow-200 text-yellow-800">Announcement</Badge> 
                                     : <span className="ml-2 text-destructive text-xs font-semibold whitespace-nowrap">Reminder</span>
                                 }
                             </div>
-                            <p className={cn("text-xs mt-2", !n.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
-                              {format(new Date(n.notifyAt), 'MMM dd, yyyy @ h:mm a')}
+                            <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
+                              {format(new Date(notification.notifyAt), 'MMM dd, yyyy @ h:mm a')}
                             </p>
                         </div>
                         )
