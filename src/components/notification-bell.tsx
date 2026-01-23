@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -360,7 +361,10 @@ export function NotificationBell() {
                                     {isAnnouncement ? (
                                         <p className="text-xs text-muted-foreground">from {notification.joNumber}</p>
                                     ) : (
-                                        <p className="text-xs text-muted-foreground">{(notification as JoNoteNotification).customerName} | {(notification as JoNoteNotification).contactNumber}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                          {(notification as JoNoteNotification).customerName}
+                                          {(notification as JoNoteNotification).contactNumber && ` | ${(notification as JoNoteNotification).contactNumber}`}
+                                        </p>
                                     )}
                                 </div>
                                 {isAnnouncement 
