@@ -328,15 +328,15 @@ export function NotificationBell() {
                                                 {notification.companyName && notification.companyName !== '-' && <p>{notification.companyName}</p>}
                                                 {notification.contactNumber && <p>{notification.contactNumber}</p>}
                                             </div>
-                                            <p className={cn("text-sm mt-2", !notification.isRead ? "text-foreground font-semibold" : "text-muted-foreground")}>
-                                                {notification.message}
-                                            </p>
-                                            <p className={cn("text-xs mt-1", notification.isDisapproved ? "text-destructive font-bold" : "text-gray-500")}>
-                                                {notification.overdueStatus}
-                                            </p>
                                         </div>
                                         <Badge variant={notification.isDisapproved ? 'destructive' : 'success'}>Progress</Badge>
                                     </div>
+                                    <p className={cn("text-sm mt-2", !notification.isRead ? "text-foreground font-semibold" : "text-muted-foreground")}>
+                                        {notification.message}
+                                    </p>
+                                    <p className={cn("text-xs mt-1", notification.isDisapproved ? "text-destructive font-bold" : "text-gray-500")}>
+                                        {notification.overdueStatus}
+                                    </p>
                                     <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
                                         {format(new Date(notification.timestamp), 'MMM dd, yyyy @ h:mm a')}
                                     </p>
@@ -363,13 +363,13 @@ export function NotificationBell() {
                                     ) : (
                                         <p className="text-xs text-muted-foreground">{(notification as JoNoteNotification).customerName} | {(notification as JoNoteNotification).contactNumber}</p>
                                     )}
-                                    <p className={cn("text-base mt-1 font-bold", !notification.isRead ? "text-foreground" : "text-muted-foreground")}>"{notification.noteContent}"</p>
                                 </div>
                                 {isAnnouncement 
                                     ? <Badge variant="warning" className="ml-2 bg-yellow-200 text-yellow-800">Announcement</Badge> 
                                     : <span className="ml-2 text-destructive text-xs font-semibold whitespace-nowrap">Reminder</span>
                                 }
                             </div>
+                            <p className={cn("text-base mt-1 font-bold", !notification.isRead ? "text-foreground" : "text-muted-foreground")}>"{notification.noteContent}"</p>
                             <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
                               {format(new Date(notification.notifyAt), 'MMM dd, yyyy @ h:mm a')}
                             </p>
