@@ -179,6 +179,19 @@ export function NotificationBell() {
 
   useEffect(() => {
     if (unreadCount > prevUnreadCountRef.current) {
+      // Check if a notification was fired very recently by another tab
+      const lastFired = parseInt(localStorage.getItem('lastNotificationFiredAt') || '0', 10);
+      const now = Date.now();
+      
+      // If a notification was fired in the last 2 seconds, suppress this one
+      if (now - lastFired < 2000) {
+          prevUnreadCountRef.current = unreadCount; // Still update the count to prevent future firing
+          return;
+      }
+
+      // This tab will fire the notification. Record the timestamp.
+      localStorage.setItem('lastNotificationFiredAt', now.toString());
+
       setIsAnimating(true);
 
       if (notificationPermission === 'granted') {
