@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -171,7 +172,7 @@ export function HomeCarousel() {
       <Button variant="ghost" size="icon" onClick={() => paginate(-1)} className="h-24 w-24 shrink-0 hover:bg-transparent" disabled={imageUrls.length <= 1}>
           <ChevronLeft className="h-20 w-20 text-muted-foreground" />
       </Button>
-      <div className="relative w-full h-[740px] overflow-hidden">
+      <div className="relative w-full h-[760px] overflow-hidden">
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
             key={page}
