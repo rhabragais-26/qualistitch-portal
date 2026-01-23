@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -10,6 +11,8 @@ import { Button } from './ui/button';
 import { format, isPast } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Separator } from './ui/separator';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 type Notification = {
   id: string; // noteId
@@ -21,11 +24,21 @@ type Notification = {
   isRead: boolean;
 };
 
+type AppState = {
+  announcementText?: string;
+  announcementType?: 'banner' | 'notification';
+  announcementTimestamp?: string;
+};
+
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const prevUnreadCountRef = useRef(0);
+  const firestore = useFirestore();
+  const appStateRef = useMemoFirebase(() => (firestore ? doc(firestore, 'appState', 'global') : null), [firestore]);
+  const { data: appState } = useDoc<AppState>(appStateRef);
+  const [globalAnnouncement, setGlobalAnnouncement] = useState<Notification | null>(null);
 
   const loadNotifications = () => {
     const storedNotifications = JSON.parse(localStorage.getItem('jo-notifications') || '[]') as Notification[];
@@ -39,8 +52,40 @@ export function NotificationBell() {
     const interval = setInterval(loadNotifications, 30000); // Check every 30 seconds
     return () => clearInterval(interval);
   }, []);
+  
+  useEffect(() => {
+    if (appState?.announcementType === 'notification' && appState.announcementText && appState.announcementTimestamp) {
+        const lastSeenTimestamp = localStorage.getItem('announcementLastSeen');
+        const isNew = !lastSeenTimestamp || new Date(appState.announcementTimestamp) > new Date(lastSeenTimestamp);
+        
+        const announcementNotif: Notification = {
+            id: `global-${appState.announcementTimestamp}`,
+            leadId: 'global',
+            customerName: 'System Announcement',
+            joNumber: '',
+            noteContent: appState.announcementText,
+            notifyAt: appState.announcementTimestamp,
+            isRead: !isNew
+        };
+        setGlobalAnnouncement(announcementNotif);
+    } else {
+        setGlobalAnnouncement(null);
+    }
+  }, [appState]);
 
-  const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
+  const handlePopoverOpenChange = (isOpen: boolean) => {
+    if (isOpen && globalAnnouncement && !globalAnnouncement.isRead) {
+        localStorage.setItem('announcementLastSeen', globalAnnouncement.notifyAt);
+        setGlobalAnnouncement(prev => prev ? {...prev, isRead: true} : null);
+    }
+    if (!isOpen) setShowAll(false);
+  };
+
+  const unreadCount = useMemo(() => {
+    const localUnread = notifications.filter(n => !n.isRead).length;
+    const globalUnread = (globalAnnouncement && !globalAnnouncement.isRead) ? 1 : 0;
+    return localUnread + globalUnread;
+  }, [notifications, globalAnnouncement]);
 
   useEffect(() => {
     if (unreadCount > prevUnreadCountRef.current) {
@@ -79,7 +124,7 @@ export function NotificationBell() {
   }, [sortedNotifications, showAll]);
 
   return (
-    <Popover onOpenChange={(isOpen) => { if (!isOpen) setShowAll(false); }}>
+    <Popover onOpenChange={handlePopoverOpenChange}>
       <PopoverTrigger asChild>
         <div
           role="button"
@@ -109,13 +154,31 @@ export function NotificationBell() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {notifications.length === 0 ? (
-                <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
-                    No new notifications.
-                </div>
-            ) : (
+            {(globalAnnouncement || notifications.length > 0) ? (
                 <ScrollArea className="h-80 modern-scrollbar">
                   <div className="p-2 space-y-1">
+                    {globalAnnouncement && (
+                         <div 
+                          key={globalAnnouncement.id} 
+                          className={cn(
+                            'p-3 rounded-lg border-2 border-primary',
+                            !globalAnnouncement.isRead && 'bg-primary/10 font-bold'
+                          )}
+                        >
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-sm font-bold text-primary">{globalAnnouncement.customerName}</p>
+                                    <p className={cn("text-xs mt-1", !globalAnnouncement.isRead ? "text-foreground" : "text-muted-foreground")}>"{globalAnnouncement.noteContent}"</p>
+                                </div>
+                                <Badge variant="destructive">NEW</Badge>
+                            </div>
+                            <p className={cn("text-xs mt-2", !globalAnnouncement.isRead ? "text-blue-600" : "text-muted-foreground")}>
+                              {format(new Date(globalAnnouncement.notifyAt), 'MMM dd, yyyy @ h:mm a')}
+                            </p>
+                        </div>
+                    )}
+                    {globalAnnouncement && displayedNotifications.length > 0 && <Separator className="my-2" />}
+
                     {displayedNotifications.map(n => (
                         <div 
                           key={n.id} 
@@ -139,6 +202,10 @@ export function NotificationBell() {
                     ))}
                   </div>
                 </ScrollArea>
+            ) : (
+              <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
+                    No new notifications.
+                </div>
             )}
           </CardContent>
           {notifications.length > 5 && !showAll && (
@@ -153,3 +220,5 @@ export function NotificationBell() {
     </Popover>
   );
 }
+
+  

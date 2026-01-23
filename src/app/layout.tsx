@@ -5,6 +5,7 @@ import { FirebaseClientProvider } from '@/firebase';
 import { CollapsibleChat } from '@/components/collapsible-chat';
 import { RealtimeConfetti } from '@/components/realtime-confetti';
 import { CollapsibleRightPanel } from '@/components/collapsible-right-panel';
+import { RealtimeBanner } from '@/components/realtime-banner';
 
 export const metadata: Metadata = {
   title: 'Qualistitch Inc.',
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body className="font-body antialiased bg-background h-full">
         <FirebaseClientProvider>
           <RealtimeConfetti />
+          <RealtimeBanner />
           <div className="flex-1 flex flex-col">
             {children}
           </div>
@@ -40,3 +42,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+  

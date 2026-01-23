@@ -66,10 +66,24 @@ import {
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth } from '@/firebase';
-import { collection, query, doc, getDoc } from 'firebase/firestore';
+import { collection, query, doc, getDoc, setDoc } from 'firebase/firestore';
 import { Badge } from './ui/badge';
 import { signOut } from 'firebase/auth';
 import { NotificationBell } from './notification-bell';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+    DialogClose,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Textarea } from './ui/textarea';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Label } from './ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
@@ -98,7 +112,12 @@ const HeaderMemo = React.memo(function Header({
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const firestore = useFirestore();
   const auth = useAuth();
+  const { toast } = useToast();
   const { user, userProfile, isAdmin } = useUser();
+  const [isAnnouncementDialogOpen, setIsAnnouncementDialogOpen] = useState(false);
+  const [announcementText, setAnnouncementText] = useState('');
+  const [announcementType, setAnnouncementType] = useState<'banner' | 'notification'>('banner');
+  const appStateRef = useMemoFirebase(() => firestore ? doc(firestore, 'appState', 'global') : null, [firestore]);
 
 
   const leadsQuery = useMemoFirebase(
@@ -126,6 +145,39 @@ const HeaderMemo = React.memo(function Header({
   useEffect(() => {
     setIsClient(true);
   }, []);
+  
+  const handleSendAnnouncement = async () => {
+    if (!announcementText.trim() || !appStateRef) {
+        toast({
+            variant: 'destructive',
+            title: 'Announcement is empty',
+            description: 'Please write a message before sending.',
+        });
+        return;
+    }
+
+    try {
+        await setDoc(appStateRef, {
+            announcementText,
+            announcementType,
+            announcementTimestamp: new Date().toISOString(),
+        }, { merge: true });
+
+        toast({
+            title: 'Announcement Sent!',
+            description: 'Your announcement has been broadcast to all users.',
+        });
+        setAnnouncementText('');
+        setIsAnnouncementDialogOpen(false);
+    } catch (e: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Failed to Send',
+            description: e.message || 'Could not send the announcement.',
+        });
+    }
+  };
+
 
   const getActiveMenuClass = useCallback((paths: string[]) => {
     const isActive = paths.some(path => pathname === path || (path !== '/' && pathname.startsWith(path)));
@@ -411,19 +463,61 @@ const HeaderMemo = React.memo(function Header({
                     Profile
                 </DropdownMenuItem>
                 {isAdmin && (
-                    <DropdownMenuItem onClick={() => router.push('/admin/users')}>
-                        <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center">
-                                <UserCog className="mr-2" />
-                                <span>Admin Setting</span>
-                            </div>
-                            {unassignedUsersCount > 0 && (
-                                <Badge variant="destructive" className="h-5 w-5 justify-center rounded-full p-0 ml-2 text-xs">
-                                    {unassignedUsersCount}
-                                </Badge>
-                            )}
+                  <>
+                  <Dialog open={isAnnouncementDialogOpen} onOpenChange={setIsAnnouncementDialogOpen}>
+                    <DialogTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <Megaphone className="mr-2" />
+                            <span>Announcement</span>
+                        </DropdownMenuItem>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Create an Announcement</DialogTitle>
+                            <DialogDescription>
+                                This message will be broadcast to all logged-in users.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 space-y-4">
+                            <Textarea
+                                placeholder="Type your announcement here..."
+                                value={announcementText}
+                                onChange={(e) => setAnnouncementText(e.target.value)}
+                                className="min-h-[100px]"
+                            />
+                            <RadioGroup value={announcementType} onValueChange={(v: 'banner' | 'notification') => setAnnouncementType(v)} className="flex space-x-4">
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="banner" id="type-banner" />
+                                    <Label htmlFor="type-banner">Real-time Banner</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="notification" id="type-notification" />
+                                    <Label htmlFor="type-notification">Notification Popover</Label>
+                                </div>
+                            </RadioGroup>
                         </div>
-                    </DropdownMenuItem>
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button type="button" variant="outline">Cancel</Button>
+                            </DialogClose>
+                            <Button onClick={handleSendAnnouncement} disabled={!announcementText.trim()}>Send</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                  <DropdownMenuItem onClick={() => router.push('/admin/users')}>
+                      <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center">
+                              <UserCog className="mr-2" />
+                              <span>Admin Setting</span>
+                          </div>
+                          {unassignedUsersCount > 0 && (
+                              <Badge variant="destructive" className="h-5 w-5 justify-center rounded-full p-0 ml-2 text-xs">
+                                  {unassignedUsersCount}
+                              </Badge>
+                          )}
+                      </div>
+                  </DropdownMenuItem>
+                  </>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
@@ -465,3 +559,5 @@ const HeaderMemo = React.memo(function Header({
 HeaderMemo.displayName = 'Header';
 
 export { HeaderMemo as Header };
+
+  
