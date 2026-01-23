@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -239,15 +240,17 @@ function AdsVsInquiriesPage() {
                         <TableHead className="text-center text-white font-bold">Ads Spent</TableHead>
                         <TableHead className="text-center text-white font-bold">Meta Inquiries</TableHead>
                         <TableHead className="text-center text-white font-bold">Pancake Inquiries</TableHead>
-                        <TableHead className="text-center text-white font-bold">Total Inquiries</TableHead>
+                        <TableHead className="text-center text-white font-bold">CPM</TableHead>
                         <TableHead className="text-center text-white font-bold">Submitted By</TableHead>
                         <TableHead className="text-center text-white font-bold">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {isLoading ? [...Array(5)].map((_, i) => (<TableRow key={i}><TableCell colSpan={7}><Skeleton className="h-8 w-full" /></TableCell></TableRow>))
-                        : error ? <TableRow><TableCell colSpan={7} className="text-center text-destructive">Error: {error.message}</TableCell></TableRow>
-                        : inquiries && inquiries.length > 0 ? inquiries.map(inquiry => (
+                      {isLoading ? [...Array(5)].map((_, i) => (<TableRow key={i}><TableCell colSpan={8}><Skeleton className="h-8 w-full" /></TableCell></TableRow>))
+                        : error ? <TableRow><TableCell colSpan={8} className="text-center text-destructive">Error: {error.message}</TableCell></TableRow>
+                        : inquiries && inquiries.length > 0 ? inquiries.map(inquiry => {
+                            const cpm = inquiry.metaInquiries > 0 ? inquiry.adsSpent / inquiry.metaInquiries : 0;
+                            return (
                           <TableRow key={inquiry.id}>
                             <TableCell className="text-center">{format(new Date(inquiry.date), 'MMM d, yyyy')}</TableCell>
                             <TableCell>
@@ -256,15 +259,16 @@ function AdsVsInquiriesPage() {
                             <TableCell className="text-right">{formatCurrency(inquiry.adsSpent)}</TableCell>
                             <TableCell className="text-center">{inquiry.metaInquiries}</TableCell>
                             <TableCell className="text-center">{inquiry.pancakeInquiries}</TableCell>
-                            <TableCell className="text-center font-bold">{inquiry.metaInquiries + inquiry.pancakeInquiries}</TableCell>
+                            <TableCell className="text-right font-bold">{formatCurrency(cpm)}</TableCell>
                             <TableCell className="text-center">{inquiry.submittedBy}</TableCell>
                             <TableCell className="text-center">
                               <Button variant="ghost" size="icon" onClick={() => setEditingInquiry(inquiry)}><Edit className="h-4 w-4" /></Button>
                               <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeletingInquiry(inquiry)}><Trash2 className="h-4 w-4" /></Button>
                             </TableCell>
                           </TableRow>
-                        ))
-                        : <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No records yet.</TableCell></TableRow>}
+                            )
+                        })
+                        : <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">No records yet.</TableCell></TableRow>}
                     </TableBody>
                   </Table>
                 </div>
@@ -304,3 +308,4 @@ function AdsVsInquiriesPage() {
 }
 
 export default AdsVsInquiriesPage;
+
