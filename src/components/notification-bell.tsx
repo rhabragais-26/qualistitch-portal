@@ -283,7 +283,7 @@ export function NotificationBell() {
           )}
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-96 p-0" align="end">
+      <PopoverContent onOpenAutoFocus={(event) => event.preventDefault()} className="w-96 p-0" align="end">
         <Card className="border-none shadow-none">
           <CardHeader className="p-4 border-b">
             <div className="flex justify-between items-center">
@@ -313,7 +313,7 @@ export function NotificationBell() {
                                 <div 
                                     key={notification.id} 
                                     className={cn(
-                                        'p-3 rounded-lg cursor-pointer hover:bg-accent/50',
+                                        'p-3 rounded-lg cursor-pointer hover:bg-accent/50 bg-muted/30',
                                         !notification.isRead && 'bg-blue-50'
                                     )}
                                     onClick={() => handleMarkAsRead(notification.id)}
@@ -347,8 +347,8 @@ export function NotificationBell() {
                          <div 
                           key={notification.id} 
                           className={cn(
-                            'p-3 rounded-lg cursor-pointer hover:bg-accent/50',
-                            !notification.isRead && (isAnnouncement ? 'bg-yellow-100' : 'bg-blue-50')
+                            'p-3 rounded-lg cursor-pointer hover:bg-accent/50 bg-muted/30',
+                             !notification.isRead && (isAnnouncement ? 'bg-yellow-100' : 'bg-blue-50')
                           )}
                           onClick={() => handleMarkAsRead(notification.id)}
                         >
