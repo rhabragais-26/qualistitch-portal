@@ -145,7 +145,7 @@ export function ProductManagement() {
            toast({
             variant: 'destructive',
             title: 'Invalid Tier Order',
-            description: `A tier with Min Qty ${numericTiers[i].min} cannot be less than or equal to the previous tier's Min Qty ${numericTiers[i - 1].min}.`,
+            description: `A tier with Min Qty ${'\'\'\''}numericTiers[i].min{'\'\'\''} cannot be less than or equal to the previous tier's Min Qty ${'\'\'\''}numericTiers[i - 1].min{'\'\'\''}.`,
           });
           return; // Don't exit edit mode
         }
@@ -246,7 +246,7 @@ export function ProductManagement() {
     setSelectedProductType(newProduct.name);
 
     setNewProduct({ name: '', group: newProduct.group });
-    toast({ title: 'Product Staged', description: `"${newProduct.name}" is ready to be saved.`});
+    toast({ title: 'Product Staged', description: `"${'\'\'\''}newProduct.name{'\'\'\''}" is ready to be saved.`});
   };
 
   const handleRemoveProduct = (productName: string) => {
@@ -285,7 +285,7 @@ export function ProductManagement() {
     setConfig(newConfig);
     setNewCategoryName('');
     setIsAddCategoryOpen(false);
-    toast({ title: 'Category Added', description: `"${newCategoryName.trim()}" is ready to be configured and used.`});
+    toast({ title: 'Category Added', description: `"${'\'\'\''}newCategoryName.trim(){'\'\'\''}" is ready to be configured and used.`});
   };
 
   const handleSaveCategoryName = () => {
@@ -316,7 +316,7 @@ export function ProductManagement() {
     
     setConfig(newConfig);
     setEditingCategory(null);
-    toast({ title: 'Category Renamed', description: `"${oldName}" was renamed to "${newName.trim()}".`});
+    toast({ title: 'Category Renamed', description: `"${oldName}" was renamed to "${'\'\'\''}newName.trim(){'\'\'\''}".`});
   };
 
   const handleConfirmDeleteCategory = () => {
@@ -566,7 +566,7 @@ export function ProductManagement() {
                                 </section>
                                  <section>
                                     <h3 className="text-lg font-semibold">Product List</h3>
-                                    <div className="space-y-2 max-h-40 overflow-y-auto border p-2 rounded-md mt-2 text-sm">
+                                    <div className="space-y-2 overflow-y-auto border p-2 rounded-md mt-2 text-sm">
                                         {Object.entries(config.productGroupMapping).map(([name, group]) => (
                                             <div key={name} className="flex items-center justify-between gap-4">
                                                 <span className="whitespace-nowrap flex-1">{name}</span>
