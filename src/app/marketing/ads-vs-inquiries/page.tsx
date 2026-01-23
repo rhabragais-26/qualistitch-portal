@@ -33,7 +33,6 @@ type AdSpendInquiry = {
     id: string;
     date: string;
     adAccount: string;
-    adCampaign: string;
     adsSpent: number;
     metaInquiries: number;
     pancakeInquiries: number;
@@ -41,17 +40,9 @@ type AdSpendInquiry = {
     timestamp: string;
 };
 
-type AdCampaign = {
-    id: string;
-    name: string;
-    imageUrl?: string;
-    adAccount: string;
-};
-
 const formSchema = z.object({
   date: z.date({ required_error: "A date is required." }),
   adAccount: z.string().min(1, 'AD Account is required.'),
-  adCampaign: z.string().min(1, 'AD Campaign is required.'),
   adsSpent: z.coerce.number().min(0, "Cannot be negative.").default(0),
   metaInquiries: z.coerce.number().min(0, "Cannot be negative.").default(0),
   pancakeInquiries: z.coerce.number().min(0, "Cannot be negative.").default(0),
@@ -70,9 +61,6 @@ function AdsVsInquiriesPage() {
   
   const inquiriesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'ad_spend_inquiries'), orderBy('timestamp', 'desc')) : null, [firestore]);
   const { data: inquiries, isLoading, error, refetch } = useCollection<AdSpendInquiry>(inquiriesQuery);
-
-  const campaignsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'adCampaigns')) : null, [firestore]);
-  const { data: campaigns } = useCollection<AdCampaign>(campaignsQuery);
   
   const [showReplaceDialog, setShowReplaceDialog] = useState(false);
   const [valuesToSave, setValuesToSave] = useState<FormValues | null>(null);
@@ -82,37 +70,23 @@ function AdsVsInquiriesPage() {
     defaultValues: {
       date: new Date(),
       adAccount: '',
-      adCampaign: '',
       adsSpent: 0,
       metaInquiries: 0,
       pancakeInquiries: 0,
     },
   });
 
-  const adAccountValue = form.watch('adAccount');
-  const adCampaignValue = form.watch('adCampaign');
-
-  const filteredCampaigns = useMemo(() => {
-    if (!campaigns || !adAccountValue) return [];
-    return campaigns.filter(c => c.adAccount === adAccountValue).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
-  }, [campaigns, adAccountValue]);
-
-  const selectedCampaign = useMemo(() => 
-    filteredCampaigns?.find(c => c.name === adCampaignValue)
-  , [adCampaignValue, filteredCampaigns]);
-
   useEffect(() => {
     if (editingInquiry) {
       form.reset({
         date: new Date(editingInquiry.date),
         adAccount: editingInquiry.adAccount,
-        adCampaign: editingInquiry.adCampaign,
         adsSpent: editingInquiry.adsSpent || 0,
         metaInquiries: editingInquiry.metaInquiries || 0,
         pancakeInquiries: editingInquiry.pancakeInquiries || 0,
       });
     } else {
-      form.reset({ date: new Date(), adAccount: '', adCampaign: '', adsSpent: 0, metaInquiries: 0, pancakeInquiries: 0 });
+      form.reset({ date: new Date(), adAccount: '', adsSpent: 0, metaInquiries: 0, pancakeInquiries: 0 });
     }
   }, [editingInquiry, form]);
   
@@ -125,7 +99,6 @@ function AdsVsInquiriesPage() {
     const dataToSave = {
         date: values.date.toISOString(),
         adAccount: values.adAccount,
-        adCampaign: values.adCampaign,
         adsSpent: values.adsSpent || 0,
         metaInquiries: values.metaInquiries || 0,
         pancakeInquiries: values.pancakeInquiries || 0,
@@ -140,7 +113,7 @@ function AdsVsInquiriesPage() {
             toast({ title: 'Success!', description: 'Entry has been updated.' });
             setEditingInquiry(null);
         } else {
-            const docId = `${format(values.date, 'yyyy-MM-dd')}_${userProfile.nickname}_${values.adAccount}_${values.adCampaign}`;
+            const docId = `${format(values.date, 'yyyy-MM-dd')}_${userProfile.nickname}_${values.adAccount}`;
             const inquiryRef = doc(firestore, 'ad_spend_inquiries', docId);
             await setDoc(inquiryRef, { ...dataToSave, id: docId });
             toast({
@@ -152,7 +125,6 @@ function AdsVsInquiriesPage() {
         form.reset({
             date: new Date(),
             adAccount: values.adAccount,
-            adCampaign: '',
             adsSpent: 0,
             metaInquiries: 0,
             pancakeInquiries: 0,
@@ -179,7 +151,7 @@ function AdsVsInquiriesPage() {
         return;
     }
     
-    const docId = `${format(values.date, 'yyyy-MM-dd')}_${userProfile.nickname}_${values.adAccount}_${values.adCampaign}`;
+    const docId = `${format(values.date, 'yyyy-MM-dd')}_${userProfile.nickname}_${values.adAccount}`;
     const inquiryRef = doc(firestore, 'ad_spend_inquiries', docId);
     
     const docSnap = await getDoc(inquiryRef);
@@ -224,23 +196,12 @@ function AdsVsInquiriesPage() {
                     <FormField control={form.control} name="adAccount" render={({ field }) => (
                       <FormItem>
                         <FormLabel>AD Account</FormLabel>
-                        <Select onValueChange={(value) => { field.onChange(value); form.setValue('adCampaign', '', { shouldValidate: true }); }} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger></FormControl>
                             <SelectContent>{adAccountOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
-                    )} />
-                    <FormField control={form.control} name="adCampaign" render={({ field }) => (
-                        <FormItem>
-                        {selectedCampaign?.imageUrl && <div className="mb-2 p-1 rounded-md mx-auto border w-full h-auto aspect-[4/3] relative"><Image src={selectedCampaign.imageUrl} alt={selectedCampaign.name} layout="fill" objectFit="contain" className="rounded-md" /></div>}
-                        <FormLabel>AD Campaign</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={!adAccountValue}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Select Campaign" /></SelectTrigger></FormControl>
-                            <SelectContent>{filteredCampaigns?.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
                     )} />
                     <FormField control={form.control} name="adsSpent" render={({ field }) => (
                       <FormItem><FormLabel>Ads Spent</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>
@@ -274,7 +235,7 @@ function AdsVsInquiriesPage() {
                     <TableHeader className="sticky top-0 bg-neutral-800 z-10">
                       <TableRow>
                         <TableHead className="text-center text-white font-bold">Date</TableHead>
-                        <TableHead className="text-white font-bold">Campaign</TableHead>
+                        <TableHead className="text-white font-bold">Ad Account</TableHead>
                         <TableHead className="text-center text-white font-bold">Ads Spent</TableHead>
                         <TableHead className="text-center text-white font-bold">Meta Inquiries</TableHead>
                         <TableHead className="text-center text-white font-bold">Pancake Inquiries</TableHead>
@@ -284,14 +245,13 @@ function AdsVsInquiriesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {isLoading ? [...Array(5)].map((_, i) => (<TableRow key={i}><TableCell colSpan={8}><Skeleton className="h-8 w-full" /></TableCell></TableRow>))
-                        : error ? <TableRow><TableCell colSpan={8} className="text-center text-destructive">Error: {error.message}</TableCell></TableRow>
+                      {isLoading ? [...Array(5)].map((_, i) => (<TableRow key={i}><TableCell colSpan={7}><Skeleton className="h-8 w-full" /></TableCell></TableRow>))
+                        : error ? <TableRow><TableCell colSpan={7} className="text-center text-destructive">Error: {error.message}</TableCell></TableRow>
                         : inquiries && inquiries.length > 0 ? inquiries.map(inquiry => (
                           <TableRow key={inquiry.id}>
                             <TableCell className="text-center">{format(new Date(inquiry.date), 'MMM d, yyyy')}</TableCell>
                             <TableCell>
-                                <div>{inquiry.adCampaign}</div>
-                                <div className="text-xs text-muted-foreground">{inquiry.adAccount}</div>
+                                {inquiry.adAccount}
                             </TableCell>
                             <TableCell className="text-right">{formatCurrency(inquiry.adsSpent)}</TableCell>
                             <TableCell className="text-center">{inquiry.metaInquiries}</TableCell>
@@ -304,7 +264,7 @@ function AdsVsInquiriesPage() {
                             </TableCell>
                           </TableRow>
                         ))
-                        : <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">No records yet.</TableCell></TableRow>}
+                        : <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No records yet.</TableCell></TableRow>}
                     </TableBody>
                   </Table>
                 </div>
@@ -330,7 +290,7 @@ function AdsVsInquiriesPage() {
             <AlertDialogHeader>
                 <AlertDialogTitle>Record Exists</AlertDialogTitle>
                 <AlertDialogDescription>
-                    An entry for this date, account, and campaign already exists. Do you want to replace it with the new data?
+                    An entry for this date and account already exists. Do you want to replace it with the new data?
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

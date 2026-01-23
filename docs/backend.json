@@ -865,14 +865,13 @@
         "id": { "type": "string" },
         "date": { "type": "string", "format": "date-time" },
         "adAccount": { "type": "string" },
-        "adCampaign": { "type": "string" },
         "adsSpent": { "type": "number" },
         "metaInquiries": { "type": "number" },
         "pancakeInquiries": { "type": "number" },
         "submittedBy": { "type": "string" },
         "timestamp": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "date", "adAccount", "adCampaign", "adsSpent", "metaInquiries", "pancakeInquiries", "submittedBy", "timestamp"]
+      "required": ["id", "date", "adAccount", "adsSpent", "metaInquiries", "pancakeInquiries", "submittedBy", "timestamp"]
     },
     "AdCampaign": {
       "title": "AdCampaign",
