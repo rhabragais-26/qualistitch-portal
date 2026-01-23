@@ -11,7 +11,7 @@ export default function HomePage() {
     <Header>
       <div className="flex flex-col items-center flex-1 pt-[8px]">
         <div className="text-center mb-4 px-4">
-          <p className="text-xl font-semibold text-foreground">
+          <p className="text-lg font-semibold text-foreground">
             Here's a quick look for our Company Profile
           </p>
         </div>
