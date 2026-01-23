@@ -380,7 +380,7 @@ export function ProductManagement() {
 
   const handleSaveChanges = async () => {
     if (!config) return;
-    saveConfiguration(config, 'Product and category changes have been saved.');
+    saveConfiguration(config);
   };
   
   const handleSaveCategoryName = async () => {
@@ -407,8 +407,9 @@ export function ProductManagement() {
         }
     }
     
-    await saveConfiguration(newConfig, "Category successfully renamed.");
+    setConfig(newConfig);
     setEditingCategory(null);
+    toast({ title: 'Category Renamed', description: 'The change has been staged. Click "Save All Changes" to apply.' });
   };
 
   const handleConfirmDeleteCategory = async () => {
@@ -442,8 +443,9 @@ export function ProductManagement() {
     
     delete newConfig.pricingTiers[deletingCategory];
     
-    await saveConfiguration(newConfig, `Category "${deletingCategory}" deleted.`);
+    setConfig(newConfig);
     setDeletingCategory(null);
+    toast({ title: 'Category Deletion Staged', description: `Category "${deletingCategory}" is marked for deletion. Click "Save All Changes" to apply.` });
   };
 
   const productGroups = useMemo(() => config ? Object.keys(config.pricingTiers).sort() as ProductGroup[] : [], [config]);
@@ -580,15 +582,15 @@ export function ProductManagement() {
                                  <section>
                                     <h3 className="text-lg font-semibold">Product List</h3>
                                     <div className="overflow-y-auto border p-2 rounded-md mt-2 text-sm">
-                                        <div className="grid grid-cols-3 gap-4 mb-2 font-bold text-center border-b pb-2">
-                                            <div>Product Name</div>
+                                        <div className="grid grid-cols-5 gap-4 mb-2 font-bold text-center border-b pb-2">
+                                            <div className="col-span-3 text-left">Product Name</div>
                                             <div>Product Category</div>
                                             <div>Action</div>
                                         </div>
                                         <div className="space-y-2">
                                             {Object.entries(config.productGroupMapping).map(([name, group]) => (
-                                                <div key={name} className="grid grid-cols-3 gap-4 items-center text-center">
-                                                    <span className="whitespace-nowrap text-left">{name}</span>
+                                                <div key={name} className="grid grid-cols-5 gap-4 items-start text-center">
+                                                    <span className="whitespace-nowrap text-left col-span-3">{name}</span>
                                                     <div className="flex justify-center">
                                                         <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
                                                             <SelectTrigger className="w-[170px] h-8 text-xs">
@@ -794,7 +796,7 @@ export function ProductManagement() {
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure you want to delete this category?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    This will permanently delete the category. Any products assigned to this category will be automatically reassigned to another existing category. This action cannot be undone.
+                     This will permanently delete the category. Any products assigned to this category will be automatically reassigned to another existing category. This action cannot be undone.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
