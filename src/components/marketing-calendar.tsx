@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -238,7 +239,7 @@ export function MarketingCalendar() {
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   if(isLoading) {
-    return <Skeleton className="w-full h-auto" />;
+    return <Skeleton className="w-full h-[70vh]" />;
   }
 
   if(error) {
@@ -283,9 +284,9 @@ export function MarketingCalendar() {
             </Button>
           </div>
         </header>
-        <div className="flex-1 grid grid-cols-7 grid-rows-6">
+        <div className="flex-1 grid grid-cols-7">
           {weekDays.map(day => (
-            <div key={day} className="flex items-center justify-center font-bold border-b border-r py-0">
+            <div key={day} className="flex items-center justify-center font-bold border-b border-r py-2">
               {day}
             </div>
           ))}
@@ -317,8 +318,8 @@ export function MarketingCalendar() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                          <div className="flex-1 mt-2 overflow-hidden">
-                          <p className="text-xs text-foreground truncate">{dayEvents[0].content}</p>
-                          {dayEvents.length > 1 && <p className="text-xs text-muted-foreground mt-1">+ {dayEvents.length - 1} more</p>}
+                          <p className="text-xs text-foreground truncate text-center">{dayEvents[0].content}</p>
+                          {dayEvents.length > 1 && <p className="text-xs text-muted-foreground mt-1 text-center">+ {dayEvents.length - 1} more</p>}
                         </div>
                       </TooltipTrigger>
                        <TooltipContent className="p-0">
