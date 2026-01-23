@@ -129,8 +129,9 @@ function JoNotesPanel() {
         const updatedNotes = [...existingEntry.notes, newNote];
         
         localStorage.setItem(`notes_${leadId}`, JSON.stringify(updatedNotes));
-        loadNotes(); // Reload and re-sort all notes
         
+        // After saving, reload all notes and clear the search
+        loadNotes();
         setCurrentNote('');
         setSelectedLead(null);
         setSearchTerm('');
@@ -158,7 +159,11 @@ function JoNotesPanel() {
     };
 
     const filteredNotes = useMemo(() => {
-        if (!searchTerm) return allNotes;
+        if (!searchTerm && !selectedLead) return allNotes;
+        if (selectedLead) {
+            return { [selectedLead.id]: allNotes[selectedLead.id] || { lead: selectedLead, notes: [] } };
+        }
+        
         const lowercasedSearchTerm = searchTerm.toLowerCase();
         
         const filtered: Record<string, { lead: Lead; notes: Note[] }> = {};
@@ -177,10 +182,10 @@ function JoNotesPanel() {
             }
         }
         return filtered;
-    }, [allNotes, searchTerm]);
+    }, [allNotes, searchTerm, selectedLead]);
 
     useEffect(() => {
-        if (!searchTerm || !allLeads || !showSuggestions) {
+        if (!searchTerm || !allLeads || !showSuggestions || selectedLead) {
             setSuggestions([]);
             return;
         }
@@ -194,7 +199,7 @@ function JoNotesPanel() {
 
         setSuggestions(matchingLeads);
 
-    }, [searchTerm, allLeads, showSuggestions]);
+    }, [searchTerm, allLeads, showSuggestions, selectedLead]);
 
     const handleSuggestionClick = (lead: Lead) => {
         setSelectedLead(lead);
@@ -208,7 +213,10 @@ function JoNotesPanel() {
                 <Input 
                     placeholder="Search notes, or find lead to add note..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        if(selectedLead) setSelectedLead(null);
+                    }}
                     onFocus={() => setShowSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     className="h-9"
@@ -504,10 +512,40 @@ export function CollapsibleRightPanel() {
     <>
       <div
         className={cn(
-          "fixed z-40 top-0 h-full w-96 no-print transition-transform duration-300 ease-in-out",
-          isExpanded ? "right-0" : "-right-96"
+          "fixed z-40 top-0 h-full w-96 no-print transition-transform duration-300 ease-in-out right-0",
+          isExpanded ? "translate-x-0" : "translate-x-full"
         )}
       >
+        <div
+            ref={buttonRef}
+            className="absolute z-50 no-print"
+            style={{ 
+                top: `${yPosition}px`, 
+                left: '-2.25rem'
+            }}
+          >
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    onClick={handleButtonClick}
+                    onMouseDown={handleMouseDown}
+                    className={cn(
+                        "relative h-48 w-9 p-1 rounded-r-none rounded-l-lg flex items-center justify-center transition-colors",
+                        isExpanded ? 'bg-[#81cdc6]' : 'bg-[#81cdc6] hover:bg-[#69bab2]',
+                        "text-white"
+                    )}
+                  >
+                    <span className="[writing-mode:vertical-rl] rotate-180 font-bold tracking-wider">PERSONAL NOTES</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <p>{isExpanded ? "Close Panel" : "Open Panel"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         <Card className="w-96 h-full shadow-xl rounded-none rounded-l-lg flex flex-col">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
                 <CardHeader className="p-2 border-b space-y-2">
@@ -574,38 +612,6 @@ export function CollapsibleRightPanel() {
         </Card>
       </div>
 
-      <div
-        ref={buttonRef}
-        className="fixed z-50 no-print"
-        style={{ 
-            top: `${yPosition}px`, 
-            transform: `translateX(${isExpanded ? '-24rem' : '0px'})`,
-            right: 0,
-            transition: 'transform 0.3s ease-in-out',
-        }}
-      >
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                onClick={handleButtonClick}
-                onMouseDown={handleMouseDown}
-                className={cn(
-                    "relative h-48 w-9 p-1 rounded-r-none rounded-l-lg flex items-center justify-center transition-colors",
-                    isExpanded ? 'bg-[#81cdc6]' : 'bg-[#81cdc6] hover:bg-[#69bab2]',
-                    "text-white"
-                )}
-              >
-                <span className="[writing-mode:vertical-rl] rotate-180 font-bold tracking-wider">PERSONAL NOTES</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="left">
-              <p>{isExpanded ? "Close Panel" : "Open Panel"}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
       <AlertDialog open={!!deletingPanelId} onOpenChange={(isOpen) => !isOpen && setDeletingPanelId(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>
