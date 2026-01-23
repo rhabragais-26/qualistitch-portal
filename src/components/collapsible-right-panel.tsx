@@ -757,15 +757,13 @@ export function CollapsibleRightPanel() {
                     <JoNotesPanel />
                   </TabsContent>
                   {panels.filter(p => p.type === 'textarea').map(panel => (
-                      <TabsContent key={panel.id} value={panel.id} className="h-full m-0" forceMount>
-                         <div className="h-full p-2" style={{ display: activeTab === panel.id ? 'block' : 'none' }}>
+                      <TabsContent key={panel.id} value={panel.id} className="m-0 p-2 h-full">
                           <Textarea 
                               placeholder="Your notes here..."
                               className="h-full w-full resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                               value={textareaContents[panel.id] || ''}
                               onChange={(e) => setTextareaContents(prev => ({...prev, [panel.id]: e.target.value}))}
                           />
-                         </div>
                       </TabsContent>
                   ))}
                 </CardContent>
