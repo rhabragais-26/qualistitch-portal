@@ -84,11 +84,13 @@ import { Textarea } from './ui/textarea';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
+import type { UserPosition } from '@/lib/permissions';
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
   isOperationalCasesPageDirty?: boolean;
   children?: React.ReactNode;
+  onOpenChange?: (open: boolean) => void;
 };
 
 type Lead = {
@@ -102,7 +104,8 @@ type UserProfileInfo = {
 const HeaderMemo = React.memo(function Header({ 
   isNewOrderPageDirty = false, 
   isOperationalCasesPageDirty = false,
-  children 
+  children,
+  onOpenChange
 }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -141,6 +144,9 @@ const HeaderMemo = React.memo(function Header({
     if (!usersData) return 0;
     return usersData.filter(user => user.position === 'Not Assigned').length;
   }, [usersData]);
+
+  const announcementPositions: UserPosition[] = ["CEO", "Sales Manager", "Operations Manager", "HR", "Finance"];
+  const canSendAnnouncement = isAdmin || (userProfile && announcementPositions.includes(userProfile.position as UserPosition));
 
   useEffect(() => {
     setIsClient(true);
@@ -463,22 +469,26 @@ const HeaderMemo = React.memo(function Header({
                     <User className="mr-2" />
                     Profile
                 </DropdownMenuItem>
-                {isAdmin && (
-                  <>
-                  <DropdownMenuItem onSelect={() => setIsAnnouncementDialogOpen(true)}>
+                {canSendAnnouncement && (
+                  <DropdownMenuItem onSelect={() => { onOpenChange?.(false); setIsAnnouncementDialogOpen(true); }}>
                       <Megaphone className="mr-2" />
                       <span>Announcement</span>
                   </DropdownMenuItem>
+                )}
+                {isAdmin && (
                   <DropdownMenuItem onClick={() => router.push('/admin/users')}>
-                      <UserCog className="mr-2" />
-                      <span>Admin Setting</span>
-                      {unassignedUsersCount > 0 && (
-                          <Badge variant="destructive" className="h-5 w-5 shrink-0 justify-center rounded-full p-0 ml-auto">
-                              {unassignedUsersCount}
-                          </Badge>
-                      )}
+                    <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                            <UserCog className="mr-2" />
+                            <span>Admin Setting</span>
+                        </div>
+                        {unassignedUsersCount > 0 && (
+                            <Badge variant="destructive" className="h-5 w-5 shrink-0 justify-center rounded-full p-0">
+                                {unassignedUsersCount}
+                            </Badge>
+                        )}
+                    </div>
                   </DropdownMenuItem>
-                  </>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
