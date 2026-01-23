@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -146,7 +147,7 @@ export function MarketingCalendar() {
 
   return (
     <>
-      <div className="flex flex-col h-[calc(100vh-10rem)] w-full border rounded-lg">
+      <div className="flex flex-col w-full border rounded-lg">
         <header className="flex items-center justify-between px-6 py-4 border-b">
           <h2 className="text-2xl font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
           <div className="flex items-center gap-2">
