@@ -145,7 +145,7 @@ export function ProductManagement() {
            toast({
             variant: 'destructive',
             title: 'Invalid Tier Order',
-            description: `A tier with Min Qty ${'\'\'\''}numericTiers[i].min{'\'\'\''} cannot be less than or equal to the previous tier's Min Qty ${'\'\'\''}numericTiers[i - 1].min{'\'\'\''}.`,
+            description: `A tier with Min Qty '${'\'\'\''}numericTiers[i].min{'\'\'\'}' cannot be less than or equal to the previous tier's Min Qty '${'\'\'\''}numericTiers[i - 1].min{'\'\'\''}'.`,
           });
           return; // Don't exit edit mode
         }
@@ -246,7 +246,7 @@ export function ProductManagement() {
     setSelectedProductType(newProduct.name);
 
     setNewProduct({ name: '', group: newProduct.group });
-    toast({ title: 'Product Staged', description: `"${'\'\'\''}newProduct.name{'\'\'\''}" is ready to be saved.`});
+    toast({ title: 'Product Staged', description: `"${newProduct.name}" is ready to be saved.`});
   };
 
   const handleRemoveProduct = (productName: string) => {
@@ -285,68 +285,13 @@ export function ProductManagement() {
     setConfig(newConfig);
     setNewCategoryName('');
     setIsAddCategoryOpen(false);
-    toast({ title: 'Category Added', description: `"${'\'\'\''}newCategoryName.trim(){'\'\'\''}" is ready to be configured and used.`});
+    toast({ title: 'Category Added', description: `"${newCategoryName.trim()}" is ready to be configured and used.`});
   };
 
-  const handleSaveCategoryName = () => {
-    if (!editingCategory || !config) return;
-    const { oldName, newName } = editingCategory;
-
-    if (!newName.trim()) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Category name cannot be empty.' });
-        return;
-    }
-    if (newName.trim() !== oldName && config.pricingTiers[newName.trim()]) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Category name already exists.' });
-        return;
-    }
-
-    const newConfig = JSON.parse(JSON.stringify(config));
-
-    // Rename in pricingTiers
-    newConfig.pricingTiers[newName.trim()] = newConfig.pricingTiers[oldName];
-    delete newConfig.pricingTiers[oldName];
-
-    // Update productGroupMapping
-    for (const product in newConfig.productGroupMapping) {
-        if (newConfig.productGroupMapping[product] === oldName) {
-            newConfig.productGroupMapping[product] = newName.trim();
-        }
-    }
-    
-    setConfig(newConfig);
-    setEditingCategory(null);
-    toast({ title: 'Category Renamed', description: `"${oldName}" was renamed to "${'\'\'\''}newName.trim(){'\'\'\''}".`});
-  };
-
-  const handleConfirmDeleteCategory = () => {
-    if (!deletingCategory || !config) return;
-
-    const isCategoryInUse = Object.values(config.productGroupMapping).some(group => group === deletingCategory);
-
-    if (isCategoryInUse) {
-        toast({
-            variant: 'destructive',
-            title: 'Deletion Failed',
-            description: `Cannot delete category "${deletingCategory}" as it is still assigned to one or more products. Please re-assign them first.`,
-            duration: 5000,
-        });
-        setDeletingCategory(null);
-        return;
-    }
-
-    const newConfig = JSON.parse(JSON.stringify(config));
-    delete newConfig.pricingTiers[deletingCategory];
-    setConfig(newConfig);
-    setDeletingCategory(null);
-    toast({ title: 'Category Deleted', description: `Category "${deletingCategory}" has been deleted.`});
-  };
-
-
-  const handleSaveChanges = async () => {
-    if (!config || !pricingConfigRef) return;
+  const saveConfiguration = async (configToSave: EditablePricingConfig, successMessage?: string) => {
+    if (!configToSave || !pricingConfigRef) return;
   
-    const validateTiers = (tiers: EditableTier[], context: string) => {
+    const validateTiers = (tiers: EditableTier[], context: string): {min: number, price: number}[] | null => {
       const numericTiers: { min: number; price: number }[] = [];
   
       for (let i = 0; i < tiers.length; i++) {
@@ -369,7 +314,7 @@ export function ProductManagement() {
       return numericTiers;
     };
   
-    const validatedConfig = JSON.parse(JSON.stringify(config));
+    const validatedConfig = JSON.parse(JSON.stringify(configToSave));
     let isValid = true;
   
     for (const group of Object.keys(validatedConfig.pricingTiers)) {
@@ -419,7 +364,7 @@ export function ProductManagement() {
       await setDoc(pricingConfigRef, validatedConfig, { merge: true });
       toast({
         title: 'Success!',
-        description: 'Pricing configuration has been updated.',
+        description: successMessage || 'Pricing configuration has been updated.',
       });
       refetch();
       setEditModes({});
@@ -432,7 +377,64 @@ export function ProductManagement() {
       });
     }
   };
-  
+
+  const handleSaveChanges = async () => {
+    if (!config) return;
+    await saveConfiguration(config);
+  };
+
+  const handleSaveCategoryName = async () => {
+    if (!editingCategory || !config) return;
+    const { oldName, newName } = editingCategory;
+
+    if (!newName.trim()) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Category name cannot be empty.' });
+        return;
+    }
+    if (newName.trim() !== oldName && config.pricingTiers[newName.trim()]) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Category name already exists.' });
+        return;
+    }
+
+    const newConfig = JSON.parse(JSON.stringify(config));
+
+    newConfig.pricingTiers[newName.trim()] = newConfig.pricingTiers[oldName];
+    delete newConfig.pricingTiers[oldName];
+
+    for (const product in newConfig.productGroupMapping) {
+        if (newConfig.productGroupMapping[product] === oldName) {
+            newConfig.productGroupMapping[product] = newName.trim();
+        }
+    }
+    
+    setEditingCategory(null);
+    await saveConfiguration(newConfig, `Category "${oldName}" was successfully renamed to "${newName.trim()}".`);
+  };
+
+  const handleConfirmDeleteCategory = async () => {
+    if (!deletingCategory || !config) return;
+
+    const isCategoryInUse = Object.values(config.productGroupMapping).some(group => group === deletingCategory);
+
+    if (isCategoryInUse) {
+        toast({
+            variant: 'destructive',
+            title: 'Deletion Failed',
+            description: `Cannot delete category "${deletingCategory}" as it is still assigned to one or more products. Please re-assign them first.`,
+            duration: 5000,
+        });
+        setDeletingCategory(null);
+        return;
+    }
+
+    const newConfig = JSON.parse(JSON.stringify(config));
+    delete newConfig.pricingTiers[deletingCategory];
+    
+    setDeletingCategory(null);
+    await saveConfiguration(newConfig, `Category "${deletingCategory}" has been deleted.`);
+  };
+
+
   const productGroups = useMemo(() => config ? Object.keys(config.pricingTiers).sort() as ProductGroup[] : [], [config]);
   const addOnTypes = useMemo(() => config ? (Object.keys(config.addOnPricing) as AddOnType[]).filter(type => type !== 'rushFee' && type !== 'shippingFee') : [], [config]);
   
@@ -451,7 +453,7 @@ export function ProductManagement() {
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-                <CardTitle>Product &amp; Pricing Management</CardTitle>
+                <CardTitle>Product & Pricing Management</CardTitle>
                 <CardDescription>
                 Edit product prices, add-ons, and manage product categories.
                 </CardDescription>
