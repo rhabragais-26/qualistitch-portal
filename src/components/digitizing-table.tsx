@@ -186,7 +186,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([]);
   const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
   const [sequenceLogo, setSequenceLogo] = useState<(FileObject | null)[]>([null]);
-  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([null]);
+  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
   const [finalProgrammedLogo, setFinalProgrammedLogo] = useState<(FileObject | null)[]>([null]);
   const [finalProgrammedBackDesign, setFinalProgrammedBackDesign] = useState<(FileObject | null)[]>([]);
   const [isNamesOnly, setIsNamesOnly] = useState(false);
@@ -207,6 +207,45 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [imageInView, setImageInView] = useState<string | null>(null);
   
   const isViewOnly = isReadOnly || filterType === 'COMPLETED';
+
+  const getContactDisplay = useCallback((lead: Lead) => {
+    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
+    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+
+    if (mobile && landline) {
+      return `${mobile} / ${landline}`;
+    }
+    return mobile || landline || null;
+  }, []);
+
+  const formatJoNumber = useCallback((joNumber: number | undefined) => {
+    if (!joNumber) return '';
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+  }, []);
+
+  const calculateDigitizingDeadline = useCallback((lead: Lead) => {
+    if (lead.isFinalProgram) {
+        const finalProgramTime = lead.finalProgramTimestamp ? new Date(lead.finalProgramTimestamp) : new Date();
+        const remainingDays = differenceInDays(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 2 : 6), finalProgramTime);
+        if (remainingDays < 0) {
+            return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
+        }
+        return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
+    }
+    const submissionDate = new Date(lead.submissionDateTime);
+    const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
+    const deadlineDate = addDays(submissionDate, deadlineDays);
+    const remainingDays = differenceInDays(deadlineDate, new Date());
+    
+    if (remainingDays < 0) {
+      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
+    } else if (remainingDays <= 2) {
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
+    } else {
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
+    }
+  }, []);
 
   const updateStatus = useCallback((leadId: string, field: CheckboxField | 'isJoHardcopyReceived', value: boolean) => {
     if (!firestore) return Promise.reject(new Error("Firestore not available"));
@@ -282,35 +321,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     return enrichedLeads;
   }, [leads]);
   
-  const formatJoNumber = useCallback((joNumber: number | undefined) => {
-    if (!joNumber) return '';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-  }, []);
-
-  const calculateDigitizingDeadline = useCallback((lead: Lead) => {
-    if (lead.isFinalProgram) {
-        const finalProgramTime = lead.finalProgramTimestamp ? new Date(lead.finalProgramTimestamp) : new Date();
-        const remainingDays = differenceInDays(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 2 : 6), finalProgramTime);
-        if (remainingDays < 0) {
-            return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
-        }
-        return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
-    }
-    const submissionDate = new Date(lead.submissionDateTime);
-    const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
-    const deadlineDate = addDays(submissionDate, deadlineDays);
-    const remainingDays = differenceInDays(deadlineDate, new Date());
-    
-    if (remainingDays < 0) {
-      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
-    } else if (remainingDays <= 2) {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
-    } else {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
-    }
-  }, []);
-
   const filteredLeads = React.useMemo(() => {
     if (!processedLeads) return [];
     
@@ -708,23 +718,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             description: e.message || 'Could not send the project to production.',
         });
     }
-  }, [reviewConfirmLead, firestore, toast, calculateDigitizingDeadline, getContactDisplay]);
+  }, [reviewConfirmLead, firestore, toast, calculateDigitizingDeadline, getContactDisplay, formatJoNumber]);
 
 
   const toggleLeadDetails = useCallback((leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
   }, [openLeadId]);
   
-  const getContactDisplay = useCallback((lead: Lead) => {
-    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
-    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
-
-    if (mobile && landline) {
-      return `${mobile} / ${landline}`;
-    }
-    return mobile || landline || null;
-  }, []);
-
   const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
   }, [openCustomerDetails]);
@@ -1548,3 +1548,4 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
