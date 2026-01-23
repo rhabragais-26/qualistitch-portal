@@ -304,7 +304,7 @@ export function MarketingCalendar() {
                 key={day.toString()}
                 onClick={() => handleDateSelect(day)}
                 className={cn(
-                  "relative p-2 border-r border-b flex flex-col items-center justify-center min-h-[120px]",
+                  "relative p-2 border-r border-b flex flex-col items-start justify-center min-h-[120px]",
                   isSameMonth(day, currentMonth) ? 'bg-background' : 'bg-muted/50 text-muted-foreground',
                   canEdit && 'cursor-pointer hover:bg-accent/20 transition-colors',
                   "overflow-hidden"
@@ -323,7 +323,7 @@ export function MarketingCalendar() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                         <ul className="w-full px-2 text-left list-disc list-inside">
+                         <ul className="w-full pl-6 pr-2 text-left list-disc list-inside">
                             {dayEvents.slice(0, 2).map((event) => (
                                 <li key={event.id} className="text-xs text-foreground truncate mt-1 first:mt-0">
                                     <span>{event.content}</span>
