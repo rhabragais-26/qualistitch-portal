@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -237,7 +238,7 @@ export function MarketingCalendar() {
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   if(isLoading) {
-    return <Skeleton className="w-full h-[600px]" />;
+    return <Skeleton className="w-full h-auto" />;
   }
 
   if(error) {
@@ -265,7 +266,7 @@ export function MarketingCalendar() {
         </header>
         <div className="flex-1 grid grid-cols-7 grid-rows-6">
           {weekDays.map(day => (
-            <div key={day} className="text-center font-medium text-muted-foreground pt-2 border-b border-r">
+            <div key={day} className="flex items-center justify-center font-bold border-b border-r">
               {day}
             </div>
           ))}
