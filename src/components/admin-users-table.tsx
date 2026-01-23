@@ -281,7 +281,7 @@ export function AdminUsersTable() {
 
   return (
     <>
-      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
+      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
