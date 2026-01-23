@@ -306,7 +306,7 @@ function JoNotesPanel() {
                 <div className="space-y-4">
                     {Object.keys(filteredNotes).length > 0 ? (
                         Object.entries(filteredNotes).map(([leadId, { lead, notes }]) => (
-                            <div key={leadId} className="p-3 border rounded-lg bg-gray-50 text-xs">
+                            <div key={leadId} className="relative p-3 border rounded-lg bg-gray-50 text-xs">
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <p className="font-semibold text-sm">
@@ -317,7 +317,7 @@ function JoNotesPanel() {
                                         </p>
                                         <p className="text-gray-500">{getContactDisplay(lead)}</p>
                                     </div>
-                                    <div className="flex items-center">
+                                    <div className="absolute top-1 right-1 flex items-center">
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
@@ -376,7 +376,7 @@ function JoNotesPanel() {
                                                                 value={notificationDateTime}
                                                                 onChange={(e) => setNotificationDateTime(e.target.value)}
                                                             />
-                                                            <Button onClick={handleSetNotification} className="w-full mt-2">Set Notification</Button>
+                                                            <Button onClick={handleSetNotification} className="w-full">Select</Button>
                                                         </div>
                                                     </PopoverContent>
                                                 </Popover>
@@ -673,8 +673,8 @@ export function CollapsibleRightPanel() {
                     </Button>
                     <TabsList className={cn("grid w-full", `grid-cols-${panels.length}`)}>
                         {panels.map((panel) => (
-                           <div key={panel.id} className="relative group flex">
-                             <TabsTrigger value={panel.id} className="w-full" onDoubleClick={() => panel.type !== 'jo-notes' && setEditingPanelId(panel.id)}>
+                           <div key={panel.id} className="relative group flex items-center">
+                             <TabsTrigger value={panel.id} className="w-full data-[state=active]:relative" onDoubleClick={() => panel.type !== 'jo-notes' && setEditingPanelId(panel.id)}>
                                 {editingPanelId === panel.id ? (
                                     <Input
                                         type="text"
@@ -701,7 +701,7 @@ export function CollapsibleRightPanel() {
                            {panel.type !== 'jo-notes' && (
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setDeletingPanelId(panel.id); }}
-                                    className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer"
+                                    className="absolute top-1/2 -translate-y-1/2 right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer"
                                 >
                                     <X className="h-3 w-3" />
                                 </button>
