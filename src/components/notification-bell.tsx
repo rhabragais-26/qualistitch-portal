@@ -27,7 +27,7 @@ type JoNoteNotification = {
 type GlobalAnnouncement = {
   id: string; 
   leadId: 'global';
-  customerName: string; // Title like 'Non-Urgent Announcement'
+  customerName: string; // Title like 'Important Notice!'
   joNumber: string; // Sender
   noteContent: string;
   notifyAt: string; // ISO string
@@ -330,7 +330,7 @@ export function NotificationBell() {
                                         </div>
                                         <Badge variant={notification.isDisapproved ? 'destructive' : 'success'}>Progress</Badge>
                                     </div>
-                                    <p className={cn("text-sm mt-2 w-full", !notification.isRead ? "text-foreground font-semibold" : "text-muted-foreground")}>
+                                    <p className={cn("text-sm mt-2 w-full", !notification.isRead ? "text-foreground" : "text-muted-foreground")}>
                                         {notification.message}
                                     </p>
                                     <p className={cn("text-xs mt-1", notification.isDisapproved ? "text-destructive font-bold" : "text-gray-500")}>
@@ -356,22 +356,22 @@ export function NotificationBell() {
                         >
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-sm font-bold text-gray-800">{isAnnouncement ? 'Important Notice!' : notification.joNumber}</p>
+                                    <p className="text-sm font-bold text-gray-800">{notification.joNumber}</p>
                                     {isAnnouncement ? (
                                         <p className="text-xs text-muted-foreground">from {notification.joNumber}</p>
                                     ) : (
                                         <p className="text-xs text-muted-foreground">
-                                          {(notification as JoNoteNotification).customerName}
+                                          {notification.customerName}
                                           {(notification as JoNoteNotification).contactNumber && ` | ${(notification as JoNoteNotification).contactNumber}`}
                                         </p>
                                     )}
                                 </div>
                                 {isAnnouncement 
-                                    ? <Badge variant="warning" className="ml-2 bg-yellow-200 text-yellow-800">Announcement</Badge> 
+                                    ? <Badge variant="warning" className="ml-2 bg-yellow-200 text-yellow-800">Important Notice!</Badge> 
                                     : <span className="ml-2 text-destructive text-xs font-semibold whitespace-nowrap">Reminder</span>
                                 }
                             </div>
-                            <p className="text-base mt-1 font-bold text-black pl-4">"{notification.noteContent}"</p>
+                            <p className="text-base mt-1 text-black pl-4">"{notification.noteContent}"</p>
                             <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
                               {format(new Date(notification.notifyAt), 'MMM dd, yyyy @ h:mm a')}
                             </p>
