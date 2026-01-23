@@ -291,7 +291,7 @@ export function ProductManagement() {
   const saveConfiguration = async (configToSave: EditablePricingConfig, successMessage?: string) => {
     if (!configToSave || !pricingConfigRef) return;
   
-    const validateTiers = (tiers: EditableTier[], context: string): {min: number, price: number}[] | null => {
+    const validateTiers = (tiers: EditableTier[], context: string): {min: number, max: number, price: number}[] | null => {
       const numericTiers: { min: number; price: number }[] = [];
   
       for (let i = 0; i < tiers.length; i++) {
@@ -311,7 +311,7 @@ export function ProductManagement() {
           return null;
         }
       }
-      return numericTiers;
+      return numericTiers.map(t => ({...t, max: 0}));
     };
   
     const validatedConfig = JSON.parse(JSON.stringify(configToSave));
@@ -407,7 +407,7 @@ export function ProductManagement() {
         }
     }
     
-    setConfig(newConfig);
+    await saveConfiguration(newConfig, "Category successfully renamed.");
     setEditingCategory(null);
   };
 
@@ -442,7 +442,7 @@ export function ProductManagement() {
     
     delete newConfig.pricingTiers[deletingCategory];
     
-    setConfig(newConfig);
+    await saveConfiguration(newConfig, `Category "${deletingCategory}" deleted.`);
     setDeletingCategory(null);
   };
 
@@ -579,25 +579,34 @@ export function ProductManagement() {
                                 </section>
                                  <section>
                                     <h3 className="text-lg font-semibold">Product List</h3>
-                                    <div className="space-y-2 overflow-y-auto border p-2 rounded-md mt-2 text-sm">
-                                        {Object.entries(config.productGroupMapping).map(([name, group]) => (
-                                            <div key={name} className="flex items-start justify-between gap-4">
-                                                <span className="whitespace-nowrap flex-1 pt-1.5">{name}</span>
-                                                <div className="flex items-start gap-2">
-                                                    <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
-                                                        <SelectTrigger className="w-[170px] h-8 text-xs flex-shrink-0">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveProduct(name)}>
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                    <div className="overflow-y-auto border p-2 rounded-md mt-2 text-sm">
+                                        <div className="grid grid-cols-3 gap-4 mb-2 font-bold text-center border-b pb-2">
+                                            <div>Product Name</div>
+                                            <div>Product Category</div>
+                                            <div>Action</div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {Object.entries(config.productGroupMapping).map(([name, group]) => (
+                                                <div key={name} className="grid grid-cols-3 gap-4 items-center text-center">
+                                                    <span className="whitespace-nowrap text-left">{name}</span>
+                                                    <div className="flex justify-center">
+                                                        <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
+                                                            <SelectTrigger className="w-[170px] h-8 text-xs">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="flex justify-center">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveProduct(name)}>
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
                                 </section>
                             </div>
