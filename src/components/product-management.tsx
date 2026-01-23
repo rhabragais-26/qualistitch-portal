@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -145,7 +144,7 @@ export function ProductManagement() {
            toast({
             variant: 'destructive',
             title: 'Invalid Tier Order',
-            description: `A tier with Min Qty '${'\'\'\''}numericTiers[i].min{'\'\'\'}' cannot be less than or equal to the previous tier's Min Qty '${'\'\'\''}numericTiers[i - 1].min{'\'\'\''}'.`,
+            description: `A tier with Min Qty '${numericTiers[i].min}' cannot be less than or equal to the previous tier's Min Qty '${numericTiers[i - 1].min}'.`,
           });
           return; // Don't exit edit mode
         }
@@ -466,7 +465,7 @@ export function ProductManagement() {
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-                <CardTitle>Product & Pricing Management</CardTitle>
+                <CardTitle>Product &amp; Pricing Management</CardTitle>
                 <CardDescription>
                 Edit product prices, add-ons, and manage product categories.
                 </CardDescription>
@@ -485,7 +484,7 @@ export function ProductManagement() {
                     <DialogTrigger asChild>
                         <Button variant="outline" className="bg-teal-600 hover:bg-teal-700 text-white font-bold"><PlusCircle className="mr-2"/> Add / Manage Products</Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-4xl h-[700px] px-0 flex flex-col">
+                    <DialogContent className="max-w-5xl h-[700px] px-0 flex flex-col">
                         <DialogHeader className="px-6">
                             <DialogTitle>Manage Products &amp; Categories</DialogTitle>
                             <DialogDescription>
@@ -590,17 +589,21 @@ export function ProductManagement() {
                                             {Object.entries(config.productGroupMapping).map(([name, group]) => (
                                                 <div key={name} className="grid grid-cols-5 gap-4 items-start">
                                                     <span className="whitespace-nowrap col-span-3">{name}</span>
-                                                    <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
-                                                        <SelectTrigger className="h-8 text-xs w-full">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive mx-auto" onClick={() => handleRemoveProduct(name)}>
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    <div className="flex justify-center">
+                                                      <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
+                                                          <SelectTrigger className="h-8 text-xs w-[170px]">
+                                                              <SelectValue />
+                                                          </SelectTrigger>
+                                                          <SelectContent>
+                                                              {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                                                          </SelectContent>
+                                                      </Select>
+                                                    </div>
+                                                    <div className="flex justify-center">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive mx-auto" onClick={() => handleRemoveProduct(name)}>
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -608,7 +611,7 @@ export function ProductManagement() {
                                 </section>
                             </div>
                         </div>
-                        <DialogFooter className="flex items-center justify-end px-6 border-t pt-4">
+                        <DialogFooter className="flex items-center justify-center px-6 border-t pt-2">
                             <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
                         </DialogFooter>
                     </DialogContent>
