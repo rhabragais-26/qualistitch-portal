@@ -475,40 +475,40 @@ const HeaderMemo = React.memo(function Header({
                 </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => router.push('/profile')}>
-                    <User className="mr-2" />
-                    Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/personal-calendar')}>
-                    <CalendarIcon className="mr-2" />
-                    Personal Calendar
-                </DropdownMenuItem>
-                {canSendAnnouncement && (
-                  <DropdownMenuItem onSelect={() => { onOpenChange?.(false); setIsAnnouncementDialogOpen(true); }}>
-                      <Megaphone className="mr-2" />
-                      <span>Announcement</span>
-                  </DropdownMenuItem>
-                )}
-                {isAdmin && (
-                  <DropdownMenuItem onClick={() => router.push('/admin/users')}>
-                    <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center">
-                            <UserCog className="mr-2" />
-                            <span>Admin Setting</span>
+                    <DropdownMenuItem onClick={() => router.push('/profile')}>
+                        <User />
+                        <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/personal-calendar')}>
+                        <CalendarIcon />
+                        <span>Personal Calendar</span>
+                    </DropdownMenuItem>
+                    {canSendAnnouncement && (
+                    <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsAnnouncementDialogOpen(true); }}>
+                        <Megaphone />
+                        <span>Announcement</span>
+                    </DropdownMenuItem>
+                    )}
+                    {isAdmin && (
+                    <DropdownMenuItem onClick={() => router.push('/admin/users')}>
+                        <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-2">
+                                <UserCog />
+                                <span>Admin Setting</span>
+                            </div>
+                            {unassignedUsersCount > 0 && (
+                                <Badge variant="destructive" className="h-5 w-5 shrink-0 justify-center rounded-full p-0">
+                                    {unassignedUsersCount}
+                                </Badge>
+                            )}
                         </div>
-                        {unassignedUsersCount > 0 && (
-                            <Badge variant="destructive" className="h-5 w-5 shrink-0 justify-center rounded-full p-0">
-                                {unassignedUsersCount}
-                            </Badge>
-                        )}
-                    </div>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2" />
-                    Sign Out
-                </DropdownMenuItem>
+                    </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                        <LogOut />
+                        <span>Sign Out</span>
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
             )}
