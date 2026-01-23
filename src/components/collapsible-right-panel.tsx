@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -418,8 +419,8 @@ function JoNotesPanel() {
                                                     </Button>
                                                 </div>
                                                 {notificationForThisNote && (
-                                                    <div className="flex items-center text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md">
-                                                        <Bell className="h-3 w-3 mr-1" />
+                                                    <div className="flex items-center text-xs text-yellow-800 bg-yellow-100 px-1.5 py-0.5 rounded-md">
+                                                        <Bell className="h-3 w-3 mr-1 text-yellow-600" />
                                                         <span>{format(new Date(notificationForThisNote.notifyAt), 'MMM dd, h:mm a')}</span>
                                                     </div>
                                                 )}
