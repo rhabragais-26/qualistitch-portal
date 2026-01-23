@@ -285,7 +285,7 @@ export function MarketingCalendar() {
         </header>
         <div className="flex-1 grid grid-cols-7 grid-rows-6">
           {weekDays.map(day => (
-            <div key={day} className="flex items-center justify-center font-bold border-b border-r py-2">
+            <div key={day} className="flex items-center justify-center font-bold border-b border-r py-0">
               {day}
             </div>
           ))}
@@ -317,11 +317,6 @@ export function MarketingCalendar() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                          <div className="flex-1 mt-2 overflow-hidden">
-                          {dayEvents[0].imageUrl && (
-                            <div className="relative w-full h-12 mb-1">
-                              <Image src={dayEvents[0].imageUrl} alt={dayEvents[0].content} layout="fill" objectFit="cover" className="rounded-md"/>
-                            </div>
-                          )}
                           <p className="text-xs text-foreground truncate">{dayEvents[0].content}</p>
                           {dayEvents.length > 1 && <p className="text-xs text-muted-foreground mt-1">+ {dayEvents.length - 1} more</p>}
                         </div>
