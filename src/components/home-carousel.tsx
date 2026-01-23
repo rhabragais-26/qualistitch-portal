@@ -113,14 +113,14 @@ export function HomeCarousel() {
 
           if (failedReasons.length > 0) {
               const firstError = failedReasons[0];
-              let errorMessage = `Failed to load ${failedReasons.length} of ${allImageRefs.length} images.`;
+              let errorMessage = `Failed to load ${'\'\'\''}failedReasons.length{'\'\'\''} of ${'\'\'\''}allImageRefs.length{'\'\'\''} images.`;
               
               if (firstError.code === 'storage/object-not-found') {
                   errorMessage += " Reason: The 'Carousel' folder or images within it could not be found. Please check that the folder name is capitalized correctly and contains your images.";
               } else if (firstError.code === 'storage/unauthorized') {
                   errorMessage += " Reason: You are not authorized to view these images. Please ensure your Firebase Storage security rules for the 'Carousel' path are correctly configured for public read access.";
               } else {
-                  errorMessage += ` First error: ${firstError.message}`;
+                  errorMessage += ` First error: ${'\'\'\''}firstError.message{'\'\'\'}`;
               }
               setError(errorMessage);
           }
@@ -171,7 +171,7 @@ export function HomeCarousel() {
       <Button variant="ghost" size="icon" onClick={() => paginate(-1)} className="h-24 w-24 shrink-0 hover:bg-transparent" disabled={imageUrls.length <= 1}>
           <ChevronLeft className="h-20 w-20 text-muted-foreground" />
       </Button>
-      <div className="relative w-full h-[700px] overflow-hidden">
+      <div className="relative w-full h-[720px] overflow-hidden">
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
             key={page}
@@ -201,7 +201,7 @@ export function HomeCarousel() {
                     <div className="w-[35%] h-full relative z-10 shadow-2xl">
                         <Image
                             src={imageUrls[imageIndex]}
-                            alt={`Carousel image ${imageIndex + 1}`}
+                            alt={`Carousel image ${'\'\'\''}imageIndex + 1{'\'\'\''}`}
                             layout="fill"
                             objectFit="cover"
                             className="rounded-lg"
@@ -223,7 +223,7 @@ export function HomeCarousel() {
                 <div className="w-[35%] h-full relative z-10 shadow-2xl">
                     <Image
                         src={imageUrls[imageIndex]}
-                        alt={`Carousel image ${imageIndex + 1}`}
+                        alt={`Carousel image ${'\'\'\''}imageIndex + 1{'\'\'\''}`}
                         layout="fill"
                         objectFit="cover"
                         className="rounded-lg"
