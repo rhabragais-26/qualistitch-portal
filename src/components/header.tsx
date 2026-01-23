@@ -476,17 +476,23 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuItem onClick={() => router.push('/profile')}>
-                        <User className="mr-2" />
-                        <span>Profile</span>
+                        <div className="flex items-center gap-2">
+                            <User />
+                            <span>Profile</span>
+                        </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/personal-calendar')}>
-                        <CalendarIcon className="mr-2" />
-                        <span>Personal Calendar</span>
+                         <div className="flex items-center gap-2">
+                             <CalendarIcon />
+                             <span>Personal Calendar</span>
+                         </div>
                     </DropdownMenuItem>
                     {canSendAnnouncement && (
                     <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsAnnouncementDialogOpen(true); }}>
-                        <Megaphone className="mr-2" />
-                        <span>Announcement</span>
+                        <div className="flex items-center gap-2">
+                            <Megaphone />
+                            <span>Announcement</span>
+                        </div>
                     </DropdownMenuItem>
                     )}
                     {isAdmin && (
@@ -506,8 +512,10 @@ const HeaderMemo = React.memo(function Header({
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
-                        <LogOut className="mr-2" />
-                        <span>Sign Out</span>
+                         <div className="flex items-center gap-2">
+                            <LogOut />
+                            <span>Sign Out</span>
+                         </div>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
