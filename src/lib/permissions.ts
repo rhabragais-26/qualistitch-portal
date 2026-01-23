@@ -15,6 +15,8 @@ export type UserPosition =
   | 'Finance'
   | 'CEO'
   | 'Page Admin'
+  | 'Marketing Head'
+  | 'Social Media Manager'
   | 'Not Assigned';
 
 export type PageGroup = 'sales' | 'digitizing' | 'inventory' | 'production' | 'logistics' | 'admin' | 'profile' | 'order-status' | 'finance' | 'marketing';
@@ -79,6 +81,8 @@ const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'Logistics Officer': ['logistics'],
   'Operations Manager': ['inventory', 'production', 'logistics'],
   'Finance': ['finance'],
+  'Marketing Head': ['marketing'],
+  'Social Media Manager': ['marketing'],
   'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'admin', 'profile', 'finance', 'marketing'],
 };
 
