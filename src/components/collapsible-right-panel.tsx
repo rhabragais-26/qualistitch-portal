@@ -142,8 +142,11 @@ function JoNotesPanel() {
             </div>
             
             {selectedLead && (
-                <div className="p-2 m-2 border rounded-lg bg-gray-50 text-xs">
-                    <p><strong>Notes for:</strong> {toTitleCase(selectedLead.customerName)} ({formatJoNumber(selectedLead.joNumber)})</p>
+                <div className="relative p-2 m-2 border rounded-lg bg-gray-50 text-xs">
+                    <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6 text-muted-foreground hover:bg-red-100 hover:text-red-500" onClick={() => setSelectedLead(null)}>
+                        <X className="h-4 w-4" />
+                    </Button>
+                    <p><strong>Notes for:</strong> {toTitleCase(selectedLead.customerName)} ({selectedLead.joNumber ? formatJoNumber(selectedLead.joNumber) : 'No J.O. yet'})</p>
                     <p><strong>Contact:</strong> {getContactDisplay(selectedLead)}</p>
                 </div>
             )}
@@ -371,13 +374,16 @@ export function CollapsibleRightPanel() {
                                 )}
                            </TabsTrigger>
                            {panel.type !== 'jo-notes' && (
-                                <div
+                            <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={(e) => { e.stopPropagation(); setDeletingPanelId(panel.id); }}
                                 className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer"
-                                >
-                                <X className="h-3 w-3" />
-                                </div>
-                            )}
+                                asChild
+                            >
+                                <div><X className="h-3 w-3" /></div>
+                            </Button>
+                           )}
                            </div>
                         ))}
                     </TabsList>
@@ -404,11 +410,12 @@ export function CollapsibleRightPanel() {
 
       <div
         ref={buttonRef}
-        className={cn(
-          "fixed z-50 no-print transition-transform duration-300 ease-in-out",
-          isExpanded && "translate-x-[-24rem]" // w-96 is 24rem
-        )}
-        style={{ top: `${yPosition}px`, right: 0 }}
+        className="fixed z-50 no-print"
+        style={{ 
+            top: `${yPosition}px`, 
+            right: isExpanded ? '24rem' : '0rem',
+            transition: 'right 0.3s ease-in-out'
+        }}
       >
         <TooltipProvider>
           <Tooltip>
@@ -450,4 +457,5 @@ export function CollapsibleRightPanel() {
     </>
   );
 }
+
 
