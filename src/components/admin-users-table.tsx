@@ -90,7 +90,7 @@ const AdminUserTableRow = React.memo(({
           <SelectTrigger className={cn("w-[200px]", (editedUser.position || user.position) === 'Not Assigned' && 'text-destructive font-bold')}>
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="item-aligned">
             {positions.map(pos => (
               <SelectItem key={pos} value={pos}>{pos}</SelectItem>
             ))}
@@ -109,7 +109,7 @@ const AdminUserTableRow = React.memo(({
               </Badge>
             </SelectValue>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="item-aligned">
             <SelectItem value="user">User</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
           </SelectContent>
