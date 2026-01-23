@@ -337,7 +337,7 @@ function JoNotesPanel() {
                 <div className="space-y-4">
                     {Object.keys(filteredNotes).length > 0 ? (
                         Object.entries(filteredNotes).map(([leadId, { lead, notes }]) => (
-                            <div key={leadId} className="relative p-3 border rounded-lg bg-teal-500/15 text-xs">
+                            <div key={leadId} className="relative p-3 border rounded-lg bg-gray-100 text-xs">
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <p className="font-semibold text-sm">
