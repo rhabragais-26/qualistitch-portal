@@ -581,7 +581,7 @@ export function ProductManagement() {
                                 </section>
                                  <section>
                                     <h3 className="text-lg font-semibold">Product List</h3>
-                                    <div className="overflow-y-auto border p-2 rounded-md mt-2 text-sm">
+                                    <div className="space-y-2 overflow-y-auto border p-2 rounded-md mt-2 text-sm">
                                         <div className="grid grid-cols-5 gap-4 mb-2 font-bold text-center border-b pb-2">
                                             <div className="col-span-3 text-left">Product Name</div>
                                             <div>Product Category</div>
@@ -593,7 +593,7 @@ export function ProductManagement() {
                                                     <span className="whitespace-nowrap text-left col-span-3">{name}</span>
                                                     <div className="flex justify-center">
                                                         <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
-                                                            <SelectTrigger className="w-[170px] h-8 text-xs">
+                                                            <SelectTrigger className="h-8 text-xs">
                                                                 <SelectValue />
                                                             </SelectTrigger>
                                                             <SelectContent>
@@ -796,7 +796,7 @@ export function ProductManagement() {
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure you want to delete this category?</AlertDialogTitle>
                 <AlertDialogDescription>
-                     This will permanently delete the category. Any products assigned to this category will be automatically reassigned to another existing category. This action cannot be undone.
+                     This will permanently delete the category "{deletingCategory}". Any products assigned to it will be automatically reassigned to the next available category. This action cannot be undone.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
