@@ -465,22 +465,18 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenuItem>
                 {isAdmin && (
                   <>
-                  <DropdownMenuItem onSelect={() => setIsAnnouncementDialogOpen(true)}>
+                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsAnnouncementDialogOpen(true); }}>
                       <Megaphone className="mr-2" />
                       <span>Announcement</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/admin/users')}>
-                      <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center">
-                              <UserCog className="mr-2" />
-                              <span>Admin Setting</span>
-                          </div>
-                          {unassignedUsersCount > 0 && (
-                              <Badge variant="destructive" className="h-5 w-5 justify-center rounded-full p-0 ml-2 text-xs">
-                                  {unassignedUsersCount}
-                              </Badge>
-                          )}
-                      </div>
+                      <UserCog className="mr-2" />
+                      <span>Admin Setting</span>
+                      {unassignedUsersCount > 0 && (
+                          <Badge variant="destructive" className="h-5 w-5 justify-center rounded-full p-0 ml-auto text-xs">
+                              {unassignedUsersCount}
+                          </Badge>
+                      )}
                   </DropdownMenuItem>
                   </>
                 )}
