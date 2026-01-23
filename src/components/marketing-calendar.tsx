@@ -161,7 +161,7 @@ export function MarketingCalendar() {
           }
           map.get(dateKey)!.push(event);
         } catch (e) {
-          console.warn(`Invalid date format for event ${event.id}: ${event.date}`);
+          console.warn(`Invalid date format for event ${'\'\'\''}event.id{'\'\'\''}: ${'\'\'\''}event.date{'\'\'\''}`);
         }
       });
     }
@@ -191,7 +191,7 @@ export function MarketingCalendar() {
     const fileToUpload = eventData._fileToUpload;
 
     if (fileToUpload && finalImageUrl?.startsWith('data:')) {
-        const storageRef = ref(storage, `marketingCalendar/${eventId}/${fileToUpload.name}`);
+        const storageRef = ref(storage, `marketingCalendar/${'\'\'\''}eventId{'\'\'\''}/${'\'\'\''}fileToUpload.name{'\'\'\''}`);
         const uploadResult = await uploadString(storageRef, finalImageUrl, 'data_url');
         finalImageUrl = await getDownloadURL(uploadResult.ref);
     }
@@ -208,7 +208,7 @@ export function MarketingCalendar() {
 
     try {
         await setDoc(eventDocRef, dataToSave, { merge: true });
-        toast({ title: `Event ${isNew ? 'Added' : 'Updated'}` });
+        toast({ title: `Event ${'\'\'\''}isNew ? 'Added' : 'Updated'}` });
         setCurrentEvent(null);
         setDialogView('list');
     } catch (error: any) {
@@ -274,7 +274,7 @@ export function MarketingCalendar() {
             <h2 className="text-2xl font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
           </div>
           <div className="justify-self-center">
-            <h2 className="text-2xl font-bold">Marketing Calendar</h2>
+            <h2 className="text-2xl font-bold">MARKETING CALENDAR</h2>
           </div>
           <div className="justify-self-end">
             <div className="flex items-center gap-2">
@@ -374,7 +374,7 @@ export function MarketingCalendar() {
             <DialogHeader>
                 <DialogTitle>
                     {dialogView === 'list' 
-                        ? `Events for ${selectedDate ? format(selectedDate, 'MMMM dd, yyyy') : ''}` 
+                        ? `Events for ${'\'\'\''}selectedDate ? format(selectedDate, 'MMMM dd, yyyy') : ''}` 
                         : currentEvent?.id && events?.some(e => e.id === currentEvent.id) ? 'Edit Event' : 'Add New Event'
                     }
                 </DialogTitle>
