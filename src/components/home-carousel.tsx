@@ -168,7 +168,7 @@ export function HomeCarousel() {
   }
 
   return (
-    <div className="flex items-center justify-center w-full max-w-[1780px]">
+    <div className="flex items-center justify-center w-full max-w-[1680px]">
       <Button variant="ghost" size="icon" onClick={() => paginate(-1)} className="h-24 w-24 shrink-0 hover:bg-transparent" disabled={imageUrls.length <= 1}>
           <ChevronLeft className="h-20 w-20 text-muted-foreground" />
       </Button>
