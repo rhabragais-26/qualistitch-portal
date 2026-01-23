@@ -337,7 +337,7 @@ function JoNotesPanel() {
                 <div className="space-y-4">
                     {Object.keys(filteredNotes).length > 0 ? (
                         Object.entries(filteredNotes).map(([leadId, { lead, notes }]) => (
-                            <div key={leadId} className="relative p-3 border rounded-lg bg-gray-50 text-xs">
+                            <div key={leadId} className="relative p-3 border rounded-lg bg-teal-500/15 text-xs">
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <p className="font-semibold text-sm">
@@ -757,8 +757,8 @@ export function CollapsibleRightPanel() {
                     <JoNotesPanel />
                   </TabsContent>
                   {panels.filter(p => p.type === 'textarea').map(panel => (
-                      <TabsContent key={panel.id} value={panel.id} className="h-full m-0 p-2">
-                         <div className="h-full">
+                      <TabsContent key={panel.id} value={panel.id} className="h-full m-0" forceMount>
+                         <div className="h-full p-2" style={{ display: activeTab === panel.id ? 'block' : 'none' }}>
                           <Textarea 
                               placeholder="Your notes here..."
                               className="h-full w-full resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
