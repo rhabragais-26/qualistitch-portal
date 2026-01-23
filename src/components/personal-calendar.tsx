@@ -20,10 +20,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Trash2, ChevronLeft, ChevronRight, Edit, Plus, ArrowLeft } from 'lucide-react';
+import { Trash2, ChevronLeft, ChevronRight, Edit, Plus, ArrowLeft, Paintbrush } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, collection, query, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -92,6 +99,16 @@ export function PersonalCalendar() {
   const [dialogView, setDialogView] = useState<'list' | 'form'>('list');
   const [currentEvent, setCurrentEvent] = useState<Partial<PersonalEvent> | null>(null);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+  const [theme, setTheme] = useState('default');
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('personalCalendarTheme') || 'default';
+    setTheme(savedTheme);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('personalCalendarTheme', theme);
+  }, [theme]);
 
   const canEdit = !!userProfile;
   
@@ -181,7 +198,7 @@ export function PersonalCalendar() {
 
   return (
     <>
-      <div className="flex flex-col w-full border rounded-lg h-auto">
+      <div className={cn("flex flex-col w-full border rounded-lg h-auto", `theme-${theme}`)}>
         <header className="grid grid-cols-3 items-center px-6 py-4 border-b">
           <div className="justify-self-start">
             <h2 className="text-2xl font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
@@ -200,6 +217,22 @@ export function PersonalCalendar() {
               <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
+               <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <Paintbrush className="mr-2 h-4 w-4" />
+                    Theme
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+                    <DropdownMenuRadioItem value="default">Default</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="serene">Serene</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="vibrant">Vibrant</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="professional">Professional</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>
@@ -237,8 +270,8 @@ export function PersonalCalendar() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                          <div className="mt-2 overflow-hidden w-full px-1 text-center">
-                            <p className="text-xs text-foreground truncate">{dayEvents[0].content}</p>
-                            {dayEvents.length > 1 && <p className="text-xs text-muted-foreground mt-1">+ {dayEvents.length - 1} more</p>}
+                            <p className="text-xs text-foreground truncate text-center">{dayEvents[0].content}</p>
+                            {dayEvents.length > 1 && <p className="text-xs text-muted-foreground mt-1 text-center">+ {dayEvents.length - 1} more</p>}
                         </div>
                       </TooltipTrigger>
                        <TooltipContent className="p-0">
