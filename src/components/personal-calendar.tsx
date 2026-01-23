@@ -217,7 +217,7 @@ export function PersonalCalendar() {
                 key={day.toString()}
                 onClick={() => handleDateSelect(day)}
                 className={cn(
-                  "relative p-2 border-r border-b flex items-center justify-center min-h-[120px]",
+                  "relative p-2 border-r border-b flex flex-col items-center justify-center min-h-[120px]",
                   isSameMonth(day, currentMonth) ? 'bg-background' : 'bg-muted/50 text-muted-foreground',
                   canEdit && 'cursor-pointer hover:bg-accent/20 transition-colors',
                   "overflow-hidden"
@@ -236,9 +236,17 @@ export function PersonalCalendar() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                         <div className="mt-2 overflow-hidden w-full px-1 text-center">
-                            <p className="text-xs text-foreground truncate text-center">{dayEvents[0].content}</p>
-                            {dayEvents.length > 1 && <p className="text-xs text-muted-foreground mt-1 text-center">+ {dayEvents.length - 1} more</p>}
+                         <div className="w-full px-1 text-center">
+                           {dayEvents.slice(0, 2).map((event) => (
+                                <p key={event.id} className="text-xs text-foreground truncate text-center mt-1 first:mt-0">
+                                    {event.content}
+                                </p>
+                            ))}
+                            {dayEvents.length > 2 && (
+                                <p className="text-xs text-muted-foreground mt-1 text-center">
+                                    + {dayEvents.length - 2} more
+                                </p>
+                            )}
                         </div>
                       </TooltipTrigger>
                        <TooltipContent className="p-0">
