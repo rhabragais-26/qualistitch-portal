@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -580,37 +579,33 @@ export function ProductManagement() {
                                 </div>
                                 </section>
                                  <section>
-                                    <div className="overflow-y-auto border p-2 rounded-md mt-2 text-sm">
-                                        <div className="grid grid-cols-5 gap-4 mb-2 font-bold text-center border-b pb-2">
-                                            <div className="col-span-3 text-left">Product Name</div>
-                                            <div>Product Category</div>
-                                            <div>Action</div>
-                                        </div>
-                                        <div className="space-y-2">
+                                    <div className="space-y-2 overflow-y-auto border p-2 rounded-md mt-2 text-sm">
+                                        <div className="grid grid-cols-5 gap-4 items-start">
+                                            <div className="col-span-3 text-left font-bold border-b pb-2">Product Name</div>
+                                            <div className="font-bold text-center border-b pb-2">Product Category</div>
+                                            <div className="font-bold text-center border-b pb-2">Action</div>
+
                                             {Object.entries(config.productGroupMapping).map(([name, group]) => (
-                                                <div key={name} className="grid grid-cols-5 gap-4 items-start">
-                                                    <span className="whitespace-nowrap col-span-3">{name}</span>
+                                                <React.Fragment key={name}>
+                                                    <span className="whitespace-nowrap col-span-3 self-center">{name}</span>
                                                     <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
-                                                        <SelectTrigger className="h-8 text-xs">
+                                                        <SelectTrigger className="h-8 text-xs w-full">
                                                             <SelectValue />
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                                                         </SelectContent>
                                                     </Select>
-                                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive mx-auto" onClick={() => handleRemoveProduct(name)}>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive mx-auto" onClick={() => handleRemoveProduct(name)}>
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
-                                                </div>
+                                                </React.Fragment>
                                             ))}
                                         </div>
                                     </div>
                                 </section>
                             </div>
                         </div>
-                        <DialogFooter className="flex items-center justify-center px-6 pt-2">
-                            <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
-                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </div>
