@@ -332,7 +332,7 @@ export function NotificationBell() {
                                         <Badge variant={notification.isDisapproved ? 'destructive' : 'success'}>Progress</Badge>
                                     </div>
                                     <div className="mt-2 w-full">
-                                      <p className={cn("text-sm", !notification.isRead ? "text-foreground" : "text-muted-foreground")}>
+                                      <p className={cn("text-sm w-full pl-4 text-black", !notification.isRead ? "text-foreground" : "text-muted-foreground")}>
                                           {notification.message}
                                       </p>
                                       <p className={cn("text-xs mt-1", notification.isDisapproved ? "text-destructive font-bold" : "text-gray-500")}>
@@ -347,7 +347,7 @@ export function NotificationBell() {
                         }
 
                         const notification = n as JoNoteNotification | GlobalAnnouncement;
-                        const title = isAnnouncement ? 'Announcement' : 'Reminder';
+                        const title = isAnnouncement ? 'Important Notice!' : 'Reminder';
                         
                         return (
                          <div 
@@ -376,7 +376,7 @@ export function NotificationBell() {
                                 )}
                                 <Badge variant={isAnnouncement ? 'warning' : 'destructive'} className={cn(isAnnouncement && 'bg-yellow-200 text-yellow-800')}>{title}</Badge> 
                             </div>
-                            <p className="text-sm mt-1 pl-4 text-black">"{notification.noteContent}"</p>
+                            <p className="text-sm mt-1 pl-4 text-black w-full">"{notification.noteContent}"</p>
                             <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
                               {format(new Date(notification.notifyAt), 'MMM dd, yyyy @ h:mm a')}
                             </p>
