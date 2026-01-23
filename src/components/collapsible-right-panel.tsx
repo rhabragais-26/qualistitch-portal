@@ -56,6 +56,7 @@ function JoNotesPanel() {
     const [currentNote, setCurrentNote] = useState('');
     const [allNotes, setAllNotes] = useState<Record<string, { lead: Lead; notes: Note[] }>>({});
     const [suggestions, setSuggestions] = useState<Lead[]>([]);
+    const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
 
     const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
     const { data: allLeads } = useCollection<Lead>(leadsQuery);
@@ -146,6 +147,13 @@ function JoNotesPanel() {
         }
         loadNotes(); // Reload and re-sort
     };
+    
+    const handleDeleteAllNotes = () => {
+        if (!deletingLeadId) return;
+        localStorage.removeItem(`notes_${deletingLeadId}`);
+        loadNotes();
+        setDeletingLeadId(null);
+    };
 
     const filteredNotes = useMemo(() => {
         if (!searchTerm) return allNotes;
@@ -220,20 +228,36 @@ function JoNotesPanel() {
                             <div key={leadId} className="p-3 border rounded-lg bg-gray-50 text-xs">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <p className="font-semibold text-sm">{toTitleCase(lead.customerName)}</p>
-                                        <p className="text-gray-600">{lead.joNumber ? formatJoNumber(lead.joNumber) : 'No J.O. yet'}</p>
+                                        <p className="font-semibold text-sm">
+                                            {toTitleCase(lead.customerName)}{' '}
+                                            <span className="text-gray-600 font-normal">
+                                                ({lead.joNumber ? formatJoNumber(lead.joNumber) : 'No J.O. yet'})
+                                            </span>
+                                        </p>
                                         <p className="text-gray-500">{getContactDisplay(lead)}</p>
                                     </div>
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => { setSelectedLead(lead); setCurrentNote(''); }}>
-                                                    <PlusCircle className="h-5 w-5" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>Add note to this lead</p></TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
+                                    <div className="flex items-center">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => { setSelectedLead(lead); setCurrentNote(''); }}>
+                                                        <PlusCircle className="h-5 w-5" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>Add note to this lead</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingLeadId(leadId)}>
+                                                        <Trash2 className="h-5 w-5" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>Delete all notes for this lead</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
                                 </div>
                                 <div className="mt-2 space-y-2 pl-4 border-l-2 ml-1">
                                     {notes.map(note => (
@@ -259,7 +283,7 @@ function JoNotesPanel() {
             {selectedLead && (
                 <div className="p-2 mt-auto border-t animate-in slide-in-from-bottom-2 bg-white">
                     <div className="flex justify-between items-center mb-1">
-                        <p className="text-xs font-medium">Adding note for: <span className="font-bold">{toTitleCase(selectedLead.customerName)}</span></p>
+                        <p className="text-xs font-medium">Adding note for: <span className="font-bold">{toTitleCase(selectedLead.customerName)}</span> ({selectedLead.joNumber ? formatJoNumber(selectedLead.joNumber) : 'No J.O. yet'})</p>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedLead(null)}><X className="h-4 w-4"/></Button>
                     </div>
                     <Textarea 
@@ -274,6 +298,22 @@ function JoNotesPanel() {
                     </div>
                 </div>
             )}
+             <AlertDialog open={!!deletingLeadId} onOpenChange={(isOpen) => !isOpen && setDeletingLeadId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete all notes for this job order. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteAllNotes} className="bg-destructive hover:bg-destructive/90">
+                            Delete All Notes
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
@@ -509,9 +549,8 @@ export function CollapsibleRightPanel() {
         className="fixed z-50 no-print"
         style={{ 
             top: `${yPosition}px`, 
-            transform: isExpanded ? 'translateX(0)' : 'translateX(100%)',
-            right: '24rem',
-            transition: 'transform 0.3s ease-in-out',
+            right: isExpanded ? '24rem' : '0',
+            transition: 'right 0.3s ease-in-out',
         }}
       >
         <TooltipProvider>
@@ -522,8 +561,9 @@ export function CollapsibleRightPanel() {
                 onClick={handleButtonClick}
                 onMouseDown={handleMouseDown}
                 className={cn(
-                    "relative h-48 w-9 p-1 rounded-r-none rounded-l-lg text-white flex items-center justify-center transition-colors",
-                    isExpanded ? 'bg-[#81cdc6]' : 'bg-[#81cdc6] hover:bg-[#69bab2]'
+                    "relative h-48 w-9 p-1 rounded-r-none rounded-l-lg flex items-center justify-center transition-colors",
+                    isExpanded ? 'bg-[#81cdc6]' : 'bg-[#81cdc6] hover:bg-[#69bab2]',
+                    "text-white"
                 )}
               >
                 <span className="[writing-mode:vertical-rl] rotate-180 font-bold tracking-wider">PERSONAL NOTES</span>
@@ -554,6 +594,3 @@ export function CollapsibleRightPanel() {
     </>
   );
 }
-
-
-
