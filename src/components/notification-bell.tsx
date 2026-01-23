@@ -237,7 +237,7 @@ export function NotificationBell() {
         setProgressNotifications(updatedProgress);
     }
     else {
-        const allStoredNotifications: JoNoteNotification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
+        const allStoredNotifications: JoNoteNotification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]') as JoNoteNotification[];
         const newStoredNotifications = allStoredNotifications.map(n => 
             n.id === notificationId ? { ...n, isRead: true } : n
         );
@@ -284,8 +284,8 @@ export function NotificationBell() {
         </div>
       </PopoverTrigger>
       <PopoverContent onOpenAutoFocus={(event) => event.preventDefault()} className="w-96 p-0" align="end">
-        <Card className="border-none shadow-none">
-          <CardHeader className="p-4 border-b">
+        <Card className="border-none shadow-none h-[450px] flex flex-col">
+          <CardHeader className="p-4 border-b flex-shrink-0">
             <div className="flex justify-between items-center">
               <CardTitle className="text-sm font-semibold">Notifications</CardTitle>
               {sortedNotifications.length > 0 && (
@@ -298,9 +298,9 @@ export function NotificationBell() {
               )}
             </div>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 flex-1 overflow-hidden">
             {sortedNotifications.length > 0 ? (
-                <ScrollArea className="h-80 modern-scrollbar">
+                <ScrollArea className="h-full modern-scrollbar">
                   <div className="p-2 space-y-1">
                     {displayedNotifications.map(n => {
                         const isAnnouncement = 'leadId' in n && n.leadId === 'global';
@@ -313,8 +313,9 @@ export function NotificationBell() {
                                 <div 
                                     key={notification.id} 
                                     className={cn(
-                                        'p-3 rounded-lg cursor-pointer hover:bg-accent/50 bg-muted/30',
-                                        !notification.isRead && 'bg-blue-50'
+                                        'p-3 rounded-lg cursor-pointer hover:bg-accent/50',
+                                        !notification.isRead && 'bg-blue-50',
+                                        notification.isRead && 'bg-muted/30'
                                     )}
                                     onClick={() => handleMarkAsRead(notification.id)}
                                 >
@@ -347,8 +348,9 @@ export function NotificationBell() {
                          <div 
                           key={notification.id} 
                           className={cn(
-                            'p-3 rounded-lg cursor-pointer hover:bg-accent/50 bg-muted/30',
-                             !notification.isRead && (isAnnouncement ? 'bg-yellow-100' : 'bg-blue-50')
+                            'p-3 rounded-lg cursor-pointer hover:bg-accent/50',
+                             !notification.isRead && (isAnnouncement ? 'bg-yellow-100' : 'bg-blue-50'),
+                             notification.isRead && 'bg-muted/30'
                           )}
                           onClick={() => handleMarkAsRead(notification.id)}
                         >
@@ -372,13 +374,13 @@ export function NotificationBell() {
                   </div>
                 </ScrollArea>
             ) : (
-              <div className="flex items-center justify-center h-80 text-sm text-muted-foreground">
+              <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                     No new notifications.
                 </div>
             )}
           </CardContent>
           {sortedNotifications.length > 5 && !showAll && (
-              <CardFooter className="p-2 border-t justify-center">
+              <CardFooter className="p-2 border-t justify-center flex-shrink-0">
                   <Button variant="link" className="text-sm h-auto p-0" onClick={() => setShowAll(true)}>
                       Load older notifications
                   </Button>
