@@ -534,11 +534,11 @@ const HeaderMemo = React.memo(function Header({
                 <RadioGroup value={announcementType} onValueChange={(v: 'banner' | 'notification') => setAnnouncementType(v)} className="flex space-x-4">
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="banner" id="type-banner" />
-                        <Label htmlFor="type-banner">Real-time Banner</Label>
+                        <Label htmlFor="type-banner">Urgent</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="notification" id="type-notification" />
-                        <Label htmlFor="type-notification">Notification Popover</Label>
+                        <Label htmlFor="type-notification">Non-Urgent</Label>
                     </div>
                 </RadioGroup>
             </div>
