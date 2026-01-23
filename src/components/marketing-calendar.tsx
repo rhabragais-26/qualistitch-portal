@@ -25,7 +25,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Upload, Trash2, ChevronLeft, ChevronRight, Edit, Plus, ArrowLeft } from 'lucide-react';
+import { Upload, Trash2, ChevronLeft, ChevronRight, Edit, Plus, ArrowLeft, X } from 'lucide-react';
 import Image from 'next/image';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, collection, query, deleteDoc } from 'firebase/firestore';
@@ -285,7 +285,7 @@ export function MarketingCalendar() {
         </header>
         <div className="flex-1 grid grid-cols-7">
           {weekDays.map(day => (
-            <div key={day} className="text-center font-bold py-2 border-b border-r">
+            <div key={day} className="text-center font-bold border-b border-r py-2">
               {day}
             </div>
           ))}
@@ -316,11 +316,9 @@ export function MarketingCalendar() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                         <div className="mt-2 overflow-hidden">
-                          <div>
+                         <div className="mt-2 overflow-hidden w-full px-1">
                             <p className="text-xs text-foreground truncate text-center">{dayEvents[0].content}</p>
                             {dayEvents.length > 1 && <p className="text-xs text-muted-foreground mt-1 text-center">+ {dayEvents.length - 1} more</p>}
-                          </div>
                         </div>
                       </TooltipTrigger>
                        <TooltipContent className="p-0">
