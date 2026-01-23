@@ -27,7 +27,6 @@ import {
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Calendar } from './ui/calendar';
 import { format } from 'date-fns';
 
 
@@ -74,8 +73,7 @@ function JoNotesPanel() {
     const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
     const [deletingNote, setDeletingNote] = useState<{ leadId: string; noteId: string } | null>(null);
     const [notificationPopover, setNotificationPopover] = useState<{ noteId: string; noteContent: string, lead: Lead } | null>(null);
-    const [notificationDate, setNotificationDate] = useState<Date | undefined>();
-    const [notificationTime, setNotificationTime] = useState('09:00');
+    const [notificationDateTime, setNotificationDateTime] = useState('');
 
     const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
     const { data: allLeads } = useCollection<Lead>(leadsQuery);
@@ -188,14 +186,12 @@ function JoNotesPanel() {
     };
 
     const handleSetNotification = () => {
-        if (!notificationPopover || !notificationDate) {
-            toast({ variant: 'destructive', title: 'Please select a date.' });
+        if (!notificationPopover || !notificationDateTime) {
+            toast({ variant: 'destructive', title: 'Please select a date and time.' });
             return;
         }
 
-        const [hours, minutes] = notificationTime.split(':').map(Number);
-        const notifyAt = new Date(notificationDate);
-        notifyAt.setHours(hours, minutes, 0, 0);
+        const notifyAt = new Date(notificationDateTime);
 
         if (notifyAt < new Date()) {
             toast({ variant: 'destructive', title: 'Cannot set notification in the past.' });
@@ -225,8 +221,7 @@ function JoNotesPanel() {
         toast({ title: 'Notification Set!', description: `You will be notified on ${format(notifyAt, 'MMM dd, yyyy @ h:mm a')}` });
         
         setNotificationPopover(null);
-        setNotificationDate(undefined);
-        setNotificationTime('09:00');
+        setNotificationDateTime('');
     };
 
     const filteredNotes = useMemo(() => {
@@ -351,16 +346,36 @@ function JoNotesPanel() {
                                             <p className="whitespace-pre-wrap">{note.content}</p>
                                             <p className="text-xs text-gray-400 mt-1">{new Date(note.timestamp).toLocaleString()}</p>
                                             <div className="absolute top-1 right-1 flex items-center">
-                                                <Popover open={notificationPopover?.noteId === note.id} onOpenChange={(isOpen) => setNotificationPopover(isOpen ? { noteId: note.id, noteContent: note.content, lead } : null)}>
+                                                <Popover open={notificationPopover?.noteId === note.id} onOpenChange={(isOpen) => {
+                                                    if (isOpen) {
+                                                        setNotificationPopover({ noteId: note.id, noteContent: note.content, lead });
+                                                        const tomorrow = new Date();
+                                                        tomorrow.setDate(tomorrow.getDate() + 1);
+                                                        tomorrow.setHours(9, 0, 0, 0);
+                                                        const yyyy = tomorrow.getFullYear();
+                                                        const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+                                                        const dd = String(tomorrow.getDate()).padStart(2, '0');
+                                                        const hh = String(tomorrow.getHours()).padStart(2, '0');
+                                                        const min = String(tomorrow.getMinutes()).padStart(2, '0');
+                                                        setNotificationDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}`);
+                                                    } else {
+                                                        setNotificationPopover(null);
+                                                    }
+                                                }}>
                                                     <PopoverTrigger asChild>
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-500 hover:bg-gray-200">
                                                             <Clock className="h-4 w-4" />
                                                         </Button>
                                                     </PopoverTrigger>
-                                                    <PopoverContent className="w-auto p-0">
-                                                        <Calendar mode="single" selected={notificationDate} onSelect={setNotificationDate} initialFocus />
-                                                        <div className="p-2 border-t">
-                                                            <Input type="time" value={notificationTime} onChange={(e) => setNotificationTime(e.target.value)} />
+                                                    <PopoverContent className="w-auto p-4">
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="notification-datetime">Set Notification Time</Label>
+                                                            <Input
+                                                                id="notification-datetime"
+                                                                type="datetime-local"
+                                                                value={notificationDateTime}
+                                                                onChange={(e) => setNotificationDateTime(e.target.value)}
+                                                            />
                                                             <Button onClick={handleSetNotification} className="w-full mt-2">Set Notification</Button>
                                                         </div>
                                                     </PopoverContent>
