@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -315,7 +314,7 @@ export function NotificationBell() {
                                     key={notification.id} 
                                     className={cn(
                                         'p-3 rounded-lg cursor-pointer hover:bg-accent/50',
-                                        !notification.isRead && 'bg-blue-50',
+                                        !notification.isRead && 'bg-blue-100',
                                         notification.isRead && 'bg-muted/30'
                                     )}
                                     onClick={() => handleMarkAsRead(notification.id)}
@@ -354,7 +353,7 @@ export function NotificationBell() {
                           key={notification.id} 
                           className={cn(
                             'p-3 rounded-lg cursor-pointer hover:bg-accent/50',
-                             !notification.isRead && (isAnnouncement ? 'bg-yellow-100' : 'bg-blue-50'),
+                             !notification.isRead && (isAnnouncement ? 'bg-yellow-200' : 'bg-blue-100'),
                              notification.isRead && 'bg-muted/30'
                           )}
                           onClick={() => handleMarkAsRead(notification.id)}
