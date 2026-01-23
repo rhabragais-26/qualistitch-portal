@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,6 +12,7 @@ type AppState = {
   announcementText?: string;
   announcementType?: 'banner' | 'notification';
   announcementTimestamp?: string;
+  announcementSender?: string;
 };
 
 export function RealtimeBanner() {
@@ -53,7 +55,9 @@ export function RealtimeBanner() {
     <div className="fixed top-1/2 left-0 right-0 z-[200] w-full -translate-y-1/2 bg-black/70 backdrop-blur-sm pointer-events-auto">
       <div className="relative flex items-center h-16 overflow-hidden">
         <h2 className="absolute whitespace-nowrap text-3xl font-bold text-white animate-marquee">
+          <span className="text-yellow-400">Announcement: </span>
           {appState?.announcementText}
+          {appState?.announcementSender && <span className="italic"> - {appState.announcementSender}</span>}
         </h2>
         <Button
           variant="ghost"
@@ -69,4 +73,4 @@ export function RealtimeBanner() {
   );
 }
 
-  
+    

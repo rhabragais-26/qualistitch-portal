@@ -147,7 +147,7 @@ const HeaderMemo = React.memo(function Header({
   }, []);
   
   const handleSendAnnouncement = async () => {
-    if (!announcementText.trim() || !appStateRef) {
+    if (!announcementText.trim() || !appStateRef || !userProfile) {
         toast({
             variant: 'destructive',
             title: 'Announcement is empty',
@@ -161,6 +161,7 @@ const HeaderMemo = React.memo(function Header({
             announcementText,
             announcementType,
             announcementTimestamp: new Date().toISOString(),
+            announcementSender: userProfile.nickname,
         }, { merge: true });
 
         toast({
@@ -560,4 +561,4 @@ HeaderMemo.displayName = 'Header';
 
 export { HeaderMemo as Header };
 
-  
+    
