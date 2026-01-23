@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -136,7 +137,7 @@ export function NotificationBell() {
             const newAnnouncement: GlobalAnnouncement = {
                 id: newAnnouncementId,
                 leadId: 'global',
-                customerName: 'Important Notice!',
+                customerName: 'ANNOUNCEMENT',
                 joNumber: appState.announcementSender || 'Admin',
                 noteContent: appState.announcementText,
                 notifyAt: appState.announcementTimestamp,
@@ -205,7 +206,7 @@ export function NotificationBell() {
                 title = `Progress: ${latestNotification.joNumber}`;
                 body = latestNotification.message;
             } else if (latestNotification.leadId === 'global') { // Global Announcement
-                title = `Announcement from ${latestNotification.joNumber}`;
+                title = `ANNOUNCEMENT from ${latestNotification.joNumber}`;
                 body = latestNotification.noteContent;
             } else { // JO Note Reminder
                 title = `Reminder: ${latestNotification.joNumber}`;
@@ -346,7 +347,7 @@ export function NotificationBell() {
                         }
 
                         const notification = n as JoNoteNotification | GlobalAnnouncement;
-                        const title = isAnnouncement ? 'Important Notice!' : 'Reminder';
+                        const title = isAnnouncement ? 'Announcement' : 'Reminder';
                         
                         return (
                          <div 
@@ -359,15 +360,20 @@ export function NotificationBell() {
                           onClick={() => handleMarkAsRead(notification.id)}
                         >
                             <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="text-sm font-bold text-gray-800">{notification.joNumber}</p>
-                                    {!isAnnouncement && (
+                                {isAnnouncement ? (
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-800">ANNOUNCEMENT</p>
+                                        <p className="text-xs text-muted-foreground">by {notification.joNumber}</p>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-800">{notification.joNumber}</p>
                                         <p className="text-xs text-muted-foreground">
                                             {notification.customerName}
                                             {(notification as JoNoteNotification).contactNumber && ` | ${(notification as JoNoteNotification).contactNumber}`}
                                         </p>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
                                 <Badge variant={isAnnouncement ? 'warning' : 'destructive'} className={cn(isAnnouncement && 'bg-yellow-200 text-yellow-800')}>{title}</Badge> 
                             </div>
                             <p className="text-sm mt-1 pl-4 text-black">"{notification.noteContent}"</p>
