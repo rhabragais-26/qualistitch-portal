@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -286,7 +285,7 @@ export function MarketingCalendar() {
         </header>
         <div className="flex-1 grid grid-cols-7">
           {weekDays.map(day => (
-            <div key={day} className="flex items-center justify-center font-bold border-b border-r py-2">
+            <div key={day} className="text-center font-bold py-2 border-b border-r">
               {day}
             </div>
           ))}
@@ -298,7 +297,7 @@ export function MarketingCalendar() {
                 key={day.toString()}
                 onClick={() => handleDateSelect(day)}
                 className={cn(
-                  "relative p-2 border-r border-b flex flex-col min-h-[120px]",
+                  "relative p-2 border-r border-b flex flex-col items-center justify-center min-h-[120px]",
                   isSameMonth(day, currentMonth) ? 'bg-background' : 'bg-muted/50 text-muted-foreground',
                   canEdit && 'cursor-pointer hover:bg-accent/20 transition-colors',
                   "overflow-hidden"
@@ -307,7 +306,7 @@ export function MarketingCalendar() {
                 <time
                   dateTime={format(day, 'yyyy-MM-dd')}
                   className={cn(
-                    "text-sm font-medium",
+                    "absolute top-2 left-2 text-sm font-medium",
                     isToday(day) && "flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground"
                   )}
                 >
@@ -317,9 +316,11 @@ export function MarketingCalendar() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                         <div className="flex-1 mt-2 overflow-hidden">
-                          <p className="text-xs text-foreground truncate text-center">{dayEvents[0].content}</p>
-                          {dayEvents.length > 1 && <p className="text-xs text-muted-foreground mt-1 text-center">+ {dayEvents.length - 1} more</p>}
+                         <div className="mt-2 overflow-hidden">
+                          <div>
+                            <p className="text-xs text-foreground truncate text-center">{dayEvents[0].content}</p>
+                            {dayEvents.length > 1 && <p className="text-xs text-muted-foreground mt-1 text-center">+ {dayEvents.length - 1} more</p>}
+                          </div>
                         </div>
                       </TooltipTrigger>
                        <TooltipContent className="p-0">
