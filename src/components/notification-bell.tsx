@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -137,7 +136,7 @@ export function NotificationBell() {
             const newAnnouncement: GlobalAnnouncement = {
                 id: newAnnouncementId,
                 leadId: 'global',
-                customerName: 'Non-Urgent Announcement',
+                customerName: 'Important Notice!',
                 joNumber: appState.announcementSender || 'Admin',
                 noteContent: appState.announcementText,
                 notifyAt: appState.announcementTimestamp,
@@ -322,7 +321,7 @@ export function NotificationBell() {
                                 >
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <p className="text-sm font-bold">{notification.joNumber}</p>
+                                            <p className="text-sm font-bold text-gray-800">{notification.joNumber}</p>
                                             <div className="text-xs text-muted-foreground mt-1">
                                                 <p>{notification.customerName}</p>
                                                 {notification.companyName && notification.companyName !== '-' && <p>{notification.companyName}</p>}
@@ -357,7 +356,7 @@ export function NotificationBell() {
                         >
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-sm font-bold">{isAnnouncement ? 'Non-Urgent Announcement' : notification.joNumber}</p>
+                                    <p className="text-sm font-bold text-gray-800">{isAnnouncement ? 'Important Notice!' : notification.joNumber}</p>
                                     {isAnnouncement ? (
                                         <p className="text-xs text-muted-foreground">from {notification.joNumber}</p>
                                     ) : (
@@ -372,7 +371,7 @@ export function NotificationBell() {
                                     : <span className="ml-2 text-destructive text-xs font-semibold whitespace-nowrap">Reminder</span>
                                 }
                             </div>
-                            <p className="text-base mt-1 font-bold w-full text-black pl-4">"{notification.noteContent}"</p>
+                            <p className="text-base mt-1 font-bold text-black pl-4">"{notification.noteContent}"</p>
                             <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
                               {format(new Date(notification.notifyAt), 'MMM dd, yyyy @ h:mm a')}
                             </p>
