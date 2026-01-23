@@ -285,7 +285,7 @@ export function ProductManagement() {
     setConfig(newConfig);
     setNewCategoryName('');
     setIsAddCategoryOpen(false);
-    toast({ title: 'Category Added', description: `"${newCategoryName.trim()}" is ready to be configured and used.`});
+    toast({ title: 'Category Staged', description: `"${newCategoryName.trim()}" is ready to be configured and saved.`});
   };
 
   const saveConfiguration = async (configToSave: EditablePricingConfig, successMessage?: string) => {
@@ -382,8 +382,8 @@ export function ProductManagement() {
     if (!config) return;
     await saveConfiguration(config);
   };
-
-  const handleSaveCategoryName = async () => {
+  
+  const handleSaveCategoryName = () => {
     if (!editingCategory || !config) return;
     const { oldName, newName } = editingCategory;
 
@@ -407,11 +407,12 @@ export function ProductManagement() {
         }
     }
     
+    setConfig(newConfig);
     setEditingCategory(null);
-    await saveConfiguration(newConfig, `Category "${oldName}" was successfully renamed to "${newName.trim()}".`);
+    toast({ title: 'Category Renamed (Staged)', description: `"${oldName}" will be renamed to "${newName.trim()}" upon saving.`});
   };
 
-  const handleConfirmDeleteCategory = async () => {
+  const handleConfirmDeleteCategory = () => {
     if (!deletingCategory || !config) return;
 
     const currentCategories = Object.keys(config.pricingTiers);
@@ -427,7 +428,6 @@ export function ProductManagement() {
 
     const newConfig = JSON.parse(JSON.stringify(config));
     
-    // Find a category to reassign products to
     const fallbackCategory = currentCategories.find(c => c !== deletingCategory);
     if (!fallbackCategory) {
        toast({ variant: 'destructive', title: 'Error', description: 'Could not find a category to reassign products to.' });
@@ -435,20 +435,18 @@ export function ProductManagement() {
        return;
     }
 
-    // Re-assign products from the deleted category to the fallback category
     for (const productName in newConfig.productGroupMapping) {
       if (newConfig.productGroupMapping[productName] === deletingCategory) {
         newConfig.productGroupMapping[productName] = fallbackCategory;
       }
     }
     
-    // Delete the category itself
     delete newConfig.pricingTiers[deletingCategory];
     
+    setConfig(newConfig);
     setDeletingCategory(null);
-    await saveConfiguration(newConfig, `Category "${deletingCategory}" deleted. Its products have been moved to "${fallbackCategory}".`);
+    toast({ title: 'Category Deleted (Staged)', description: `"${deletingCategory}" will be deleted upon saving. Its products have been moved to "${fallbackCategory}".`});
   };
-
 
   const productGroups = useMemo(() => config ? Object.keys(config.pricingTiers).sort() as ProductGroup[] : [], [config]);
   const addOnTypes = useMemo(() => config ? (Object.keys(config.addOnPricing) as AddOnType[]).filter(type => type !== 'rushFee' && type !== 'shippingFee') : [], [config]);
@@ -608,6 +606,7 @@ export function ProductManagement() {
                         </div>
                         <DialogFooter className="flex items-center justify-center px-6 border-t pt-2">
                             <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
+                            <Button onClick={handleSaveChanges} disabled={!isDirty}>Save Changes</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
@@ -801,4 +800,3 @@ export function ProductManagement() {
     </>
   );
 }
-
