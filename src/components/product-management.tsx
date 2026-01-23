@@ -361,7 +361,7 @@ export function ProductManagement() {
     if (!isValid) return;
   
     try {
-      await setDoc(pricingConfigRef, validatedConfig, { merge: true });
+      await setDoc(pricingConfigRef, validatedConfig); // Removed { merge: true }
       toast({
         title: 'Success!',
         description: successMessage || 'Pricing configuration has been updated.',
@@ -380,10 +380,10 @@ export function ProductManagement() {
 
   const handleSaveChanges = async () => {
     if (!config) return;
-    await saveConfiguration(config);
+    await saveConfiguration(config, 'Product and category changes have been saved.');
   };
   
-  const handleSaveCategoryName = () => {
+  const handleSaveCategoryName = async () => {
     if (!editingCategory || !config) return;
     const { oldName, newName } = editingCategory;
 
@@ -407,12 +407,11 @@ export function ProductManagement() {
         }
     }
     
-    setConfig(newConfig);
+    await saveConfiguration(newConfig, `Category "${oldName}" renamed to "${newName.trim()}".`);
     setEditingCategory(null);
-    toast({ title: 'Category Renamed (Staged)', description: `"${oldName}" will be renamed to "${newName.trim()}" upon saving.`});
   };
 
-  const handleConfirmDeleteCategory = () => {
+  const handleConfirmDeleteCategory = async () => {
     if (!deletingCategory || !config) return;
 
     const currentCategories = Object.keys(config.pricingTiers);
@@ -443,9 +442,8 @@ export function ProductManagement() {
     
     delete newConfig.pricingTiers[deletingCategory];
     
-    setConfig(newConfig);
+    await saveConfiguration(newConfig, `Category "${deletingCategory}" deleted. Products moved to "${fallbackCategory}".`);
     setDeletingCategory(null);
-    toast({ title: 'Category Deleted (Staged)', description: `"${deletingCategory}" will be deleted upon saving. Its products have been moved to "${fallbackCategory}".`});
   };
 
   const productGroups = useMemo(() => config ? Object.keys(config.pricingTiers).sort() as ProductGroup[] : [], [config]);
