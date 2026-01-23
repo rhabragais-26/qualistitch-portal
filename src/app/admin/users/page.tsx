@@ -24,8 +24,8 @@ export default function AdminUsersPage() {
   return (
       <Header>
         <div className="p-4 sm:p-6 lg:p-8 space-y-8">
-          <AdminUsersTable />
           <ProductManagement />
+          <AdminUsersTable />
         </div>
       </Header>
   );
