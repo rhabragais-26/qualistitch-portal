@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -331,7 +330,7 @@ export function NotificationBell() {
                                         </div>
                                         <Badge variant={notification.isDisapproved ? 'destructive' : 'success'}>Progress</Badge>
                                     </div>
-                                    <p className={cn("text-sm mt-2", !notification.isRead ? "text-foreground font-semibold" : "text-muted-foreground")}>
+                                    <p className={cn("text-sm mt-2 w-full", !notification.isRead ? "text-foreground font-semibold" : "text-muted-foreground")}>
                                         {notification.message}
                                     </p>
                                     <p className={cn("text-xs mt-1", notification.isDisapproved ? "text-destructive font-bold" : "text-gray-500")}>
@@ -369,7 +368,7 @@ export function NotificationBell() {
                                     : <span className="ml-2 text-destructive text-xs font-semibold whitespace-nowrap">Reminder</span>
                                 }
                             </div>
-                            <p className={cn("text-base mt-1 font-bold", !notification.isRead ? "text-foreground" : "text-muted-foreground")}>"{notification.noteContent}"</p>
+                            <p className="text-base mt-1 font-bold w-full text-black pl-4">"{notification.noteContent}"</p>
                             <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
                               {format(new Date(notification.notifyAt), 'MMM dd, yyyy @ h:mm a')}
                             </p>
