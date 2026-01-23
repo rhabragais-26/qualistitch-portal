@@ -65,6 +65,10 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
+    match /marketingCalendar/{eventId} {
+      allow read, write: if request.auth != null;
+    }
+
     match /operational_expenses/{expenseId} {
       allow read, write: if request.auth != null;
     }

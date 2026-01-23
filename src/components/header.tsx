@@ -41,6 +41,7 @@ import {
   BarChart,
   ShoppingCart,
   Building,
+  CalendarIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -301,6 +302,10 @@ const HeaderMemo = React.memo(function Header({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleNavigation('/marketing/calendar')}>
+                      <CalendarIcon className="mr-2" />
+                      Marketing Calendar
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/marketing/campaigns')}>
                       <Ticket className="mr-2" />
                       Inquiries per Ticket Size
