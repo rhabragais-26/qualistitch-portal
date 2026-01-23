@@ -343,12 +343,12 @@ const HeaderMemo = React.memo(function Header({
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/sales/audit-for-shipment')}>
                       <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center">
-                          <FileCheck className="mr-2" />
+                        <div className="flex items-center gap-2">
+                          <FileCheck />
                           <span>Audit for Shipment</span>
                         </div>
                         {auditQueueCount > 0 && (
-                          <Badge variant="destructive" className="h-4 w-4 shrink-0 justify-center rounded-full p-0 ml-2">
+                          <Badge variant="destructive" className="h-4 w-4 shrink-0 justify-center rounded-full p-0">
                             {auditQueueCount}
                           </Badge>
                         )}
