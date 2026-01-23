@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -371,7 +370,7 @@ function JoNotesPanel() {
                                         </TooltipProvider>
                                     </div>
                                 </div>
-                                <div className="mt-2 space-y-2 pl-4 border-l-2 border-dotted ml-1">
+                                <div className="mt-2 space-y-2 pl-4 border-l-2 ml-1">
                                     {notes.map(note => {
                                         const notificationForThisNote = notifications.find(n => n.id === note.id);
                                         return (
@@ -419,7 +418,7 @@ function JoNotesPanel() {
                                                     </Button>
                                                 </div>
                                                 {notificationForThisNote && (
-                                                    <div className="flex items-center text-xs text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded-md">
+                                                    <div className="flex items-center text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md">
                                                         <Bell className="h-3 w-3 mr-1" />
                                                         <span>{format(new Date(notificationForThisNote.notifyAt), 'MMM dd, h:mm a')}</span>
                                                     </div>
@@ -753,19 +752,21 @@ export function CollapsibleRightPanel() {
                 </CardHeader>
 
                 <CardContent className="flex-1 p-0 overflow-hidden">
-                    <TabsContent value="jo-notes" className="h-full m-0">
-                       <JoNotesPanel />
-                    </TabsContent>
-                    {panels.filter(p => p.type === 'textarea').map(panel => (
-                        <TabsContent key={panel.id} value={panel.id} className="h-full m-0 p-2">
-                           <Textarea 
-                                placeholder="Your notes here..."
-                                className="h-full w-full resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                                value={textareaContents[panel.id] || ''}
-                                onChange={(e) => setTextareaContents(prev => ({...prev, [panel.id]: e.target.value}))}
-                           />
-                        </TabsContent>
-                    ))}
+                  <TabsContent value="jo-notes" className="h-full m-0">
+                    <JoNotesPanel />
+                  </TabsContent>
+                  {panels.filter(p => p.type === 'textarea').map(panel => (
+                      <TabsContent key={panel.id} value={panel.id} className="h-full m-0 p-2">
+                         <div className="h-full">
+                          <Textarea 
+                              placeholder="Your notes here..."
+                              className="h-full w-full resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                              value={textareaContents[panel.id] || ''}
+                              onChange={(e) => setTextareaContents(prev => ({...prev, [panel.id]: e.target.value}))}
+                          />
+                         </div>
+                      </TabsContent>
+                  ))}
                 </CardContent>
             </Tabs>
         </Card>
