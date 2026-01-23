@@ -49,67 +49,17 @@ type Lead = {
     landlineNumber?: string;
 };
 
-const formatJoNumber = (joNumber: number | undefined) => {
-    if (!joNumber) return '';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-};
-
 function JoNotesPanel() {
     const firestore = useFirestore();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-    const [notes, setNotes] = useState<Note[]>([]);
     const [currentNote, setCurrentNote] = useState('');
+    const [allNotes, setAllNotes] = useState<Record<string, { lead: Lead; notes: Note[] }>>({});
+    const [suggestions, setSuggestions] = useState<Lead[]>([]);
 
     const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-    const { data: allLeads, isLoading: areLeadsLoading } = useCollection<Lead>(leadsQuery);
+    const { data: allLeads } = useCollection<Lead>(leadsQuery);
 
-    const suggestions = useMemo(() => {
-        if (!searchTerm || !allLeads) return [];
-        const lowercasedSearchTerm = searchTerm.toLowerCase();
-        return allLeads.filter(lead => 
-            (lead.joNumber && formatJoNumber(lead.joNumber).toLowerCase().includes(lowercasedSearchTerm)) ||
-            lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
-            (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm)) ||
-            (lead.contactNumber && lead.contactNumber.includes(lowercasedSearchTerm)) ||
-            (lead.landlineNumber && lead.landlineNumber.includes(lowercasedSearchTerm))
-        ).slice(0, 5);
-    }, [searchTerm, allLeads]);
-
-    useEffect(() => {
-        if (selectedLead) {
-            const savedNotes = localStorage.getItem(`notes_${selectedLead.id}`);
-            if (savedNotes) {
-                setNotes(JSON.parse(savedNotes));
-            } else {
-                setNotes([]);
-            }
-        } else {
-            setNotes([]);
-        }
-    }, [selectedLead]);
-
-    const handleSaveNote = () => {
-        if (!selectedLead || !currentNote.trim()) return;
-        const newNote: Note = {
-            id: new Date().toISOString(),
-            content: currentNote,
-            timestamp: new Date().toISOString(),
-        };
-        const updatedNotes = [...notes, newNote];
-        setNotes(updatedNotes);
-        localStorage.setItem(`notes_${selectedLead.id}`, JSON.stringify(updatedNotes));
-        setCurrentNote('');
-    };
-    
-    const handleDeleteNote = (noteId: string) => {
-        if (!selectedLead) return;
-        const updatedNotes = notes.filter(n => n.id !== noteId);
-        setNotes(updatedNotes);
-        localStorage.setItem(`notes_${selectedLead.id}`, JSON.stringify(updatedNotes));
-    }
-    
     const getContactDisplay = (lead: Lead) => {
         const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
         const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
@@ -117,23 +67,145 @@ function JoNotesPanel() {
         return mobile || landline || '';
     };
 
+    const formatJoNumber = (joNumber: number | undefined) => {
+        if (!joNumber) return '';
+        const currentYear = new Date().getFullYear().toString().slice(-2);
+        return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+    };
+
+    const loadNotes = useCallback(() => {
+        if (allLeads) {
+            const notesData: Record<string, { lead: Lead; notes: Note[] }> = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('notes_')) {
+                    const leadId = key.substring(6);
+                    const lead = allLeads.find(l => l.id === leadId);
+                    if (lead) {
+                        const savedNotes = localStorage.getItem(key);
+                        if (savedNotes) {
+                            try {
+                                const parsedNotes = JSON.parse(savedNotes);
+                                if (Array.isArray(parsedNotes)) {
+                                    notesData[leadId] = { lead, notes: parsedNotes };
+                                }
+                            } catch (e) {
+                                console.error(`Could not parse notes for ${key}`, e);
+                            }
+                        }
+                    }
+                }
+            }
+
+            const sortedLeadIds = Object.keys(notesData).sort((a, b) => {
+                const lastNoteA = notesData[a].notes[notesData[a].notes.length - 1];
+                const lastNoteB = notesData[b].notes[notesData[b].notes.length - 1];
+                const timeA = lastNoteA ? new Date(lastNoteA.timestamp).getTime() : 0;
+                const timeB = lastNoteB ? new Date(lastNoteB.timestamp).getTime() : 0;
+                return timeB - timeA;
+            });
+            
+            const sortedNotesData: Record<string, { lead: Lead; notes: Note[] }> = {};
+            sortedLeadIds.forEach(id => {
+                sortedNotesData[id] = notesData[id];
+            });
+
+            setAllNotes(sortedNotesData);
+        }
+    }, [allLeads]);
+
+    useEffect(() => {
+        loadNotes();
+    }, [allLeads, loadNotes]);
+
+    const handleSaveNote = () => {
+        if (!selectedLead || !currentNote.trim()) return;
+        const newNote: Note = { id: new Date().toISOString(), content: currentNote, timestamp: new Date().toISOString() };
+        
+        const leadId = selectedLead.id;
+        const existingEntry = allNotes[leadId] || { lead: selectedLead, notes: [] };
+        const updatedNotes = [...existingEntry.notes, newNote];
+        
+        localStorage.setItem(`notes_${leadId}`, JSON.stringify(updatedNotes));
+        loadNotes(); // Reload and re-sort all notes
+        
+        setCurrentNote('');
+        setSelectedLead(null);
+    };
+
+    const handleDeleteNote = (leadId: string, noteId: string) => {
+        const leadEntry = allNotes[leadId];
+        if (!leadEntry) return;
+        
+        const updatedNotes = leadEntry.notes.filter(n => n.id !== noteId);
+        
+        if (updatedNotes.length === 0) {
+            localStorage.removeItem(`notes_${leadId}`);
+        } else {
+            localStorage.setItem(`notes_${leadId}`, JSON.stringify(updatedNotes));
+        }
+        loadNotes(); // Reload and re-sort
+    };
+
+    const filteredNotes = useMemo(() => {
+        if (!searchTerm) return allNotes;
+        const lowercasedSearchTerm = searchTerm.toLowerCase();
+        
+        const filtered: Record<string, { lead: Lead; notes: Note[] }> = {};
+
+        for (const leadId in allNotes) {
+            const { lead, notes } = allNotes[leadId];
+            const matchesLead = 
+                (lead.joNumber && formatJoNumber(lead.joNumber).toLowerCase().includes(lowercasedSearchTerm)) ||
+                lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
+                (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm));
+
+            const matchesNotes = notes.some(note => note.content.toLowerCase().includes(lowercasedSearchTerm));
+
+            if (matchesLead || matchesNotes) {
+                filtered[leadId] = allNotes[leadId];
+            }
+        }
+        return filtered;
+    }, [allNotes, searchTerm]);
+
+    useEffect(() => {
+        if (!searchTerm || !allLeads) {
+            setSuggestions([]);
+            return;
+        }
+        const lowercasedSearchTerm = searchTerm.toLowerCase();
+        
+        const matchingLeads = allLeads.filter(lead => 
+            (lead.joNumber && formatJoNumber(lead.joNumber).toLowerCase().includes(lowercasedSearchTerm)) ||
+            lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
+            (lead.companyName && lead.companyName.toLowerCase().includes(lowercasedSearchTerm))
+        );
+
+        const leadsWithoutNotes = matchingLeads.filter(lead => !allNotes[lead.id]);
+        setSuggestions(leadsWithoutNotes.slice(0, 5));
+
+    }, [searchTerm, allLeads, allNotes]);
+
+
     return (
         <div className="flex flex-col h-full">
             <div className="relative p-2">
                 <Input 
-                    placeholder="Search JO #, Customer, Company, or Contact..."
+                    placeholder="Search notes, or find lead to add note..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    onFocus={() => { if(!selectedLead) setSearchTerm('')}}
+                    onBlur={() => setTimeout(() => setSuggestions([]), 150)}
                     className="h-9"
                 />
-                {suggestions.length > 0 && searchTerm && (
+                {suggestions.length > 0 && (
                     <Card className="absolute z-10 w-[calc(100%-1rem)] mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                        <CardContent className="p-2 max-h-40 overflow-y-auto">
+                        <CardHeader className="p-2 text-xs font-bold text-muted-foreground">Select a lead to add notes</CardHeader>
+                        <CardContent className="p-0">
                             {suggestions.map((lead) => (
-                                <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => { setSelectedLead(lead); setSearchTerm(''); }}>
-                                    <p className="font-semibold">{toTitleCase(lead.customerName)} {lead.joNumber ? `(${formatJoNumber(lead.joNumber)})` : ''}</p>
-                                    <p className="text-xs text-gray-500">{toTitleCase(lead.companyName || '')}</p>
+                                <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100 text-sm" onClick={() => { setSelectedLead(lead); setSearchTerm(''); setSuggestions([]); }}>
+                                    <p className="font-semibold">{toTitleCase(lead.customerName)}</p>
+                                    <p className="text-xs text-gray-500">{lead.joNumber ? formatJoNumber(lead.joNumber) : (lead.companyName || '')}</p>
                                 </div>
                             ))}
                         </CardContent>
@@ -141,40 +213,67 @@ function JoNotesPanel() {
                 )}
             </div>
             
-            {selectedLead && (
-                <div className="relative p-2 m-2 border rounded-lg bg-gray-50 text-xs">
-                    <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6 text-muted-foreground hover:bg-red-100 hover:text-red-500" onClick={() => setSelectedLead(null)}>
-                        <X className="h-4 w-4" />
-                    </Button>
-                    <p><strong>Notes for:</strong> {toTitleCase(selectedLead.customerName)} ({selectedLead.joNumber ? formatJoNumber(selectedLead.joNumber) : 'No J.O. yet'})</p>
-                    <p><strong>Contact:</strong> {getContactDisplay(selectedLead)}</p>
-                </div>
-            )}
-            
             <ScrollArea className="flex-1 px-2">
-                <div className="space-y-2">
-                    {notes.map(note => (
-                        <div key={note.id} className="group relative p-2 text-sm border rounded-md bg-yellow-50">
-                            <p className="whitespace-pre-wrap">{note.content}</p>
-                            <p className="text-xs text-gray-400 mt-1">{new Date(note.timestamp).toLocaleString()}</p>
-                            <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteNote(note.id)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
+                <div className="space-y-4">
+                    {Object.keys(filteredNotes).length > 0 ? (
+                        Object.entries(filteredNotes).map(([leadId, { lead, notes }]) => (
+                            <div key={leadId} className="p-3 border rounded-lg bg-gray-50 text-xs">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-semibold text-sm">{toTitleCase(lead.customerName)}</p>
+                                        <p className="text-gray-600">{lead.joNumber ? formatJoNumber(lead.joNumber) : 'No J.O. yet'}</p>
+                                        <p className="text-gray-500">{getContactDisplay(lead)}</p>
+                                    </div>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => { setSelectedLead(lead); setCurrentNote(''); }}>
+                                                    <PlusCircle className="h-5 w-5" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Add note to this lead</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                                <div className="mt-2 space-y-2 pl-4 border-l-2 ml-1">
+                                    {notes.map(note => (
+                                        <div key={note.id} className="group relative p-2 text-sm border rounded-md bg-yellow-50">
+                                            <p className="whitespace-pre-wrap">{note.content}</p>
+                                            <p className="text-xs text-gray-400 mt-1">{new Date(note.timestamp).toLocaleString()}</p>
+                                            <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteNote(leadId, note.id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center text-gray-500 py-8">
+                           {searchTerm ? `No notes match "${searchTerm}".` : "No notes yet. Use the search bar above to find a lead and add a note."}
                         </div>
-                    ))}
+                    )}
                 </div>
             </ScrollArea>
             
-            <div className="p-2 mt-auto border-t">
-                <Textarea 
-                    placeholder={selectedLead ? "Add a new note..." : "Select a lead to add notes."}
-                    value={currentNote}
-                    onChange={(e) => setCurrentNote(e.target.value)}
-                    disabled={!selectedLead}
-                    className="min-h-[80px]"
-                />
-                <Button onClick={handleSaveNote} disabled={!selectedLead || !currentNote.trim()} className="w-full mt-2">Save Note</Button>
-            </div>
+            {selectedLead && (
+                <div className="p-2 mt-auto border-t animate-in slide-in-from-bottom-2 bg-white">
+                    <div className="flex justify-between items-center mb-1">
+                        <p className="text-xs font-medium">Adding note for: <span className="font-bold">{toTitleCase(selectedLead.customerName)}</span></p>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedLead(null)}><X className="h-4 w-4"/></Button>
+                    </div>
+                    <Textarea 
+                        placeholder="Type your new note here..."
+                        value={currentNote}
+                        onChange={(e) => setCurrentNote(e.target.value)}
+                        className="min-h-[60px]"
+                        autoFocus
+                    />
+                    <div className="flex justify-end gap-2 mt-2">
+                        <Button onClick={handleSaveNote} disabled={!currentNote.trim()} size="sm">Save Note</Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -374,15 +473,12 @@ export function CollapsibleRightPanel() {
                                 )}
                            </TabsTrigger>
                            {panel.type !== 'jo-notes' && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
+                            <button
                                 onClick={(e) => { e.stopPropagation(); setDeletingPanelId(panel.id); }}
                                 className="absolute top-[-5px] right-[-5px] h-4 w-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer"
-                                asChild
                             >
-                                <div><X className="h-3 w-3" /></div>
-                            </Button>
+                                <X className="h-3 w-3" />
+                            </button>
                            )}
                            </div>
                         ))}
@@ -413,8 +509,9 @@ export function CollapsibleRightPanel() {
         className="fixed z-50 no-print"
         style={{ 
             top: `${yPosition}px`, 
-            right: isExpanded ? '24rem' : '0rem',
-            transition: 'right 0.3s ease-in-out'
+            transform: isExpanded ? 'translateX(0)' : 'translateX(100%)',
+            right: '24rem',
+            transition: 'transform 0.3s ease-in-out',
         }}
       >
         <TooltipProvider>
@@ -457,5 +554,6 @@ export function CollapsibleRightPanel() {
     </>
   );
 }
+
 
 
