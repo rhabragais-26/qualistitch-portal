@@ -15,10 +15,10 @@ import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
 type Notification = {
-  id: string; // noteId
+  id: string; // noteId or global announcement timestamp
   leadId: string;
   customerName: string;
-  joNumber: string;
+  joNumber: string; // For JO notes, this is JO number. For announcements, it's sender.
   noteContent: string;
   notifyAt: string; // ISO string
   isRead: boolean;
@@ -33,60 +33,87 @@ type AppState = {
 
 export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [globalAnnouncements, setGlobalAnnouncements] = useState<Notification[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const prevUnreadCountRef = useRef(0);
   const firestore = useFirestore();
   const appStateRef = useMemoFirebase(() => (firestore ? doc(firestore, 'appState', 'global') : null), [firestore]);
   const { data: appState } = useDoc<AppState>(appStateRef);
-  const [globalAnnouncement, setGlobalAnnouncement] = useState<Notification | null>(null);
 
-  const loadNotifications = () => {
+  const loadLocalNotifications = () => {
     const storedNotifications = JSON.parse(localStorage.getItem('jo-notifications') || '[]') as Notification[];
     const now = new Date();
     const triggered = storedNotifications.filter(n => isPast(new Date(n.notifyAt)));
     setNotifications(triggered);
   };
 
+  const loadGlobalAnnouncements = () => {
+    const stored = JSON.parse(localStorage.getItem('global-announcements') || '[]') as Notification[];
+    setGlobalAnnouncements(stored);
+  };
+
   useEffect(() => {
-    loadNotifications();
-    const interval = setInterval(loadNotifications, 30000); // Check every 30 seconds
-    return () => clearInterval(interval);
+    loadLocalNotifications();
+    loadGlobalAnnouncements();
+    const interval = setInterval(loadLocalNotifications, 30000); // Check every 30 seconds
+    
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'jo-notifications') {
+            loadLocalNotifications();
+        }
+        if (event.key === 'global-announcements') {
+            loadGlobalAnnouncements();
+        }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+        clearInterval(interval);
+        window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
   
   useEffect(() => {
     if (appState?.announcementType === 'notification' && appState.announcementText && appState.announcementTimestamp) {
-        const lastSeenTimestamp = localStorage.getItem('announcementLastSeen');
-        const isNew = !lastSeenTimestamp || new Date(appState.announcementTimestamp) > new Date(lastSeenTimestamp);
-        
-        const announcementNotif: Notification = {
-            id: `global-${appState.announcementTimestamp}`,
-            leadId: 'global',
-            customerName: 'Non-Urgent Announcement',
-            joNumber: appState.announcementSender || 'Admin',
-            noteContent: appState.announcementText,
-            notifyAt: appState.announcementTimestamp,
-            isRead: !isNew
-        };
-        setGlobalAnnouncement(announcementNotif);
-    } else {
-        setGlobalAnnouncement(null);
+        const existingAnnouncements = JSON.parse(localStorage.getItem('global-announcements') || '[]') as Notification[];
+        const newAnnouncementId = `global-${appState.announcementTimestamp}`;
+
+        // Check if this announcement already exists
+        if (!existingAnnouncements.some(a => a.id === newAnnouncementId)) {
+            const newAnnouncement: Notification = {
+                id: newAnnouncementId,
+                leadId: 'global',
+                customerName: 'Non-Urgent Announcement',
+                joNumber: appState.announcementSender || 'Admin',
+                noteContent: appState.announcementText,
+                notifyAt: appState.announcementTimestamp,
+                isRead: false // Always new when it comes from appState
+            };
+            const updatedAnnouncements = [...existingAnnouncements, newAnnouncement];
+            localStorage.setItem('global-announcements', JSON.stringify(updatedAnnouncements));
+            setGlobalAnnouncements(updatedAnnouncements);
+        }
     }
   }, [appState]);
 
   const handlePopoverOpenChange = (isOpen: boolean) => {
-    if (isOpen && globalAnnouncement && !globalAnnouncement.isRead) {
-        localStorage.setItem('announcementLastSeen', globalAnnouncement.notifyAt);
-        setGlobalAnnouncement(prev => prev ? {...prev, isRead: true} : null);
+    if (isOpen) {
+        const unreadGlobal = globalAnnouncements.filter(a => !a.isRead);
+        if (unreadGlobal.length > 0) {
+            const updatedAnnouncements = globalAnnouncements.map(a => ({...a, isRead: true}));
+            localStorage.setItem('global-announcements', JSON.stringify(updatedAnnouncements));
+            setGlobalAnnouncements(updatedAnnouncements);
+        }
     }
     if (!isOpen) setShowAll(false);
   };
 
   const unreadCount = useMemo(() => {
     const localUnread = notifications.filter(n => !n.isRead).length;
-    const globalUnread = (globalAnnouncement && !globalAnnouncement.isRead) ? 1 : 0;
+    const globalUnread = globalAnnouncements.filter(n => !n.isRead).length;
     return localUnread + globalUnread;
-  }, [notifications, globalAnnouncement]);
+  }, [notifications, globalAnnouncements]);
 
   useEffect(() => {
     if (unreadCount > prevUnreadCountRef.current) {
@@ -98,25 +125,35 @@ export function NotificationBell() {
   }, [unreadCount]);
 
   const handleMarkAsRead = (notificationId: string) => {
-    const allStoredNotifications: Notification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
-    const newStoredNotifications = allStoredNotifications.map(n => 
-        n.id === notificationId ? { ...n, isRead: true } : n
-    );
-    localStorage.setItem('jo-notifications', JSON.stringify(newStoredNotifications));
-    loadNotifications(); // Reload to update state
+    if (notificationId.startsWith('global-')) {
+        const updatedAnnouncements = globalAnnouncements.map(n => n.id === notificationId ? { ...n, isRead: true } : n);
+        localStorage.setItem('global-announcements', JSON.stringify(updatedAnnouncements));
+        setGlobalAnnouncements(updatedAnnouncements);
+    } else {
+        const allStoredNotifications: Notification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
+        const newStoredNotifications = allStoredNotifications.map(n => 
+            n.id === notificationId ? { ...n, isRead: true } : n
+        );
+        localStorage.setItem('jo-notifications', JSON.stringify(newStoredNotifications));
+        loadLocalNotifications(); // Reload to update state
+    }
   };
 
   const handleMarkAllAsRead = () => {
     const allStoredNotifications: Notification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
     const newStoredNotifications = allStoredNotifications.map(n => ({...n, isRead: true}));
     localStorage.setItem('jo-notifications', JSON.stringify(newStoredNotifications));
-    loadNotifications();
-  };
+    loadLocalNotifications();
 
-  const sortedNotifications = useMemo(() => {
-    return [...notifications].sort((a,b) => new Date(b.notifyAt).getTime() - new Date(a.notifyAt).getTime());
-  }, [notifications]);
+    const updatedAnnouncements = globalAnnouncements.map(a => ({...a, isRead: true}));
+    localStorage.setItem('global-announcements', JSON.stringify(updatedAnnouncements));
+    setGlobalAnnouncements(updatedAnnouncements);
+  };
   
+  const sortedNotifications = useMemo(() => {
+    return [...notifications, ...globalAnnouncements].sort((a,b) => new Date(b.notifyAt).getTime() - new Date(a.notifyAt).getTime());
+  }, [notifications, globalAnnouncements]);
+
   const displayedNotifications = useMemo(() => {
       if (showAll) {
           return sortedNotifications;
@@ -144,7 +181,7 @@ export function NotificationBell() {
           <CardHeader className="p-4 border-b">
             <div className="flex justify-between items-center">
               <CardTitle className="text-sm font-semibold">Notifications</CardTitle>
-              {notifications.length > 0 && (
+              {sortedNotifications.length > 0 && (
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
                         <Check className="mr-1 h-4 w-4"/>
@@ -155,53 +192,37 @@ export function NotificationBell() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {(globalAnnouncement || notifications.length > 0) ? (
+            {sortedNotifications.length > 0 ? (
                 <ScrollArea className="h-80 modern-scrollbar">
                   <div className="p-2 space-y-1">
-                    {globalAnnouncement && (
+                    {displayedNotifications.map(n => {
+                        const isAnnouncement = n.leadId === 'global';
+                        return (
                          <div 
-                          key={globalAnnouncement.id} 
-                          className={cn(
-                            'p-3 rounded-lg border-2 border-primary',
-                            !globalAnnouncement.isRead && 'bg-primary/10 font-bold'
-                          )}
-                        >
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="text-sm font-bold text-primary">{globalAnnouncement.customerName}</p>
-                                    <p className="text-xs text-muted-foreground">from {globalAnnouncement.joNumber}</p>
-                                    <p className={cn("text-xs mt-1", !globalAnnouncement.isRead ? "text-foreground" : "text-muted-foreground")}>"{globalAnnouncement.noteContent}"</p>
-                                </div>
-                                <Badge variant="warning">Announcement</Badge>
-                            </div>
-                            <p className={cn("text-xs mt-2", !globalAnnouncement.isRead ? "text-blue-600" : "text-muted-foreground")}>
-                              {format(new Date(globalAnnouncement.notifyAt), 'MMM dd, yyyy @ h:mm a')}
-                            </p>
-                        </div>
-                    )}
-                    {globalAnnouncement && displayedNotifications.length > 0 && <Separator className="my-2" />}
-
-                    {displayedNotifications.map(n => (
-                        <div 
                           key={n.id} 
                           className={cn(
                             'p-3 rounded-lg cursor-pointer hover:bg-accent/50',
-                            !n.isRead && 'bg-blue-50 font-bold'
+                            !n.isRead && (isAnnouncement ? 'bg-primary/10' : 'bg-blue-50')
                           )}
                           onClick={() => handleMarkAsRead(n.id)}
                         >
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-sm">{n.customerName} ({n.joNumber})</p>
-                                    <p className={cn("text-xs mt-1", !n.isRead ? "text-foreground" : "text-muted-foreground")}>"{n.noteContent}"</p>
+                                    <p className="text-sm font-bold">{n.customerName}</p>
+                                    <p className="text-xs text-muted-foreground">from {n.joNumber}</p>
+                                    <p className={cn("text-xs mt-1", !n.isRead ? "text-foreground font-semibold" : "text-muted-foreground")}>"{n.noteContent}"</p>
                                 </div>
-                                <span className="ml-2 text-destructive text-xs font-semibold whitespace-nowrap">Reminder</span>
+                                {isAnnouncement 
+                                    ? <Badge variant="warning" className="ml-2 bg-yellow-200 text-yellow-800">Announcement</Badge> 
+                                    : <span className="ml-2 text-destructive text-xs font-semibold whitespace-nowrap">Reminder</span>
+                                }
                             </div>
-                            <p className={cn("text-xs mt-2", !n.isRead ? "text-blue-600" : "text-muted-foreground")}>
+                            <p className={cn("text-xs mt-2", !n.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>
                               {format(new Date(n.notifyAt), 'MMM dd, yyyy @ h:mm a')}
                             </p>
                         </div>
-                    ))}
+                        )
+                    })}
                   </div>
                 </ScrollArea>
             ) : (
@@ -210,7 +231,7 @@ export function NotificationBell() {
                 </div>
             )}
           </CardContent>
-          {notifications.length > 5 && !showAll && (
+          {sortedNotifications.length > 5 && !showAll && (
               <CardFooter className="p-2 border-t justify-center">
                   <Button variant="link" className="text-sm h-auto p-0" onClick={() => setShowAll(true)}>
                       Load older notifications
