@@ -11,7 +11,7 @@ import { collection, query } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import { PlusCircle, Trash2, X, Edit, Save, Clock } from 'lucide-react';
+import { PlusCircle, Trash2, X, Edit, Save, Clock, Bell } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { toTitleCase } from '@/lib/utils';
 import {
@@ -74,6 +74,35 @@ function JoNotesPanel() {
     const [deletingNote, setDeletingNote] = useState<{ leadId: string; noteId: string } | null>(null);
     const [notificationPopover, setNotificationPopover] = useState<{ noteId: string; noteContent: string, lead: Lead } | null>(null);
     const [notificationDateTime, setNotificationDateTime] = useState('');
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+
+    useEffect(() => {
+        const loadNotifications = () => {
+            try {
+                const stored = localStorage.getItem('jo-notifications');
+                if (stored) {
+                    setNotifications(JSON.parse(stored));
+                }
+            } catch (e) {
+                console.error("Failed to parse notifications from localStorage", e);
+                setNotifications([]);
+            }
+        };
+
+        loadNotifications();
+        
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === 'jo-notifications') {
+                loadNotifications();
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
 
     const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
     const { data: allLeads } = useCollection<Lead>(leadsQuery);
@@ -164,9 +193,10 @@ function JoNotesPanel() {
             localStorage.setItem(`notes_${leadId}`, JSON.stringify(updatedNotes));
         }
 
-        const notifications = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
-        const newNotifications = notifications.filter((n: Notification) => n.id !== noteId);
+        const currentNotifications = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
+        const newNotifications = currentNotifications.filter((n: Notification) => n.id !== noteId);
         localStorage.setItem('jo-notifications', JSON.stringify(newNotifications));
+        setNotifications(newNotifications);
 
         loadNotes();
     };
@@ -208,15 +238,16 @@ function JoNotesPanel() {
             isRead: false,
         };
 
-        const notifications: Notification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
-        const existingIndex = notifications.findIndex(n => n.id === newNotification.id);
+        const updatedNotifications = [...notifications];
+        const existingIndex = updatedNotifications.findIndex(n => n.id === newNotification.id);
         if (existingIndex > -1) {
-            notifications[existingIndex] = newNotification;
+            updatedNotifications[existingIndex] = newNotification;
         } else {
-            notifications.push(newNotification);
+            updatedNotifications.push(newNotification);
         }
         
-        localStorage.setItem('jo-notifications', JSON.stringify(notifications));
+        localStorage.setItem('jo-notifications', JSON.stringify(updatedNotifications));
+        setNotifications(updatedNotifications);
         
         toast({ title: 'Notification Set!', description: `You will be notified on ${format(notifyAt, 'MMM dd, yyyy @ h:mm a')}` });
         
@@ -341,51 +372,61 @@ function JoNotesPanel() {
                                     </div>
                                 </div>
                                 <div className="mt-2 space-y-2 pl-4 border-l-2 border-dotted ml-1">
-                                    {notes.map(note => (
-                                        <div key={note.id} className="group relative py-2 pr-12 pl-2 text-sm border rounded-md bg-yellow-50">
+                                    {notes.map(note => {
+                                        const notificationForThisNote = notifications.find(n => n.id === note.id);
+                                        return (
+                                        <div key={note.id} className="group relative py-2 pr-24 pl-2 text-sm">
                                             <p className="whitespace-pre-wrap">{note.content}</p>
                                             <p className="text-xs text-gray-400 mt-1">{new Date(note.timestamp).toLocaleString()}</p>
-                                            <div className="absolute top-1 right-1 flex items-center">
-                                                <Popover open={notificationPopover?.noteId === note.id} onOpenChange={(isOpen) => {
-                                                    if (isOpen) {
-                                                        setNotificationPopover({ noteId: note.id, noteContent: note.content, lead });
-                                                        const tomorrow = new Date();
-                                                        tomorrow.setDate(tomorrow.getDate() + 1);
-                                                        tomorrow.setHours(9, 0, 0, 0);
-                                                        const yyyy = tomorrow.getFullYear();
-                                                        const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
-                                                        const dd = String(tomorrow.getDate()).padStart(2, '0');
-                                                        const hh = String(tomorrow.getHours()).padStart(2, '0');
-                                                        const min = String(tomorrow.getMinutes()).padStart(2, '0');
-                                                        setNotificationDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}`);
-                                                    } else {
-                                                        setNotificationPopover(null);
-                                                    }
-                                                }}>
-                                                    <PopoverTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-500 hover:bg-gray-200">
-                                                            <Clock className="h-4 w-4" />
-                                                        </Button>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent className="w-auto p-4">
-                                                        <div className="space-y-2">
-                                                            <Label htmlFor="notification-datetime">Set Notification Time</Label>
-                                                            <Input
-                                                                id="notification-datetime"
-                                                                type="datetime-local"
-                                                                value={notificationDateTime}
-                                                                onChange={(e) => setNotificationDateTime(e.target.value)}
-                                                            />
-                                                            <Button onClick={handleSetNotification} className="w-full">Select</Button>
-                                                        </div>
-                                                    </PopoverContent>
-                                                </Popover>
-                                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setDeletingNote({ leadId, noteId: note.id })}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                            <div className="absolute top-1 right-1 flex flex-col items-end gap-1">
+                                                <div className="flex items-center">
+                                                    <Popover open={notificationPopover?.noteId === note.id} onOpenChange={(isOpen) => {
+                                                        if (isOpen) {
+                                                            setNotificationPopover({ noteId: note.id, noteContent: note.content, lead });
+                                                            const tomorrow = new Date();
+                                                            tomorrow.setDate(tomorrow.getDate() + 1);
+                                                            tomorrow.setHours(9, 0, 0, 0);
+                                                            const yyyy = tomorrow.getFullYear();
+                                                            const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+                                                            const dd = String(tomorrow.getDate()).padStart(2, '0');
+                                                            const hh = String(tomorrow.getHours()).padStart(2, '0');
+                                                            const min = String(tomorrow.getMinutes()).padStart(2, '0');
+                                                            setNotificationDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}`);
+                                                        } else {
+                                                            setNotificationPopover(null);
+                                                        }
+                                                    }}>
+                                                        <PopoverTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-500 hover:bg-gray-200">
+                                                                <Clock className="h-4 w-4" />
+                                                            </Button>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent className="w-auto p-4">
+                                                            <div className="space-y-2">
+                                                                <Label htmlFor="notification-datetime">Set Notification Time</Label>
+                                                                <Input
+                                                                    id="notification-datetime"
+                                                                    type="datetime-local"
+                                                                    value={notificationDateTime}
+                                                                    onChange={(e) => setNotificationDateTime(e.target.value)}
+                                                                />
+                                                                <Button onClick={handleSetNotification} className="w-full">Select</Button>
+                                                            </div>
+                                                        </PopoverContent>
+                                                    </Popover>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setDeletingNote({ leadId, noteId: note.id })}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                                {notificationForThisNote && (
+                                                    <div className="flex items-center text-xs text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded-md">
+                                                        <Bell className="h-3 w-3 mr-1" />
+                                                        <span>{format(new Date(notificationForThisNote.notifyAt), 'MMM dd, h:mm a')}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                    ))}
+                                    )})}
                                 </div>
                             </div>
                         ))
