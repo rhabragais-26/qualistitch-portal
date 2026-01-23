@@ -11,7 +11,7 @@ import { collection, query } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import { PlusCircle, Trash2, X, Edit, Save } from 'lucide-react';
+import { PlusCircle, Trash2, X, Edit, Save, Clock } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { toTitleCase } from '@/lib/utils';
 import {
@@ -26,6 +26,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Calendar } from './ui/calendar';
+import { format } from 'date-fns';
 
 
 type Panel = {
@@ -49,8 +52,19 @@ type Lead = {
     landlineNumber?: string;
 };
 
+type Notification = {
+  id: string; // noteId, unique
+  leadId: string;
+  customerName: string;
+  joNumber: string;
+  noteContent: string;
+  notifyAt: string; // ISO string
+  isRead: boolean;
+};
+
 function JoNotesPanel() {
     const firestore = useFirestore();
+    const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
     const [currentNote, setCurrentNote] = useState('');
@@ -58,6 +72,10 @@ function JoNotesPanel() {
     const [suggestions, setSuggestions] = useState<Lead[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(true);
     const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
+    const [deletingNote, setDeletingNote] = useState<{ leadId: string; noteId: string } | null>(null);
+    const [notificationPopover, setNotificationPopover] = useState<{ noteId: string; noteContent: string, lead: Lead } | null>(null);
+    const [notificationDate, setNotificationDate] = useState<Date | undefined>();
+    const [notificationTime, setNotificationTime] = useState('09:00');
 
     const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
     const { data: allLeads } = useCollection<Lead>(leadsQuery);
@@ -130,7 +148,6 @@ function JoNotesPanel() {
         
         localStorage.setItem(`notes_${leadId}`, JSON.stringify(updatedNotes));
         
-        // After saving, reload all notes and clear the search
         loadNotes();
         setCurrentNote('');
         setSelectedLead(null);
@@ -148,7 +165,19 @@ function JoNotesPanel() {
         } else {
             localStorage.setItem(`notes_${leadId}`, JSON.stringify(updatedNotes));
         }
-        loadNotes(); // Reload and re-sort
+
+        const notifications = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
+        const newNotifications = notifications.filter((n: Notification) => n.id !== noteId);
+        localStorage.setItem('jo-notifications', JSON.stringify(newNotifications));
+
+        loadNotes();
+    };
+
+    const handleConfirmDeleteNote = () => {
+        if (deletingNote) {
+            handleDeleteNote(deletingNote.leadId, deletingNote.noteId);
+            setDeletingNote(null);
+        }
     };
     
     const handleDeleteAllNotes = () => {
@@ -156,6 +185,48 @@ function JoNotesPanel() {
         localStorage.removeItem(`notes_${deletingLeadId}`);
         loadNotes();
         setDeletingLeadId(null);
+    };
+
+    const handleSetNotification = () => {
+        if (!notificationPopover || !notificationDate) {
+            toast({ variant: 'destructive', title: 'Please select a date.' });
+            return;
+        }
+
+        const [hours, minutes] = notificationTime.split(':').map(Number);
+        const notifyAt = new Date(notificationDate);
+        notifyAt.setHours(hours, minutes, 0, 0);
+
+        if (notifyAt < new Date()) {
+            toast({ variant: 'destructive', title: 'Cannot set notification in the past.' });
+            return;
+        }
+
+        const newNotification: Notification = {
+            id: notificationPopover.noteId,
+            leadId: notificationPopover.lead.id,
+            customerName: notificationPopover.lead.customerName,
+            joNumber: formatJoNumber(notificationPopover.lead.joNumber),
+            noteContent: notificationPopover.noteContent,
+            notifyAt: notifyAt.toISOString(),
+            isRead: false,
+        };
+
+        const notifications: Notification[] = JSON.parse(localStorage.getItem('jo-notifications') || '[]');
+        const existingIndex = notifications.findIndex(n => n.id === newNotification.id);
+        if (existingIndex > -1) {
+            notifications[existingIndex] = newNotification;
+        } else {
+            notifications.push(newNotification);
+        }
+        
+        localStorage.setItem('jo-notifications', JSON.stringify(notifications));
+        
+        toast({ title: 'Notification Set!', description: `You will be notified on ${format(notifyAt, 'MMM dd, yyyy @ h:mm a')}` });
+        
+        setNotificationPopover(null);
+        setNotificationDate(undefined);
+        setNotificationTime('09:00');
     };
 
     const filteredNotes = useMemo(() => {
@@ -276,12 +347,28 @@ function JoNotesPanel() {
                                 </div>
                                 <div className="mt-2 space-y-2 pl-4 border-l-2 border-dotted ml-1">
                                     {notes.map(note => (
-                                        <div key={note.id} className="group relative py-2 pr-8 pl-2 text-sm border rounded-md bg-yellow-50">
+                                        <div key={note.id} className="group relative py-2 pr-12 pl-2 text-sm border rounded-md bg-yellow-50">
                                             <p className="whitespace-pre-wrap">{note.content}</p>
                                             <p className="text-xs text-gray-400 mt-1">{new Date(note.timestamp).toLocaleString()}</p>
-                                            <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteNote(leadId, note.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            <div className="absolute top-1 right-1 flex items-center">
+                                                <Popover open={notificationPopover?.noteId === note.id} onOpenChange={(isOpen) => setNotificationPopover(isOpen ? { noteId: note.id, noteContent: note.content, lead } : null)}>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-500 hover:bg-gray-200">
+                                                            <Clock className="h-4 w-4" />
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0">
+                                                        <Calendar mode="single" selected={notificationDate} onSelect={setNotificationDate} initialFocus />
+                                                        <div className="p-2 border-t">
+                                                            <Input type="time" value={notificationTime} onChange={(e) => setNotificationTime(e.target.value)} />
+                                                            <Button onClick={handleSetNotification} className="w-full mt-2">Set Notification</Button>
+                                                        </div>
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setDeletingNote({ leadId, noteId: note.id })}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -325,6 +412,22 @@ function JoNotesPanel() {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleDeleteAllNotes} className="bg-destructive hover:bg-destructive/90">
                             Delete All Notes
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog open={!!deletingNote} onOpenChange={(isOpen) => !isOpen && setDeletingNote(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete this note. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmDeleteNote} className="bg-destructive hover:bg-destructive/90">
+                            Delete Note
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -396,7 +499,7 @@ export function CollapsibleRightPanel() {
     };
   }, []);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     wasDragged.current = false;
     setIsDragging(true);
     dragStartPos.current = { y: e.clientY - yPosition };
@@ -492,7 +595,6 @@ export function CollapsibleRightPanel() {
               title: 'Panel Name Required',
               description: "Please provide a name for the panel or it will be removed."
             })
-            // This is a temporary removal for UX, it won't be saved until confirmed
             const newPanels = panels.filter(p => p.id !== editingPanelId);
             setPanels(newPanels);
             if (activeTab === editingPanelId) {
@@ -512,8 +614,9 @@ export function CollapsibleRightPanel() {
     <>
       <div
         className={cn(
-          "fixed z-40 top-0 h-full w-96 no-print transition-transform duration-300 ease-in-out right-0",
-          isExpanded ? "translate-x-0" : "translate-x-full"
+          "fixed z-40 top-0 h-full no-print transition-transform duration-300 ease-in-out",
+          isExpanded ? "translate-x-0" : "translate-x-full",
+          "right-0 w-96" 
         )}
       >
         <div
@@ -523,6 +626,7 @@ export function CollapsibleRightPanel() {
                 top: `${yPosition}px`, 
                 left: '-2.25rem'
             }}
+            onMouseDown={handleMouseDown}
           >
             <TooltipProvider>
               <Tooltip>
@@ -530,7 +634,6 @@ export function CollapsibleRightPanel() {
                   <Button
                     variant="ghost"
                     onClick={handleButtonClick}
-                    onMouseDown={handleMouseDown}
                     className={cn(
                         "relative h-48 w-9 p-1 rounded-r-none rounded-l-lg flex items-center justify-center transition-colors",
                         isExpanded ? 'bg-[#81cdc6]' : 'bg-[#81cdc6] hover:bg-[#69bab2]',
@@ -555,7 +658,7 @@ export function CollapsibleRightPanel() {
                     </Button>
                     <TabsList className={cn("grid w-full", `grid-cols-${panels.length}`)}>
                         {panels.map((panel) => (
-                           <div key={panel.id} className="relative group">
+                           <div key={panel.id} className="relative group flex">
                              <TabsTrigger value={panel.id} className="w-full" onDoubleClick={() => panel.type !== 'jo-notes' && setEditingPanelId(panel.id)}>
                                 {editingPanelId === panel.id ? (
                                     <Input
