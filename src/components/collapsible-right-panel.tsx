@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -69,7 +68,7 @@ function JoNotesPanel() {
     };
 
     const formatJoNumber = (joNumber: number | undefined) => {
-        if (!joNumber) return '';
+        if (!joNumber) return 'No J.O. yet';
         const currentYear = new Date().getFullYear().toString().slice(-2);
         return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
     };
@@ -231,7 +230,7 @@ function JoNotesPanel() {
                                         <p className="font-semibold text-sm">
                                             {toTitleCase(lead.customerName)}{' '}
                                             <span className="text-gray-600 font-normal">
-                                                ({lead.joNumber ? formatJoNumber(lead.joNumber) : 'No J.O. yet'})
+                                                ({formatJoNumber(lead.joNumber)})
                                             </span>
                                         </p>
                                         <p className="text-gray-500">{getContactDisplay(lead)}</p>
@@ -261,7 +260,7 @@ function JoNotesPanel() {
                                 </div>
                                 <div className="mt-2 space-y-2 pl-4 border-l-2 ml-1">
                                     {notes.map(note => (
-                                        <div key={note.id} className="group relative p-2 text-sm border rounded-md bg-yellow-50">
+                                        <div key={note.id} className="group relative py-2 pl-2 pr-8 text-sm border rounded-md bg-yellow-50">
                                             <p className="whitespace-pre-wrap">{note.content}</p>
                                             <p className="text-xs text-gray-400 mt-1">{new Date(note.timestamp).toLocaleString()}</p>
                                             <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteNote(leadId, note.id)}>
@@ -283,7 +282,7 @@ function JoNotesPanel() {
             {selectedLead && (
                 <div className="p-2 mt-auto border-t animate-in slide-in-from-bottom-2 bg-white">
                     <div className="flex justify-between items-center mb-1">
-                        <p className="text-xs font-medium">Adding note for: <span className="font-bold">{toTitleCase(selectedLead.customerName)}</span> ({selectedLead.joNumber ? formatJoNumber(selectedLead.joNumber) : 'No J.O. yet'})</p>
+                        <p className="text-xs font-medium">Adding note for: <span className="font-bold">{toTitleCase(selectedLead.customerName)}</span> ({formatJoNumber(selectedLead.joNumber)})</p>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedLead(null)}><X className="h-4 w-4"/></Button>
                     </div>
                     <Textarea 
@@ -324,11 +323,34 @@ export function CollapsibleRightPanel() {
   const [isMounted, setIsMounted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   
-  const [panels, setPanels] = useState<Panel[]>([{ id: 'jo-notes', title: 'JO Notes', type: 'jo-notes' }]);
+  const [panels, setPanels] = useState<Panel[]>(() => {
+    if (typeof window !== 'undefined') {
+        const savedPanels = localStorage.getItem('customPanels');
+        return savedPanels ? JSON.parse(savedPanels) : [{ id: 'jo-notes', title: 'JO Notes', type: 'jo-notes' }];
+    }
+    return [{ id: 'jo-notes', title: 'JO Notes', type: 'jo-notes' }];
+  });
+
   const [activeTab, setActiveTab] = useState('jo-notes');
-  const [textareaContents, setTextareaContents] = useState<Record<string, string>>({});
+
+  const [textareaContents, setTextareaContents] = useState<Record<string, string>>(() => {
+    if (typeof window !== 'undefined') {
+        const savedContents = localStorage.getItem('textareaContents');
+        return savedContents ? JSON.parse(savedContents) : {};
+    }
+    return {};
+  });
+
   const [editingPanelId, setEditingPanelId] = useState<string | null>(null);
   const [deletingPanelId, setDeletingPanelId] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('customPanels', JSON.stringify(panels));
+  }, [panels]);
+
+  useEffect(() => {
+    localStorage.setItem('textareaContents', JSON.stringify(textareaContents));
+  }, [textareaContents]);
 
 
   const buttonRef = useRef<HTMLDivElement>(null);
@@ -475,7 +497,7 @@ export function CollapsibleRightPanel() {
       <div
         className={cn(
           "fixed z-40 top-0 h-full w-96 no-print transition-transform duration-300 ease-in-out",
-          isExpanded ? "right-0" : "right-[-24rem]"
+          isExpanded ? "right-0" : "-right-96"
         )}
       >
         <Card className="w-96 h-full shadow-xl rounded-none rounded-l-lg flex flex-col">
