@@ -372,7 +372,7 @@ export function NotificationBell() {
                   </div>
                 </ScrollArea>
             ) : (
-              <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
+              <div className="flex items-center justify-center h-80 text-sm text-muted-foreground">
                     No new notifications.
                 </div>
             )}
