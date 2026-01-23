@@ -265,7 +265,7 @@ export function MarketingCalendar() {
         </header>
         <div className="flex-1 grid grid-cols-7 grid-rows-6">
           {weekDays.map(day => (
-            <div key={day} className="text-center font-medium text-muted-foreground py-2 border-b border-r">
+            <div key={day} className="text-center font-medium text-muted-foreground pt-2 border-b border-r">
               {day}
             </div>
           ))}
