@@ -465,46 +465,10 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenuItem>
                 {isAdmin && (
                   <>
-                  <Dialog open={isAnnouncementDialogOpen} onOpenChange={setIsAnnouncementDialogOpen}>
-                    <DialogTrigger asChild>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                            <Megaphone className="mr-2" />
-                            <span>Announcement</span>
-                        </DropdownMenuItem>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Create an Announcement</DialogTitle>
-                            <DialogDescription>
-                                This message will be broadcast to all logged-in users.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4 space-y-4">
-                            <Textarea
-                                placeholder="Type your announcement here..."
-                                value={announcementText}
-                                onChange={(e) => setAnnouncementText(e.target.value)}
-                                className="min-h-[100px]"
-                            />
-                            <RadioGroup value={announcementType} onValueChange={(v: 'banner' | 'notification') => setAnnouncementType(v)} className="flex space-x-4">
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="banner" id="type-banner" />
-                                    <Label htmlFor="type-banner">Real-time Banner</Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="notification" id="type-notification" />
-                                    <Label htmlFor="type-notification">Notification Popover</Label>
-                                </div>
-                            </RadioGroup>
-                        </div>
-                        <DialogFooter>
-                            <DialogClose asChild>
-                                <Button type="button" variant="outline">Cancel</Button>
-                            </DialogClose>
-                            <Button onClick={handleSendAnnouncement} disabled={!announcementText.trim()}>Send</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                  <DropdownMenuItem onSelect={() => setIsAnnouncementDialogOpen(true)}>
+                      <Megaphone className="mr-2" />
+                      <span>Announcement</span>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/admin/users')}>
                       <div className="flex items-center justify-between w-full">
                           <div className="flex items-center">
@@ -552,7 +516,40 @@ const HeaderMemo = React.memo(function Header({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
+       <Dialog open={isAnnouncementDialogOpen} onOpenChange={setIsAnnouncementDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Create an Announcement</DialogTitle>
+                <DialogDescription>
+                    This message will be broadcast to all logged-in users.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+                <Textarea
+                    placeholder="Type your announcement here..."
+                    value={announcementText}
+                    onChange={(e) => setAnnouncementText(e.target.value)}
+                    className="min-h-[100px]"
+                />
+                <RadioGroup value={announcementType} onValueChange={(v: 'banner' | 'notification') => setAnnouncementType(v)} className="flex space-x-4">
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="banner" id="type-banner" />
+                        <Label htmlFor="type-banner">Real-time Banner</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="notification" id="type-notification" />
+                        <Label htmlFor="type-notification">Notification Popover</Label>
+                    </div>
+                </RadioGroup>
+            </div>
+            <DialogFooter>
+                <DialogClose asChild>
+                    <Button type="button" variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button onClick={handleSendAnnouncement} disabled={!announcementText.trim()}>Send</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 });
@@ -560,5 +557,3 @@ const HeaderMemo = React.memo(function Header({
 HeaderMemo.displayName = 'Header';
 
 export { HeaderMemo as Header };
-
-    
