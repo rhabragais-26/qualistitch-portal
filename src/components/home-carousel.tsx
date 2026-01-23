@@ -120,7 +120,7 @@ export function HomeCarousel() {
               } else if (firstError.code === 'storage/unauthorized') {
                   errorMessage += " Reason: You are not authorized to view these images. Please ensure your Firebase Storage security rules for the 'Carousel' path are correctly configured for public read access.";
               } else {
-                  errorMessage += ` First error: ${'\'\'\''}firstError.message{'\'\'\'}`;
+                  errorMessage += ` First error: ${'\'\'\''}firstError.message{'\'\'\''}`;
               }
               setError(errorMessage);
           }
@@ -171,7 +171,7 @@ export function HomeCarousel() {
       <Button variant="ghost" size="icon" onClick={() => paginate(-1)} className="h-24 w-24 shrink-0 hover:bg-transparent" disabled={imageUrls.length <= 1}>
           <ChevronLeft className="h-20 w-20 text-muted-foreground" />
       </Button>
-      <div className="relative w-full h-[720px] overflow-hidden">
+      <div className="relative w-full h-[740px] overflow-hidden">
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
             key={page}
