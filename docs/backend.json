@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "OperationalExpense": {
@@ -54,13 +53,33 @@
       "type": "object",
       "description": "Represents an event on the marketing calendar.",
       "properties": {
-        "id": { "type": "string", "description": "The date of the event in YYYY-MM-DD format." },
-        "date": { "type": "string", "format": "date-time" },
-        "content": { "type": "string", "description": "The textual content or description for the calendar event." },
-        "imageUrl": { "type": "string", "format": "uri", "description": "URL of the uploaded image for the event." },
-        "uploadedBy": { "type": "string", "description": "Nickname of the user who uploaded the event." }
+        "id": {
+          "type": "string",
+          "description": "A unique identifier for the event."
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "content": {
+          "type": "string",
+          "description": "The textual content or description for the calendar event."
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the uploaded image for the event."
+        },
+        "uploadedBy": {
+          "type": "string",
+          "description": "Nickname of the user who uploaded the event."
+        }
       },
-      "required": ["id", "date", "content"]
+      "required": [
+        "id",
+        "date",
+        "content"
+      ]
     },
     "PricingConfig": {
         "title": "PricingConfig",
@@ -918,11 +937,11 @@
           "schema": {
             "$ref": "#/backend/entities/MarketingCalendarEvent"
           },
-          "description": "Stores marketing calendar events, where the eventId is the date in YYYY-MM-DD format.",
+          "description": "Stores marketing calendar events, with each document representing a single event.",
           "params": [
             {
               "name": "eventId",
-              "description": "The document ID, which should be the date in YYYY-MM-DD format."
+              "description": "A unique ID for the event."
             }
           ]
         }

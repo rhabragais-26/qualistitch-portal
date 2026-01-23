@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   format,
   startOfMonth,
@@ -26,23 +25,107 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Upload, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Upload, Trash2, ChevronLeft, ChevronRight, Edit, Plus, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, setDoc, collection, query } from 'firebase/firestore';
+import { doc, setDoc, collection, query, deleteDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { v4 as uuidv4 } from 'uuid';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from './ui/alert-dialog';
+import { ScrollArea } from './ui/scroll-area';
 
 type MarketingEvent = {
-  id: string; // YYYY-MM-DD
+  id: string;
   date: string;
   content: string;
   imageUrl?: string | null;
   uploadedBy?: string;
 };
+
+function EventForm({
+  event,
+  onSave,
+  onCancel,
+}: {
+  event: Partial<MarketingEvent>;
+  onSave: (event: Partial<MarketingEvent> & { _fileToUpload?: File }) => void;
+  onClose: () => void;
+  onCancel: () => void;
+}) {
+  const [content, setContent] = useState(event.content || '');
+  const [image, setImage] = useState(event.imageUrl || null);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSaveClick = () => {
+    onSave({
+      ...event,
+      content,
+      imageUrl: image,
+      _fileToUpload: fileToUpload || undefined,
+    });
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (readEvent) => {
+        setImage(readEvent.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      setFileToUpload(file);
+    }
+  };
+  
+  return (
+    <div className="space-y-4 py-4">
+      <div>
+        <Label htmlFor="event-content">Content</Label>
+        <Textarea
+          id="event-content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Describe the marketing plan for this day..."
+          className="min-h-[100px]"
+        />
+      </div>
+      <div>
+        <Label htmlFor="event-image">Image</Label>
+        <div className="mt-2 flex items-center gap-4">
+          {image && (
+            <div className="relative w-24 h-24">
+              <Image src={image} alt="Event" layout="fill" objectFit="cover" className="rounded-md" />
+              <Button
+                variant="destructive"
+                size="icon"
+                className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                onClick={() => { setImage(null); setFileToUpload(null); }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          <Button asChild variant="outline" className="flex-1">
+            <Label htmlFor="event-image-upload" className="cursor-pointer">
+              <Upload className="mr-2" />
+              <span>Upload Image</span>
+              <input id="event-image-upload" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" ref={fileInputRef} />
+            </Label>
+          </Button>
+        </div>
+      </div>
+      <DialogFooter className="pt-4">
+        <Button variant="outline" onClick={onCancel}>Back to List</Button>
+        <Button onClick={handleSaveClick}>Save Event</Button>
+      </DialogFooter>
+    </div>
+  );
+}
 
 export function MarketingCalendar() {
   const { userProfile } = useUser();
@@ -54,10 +137,11 @@ export function MarketingCalendar() {
 
   const eventsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'marketingCalendar')) : null, [firestore]);
   const { data: events, isLoading, error } = useCollection<MarketingEvent>(eventsQuery);
+  
+  const [dialogView, setDialogView] = useState<'list' | 'form'>('list');
+  const [currentEvent, setCurrentEvent] = useState<Partial<MarketingEvent> | null>(null);
+  const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
 
-  const [dialogContent, setDialogContent] = useState('');
-  const [dialogImage, setDialogImage] = useState<string | null>(null);
-  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
 
   const canEdit = useMemo(() => {
     if (!userProfile) return false;
@@ -65,10 +149,20 @@ export function MarketingCalendar() {
     return allowedPositions.includes(userProfile.position);
   }, [userProfile]);
   
-  const eventsMap = useMemo(() => {
-    const map = new Map<string, MarketingEvent>();
+  const eventsByDate = useMemo(() => {
+    const map = new Map<string, MarketingEvent[]>();
     if (events) {
-      events.forEach(event => map.set(event.id, event));
+      events.forEach(event => {
+        try {
+          const dateKey = format(new Date(event.date), 'yyyy-MM-dd');
+          if (!map.has(dateKey)) {
+            map.set(dateKey, []);
+          }
+          map.get(dateKey)!.push(event);
+        } catch (e) {
+          console.warn(`Invalid date format for event ${event.id}: ${event.date}`);
+        }
+      });
     }
     return map;
   }, [events]);
@@ -77,57 +171,62 @@ export function MarketingCalendar() {
     if (!date || !canEdit) return;
     
     setSelectedDate(date);
-    const dateKey = format(date, 'yyyy-MM-dd');
-    const existingEvent = eventsMap.get(dateKey);
-
-    setDialogContent(existingEvent?.content || '');
-    setDialogImage(existingEvent?.imageUrl || null);
-    setFileToUpload(null);
+    setDialogView('list');
+    setCurrentEvent(null);
     setIsDialogOpen(true);
   };
   
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (readEvent) => {
-        setDialogImage(readEvent.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-      setFileToUpload(file);
-    }
-  };
-  
-  const handleSave = async () => {
-    if (!selectedDate || !firestore || !userProfile) return;
-
-    const dateKey = format(selectedDate, 'yyyy-MM-dd');
-    const eventDocRef = doc(firestore, 'marketingCalendar', dateKey);
-
-    let imageUrl = dialogImage;
-    if (fileToUpload && imageUrl) {
-        const storage = getStorage();
-        const storageRef = ref(storage, `marketingCalendar/${dateKey}/${fileToUpload.name}`);
-        await uploadString(storageRef, imageUrl, 'data_url');
-        imageUrl = await getDownloadURL(storageRef);
+  const handleSaveEvent = async (eventData: Partial<MarketingEvent> & { _fileToUpload?: File }) => {
+    if (!firestore || !userProfile || !eventData.content?.trim()) {
+        toast({ variant: 'destructive', title: 'Content is required.' });
+        return;
     }
 
-    const eventData: MarketingEvent = {
-        id: dateKey,
-        date: selectedDate.toISOString(),
-        content: dialogContent,
-        imageUrl: imageUrl || null,
+    const isNew = !eventData.id;
+    const eventId = isNew ? uuidv4() : eventData.id!;
+    const storage = getStorage();
+
+    let finalImageUrl = eventData.imageUrl;
+    const fileToUpload = eventData._fileToUpload;
+
+    if (fileToUpload && finalImageUrl?.startsWith('data:')) {
+        const storageRef = ref(storage, `marketingCalendar/${eventId}/${fileToUpload.name}`);
+        const uploadResult = await uploadString(storageRef, finalImageUrl, 'data_url');
+        finalImageUrl = await getDownloadURL(uploadResult.ref);
+    }
+    
+    const dataToSave: MarketingEvent = {
+        id: eventId,
+        date: eventData.date!,
+        content: eventData.content!,
+        imageUrl: finalImageUrl || null,
         uploadedBy: userProfile.nickname,
     };
 
+    const eventDocRef = doc(firestore, 'marketingCalendar', eventId);
+
     try {
-        await setDoc(eventDocRef, eventData, { merge: true });
-        toast({ title: 'Event Saved', description: 'Your changes have been saved to the calendar.' });
-        setIsDialogOpen(false);
-    } catch (e: any) {
-        toast({ variant: 'destructive', title: 'Save Failed', description: e.message });
+        await setDoc(eventDocRef, dataToSave, { merge: true });
+        toast({ title: `Event ${isNew ? 'Added' : 'Updated'}` });
+        setCurrentEvent(null);
+        setDialogView('list');
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Save Failed', description: error.message });
     }
   };
+
+  const handleDeleteEvent = async () => {
+    if (!deletingEventId || !firestore) return;
+    try {
+        await deleteDoc(doc(firestore, 'marketingCalendar', deletingEventId));
+        toast({ title: 'Event Deleted' });
+    } catch (e: any) {
+        toast({ variant: 'destructive', title: 'Delete Failed', description: e.message });
+    } finally {
+        setDeletingEventId(null);
+    }
+  };
+
   
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(currentMonth));
@@ -144,10 +243,12 @@ export function MarketingCalendar() {
   if(error) {
     return <p className="text-destructive">Error loading calendar events: {error.message}</p>
   }
+  
+  const eventsForDay = selectedDate ? eventsByDate.get(format(selectedDate, 'yyyy-MM-dd')) || [] : [];
 
   return (
     <>
-      <div className="flex flex-col w-full border rounded-lg">
+      <div className="flex flex-col w-full border rounded-lg h-auto">
         <header className="flex items-center justify-between px-6 py-4 border-b">
           <h2 className="text-2xl font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
           <div className="flex items-center gap-2">
@@ -170,13 +271,13 @@ export function MarketingCalendar() {
           ))}
           {days.map(day => {
             const dateKey = format(day, 'yyyy-MM-dd');
-            const event = eventsMap.get(dateKey);
+            const dayEvents = eventsByDate.get(dateKey) || [];
             return (
               <div
                 key={day.toString()}
                 onClick={() => handleDateSelect(day)}
                 className={cn(
-                  "relative p-2 border-r border-b flex flex-col",
+                  "relative p-2 border-r border-b flex flex-col min-h-[120px]",
                   isSameMonth(day, currentMonth) ? 'bg-background' : 'bg-muted/50 text-muted-foreground',
                   canEdit && 'cursor-pointer hover:bg-accent/20 transition-colors',
                   "overflow-hidden"
@@ -191,23 +292,28 @@ export function MarketingCalendar() {
                 >
                   {format(day, 'd')}
                 </time>
-                {event && (
+                {dayEvents.length > 0 && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                          <div className="flex-1 mt-2 overflow-hidden">
-                          {event.imageUrl && (
-                            <div className="relative w-full h-16 mb-2">
-                              <Image src={event.imageUrl} alt={event.content} layout="fill" objectFit="cover" className="rounded-md"/>
+                          {dayEvents[0].imageUrl && (
+                            <div className="relative w-full h-12 mb-1">
+                              <Image src={dayEvents[0].imageUrl} alt={dayEvents[0].content} layout="fill" objectFit="cover" className="rounded-md"/>
                             </div>
                           )}
-                          <p className="text-xs text-foreground truncate">{event.content}</p>
+                          <p className="text-xs text-foreground truncate">{dayEvents[0].content}</p>
+                          {dayEvents.length > 1 && <p className="text-xs text-muted-foreground mt-1">+ {dayEvents.length - 1} more</p>}
                         </div>
                       </TooltipTrigger>
                        <TooltipContent>
                         <div className="flex flex-col gap-2 p-2 max-w-xs">
-                          {event.imageUrl && <Image src={event.imageUrl} alt="Event" width={100} height={100} className="rounded-md" />}
-                          <p className="text-sm font-semibold">{event.content}</p>
+                          {dayEvents.map(event => (
+                            <div key={event.id} className="flex items-start gap-2 border-b last:border-b-0 pb-2 last:pb-0">
+                              {event.imageUrl && <Image src={event.imageUrl} alt="Event" width={40} height={40} className="rounded-md" />}
+                              <p className="text-sm">{event.content}</p>
+                            </div>
+                          ))}
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -219,57 +325,66 @@ export function MarketingCalendar() {
         </div>
       </div>
       
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) { setDialogView('list'); setCurrentEvent(null); } setIsDialogOpen(open); }}>
+        <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-                <DialogTitle>Event for {selectedDate ? format(selectedDate, 'MMMM dd, yyyy') : ''}</DialogTitle>
-                <DialogDescription>Add or edit the content and image for this date.</DialogDescription>
+                <DialogTitle>
+                    {dialogView === 'list' 
+                        ? `Events for ${selectedDate ? format(selectedDate, 'MMMM dd, yyyy') : ''}` 
+                        : currentEvent?.id && events?.some(e => e.id === currentEvent.id) ? 'Edit Event' : 'Add New Event'
+                    }
+                </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-                <div>
-                    <Label htmlFor="event-content">Content</Label>
-                    <Textarea 
-                        id="event-content"
-                        value={dialogContent}
-                        onChange={(e) => setDialogContent(e.target.value)}
-                        placeholder="Describe the marketing plan for this day..."
-                        className="min-h-[100px]"
-                    />
-                </div>
-                <div>
-                    <Label htmlFor="event-image">Image</Label>
-                    <div className="mt-2 flex items-center gap-4">
-                        {dialogImage && (
-                            <div className="relative w-24 h-24">
-                                <Image src={dialogImage} alt="Event" layout="fill" objectFit="cover" className="rounded-md" />
-                                <Button
-                                    variant="destructive"
-                                    size="icon"
-                                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                                    onClick={() => { setDialogImage(null); setFileToUpload(null); }}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+            {dialogView === 'list' ? (
+                 <div className="py-4">
+                    <ScrollArea className="max-h-80 pr-4">
+                        <div className="space-y-4">
+                        {eventsForDay.length > 0 ? (
+                            eventsForDay.map(event => (
+                            <div key={event.id} className="flex items-center justify-between gap-4 p-2 rounded-md border">
+                                <div className="flex items-center gap-2 overflow-hidden">
+                                {event.imageUrl && <Image src={event.imageUrl} alt="Event thumbnail" width={40} height={40} className="rounded-md" />}
+                                <p className="truncate text-sm">{event.content}</p>
+                                </div>
+                                <div className="flex-shrink-0">
+                                <Button variant="ghost" size="icon" onClick={() => { setCurrentEvent(event); setDialogView('form'); }}><Edit className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeletingEventId(event.id)}><Trash2 className="h-4 w-4" /></Button>
+                                </div>
                             </div>
-                        )}
-                        <Button asChild variant="outline" className="flex-1">
-                            <Label htmlFor="event-image-upload" className="cursor-pointer">
-                                <Upload className="mr-2" />
-                                <span>Upload Image</span>
-                                <input id="event-image-upload" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                            </Label>
+                            ))
+                        ) : <p className="text-center text-muted-foreground">No events for this day.</p>}
+                        </div>
+                    </ScrollArea>
+                    <DialogFooter className="pt-4 mt-4 border-t">
+                        <Button onClick={() => { setCurrentEvent({ date: selectedDate!.toISOString() }); setDialogView('form'); }}>
+                            <Plus className="mr-2" /> Add New Event
                         </Button>
-                    </div>
-                </div>
-            </div>
-            <DialogFooter>
-                <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                </DialogClose>
-                <Button onClick={handleSave}>Save</Button>
-            </DialogFooter>
+                    </DialogFooter>
+                 </div>
+            ) : currentEvent ? (
+                <EventForm
+                    event={currentEvent}
+                    onSave={handleSaveEvent}
+                    onCancel={() => setDialogView('list')}
+                    onClose={() => {}}
+                />
+            ) : null}
         </DialogContent>
       </Dialog>
+      <AlertDialog open={!!deletingEventId} onOpenChange={(open) => !open && setDeletingEventId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this event. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteEvent} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
