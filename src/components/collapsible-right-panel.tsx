@@ -688,12 +688,11 @@ export function CollapsibleRightPanel() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="ghost"
                     onClick={handleButtonClick}
                     className={cn(
                         "relative h-48 w-9 p-1 rounded-r-none rounded-l-lg flex items-center justify-center transition-colors",
-                        isExpanded ? 'bg-[#81cdc6]' : 'bg-[#81cdc6] hover:bg-[#69bab2] hover:text-white',
-                        "text-white"
+                        isExpanded ? 'bg-[#81cdc6]' : 'bg-[#81cdc6] hover:bg-[#69bab2]',
+                        "text-white hover:text-white"
                     )}
                   >
                     <span className="[writing-mode:vertical-rl] rotate-180 font-bold tracking-wider">PERSONAL NOTES</span>

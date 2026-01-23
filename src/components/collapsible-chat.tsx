@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -102,7 +101,6 @@ export function CollapsibleChat() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="ghost"
                   onClick={() => setIsExpanded(true)}
                   className="relative h-24 w-9 p-1 rounded-l-none rounded-r-lg bg-[#81cdc6] text-white hover:bg-[#69bab2] hover:text-white flex items-center justify-center"
                 >
