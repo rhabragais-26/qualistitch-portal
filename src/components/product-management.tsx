@@ -361,7 +361,7 @@ export function ProductManagement() {
     if (!isValid) return;
   
     try {
-      await setDoc(pricingConfigRef, validatedConfig); // Removed { merge: true }
+      await setDoc(pricingConfigRef, validatedConfig);
       toast({
         title: 'Success!',
         description: successMessage || 'Pricing configuration has been updated.',
@@ -419,7 +419,7 @@ export function ProductManagement() {
         toast({
             variant: 'destructive',
             title: 'Cannot Delete Last Category',
-            description: 'You must have at least one product category.',
+            description: 'You must have at least one pricing category.',
         });
         setDeletingCategory(null);
         return;
@@ -604,7 +604,6 @@ export function ProductManagement() {
                         </div>
                         <DialogFooter className="flex items-center justify-center px-6 border-t pt-2">
                             <DialogClose asChild><Button type="button" variant="outline">Close</Button></DialogClose>
-                            <Button onClick={handleSaveChanges} disabled={!isDirty}>Save Changes</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
