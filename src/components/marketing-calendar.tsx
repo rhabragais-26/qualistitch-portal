@@ -271,10 +271,10 @@ export function MarketingCalendar() {
       <div className="flex flex-col w-full border rounded-lg h-auto">
         <header className="grid grid-cols-3 items-center px-6 py-4 border-b">
           <div className="justify-self-start">
-            <h2 className="text-2xl font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
+             <h2 className="text-2xl font-bold uppercase">MARKETING CALENDAR</h2>
           </div>
           <div className="justify-self-center">
-            <h2 className="text-2xl font-bold">MARKETING CALENDAR</h2>
+             <h2 className="text-2xl font-bold">{format(currentMonth, 'MMMM yyyy')}</h2>
           </div>
           <div className="justify-self-end">
             <div className="flex items-center gap-2">
