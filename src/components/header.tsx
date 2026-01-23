@@ -459,7 +459,7 @@ const HeaderMemo = React.memo(function Header({
         <div className="absolute top-0 right-4 h-14 flex items-center">
             <NotificationBell />
             {user && userProfile && (
-            <DropdownMenu>
+            <DropdownMenu open={openMenu === 'profile'} onOpenChange={(isOpen) => handleMenuOpenChange('profile', isOpen)}>
                 <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 h-10 rounded-md pl-3 text-white hover:bg-accent/90">
                     <Avatar className="h-8 w-8">
@@ -476,16 +476,16 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuItem onClick={() => router.push('/profile')}>
-                        <User />
+                        <User className="mr-2" />
                         <span>Profile</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/personal-calendar')}>
-                        <CalendarIcon />
+                        <CalendarIcon className="mr-2" />
                         <span>Personal Calendar</span>
                     </DropdownMenuItem>
                     {canSendAnnouncement && (
                     <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsAnnouncementDialogOpen(true); }}>
-                        <Megaphone />
+                        <Megaphone className="mr-2" />
                         <span>Announcement</span>
                     </DropdownMenuItem>
                     )}
@@ -506,7 +506,7 @@ const HeaderMemo = React.memo(function Header({
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
-                        <LogOut />
+                        <LogOut className="mr-2" />
                         <span>Sign Out</span>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -536,7 +536,12 @@ const HeaderMemo = React.memo(function Header({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-       <Dialog open={isAnnouncementDialogOpen} onOpenChange={setIsAnnouncementDialogOpen}>
+       <Dialog open={isAnnouncementDialogOpen} onOpenChange={(isOpen) => {
+            setIsAnnouncementDialogOpen(isOpen);
+            if (!isOpen) {
+                setOpenMenu(null);
+            }
+        }}>
         <DialogContent>
             <DialogHeader>
                 <DialogTitle>Create an Announcement</DialogTitle>
