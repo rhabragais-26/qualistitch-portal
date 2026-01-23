@@ -70,6 +70,7 @@ export function NotificationBell() {
   const appStateRef = useMemoFirebase(() => (firestore ? doc(firestore, 'appState', 'global') : null), [firestore]);
   const { data: appState } = useDoc<AppState>(appStateRef);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const lastProcessedAnnouncementTimestamp = useRef<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -120,7 +121,14 @@ export function NotificationBell() {
   }, []);
   
   useEffect(() => {
-    if (appState?.announcementType === 'notification' && appState.announcementText && appState.announcementTimestamp) {
+    if (
+        appState?.announcementType === 'notification' &&
+        appState.announcementText &&
+        appState.announcementTimestamp &&
+        appState.announcementTimestamp !== lastProcessedAnnouncementTimestamp.current
+    ) {
+        lastProcessedAnnouncementTimestamp.current = appState.announcementTimestamp;
+
         const existingAnnouncements = JSON.parse(localStorage.getItem('global-announcements') || '[]') as GlobalAnnouncement[];
         const newAnnouncementId = `global-${appState.announcementTimestamp}`;
 
