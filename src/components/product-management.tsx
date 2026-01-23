@@ -580,17 +580,16 @@ export function ProductManagement() {
                                 </div>
                                 </section>
                                  <section>
-                                    <h3 className="text-lg font-semibold">Product List</h3>
-                                    <div className="space-y-2 overflow-y-auto border p-2 rounded-md mt-2 text-sm">
+                                    <div className="overflow-y-auto border p-2 rounded-md mt-2 text-sm">
                                         <div className="grid grid-cols-5 gap-4 mb-2 font-bold text-center border-b pb-2">
                                             <div className="col-span-3 text-left">Product Name</div>
-                                            <div className="text-center">Product Category</div>
-                                            <div className="text-center">Action</div>
+                                            <div>Product Category</div>
+                                            <div>Action</div>
                                         </div>
                                         <div className="space-y-2">
                                             {Object.entries(config.productGroupMapping).map(([name, group]) => (
                                                 <div key={name} className="grid grid-cols-5 gap-4 items-start">
-                                                    <span className="whitespace-nowrap text-left col-span-3">{name}</span>
+                                                    <span className="whitespace-nowrap col-span-3">{name}</span>
                                                     <Select value={group} onValueChange={(newGroup) => setConfig(c => ({...c!, productGroupMapping: {...c!.productGroupMapping, [name]: newGroup as ProductGroup}}))}>
                                                         <SelectTrigger className="h-8 text-xs w-full">
                                                             <SelectValue />
@@ -599,11 +598,9 @@ export function ProductManagement() {
                                                             {productGroups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                                                         </SelectContent>
                                                     </Select>
-                                                    <div className="flex justify-center">
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive mx-auto" onClick={() => handleRemoveProduct(name)}>
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive mx-auto" onClick={() => handleRemoveProduct(name)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
                                             ))}
                                         </div>
