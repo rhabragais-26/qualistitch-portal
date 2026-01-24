@@ -75,7 +75,7 @@ export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'SCES': ['sales'],
   'Sales Supervisor': ['sales'],
   'Sales Manager': ['sales'],
-  'S.E Officer': ['sales', 'marketing'],
+  'S.E Officer': ['sales'],
   'Inventory Officer': ['inventory'],
   'Digitizer': ['digitizing'],
   'E.D Coordinator': ['digitizing'],
