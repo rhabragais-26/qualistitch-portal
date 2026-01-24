@@ -12,7 +12,7 @@ import { Button } from './ui/button';
 import { X } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { AddOns, Discount, Payment } from "./invoice-dialogs";
-import { AddOnsDialog, DiscountDialog, AddPaymentDialog } from './invoice-dialogs';
+import { AddOnsDialog, DiscountDialog, AddPaymentDialog, AddBalancePaymentDialog } from './invoice-dialogs';
 import { formatCurrency } from '@/lib/utils';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -30,9 +30,10 @@ type InvoiceCardProps = {
   onGrandTotalChange: (total: number) => void;
   onBalanceChange: (balance: number) => void;
   isReadOnly?: boolean;
+  isEditingLead?: boolean;
 };
 
-export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, setDiscounts, payments, setPayments, onGrandTotalChange, onBalanceChange, isReadOnly }: InvoiceCardProps) {
+export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, setDiscounts, payments, setPayments, onGrandTotalChange, onBalanceChange, isReadOnly, isEditingLead }: InvoiceCardProps) {
   
   const firestore = useFirestore();
   const pricingConfigRef = useMemoFirebase(
@@ -409,7 +410,14 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 <Separator />
                  <div className="mt-4 space-y-2">
                     <div className="flex justify-between items-center text-lg">
-                      <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly}/>
+                      {isEditingLead ? (
+                        <div className="flex flex-col items-start gap-2">
+                            <Button variant="outline" disabled>Edit Initial Payment</Button>
+                            <AddBalancePaymentDialog balance={balance} setPayments={setPayments} isReadOnly={isReadOnly} />
+                        </div>
+                      ) : (
+                        <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly}/>
+                      )}
                       <div className="text-right">
                         <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
                       </div>
@@ -419,7 +427,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                       Object.values(payments).flat().map((payment, index) => (
                         <div key={index} className="flex justify-end items-center text-sm text-right">
                             <span className="text-muted-foreground mr-2">
-                              {payment.type === 'full' ? 'Full Payment' : 'Down Payment'} <span className="italic">(via {payment.mode})</span>:
+                              {payment.type === 'full' ? 'Full Payment' : payment.type === 'balance' ? 'Balance Payment' : 'Down Payment'} <span className="italic">(via {payment.mode})</span>:
                             </span>
                             <span className="font-medium">{formatCurrency(payment.amount)}</span>
                         </div>

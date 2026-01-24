@@ -8,13 +8,14 @@
       "properties": {
         "id": { "type": "string" },
         "date": { "type": "string", "format": "date-time" },
+        "customerName": { "type": "string" },
         "description": { "type": "string" },
         "amount": { "type": "number" },
         "paymentMode": { "type": "string" },
         "submittedBy": { "type": "string" },
         "timestamp": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "date", "description", "amount", "paymentMode", "submittedBy", "timestamp"]
+      "required": ["id", "date", "customerName", "description", "amount", "paymentMode", "submittedBy", "timestamp"]
     },
     "OperationalExpense": {
       "title": "OperationalExpense",
@@ -810,9 +811,14 @@
           "items": {
               "type": "object",
               "properties": {
-                  "type": { "type": "string", "enum": ["down", "full"] },
+                  "type": { "type": "string", "enum": ["down", "full", "balance"] },
                   "amount": { "type": "number" },
-                  "mode": { "type": "string" }
+                  "mode": { "type": "string" },
+                  "processedBy": { "type": "string" },
+                  "timestamp": { "type": "string", "format": "date-time" },
+                  "verified": { "type": "boolean", "description": "Indicates if the payment has been verified by finance." },
+                  "verifiedBy": { "type": "string", "description": "The nickname of the user who verified the payment." },
+                  "verifiedTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp of when the payment was verified." }
               }
           }
         }

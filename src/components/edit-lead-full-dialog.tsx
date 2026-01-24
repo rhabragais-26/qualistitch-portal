@@ -1,3 +1,4 @@
+
 // edit-lead-full-dialog.tsx (WITHOUT ALERTDIALOG)
 "use client";
 
@@ -253,6 +254,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
                             setPayments={setPayments}
                             onGrandTotalChange={setGrandTotal}
                             onBalanceChange={setBalance}
+                            isEditingLead={true}
                         />
                     </div>
                 </div>

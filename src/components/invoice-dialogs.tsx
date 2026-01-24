@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -9,6 +10,7 @@ import { Minus, Plus, TicketPercent } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { formatCurrency } from '@/lib/utils';
 
 export type AddOns = {
   backLogo: number;
@@ -255,7 +257,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   useEffect(() => {
     if (isOpen) {
       if (hasPayments && firstPayment) {
-        setPaymentType(firstPayment.type);
+        setPaymentType(firstPayment.type as 'down' | 'full');
         setAmount(firstPayment.amount);
         setFormattedAmount(new Intl.NumberFormat('en-PH').format(firstPayment.amount));
         setPaymentMode(firstPayment.mode);
@@ -342,6 +344,136 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
                 readOnly={paymentType === 'full'}
               />
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Mode of Payment</Label>
+            <Select onValueChange={setPaymentMode} value={paymentMode}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select mode of payment" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CASH">CASH</SelectItem>
+                <SelectItem value="GCash (Jam)">GCash (Jam)</SelectItem>
+                <SelectItem value="GCash (Jonathan)">GCash (Jonathan)</SelectItem>
+                <SelectItem value="GCash (Jhun)">GCash (Jhun)</SelectItem>
+                <SelectItem value="GCash (Jays)">GCash (Jays)</SelectItem>
+                <SelectItem value="GCash (Tantan)">GCash (Tantan)</SelectItem>
+                <SelectItem value="Paymaya">Paymaya</SelectItem>
+                <SelectItem value="Bank Transfer to BDO">Bank Transfer to BDO</SelectItem>
+                <SelectItem value="Bank Transfer to BPI">Bank Transfer to BPI</SelectItem>
+                <SelectItem value="Bank Transfer to ChinaBank">Bank Transfer to ChinaBank</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button onClick={handleSave} disabled={isSaveDisabled}>Save Payment</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+});
+
+export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDialog({ balance, setPayments, isReadOnly }: { balance: number; setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>>; isReadOnly?: boolean }) {
+  const [paymentType, setPaymentType] = useState<'balance' | 'full'>('balance');
+  const [amount, setAmount] = useState(0);
+  const [formattedAmount, setFormattedAmount] = useState('');
+  const [paymentMode, setPaymentMode] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+
+  const amountError = amount > balance ? `Amount cannot exceed balance of ${formatCurrency(balance)}` : null;
+  const isSaveDisabled = amount <= 0 || !paymentMode || !!amountError;
+
+  useEffect(() => {
+    if (isOpen) {
+      setPaymentType('balance');
+      setAmount(0);
+      setFormattedAmount('');
+      setPaymentMode('');
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (paymentType === 'full') {
+      setAmount(balance);
+      setFormattedAmount(new Intl.NumberFormat('en-PH').format(balance));
+    } else if (isOpen) {
+      setAmount(0);
+      setFormattedAmount('');
+    }
+  }, [paymentType, balance, isOpen]);
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const sanitizedValue = rawValue.replace(/[^0-9.]/g, '');
+    const parts = sanitizedValue.split('.');
+    if (parts.length > 2) return;
+    setFormattedAmount(sanitizedValue);
+    setAmount(parseFloat(sanitizedValue) || 0);
+  };
+
+  const handleSave = () => {
+    const newPayment: Payment = {
+      type: paymentType === 'full' ? 'full' : 'balance',
+      amount: amount,
+      mode: paymentMode,
+    };
+    setPayments(prev => {
+        const newPayments = {...prev};
+        const paymentKey = Object.keys(newPayments)[0] || new Date().toISOString();
+        if (!newPayments[paymentKey]) {
+            newPayments[paymentKey] = [];
+        }
+        newPayments[paymentKey].push(newPayment);
+        return newPayments;
+    });
+    setIsOpen(false);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          className="bg-teal-600 hover:bg-teal-700 text-white font-bold"
+          disabled={isReadOnly || balance <= 0}
+        >
+          Add Payment
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Balance Payment</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <RadioGroup value={paymentType} onValueChange={(v: 'full' | 'balance') => setPaymentType(v)} className="flex justify-center gap-4">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="balance" id="balance" />
+              <Label htmlFor="balance">Additional Payment</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="full" id="full" />
+              <Label htmlFor="full">Full Payment</Label>
+            </div>
+          </RadioGroup>
+
+          <div className="space-y-1">
+            <Label>Amount</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₱</span>
+              <Input
+                type="text"
+                value={formattedAmount}
+                onChange={handleAmountChange}
+                className={cn("pl-8", amountError && "border-destructive")}
+                placeholder="0.00"
+                readOnly={paymentType === 'full'}
+              />
+            </div>
+            {amountError && <p className="text-sm text-destructive mt-1">{amountError}</p>}
           </div>
           <div className="space-y-2">
             <Label>Mode of Payment</Label>
