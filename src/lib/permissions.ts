@@ -72,9 +72,9 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
 };
 
 export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
-  'SCES': ['sales', 'marketing'],
-  'Sales Supervisor': ['sales', 'marketing'],
-  'Sales Manager': ['sales', 'marketing'],
+  'SCES': ['sales'],
+  'Sales Supervisor': ['sales'],
+  'Sales Manager': ['sales'],
   'S.E Officer': ['sales', 'marketing'],
   'Inventory Officer': ['inventory'],
   'Digitizer': ['digitizing'],
