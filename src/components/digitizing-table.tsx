@@ -56,6 +56,14 @@ type FileObject = {
 type Layout = {
   layoutImage?: string;
   layoutImageUploadTime?: string | null;
+  refLogoLeftImage?: string | null;
+  refLogoLeftImageUploadTime?: string | null;
+  refLogoRightImage?: string | null;
+  refLogoRightImageUploadTime?: string | null;
+  refBackLogoImage?: string | null;
+  refBackLogoImageUploadTime?: string | null;
+  refBackDesignImage?: string | null;
+  refBackDesignImageUploadTime?: string | null;
   dstLogoLeft?: string;
   dstLogoRight?: string;
   dstBackLogo?: string;
@@ -171,6 +179,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [uploadLeadId, setUploadLeadId] = useState<string | null>(null);
   const [uploadField, setUploadField] = useState<CheckboxField | null>(null);
   
+  const [initialDialogImages, setInitialDialogImages] = useState({ logoLeftImage: '', logoRightImage: '', backLogoImage: '', backDesignImage: '' });
   const [logoLeftImage, setLogoLeftImage] = useState<string>('');
   const [logoRightImage, setLogoRightImage] = useState<string>('');
   const [backLogoImage, setBackLogoImage] = useState<string>('');
@@ -376,28 +385,43 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     if (!checked && isCurrentlyChecked) {
       setUncheckConfirmation({ leadId, field });
     } else if (checked && !isCurrentlyChecked) {
-      if (field === 'isUnderProgramming' || field === 'isLogoTesting' || field === 'isFinalProgram') {
+      if (field === 'isUnderProgramming') {
+        setUploadLeadId(leadId);
+        setUploadField(field);
+        setLogoLeftImage('');
+        setLogoRightImage('');
+        setBackLogoImage('');
+        setBackDesignImage('');
+        setIsUploadDialogOpen(true);
+      } else if (field === 'isLogoTesting') {
+        setUploadLeadId(leadId);
+        setUploadField(field);
+        const layout = lead.layouts?.[0];
+        const initialImages = {
+          logoLeftImage: layout?.testLogoLeftImage || '',
+          logoRightImage: layout?.testLogoRightImage || '',
+          backLogoImage: layout?.testBackLogoImage || '',
+          backDesignImage: layout?.testBackDesignImage || '',
+        }
+        setInitialDialogImages(initialImages);
+        setLogoLeftImage(initialImages.logoLeftImage);
+        setLogoRightImage(initialImages.logoRightImage);
+        setBackLogoImage(initialImages.backLogoImage);
+        setBackDesignImage(initialImages.backDesignImage);
+        setIsUploadDialogOpen(true);
+      } else if (field === 'isFinalProgram') {
           setUploadLeadId(leadId);
           setUploadField(field);
-          if (field === 'isUnderProgramming' || field === 'isLogoTesting') {
-            const layout = lead.layouts?.[0];
-            const isTest = field === 'isLogoTesting';
-            setLogoLeftImage(isTest ? layout?.testLogoLeftImage || '' : layout?.logoLeftImage || '');
-            setLogoRightImage(isTest ? layout?.testLogoRightImage || '' : layout?.logoRightImage || '');
-            setBackLogoImage(isTest ? layout?.testBackLogoImage || '' : layout?.backLogoImage || '');
-            setBackDesignImage(isTest ? layout?.testBackDesignImage || '' : layout?.backDesignImage || '');
-          } else { 
-            const layout = lead.layouts?.[0];
-            setFinalLogoEmb(layout?.finalLogoEmb?.length ? layout.finalLogoEmb : [null]);
-            setFinalBackDesignEmb(layout?.finalBackDesignEmb?.length ? layout.finalBackDesignEmb : [null]);
-            setFinalLogoDst(layout?.finalLogoDst?.length ? layout.finalLogoDst : [null]);
-            setFinalBackDesignDst(layout?.finalBackDesignDst?.length ? layout.finalBackDesignDst : [null]);
-            setFinalNamesDst(layout?.finalNamesDst || []);
-            setSequenceLogo(layout?.sequenceLogo?.length ? layout.sequenceLogo : [null]);
-            setSequenceBackDesign(layout?.sequenceBackDesign?.length ? layout.sequenceBackDesign : [null]);
-            setFinalProgrammedLogo(layout?.finalProgrammedLogo?.length ? layout.finalProgrammedLogo : [null]);
-            setFinalProgrammedBackDesign(layout?.finalProgrammedBackDesign?.length ? layout.finalProgrammedBackDesign : [null]);
-          }
+          const layout = lead.layouts?.[0];
+          setFinalLogoEmb(layout?.finalLogoEmb?.length ? layout.finalLogoEmb : [null]);
+          setFinalBackDesignEmb(layout?.finalBackDesignEmb?.length ? layout.finalBackDesignEmb : [null]);
+          setFinalLogoDst(layout?.finalLogoDst?.length ? layout.finalLogoDst : [null]);
+          setFinalBackDesignDst(layout?.finalBackDesignDst?.length ? layout.finalBackDesignDst : [null]);
+          setFinalNamesDst(layout?.finalNamesDst || []);
+          setSequenceLogo(layout?.sequenceLogo?.length ? layout.sequenceLogo : [null]);
+          setSequenceBackDesign(layout?.sequenceBackDesign?.length ? layout.sequenceBackDesign : [null]);
+          setFinalProgrammedLogo(layout?.finalProgrammedLogo?.length ? layout.finalProgrammedLogo : [null]);
+          setFinalProgrammedBackDesign(layout?.finalProgrammedBackDesign?.length ? layout.finalProgrammedBackDesign : [null]);
           setIsUploadDialogOpen(true);
       } else {
         const optimisticUpdate = { [field]: true, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() };
@@ -750,6 +774,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const renderUploadDialogContent = useCallback(() => {
     if (uploadField === 'isUnderProgramming' || uploadField === 'isLogoTesting') {
       const title = uploadField === 'isUnderProgramming' ? 'Upload Program Files' : 'Upload Actual Tested Image';
+      const isDialogDirty = initialDialogImages.logoLeftImage !== logoLeftImage || initialDialogImages.logoRightImage !== logoRightImage || initialDialogImages.backLogoImage !== backLogoImage || initialDialogImages.backDesignImage !== backDesignImage;
+      const isButtonDisabled = uploadField === 'isUnderProgramming' ? !logoLeftImage && !logoRightImage && !backLogoImage && !backDesignImage : !isDialogDirty;
+
       return (
         <>
           <DialogHeader>
@@ -787,7 +814,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           </div>
           <DialogFooter>
             <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-            <Button type="button" onClick={handleUploadDialogSave} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white" disabled={!logoLeftImage && !logoRightImage && !backLogoImage && !backDesignImage}>Save and Continue</Button>
+            <Button type="button" onClick={handleUploadDialogSave} className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-white" disabled={isButtonDisabled}>Save and Continue</Button>
           </DialogFooter>
         </>
       );
@@ -996,7 +1023,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       );
     }
     return null;
-  }, [uploadField, handleImagePaste, handleFileUpload, handleRemoveImage, handleMultipleFileUpload, addFile, removeFile, handleUploadDialogSave, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, isNamesOnly]);
+  }, [uploadField, handleImagePaste, handleFileUpload, handleRemoveImage, handleMultipleFileUpload, addFile, removeFile, handleUploadDialogSave, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, isNamesOnly, initialDialogImages]);
 
   const ImagePreview = ({ src, alt, className }: { src: string; alt: string; className?:string;}) => (
     <div className={cn("relative cursor-pointer", className)} onClick={() => setImageInView(src)}>
@@ -1229,6 +1256,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 <TableBody>
                 {displayedLeads.map((lead) => {
                   const deadlineInfo = calculateDigitizingDeadline(lead);
+                  const hasRefImages = lead.layouts?.[0]?.refLogoLeftImage || lead.layouts?.[0]?.refLogoRightImage || lead.layouts?.[0]?.refBackLogoImage || lead.layouts?.[0]?.refBackDesignImage;
                   const hasInitialImages = lead.layouts?.[0]?.logoLeftImage || lead.layouts?.[0]?.logoRightImage || lead.layouts?.[0]?.backLogoImage || lead.layouts?.[0]?.backDesignImage;
                   const hasTestImages = lead.layouts?.[0]?.testLogoLeftImage || lead.layouts?.[0]?.testLogoRightImage || lead.layouts?.[0]?.testBackLogoImage || lead.layouts?.[0]?.testBackDesignImage;
                   const hasFinalFiles = lead.layouts?.[0]?.finalLogoEmb?.some(f => f) || lead.layouts?.[0]?.finalBackDesignEmb?.some(f => f) || lead.layouts?.[0]?.finalLogoDst?.some(f => f) || lead.layouts?.[0]?.finalBackDesignDst?.some(f => f) || lead.layouts?.[0]?.finalNamesDst?.some(f => f) || lead.layouts?.[0]?.sequenceLogo?.some(f => f) || lead.layouts?.[0]?.sequenceBackDesign?.some(f => f);
@@ -1411,9 +1439,20 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       <TableRow className="bg-gray-50">
                         <TableCell colSpan={14} className="p-0">
                            <div className="flex flex-wrap gap-4 p-4 items-start">
-                                {hasInitialImages && (
+                                {hasRefImages && (
                                     <Card className="bg-white">
                                         <CardHeader className="p-2"><CardTitle className="text-sm text-center">Reference Images</CardTitle></CardHeader>
+                                        <CardContent className="flex gap-4 text-xs p-2">
+                                            {lead.layouts?.[0]?.refLogoLeftImage && <ImagePreview src={lead.layouts[0].refLogoLeftImage} alt="Reference Logo Left" className="w-24 h-24"/>}
+                                            {lead.layouts?.[0]?.refLogoRightImage && <ImagePreview src={lead.layouts[0].refLogoRightImage} alt="Reference Logo Right" className="w-24 h-24"/>}
+                                            {lead.layouts?.[0]?.refBackLogoImage && <ImagePreview src={lead.layouts[0].refBackLogoImage} alt="Reference Back Logo" className="w-24 h-24"/>}
+                                            {lead.layouts?.[0]?.refBackDesignImage && <ImagePreview src={lead.layouts[0].refBackDesignImage} alt="Reference Back Design" className="w-32 h-24"/>}
+                                        </CardContent>
+                                    </Card>
+                                )}
+                                {hasInitialImages && (
+                                    <Card className="bg-white">
+                                        <CardHeader className="p-2"><CardTitle className="text-sm text-center">Initial Program Images</CardTitle></CardHeader>
                                         <CardContent className="flex gap-4 text-xs p-2">
                                             {lead.layouts?.[0]?.logoLeftImage && (
                                               <div className="flex flex-col items-center text-center"> 
@@ -1548,4 +1587,5 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
 

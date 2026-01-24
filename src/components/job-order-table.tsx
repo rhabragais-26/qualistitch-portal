@@ -1,3 +1,5 @@
+
+
 'use client';
 
 import {
@@ -46,6 +48,14 @@ type Order = {
 
 type Layout = {
   layoutImage?: string | null;
+  refLogoLeftImage?: string | null;
+  refLogoLeftImageUploadTime?: string | null;
+  refLogoRightImage?: string | null;
+  refLogoRightImageUploadTime?: string | null;
+  refBackLogoImage?: string | null;
+  refBackLogoImageUploadTime?: string | null;
+  refBackDesignImage?: string | null;
+  refBackDesignImageUploadTime?: string | null;
   logoLeftImage?: string | null;
   logoLeftImageUploadTime?: string | null;
   logoRightImage?: string | null;
@@ -54,7 +64,7 @@ type Layout = {
   backLogoImageUploadTime?: string | null;
   backDesignImage?: string | null;
   backDesignImageUploadTime?: string | null;
-}
+};
 
 
 type Lead = {
@@ -263,10 +273,10 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const handleOpenUploadDialog = useCallback((lead: Lead) => {
       const layout = lead.layouts?.[0];
       const initial = {
-        logoLeftImage: layout?.logoLeftImage || '',
-        logoRightImage: layout?.logoRightImage || '',
-        backLogoImage: layout?.backLogoImage || '',
-        backDesignImage: layout?.backDesignImage || '',
+        logoLeftImage: layout?.refLogoLeftImage || '',
+        logoRightImage: layout?.refLogoRightImage || '',
+        backLogoImage: layout?.refBackLogoImage || '',
+        backDesignImage: layout?.refBackDesignImage || '',
       };
       setInitialImages(initial);
       setLogoLeftImage(initial.logoLeftImage);
@@ -319,14 +329,14 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
 
     const updatedFirstLayout = {
         ...existingLayout,
-        logoLeftImage: logoLeftImage || null,
-        logoLeftImageUploadTime: logoLeftImage ? (existingLayout.logoLeftImage === logoLeftImage ? existingLayout.logoLeftImageUploadTime : now) : null,
-        logoRightImage: logoRightImage || null,
-        logoRightImageUploadTime: logoRightImage ? (existingLayout.logoRightImage === logoRightImage ? existingLayout.logoRightImageUploadTime : now) : null,
-        backLogoImage: backLogoImage || null,
-        backLogoImageUploadTime: backLogoImage ? (existingLayout.backLogoImage === backLogoImage ? existingLayout.backLogoImageUploadTime : now) : null,
-        backDesignImage: backDesignImage || null,
-        backDesignImageUploadTime: backDesignImage ? (existingLayout.backDesignImage === backDesignImage ? existingLayout.backDesignImageUploadTime : now) : null,
+        refLogoLeftImage: logoLeftImage || null,
+        refLogoLeftImageUploadTime: logoLeftImage ? (existingLayout.refLogoLeftImage === logoLeftImage ? existingLayout.refLogoLeftImageUploadTime : now) : null,
+        refLogoRightImage: logoRightImage || null,
+        refLogoRightImageUploadTime: logoRightImage ? (existingLayout.refLogoRightImage === logoRightImage ? existingLayout.refLogoRightImageUploadTime : now) : null,
+        refBackLogoImage: backLogoImage || null,
+        refBackLogoImageUploadTime: backLogoImage ? (existingLayout.refBackLogoImage === backLogoImage ? existingLayout.refBackLogoImageUploadTime : now) : null,
+        refBackDesignImage: backDesignImage || null,
+        refBackDesignImageUploadTime: backDesignImage ? (existingLayout.refBackDesignImage === backDesignImage ? existingLayout.refBackDesignImageUploadTime : now) : null,
     };
 
     layouts[0] = updatedFirstLayout;
@@ -453,10 +463,10 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       const modifiedDate = formatDateTime(lead.lastModified);
                       const isRepeat = lead.orderNumber > 1;
                        const imageCount = [
-                            lead.layouts?.[0]?.logoLeftImage,
-                            lead.layouts?.[0]?.logoRightImage,
-                            lead.layouts?.[0]?.backLogoImage,
-                            lead.layouts?.[0]?.backDesignImage,
+                            lead.layouts?.[0]?.refLogoLeftImage,
+                            lead.layouts?.[0]?.refLogoRightImage,
+                            lead.layouts?.[0]?.refBackLogoImage,
+                            lead.layouts?.[0]?.refBackDesignImage,
                         ].filter(Boolean).length;
 
                       return (
@@ -641,3 +651,4 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               }>Save Images </Button></DialogFooter></DialogContent></Dialog></Card> ); }
 
     
+
