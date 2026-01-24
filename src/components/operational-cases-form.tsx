@@ -31,6 +31,7 @@ import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDay
 import { v4 as uuidv4 } from 'uuid';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, setDoc, updateDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
 import { addDays, format } from 'date-fns';
 import { QuantityDialog } from './quantity-dialog';
@@ -122,7 +123,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
     () => (firestore ? query(collection(firestore, 'leads')) : null),
     [firestore]
   );
-  const { data: allLeads, isLoading: areLeadsLoading } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: allLeads, isLoading: areLeadsLoading } = useCollection<Lead>(leadsQuery);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -243,7 +244,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        setValue('image', result, { shouldValidate: true });
+        setValue('image', result, { shouldDirty: true });
       };
       reader.readAsDataURL(file);
     }
@@ -258,7 +259,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     if (e.target?.result) {
-                        setValue('image', e.target.result as string, { shouldValidate: true });
+                        setValue('image', e.target.result as string, { shouldDirty: true });
                     }
                 };
                 reader.readAsDataURL(blob);
@@ -296,42 +297,41 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
 
   async function onSubmit(values: FormValues) {
     if (!firestore) {
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Firestore is not available. Please try again later.'
-        });
-        return;
+      toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available. Please try again later.' });
+      return;
     }
 
     if (!isEditing && !foundLead) {
-        toast({
-            variant: 'destructive',
-            title: 'Invalid Job Order',
-            description: 'Please select a valid Job Order from the suggestions.'
-        });
-        return;
+      toast({ variant: 'destructive', title: 'Invalid Job Order', description: 'Please select a valid Job Order from the suggestions.' });
+      return;
     }
     
     try {
+        let imageUrl = values.image || '';
+        const caseId = isEditing && editingCase ? editingCase.id : uuidv4();
+        
+        if (values.image && values.image.startsWith('data:')) {
+            const storage = getStorage();
+            const storageRef = ref(storage, `operational-cases/${caseId}/image.png`);
+            const snapshot = await uploadString(storageRef, values.image, 'data_url');
+            imageUrl = await getDownloadURL(snapshot.ref);
+        }
+
         const submissionData = {
           joNumber: values.joNumber,
           caseType: values.caseType,
           remarks: values.remarks,
-          image: values.image,
+          image: imageUrl,
           quantity: values.quantity,
           caseItems: caseItems,
         }
 
         if (isEditing && editingCase) {
-            // Update existing case
             const caseDocRef = doc(firestore, 'operationalCases', editingCase.id);
             await updateDoc(caseDocRef, { ...submissionData, lastModified: new Date().toISOString() });
             handleFormReset();
             onSaveComplete();
         } else {
-            // Create new case
-            const caseId = uuidv4();
             const operationalCasesRef = collection(firestore, 'operationalCases');
             const caseDocRef = doc(operationalCasesRef, caseId);
             
@@ -623,3 +623,4 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
 });
 
 export { OperationalCasesFormMemo as OperationalCasesForm };
+

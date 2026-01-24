@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Camera, Eye, EyeOff, X } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { UserPosition } from '@/lib/permissions';
 import Image from 'next/image';
@@ -165,7 +167,15 @@ export function ProfileForm() {
         if (dirtyFields.nickname) profileDataToUpdate.nickname = toTitleCase(values.nickname);
         if (dirtyFields.position) profileDataToUpdate.position = values.position;
         if (dirtyFields.phoneNumber) profileDataToUpdate.phoneNumber = values.phoneNumber;
-        if (dirtyFields.photoURL) profileDataToUpdate.photoURL = values.photoURL;
+        
+        if (dirtyFields.photoURL && values.photoURL && values.photoURL.startsWith('data:')) {
+            const storage = getStorage();
+            const storageRef = ref(storage, `profile-photos/${user.uid}`);
+            const snapshot = await uploadString(storageRef, values.photoURL, 'data_url');
+            profileDataToUpdate.photoURL = await getDownloadURL(snapshot.ref);
+        } else if (dirtyFields.photoURL) {
+            profileDataToUpdate.photoURL = values.photoURL; 
+        }
 
         if (Object.keys(profileDataToUpdate).length > 0) {
             const userDocRef = doc(firestore, 'users', user.uid);

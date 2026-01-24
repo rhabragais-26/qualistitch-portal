@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -128,7 +129,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery);
 
   const salesRepresentatives = useMemo(() => {
     if (!leads) return [];
@@ -175,6 +176,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
         isJoPrinted: checked,
         joPrintedTimestamp: checked ? new Date().toISOString() : null
       });
+      refetch();
     } catch (e: any) {
       console.error("Error updating printed status:", e);
       toast({
@@ -672,6 +674,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               }>Save Images </Button></DialogFooter></DialogContent></Dialog></Card> ); }
 
     
+
 
 
 

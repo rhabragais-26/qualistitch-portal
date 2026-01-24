@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -37,6 +36,7 @@ import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import Link from 'next/link';
 
@@ -469,105 +469,115 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
   const handleUploadDialogSave = useCallback(async () => {
     if (!uploadLeadId || !uploadField || !firestore || !leads) return;
-
+  
     const lead = leads.find(l => l.id === uploadLeadId);
     if (!lead) return;
-
-    const currentLayouts = lead.layouts && lead.layouts.length > 0 ? [...lead.layouts] : [{}];
-    let updatedFirstLayout;
+  
+    const storage = getStorage();
     const now = new Date().toISOString();
-
-    if (uploadField === 'isUnderProgramming') {
-        const existingLayout = currentLayouts[0] || {};
+  
+    const uploadAndGetURL = async (imageData: string, fieldName: string, existingUrl?: string | null): Promise<string | null> => {
+      if (!imageData) return null;
+      if (imageData === existingUrl || imageData.startsWith('http')) return imageData; // No change or already a URL
+      const storageRef = ref(storage, `leads-files/${uploadLeadId}/${fieldName}_${Date.now()}`);
+      const snapshot = await uploadString(storageRef, imageData, 'data_url');
+      return await getDownloadURL(snapshot.ref);
+    };
+  
+    const uploadFileArray = async (files: (FileObject | null)[], folderName: string): Promise<(FileObject | null)[]> => {
+      return Promise.all(
+        files.map(async (file, index) => {
+          if (!file || !file.url.startsWith('data:')) return file;
+          const url = await uploadAndGetURL(file.url, `${folderName}/${index}_${file.name}`);
+          return { name: file.name, url: url! };
+        })
+      );
+    };
+  
+    try {
+      const currentLayouts = lead.layouts && lead.layouts.length > 0 ? JSON.parse(JSON.stringify(lead.layouts)) : [{}];
+      let updatedFirstLayout = currentLayouts[0] || {};
+  
+      if (uploadField === 'isUnderProgramming' || uploadField === 'isLogoTesting') {
+        const fieldPrefix = uploadField === 'isUnderProgramming' ? '' : 'test';
+        const [logoLeftImageUrl, logoRightImageUrl, backLogoImageUrl, backDesignImageUrl] = await Promise.all([
+          uploadAndGetURL(logoLeftImage, `${fieldPrefix}LogoLeft`, updatedFirstLayout[`${fieldPrefix}LogoLeftImage`]),
+          uploadAndGetURL(logoRightImage, `${fieldPrefix}LogoRight`, updatedFirstLayout[`${fieldPrefix}LogoRightImage`]),
+          uploadAndGetURL(backLogoImage, `${fieldPrefix}BackLogo`, updatedFirstLayout[`${fieldPrefix}BackLogoImage`]),
+          uploadAndGetURL(backDesignImage, `${fieldPrefix}BackDesign`, updatedFirstLayout[`${fieldPrefix}BackDesignImage`]),
+        ]);
         updatedFirstLayout = {
-            ...existingLayout,
-            logoLeftImage: logoLeftImage || null,
-            logoLeftImageUploadTime: logoLeftImage ? (existingLayout.logoLeftImage === logoLeftImage ? existingLayout.logoLeftImageUploadTime : now) : null,
-            logoRightImage: logoRightImage || null,
-            logoRightImageUploadTime: logoRightImage ? (existingLayout.logoRightImage === logoRightImage ? existingLayout.logoRightImageUploadTime : now) : null,
-            backLogoImage: backLogoImage || null,
-            backLogoImageUploadTime: backLogoImage ? (existingLayout.backLogoImage === backLogoImage ? existingLayout.backLogoImageUploadTime : now) : null,
-            backDesignImage: backDesignImage || null,
-            backDesignImageUploadTime: backDesignImage ? (existingLayout.backDesignImage === backDesignImage ? existingLayout.backDesignImageUploadTime : now) : null,
+          ...updatedFirstLayout,
+          [`${fieldPrefix}LogoLeftImage`]: logoLeftImageUrl,
+          [`${fieldPrefix}LogoLeftImageUploadTime`]: logoLeftImageUrl ? (updatedFirstLayout[`${fieldPrefix}LogoLeftImage`] === logoLeftImageUrl ? updatedFirstLayout[`${fieldPrefix}LogoLeftImageUploadTime`] : now) : null,
+          [`${fieldPrefix}LogoRightImage`]: logoRightImageUrl,
+          [`${fieldPrefix}LogoRightImageUploadTime`]: logoRightImageUrl ? (updatedFirstLayout[`${fieldPrefix}LogoRightImage`] === logoRightImageUrl ? updatedFirstLayout[`${fieldPrefix}LogoRightImageUploadTime`] : now) : null,
+          [`${fieldPrefix}BackLogoImage`]: backLogoImageUrl,
+          [`${fieldPrefix}BackLogoImageUploadTime`]: backLogoImageUrl ? (updatedFirstLayout[`${fieldPrefix}BackLogoImage`] === backLogoImageUrl ? updatedFirstLayout[`${fieldPrefix}BackLogoImageUploadTime`] : now) : null,
+          [`${fieldPrefix}BackDesignImage`]: backDesignImageUrl,
+          [`${fieldPrefix}BackDesignImageUploadTime`]: backDesignImageUrl ? (updatedFirstLayout[`${fieldPrefix}BackDesignImage`] === backDesignImageUrl ? updatedFirstLayout[`${fieldPrefix}BackDesignImageUploadTime`] : now) : null,
         };
-    } else if (uploadField === 'isLogoTesting') {
-        const existingLayout = currentLayouts[0] || {};
-        updatedFirstLayout = {
-            ...existingLayout,
-            testLogoLeftImage: logoLeftImage || null,
-            testLogoLeftImageUploadTime: logoLeftImage ? (existingLayout.testLogoLeftImage === logoLeftImage ? existingLayout.testLogoLeftImageUploadTime : now) : null,
-            testLogoRightImage: logoRightImage || null,
-            testLogoRightImageUploadTime: logoRightImage ? (existingLayout.testLogoRightImage === logoRightImage ? existingLayout.testLogoRightImageUploadTime : now) : null,
-            testBackLogoImage: backLogoImage || null,
-            testBackLogoImageUploadTime: backLogoImage ? (existingLayout.testBackLogoImage === backLogoImage ? existingLayout.testBackLogoImageUploadTime : now) : null,
-            testBackDesignImage: backDesignImage || null,
-            testBackDesignImageUploadTime: backDesignImage ? (existingLayout.testBackDesignImage === backDesignImage ? existingLayout.testBackDesignImageUploadTime : now) : null,
-        };
-    } else if (uploadField === 'isFinalProgram') {
-      const existingLayout = currentLayouts[0] || {};
+      } else if (uploadField === 'isFinalProgram') {
+        const [
+          finalLogoEmbUrls, finalBackDesignEmbUrls, finalLogoDstUrls, finalBackDesignDstUrls,
+          finalNamesDstUrls, sequenceLogoUrls, sequenceBackDesignUrls,
+          finalProgrammedLogoUrls, finalProgrammedBackDesignUrls,
+        ] = await Promise.all([
+          uploadFileArray(finalLogoEmb, 'finalLogoEmb'), uploadFileArray(finalBackDesignEmb, 'finalBackDesignEmb'),
+          uploadFileArray(finalLogoDst, 'finalLogoDst'), uploadFileArray(finalBackDesignDst, 'finalBackDesignDst'),
+          uploadFileArray(finalNamesDst, 'finalNamesDst'), uploadFileArray(sequenceLogo, 'sequenceLogo'),
+          uploadFileArray(sequenceBackDesign, 'sequenceBackDesign'),
+          uploadFileArray(finalProgrammedLogo, 'finalProgrammedLogo'),
+          uploadFileArray(finalProgrammedBackDesign, 'finalProgrammedBackDesign'),
+        ]);
 
-      const createTimestampArray = (newFiles: (FileObject|null)[], oldFiles?: (FileObject|null)[], oldTimes?: (string|null)[]) => {
+        const createTimestampArray = (newFiles: (FileObject|null)[], oldFiles?: (FileObject|null)[], oldTimes?: (string|null)[]) => {
           return newFiles.map((file, index) => {
               const existingFile = oldFiles?.[index];
               const existingTime = oldTimes?.[index];
               return file && file.url === existingFile?.url ? existingTime : (file ? now : null);
           });
-      };
-
-      updatedFirstLayout = {
-          ...existingLayout,
-          finalLogoEmb,
-          finalLogoEmbUploadTimes: createTimestampArray(finalLogoEmb, existingLayout.finalLogoEmb, existingLayout.finalLogoEmbUploadTimes),
-          finalBackDesignEmb,
-          finalBackDesignEmbUploadTimes: createTimestampArray(finalBackDesignEmb, existingLayout.finalBackDesignEmb, existingLayout.finalBackDesignEmbUploadTimes),
-          finalLogoDst,
-          finalLogoDstUploadTimes: createTimestampArray(finalLogoDst, existingLayout.finalLogoDst, existingLayout.finalLogoDstUploadTimes),
-          finalBackDesignDst,
-          finalBackDesignDstUploadTimes: createTimestampArray(finalBackDesignDst, existingLayout.finalBackDesignDst, existingLayout.finalBackDesignDstUploadTimes),
-          finalNamesDst,
-          finalNamesDstUploadTimes: createTimestampArray(finalNamesDst, existingLayout.finalNamesDst, existingLayout.finalNamesDstUploadTimes),
-          sequenceLogo,
-          sequenceLogoUploadTimes: createTimestampArray(sequenceLogo, existingLayout.sequenceLogo, existingLayout.sequenceLogoUploadTimes),
-          sequenceBackDesign,
-          sequenceBackDesignUploadTimes: createTimestampArray(sequenceBackDesign, existingLayout.sequenceBackDesign, existingLayout.sequenceBackDesignUploadTimes),
-          finalProgrammedLogo,
-          finalProgrammedLogoUploadTimes: createTimestampArray(finalProgrammedLogo, existingLayout.finalProgrammedLogo, existingLayout.finalProgrammedLogoUploadTimes),
-          finalProgrammedBackDesign,
-          finalProgrammedBackDesignUploadTimes: createTimestampArray(finalProgrammedBackDesign, existingLayout.finalProgrammedBackDesign, existingLayout.finalProgrammedBackDesignUploadTimes),
-      };
-    }
-     else {
-        return;
-    }
-    
-    const newLayouts = [updatedFirstLayout, ...currentLayouts.slice(1)];
-    
-    const optimisticUpdate = { layouts: newLayouts, [uploadField]: true, [`${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: now };
-    setOptimisticChanges(prev => ({ ...prev, [uploadLeadId]: { ...prev[uploadLeadId], ...optimisticUpdate } }));
-
-    setIsUploadDialogOpen(false);
-    
-    try {
+        };
+  
+        updatedFirstLayout = {
+          ...updatedFirstLayout,
+          finalLogoEmb: finalLogoEmbUrls,
+          finalLogoEmbUploadTimes: createTimestampArray(finalLogoEmbUrls, updatedFirstLayout.finalLogoEmb, updatedFirstLayout.finalLogoEmbUploadTimes),
+          finalBackDesignEmb: finalBackDesignEmbUrls,
+          finalBackDesignEmbUploadTimes: createTimestampArray(finalBackDesignEmbUrls, updatedFirstLayout.finalBackDesignEmb, updatedFirstLayout.finalBackDesignEmbUploadTimes),
+          finalLogoDst: finalLogoDstUrls,
+          finalLogoDstUploadTimes: createTimestampArray(finalLogoDstUrls, updatedFirstLayout.finalLogoDst, updatedFirstLayout.finalLogoDstUploadTimes),
+          finalBackDesignDst: finalBackDesignDstUrls,
+          finalBackDesignDstUploadTimes: createTimestampArray(finalBackDesignDstUrls, updatedFirstLayout.finalBackDesignDst, updatedFirstLayout.finalBackDesignDstUploadTimes),
+          finalNamesDst: finalNamesDstUrls,
+          finalNamesDstUploadTimes: createTimestampArray(finalNamesDstUrls, updatedFirstLayout.finalNamesDst, updatedFirstLayout.finalNamesDstUploadTimes),
+          sequenceLogo: sequenceLogoUrls,
+          sequenceLogoUploadTimes: createTimestampArray(sequenceLogoUrls, updatedFirstLayout.sequenceLogo, updatedFirstLayout.sequenceLogoUploadTimes),
+          sequenceBackDesign: sequenceBackDesignUrls,
+          sequenceBackDesignUploadTimes: createTimestampArray(sequenceBackDesignUrls, updatedFirstLayout.sequenceBackDesign, updatedFirstLayout.sequenceBackDesignUploadTimes),
+          finalProgrammedLogo: finalProgrammedLogoUrls,
+          finalProgrammedLogoUploadTimes: createTimestampArray(finalProgrammedLogoUrls, updatedFirstLayout.finalProgrammedLogo, updatedFirstLayout.finalProgrammedLogoUploadTimes),
+          finalProgrammedBackDesign: finalProgrammedBackDesignUrls,
+          finalProgrammedBackDesignUploadTimes: createTimestampArray(finalProgrammedBackDesignUrls, updatedFirstLayout.finalProgrammedBackDesign, updatedFirstLayout.finalProgrammedBackDesignUploadTimes),
+        };
+      }
+  
+      const newLayouts = [updatedFirstLayout, ...currentLayouts.slice(1)];
       const leadDocRef = doc(firestore, 'leads', uploadLeadId);
       await updateDoc(leadDocRef, { layouts: newLayouts });
       await updateStatus(uploadLeadId, uploadField, true);
-      
-      setLogoLeftImage('');
-      setLogoRightImage('');
-      setBackLogoImage('');
-      setBackDesignImage('');
-      setFinalLogoEmb([null]);
-      setFinalBackDesignEmb([null]);
-      setFinalLogoDst([null]);
-      setFinalBackDesignDst([]);
-      setFinalNamesDst([]);
-      setSequenceLogo([null]);
-      setSequenceBackDesign([]);
-      setFinalProgrammedLogo([null]);
-      setFinalProgrammedBackDesign([]);
+  
+      // Reset state
+      setLogoLeftImage(''); setLogoRightImage(''); setBackLogoImage(''); setBackDesignImage('');
+      setFinalLogoEmb([null]); setFinalBackDesignEmb([null]); setFinalLogoDst([null]);
+      setFinalBackDesignDst([]); setFinalNamesDst([]); setSequenceLogo([null]);
+      setSequenceBackDesign([]); setFinalProgrammedLogo([null]); setFinalProgrammedBackDesign([]);
       setIsNamesOnly(false);
+      
+      setIsUploadDialogOpen(false);
       setUploadLeadId(null);
       setUploadField(null);
+  
     } catch (e: any) {
       console.error('Error saving images or status:', e);
       toast({
@@ -575,12 +585,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         title: 'Save Failed',
         description: e.message || 'Could not save the images and update status.',
       });
-      setOptimisticChanges(prev => {
-        const { [uploadField]: _uf, [`${uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _ts, layouts: _l, ...rest } = prev[uploadLeadId] || {};
-        return { ...prev, [uploadLeadId]: rest };
-      });
     }
   }, [uploadLeadId, uploadField, firestore, leads, updateStatus, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign]);
+
 
   const confirmUncheck = useCallback(() => {
     if (uncheckConfirmation) {
@@ -1587,5 +1594,6 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
 
 
