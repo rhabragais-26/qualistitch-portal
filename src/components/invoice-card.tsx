@@ -11,8 +11,8 @@ import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOptio
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { AddOns, Discount, Payment } from "./invoice-dialogs";
-import { AddOnsDialog, DiscountDialog, AddPaymentDialog, AddBalancePaymentDialog } from './invoice-dialogs';
+import { AddOns, Discount, Payment, AddBalancePaymentDialog } from "./invoice-dialogs";
+import { AddOnsDialog, DiscountDialog, AddPaymentDialog } from './invoice-dialogs';
 import { formatCurrency } from '@/lib/utils';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -44,13 +44,22 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
 
   const pricingConfig = useMemo(() => {
       if (fetchedConfig) return fetchedConfig;
-      // The useDoc hook might initially return null while loading, so we use a default.
-      // Once fetchedData is available, this will re-run and use it.
       return initialPricingConfig as PricingConfig;
   }, [fetchedConfig]);
 
   const [removingAddOn, setRemovingAddOn] = useState<{ groupKey: string; addOnType: keyof AddOns; } | null>(null);
   const [removedFees, setRemovedFees] = useState<Record<string, { logo?: boolean; backText?: boolean }>>({});
+  const [paymentToEdit, setPaymentToEdit] = useState<{ payment: Payment; index: number; key: string } | null>(null);
+  const [isBalanceDialogOpen, setIsBalanceDialogOpen] = useState(false);
+
+  const lastBalancePaymentInfo = useMemo(() => {
+    if (!payments) return null;
+    const allPayments = Object.entries(payments).flatMap(([key, paymentArr]) =>
+      (paymentArr || []).map((p, index) => ({ payment: p, index, key }))
+    );
+    return allPayments.filter(p => p.payment.type === 'balance').pop() || null;
+  }, [payments]);
+
 
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
@@ -172,6 +181,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
 
 
   return (
+    <>
     <Card className="shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
       <CardHeader>
         <div className="flex justify-between items-center">
@@ -413,7 +423,21 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                       {isEditingLead ? (
                         <div className="flex flex-col items-start gap-2">
                             <Button variant="outline" disabled>Edit Initial Payment</Button>
-                            <AddBalancePaymentDialog balance={balance} setPayments={setPayments} isReadOnly={isReadOnly} />
+                            <Button
+                                type="button"
+                                className="bg-teal-600 hover:bg-teal-700 text-white font-bold"
+                                disabled={isReadOnly || (balance <= 0 && !lastBalancePaymentInfo)}
+                                onClick={() => {
+                                    if (lastBalancePaymentInfo) {
+                                        setPaymentToEdit(lastBalancePaymentInfo);
+                                    } else {
+                                        setPaymentToEdit(null);
+                                    }
+                                    setIsBalanceDialogOpen(true);
+                                }}
+                            >
+                                {lastBalancePaymentInfo ? 'Edit Payment' : 'Add Payment'}
+                            </Button>
                         </div>
                       ) : (
                         <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly}/>
@@ -479,8 +503,17 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AddBalancePaymentDialog
+        isOpen={isBalanceDialogOpen}
+        onOpenChange={setIsBalanceDialogOpen}
+        balance={balance}
+        payments={payments}
+        setPayments={setPayments}
+        paymentToEdit={paymentToEdit}
+        onClose={() => setPaymentToEdit(null)}
+        isReadOnly={isReadOnly}
+    />
     </Card>
+    </>
   );
 }
-
-    

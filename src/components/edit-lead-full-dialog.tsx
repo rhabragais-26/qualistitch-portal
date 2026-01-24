@@ -14,17 +14,6 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-// AlertDialog imports removed as it's no longer used
-// import {
-//     AlertDialog,
-//     AlertDialogAction,
-//     AlertDialogCancel,
-//     AlertDialogContent,
-//     AlertDialogHeader,
-//     AlertDialogTitle,
-//     AlertDialogDescription,
-//     AlertDialogFooter,
-// } from './ui/alert-dialog';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -32,7 +21,7 @@ import { useFirestore, useUser } from '@/firebase';
 import { LeadForm, FormValues, formSchema } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
-import { AddOns, Discount, Payment, AddBalancePaymentDialog } from "./invoice-dialogs";
+import { AddOns, Discount, Payment } from "./invoice-dialogs";
 import type { Lead as LeadType } from './records-table';
 import { toTitleCase } from '@/lib/utils';
 
@@ -58,9 +47,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
   const [grandTotal, setGrandTotal] = useState(0);
   const [balance, setBalance] = useState(0);
   
-  const [paymentToEdit, setPaymentToEdit] = useState<{ payment: Payment; index: number; key: string } | null>(null);
-  const [isBalanceDialogOpen, setIsBalanceDialogOpen] = useState(false);
-
   const formMethods = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onSubmit',
@@ -147,14 +133,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
       description: "Please correct the errors in the form before saving.",
     });
   };
-
-  const lastBalancePaymentInfo = useMemo(() => {
-    if (!payments) return null;
-    const allPayments = Object.entries(payments).flatMap(([key, paymentArr]) =>
-      (paymentArr || []).map((p, index) => ({ payment: p, index, key }))
-    );
-    return allPayments.filter(p => p.payment.type === 'balance').pop() || null;
-  }, [payments]);
 
   const handleConfirmSave = useCallback(async () => {
     if (!firestore || !lead) {
@@ -263,36 +241,20 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
                             onGrandTotalChange={setGrandTotal}
                             onBalanceChange={setBalance}
                             isEditingLead={true}
+                            isReadOnly={isReadOnly}
                         />
                     </div>
                 </div>
                 
                 <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
-                    <div className="flex w-full justify-between items-center">
-                        <div className="flex flex-col items-start gap-2">
-                            <Button variant="outline" disabled>Edit Initial Payment</Button>
-                             <Button
-                                type="button"
-                                className="bg-teal-600 hover:bg-teal-700 text-white font-bold"
-                                disabled={isReadOnly || (balance <= 0 && !lastBalancePaymentInfo)}
-                                onClick={() => {
-                                    if (lastBalancePaymentInfo) {
-                                        setPaymentToEdit(lastBalancePaymentInfo);
-                                    } else {
-                                        setPaymentToEdit(null);
-                                    }
-                                    setIsBalanceDialogOpen(true);
-                                }}
-                            >
-                                {lastBalancePaymentInfo ? 'Edit Payment' : 'Add Payment'}
-                            </Button>
-                        </div>
+                    <div className="flex w-full justify-end items-center">
                         <div className="flex gap-2">
                            <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
                             <Button 
                             type="button" 
                             form={`edit-lead-form-${lead?.id}`} 
                             onClick={handleSubmit(onValidSubmit, onInvalidSubmit)}
+                            disabled={isReadOnly}
                             >
                             Save Changes
                             </Button>
@@ -303,17 +265,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
         </FormProvider>
       </DialogContent>
     </Dialog>
-     <AddBalancePaymentDialog
-        isOpen={isBalanceDialogOpen}
-        onOpenChange={setIsBalanceDialogOpen}
-        balance={balance}
-        payments={payments}
-        setPayments={setPayments}
-        paymentToEdit={paymentToEdit}
-        onClose={() => setPaymentToEdit(null)}
-        isReadOnly={isReadOnly}
-    />
     </>
   );
 }
-    
