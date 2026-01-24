@@ -377,34 +377,58 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   );
 });
 
-export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDialog({ balance, setPayments, isReadOnly }: { balance: number; setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>>; isReadOnly?: boolean }) {
+export const BalancePaymentDialog = React.memo(function BalancePaymentDialog({
+  isOpen,
+  onOpenChange,
+  balance,
+  payments,
+  setPayments,
+  paymentToEdit,
+  onClose,
+  isReadOnly,
+}: {
+  balance: number;
+  payments: Record<string, Payment[]>;
+  setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>>;
+  isReadOnly?: boolean;
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  paymentToEdit: { payment: Payment; index: number; key: string } | null;
+  onClose: () => void;
+}) {
   const [paymentType, setPaymentType] = useState<'balance' | 'full'>('balance');
   const [amount, setAmount] = useState(0);
   const [formattedAmount, setFormattedAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('');
-  const [isOpen, setIsOpen] = useState(false);
 
-  const amountError = amount > balance ? `Amount cannot exceed balance of ${formatCurrency(balance)}` : null;
-  const isSaveDisabled = amount <= 0 || !paymentMode || !!amountError;
+  const isEditing = !!paymentToEdit;
 
   useEffect(() => {
     if (isOpen) {
-      setPaymentType('balance');
-      setAmount(0);
-      setFormattedAmount('');
-      setPaymentMode('');
+      if (isEditing && paymentToEdit) {
+        setPaymentType(paymentToEdit.payment.type);
+        setAmount(paymentToEdit.payment.amount);
+        setFormattedAmount(String(paymentToEdit.payment.amount));
+        setPaymentMode(paymentToEdit.payment.mode);
+      } else {
+        setPaymentType('balance');
+        setAmount(0);
+        setFormattedAmount('');
+        setPaymentMode('');
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, isEditing, paymentToEdit]);
+
+  const maxAmount = isEditing && paymentToEdit ? balance + paymentToEdit.payment.amount : balance;
+  const amountError = amount > maxAmount ? `Amount cannot exceed balance of ${formatCurrency(maxAmount)}` : null;
+  const isSaveDisabled = amount <= 0 || !paymentMode || !!amountError;
 
   useEffect(() => {
     if (paymentType === 'full') {
       setAmount(balance);
       setFormattedAmount(new Intl.NumberFormat('en-PH').format(balance));
-    } else if (isOpen) {
-      setAmount(0);
-      setFormattedAmount('');
     }
-  }, [paymentType, balance, isOpen]);
+  }, [paymentType, balance]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
@@ -416,35 +440,49 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   };
 
   const handleSave = () => {
-    const newPayment: Payment = {
-      type: paymentType === 'full' ? 'full' : 'balance',
+    const newOrUpdatedPayment: Payment = {
+      type: paymentType,
       amount: amount,
       mode: paymentMode,
     };
+    
     setPayments(prev => {
-        const newPayments = {...prev};
+      const newPayments = JSON.parse(JSON.stringify(prev)); // deep copy
+      
+      if (isEditing && paymentToEdit) {
+        const { key, index } = paymentToEdit;
+        if (newPayments[key] && newPayments[key][index]) {
+          newPayments[key][index] = {
+            ...newPayments[key][index],
+            ...newOrUpdatedPayment,
+          };
+        }
+      } else {
         const paymentKey = Object.keys(newPayments)[0] || new Date().toISOString();
-        const existingPayments = newPayments[paymentKey] || [];
-        newPayments[paymentKey] = [...existingPayments, newPayment];
-        return newPayments;
+        if (!newPayments[paymentKey]) {
+          newPayments[paymentKey] = [];
+        }
+        newPayments[paymentKey].push({
+          ...(newOrUpdatedPayment as any),
+          processedBy: 'Finance', // Or get current user
+          timestamp: new Date().toISOString(),
+        });
+      }
+      return newPayments;
     });
-    setIsOpen(false);
+
+    onClose();
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          className="bg-teal-600 hover:bg-teal-700 text-white font-bold"
-          disabled={isReadOnly || balance <= 0}
-        >
-          Add Payment
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+        if (!open) onClose();
+        onOpenChange(open);
+    }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Balance Payment</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Payment' : 'Add Balance Payment'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <RadioGroup value={paymentType} onValueChange={(v: 'full' | 'balance') => setPaymentType(v)} className="flex justify-center gap-4">
@@ -468,7 +506,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
                 onChange={handleAmountChange}
                 className={cn("pl-8", amountError && "border-destructive")}
                 placeholder="0.00"
-                readOnly={paymentType === 'full'}
+                readOnly={paymentType === 'full' && !isEditing}
               />
             </div>
             {amountError && <p className="text-sm text-destructive mt-1">{amountError}</p>}
@@ -504,3 +542,4 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
     </Dialog>
   );
 });
+```

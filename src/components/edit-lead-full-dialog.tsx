@@ -32,7 +32,7 @@ import { useFirestore, useUser } from '@/firebase';
 import { LeadForm, FormValues, formSchema } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
-import { AddOns, Discount, Payment } from "./invoice-dialogs";
+import { AddOns, Discount, Payment, BalancePaymentDialog } from "./invoice-dialogs";
 import type { Lead as LeadType } from './records-table';
 import { toTitleCase } from '@/lib/utils';
 
@@ -57,8 +57,8 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
   const [grandTotal, setGrandTotal] = useState(0);
   const [balance, setBalance] = useState(0);
   
-  // No longer needed as AlertDialog is removed
-  // const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
+  const [paymentToEdit, setPaymentToEdit] = useState<{ payment: Payment; index: number; key: string } | null>(null);
+  const [isBalanceDialogOpen, setIsBalanceDialogOpen] = useState(false);
 
   const formMethods = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -134,7 +134,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     }
   }, [isOpen, lead, reset]);
   
-  // MODIFIED: Directly call handleConfirmSave
   const onValidSubmit = () => {
     handleConfirmSave();
   };
@@ -147,6 +146,14 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
       description: "Please correct the errors in the form before saving.",
     });
   };
+
+  const lastBalancePaymentInfo = useMemo(() => {
+    if (!payments) return null;
+    const allPayments = Object.entries(payments).flatMap(([key, paymentArr]) =>
+      (paymentArr || []).map((p, index) => ({ payment: p, index, key }))
+    );
+    return allPayments.filter(p => p.payment.type === 'balance').pop() || null;
+  }, [payments]);
 
   const handleConfirmSave = useCallback(async () => {
     if (!firestore || !lead) {
@@ -260,19 +267,52 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
                 </div>
                 
                 <DialogFooter className="mt-auto pt-4 border-t px-6 pb-6">
-                    <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                    <Button 
-                      type="button" 
-                      form={`edit-lead-form-${lead?.id}`} 
-                      onClick={handleSubmit(onValidSubmit, onInvalidSubmit)}
-                    >
-                      Save Changes
-                    </Button>
+                    <div className="flex w-full justify-between items-center">
+                        <div className="flex flex-col items-start gap-2">
+                            <Button variant="outline" disabled>Edit Initial Payment</Button>
+                             <Button
+                                type="button"
+                                className="bg-teal-600 hover:bg-teal-700 text-white font-bold"
+                                disabled={isReadOnly || (balance <= 0 && !lastBalancePaymentInfo)}
+                                onClick={() => {
+                                    if (lastBalancePaymentInfo) {
+                                        setPaymentToEdit(lastBalancePaymentInfo);
+                                    } else {
+                                        setPaymentToEdit(null);
+                                    }
+                                    setIsBalanceDialogOpen(true);
+                                }}
+                            >
+                                {lastBalancePaymentInfo ? 'Edit Payment' : 'Add Payment'}
+                            </Button>
+                        </div>
+                        <div className="flex gap-2">
+                           <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                            <Button 
+                            type="button" 
+                            form={`edit-lead-form-${lead?.id}`} 
+                            onClick={handleSubmit(onValidSubmit, onInvalidSubmit)}
+                            >
+                            Save Changes
+                            </Button>
+                        </div>
+                    </div>
                 </DialogFooter>
             </form>
         </FormProvider>
       </DialogContent>
     </Dialog>
+     <BalancePaymentDialog
+        isOpen={isBalanceDialogOpen}
+        onOpenChange={setIsBalanceDialogOpen}
+        balance={balance}
+        payments={payments}
+        setPayments={setPayments}
+        paymentToEdit={paymentToEdit}
+        onClose={() => setPaymentToEdit(null)}
+        isReadOnly={isReadOnly}
+    />
     </>
   );
 }
+```
