@@ -26,7 +26,7 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { formatDateTime, toTitleCase, formatCurrency, cn } from '@/lib/utils';
+import { formatDateTime, toTitleCase, formatCurrency } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -34,6 +34,8 @@ import { z } from 'zod';
 import Link from 'next/link';
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
+import { cn } from '@/lib/utils';
+import { addDays, format } from 'date-fns';
 
 const leadSchema = z.object({
   id: z.string(),
@@ -374,7 +376,7 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                             </TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.salesRepresentative}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
-                            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
+                            <TableCell className={cn("text-xs align-middle text-center py-2", lead.balance === 0 ? "font-bold text-green-700" : "text-black")}>{lead.grandTotal != null ? formatCurrency(lead.grandTotal) : '-'}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">
                                 {hasAddOns || hasDiscounts ? (
                                     <Popover>
