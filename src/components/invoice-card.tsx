@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -416,10 +415,27 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
         <CardFooter className="py-2 mt-auto">
             <div className="w-full">
                 <Separator />
-                <div className="flex flex-col items-end gap-1">
-                    <div className="w-full flex justify-between items-center text-lg pt-2">
+                <div className="flex flex-col items-end gap-1 pt-2">
+                    <div className="w-full flex justify-between items-center text-lg">
                       <div className="pt-2">
-                        <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly} disabled={orders.length === 0} />
+                        {isEditingLead ? (
+                             <>
+                                {lastBalancePaymentInfo && balance <= 0 ? (
+                                    <Button variant="outline" onClick={() => {
+                                        setPaymentToEdit(lastBalancePaymentInfo);
+                                        setIsBalanceDialogOpen(true);
+                                    }} disabled={isReadOnly}>
+                                        Edit Payment
+                                    </Button>
+                                ) : balance > 0 ? (
+                                    <Button variant="outline" onClick={() => setIsBalanceDialogOpen(true)} disabled={isReadOnly}>
+                                        Add Payment
+                                    </Button>
+                                ) : null}
+                            </>
+                        ) : (
+                            <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly} disabled={orders.length === 0} />
+                        )}
                       </div>
                       <div className="text-right flex-1">
                           <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
@@ -432,7 +448,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                         if (payment.type === 'down') {
                           description = 'Down Payment';
                         } else if (payment.type === 'full') {
-                          description = 'Full Payment';
+                          description = balance > 0 ? 'Down Payment' : 'Full Payment';
                         } else if (payment.type === 'balance') {
                            description = balance <= 0 ? 'Balance Payment' : 'Additional Payment';
                         }
