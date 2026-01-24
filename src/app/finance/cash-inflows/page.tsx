@@ -20,9 +20,9 @@ import {
 } from '@/components/ui/card';
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, parseISO, isSameDay } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
-import { Banknote, CalendarIcon } from 'lucide-react';
+import { Banknote } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -33,8 +33,6 @@ import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 
 
@@ -156,7 +154,7 @@ function OtherInflowsForm() {
 
 export default function CashInflowsPage() {
   const firestore = useFirestore();
-  const [dateFilter, setDateFilter] = useState<Date | undefined>();
+  const [dateFilter, setDateFilter] = useState('All');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('All');
   const [joNumberSearch, setJoNumberSearch] = useState('');
 
@@ -203,11 +201,24 @@ export default function CashInflowsPage() {
     });
     return ['All', ...Array.from(allModes).sort()];
   }, [combinedInflows]);
+
+  const dateOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const uniqueDates = combinedInflows.reduce((acc, inflow) => {
+        const dateStr = format(parseISO(inflow.date), 'yyyy-MM-dd');
+        if (!seen.has(dateStr)) {
+            seen.add(dateStr);
+            acc.push(dateStr);
+        }
+        return acc;
+    }, [] as string[]);
+    return ['All', ...uniqueDates];
+  }, [combinedInflows]);
   
   const filteredInflows = useMemo(() => {
     return combinedInflows.filter(inflow => {
-        const date = new Date(inflow.date);
-        const matchesDate = !dateFilter || isSameDay(date, dateFilter);
+        const inflowDateStr = format(parseISO(inflow.date), 'yyyy-MM-dd');
+        const matchesDate = dateFilter === 'All' || inflowDateStr === dateFilter;
 
         const matchesPaymentMethod = paymentMethodFilter === 'All' || inflow.paymentMode === paymentMethodFilter;
 
@@ -251,28 +262,18 @@ export default function CashInflowsPage() {
                 </div>
               </div>
                <div className="flex items-center gap-4 mt-4 pt-4 border-t">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-[280px] justify-start text-left font-normal",
-                          !dateFilter && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {dateFilter ? format(dateFilter, "PPP") : <span>Filter by date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={dateFilter}
-                        onSelect={setDateFilter}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Select value={dateFilter} onValueChange={setDateFilter}>
+                    <SelectTrigger className="w-[280px]">
+                        <SelectValue placeholder="Filter by date" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {dateOptions.map(option => (
+                            <SelectItem key={option} value={option}>
+                                {option === 'All' ? 'All Dates' : format(parseISO(option), 'PPP')}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                   <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
                       <SelectTrigger className="w-[240px]">
                           <SelectValue placeholder="Filter by Payment Method" />
@@ -289,7 +290,7 @@ export default function CashInflowsPage() {
                     onChange={(e) => setJoNumberSearch(e.target.value)}
                     className="w-[240px]"
                   />
-                  <Button onClick={() => { setDateFilter(undefined); setPaymentMethodFilter('All'); setJoNumberSearch(''); }}>Reset Filters</Button>
+                  <Button onClick={() => { setDateFilter('All'); setPaymentMethodFilter('All'); setJoNumberSearch(''); }}>Reset Filters</Button>
                </div>
             </CardHeader>
             <CardContent>
