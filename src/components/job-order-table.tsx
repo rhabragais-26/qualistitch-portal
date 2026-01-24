@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -120,7 +119,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const salesRepresentatives = useMemo(() => {
     if (!leads) return [];
@@ -343,6 +342,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
             description: 'The reference images have been saved.',
         });
         setUploadLead(null); // Close dialog
+        refetch(); // This will refresh the data
     } catch (e: any) {
         console.error("Error saving images: ", e);
         toast({
@@ -351,7 +351,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
             description: e.message || "Could not save the images.",
         });
     }
-  }, [uploadLead, firestore, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage]);
+  }, [uploadLead, firestore, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, refetch]);
 
   const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
