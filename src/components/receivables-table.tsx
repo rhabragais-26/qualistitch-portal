@@ -98,7 +98,7 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
   const { userProfile } = useUser();
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, leadSchema);
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, leadSchema);
 
   const [confirmingLead, setConfirmingLead] = useState<Lead | null>(null);
   const [remittanceMode, setRemittanceMode] = useState('');
@@ -207,6 +207,9 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
             mode: remittanceMode,
             processedBy: userProfile.nickname,
             timestamp: nowISO,
+            verified: true,
+            verifiedBy: userProfile.nickname,
+            verifiedTimestamp: nowISO,
         };
 
         await updateDoc(leadDocRef, {
@@ -221,6 +224,7 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
             title: "Payment Updated",
             description: `Order for ${lead.customerName} has been marked as fully paid.`,
         });
+        refetchLeads();
     } catch (e: any) {
         console.error("Error marking as fully paid:", e);
         toast({

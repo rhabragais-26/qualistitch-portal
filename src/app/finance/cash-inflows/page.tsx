@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, doc, setDoc, orderBy, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, doc, setDoc, orderBy, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -21,8 +21,8 @@ import {
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, parseISO } from 'date-fns';
-import { formatCurrency } from '@/lib/utils';
-import { Banknote, Edit, Trash2 } from 'lucide-react';
+import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { Banknote, Edit, Trash2, Check } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -35,6 +35,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 // Types for downpayments from leads
 type Payment = {
@@ -43,6 +45,9 @@ type Payment = {
   mode: string;
   timestamp?: string;
   processedBy?: string;
+  verified?: boolean;
+  verifiedBy?: string;
+  verifiedTimestamp?: string;
 };
 
 type Lead = {
@@ -198,6 +203,7 @@ function OtherInflowsForm({
 
 export default function CashInflowsPage() {
   const firestore = useFirestore();
+  const { userProfile } = useUser();
   const [monthFilter, setMonthFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('All');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('All');
@@ -206,9 +212,10 @@ export default function CashInflowsPage() {
   const [editingInflow, setEditingInflow] = useState<OtherCashInflow | null>(null);
   const [deletingInflow, setDeletingInflow] = useState<OtherCashInflow | null>(null);
   const { toast } = useToast();
+  const [verifyingPayment, setVerifyingPayment] = useState<{ leadId: string; paymentIndex: number } | null>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: leadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading: leadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery);
   
   const otherInflowsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'other_cash_inflows'), orderBy('date', 'desc')) : null, [firestore]);
   const { data: otherInflows, isLoading: otherInflowsLoading, error: otherInflowsError, refetch: refetchOtherInflows } = useCollection<OtherCashInflow>(otherInflowsQuery);
@@ -220,10 +227,10 @@ export default function CashInflowsPage() {
   };
 
   const combinedInflows = useMemo(() => {
-    const leadPayments = (leads || []).flatMap(lead => 
+    const leadPayments = (leads || []).flatMap((lead, leadIndex) => 
         (lead.payments || [])
             .filter(p => p.amount > 0)
-            .map((p, i) => {
+            .map((p, paymentIndex) => {
                 let description: string;
                 switch (p.type) {
                     case 'down': description = 'Downpayment'; break;
@@ -233,7 +240,9 @@ export default function CashInflowsPage() {
                 }
 
                 return {
-                    id: `${lead.id}-${i}`,
+                    id: `${lead.id}-${paymentIndex}`, // A unique ID for the row
+                    leadId: lead.id, // ID of the lead document
+                    paymentIndex: paymentIndex, // Index of the payment in the array
                     date: p.timestamp || lead.submissionDateTime,
                     customerName: lead.customerName,
                     description: description,
@@ -241,7 +250,11 @@ export default function CashInflowsPage() {
                     paymentMode: p.mode,
                     source: 'Lead Payment',
                     joNumber: lead.joNumber,
-                    processedBy: p.processedBy || lead.salesRepresentative
+                    processedBy: p.processedBy || lead.salesRepresentative,
+                    verified: p.verified,
+                    verifiedBy: p.verifiedBy,
+                    verifiedTimestamp: p.verifiedTimestamp,
+                    type: p.type
                 };
             })
     );
@@ -251,6 +264,10 @@ export default function CashInflowsPage() {
         source: 'Other',
         joNumber: undefined,
         processedBy: inflow.submittedBy,
+        leadId: inflow.id,
+        paymentIndex: -1,
+        type: 'other' as const,
+        verified: true,
     }));
     
     return [...leadPayments, ...other].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -326,6 +343,52 @@ export default function CashInflowsPage() {
       refetchOtherInflows();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Error', description: e.message });
+    }
+  };
+
+  const handleConfirmVerification = async () => {
+    if (!verifyingPayment || !firestore || !userProfile) return;
+
+    const { leadId, paymentIndex } = verifyingPayment;
+    const leadRef = doc(firestore, 'leads', leadId);
+
+    try {
+        const leadSnap = await getDoc(leadRef);
+        if (!leadSnap.exists()) {
+            throw new Error("Lead document not found.");
+        }
+        
+        const leadData = leadSnap.data() as Lead;
+        const updatedPayments = [...(leadData.payments || [])];
+        
+        if (updatedPayments[paymentIndex]) {
+            updatedPayments[paymentIndex] = {
+                ...updatedPayments[paymentIndex],
+                verified: true,
+                verifiedBy: userProfile.nickname,
+                verifiedTimestamp: new Date().toISOString(),
+            };
+        } else {
+            throw new Error("Payment not found at the specified index.");
+        }
+
+        await updateDoc(leadRef, { payments: updatedPayments });
+
+        toast({
+            title: 'Payment Verified!',
+            description: 'The payment has been successfully verified.',
+        });
+        
+        refetchLeads();
+
+    } catch (e: any) {
+        toast({
+            variant: "destructive",
+            title: "Verification Failed",
+            description: e.message || "Could not verify the payment.",
+        });
+    } finally {
+        setVerifyingPayment(null);
     }
   };
 
@@ -440,7 +503,30 @@ export default function CashInflowsPage() {
                             <TableCell>{inflow.processedBy}</TableCell>
                             <TableCell className="text-right">{formatCurrency(inflow.amount)}</TableCell>
                             <TableCell className="text-center">
-                              {inflow.source === 'Other' && (
+                              {inflow.source === 'Lead Payment' ? (
+                                (inflow.type === 'balance' || inflow.verified) ? (
+                                  <div className="flex flex-col items-center justify-center text-sm text-green-600 font-semibold">
+                                      <Check className="mr-2 h-4 w-4" />
+                                      Verified
+                                      {inflow.verifiedTimestamp && (
+                                          <TooltipProvider>
+                                              <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                      <div className="text-[10px] text-gray-500 ml-2 cursor-pointer">({formatDateTime(inflow.verifiedTimestamp).dateTimeShort})</div>
+                                                  </TooltipTrigger>
+                                                  <TooltipContent>
+                                                      <p>Verified by {inflow.verifiedBy}</p>
+                                                  </TooltipContent>
+                                              </Tooltip>
+                                          </TooltipProvider>
+                                      )}
+                                  </div>
+                                ) : (
+                                  <Button size="sm" onClick={() => setVerifyingPayment({ leadId: inflow.leadId, paymentIndex: inflow.paymentIndex })}>
+                                    Verify
+                                  </Button>
+                                )
+                              ) : inflow.source === 'Other' ? (
                                 <div className="flex justify-center gap-1">
                                   <Button variant="ghost" size="icon" onClick={() => setEditingInflow(inflow as OtherCashInflow)}>
                                     <Edit className="h-4 w-4" />
@@ -449,7 +535,7 @@ export default function CashInflowsPage() {
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
-                              )}
+                              ) : null}
                             </TableCell>
                         </TableRow>
                       ))
@@ -481,7 +567,21 @@ export default function CashInflowsPage() {
             <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+    </AlertDialog>
+     <AlertDialog open={!!verifyingPayment} onOpenChange={() => setVerifyingPayment(null)}>
+      <AlertDialogContent>
+          <AlertDialogHeader>
+          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+              Please confirm that this payment has been received.
+          </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirmVerification}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }

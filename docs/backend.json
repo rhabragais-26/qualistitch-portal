@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "OtherCashInflow": {
@@ -814,7 +815,10 @@
                   "amount": { "type": "number" },
                   "mode": { "type": "string" },
                   "processedBy": { "type": "string" },
-                  "timestamp": { "type": "string", "format": "date-time" }
+                  "timestamp": { "type": "string", "format": "date-time" },
+                  "verified": { "type": "boolean", "description": "Indicates if the payment has been verified by finance." },
+                  "verifiedBy": { "type": "string", "description": "The nickname of the user who verified the payment." },
+                  "verifiedTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp of when the payment was verified." }
               }
           }
         }
