@@ -79,6 +79,7 @@ type Lead = {
   joHardcopyReceivedTimestamp?: string;
   isJoPrinted?: boolean;
   isDone?: boolean;
+  photoshootDate?: string;
 }
 
 type OperationalCase = {
@@ -508,14 +509,15 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
               <TableRow>
                 <TableHead className="text-white font-bold text-xs">Customer</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Courier</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Expected Delivery Date</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center w-[150px]">Received Printed J.O.?</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Quality Check</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Photoshoot Request</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Packed</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Sales Audit</TableHead>
-                <TableHead className="text-white font-bold text-xs">Courier</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Expected Delivery Date</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Status</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">{filterType === 'COMPLETED' ? 'Delivered?' : 'Ship Order'}</TableHead>
+                <TableHead className="text-white font-bold text-xs">Status</TableHead>
+                {filterType !== 'COMPLETED' && <TableHead className="text-white font-bold text-xs text-center">{filterType === 'SHIPPED' ? 'Mark as Delivered' : 'Ship Order'}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -594,7 +596,13 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                                 <div className="font-bold mt-1">Stocks (Jacket Only)</div>
                             )}
                         </TableCell>
-                         <TableCell className="text-center align-middle py-2">
+                        <TableCell className="text-xs">{lead.courier}</TableCell>
+                        <TableCell className={cn("text-xs text-center", lead.adjustedDeliveryDate && "font-bold")}>
+                           {format(deliveryDate, "MMM dd, yyyy")}
+                           {lead.adjustedDeliveryDate && <div className="text-gray-500 text-[10px]">(Adjusted)</div>}
+                           {daysOverdue !== null && daysOverdue > 0 && <div className="text-red-500 font-medium">({daysOverdue} days overdue)</div>}
+                        </TableCell>
+                        <TableCell className="text-center align-middle py-2">
                             <div className="flex flex-col items-center justify-center gap-1">
                                 <Checkbox
                                 checked={lead.isJoHardcopyReceived || false}
@@ -620,6 +628,9 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                                     <Button size="sm" variant="destructive" className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => setDisapprovingLead(lead)} disabled={!lead.isJoHardcopyReceived || isReadOnly || isCompleted}>Disapprove</Button>
                                 </div>
                             )}
+                        </TableCell>
+                        <TableCell className="text-xs text-center">
+                          {lead.photoshootDate ? format(new Date(lead.photoshootDate), 'MMM-dd') : '-'}
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center justify-center gap-1">
@@ -651,57 +662,28 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                                 </Button>
                            )}
                         </TableCell>
-                        <TableCell className="text-xs">{lead.courier}</TableCell>
-                        <TableCell className={cn("text-xs text-center", lead.adjustedDeliveryDate && "font-bold")}>
-                           {format(deliveryDate, "MMM dd, yyyy")}
-                           {lead.adjustedDeliveryDate && <div className="text-gray-500 text-[10px]">(Adjusted)</div>}
-                           {daysOverdue !== null && daysOverdue > 0 && <div className="text-red-500 font-medium">({daysOverdue} days overdue)</div>}
-                        </TableCell>
                         <TableCell className="text-xs text-center">
-                          <Badge variant={status.variant} className={status.className}>{status.text}</Badge>
+                          <Badge variant={status.variant}>{status.text}</Badge>
                         </TableCell>
-                        <TableCell className="text-center">
-                          {filterType === 'COMPLETED' ? (
-                            lead.shipmentStatus === 'Delivered' ? (
-                                <div className="flex flex-col items-center justify-center gap-1">
-                                    <div className="flex items-center font-bold text-blue-600 text-xs">
-                                        <Check className="h-4 w-4 mr-1" />
-                                        Delivered
-                                    </div>
-                                    {lead.deliveredTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.deliveredTimestamp).dateTimeShort}</div>}
-                                </div>
-                            ) : lead.shipmentStatus === 'Shipped' ? (
-                                <div className="flex flex-col items-center justify-center gap-1">
-                                    <div className="flex items-center font-bold text-green-600 text-xs">
-                                      <Check className="h-4 w-4 mr-1" />
-                                      Shipped
-                                    </div>
-                                    {lead.shippedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.shippedTimestamp).dateTimeShort}</div>}
-                                    <Button size="sm" className="h-7 text-xs font-bold mt-1" onClick={() => setDeliveringLead(lead)} disabled={isReadOnly}>
-                                        Yes
-                                    </Button>
-                                </div>
-                            ) : (
-                                <span className="text-muted-foreground text-xs">{status.text}</span>
-                            )
-                          ) : (
-                            <Button
-                              size="sm"
-                              className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")}
-                              onClick={() => setShippingLead(lead)}
-                              disabled={!lead.isSalesAuditComplete || isReadOnly || isCompleted}
-                            >
-                              Ship Now
-                            </Button>
-                          )}
-                        </TableCell>
+                        {filterType !== 'COMPLETED' && (
+                          <TableCell className="text-center">
+                              <Button
+                                size="sm"
+                                className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")}
+                                onClick={() => setShippingLead(lead)}
+                                disabled={!lead.isSalesAuditComplete || isReadOnly || isCompleted}
+                              >
+                                Ship Now
+                              </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                    )
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground text-xs">
-                    No items in shipment queue.
+                  <TableCell colSpan={filterType !== 'COMPLETED' ? 12 : 11} className="text-center text-muted-foreground text-xs">
+                    No orders in shipment queue.
                   </TableCell>
                 </TableRow>
               )}
@@ -822,7 +804,3 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     </>
   );
 }
-
-  
-
-    
