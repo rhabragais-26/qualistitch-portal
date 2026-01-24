@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
@@ -342,7 +343,11 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                   const hasAddOns = lead.addOns && Object.values(lead.addOns).flat().some((group: any) => Object.values(group).some(val => Number(val) > 0));
                   const hasDiscounts = lead.discounts && Object.values(lead.discounts).some((discount: any) => discount.value > 0);
                   const wasPaidInFullViaReceivables = lead.payments?.some(p => p.type === 'balance');
-                  const displayPaymentType = wasPaidInFullViaReceivables ? 'Balance Payment' : lead.paymentType;
+                  
+                  let displayPaymentType = wasPaidInFullViaReceivables ? 'Balance Payment' : lead.paymentType;
+                  if (lead.paymentType === 'Fully Paid' && lead.balance && lead.balance > 0) {
+                      displayPaymentType = 'Partially Paid';
+                  }
 
                   return (
                     <React.Fragment key={lead.id}>

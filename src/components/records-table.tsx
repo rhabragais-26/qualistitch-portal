@@ -184,9 +184,17 @@ const RecordsTableRow = React.memo(({
     setOpenLeadId: React.Dispatch<React.SetStateAction<string | null>>;
 }) => {
     
+    const isCompleted = filterType === 'COMPLETED';
+
+    let displayPaymentType = lead.paymentType;
+    if (lead.paymentType === 'Fully Paid' && lead.balance && lead.balance > 0) {
+        displayPaymentType = 'Partially Paid';
+    }
+
     return (
-        <TableRow>
-            <TableCell className="text-xs align-middle text-center py-2 text-black">
+        <React.Fragment>
+            <TableRow>
+                <TableCell className="text-xs align-middle text-center py-2 text-black">
               <Collapsible>
                 <CollapsibleTrigger asChild>
                     <div className="flex items-center justify-center cursor-pointer">
@@ -254,7 +262,7 @@ const RecordsTableRow = React.memo(({
               {lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}
             </TableCell>
             <TableCell className={cn("text-xs align-middle text-center py-2 font-bold", lead.balance === 0 ? "text-muted-foreground" : "text-destructive")}>{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
-            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType}</TableCell>
+            <TableCell className="text-xs align-middle text-center py-2 text-black">{displayPaymentType}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType === 'COD' ? 'CASH' : (lead.modeOfPayment || '-')}</TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">
               <Button variant="secondary" size="sm" onClick={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)} className="h-8 px-2 text-black hover:bg-gray-200">
@@ -295,6 +303,7 @@ const RecordsTableRow = React.memo(({
                 </TableCell>
             )}
         </TableRow>
+        </React.Fragment>
     );
 });
 RecordsTableRow.displayName = 'RecordsTableRow';
