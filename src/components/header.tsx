@@ -86,6 +86,7 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { UserPosition } from '@/lib/permissions';
+import Image from 'next/image';
 
 type HeaderProps = {
   isNewOrderPageDirty?: boolean;
@@ -271,6 +272,13 @@ const HeaderMemo = React.memo(function Header({
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex items-center">
             <Link href="/home" className="mr-6 flex items-center ml-4" onClick={(e) => { e.preventDefault(); handleNavigation('/home'); }}>
+              <Image
+                  src="https://firebasestorage.googleapis.com/v0/b/studio-399912310-23c48.appspot.com/o/companyLogo%2Fqualistitch.png?alt=media"
+                  alt="Qualistitch Inc. Logo"
+                  width={32}
+                  height={32}
+                  className="mr-2"
+              />
               <span className={cn("font-bold font-headline flex items-baseline bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-200 bg-clip-text text-transparent shining-metal whitespace-nowrap")}>
                 <span className="text-3xl">Q</span>
                 <span className="text-2xl">UALISTITCH Inc.</span>

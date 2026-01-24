@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
@@ -6,6 +7,11 @@ service firebase.storage {
     // This assumes your carousel images are directly under 'Carousel/{imageId}'.
     match /Carousel/{imageId} {
       allow read: if true; // Allows public read access
+    }
+
+    // Allow public read for company logo
+    match /companyLogo/{allPaths=**} {
+      allow read: if true;
     }
 
     // For sizeCharts:
