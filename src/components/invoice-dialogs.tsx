@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -327,6 +326,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
         title: 'Payment Details Updated',
         description: `The payment of ${formatCurrency(amount)} is set.`
     });
+    setIsOpen(false);
   };
 
   return (
