@@ -269,7 +269,7 @@ export default function CashInflowsPage() {
                     <SelectContent>
                         {dateOptions.map(option => (
                             <SelectItem key={option} value={option}>
-                                {option === 'All' ? 'All Dates' : format(parseISO(option), 'PPP')}
+                                {option === 'All' ? 'All Dates' : format(parseISO(option), 'MMM-dd-yyyy')}
                             </SelectItem>
                         ))}
                     </SelectContent>
