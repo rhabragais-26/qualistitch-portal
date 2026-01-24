@@ -20,9 +20,9 @@ import {
 } from '@/components/ui/card';
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isSameDay } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
-import { Banknote } from 'lucide-react';
+import { Banknote, CalendarIcon } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -33,6 +33,10 @@ import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+
 
 // Types for downpayments from leads
 type Payment = {
@@ -43,6 +47,7 @@ type Payment = {
 
 type Lead = {
   id: string;
+  joNumber?: number; // Added for JO Number column
   payments?: Payment[];
   submissionDateTime: string;
 };
@@ -68,7 +73,7 @@ const otherInflowSchema = z.object({
 type OtherInflowFormValues = z.infer<typeof otherInflowSchema>;
 
 const paymentModes = [
-    "CASH", "GCash (Jam)", "GCash (Jonathan)", "GCash (Jhun)", "GCash (Jays)", "GCash (Tantan)", "Paymaya", "Bank Transfer to BDO", "Bank Transfer to BPI", "Bank Transfer to ChinaBank"
+    "CASH", "GCash (Jam)", "GCash (Jonathan)", "GCash (Jhun)", "GCash (Jays)", "GCash (Tantan)", "Paymaya", "Bank Transfer to BDO", "Bank Transfer to BPI", "Bank Transfer to ChinaBank", "J&T Remittance", "LBC Remittance"
 ];
 
 function OtherInflowsForm() {
@@ -117,7 +122,7 @@ function OtherInflowsForm() {
     <Card className="max-w-md mx-auto">
       <CardHeader>
         <CardTitle>Record Other Cash Inflow</CardTitle>
-        <CardDescription>Enter details of cash inflows not from downpayments.</CardDescription>
+        <CardDescription>Enter details of cash inflows not from lead payments.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -151,11 +156,21 @@ function OtherInflowsForm() {
 
 export default function CashInflowsPage() {
   const firestore = useFirestore();
+  const [dateFilter, setDateFilter] = useState<Date | undefined>();
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('All');
+  const [joNumberSearch, setJoNumberSearch] = useState('');
+
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading: leadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
   
   const otherInflowsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'other_cash_inflows'), orderBy('date', 'desc')) : null, [firestore]);
   const { data: otherInflows, isLoading: otherInflowsLoading, error: otherInflowsError } = useCollection<OtherCashInflow>(otherInflowsQuery);
+
+  const formatJoNumber = (joNumber: number | undefined): string => {
+    if (!joNumber) return '';
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+  };
 
   const combinedInflows = useMemo(() => {
     const leadPayments = (leads || []).flatMap(lead => 
@@ -167,22 +182,46 @@ export default function CashInflowsPage() {
                 description: p.type === 'full' ? 'Full Payment' : 'Downpayment',
                 amount: p.amount,
                 paymentMode: p.mode,
-                source: 'Lead Payment'
+                source: 'Lead Payment',
+                joNumber: lead.joNumber,
             }))
     );
 
     const other = (otherInflows || []).map(inflow => ({
         ...inflow,
-        source: 'Other'
+        source: 'Other',
+        joNumber: undefined,
     }));
     
     return [...leadPayments, ...other].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [leads, otherInflows]);
+  
+  const paymentMethodOptions = useMemo(() => {
+    const allModes = new Set<string>();
+    (combinedInflows).forEach(inflow => {
+        allModes.add(inflow.paymentMode);
+    });
+    return ['All', ...Array.from(allModes).sort()];
+  }, [combinedInflows]);
+  
+  const filteredInflows = useMemo(() => {
+    return combinedInflows.filter(inflow => {
+        const date = new Date(inflow.date);
+        const matchesDate = !dateFilter || isSameDay(date, dateFilter);
+
+        const matchesPaymentMethod = paymentMethodFilter === 'All' || inflow.paymentMode === paymentMethodFilter;
+
+        const formattedJo = inflow.joNumber ? formatJoNumber(inflow.joNumber) : '';
+        const matchesJo = !joNumberSearch || (formattedJo && formattedJo.toLowerCase().includes(joNumberSearch.toLowerCase()));
+
+        return matchesDate && matchesPaymentMethod && matchesJo;
+    });
+  }, [combinedInflows, dateFilter, paymentMethodFilter, joNumberSearch]);
 
 
   const grandTotal = useMemo(() => {
-    return combinedInflows.reduce((sum, item) => sum + item.amount, 0);
-  }, [combinedInflows]);
+    return filteredInflows.reduce((sum, item) => sum + item.amount, 0);
+  }, [filteredInflows]);
 
   const isLoading = leadsLoading || otherInflowsLoading;
   const error = leadsError || otherInflowsError;
@@ -196,21 +235,62 @@ export default function CashInflowsPage() {
         <div>
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-start">
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Banknote />
                     Cash Inflows Summary
                   </CardTitle>
                   <CardDescription>
-                    Summary of all recorded cash inflows from downpayments and other sources.
+                    Summary of all recorded cash inflows from lead payments and other sources.
                   </CardDescription>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Total Cash Inflow</p>
+                  <p className="text-sm text-muted-foreground">Total Displayed Inflow</p>
                   <p className="text-2xl font-bold">{formatCurrency(grandTotal)}</p>
                 </div>
               </div>
+               <div className="flex items-center gap-4 mt-4 pt-4 border-t">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-[280px] justify-start text-left font-normal",
+                          !dateFilter && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateFilter ? format(dateFilter, "PPP") : <span>Filter by date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={dateFilter}
+                        onSelect={setDateFilter}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
+                      <SelectTrigger className="w-[240px]">
+                          <SelectValue placeholder="Filter by Payment Method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          {paymentMethodOptions.map(option => (
+                              <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+                  <Input 
+                    placeholder="Search by J.O. No..."
+                    value={joNumberSearch}
+                    onChange={(e) => setJoNumberSearch(e.target.value)}
+                    className="w-[240px]"
+                  />
+                  <Button onClick={() => { setDateFilter(undefined); setPaymentMethodFilter('All'); setJoNumberSearch(''); }}>Reset Filters</Button>
+               </div>
             </CardHeader>
             <CardContent>
               <div className="border rounded-md h-[75vh] overflow-y-auto modern-scrollbar">
@@ -220,35 +300,37 @@ export default function CashInflowsPage() {
                       <TableHead className="text-white font-bold">Date</TableHead>
                       <TableHead className="text-white font-bold">Description</TableHead>
                       <TableHead className="text-white font-bold">Payment Method</TableHead>
+                      <TableHead className="text-white font-bold">J.O. Number</TableHead>
                       <TableHead className="text-white font-bold text-right">Amount</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
-                        <TableCell colSpan={4}>
+                        <TableCell colSpan={5}>
                           <Skeleton className="h-24 w-full" />
                         </TableCell>
                       </TableRow>
                     ) : error ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center text-destructive">
+                        <TableCell colSpan={5} className="text-center text-destructive">
                           Error loading data: {error.message}
                         </TableCell>
                       </TableRow>
-                    ) : combinedInflows.length > 0 ? (
-                      combinedInflows.map((inflow, index) => (
+                    ) : filteredInflows.length > 0 ? (
+                      filteredInflows.map((inflow, index) => (
                         <TableRow key={`${inflow.id}-${index}`}>
                             <TableCell className="font-bold">{format(parseISO(inflow.date), 'MMM dd, yyyy')}</TableCell>
                             <TableCell>{inflow.description}</TableCell>
                             <TableCell>{inflow.paymentMode}</TableCell>
+                            <TableCell>{inflow.joNumber ? formatJoNumber(inflow.joNumber) : '-'}</TableCell>
                             <TableCell className="text-right">{formatCurrency(inflow.amount)}</TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center text-muted-foreground">
-                          No cash inflow data available.
+                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                          No cash inflow data available for the selected filters.
                         </TableCell>
                       </TableRow>
                     )}
