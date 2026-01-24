@@ -424,14 +424,25 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                     </div>
                     
                     {totalPaid > 0 ? (
-                      Object.values(payments).flat().map((payment, index) => (
-                        <div key={index} className="flex justify-end items-center text-sm text-right">
-                            <span className="text-muted-foreground mr-2">
-                              {payment.type === 'full' ? 'Full Payment' : payment.type === 'balance' ? 'Balance Payment' : 'Down Payment'} <span className="italic">(via {payment.mode})</span>:
-                            </span>
-                            <span className="font-medium">{formatCurrency(payment.amount)}</span>
-                        </div>
-                      ))
+                      Object.values(payments).flat().map((payment, index) => {
+                        let description = 'Payment';
+                        if (payment.type === 'down') {
+                          description = 'Down Payment';
+                        } else if (payment.type === 'full') {
+                          description = 'Full Payment';
+                        } else if (payment.type === 'balance') {
+                          description = balance <= 0 ? 'Balance Payment' : 'Additional Payment';
+                        }
+
+                        return (
+                          <div key={index} className="flex justify-end items-center text-sm text-right">
+                              <span className="text-muted-foreground mr-2">
+                                {description} <span className="italic">(via {payment.mode})</span>:
+                              </span>
+                              <span className="font-medium">{formatCurrency(payment.amount)}</span>
+                          </div>
+                        )
+                      })
                     ) : (
                       <div className="flex justify-end items-center text-sm text-right">
                           <span className="text-muted-foreground mr-2">Payment:</span>

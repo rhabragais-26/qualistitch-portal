@@ -424,10 +424,8 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
     setPayments(prev => {
         const newPayments = {...prev};
         const paymentKey = Object.keys(newPayments)[0] || new Date().toISOString();
-        if (!newPayments[paymentKey]) {
-            newPayments[paymentKey] = [];
-        }
-        newPayments[paymentKey].push(newPayment);
+        const existingPayments = newPayments[paymentKey] || [];
+        newPayments[paymentKey] = [...existingPayments, newPayment];
         return newPayments;
     });
     setIsOpen(false);
