@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -92,7 +91,7 @@ const PhotoshootRequestsTable = () => {
     if (lead.isDone) return { text: "Done Production", variant: "success" };
     if (lead.isSewing) return { text: "Sewing", variant: "warning" };
     if (lead.isEmbroideryDone) return { text: "Embroidery Done", variant: "warning" };
-    if (lead.isCutting) return { text: "Cutting", variant: "warning" };
+    if(lead.isCutting) return { text: "Cutting", variant: "warning" };
     if (lead.isSentToProduction) return { text: "In Production", variant: "warning" };
     return { text: "Pending Production", variant: "secondary" };
   }, []);
@@ -183,6 +182,7 @@ const PhotoshootRequestsTable = () => {
                   <TableHead className="text-white">J.O. Number</TableHead>
                   <TableHead className="text-white">Production Status</TableHead>
                   <TableHead className="text-white">Expected Delivery</TableHead>
+                  <TableHead className="text-white text-center">Layout</TableHead>
                   <TableHead className="text-white text-center">Test Designs</TableHead>
                   <TableHead className="text-white text-center">Final Program Designs</TableHead>
                   <TableHead className="text-white text-center">Set Photoshoot Date</TableHead>
@@ -205,6 +205,15 @@ const PhotoshootRequestsTable = () => {
                       <TableCell className="font-medium">{formatJoNumber(lead.joNumber)}</TableCell>
                       <TableCell><Badge variant={status.variant}>{status.text}</Badge></TableCell>
                       <TableCell>{format(deliveryDate, 'MMM dd, yyyy')}</TableCell>
+                       <TableCell className="text-center">
+                        {layout?.layoutImage ? (
+                          <div className="relative w-16 h-16 mx-auto border rounded-md cursor-pointer" onClick={() => setImageInView(layout.layoutImage!)}>
+                            <Image src={layout.layoutImage} alt="Layout" layout="fill" objectFit="contain" />
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">-</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-center">
                         <div className="flex gap-2 justify-center">
                           {layout?.testLogoLeftImage && <Image src={layout.testLogoLeftImage} alt="Test Logo" width={40} height={40} className="rounded-md cursor-pointer" onClick={() => setImageInView(layout.testLogoLeftImage!)} />}
