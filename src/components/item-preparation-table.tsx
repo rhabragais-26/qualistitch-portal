@@ -286,16 +286,6 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
     setConfirmingLead(lead);
     setCheckedItems({});
   }, []);
-  
-  const calculateDeadline = useCallback((lead: Lead) => {
-    const deadlineDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
-    const remainingDays = differenceInDays(deadlineDate, new Date());
-    let text = `${remainingDays} day(s) remaining`;
-    if (remainingDays < 0) {
-      text = `${Math.abs(remainingDays)} day(s) overdue`;
-    }
-    return text;
-  }, []);
 
   const handleUpdateStatus = useCallback(async (leadId: string, field: 'isPreparedForProduction' | 'isSentToProduction' | 'isEndorsedToLogistics' | 'isJoHardcopyReceived', value: boolean) => {
     if (!firestore) return;
@@ -370,26 +360,8 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
   const handleConfirmSendToProd = useCallback(async () => {
     if (!leadToSend) return;
     await handleUpdateStatus(leadToSend.id, 'isSentToProduction', true);
-        const notification = {
-        id: `progress-${leadToSend.id}-${new Date().toISOString()}`,
-        type: 'progress',
-        leadId: leadToSend.id,
-        joNumber: formatJoNumber(leadToSend.joNumber),
-        customerName: toTitleCase(leadToSend.customerName),
-        companyName: leadToSend.companyName,
-        contactNumber: getContactDisplay(leadToSend),
-        message: `Order endorsed to Production.`,
-        overdueStatus: calculateDeadline(leadToSend), // Overdue status is not calculated here, can be added if needed
-        isRead: false,
-        timestamp: new Date().toISOString(),
-        isDisapproved: false
-    };
-    const existingNotifications = JSON.parse(localStorage.getItem('progress-notifications') || '[]');
-    localStorage.setItem('progress-notifications', JSON.stringify([...existingNotifications, notification]));
-    window.dispatchEvent(new StorageEvent('storage', { key: 'progress-notifications' }));
-    
     setLeadToSend(null);
-  }, [leadToSend, handleUpdateStatus, formatJoNumber, getContactDisplay, calculateDeadline]);
+  }, [leadToSend, handleUpdateStatus]);
   
   const handleConfirmSendToLogistics = useCallback(async () => {
     if (!leadToSend) return;
@@ -657,5 +629,3 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
-
-    

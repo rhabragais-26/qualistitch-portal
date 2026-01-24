@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -61,6 +62,65 @@ export interface DirectMessageChannel {
         [key: string]: number;
     }
 }
+const ChatMessageItem = React.memo(({ msg, showTimestamp, formattedTimestamp, isLastMessage, user, selectedUser, channels, channelId }: { msg: ChatMessage, showTimestamp: boolean, formattedTimestamp: string, isLastMessage: boolean, user: UserProfile | null, selectedUser: UserProfile | null, channels: DirectMessageChannel[] | null, channelId: string | null }) => {
+  const isMyMessage = msg.senderId === user?.uid;
+
+  return (
+    <React.Fragment>
+      {showTimestamp && (
+        <div className="text-center text-xs text-gray-500 my-2">
+          {formattedTimestamp}
+        </div>
+      )}
+      <div
+        className={cn(
+            "flex w-full",
+            !showTimestamp && 'mt-1',
+            isMyMessage ? "justify-end" : "justify-start"
+        )}
+      >
+        <div className={cn(
+            "flex flex-col gap-1",
+            isMyMessage ? "items-end" : "items-start"
+        )}>
+            <div
+                className={cn(
+                    "max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2",
+                    isMyMessage
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-amber-300 text-black"
+                )}
+            >
+                <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+            </div>
+             {isLastMessage && isMyMessage && (
+                <div className="text-xs font-bold text-muted-foreground text-right px-1">
+                    {(() => {
+                        const recipientId = selectedUser?.uid;
+                        const channel = channels?.find(c => c.id === channelId);
+                        const lastMessageInfo = channel?.lastMessage;
+
+                        if (!lastMessageInfo || !recipientId || lastMessageInfo.senderId !== user?.uid || lastMessageInfo.text !== msg.text) {
+                            return null;
+                        }
+
+                        if (lastMessageInfo.readBy?.includes(recipientId)) {
+                            return 'Seen';
+                        }
+                        if (lastMessageInfo.deliveredTo?.includes(recipientId)) {
+                            return 'Delivered';
+                        }
+                        return 'Sent';
+                    })()}
+                </div>
+            )}
+        </div>
+      </div>
+    </React.Fragment>
+  );
+});
+ChatMessageItem.displayName = 'ChatMessageItem';
+
 
 export function ChatLayout() {
   const { user } = useUser();
@@ -439,62 +499,19 @@ export function ChatLayout() {
                       formattedTimestamp = format(date, "MMM-dd 'at' h:mm aa");
                     }
                   }
-
-                  const isLastMessage = index === messages.length - 1;
-                  const isMyMessage = msg.senderId === user?.uid;
                   
                   return (
-                    <React.Fragment key={msg.id}>
-                      {showTimestamp && (
-                        <div className="text-center text-xs text-gray-500 my-2">
-                          {formattedTimestamp}
-                        </div>
-                      )}
-                      <div
-                        className={cn(
-                            "flex w-full",
-                            !showTimestamp && index > 0 && 'mt-1',
-                            msg.senderId === user?.uid ? "justify-end" : "justify-start"
-                        )}
-                      >
-                        <div className={cn(
-                            "flex flex-col gap-1",
-                            msg.senderId === user?.uid ? "items-end" : "items-start"
-                        )}>
-                            <div
-                                className={cn(
-                                    "max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2",
-                                    msg.senderId === user?.uid
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-amber-300 text-black"
-                                )}
-                            >
-                                <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-                            </div>
-                             {isLastMessage && isMyMessage && (
-                                <div className="text-xs font-bold text-muted-foreground text-right px-1">
-                                    {(() => {
-                                        const recipientId = selectedUser?.uid;
-                                        const channel = channels?.find(c => c.id === channelId);
-                                        const lastMessageInfo = channel?.lastMessage;
-
-                                        if (!lastMessageInfo || !recipientId || lastMessageInfo.senderId !== user?.uid || lastMessageInfo.text !== msg.text) {
-                                            return null;
-                                        }
-
-                                        if (lastMessageInfo.readBy?.includes(recipientId)) {
-                                            return 'Seen';
-                                        }
-                                        if (lastMessageInfo.deliveredTo?.includes(recipientId)) {
-                                            return 'Delivered';
-                                        }
-                                        return 'Sent';
-                                    })()}
-                                </div>
-                            )}
-                        </div>
-                      </div>
-                    </React.Fragment>
+                    <ChatMessageItem
+                        key={msg.id}
+                        msg={msg}
+                        showTimestamp={showTimestamp}
+                        formattedTimestamp={formattedTimestamp}
+                        isLastMessage={index === messages.length - 1}
+                        user={user as UserProfile}
+                        selectedUser={selectedUser}
+                        channels={channels}
+                        channelId={channelId}
+                    />
                   );
                 })
             ) : (
@@ -525,5 +542,3 @@ export function ChatLayout() {
     </div>
   );
 }
-
-    

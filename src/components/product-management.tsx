@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -96,7 +97,7 @@ export function ProductManagement() {
     return !isEqual(config, fetchedConfig);
   }, [config, fetchedConfig]);
 
-  const toggleEditMode = (key: string) => {
+  const toggleEditMode = useCallback((key: string) => {
     const isCurrentlyEditing = editModes[key];
 
     if (isCurrentlyEditing && config) {
@@ -152,9 +153,9 @@ export function ProductManagement() {
     }
 
     setEditModes(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+  }, [config, editModes, toast]);
   
-  const handleTierChange = (
+  const handleTierChange = useCallback((
     group: ProductGroup,
     embroidery: 'logo' | 'logoAndText' | 'name',
     tierIndex: number,
@@ -176,9 +177,9 @@ export function ProductManagement() {
     }
     
     setConfig(newConfig);
-  };
+  }, [config]);
 
-  const handleAddOnTierChange = (
+  const handleAddOnTierChange = useCallback((
     addOn: AddOnType,
     tierIndex: number,
     field: 'min' | 'price',
@@ -198,41 +199,41 @@ export function ProductManagement() {
     }
 
     setConfig(newConfig);
-  };
+  }, [config]);
   
-  const handleAddTier = (group: ProductGroup, embroidery: 'logo' | 'logoAndText' | 'name') => {
+  const handleAddTier = useCallback((group: ProductGroup, embroidery: 'logo' | 'logoAndText' | 'name') => {
     if (!config) return;
     const newConfig = JSON.parse(JSON.stringify(config));
     const tiers = newConfig.pricingTiers[group][embroidery].tiers;
     tiers.push({ min: '', max: Infinity, price: '' });
     setConfig(newConfig);
-  };
+  }, [config]);
 
-  const handleRemoveTier = (group: ProductGroup, embroidery: 'logo' | 'logoAndText' | 'name', tierIndex: number) => {
+  const handleRemoveTier = useCallback((group: ProductGroup, embroidery: 'logo' | 'logoAndText' | 'name', tierIndex: number) => {
     if (!config) return;
     const newConfig = JSON.parse(JSON.stringify(config));
     const tiers = newConfig.pricingTiers[group][embroidery].tiers;
     tiers.splice(tierIndex, 1);
     setConfig(newConfig);
-  };
+  }, [config]);
   
-  const handleAddOnAddTier = (addOn: AddOnType) => {
+  const handleAddOnAddTier = useCallback((addOn: AddOnType) => {
     if (!config) return;
     const newConfig = JSON.parse(JSON.stringify(config));
     const tiers = newConfig.addOnPricing[addOn].tiers;
     tiers.push({ min: '', max: Infinity, price: '' });
     setConfig(newConfig);
-  };
+  }, [config]);
 
-  const handleAddOnRemoveTier = (addOn: AddOnType, tierIndex: number) => {
+  const handleAddOnRemoveTier = useCallback((addOn: AddOnType, tierIndex: number) => {
     if (!config) return;
     const newConfig = JSON.parse(JSON.stringify(config));
     const tiers = newConfig.addOnPricing[addOn].tiers;
     tiers.splice(tierIndex, 1);
     setConfig(newConfig);
-  };
+  }, [config]);
   
-  const handleAddNewProduct = () => {
+  const handleAddNewProduct = useCallback(() => {
     if (!config || !newProduct.name) {
       toast({ variant: 'destructive', title: 'Error', description: 'Product name cannot be empty.' });
       return;
@@ -246,9 +247,9 @@ export function ProductManagement() {
 
     setNewProduct({ name: '', group: newProduct.group });
     toast({ title: 'Product Staged', description: `"${newProduct.name}" is ready to be saved.`});
-  };
+  }, [config, newProduct.name, newProduct.group, productTypes, toast]);
 
-  const handleRemoveProduct = (productName: string) => {
+  const handleRemoveProduct = useCallback((productName: string) => {
       if (!config) return;
       const newMapping = { ...config.productGroupMapping };
       delete newMapping[productName];
@@ -262,9 +263,9 @@ export function ProductManagement() {
       } else if (newProductTypes.length === 0) {
         setSelectedProductType('');
       }
-  };
+  }, [config, productTypes, selectedProductType]);
   
-  const handleAddNewCategory = () => {
+  const handleAddNewCategory = useCallback(() => {
     if (!config || !newCategoryName.trim()) {
         toast({ variant: 'destructive', title: 'Error', description: 'Category name cannot be empty.' });
         return;
@@ -285,9 +286,9 @@ export function ProductManagement() {
     setNewCategoryName('');
     setIsAddCategoryOpen(false);
     toast({ title: 'Category Staged', description: `"${newCategoryName.trim()}" is ready to be configured and saved.`});
-  };
+  }, [config, newCategoryName, toast]);
 
-  const saveConfiguration = async (configToSave: EditablePricingConfig, successMessage?: string) => {
+  const saveConfiguration = useCallback(async (configToSave: EditablePricingConfig, successMessage?: string) => {
     if (!configToSave || !pricingConfigRef) return;
   
     const validateTiers = (tiers: EditableTier[], context: string): {min: number, max: number, price: number}[] | null => {
@@ -375,14 +376,14 @@ export function ProductManagement() {
         description: error.message || 'Could not save pricing configuration.',
       });
     }
-  };
+  }, [pricingConfigRef, toast, refetch]);
 
-  const handleSaveChanges = async () => {
+  const handleSaveChanges = useCallback(async () => {
     if (!config) return;
     saveConfiguration(config);
-  };
+  }, [config, saveConfiguration]);
   
-  const handleSaveCategoryName = async () => {
+  const handleSaveCategoryName = useCallback(async () => {
     if (!editingCategory || !config) return;
     const { oldName, newName } = editingCategory;
 
@@ -409,9 +410,9 @@ export function ProductManagement() {
     setConfig(newConfig);
     setEditingCategory(null);
     toast({ title: 'Category Renamed', description: 'The change has been staged. Click "Save All Changes" to apply.' });
-  };
+  }, [config, editingCategory, toast]);
 
-  const handleConfirmDeleteCategory = async () => {
+  const handleConfirmDeleteCategory = useCallback(async () => {
     if (!deletingCategory || !config) return;
 
     const currentCategories = Object.keys(config.pricingTiers);
@@ -445,7 +446,7 @@ export function ProductManagement() {
     setConfig(newConfig);
     setDeletingCategory(null);
     toast({ title: 'Category Deletion Staged', description: `Category "${deletingCategory}" is marked for deletion. Click "Save All Changes" to apply.` });
-  };
+  }, [config, deletingCategory, toast]);
 
   const productGroups = useMemo(() => config ? Object.keys(config.pricingTiers).sort() as ProductGroup[] : [], [config]);
   const addOnTypes = useMemo(() => config ? (Object.keys(config.addOnPricing) as AddOnType[]).filter(type => type !== 'rushFee' && type !== 'shippingFee') : [], [config]);
