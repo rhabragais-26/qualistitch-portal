@@ -16,7 +16,7 @@ import { Button } from './ui/button';
 import { Save, Trash2, ChevronDown } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
-import { UserPosition, hasEditPermission, PageGroup, allPageGroups } from '@/lib/permissions';
+import { UserPosition, hasEditPermission, PageGroup, allPageGroups, defaultPermissions } from '@/lib/permissions';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { isEqual } from 'lodash';
@@ -205,10 +205,32 @@ export function AdminUsersTable() {
   }, [users]);
   
   const handleFieldChange = useCallback((uid: string, field: 'role' | 'position', value: string) => {
-    setEditedUsers(prev => ({
-      ...prev,
-      [uid]: { ...prev[uid], [field]: value }
-    }));
+    setEditedUsers(prev => {
+      const newEditedUser = { ...prev[uid], [field]: value };
+
+      if (field === 'position') {
+        const newPosition = value as UserPosition;
+        const defaultPerms = defaultPermissions[newPosition] ?? [];
+        const newPermissions: UserPermissions = {};
+
+        allPageGroups.forEach(group => {
+          newPermissions[group.id] = defaultPerms.includes(group.id);
+        });
+        
+        if (newPosition === 'Page Admin' || newPosition === 'CEO') {
+            allPageGroups.forEach(group => {
+              newPermissions[group.id] = true;
+          });
+        }
+
+        newEditedUser.permissions = newPermissions;
+      }
+
+      return {
+        ...prev,
+        [uid]: newEditedUser
+      };
+    });
   }, []);
 
   const handlePermissionChange = useCallback((uid: string, pageGroup: PageGroup, checked: boolean) => {
