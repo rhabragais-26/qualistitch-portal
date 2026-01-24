@@ -14,9 +14,14 @@ service cloud.firestore {
       // Users can read and update their own profile.
       allow read, update: if request.auth != null && request.auth.uid == userId;
     }
+
+    match /users/{userId}/personalCalendar/{eventId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
     
     match /leads/{leadId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null || resource.data.publiclyPrintable == true;
+      allow write: if request.auth != null;
     }
     
     match /inventory/{itemId} {
@@ -24,6 +29,63 @@ service cloud.firestore {
     }
 
     match /operationalCases/{caseId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /sizeCharts/{chartId} {
+      allow read, write: if true;
+    }
+    
+    match /pricing/{configId} {
+      allow read: if true;
+      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /direct_messages/{channelId} {
+      // Allow read/write only if the requesting user is a participant
+      allow read, write: if request.auth.uid in resource.data.participants;
+      
+      match /messages/{messageId} {
+        // Allow read if user is a participant
+        allow read: if get(/databases/$(database)/documents/direct_messages/$(channelId)).data.participants[0] == request.auth.uid || get(/databases/$(database)/documents/direct_messages/$(channelId)).data.participants[1] == request.auth.uid;
+        // Allow create if user is the sender and is a participant
+        allow create: if request.resource.data.senderId == request.auth.uid && (get(/databases/$(database)/documents/direct_messages/$(channelId)).data.participants[0] == request.auth.uid || get(/databases/$(database)/documents/direct_messages/$(channelId)).data.participants[1] == request.auth.uid);
+      }
+    }
+
+    match /appState/{stateId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /campaign_inquiries/{inquiryId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /ad_spend_inquiries/{inquiryId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /other_cash_inflows/{inflowId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /adCampaigns/{campaignId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /marketingCalendar/{eventId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /operational_expenses/{expenseId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /cost_of_goods/{cogsId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /capital_expenses/{capitalExpenseId} {
       allow read, write: if request.auth != null;
     }
   }

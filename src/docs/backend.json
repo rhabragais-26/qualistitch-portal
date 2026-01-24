@@ -1,6 +1,21 @@
 
 {
   "entities": {
+    "OtherCashInflow": {
+      "title": "OtherCashInflow",
+      "type": "object",
+      "description": "Represents a single cash inflow record other than downpayments.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "paymentMode": { "type": "string" },
+        "submittedBy": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "date", "description", "amount", "paymentMode", "submittedBy", "timestamp"]
+    },
     "OperationalExpense": {
       "title": "OperationalExpense",
       "type": "object",
@@ -48,6 +63,50 @@
         "timestamp": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "date", "assetName", "description", "cost", "submittedBy", "timestamp"]
+    },
+    "MarketingCalendarEvent": {
+      "title": "MarketingCalendarEvent",
+      "type": "object",
+      "description": "Represents an event on the marketing calendar.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "A unique identifier for the event."
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "content": {
+          "type": "string",
+          "description": "The textual content or description for the calendar event."
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the uploaded image for the event."
+        },
+        "uploadedBy": {
+          "type": "string",
+          "description": "Nickname of the user who uploaded the event."
+        }
+      },
+      "required": [
+        "id",
+        "date",
+        "content"
+      ]
+    },
+    "PersonalCalendarEvent": {
+      "title": "PersonalCalendarEvent",
+      "type": "object",
+      "description": "Represents a personal event on a user's calendar.",
+      "properties": {
+          "id": { "type": "string" },
+          "date": { "type": "string", "format": "date-time" },
+          "content": { "type": "string" }
+      },
+      "required": ["id", "date", "content"]
     },
     "PricingConfig": {
         "title": "PricingConfig",
@@ -264,6 +323,10 @@
         "contactNumber": {
           "type": "string",
           "description": "Contact number for the lead."
+        },
+        "contactNumber2": {
+          "type": "string",
+          "description": "Second contact number for the lead."
         },
         "landlineNumber": {
           "type": "string",
@@ -857,6 +920,22 @@
       },
       "required": ["id", "date", "adAccount", "adCampaign", "smallTicketInquiries", "mediumTicketInquiries", "largeTicketInquiries", "highTicketInquiries", "submittedBy", "timestamp"]
     },
+    "AdSpendInquiry": {
+      "title": "AdSpendInquiry",
+      "type": "object",
+      "description": "Represents daily ad spend and inquiry counts.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "adAccount": { "type": "string" },
+        "adsSpent": { "type": "number" },
+        "metaInquiries": { "type": "number" },
+        "pancakeInquiries": { "type": "number" },
+        "submittedBy": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "date", "adAccount", "adsSpent", "metaInquiries", "pancakeInquiries", "submittedBy", "timestamp"]
+    },
     "AdCampaign": {
       "title": "AdCampaign",
       "type": "object",
@@ -882,6 +961,42 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/users/{userId}/personalCalendar/{eventId}",
+        "definition": {
+          "entityName": "PersonalCalendarEvent",
+          "schema": {
+            "$ref": "#/backend/entities/PersonalCalendarEvent"
+          },
+          "description": "Stores personal calendar events for a specific user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The UID of the user."
+            },
+            {
+              "name": "eventId",
+              "description": "A unique ID for the event."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/marketingCalendar/{eventId}",
+        "definition": {
+          "entityName": "MarketingCalendarEvent",
+          "schema": {
+            "$ref": "#/backend/entities/MarketingCalendarEvent"
+          },
+          "description": "Stores marketing calendar events, with each document representing a single event.",
+          "params": [
+            {
+              "name": "eventId",
+              "description": "A unique ID for the event."
+            }
+          ]
+        }
+      },
       {
         "path": "/operational_expenses/{expenseId}",
         "definition": {
@@ -1076,10 +1191,32 @@
             }
           ]
         }
+      },
+      {
+        "path": "/ad_spend_inquiries/{inquiryId}",
+        "definition": {
+          "entityName": "AdSpendInquiry",
+          "schema": { "$ref": "#/backend/entities/AdSpendInquiry" },
+          "description": "Stores daily ad spend and inquiry data.",
+          "params": [
+            {
+              "name": "inquiryId",
+              "description": "Unique identifier for the ad spend inquiry document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/other_cash_inflows/{inflowId}",
+        "definition": {
+          "entityName": "OtherCashInflow",
+          "schema": {
+            "$ref": "#/backend/entities/OtherCashInflow"
+          },
+          "description": "Stores records of other cash inflows."
+        }
       }
     ],
     "reasoning": "The data structure is designed to store lead information collected via the LeadTracker application. To ensure security and efficient data retrieval, leads are stored under a collection called `leads`. This design promotes a flat structure, avoiding nested collections and complex queries, especially considering the app's focus is on data input rather than deeply relational data. Each lead document contains all relevant lead data. This simplifies data access and minimizes the need for complex joins or subqueries, aligning with the app's focus on simplicity and ease of use.\\n\\n**Authorization Independence:** Since there are no explicit user roles, collaborative features, or ownership details mentioned in the requirements, the system assumes open access to leads. If access control becomes a requirement in the future, a `members` map or a separate `/roles` collection would be used in combination with denormalization to achieve authorization independence.\\n\\n**QAPs (Rules are not Filters):** The structure supports secure `list` operations because all lead data is stored within a single, top-level collection. Security rules can be applied at the collection level, ensuring that only authorized users can access lead data, without needing to filter data based on document content. If more sophisticated access controls are required (e.g., restricting access based on CSR assignment), denormalization of CSR assignment directly into the lead documents combined with security rules based on the `request.auth.uid` will ensure that filtering within the rules is not required."
   }
 }
-
-    
