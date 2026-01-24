@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -489,6 +490,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
     setAmount(0);
     setFormattedAmount('');
     setPaymentMode('');
+    onOpenChange(false);
   };
 
   return (
@@ -555,3 +557,6 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
     </Dialog>
   );
 });
+
+
+    
