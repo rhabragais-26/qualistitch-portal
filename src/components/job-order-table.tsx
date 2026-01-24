@@ -27,6 +27,7 @@ import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Check, ChevronDown, Upload, Trash2, ChevronUp } from 'lucide-react';
@@ -322,26 +323,48 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     if (!uploadLead || !firestore) return;
 
     const leadDocRef = doc(firestore, 'leads', uploadLead.id);
-    const layouts = uploadLead.layouts?.length ? [...uploadLead.layouts] : [{}];
-    
+    const layouts = uploadLead.layouts?.length ? JSON.parse(JSON.stringify(uploadLead.layouts)) : [{}];
     const existingLayout = layouts[0] || {};
     const now = new Date().toISOString();
+    const storage = getStorage();
 
-    const updatedFirstLayout = {
-        ...existingLayout,
-        refLogoLeftImage: logoLeftImage || null,
-        refLogoLeftImageUploadTime: logoLeftImage ? (existingLayout.refLogoLeftImage === logoLeftImage ? existingLayout.refLogoLeftImageUploadTime : now) : null,
-        refLogoRightImage: logoRightImage || null,
-        refLogoRightImageUploadTime: logoRightImage ? (existingLayout.refLogoRightImage === logoRightImage ? existingLayout.refLogoRightImageUploadTime : now) : null,
-        refBackLogoImage: backLogoImage || null,
-        refBackLogoImageUploadTime: backLogoImage ? (existingLayout.refBackLogoImage === backLogoImage ? existingLayout.refBackLogoImageUploadTime : now) : null,
-        refBackDesignImage: backDesignImage || null,
-        refBackDesignImageUploadTime: backDesignImage ? (existingLayout.refBackDesignImage === backDesignImage ? existingLayout.refBackDesignImageUploadTime : now) : null,
+    const uploadAndGetURL = async (imageData: string, fieldName: string, existingUrl: string | null) => {
+        if (!imageData) return null;
+        if (imageData === existingUrl) return existingUrl; // No change
+        if (imageData.startsWith('http')) return imageData; // Already a URL
+
+        const storageRef = ref(storage, `leads-images/${uploadLead.id}/ref_${fieldName}_${Date.now()}`);
+        const snapshot = await uploadString(storageRef, imageData, 'data_url');
+        return await getDownloadURL(snapshot.ref);
     };
 
-    layouts[0] = updatedFirstLayout;
-
     try {
+        const [
+            refLogoLeftImageUrl,
+            refLogoRightImageUrl,
+            refBackLogoImageUrl,
+            refBackDesignImageUrl
+        ] = await Promise.all([
+            uploadAndGetURL(logoLeftImage, 'logoLeft', existingLayout.refLogoLeftImage),
+            uploadAndGetURL(logoRightImage, 'logoRight', existingLayout.refLogoRightImage),
+            uploadAndGetURL(backLogoImage, 'backLogo', existingLayout.refBackLogoImage),
+            uploadAndGetURL(backDesignImage, 'backDesign', existingLayout.refBackDesignImage)
+        ]);
+        
+        const updatedFirstLayout = {
+            ...existingLayout,
+            refLogoLeftImage: refLogoLeftImageUrl,
+            refLogoLeftImageUploadTime: refLogoLeftImageUrl ? (existingLayout.refLogoLeftImage === refLogoLeftImageUrl ? existingLayout.refLogoLeftImageUploadTime : now) : null,
+            refLogoRightImage: refLogoRightImageUrl,
+            refLogoRightImageUploadTime: refLogoRightImageUrl ? (existingLayout.refLogoRightImage === refLogoRightImageUrl ? existingLayout.refLogoRightImageUploadTime : now) : null,
+            refBackLogoImage: refBackLogoImageUrl,
+            refBackLogoImageUploadTime: refBackLogoImageUrl ? (existingLayout.refBackLogoImage === refBackLogoImageUrl ? existingLayout.refBackLogoImageUploadTime : now) : null,
+            refBackDesignImage: refBackDesignImageUrl,
+            refBackDesignImageUploadTime: refBackDesignImageUrl ? (existingLayout.refBackDesignImage === refBackDesignImageUrl ? existingLayout.refBackDesignImageUploadTime : now) : null,
+        };
+
+        layouts[0] = updatedFirstLayout;
+
         await updateDoc(leadDocRef, {
             layouts: layouts,
             lastModified: new Date().toISOString(),
@@ -351,8 +374,8 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
             title: 'Images Saved!',
             description: 'The reference images have been saved.',
         });
-        setUploadLead(null); // Close dialog
-        refetch(); // This will refresh the data
+        setUploadLead(null);
+        refetch();
     } catch (e: any) {
         console.error("Error saving images: ", e);
         toast({
@@ -651,4 +674,5 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               }>Save Images </Button></DialogFooter></DialogContent></Dialog></Card> ); }
 
     
+
 
