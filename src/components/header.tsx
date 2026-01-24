@@ -269,10 +269,6 @@ const HeaderMemo = React.memo(function Header({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleNavigation('/finance/dashboard')}>
-                      <LayoutDashboard className="mr-2" />
-                      Dashboard
-                    </DropdownMenuItem>
                      <DropdownMenuItem onClick={() => handleNavigation('/finance/cash-inflows')}>
                       <Banknote className="mr-2" />
                       Cash Inflows
@@ -292,6 +288,10 @@ const HeaderMemo = React.memo(function Header({
                     <DropdownMenuItem onClick={() => handleNavigation('/finance/capital-expenses')}>
                       <Building className="mr-2" />
                       Capital Expenses
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/finance/dashboard')}>
+                      <LayoutDashboard className="mr-2" />
+                      Dashboard
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
