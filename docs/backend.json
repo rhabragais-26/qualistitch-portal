@@ -1,6 +1,21 @@
 
 {
   "entities": {
+    "OtherCashInflow": {
+      "title": "OtherCashInflow",
+      "type": "object",
+      "description": "Represents a single cash inflow record other than downpayments.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "paymentMode": { "type": "string" },
+        "submittedBy": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "date", "description", "amount", "paymentMode", "submittedBy", "timestamp"]
+    },
     "OperationalExpense": {
       "title": "OperationalExpense",
       "type": "object",
@@ -795,9 +810,11 @@
           "items": {
               "type": "object",
               "properties": {
-                  "type": { "type": "string", "enum": ["down", "full"] },
+                  "type": { "type": "string", "enum": ["down", "full", "balance"] },
                   "amount": { "type": "number" },
-                  "mode": { "type": "string" }
+                  "mode": { "type": "string" },
+                  "processedBy": { "type": "string" },
+                  "timestamp": { "type": "string", "format": "date-time" }
               }
           }
         }
@@ -1189,6 +1206,16 @@
               "description": "Unique identifier for the ad spend inquiry document."
             }
           ]
+        }
+      },
+      {
+        "path": "/other_cash_inflows/{inflowId}",
+        "definition": {
+          "entityName": "OtherCashInflow",
+          "schema": {
+            "$ref": "#/backend/entities/OtherCashInflow"
+          },
+          "description": "Stores records of other cash inflows."
         }
       }
     ],

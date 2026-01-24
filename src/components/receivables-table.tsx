@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useFirestore, useMemoFirebase, useCollection, useUser, useDoc } from '@/firebase';
+import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
 import {
   Table,
@@ -34,11 +34,6 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { z } from 'zod';
 import Link from 'next/link';
 import { Label } from './ui/label';
-import { addDays, format } from 'date-fns';
-import { initialPricingConfig } from '@/lib/pricing-data';
-import type { PricingConfig, AddOnType } from '@/lib/pricing';
-import { getAddOnPrice } from '@/lib/pricing';
-import { ScrollArea } from './ui/scroll-area';
 
 const leadSchema = z.object({
   id: z.string(),
@@ -62,13 +57,6 @@ const leadSchema = z.object({
   joNumber: z.number().optional(),
   shipmentStatus: z.string().optional(),
   payments: z.array(z.any()).optional(),
-  courier: z.string().optional(),
-  deliveryDate: z.string().optional().nullable(),
-  adjustedDeliveryDate: z.string().optional().nullable(),
-  isPacked: z.boolean().optional(),
-  isSalesAuditRequested: z.boolean().optional(),
-  isQualityApproved: z.boolean().optional(),
-  isRecheckingQuality: z.boolean().optional(),
   addOns: z.any().optional(),
   discounts: z.any().optional(),
 });
@@ -98,10 +86,7 @@ const remittanceOptions = [
 const getShipmentStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success" } => {
     if (lead.shipmentStatus === 'Delivered') return { text: 'Delivered', variant: 'success' };
     if (lead.shipmentStatus === 'Shipped') return { text: 'Shipped', variant: 'success' };
-    if (lead.isPacked) return { text: "Already Packed", variant: "default" };
-    if (lead.isSalesAuditRequested) return { text: "On-going Audit", variant: "warning" };
-    if (lead.isQualityApproved) return { text: "Approved Quality", variant: "default" };
-    if (lead.isRecheckingQuality) return { text: "Re-checking Quality", variant: "destructive" };
+    if (lead.shipmentStatus === 'Packed') return { text: "Already Packed", variant: "default" };
     return { text: lead.shipmentStatus || 'Pending', variant: 'secondary' };
 }
 
@@ -213,18 +198,21 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
         const payments = lead.payments || [];
         const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
 
+        const nowISO = new Date().toISOString();
         const updatedPayment: any = {
-            type: 'full',
+            type: 'balance',
             amount: grandTotal - totalPaid,
             mode: remittanceMode,
-        }
+            processedBy: userProfile.nickname,
+            timestamp: nowISO,
+        };
 
         await updateDoc(leadDocRef, {
             paymentType: "Fully Paid",
             balance: 0,
             paidAmount: grandTotal,
             payments: [...payments, updatedPayment],
-            lastModified: new Date().toISOString(),
+            lastModified: nowISO,
             lastModifiedBy: userProfile.nickname,
         });
         toast({

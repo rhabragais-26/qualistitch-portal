@@ -138,6 +138,12 @@ export default function NewOrderPage() {
       paymentType = 'COD';
     }
 
+    const paymentsWithMeta = Object.values(payments).flat().map(payment => ({
+      ...payment,
+      processedBy: userProfile.nickname,
+      timestamp: now,
+    }));
+
     const submissionData = {
       id: leadId,
       customerName: toTitleCase(values.customerName),
@@ -169,7 +175,7 @@ export default function NewOrderPage() {
       balance,
       addOns,
       discounts,
-      payments: Object.values(payments).flat(),
+      payments: paymentsWithMeta,
     };
 
     if (allLeads) {

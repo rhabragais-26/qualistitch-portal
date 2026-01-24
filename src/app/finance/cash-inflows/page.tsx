@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -38,16 +39,19 @@ import { cn } from '@/lib/utils';
 
 // Types for downpayments from leads
 type Payment = {
-  type: 'down' | 'full';
+  type: 'down' | 'full' | 'balance';
   amount: number;
   mode: string;
+  timestamp?: string;
+  processedBy?: string;
 };
 
 type Lead = {
   id: string;
-  joNumber?: number; // Added for JO Number column
+  joNumber?: number;
   payments?: Payment[];
   submissionDateTime: string;
+  salesRepresentative: string;
 };
 
 // Types for other cash inflows
@@ -175,21 +179,32 @@ export default function CashInflowsPage() {
     const leadPayments = (leads || []).flatMap(lead => 
         (lead.payments || [])
             .filter(p => p.amount > 0)
-            .map((p, i) => ({
-                id: `${lead.id}-${i}`,
-                date: lead.submissionDateTime,
-                description: p.type === 'full' ? 'Full Payment' : 'Downpayment',
-                amount: p.amount,
-                paymentMode: p.mode,
-                source: 'Lead Payment',
-                joNumber: lead.joNumber,
-            }))
+            .map((p, i) => {
+                let description = 'Downpayment';
+                if (p.type === 'full') {
+                    description = 'Full Payment';
+                } else if (p.type === 'balance') {
+                    description = 'Balance Payment';
+                }
+
+                return {
+                    id: `${lead.id}-${i}`,
+                    date: p.timestamp || lead.submissionDateTime,
+                    description: description,
+                    amount: p.amount,
+                    paymentMode: p.mode,
+                    source: 'Lead Payment',
+                    joNumber: lead.joNumber,
+                    processedBy: p.processedBy || lead.salesRepresentative
+                };
+            })
     );
 
     const other = (otherInflows || []).map(inflow => ({
         ...inflow,
         source: 'Other',
         joNumber: undefined,
+        processedBy: inflow.submittedBy,
     }));
     
     return [...leadPayments, ...other].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -327,19 +342,20 @@ export default function CashInflowsPage() {
                       <TableHead className="text-white font-bold">Description</TableHead>
                       <TableHead className="text-white font-bold">Payment Method</TableHead>
                       <TableHead className="text-white font-bold">J.O. Number</TableHead>
+                      <TableHead className="text-white font-bold">Processed by</TableHead>
                       <TableHead className="text-white font-bold text-right">Amount</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
-                        <TableCell colSpan={5}>
+                        <TableCell colSpan={6}>
                           <Skeleton className="h-24 w-full" />
                         </TableCell>
                       </TableRow>
                     ) : error ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-destructive">
+                        <TableCell colSpan={6} className="text-center text-destructive">
                           Error loading data: {error.message}
                         </TableCell>
                       </TableRow>
@@ -350,12 +366,13 @@ export default function CashInflowsPage() {
                             <TableCell>{inflow.description}</TableCell>
                             <TableCell>{inflow.paymentMode}</TableCell>
                             <TableCell>{inflow.joNumber ? formatJoNumber(inflow.joNumber) : '-'}</TableCell>
+                            <TableCell>{inflow.processedBy}</TableCell>
                             <TableCell className="text-right">{formatCurrency(inflow.amount)}</TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground">
                           No cash inflow data available for the selected filters.
                         </TableCell>
                       </TableRow>
