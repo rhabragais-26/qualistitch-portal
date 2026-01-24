@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -48,17 +49,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
 
   const [removingAddOn, setRemovingAddOn] = useState<{ groupKey: string; addOnType: keyof AddOns; } | null>(null);
   const [removedFees, setRemovedFees] = useState<Record<string, { logo?: boolean; backText?: boolean }>>({});
-  const [paymentToEdit, setPaymentToEdit] = useState<{ payment: Payment; index: number; key: string } | null>(null);
   const [isBalanceDialogOpen, setIsBalanceDialogOpen] = useState(false);
-
-  const lastBalancePaymentInfo = useMemo(() => {
-    if (!payments) return null;
-    const allPayments = Object.entries(payments).flatMap(([key, paymentArr]) =>
-      (paymentArr || []).map((p, index) => ({ payment: p, index, key }))
-    );
-    return allPayments.filter(p => p.payment.type === 'balance').pop() || null;
-  }, [payments]);
-
 
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
@@ -419,15 +410,8 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                     <div className="w-full flex justify-between items-center text-lg">
                       <div className="pt-2">
                         {isEditingLead ? (
-                             <>
-                                {lastBalancePaymentInfo && balance <= 0 ? (
-                                    <Button variant="outline" onClick={() => {
-                                        setPaymentToEdit(lastBalancePaymentInfo);
-                                        setIsBalanceDialogOpen(true);
-                                    }} disabled={isReadOnly}>
-                                        Edit Payment
-                                    </Button>
-                                ) : balance > 0 ? (
+                            <>
+                                {balance > 0 ? (
                                     <Button variant="outline" onClick={() => setIsBalanceDialogOpen(true)} disabled={isReadOnly}>
                                         Add Payment
                                     </Button>
@@ -503,8 +487,6 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
         balance={balance}
         payments={payments}
         setPayments={setPayments}
-        paymentToEdit={paymentToEdit}
-        onClose={() => setPaymentToEdit(null)}
         isReadOnly={isReadOnly}
     />
     </Card>

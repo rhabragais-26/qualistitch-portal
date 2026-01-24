@@ -394,8 +394,6 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   balance,
   payments,
   setPayments,
-  paymentToEdit,
-  onClose,
   isReadOnly,
 }: {
   balance: number;
@@ -404,33 +402,22 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   isReadOnly?: boolean;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  paymentToEdit: { payment: Payment; index: number; key: string } | null;
-  onClose: () => void;
 }) {
   const [paymentType, setPaymentType] = useState<'balance' | 'full'>('balance');
   const [amount, setAmount] = useState(0);
   const [formattedAmount, setFormattedAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('');
 
-  const isEditing = !!paymentToEdit;
-
   useEffect(() => {
     if (isOpen) {
-      if (isEditing && paymentToEdit) {
-        setPaymentType(paymentToEdit.payment.type);
-        setAmount(paymentToEdit.payment.amount);
-        setFormattedAmount(String(paymentToEdit.payment.amount));
-        setPaymentMode(paymentToEdit.payment.mode);
-      } else {
-        setPaymentType('balance');
-        setAmount(0);
-        setFormattedAmount('');
-        setPaymentMode('');
-      }
+      setPaymentType('balance');
+      setAmount(0);
+      setFormattedAmount('');
+      setPaymentMode('');
     }
-  }, [isOpen, isEditing, paymentToEdit]);
+  }, [isOpen]);
 
-  const maxAmount = isEditing && paymentToEdit ? balance + paymentToEdit.payment.amount : balance;
+  const maxAmount = balance;
   const amountError = amount > maxAmount ? `Amount cannot exceed balance of ${formatCurrency(maxAmount)}` : null;
   const isSaveDisabled = amount <= 0 || !paymentMode || !!amountError;
 
@@ -451,7 +438,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   };
 
   const handleSave = () => {
-    const newOrUpdatedPayment: Payment = {
+    const newPayment: Payment = {
       type: paymentType,
       amount: amount,
       mode: paymentMode,
@@ -459,41 +446,26 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
     
     setPayments(prev => {
       const newPayments = JSON.parse(JSON.stringify(prev)); // deep copy
-      
-      if (isEditing && paymentToEdit) {
-        const { key, index } = paymentToEdit;
-        if (newPayments[key] && newPayments[key][index]) {
-          newPayments[key][index] = {
-            ...newPayments[key][index],
-            ...newOrUpdatedPayment,
-          };
-        }
-      } else {
-        const paymentKey = Object.keys(newPayments)[0] || new Date().toISOString();
-        if (!newPayments[paymentKey]) {
-          newPayments[paymentKey] = [];
-        }
-        newPayments[paymentKey].push({
-          ...(newOrUpdatedPayment as any),
-          processedBy: 'Finance', // Or get current user
-          timestamp: new Date().toISOString(),
-        });
+      const paymentKey = Object.keys(newPayments)[0] || new Date().toISOString();
+      if (!newPayments[paymentKey]) {
+        newPayments[paymentKey] = [];
       }
+      newPayments[paymentKey].push({
+        ...(newPayment as any),
+        processedBy: 'Finance', // Or get current user
+        timestamp: new Date().toISOString(),
+      });
       return newPayments;
     });
 
-    onClose();
     onOpenChange(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-        if (!open) onClose();
-        onOpenChange(open);
-    }}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Payment' : 'Add Balance Payment'}</DialogTitle>
+          <DialogTitle>Add Payment</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <RadioGroup value={paymentType} onValueChange={(v: 'full' | 'balance') => setPaymentType(v)} className="flex justify-center gap-4">
@@ -503,7 +475,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="full" id="full" />
-              <Label htmlFor="full">Full Payment</Label>
+              <Label htmlFor="full">Balance Payment</Label>
             </div>
           </RadioGroup>
 
@@ -517,7 +489,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
                 onChange={handleAmountChange}
                 className={cn("pl-8", amountError && "border-destructive")}
                 placeholder="0.00"
-                readOnly={paymentType === 'full' && !isEditing}
+                readOnly={paymentType === 'full'}
               />
             </div>
             {amountError && <p className="text-sm text-destructive mt-1">{amountError}</p>}
