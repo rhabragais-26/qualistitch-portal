@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -159,16 +158,16 @@ export default function CashInflowsPage() {
   const { data: otherInflows, isLoading: otherInflowsLoading, error: otherInflowsError } = useCollection<OtherCashInflow>(otherInflowsQuery);
 
   const combinedInflows = useMemo(() => {
-    const downpayments = (leads || []).flatMap(lead => 
+    const leadPayments = (leads || []).flatMap(lead => 
         (lead.payments || [])
-            .filter(p => p.type === 'down' && p.amount > 0)
+            .filter(p => p.amount > 0)
             .map((p, i) => ({
                 id: `${lead.id}-${i}`,
                 date: lead.submissionDateTime,
-                description: `Downpayment from Lead`,
+                description: p.type === 'full' ? 'Full Payment' : 'Downpayment',
                 amount: p.amount,
                 paymentMode: p.mode,
-                source: 'Downpayment'
+                source: 'Lead Payment'
             }))
     );
 
@@ -177,7 +176,7 @@ export default function CashInflowsPage() {
         source: 'Other'
     }));
     
-    return [...downpayments, ...other].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return [...leadPayments, ...other].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [leads, otherInflows]);
 
 
