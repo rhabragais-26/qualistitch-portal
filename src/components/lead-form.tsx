@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react"
@@ -963,25 +964,27 @@ export function LeadForm({
                   )}/>
                 </div>
                 {showSecondMobile && (
-                  <FormField control={form.control} name="mobileNo2" render={({field}) => (
-                    <FormItem>
-                      <div className="flex items-center justify-between">
-                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">Second Mobile No.</FormLabel>
-                          {!isReadOnly && (
-                              <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => {
-                                  setShowSecondMobile(false);
-                                  setValue('mobileNo2', '');
-                              }}>
-                                  <X className="h-4 w-4" />
-                              </Button>
-                          )}
-                      </div>
-                      <FormControl>
-                          <Input type="tel" {...field} placeholder="Second mobile number..." onChange={(e) => handleMobileNoChange(e, field)} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}/>
+                    <div className="grid grid-cols-2 gap-x-4">
+                        <FormField control={form.control} name="mobileNo2" render={({field}) => (
+                            <FormItem>
+                            <div className="flex items-center justify-between">
+                                <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">Second Mobile No.</FormLabel>
+                                {!isReadOnly && (
+                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => {
+                                        setShowSecondMobile(false);
+                                        setValue('mobileNo2', '');
+                                    }}>
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+                            <FormControl>
+                                <Input type="tel" {...field} placeholder="Second mobile number..." onChange={(e) => handleMobileNoChange(e, field)} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}/>
+                    </div>
                 )}
               </div>
 
@@ -1377,7 +1380,7 @@ export function LeadForm({
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDeleteOrder(index)}>Delete</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleDeleteOrder(index)}>Delete Order</AlertDialogAction>
                                 </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
@@ -1488,5 +1491,7 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
+
+    
 
     
