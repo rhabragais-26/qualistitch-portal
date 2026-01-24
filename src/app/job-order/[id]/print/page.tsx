@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useFirestore } from '@/firebase';
@@ -130,6 +131,9 @@ export default function JobOrderPrintPage() {
           setTimeout(() => window.print(), 500);
         } else {
           setIsLoading(false);
+          if (!error) {
+            setError(new Error("Job order data could not be loaded for printing. Please close this tab and try again."));
+          }
         }
       }
     };
@@ -152,7 +156,7 @@ export default function JobOrderPrintPage() {
         localStorage.removeItem(`job-order-${id}`);
       }
     };
-  }, [firestore, id]);
+  }, [firestore, id, error]);
   
   if (isLoading || !lead) {
     return (
@@ -431,3 +435,4 @@ export default function JobOrderPrintPage() {
     </div>
   );
 }
+

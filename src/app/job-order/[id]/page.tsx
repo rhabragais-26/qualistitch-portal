@@ -222,8 +222,8 @@
       }, [lead, allLeads]);
 
       const handlePrint = async () => {
-        if (!leadRef || !id) {
-            console.error("Lead reference or ID is missing for printing.");
+        if (!leadRef || !id || !lead) {
+            console.error("Lead reference, ID, or data is missing for printing.");
             toast({
                 variant: "destructive",
                 title: "Printing Error",
@@ -235,7 +235,15 @@
         let printWindow: Window | null = null;
         
         try {
-          const jobOrderUrl = `/job-order/${'\'\'\''}id{'\'\'\''}/print`;
+          // Pass necessary data to the print page via localStorage
+          const dataForPrint = {
+            ...lead,
+            deliveryDate: deliveryDate,
+            scesFullName: scesFullName,
+          };
+          localStorage.setItem(`job-order-${id}`, JSON.stringify(dataForPrint));
+
+          const jobOrderUrl = `/job-order/${id}/print`;
           printWindow = window.open(jobOrderUrl, '_blank', 'noopener,noreferrer,height=800,width=1200,scrollbars=yes');
 
         } catch (error: any) {
