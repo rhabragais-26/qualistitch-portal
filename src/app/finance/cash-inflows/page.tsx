@@ -57,6 +57,7 @@ type Lead = {
   payments?: Payment[];
   submissionDateTime: string;
   salesRepresentative: string;
+  lastModifiedBy?: string;
 };
 
 // Types for other cash inflows
@@ -240,6 +241,11 @@ export default function CashInflowsPage() {
                     case 'additional': description = 'Additional Payment'; break;
                     default: description = 'Payment'; break;
                 }
+                
+                let processedBy = p.processedBy || lead.salesRepresentative;
+                if (processedBy === 'Finance' && lead.lastModifiedBy) {
+                    processedBy = lead.lastModifiedBy;
+                }
 
                 return {
                     id: `${lead.id}-${paymentIndex}`, // A unique ID for the row
@@ -252,7 +258,7 @@ export default function CashInflowsPage() {
                     paymentMode: p.mode,
                     source: 'Lead Payment',
                     joNumber: lead.joNumber,
-                    processedBy: p.processedBy || lead.salesRepresentative,
+                    processedBy: processedBy,
                     verified: p.verified,
                     verifiedBy: p.verifiedBy,
                     verifiedTimestamp: p.verifiedTimestamp,

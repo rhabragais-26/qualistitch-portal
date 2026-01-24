@@ -430,7 +430,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
 
   const maxAmount = balance;
   const amountError = amount > maxAmount ? `Amount cannot exceed balance of ${formatCurrency(maxAmount)}` : null;
-  const isSaveDisabled = amount <= 0 || !paymentMode || !!amountError;
+  const isSaveDisabled = amount <= 0 || !paymentMode || !!amountError || !userProfile;
 
   useEffect(() => {
     if (paymentType === 'balance') {
@@ -450,6 +450,15 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   };
 
   const handleSave = () => {
+    if (!userProfile) {
+        toast({
+            variant: "destructive",
+            title: "Cannot Save Payment",
+            description: "User information is still loading. Please wait a moment and try again.",
+        });
+        return;
+    }
+
     const newPayment: Payment = {
       id: uuidv4(),
       type: paymentType,
@@ -465,7 +474,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
       }
       newPayments[paymentKey].push({
         ...(newPayment as any),
-        processedBy: userProfile?.nickname || 'Finance',
+        processedBy: userProfile.nickname,
         timestamp: new Date().toISOString(),
       });
       return newPayments;
