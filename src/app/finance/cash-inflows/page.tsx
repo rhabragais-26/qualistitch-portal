@@ -105,7 +105,8 @@ function OtherInflowsForm({
       date: new Date(),
       customerName: '',
       description: '',
-      amount: 0,
+      // @ts-ignore
+      amount: '',
       paymentMode: '',
     },
   });
@@ -124,7 +125,8 @@ function OtherInflowsForm({
         date: new Date(),
         customerName: '',
         description: '',
-        amount: 0,
+        // @ts-ignore
+        amount: '',
         paymentMode: '',
       });
     }
@@ -633,3 +635,5 @@ export default function CashInflowsPage() {
     </>
   );
 }
+
+    
