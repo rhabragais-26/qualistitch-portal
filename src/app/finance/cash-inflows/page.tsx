@@ -40,6 +40,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 // Types for downpayments from leads
 type Payment = {
+  id?: string;
   type: 'down' | 'full' | 'balance' | 'additional';
   amount: number;
   mode: string;
@@ -172,7 +173,7 @@ function OtherInflowsForm({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField control={form.control} name="date" render={({ field }) => (
-              <FormItem><FormLabel>Date</FormLabel><FormControl><Input type="date" value={format(field.value, 'yyyy-MM-dd')} onChange={(e) => field.onChange(new Date(e.target.value))} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel>Date</FormLabel><FormControl><Input type="date" className="w-48" value={format(field.value, 'yyyy-MM-dd')} onChange={(e) => field.onChange(new Date(e.target.value))} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="customerName" render={({ field }) => (
               <FormItem><FormLabel>Customer Name</FormLabel><FormControl><Input placeholder="e.g., John Doe" {...field} /></FormControl><FormMessage /></FormItem>
@@ -180,8 +181,17 @@ function OtherInflowsForm({
             <FormField control={form.control} name="description" render={({ field }) => (
               <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="e.g., Sale of scrap materials" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField control={form.control} name="amount" render={({ field }) => (
-              <FormItem><FormLabel>Amount</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>
+             <FormField control={form.control} name="amount" render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Amount</FormLabel>
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+                        <FormControl>
+                            <Input type="text" placeholder="0.00" {...field} className="pl-7" />
+                        </FormControl>
+                    </div>
+                    <FormMessage />
+                </FormItem>
             )} />
             <FormField control={form.control} name="paymentMode" render={({ field }) => (
                 <FormItem><FormLabel>Payment Mode</FormLabel>
@@ -248,7 +258,7 @@ export default function CashInflowsPage() {
                 }
 
                 return {
-                    id: `${lead.id}-${paymentIndex}`, // A unique ID for the row
+                    id: `${lead.id}-${p.id || paymentIndex}`, // A unique ID for the row
                     leadId: lead.id, // ID of the lead document
                     paymentIndex: paymentIndex, // Index of the payment in the array
                     date: p.timestamp || lead.submissionDateTime,
