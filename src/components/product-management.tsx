@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -170,7 +169,7 @@ export function ProductManagement() {
     if (value === '') {
         tiers[tierIndex][field] = '';
     } else {
-        const numValue = parseInt(value, 10);
+        const numValue = parseFloat(value);
         if (!isNaN(numValue) && numValue >= 0) {
             tiers[tierIndex][field] = numValue;
         }
@@ -192,7 +191,7 @@ export function ProductManagement() {
     if (value === '') {
         tiers[tierIndex][field] = '';
     } else {
-        const numValue = parseInt(value, 10);
+        const numValue = parseFloat(value);
         if (!isNaN(numValue) && numValue >= 0) {
             tiers[tierIndex][field] = numValue;
         }
@@ -662,7 +661,13 @@ export function ProductManagement() {
                                                 <TableCell className="p-1 align-middle">
                                                   <div className="relative flex items-center justify-center">
                                                       <span className="absolute left-3 text-muted-foreground">₱</span>
-                                                      <Input type="text" value={tier.price} onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'price', e.target.value)} className="w-24 h-7 text-xs pl-6 text-center" readOnly={!isEditing}/>
+                                                      <Input
+                                                        type="text"
+                                                        value={tier.price === '' ? '' : new Intl.NumberFormat('en-US').format(Number(tier.price))}
+                                                        onChange={e => handleTierChange(selectedProductGroup!, embroideryType, tierIndex, 'price', e.target.value.replace(/,/g, ''))}
+                                                        className="w-24 h-7 text-xs pl-6 text-center"
+                                                        readOnly={!isEditing}
+                                                      />
                                                   </div>
                                                 </TableCell>
                                                 <TableCell className="p-1 align-middle">
@@ -740,7 +745,13 @@ export function ProductManagement() {
                                           <TableCell className="p-1 align-middle">
                                               <div className="relative flex items-center justify-center">
                                                   <span className="absolute left-3 text-muted-foreground">₱</span>
-                                                  <Input type="text" value={tier.price} onChange={e => handleAddOnTierChange(addOn, tierIndex, 'price', e.target.value)} className="w-24 h-7 text-xs pl-6 text-center" readOnly={!isEditing}/>
+                                                  <Input
+                                                    type="text"
+                                                    value={tier.price === '' ? '' : new Intl.NumberFormat('en-US').format(Number(tier.price))}
+                                                    onChange={e => handleAddOnTierChange(addOn, tierIndex, 'price', e.target.value.replace(/,/g, ''))}
+                                                    className="w-24 h-7 text-xs pl-6 text-center"
+                                                    readOnly={!isEditing}
+                                                  />
                                               </div>
                                           </TableCell>
                                           <TableCell className="p-1 align-middle">
