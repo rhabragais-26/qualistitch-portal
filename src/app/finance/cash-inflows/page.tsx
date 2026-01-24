@@ -180,11 +180,20 @@ export default function CashInflowsPage() {
         (lead.payments || [])
             .filter(p => p.amount > 0)
             .map((p, i) => {
-                let description = 'Downpayment';
-                if (p.type === 'full') {
-                    description = 'Full Payment';
-                } else if (p.type === 'balance') {
-                    description = 'Balance Payment';
+                let description: string;
+                switch (p.type) {
+                    case 'down':
+                        description = 'Downpayment';
+                        break;
+                    case 'full':
+                        description = 'Full Payment';
+                        break;
+                    case 'balance':
+                        description = 'Balance Payment';
+                        break;
+                    default:
+                        description = 'Payment';
+                        break;
                 }
 
                 return {
@@ -387,3 +396,5 @@ export default function CashInflowsPage() {
     </Header>
   );
 }
+
+    
