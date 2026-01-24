@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -36,7 +37,7 @@ import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import Link from 'next/link';
 
@@ -171,7 +172,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery);
 
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
   
@@ -700,9 +701,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   }, []);
 
 
-  const handleRemoveImage = useCallback((e: React.MouseEvent, imageSetter: React.Dispatch<React.SetStateAction<string>>) => {
+  const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<string>>) => {
     e.stopPropagation();
-    imageSetter('');
+    setter('');
   }, []);
 
   const handleConfirmReview = useCallback(async () => {
@@ -766,13 +767,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     if (!layout) return [];
 
     const finalProgramFiles = [
-      ...(layout.finalLogoEmb || []).map((file, i) => ({ label: `Logo ${i + 1} (EMB)`, uploaded: !!file, fileInfo: '.emb', timestamp: layout.finalLogoEmbUploadTimes?.[i] })),
-      ...(layout.finalBackDesignEmb || []).map((file, i) => ({ label: `Back Design ${i + 1} (EMB)`, uploaded: !!file, fileInfo: '.emb', timestamp: layout.finalBackDesignEmbUploadTimes?.[i] })),
-      ...(layout.finalLogoDst || []).map((file, i) => ({ label: `Logo ${i + 1} (DST)`, uploaded: !!file, fileInfo: '.dst', timestamp: layout.finalLogoDstUploadTimes?.[i] })),
-      ...(layout.finalBackDesignDst || []).map((file, i) => ({ label: `Back Design ${i + 1} (DST)`, uploaded: !!file, fileInfo: '.dst', timestamp: layout.finalBackDesignDstUploadTimes?.[i] })),
-      ...(layout.finalNamesDst || []).map((file, i) => ({ label: `Name ${i + 1} (DST)`, uploaded: !!file, fileInfo: '.dst', timestamp: layout.finalNamesDstUploadTimes?.[i] })),
       ...(layout.sequenceLogo || []).map((file, i) => ({ label: `Sequence Logo ${i + 1}`, uploaded: !!file, fileInfo: 'Image', timestamp: Array.isArray(layout.sequenceLogoUploadTimes) ? layout.sequenceLogoUploadTimes[i] : null })),
       ...(layout.sequenceBackDesign || []).map((file, i) => ({ label: `Sequence Back Design ${i+1}`, uploaded: !!file, fileInfo: 'Image', timestamp: Array.isArray(layout.sequenceBackDesignUploadTimes) ? layout.sequenceBackDesignUploadTimes[i] : null })),
+      ...(layout.finalProgrammedLogo || []).map((file, i) => ({ label: `Final Programmed Logo ${i + 1}`, uploaded: !!file, fileInfo: 'Image', timestamp: Array.isArray(layout.finalProgrammedLogoUploadTimes) ? layout.finalProgrammedLogoUploadTimes[i] : null })),
+      ...(layout.finalProgrammedBackDesign || []).map((file, i) => ({ label: `Final Programmed Back Design ${i + 1}`, uploaded: !!file, fileInfo: 'Image', timestamp: Array.isArray(layout.finalProgrammedBackDesignUploadTimes) ? layout.finalProgrammedBackDesignUploadTimes[i] : null })),
     ];
     
     return finalProgramFiles.filter(item => item.uploaded);
@@ -794,28 +792,28 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               <Label>Logo Left</Label>
               <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setLogoLeftImage)} onDoubleClick={() => logoLeftImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                 {logoLeftImage ? (<> <Image src={logoLeftImage} alt="Logo Left" layout="fill" objectFit="contain" className="rounded-md" /> {logoLeftImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setLogoLeftImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                <input type="file" accept="image/*,.dst,.emb" ref={logoLeftImageUploadRef} onChange={(e) => handleFileUpload(e, setLogoLeftImage)} className="hidden" />
+                <input type="file" accept="image/*" ref={logoLeftImageUploadRef} onChange={(e) => handleFileUpload(e, setLogoLeftImage)} className="hidden" />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Logo Right</Label>
               <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setLogoRightImage)} onDoubleClick={() => logoRightImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                 {logoRightImage ? (<> <Image src={logoRightImage} alt="Logo Right" layout="fill" objectFit="contain" className="rounded-md" /> {logoRightImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setLogoRightImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                <input type="file" accept="image/*,.dst,.emb" ref={logoRightImageUploadRef} onChange={(e) => handleFileUpload(e, setLogoRightImage)} className="hidden" />
+                <input type="file" accept="image/*" ref={logoRightImageUploadRef} onChange={(e) => handleFileUpload(e, setLogoRightImage)} className="hidden" />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Back Logo</Label>
               <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setBackLogoImage)} onDoubleClick={() => backLogoImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                 {backLogoImage ? (<> <Image src={backLogoImage} alt="Back Logo" layout="fill" objectFit="contain" className="rounded-md" /> {backLogoImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setBackLogoImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                <input type="file" accept="image/*,.dst,.emb" ref={backLogoImageUploadRef} onChange={(e) => handleFileUpload(e, setBackLogoImage)} className="hidden" />
+                <input type="file" accept="image/*" ref={backLogoImageUploadRef} onChange={(e) => handleFileUpload(e, setBackLogoImage)} className="hidden" />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Back Design</Label>
               <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none" onPaste={(e) => handleImagePaste(e, setBackDesignImage)} onDoubleClick={() => backDesignImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                 {backDesignImage ? (<> <Image src={backDesignImage} alt="Back Design" layout="fill" objectFit="contain" className="rounded-md" /> {backDesignImage && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => handleRemoveImage(e, setBackDesignImage)}> <Trash2 className="h-4 w-4" /> </Button>} </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                <input type="file" accept="image/*,.dst,.emb" ref={backDesignImageUploadRef} onChange={(e) => handleFileUpload(e, setBackDesignImage)} className="hidden" />
+                <input type="file" accept="image/*" ref={backDesignImageUploadRef} onChange={(e) => handleFileUpload(e, setBackDesignImage)} className="hidden" />
               </div>
             </div>
           </div>
@@ -1266,7 +1264,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   const hasRefImages = lead.layouts?.[0]?.refLogoLeftImage || lead.layouts?.[0]?.refLogoRightImage || lead.layouts?.[0]?.refBackLogoImage || lead.layouts?.[0]?.refBackDesignImage;
                   const hasInitialImages = lead.layouts?.[0]?.logoLeftImage || lead.layouts?.[0]?.logoRightImage || lead.layouts?.[0]?.backLogoImage || lead.layouts?.[0]?.backDesignImage;
                   const hasTestImages = lead.layouts?.[0]?.testLogoLeftImage || lead.layouts?.[0]?.testLogoRightImage || lead.layouts?.[0]?.testBackLogoImage || lead.layouts?.[0]?.testBackDesignImage;
-                  const hasFinalFiles = lead.layouts?.[0]?.finalLogoEmb?.some(f => f) || lead.layouts?.[0]?.finalBackDesignEmb?.some(f => f) || lead.layouts?.[0]?.finalLogoDst?.some(f => f) || lead.layouts?.[0]?.finalBackDesignDst?.some(f => f) || lead.layouts?.[0]?.finalNamesDst?.some(f => f) || lead.layouts?.[0]?.sequenceLogo?.some(f => f) || lead.layouts?.[0]?.sequenceBackDesign?.some(f => f);
+                  const hasFinalFiles = lead.layouts?.[0]?.sequenceLogo?.some(s => s?.url) || 
+                                       lead.layouts?.[0]?.sequenceBackDesign?.some(s => s?.url) ||
+                                       lead.layouts?.[0]?.finalProgrammedLogo?.some(f => f?.url) ||
+                                       lead.layouts?.[0]?.finalProgrammedBackDesign?.some(f => f?.url);
                   const hasLayoutImages = lead.layouts?.some(l => l.layoutImage);
                   const isRepeat = lead.orderNumber > 1;
                   const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
@@ -1531,17 +1532,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                     <Card className="bg-white">
                                         <CardHeader className="p-2"><CardTitle className="text-sm text-center">Final Program Files</CardTitle></CardHeader>
                                         <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs p-2">
-                                          {lead.layouts?.[0]?.finalLogoEmb?.map((file, index) => file && (<div className="flex flex-col items-center text-center" key={`final-logo-emb-${index}`}><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100 w-full'>{file.name}</p>{lead.layouts?.[0]?.finalLogoEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoEmbUploadTimes![index]!).dateTime}</p>}</div>))}
-                                          {lead.layouts?.[0]?.finalBackDesignEmb?.map((file, index) => file && <div className="flex flex-col items-center text-center" key={`final-back-emb-${index}`}><p className="font-semibold text-gray-500 mb-2">Back Design {index + 1} (EMB)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100 w-full'>{file.name}</p>{lead.layouts[0].finalBackDesignEmbUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignEmbUploadTimes![index]!).dateTime}</p>}</div>)}
-                                          {lead.layouts?.[0]?.finalLogoDst?.map((file, index) => file && (<div className="flex flex-col items-center text-center" key={`final-logo-dst-${index}`}><p className="font-semibold text-gray-500 mb-2">Logo {index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100 w-full'>{file.name}</p>{lead.layouts?.[0]?.finalLogoDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalLogoDstUploadTimes![index]!).dateTime}</p>}</div>))}
-                                          {lead.layouts?.[0]?.finalBackDesignDst?.map((file, index) => file && <div className="flex flex-col items-center text-center" key={`final-back-dst-${index}`}><p className="font-semibold text-gray-500 mb-2">Back Design {index + 1} (DST)</p><p className='text-black text-sm p-2 border rounded-md bg-gray-100 w-full'>{file.name}</p>{lead.layouts[0].finalBackDesignDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalBackDesignDstUploadTimes![index]!).dateTime}</p>}</div>)}
-                                          {lead.layouts?.[0]?.finalNamesDst?.map((file, index) => file && (
-                                            <div className="flex flex-col items-center text-center" key={`final-name-dst-${index}`}>
-                                                <p className="font-semibold text-gray-500 mb-2">Name {index + 1} (DST)</p>
-                                                <p className='text-black text-sm p-2 border rounded-md bg-gray-100 w-full'>{file.name}</p>
-                                                {lead.layouts?.[0]?.finalNamesDstUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalNamesDstUploadTimes![index]!).dateTime}</p>}
-                                            </div>
-                                          ))}
                                           {lead.layouts?.[0]?.sequenceLogo?.map((file, index) => file && (
                                               <div className="flex flex-col items-center text-center" key={`seq-logo-${index}`}>
                                                   <p className="font-semibold text-gray-500 mb-2">Sequence Logo {index + 1}</p>
@@ -1554,6 +1544,20 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                                   <p className="font-semibold text-gray-500 mb-2">Sequence Back Design {index + 1}</p>
                                                   <ImagePreview src={file.url} alt="Sequence Back Design" className="w-32 h-24"/>
                                                   {Array.isArray(lead.layouts?.[0]?.sequenceBackDesignUploadTimes) && lead.layouts?.[0]?.sequenceBackDesignUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceBackDesignUploadTimes![index]!).dateTime}</p>}
+                                              </div>
+                                          ))}
+                                           {lead.layouts?.[0]?.finalProgrammedLogo?.map((file, index) => file && (
+                                              <div className="flex flex-col items-center text-center" key={`final-prog-logo-${index}`}>
+                                                  <p className="font-semibold text-gray-500 mb-2">Final Program Logo {index + 1}</p>
+                                                  <ImagePreview src={file.url} alt={`Final Program Logo ${index + 1}`} className="w-24 h-24"/>
+                                                  {Array.isArray(lead.layouts?.[0]?.finalProgrammedLogoUploadTimes) && lead.layouts?.[0]?.finalProgrammedLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalProgrammedLogoUploadTimes![index]!).dateTime}</p>}
+                                              </div>
+                                          ))}
+                                          {lead.layouts?.[0]?.finalProgrammedBackDesign?.map((file, index) => file && (
+                                              <div className="flex flex-col items-center text-center" key={`final-prog-back-${index}`}>
+                                                  <p className="font-semibold text-gray-500 mb-2">Final Program Back Design {index + 1}</p>
+                                                  <ImagePreview src={file.url} alt={`Final Program Back Design ${index + 1}`} className="w-32 h-24"/>
+                                                  {Array.isArray(lead.layouts?.[0]?.finalProgrammedBackDesignUploadTimes) && lead.layouts?.[0]?.finalProgrammedBackDesignUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalProgrammedBackDesignUploadTimes![index]!).dateTime}</p>}
                                               </div>
                                           ))}
                                         </CardContent>
@@ -1594,6 +1598,7 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
 
 
 
