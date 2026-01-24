@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -507,15 +506,15 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
           <Table>
             <TableHeader className="bg-neutral-800">
               <TableRow>
+                <TableHead className="text-white font-bold text-xs">J.O. Number</TableHead>
                 <TableHead className="text-white font-bold text-xs">Customer</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Courier</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Expected Delivery Date</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center w-[150px]">Received Printed J.O.?</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Quality Check</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Photoshoot Request</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Packed</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Sales Audit</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Expected Delivery Date</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Courier</TableHead>
                 <TableHead className="text-white font-bold text-xs">Status</TableHead>
                 {filterType !== 'COMPLETED' && <TableHead className="text-white font-bold text-xs text-center">{filterType === 'SHIPPED' ? 'Mark as Delivered' : 'Ship Order'}</TableHead>}
               </TableRow>
@@ -543,6 +542,23 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
 
                    return (
                       <TableRow key={lead.id}>
+                        <TableCell className="text-xs text-center">
+                            <div className="flex items-center justify-center gap-2">
+                                <div>{formatJoNumber(lead.joNumber)}</div>
+                                {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
+                            </div>
+                        </TableCell>
                         <TableCell className="text-xs">
                           <Collapsible>
                               <CollapsibleTrigger asChild>
@@ -576,33 +592,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                             <div className="text-xs text-blue-600 font-semibold mt-1 ml-5">New Customer</div>
                           )}
                         </TableCell>
-                        <TableCell className="text-xs text-center">
-                            <div className="flex items-center justify-center gap-2">
-                                <div>{formatJoNumber(lead.joNumber)}</div>
-                                {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger>
-                                                <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                )}
-                            </div>
-                            {lead.orderType === 'Stock (Jacket Only)' && (
-                                <div className="font-bold mt-1">Stocks (Jacket Only)</div>
-                            )}
-                        </TableCell>
-                        <TableCell className="text-xs">{lead.courier}</TableCell>
-                        <TableCell className={cn("text-xs text-center", lead.adjustedDeliveryDate && "font-bold")}>
-                           {format(deliveryDate, "MMM dd, yyyy")}
-                           {lead.adjustedDeliveryDate && <div className="text-gray-500 text-[10px]">(Adjusted)</div>}
-                           {daysOverdue !== null && daysOverdue > 0 && <div className="text-red-500 font-medium">({daysOverdue} days overdue)</div>}
-                        </TableCell>
-                        <TableCell className="text-center align-middle py-2">
+                         <TableCell className="text-center align-middle py-2">
                             <div className="flex flex-col items-center justify-center gap-1">
                                 <Checkbox
                                 checked={lead.isJoHardcopyReceived || false}
@@ -662,6 +652,12 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                                 </Button>
                            )}
                         </TableCell>
+                        <TableCell className={cn("text-xs text-center", lead.adjustedDeliveryDate && "font-bold")}>
+                           {format(deliveryDate, "MMM dd, yyyy")}
+                           {lead.adjustedDeliveryDate && <div className="text-gray-500 text-[10px]">(Adjusted)</div>}
+                           {daysOverdue !== null && daysOverdue > 0 && <div className="text-red-500 font-medium">({daysOverdue} days overdue)</div>}
+                        </TableCell>
+                        <TableCell className="text-xs text-center">{lead.courier}</TableCell>
                         <TableCell className="text-xs text-center">
                           <Badge variant={status.variant}>{status.text}</Badge>
                         </TableCell>
