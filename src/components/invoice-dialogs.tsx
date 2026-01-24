@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { formatCurrency } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 export type AddOns = {
   backLogo: number;
@@ -255,10 +256,11 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   const [paymentMode, setPaymentMode] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [amountError, setAmountError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const isSaveDisabled = amount <= 0 || !paymentMode || !!amountError;
 
-  const hasPayments = useMemo(() => Object.keys(payments).length > 0, [payments]);
+  const hasPayments = useMemo(() => Object.keys(payments).length > 0 && Object.values(payments)[0].length > 0, [payments]);
   const firstPayment = useMemo(() => hasPayments ? Object.values(payments)[0][0] : null, [hasPayments, payments]);
 
   useEffect(() => {
@@ -317,7 +319,10 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
     };
     const paymentKey = hasPayments ? Object.keys(payments)[0] : new Date().toISOString(); 
     setPayments({[paymentKey]: [newPayment]});
-    setIsOpen(false);
+    toast({
+        title: 'Payment Details Updated',
+        description: `The payment of ${formatCurrency(amount)} is set.`
+    });
   };
 
   return (
@@ -379,7 +384,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">Cancel</Button>
+            <Button type="button" variant="outline">Close</Button>
           </DialogClose>
           <Button onClick={handleSave} disabled={isSaveDisabled}>Save Payment</Button>
         </DialogFooter>
@@ -407,6 +412,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   const [amount, setAmount] = useState(0);
   const [formattedAmount, setFormattedAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
@@ -434,7 +440,8 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
     const parts = sanitizedValue.split('.');
     if (parts.length > 2) return;
     setFormattedAmount(sanitizedValue);
-    setAmount(parseFloat(sanitizedValue) || 0);
+    const numericValue = parseFloat(sanitizedValue) || 0;
+    setAmount(numericValue);
   };
 
   const handleSave = () => {
@@ -457,8 +464,17 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
       });
       return newPayments;
     });
-
-    onOpenChange(false);
+    
+    toast({
+        title: "Payment Added",
+        description: `${formatCurrency(amount)} via ${paymentMode} has been added.`
+    });
+    
+    // Reset form for next payment entry
+    setPaymentType('balance');
+    setAmount(0);
+    setFormattedAmount('');
+    setPaymentMode('');
   };
 
   return (
@@ -517,7 +533,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">Cancel</Button>
+            <Button type="button" variant="outline">Close</Button>
           </DialogClose>
           <Button onClick={handleSave} disabled={isSaveDisabled}>Save Payment</Button>
         </DialogFooter>
