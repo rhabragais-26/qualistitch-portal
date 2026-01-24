@@ -213,6 +213,7 @@ export default function CashInflowsPage() {
   const [deletingInflow, setDeletingInflow] = useState<OtherCashInflow | null>(null);
   const { toast } = useToast();
   const [verifyingPayment, setVerifyingPayment] = useState<{ leadId: string; paymentIndex: number } | null>(null);
+  const [activeQuickFilter, setActiveQuickFilter] = useState<'yesterday' | 'today' | null>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading: leadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery);
@@ -422,7 +423,7 @@ export default function CashInflowsPage() {
                 </div>
               </div>
                <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-                  <Select value={monthFilter} onValueChange={(value) => { setMonthFilter(value); setDateFilter('All'); }}>
+                  <Select value={monthFilter} onValueChange={(value) => { setMonthFilter(value); setDateFilter('All'); setActiveQuickFilter(null); }}>
                     <SelectTrigger className="w-[160px]">
                         <SelectValue placeholder="Filter by month" />
                     </SelectTrigger>
@@ -434,7 +435,7 @@ export default function CashInflowsPage() {
                         ))}
                     </SelectContent>
                   </Select>
-                  <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <Select value={dateFilter} onValueChange={(value) => { setDateFilter(value); setActiveQuickFilter(null); }}>
                     <SelectTrigger className="w-[160px]">
                         <SelectValue placeholder="Filter by date" />
                     </SelectTrigger>
@@ -446,16 +447,36 @@ export default function CashInflowsPage() {
                         ))}
                     </SelectContent>
                   </Select>
-                  <Button variant="outline" onClick={() => {
-                        const yesterday = subDays(new Date(), 1);
-                        setDateFilter(format(yesterday, 'yyyy-MM-dd'));
-                        setMonthFilter(format(yesterday, 'yyyy-MM'));
-                  }}>Yesterday</Button>
-                   <Button variant="outline" onClick={() => {
-                        const today = new Date();
-                        setDateFilter(format(today, 'yyyy-MM-dd'));
-                        setMonthFilter(format(today, 'yyyy-MM'));
-                  }}>Today</Button>
+                  <Button
+                        variant={activeQuickFilter === 'yesterday' ? 'default' : 'outline'}
+                        onClick={() => {
+                            if (activeQuickFilter === 'yesterday') {
+                                setActiveQuickFilter(null);
+                                setDateFilter('All');
+                                setMonthFilter('All');
+                            } else {
+                                setActiveQuickFilter('yesterday');
+                                const yesterday = subDays(new Date(), 1);
+                                setDateFilter(format(yesterday, 'yyyy-MM-dd'));
+                                setMonthFilter(format(yesterday, 'yyyy-MM'));
+                            }
+                        }}
+                    >Yesterday</Button>
+                    <Button
+                        variant={activeQuickFilter === 'today' ? 'default' : 'outline'}
+                        onClick={() => {
+                            if (activeQuickFilter === 'today') {
+                                setActiveQuickFilter(null);
+                                setDateFilter('All');
+                                setMonthFilter('All');
+                            } else {
+                                setActiveQuickFilter('today');
+                                const today = new Date();
+                                setDateFilter(format(today, 'yyyy-MM-dd'));
+                                setMonthFilter(format(today, 'yyyy-MM'));
+                            }
+                        }}
+                    >Today</Button>
                   <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
                       <SelectTrigger className="w-[200px]">
                           <SelectValue placeholder="Filter by Payment Method" />
@@ -472,7 +493,7 @@ export default function CashInflowsPage() {
                     onChange={(e) => setJoNumberSearch(e.target.value)}
                     className="w-[200px]"
                   />
-                  <Button onClick={() => { setMonthFilter('All'); setDateFilter('All'); setPaymentMethodFilter('All'); setJoNumberSearch(''); }}>Reset Filters</Button>
+                  <Button onClick={() => { setMonthFilter('All'); setDateFilter('All'); setPaymentMethodFilter('All'); setJoNumberSearch(''); setActiveQuickFilter(null); }}>Reset Filters</Button>
                </div>
             </CardHeader>
             <CardContent>
