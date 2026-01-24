@@ -403,64 +403,64 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
           )}
         </ScrollArea>
       </CardContent>
-        <CardFooter className="py-2 mt-auto">
-            <div className="w-full">
-                <Separator />
-                <div className="pt-2">
-                  <div className="w-full flex justify-between items-center">
-                    <div className="pt-2">
-                      {isEditingLead ? (
-                        <>
-                          {balance > 0 ? (
-                            <Button type="button" variant="outline" onClick={() => setIsBalanceDialogOpen(true)} disabled={isReadOnly}>
-                              Add Payment
-                            </Button>
-                          ) : null}
-                        </>
-                      ) : (
-                        <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly} disabled={orders.length === 0} />
-                      )}
-                    </div>
-                    <div className="text-right flex-1 text-lg">
-                        <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
-                    </div>
-                  </div>
-                    
-                    {totalPaid > 0 ? (
-                      Object.values(payments).flat().map((payment, index) => {
-                        let description = 'Payment';
-                        if (payment.type === 'down') {
-                          description = 'Down Payment';
-                        } else if (payment.type === 'full') {
-                          description = balance > 0 ? 'Down Payment' : 'Full Payment';
-                        } else if (payment.type === 'balance') {
-                           description = balance <= 0 ? 'Balance Payment' : 'Additional Payment';
-                        }
-
-                        return (
-                          <div key={index} className="flex justify-end items-center text-sm text-right w-full">
-                              <span className="text-muted-foreground mr-2">
-                                {description} <span className="italic">(via {payment.mode})</span>:
-                              </span>
-                              <span className="font-medium">{formatCurrency(payment.amount)}</span>
-                          </div>
-                        )
-                      })
-                    ) : (
-                      <div className="flex justify-end items-center text-sm text-right w-full">
-                          <span className="text-muted-foreground mr-2">Payment:</span>
-                          <span className="font-medium">{formatCurrency(0)}</span>
-                      </div>
-                    )}
-
-                    <div className="flex justify-end items-center text-lg w-full">
-                        <span className="font-bold text-black">Balance:</span>
-                        <span className="font-bold text-destructive ml-2">{formatCurrency(balance)}</span>
-                    </div>
-                 </div>
+      <CardFooter className="py-2 mt-auto">
+        <div className="w-full">
+          <Separator />
+          <div className="pt-2">
+            <div className="w-full flex justify-between items-center">
+              <div className="pt-2">
+                {isEditingLead ? (
+                  <>
+                    {balance > 0 ? (
+                      <Button type="button" variant="outline" onClick={() => setIsBalanceDialogOpen(true)} disabled={isReadOnly}>
+                        Add Payment
+                      </Button>
+                    ) : null}
+                  </>
+                ) : (
+                  <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly} disabled={orders.length === 0} />
+                )}
+              </div>
+              <div className="text-right flex-1 text-lg">
+                <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
+              </div>
             </div>
-        </CardFooter>
-       <AlertDialog open={!!removingAddOn} onOpenChange={(open) => !open && setRemovingAddOn(null)}>
+
+            {totalPaid > 0 ? (
+              Object.values(payments).flat().map((payment, index) => {
+                let description = 'Payment';
+                if (payment.type === 'down' || (payment.type === 'full' && balance > 0)) {
+                  description = 'Down Payment';
+                } else if (payment.type === 'full' && balance <= 0) {
+                   description = 'Full Payment';
+                } else if (payment.type === 'balance') {
+                   description = balance <= 0 ? 'Balance Payment' : 'Additional Payment';
+                }
+
+                return (
+                  <div key={index} className="flex justify-end items-center text-sm text-right w-full">
+                      <span className="text-muted-foreground mr-2">
+                        {description} <span className="italic">(via {payment.mode})</span>:
+                      </span>
+                      <span className="font-medium">{formatCurrency(payment.amount)}</span>
+                  </div>
+                )
+              })
+            ) : (
+              <div className="flex justify-end items-center text-sm text-right w-full">
+                  <span className="text-muted-foreground mr-2">Payment:</span>
+                  <span className="font-medium">{formatCurrency(0)}</span>
+              </div>
+            )}
+
+            <div className="flex justify-end items-center text-lg w-full">
+                <span className="font-bold text-black">Balance:</span>
+                <span className="font-bold text-destructive ml-2">{formatCurrency(balance)}</span>
+            </div>
+          </div>
+        </div>
+      </CardFooter>
+      <AlertDialog open={!!removingAddOn} onOpenChange={(open) => !open && setRemovingAddOn(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
