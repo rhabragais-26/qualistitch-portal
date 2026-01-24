@@ -107,6 +107,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
   
   const [uploadLead, setUploadLead] = useState<Lead | null>(null);
+  const [initialImages, setInitialImages] = useState({ logoLeftImage: '', logoRightImage: '', backLogoImage: '', backDesignImage: '' });
   const [logoLeftImage, setLogoLeftImage] = useState<string>('');
   const [logoRightImage, setLogoRightImage] = useState<string>('');
   const [backLogoImage, setBackLogoImage] = useState<string>('');
@@ -262,10 +263,17 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   
   const handleOpenUploadDialog = useCallback((lead: Lead) => {
       const layout = lead.layouts?.[0];
-      setLogoLeftImage(layout?.logoLeftImage || '');
-      setLogoRightImage(layout?.logoRightImage || '');
-      setBackLogoImage(layout?.backLogoImage || '');
-      setBackDesignImage(layout?.backDesignImage || '');
+      const initial = {
+        logoLeftImage: layout?.logoLeftImage || '',
+        logoRightImage: layout?.logoRightImage || '',
+        backLogoImage: layout?.backLogoImage || '',
+        backDesignImage: layout?.backDesignImage || '',
+      };
+      setInitialImages(initial);
+      setLogoLeftImage(initial.logoLeftImage);
+      setLogoRightImage(initial.logoRightImage);
+      setBackLogoImage(initial.backLogoImage);
+      setBackDesignImage(initial.backDesignImage);
       setUploadLead(lead);
   }, []);
 
@@ -625,4 +633,11 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                 <Label>Back Design</Label>
                 <div tabIndex={isReadOnly ? -1 : 0} className={cn("relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 select-none", isReadOnly ? "cursor-not-allowed" : "cursor-pointer")} onPaste={(e) => !isReadOnly && handleImagePaste(e, setBackDesignImage)} onDoubleClick={() => !isReadOnly && backDesignImageUploadRef.current?.click()} onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}>
                     {backDesignImage ? (<> <Image src={backDesignImage} alt="Back Design" layout="fill" objectFit="contain" className="rounded-md" /> {backDesignImage && !isReadOnly && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setBackDesignImage)}> <Trash2 className="h-4 w-4" /> </Button>}
-</>) : ( <div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p> {isReadOnly ? "No image uploaded" : "Double-click to upload or paste image"} </p> </div> )} <input type="file" accept="image/*" ref={backDesignImageUploadRef} onChange={(e) => handleImageUpload(e, setBackDesignImage)} className="hidden" disabled={isReadOnly}/> </div></div></div><DialogFooter><DialogClose asChild><Button type="button" variant="outline"> Cancel </Button></DialogClose> <Button onClick={handleSaveImages} disabled={!logoLeftImage && !logoRightImage && !backLogoImage && !backDesignImage || isReadOnly}>Save Images </Button></DialogFooter></DialogContent></Dialog></Card> ); }
+</>) : ( <div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p> {isReadOnly ? "No image uploaded" : "Double-click to upload or paste image"} </p> </div> )} <input type="file" accept="image/*" ref={backDesignImageUploadRef} onChange={(e) => handleImageUpload(e, setBackDesignImage)} className="hidden" disabled={isReadOnly}/> </div></div></div><DialogFooter><DialogClose asChild><Button type="button" variant="outline"> Cancel </Button></DialogClose> <Button onClick={handleSaveImages} disabled={
+                (initialImages.logoLeftImage === logoLeftImage &&
+                 initialImages.logoRightImage === logoRightImage &&
+                 initialImages.backLogoImage === backLogoImage &&
+                 initialImages.backDesignImage === backDesignImage) || isReadOnly
+              }>Save Images </Button></DialogFooter></DialogContent></Dialog></Card> ); }
+
+    
