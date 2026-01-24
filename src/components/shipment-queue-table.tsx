@@ -26,7 +26,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { Check, ChevronDown, RefreshCcw, AlertTriangle } from 'lucide-react';
+import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
@@ -516,7 +516,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                 <TableHead className="text-white font-bold text-xs text-center">Expected Delivery Date</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Courier</TableHead>
                 <TableHead className="text-white font-bold text-xs">Status</TableHead>
-                {filterType !== 'COMPLETED' && <TableHead className="text-white font-bold text-xs text-center">{filterType === 'SHIPPED' ? 'Mark as Delivered' : 'Ship Order'}</TableHead>}
+                <TableHead className="text-white font-bold text-xs text-center">{filterType === 'COMPLETED' ? 'Mark as Delivered' : 'Ship Order'}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -661,24 +661,46 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                         <TableCell className="text-xs text-center">
                           <Badge variant={status.variant}>{status.text}</Badge>
                         </TableCell>
-                        {filterType !== 'COMPLETED' && (
-                          <TableCell className="text-center">
-                              <Button
-                                size="sm"
-                                className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")}
-                                onClick={() => setShippingLead(lead)}
-                                disabled={!lead.isSalesAuditComplete || isReadOnly || isCompleted}
-                              >
-                                Ship Now
-                              </Button>
-                          </TableCell>
-                        )}
+                        <TableCell className="text-center">
+                            {filterType === 'COMPLETED' ? (
+                                lead.shipmentStatus === 'Delivered' ? (
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="flex items-center text-sm text-green-600 font-semibold">
+                                            <Check className="mr-2 h-4 w-4" /> Delivered
+                                        </div>
+                                        {lead.deliveredTimestamp && (
+                                            <div className="text-xs text-gray-500">
+                                                {formatDateTime(lead.deliveredTimestamp).dateTimeShort}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <Button
+                                        size="sm"
+                                        className={cn("h-7 text-xs font-bold", isReadOnly && "disabled:opacity-100")}
+                                        onClick={() => setDeliveringLead(lead)}
+                                        disabled={isReadOnly}
+                                    >
+                                        Mark as Delivered
+                                    </Button>
+                                )
+                            ) : (
+                                <Button
+                                  size="sm"
+                                  className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")}
+                                  onClick={() => setShippingLead(lead)}
+                                  disabled={!lead.isSalesAuditComplete || isReadOnly || isCompleted}
+                                >
+                                  Ship Now
+                                </Button>
+                            )}
+                        </TableCell>
                       </TableRow>
                    )
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={filterType !== 'COMPLETED' ? 12 : 11} className="text-center text-muted-foreground text-xs">
+                  <TableCell colSpan={12} className="text-center text-muted-foreground text-xs">
                     No orders in shipment queue.
                   </TableCell>
                 </TableRow>
@@ -800,3 +822,5 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     </>
   );
 }
+
+    

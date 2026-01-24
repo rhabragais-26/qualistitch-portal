@@ -23,13 +23,15 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import { cn, formatDateTime, formatCurrency } from '@/lib/utils';
 import { Input } from './ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Label } from './ui/label';
 import { format } from 'date-fns';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
+import { Badge } from './ui/badge';
 
 type Order = {
   productType: string;
@@ -51,7 +53,7 @@ type Lead = {
   isSalesAuditComplete?: boolean;
   salesAuditCompleteTimestamp?: string;
   isWaybillPrinted?: boolean;
-  waybillNumber?: string;
+  waybillNumbers?: string[];
   grandTotal?: number;
   paidAmount?: number;
   balance?: number;
@@ -79,20 +81,22 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   const [adjustmentStates, setAdjustmentStates] = useState<Record<string, AdjustmentState>>({});
-  const [waybillNumbers, setWaybillNumbers] = useState<Record<string, string>>({});
+  const [waybillNumbers, setWaybillNumbers] = useState<Record<string, string[]>>({});
+  const [editingWaybills, setEditingWaybills] = useState<{ leadId: string; numbers: string[] } | null>(null);
+
 
   useEffect(() => {
     if(leads) {
         const initialAdjustments: Record<string, AdjustmentState> = {};
-        const initialWaybills: Record<string, string> = {};
+        const initialWaybills: Record<string, string[]> = {};
         leads.forEach(lead => {
             if (lead.adjustedDeliveryDate) {
                 initialAdjustments[lead.id] = { status: 'Yes', date: format(new Date(lead.adjustedDeliveryDate), 'yyyy-MM-dd') };
             } else if (lead.isSalesAuditComplete) {
                 initialAdjustments[lead.id] = { status: 'No' };
             }
-            if (lead.waybillNumber) {
-                initialWaybills[lead.id] = lead.waybillNumber;
+            if (lead.waybillNumbers) {
+                initialWaybills[lead.id] = lead.waybillNumbers;
             }
         });
         setAdjustmentStates(initialAdjustments);
@@ -114,9 +118,18 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
     }));
   }, []);
   
-  const handleWaybillNumberChange = useCallback((leadId: string, value: string) => {
-    setWaybillNumbers(prev => ({ ...prev, [leadId]: value }));
-  }, []);
+  const handleOpenWaybillDialog = (lead: Lead) => {
+    setEditingWaybills({ leadId: lead.id, numbers: waybillNumbers[lead.id] || [''] });
+  };
+
+  const handleSaveWaybills = () => {
+      if (!editingWaybills) return;
+      const { leadId, numbers } = editingWaybills;
+      const filteredNumbers = numbers.filter(n => n.trim() !== '');
+      setWaybillNumbers(prev => ({ ...prev, [leadId]: filteredNumbers }));
+      setEditingWaybills(null);
+  };
+
 
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
@@ -165,9 +178,9 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
         return;
     }
 
-    const waybillNo = waybillNumbers[lead.id];
-    if (lead.isWaybillPrinted && !waybillNo) {
-        toast({ variant: 'destructive', title: 'Action Required', description: 'Please enter the Waybill Number.' });
+    const waybillNos = waybillNumbers[lead.id];
+    if (lead.isWaybillPrinted && (!waybillNos || waybillNos.length === 0)) {
+        toast({ variant: 'destructive', title: 'Action Required', description: 'Please enter at least one Waybill Number.' });
         return;
     }
 
@@ -178,7 +191,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
         isSalesAuditRequested: false, // Remove from audit queue
         isSalesAuditComplete: true,
         salesAuditCompleteTimestamp: new Date().toISOString(),
-        waybillNumber: waybillNo || null,
+        waybillNumbers: waybillNos || [],
       };
 
       if (leadAdjustmentState.status === 'Yes' && leadAdjustmentState.date) {
@@ -261,6 +274,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
   }, [processedLeads, searchTerm, joNumberSearch, formatJoNumber]);
 
   return (
+    <>
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black border-none">
       <CardHeader>
         <div className="flex justify-between items-center">
@@ -310,7 +324,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
                    const isRepeat = lead.orderNumber > 1;
                    const leadAdjustmentState = adjustmentStates[lead.id] || { status: 'NotSelected' };
                    const isWaybillDisabled = leadAdjustmentState.status === 'NotSelected' || (leadAdjustmentState.status === 'Yes' && !leadAdjustmentState.date);
-                   const isProceedDisabled = !lead.isWaybillPrinted || isWaybillDisabled || (lead.isWaybillPrinted && !waybillNumbers[lead.id]);
+                   const isProceedDisabled = !lead.isWaybillPrinted || isWaybillDisabled || (lead.isWaybillPrinted && (!waybillNumbers[lead.id] || waybillNumbers[lead.id].length === 0));
 
                    return (
                       <TableRow key={lead.id}>
@@ -394,13 +408,20 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
                              />
                         </TableCell>
                         <TableCell>
-                            <Input 
-                                placeholder="Enter Waybill No."
-                                className="text-xs"
-                                value={waybillNumbers[lead.id] || ''}
-                                onChange={(e) => handleWaybillNumberChange(lead.id, e.target.value)}
-                                disabled={!lead.isWaybillPrinted || isReadOnly}
-                            />
+                            <div className="relative">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full justify-start text-left font-normal"
+                                    onClick={() => handleOpenWaybillDialog(lead)}
+                                    disabled={!lead.isWaybillPrinted || isReadOnly}
+                                >
+                                    Add Waybill No.
+                                </Button>
+                                {(waybillNumbers[lead.id]?.length || 0) > 0 && (
+                                    <Badge className="absolute -top-2 -left-2">{waybillNumbers[lead.id].length}</Badge>
+                                )}
+                            </div>
                         </TableCell>
                         <TableCell className="text-center">
                           {lead.isSalesAuditComplete ? (
@@ -435,5 +456,57 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
         </div>
       </CardContent>
     </Card>
+    {editingWaybills && (
+      <Dialog open={!!editingWaybills} onOpenChange={(isOpen) => !isOpen && setEditingWaybills(null)}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Add Waybill Numbers</DialogTitle>
+              </DialogHeader>
+              <div className="py-4 space-y-2">
+                  {editingWaybills.numbers.map((number, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                          <Input
+                              value={number}
+                              onChange={(e) => {
+                                  const newNumbers = [...editingWaybills.numbers];
+                                  newNumbers[index] = e.target.value;
+                                  setEditingWaybills({ ...editingWaybills, numbers: newNumbers });
+                              }}
+                              placeholder={`Waybill No. ${index + 1}`}
+                          />
+                          <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive h-8 w-8"
+                              onClick={() => {
+                                  const newNumbers = editingWaybills.numbers.filter((_, i) => i !== index);
+                                  setEditingWaybills({ ...editingWaybills, numbers: newNumbers.length > 0 ? newNumbers : [''] });
+                              }}
+                          >
+                              <Trash2 className="h-4 w-4" />
+                          </Button>
+                      </div>
+                  ))}
+                  <Button
+                      variant="outline"
+                      onClick={() => {
+                          setEditingWaybills({ ...editingWaybills, numbers: [...editingWaybills.numbers, ''] });
+                      }}
+                  >
+                      <Plus className="mr-2 h-4 w-4" /> Add another
+                  </Button>
+              </div>
+              <DialogFooter>
+                  <DialogClose asChild>
+                      <Button type="button" variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button onClick={handleSaveWaybills}>Save Waybills</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
+    )}
+    </>
   );
 }
+
+    
