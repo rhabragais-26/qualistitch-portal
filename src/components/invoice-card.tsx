@@ -406,25 +406,25 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
         <CardFooter className="py-2 mt-auto">
             <div className="w-full">
                 <Separator />
-                <div className="flex flex-col items-end gap-1 pt-2">
-                    <div className="w-full flex justify-between items-center text-lg">
-                      <div className="pt-2">
-                        {isEditingLead ? (
-                            <>
-                                {balance > 0 ? (
-                                    <Button variant="outline" onClick={() => setIsBalanceDialogOpen(true)} disabled={isReadOnly}>
-                                        Add Payment
-                                    </Button>
-                                ) : null}
-                            </>
-                        ) : (
-                            <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly} disabled={orders.length === 0} />
-                        )}
-                      </div>
-                      <div className="text-right flex-1">
-                          <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
-                      </div>
+                <div className="pt-2">
+                  <div className="w-full flex justify-between items-center">
+                    <div className="pt-2">
+                      {isEditingLead ? (
+                        <>
+                          {balance > 0 ? (
+                            <Button type="button" variant="outline" onClick={() => setIsBalanceDialogOpen(true)} disabled={isReadOnly}>
+                              Add Payment
+                            </Button>
+                          ) : null}
+                        </>
+                      ) : (
+                        <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly} disabled={orders.length === 0} />
+                      )}
                     </div>
+                    <div className="text-right flex-1 text-lg">
+                        <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
+                    </div>
+                  </div>
                     
                     {totalPaid > 0 ? (
                       Object.values(payments).flat().map((payment, index) => {
