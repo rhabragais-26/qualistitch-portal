@@ -31,7 +31,7 @@ import { useFirestore, useUser } from '@/firebase';
 import { LeadForm, FormValues, formSchema } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
-import { AddOns, Discount, Payment, BalancePaymentDialog } from "./invoice-dialogs";
+import { AddOns, Discount, Payment, AddBalancePaymentDialog } from "./invoice-dialogs";
 import type { Lead as LeadType } from './records-table';
 import { toTitleCase } from '@/lib/utils';
 
@@ -302,7 +302,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
         </FormProvider>
       </DialogContent>
     </Dialog>
-     <BalancePaymentDialog
+     <AddBalancePaymentDialog
         isOpen={isBalanceDialogOpen}
         onOpenChange={setIsBalanceDialogOpen}
         balance={balance}
@@ -315,3 +315,4 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
     </>
   );
 }
+    
