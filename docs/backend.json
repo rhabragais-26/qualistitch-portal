@@ -405,6 +405,11 @@
           "type": "boolean",
           "description": "Indicates if a job order can be printed without authentication."
         },
+        "photoshootDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The scheduled date for the product photoshoot."
+        },
         "isJoPrinted": {
           "type": "boolean",
           "description": "Indicates if the job order has been printed."

@@ -20,7 +20,7 @@ export type UserPosition =
   | 'Social Media Manager'
   | 'Not Assigned';
 
-export type PageGroup = 'sales' | 'digitizing' | 'inventory' | 'production' | 'logistics' | 'profile' | 'order-status' | 'finance' | 'marketing';
+export type PageGroup = 'sales' | 'digitizing' | 'inventory' | 'production' | 'logistics' | 'profile' | 'order-status' | 'finance' | 'marketing' | 'admin';
 
 export const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
     { id: 'sales', label: 'Sales', path: '/records' },
@@ -30,6 +30,7 @@ export const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
     { id: 'logistics', label: 'Logistics', path: '/logistics/shipment-queue' },
     { id: 'finance', label: 'Finance', path: '/finance/dashboard' },
     { id: 'marketing', label: 'Marketing', path: '/marketing/calendar' },
+    { id: 'admin', label: 'Admin', path: '/admin/users'},
 ];
 
 const pageGroupMapping: { [key: string]: PageGroup } = {
@@ -65,6 +66,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/finance/capital-expenses': 'finance',
   '/finance/cash-inflows': 'finance',
   '/marketing/calendar': 'marketing',
+  '/marketing/photoshoot-requests': 'marketing',
   '/marketing/campaigns': 'marketing',
   '/marketing/ads-vs-inquiries': 'marketing',
   '/marketing/analytics': 'marketing',
@@ -85,7 +87,7 @@ export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'Finance': ['finance'],
   'Marketing Head': ['marketing'],
   'Social Media Manager': ['marketing'],
-  'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'profile', 'finance', 'marketing'],
+  'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'profile', 'finance', 'marketing', 'admin'],
 };
 
 export function hasEditPermission(position: UserPosition | undefined, pathname: string, customPermissions?: UserPermissions): boolean {
