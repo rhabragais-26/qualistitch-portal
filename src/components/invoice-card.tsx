@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -207,7 +206,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 
                 const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0 };
                 const groupDiscount = discounts[groupKey];
-                const itemTotalQuantity = groupData.totalQuantity;
+                const itemTotalQuantity = group.totalQuantity;
 
                 const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity, pricingConfig);
                 const namesPrice = getAddOnPrice('names', itemTotalQuantity, pricingConfig);
@@ -416,10 +415,10 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       </CardContent>
       {grandTotal > 0 && (
          <CardFooter>
-            <div className="w-full pt-4">
+            <div className="w-full pt-2">
                 <Separator />
-                 <div className="mt-4 space-y-2">
-                    <div className="flex justify-between items-center text-lg">
+                <div className="mt-2 flex flex-col items-end gap-1">
+                    <div className="w-full flex justify-between items-center text-lg">
                       {isEditingLead ? (
                         <div className="flex flex-col items-start gap-2">
                             <Button variant="outline" disabled>Edit Initial Payment</Button>
@@ -459,7 +458,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                         }
 
                         return (
-                          <div key={index} className="flex justify-end items-center text-sm text-right">
+                          <div key={index} className="flex justify-end items-center text-sm text-right w-full">
                               <span className="text-muted-foreground mr-2">
                                 {description} <span className="italic">(via {payment.mode})</span>:
                               </span>
@@ -468,13 +467,13 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                         )
                       })
                     ) : (
-                      <div className="flex justify-end items-center text-sm text-right">
+                      <div className="flex justify-end items-center text-sm text-right w-full">
                           <span className="text-muted-foreground mr-2">Payment:</span>
                           <span className="font-medium">{formatCurrency(0)}</span>
                       </div>
                     )}
 
-                    <div className="flex justify-end items-center text-lg mt-2">
+                    <div className="flex justify-end items-center text-lg w-full">
                         <span className="font-bold text-black">Balance:</span>
                         <span className="font-bold text-destructive ml-2">{formatCurrency(balance)}</span>
                     </div>
