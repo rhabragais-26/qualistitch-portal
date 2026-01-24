@@ -309,6 +309,10 @@
           "type": "string",
           "description": "Contact number for the lead."
         },
+        "contactNumber2": {
+          "type": "string",
+          "description": "Second contact number for the lead."
+        },
         "landlineNumber": {
           "type": "string",
           "description": "Landline number for the lead."

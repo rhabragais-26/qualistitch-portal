@@ -86,6 +86,7 @@ const leadSchema = z.object({
   customerName: z.string(),
   companyName: z.string().optional(),
   contactNumber: z.string().optional(),
+  contactNumber2: z.string().optional(),
   landlineNumber: z.string().optional(),
   location: z.string(),
   houseStreet: z.string().optional(),
@@ -448,12 +449,10 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
 
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
+    const mobile2 = lead.contactNumber2 && lead.contactNumber2 !== '-' ? lead.contactNumber2.replace(/-/g, '') : null;
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
-    if (mobile && landline) {
-      return `${mobile} / ${landline}`;
-    }
-    return mobile || landline || null;
+    return [mobile, mobile2, landline].filter(Boolean).join(' / ');
   }, []);
 
   if (isLoading) {

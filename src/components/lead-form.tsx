@@ -101,6 +101,7 @@ export const formSchema = z.object({
   customerName: z.string().min(1, {message: 'Customer name is required'}),
   companyName: z.string().optional(),
   mobileNo: z.string().optional(),
+  mobileNo2: z.string().optional(),
   landlineNo: z.string().optional(),
   isInternational: z.boolean().default(false),
   houseStreet: z.string().optional(),
@@ -118,6 +119,12 @@ export const formSchema = z.object({
 }, {
     message: "Mobile number must be in 0000-000-0000 format.",
     path: ["mobileNo"],
+}).refine(data => {
+    if (data.mobileNo2) return /^\d{4}-\d{3}-\d{4}$/.test(data.mobileNo2) || data.mobileNo2 === '';
+    return true;
+}, {
+    message: "Mobile number must be in 0000-000-0000 format.",
+    path: ["mobileNo2"],
 }).refine(data => {
     if (data.landlineNo) return /^\d{2}-\d{4}-\d{4}$/.test(data.landlineNo) || data.landlineNo === '';
     return true;
@@ -173,6 +180,7 @@ type Lead = {
   customerName: string;
   companyName?: string;
   contactNumber?: string;
+  contactNumber2?: string;
   landlineNumber?: string;
   houseStreet?: string;
   barangay?: string;
@@ -264,6 +272,7 @@ export function LeadForm({
   const [pricePerPatch, setPricePerPatch] = useState(0);
   const [formattedPrice, setFormattedPrice] = useState('');
   const [activeField, setActiveField] = useState<string | null>(null);
+  const [showSecondMobile, setShowSecondMobile] = useState(false);
   
   const form = useFormContext<FormValues>();
   const { control, watch, setValue, formState, reset } = form;
@@ -275,6 +284,13 @@ export function LeadForm({
     }
   }, [formState.isDirty, onDirtyChange]);
   
+  useEffect(() => {
+    if (isEditing && initialLeadData) {
+        setShowSecondMobile(!!initialLeadData.contactNumber2);
+    } else if (!isEditing) {
+        setShowSecondMobile(false);
+    }
+  }, [isEditing, initialLeadData]);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -348,6 +364,8 @@ export function LeadForm({
     setValue('customerName', toTitleCase(lead.customerName), { shouldDirty: true, shouldValidate: true });
     setValue('companyName', lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '', { shouldDirty: true });
     setValue('mobileNo', lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '', { shouldDirty: true });
+    setValue('mobileNo2', lead.contactNumber2 && lead.contactNumber2 !== '-' ? lead.contactNumber2 : '', { shouldDirty: true });
+    setShowSecondMobile(!!lead.contactNumber2);
     setValue('landlineNo', lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber : '', { shouldDirty: true });
     setValue('houseStreet', lead.houseStreet ? toTitleCase(lead.houseStreet) : '', { shouldDirty: true });
     setValue('barangay', lead.barangay ? toTitleCase(lead.barangay) : '', { shouldDirty: true });
@@ -441,6 +459,8 @@ export function LeadForm({
             setManualStatus(null);
             setValue('companyName', '', { shouldDirty: true });
             setValue('mobileNo', '', { shouldDirty: true });
+            setValue('mobileNo2', '', { shouldDirty: true });
+            setShowSecondMobile(false);
             setValue('landlineNo', '', { shouldDirty: true });
             setValue('houseStreet', '', { shouldDirty: true });
             setValue('barangay', '', { shouldDirty: true });
@@ -922,7 +942,14 @@ export function LeadForm({
                 <div className="grid grid-cols-2 gap-x-4 mb-3">
                   <FormField control={form.control} name="mobileNo" render={({field}) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-black text-xs"><Phone className="h-4 w-4 text-primary" />Mobile No. (Optional)</FormLabel>
+                      <div className="flex items-center gap-2">
+                        <FormLabel className="flex items-center gap-2 text-black text-xs"><Phone className="h-4 w-4 text-primary" />Mobile No. (Optional)</FormLabel>
+                        {!showSecondMobile && !isReadOnly && (
+                          <Button type="button" size="icon" variant="ghost" className="h-5 w-5 text-primary" onClick={() => setShowSecondMobile(true)}>
+                            <PlusCircle className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                       <FormControl><Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -935,6 +962,27 @@ export function LeadForm({
                     </FormItem>
                   )}/>
                 </div>
+                {showSecondMobile && (
+                  <FormField control={form.control} name="mobileNo2" render={({field}) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between">
+                          <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">Second Mobile No.</FormLabel>
+                          {!isReadOnly && (
+                              <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => {
+                                  setShowSecondMobile(false);
+                                  setValue('mobileNo2', '');
+                              }}>
+                                  <X className="h-4 w-4" />
+                              </Button>
+                          )}
+                      </div>
+                      <FormControl>
+                          <Input type="tel" {...field} placeholder="Second mobile number..." onChange={(e) => handleMobileNoChange(e, field)} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}/>
+                )}
               </div>
 
               {/* Address Info */}
