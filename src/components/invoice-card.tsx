@@ -85,12 +85,12 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
 
   const grandTotal = useMemo(() => {
     let total = 0;
-    Object.entries(groupedOrders).forEach(([groupKey, group]) => {
-      const isClientOwned = group.productType === 'Client Owned';
-      const isPatches = group.productType === 'Patches';
-      const patchPrice = isPatches ? group.orders[0]?.pricePerPatch || 0 : 0;
-      const unitPrice = getUnitPrice(group.productType, group.totalQuantity, group.embroidery, pricingConfig, patchPrice, orderType);
-      const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(group.totalQuantity, group.embroidery, isClientOwned, orderType);
+    Object.entries(groupedOrders).forEach(([groupKey, groupData]) => {
+      const isClientOwned = groupData.productType === 'Client Owned';
+      const isPatches = groupData.productType === 'Patches';
+      const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
+      const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery, pricingConfig, patchPrice, orderType);
+      const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned, orderType);
       
       const isLogoFeeRemoved = removedFees[groupKey]?.logo;
       const isBackTextFeeRemoved = removedFees[groupKey]?.backText;
@@ -98,12 +98,12 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const logoFee = !isLogoFeeRemoved ? initialLogoFee : 0;
       const backTextFee = !isBackTextFeeRemoved ? initialBackTextFee : 0;
 
-      let subtotal = group.totalQuantity * unitPrice;
+      let subtotal = groupData.totalQuantity * unitPrice;
 
       
       const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0 };
       const groupDiscount = discounts[groupKey];
-      const itemTotalQuantity = group.totalQuantity;
+      const itemTotalQuantity = groupData.totalQuantity;
 
       const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity, pricingConfig);
       const namesPrice = getAddOnPrice('names', itemTotalQuantity, pricingConfig);
@@ -206,7 +206,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 
                 const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0 };
                 const groupDiscount = discounts[groupKey];
-                const itemTotalQuantity = group.totalQuantity;
+                const itemTotalQuantity = groupData.totalQuantity;
 
                 const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity, pricingConfig);
                 const namesPrice = getAddOnPrice('names', itemTotalQuantity, pricingConfig);
@@ -413,9 +413,8 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
           )}
         </ScrollArea>
       </CardContent>
-      {grandTotal > 0 && (
-         <CardFooter>
-            <div className="w-full pt-2">
+        <CardFooter className="py-2 mt-auto">
+            <div className="w-full">
                 <Separator />
                 <div className="mt-2 flex flex-col items-end gap-1">
                     <div className="w-full flex justify-between items-center text-lg">
@@ -480,7 +479,6 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                  </div>
             </div>
         </CardFooter>
-      )}
        <AlertDialog open={!!removingAddOn} onOpenChange={(open) => !open && setRemovingAddOn(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
