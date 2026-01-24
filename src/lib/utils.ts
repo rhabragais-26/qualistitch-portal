@@ -43,3 +43,9 @@ export const toTitleCase = (str: string) => {
 export const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(value);
 };
+
+export const formatJoNumber = (joNumber: number | undefined): string => {
+    if (!joNumber) return 'N/A';
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+};

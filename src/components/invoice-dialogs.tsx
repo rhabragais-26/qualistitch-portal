@@ -12,6 +12,8 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
+import { useUser } from '@/firebase';
 
 export type AddOns = {
   backLogo: number;
@@ -28,6 +30,7 @@ export type Discount = {
 };
 
 export type Payment = {
+  id?: string;
   type: 'down' | 'full' | 'balance';
   amount: number;
   mode: string;
@@ -313,6 +316,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   
   const handleSave = () => {
     const newPayment: Payment = {
+        id: uuidv4(),
         type: paymentType,
         amount: amount,
         mode: paymentMode,
@@ -408,6 +412,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }) {
+  const { userProfile } = useUser();
   const [paymentType, setPaymentType] = useState<'balance' | 'full'>('balance');
   const [amount, setAmount] = useState(0);
   const [formattedAmount, setFormattedAmount] = useState('');
@@ -446,7 +451,8 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
 
   const handleSave = () => {
     const newPayment: Payment = {
-      type: paymentType,
+      id: uuidv4(),
+      type: paymentType === 'full' ? 'balance' : paymentType, // Treat 'full' as 'balance' type
       amount: amount,
       mode: paymentMode,
     };
@@ -459,7 +465,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
       }
       newPayments[paymentKey].push({
         ...(newPayment as any),
-        processedBy: 'Finance', // Or get current user
+        processedBy: userProfile?.nickname || 'Finance',
         timestamp: new Date().toISOString(),
       });
       return newPayments;
@@ -469,8 +475,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
         title: "Payment Added",
         description: `${formatCurrency(amount)} via ${paymentMode} has been added.`
     });
-    
-    // Reset form for next payment entry
+
     setPaymentType('balance');
     setAmount(0);
     setFormattedAmount('');

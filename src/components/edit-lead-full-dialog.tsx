@@ -16,14 +16,15 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { doc, updateDoc } from 'firebase/firestore';
-import { useFirestore, useUser } from '@/firebase';
+import { doc, updateDoc, collection } from 'firebase/firestore';
+import { useFirestore, useUser, setDocumentNonBlocking } from '@/firebase';
 import { LeadForm, FormValues, formSchema } from './lead-form';
 import { InvoiceCard } from './invoice-card';
 import { Order } from './lead-form';
 import { AddOns, Discount, Payment } from "./invoice-dialogs";
 import type { Lead as LeadType } from './records-table';
-import { toTitleCase } from '@/lib/utils';
+import { toTitleCase, formatJoNumber } from '@/lib/utils';
+import { v4 as uuidv4 } from 'uuid';
 
 
 interface EditLeadFullDialogProps {
@@ -135,7 +136,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
   };
 
   const handleConfirmSave = useCallback(async () => {
-    if (!firestore || !lead) {
+    if (!firestore || !lead || !userProfile) {
         toast({
             variant: "destructive",
             title: "Update Failed",
@@ -186,6 +187,29 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
         
         const leadDocRef = doc(firestore, 'leads', lead.id);
         await updateDoc(leadDocRef, dataToUpdate);
+
+        const originalPaymentIds = new Set((lead.payments || []).map(p => p.id).filter(Boolean));
+        const currentPayments = Object.values(payments).flat();
+        const newPayments = currentPayments.filter(p => !p.id || !originalPaymentIds.has(p.id));
+
+        if (newPayments.length > 0) {
+            const cashInflowsRef = collection(firestore, 'other_cash_inflows');
+            for (const payment of newPayments) {
+                const docId = uuidv4();
+                const inflowData = {
+                    id: docId,
+                    date: payment.timestamp || new Date().toISOString(),
+                    customerName: lead.customerName,
+                    description: `Payment for J.O. ${formatJoNumber(lead.joNumber)} (${payment.type})`,
+                    amount: payment.amount,
+                    paymentMode: payment.mode,
+                    submittedBy: userProfile.nickname,
+                    timestamp: payment.timestamp || new Date().toISOString(),
+                };
+                const inflowDocRef = doc(cashInflowsRef, docId);
+                setDocumentNonBlocking(inflowDocRef, inflowData, {});
+            }
+        }
         
         toast({
             title: "Lead Updated!",
