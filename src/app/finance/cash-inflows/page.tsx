@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, doc, setDoc, orderBy } from 'firebase/firestore';
+import { collection, query, doc, setDoc, orderBy, updateDoc, deleteDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -22,7 +22,7 @@ import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, parseISO } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
-import { Banknote } from 'lucide-react';
+import { Banknote, Edit, Trash2 } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -34,7 +34,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 // Types for downpayments from leads
 type Payment = {
@@ -80,7 +80,14 @@ const paymentModes = [
     "CASH", "GCash (Jam)", "GCash (Jonathan)", "GCash (Jhun)", "GCash (Jays)", "GCash (Tantan)", "Paymaya", "Bank Transfer to BDO", "Bank Transfer to BPI", "Bank Transfer to ChinaBank", "J&T Remittance", "LBC Remittance"
 ];
 
-function OtherInflowsForm() {
+// Updated OtherInflowsForm to handle edits
+function OtherInflowsForm({
+  editingInflow,
+  onSaveComplete,
+}: {
+  editingInflow: OtherCashInflow | null;
+  onSaveComplete: () => void;
+}) {
   const firestore = useFirestore();
   const { userProfile } = useUser();
   const { toast } = useToast();
@@ -96,15 +103,33 @@ function OtherInflowsForm() {
     },
   });
 
+  useEffect(() => {
+    if (editingInflow) {
+      form.reset({
+        date: new Date(editingInflow.date),
+        customerName: editingInflow.customerName,
+        description: editingInflow.description,
+        amount: editingInflow.amount,
+        paymentMode: editingInflow.paymentMode,
+      });
+    } else {
+      form.reset({
+        date: new Date(),
+        customerName: '',
+        description: '',
+        amount: 0,
+        paymentMode: '',
+      });
+    }
+  }, [editingInflow, form]);
+
   async function onSubmit(values: OtherInflowFormValues) {
     if (!firestore || !userProfile) {
         toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
         return;
     }
     
-    const docId = uuidv4();
     const dataToSave = {
-        id: docId,
         date: values.date.toISOString(),
         customerName: values.customerName,
         description: values.description,
@@ -115,10 +140,17 @@ function OtherInflowsForm() {
     };
 
     try {
+      if (editingInflow) {
+        const inflowRef = doc(firestore, 'other_cash_inflows', editingInflow.id);
+        await updateDoc(inflowRef, dataToSave);
+        toast({ title: 'Success!', description: 'Cash inflow has been updated.' });
+      } else {
+        const docId = uuidv4();
         const inflowRef = doc(firestore, 'other_cash_inflows', docId);
-        await setDoc(inflowRef, dataToSave);
+        await setDoc(inflowRef, { ...dataToSave, id: docId });
         toast({ title: 'Success!', description: 'Cash inflow has been recorded.' });
-        form.reset({ date: new Date(), customerName: '', description: '', amount: 0, paymentMode: '' });
+      }
+      onSaveComplete();
     } catch (e: any) {
         toast({ variant: "destructive", title: "Save Failed", description: e.message });
     }
@@ -127,8 +159,8 @@ function OtherInflowsForm() {
   return (
     <Card className="max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Record Other Cash Inflow</CardTitle>
-        <CardDescription>Enter details of cash inflows not from lead payments.</CardDescription>
+        <CardTitle>{editingInflow ? 'Edit' : 'Record'} Other Cash Inflow</CardTitle>
+        <CardDescription>{editingInflow ? 'Update the details below.' : 'Enter details of cash inflows not from lead payments.'}</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -153,8 +185,9 @@ function OtherInflowsForm() {
                 </Select>
                 <FormMessage /></FormItem>
             )} />
-            <div className="flex justify-end">
-              <Button type="submit">Record Inflow</Button>
+            <div className="flex justify-end gap-2">
+              {editingInflow && <Button type="button" variant="outline" onClick={onSaveComplete}>Cancel</Button>}
+              <Button type="submit">{editingInflow ? 'Save Changes' : 'Record Inflow'}</Button>
             </div>
           </form>
         </Form>
@@ -169,12 +202,16 @@ export default function CashInflowsPage() {
   const [dateFilter, setDateFilter] = useState('All');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('All');
   const [joNumberSearch, setJoNumberSearch] = useState('');
+  
+  const [editingInflow, setEditingInflow] = useState<OtherCashInflow | null>(null);
+  const [deletingInflow, setDeletingInflow] = useState<OtherCashInflow | null>(null);
+  const { toast } = useToast();
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading: leadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
   
   const otherInflowsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'other_cash_inflows'), orderBy('date', 'desc')) : null, [firestore]);
-  const { data: otherInflows, isLoading: otherInflowsLoading, error: otherInflowsError } = useCollection<OtherCashInflow>(otherInflowsQuery);
+  const { data: otherInflows, isLoading: otherInflowsLoading, error: otherInflowsError, refetch: refetchOtherInflows } = useCollection<OtherCashInflow>(otherInflowsQuery);
 
   const formatJoNumber = (joNumber: number | undefined): string => {
     if (!joNumber) return '';
@@ -189,18 +226,10 @@ export default function CashInflowsPage() {
             .map((p, i) => {
                 let description: string;
                 switch (p.type) {
-                    case 'down':
-                        description = 'Downpayment';
-                        break;
-                    case 'full':
-                        description = 'Full Payment';
-                        break;
-                    case 'balance':
-                        description = 'Balance Payment';
-                        break;
-                    default:
-                        description = 'Payment';
-                        break;
+                    case 'down': description = 'Downpayment'; break;
+                    case 'full': description = 'Full Payment'; break;
+                    case 'balance': description = 'Balance Payment'; break;
+                    default: description = 'Payment'; break;
                 }
 
                 return {
@@ -282,11 +311,33 @@ export default function CashInflowsPage() {
   const isLoading = leadsLoading || otherInflowsLoading;
   const error = leadsError || otherInflowsError;
 
+  const handleSaveComplete = () => {
+    setEditingInflow(null);
+    refetchOtherInflows();
+  }
+
+  const confirmDelete = async () => {
+    if (!deletingInflow || !firestore) return;
+    try {
+      const inflowRef = doc(firestore, 'other_cash_inflows', deletingInflow.id);
+      await deleteDoc(inflowRef);
+      toast({ title: 'Success!', description: 'Inflow record has been deleted.' });
+      setDeletingInflow(null);
+      refetchOtherInflows();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Error', description: e.message });
+    }
+  };
+
   return (
+    <>
     <Header>
       <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 grid grid-cols-1 xl:grid-cols-[auto_1fr] gap-8 items-start">
         <div>
-            <OtherInflowsForm />
+            <OtherInflowsForm 
+              editingInflow={editingInflow}
+              onSaveComplete={handleSaveComplete}
+            />
         </div>
         <div>
           <Card>
@@ -362,18 +413,19 @@ export default function CashInflowsPage() {
                       <TableHead className="text-white font-bold">J.O. Number</TableHead>
                       <TableHead className="text-white font-bold">Processed by</TableHead>
                       <TableHead className="text-white font-bold text-right">Amount</TableHead>
+                      <TableHead className="text-white font-bold text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
-                        <TableCell colSpan={7}>
+                        <TableCell colSpan={8}>
                           <Skeleton className="h-24 w-full" />
                         </TableCell>
                       </TableRow>
                     ) : error ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-destructive">
+                        <TableCell colSpan={8} className="text-center text-destructive">
                           Error loading data: {error.message}
                         </TableCell>
                       </TableRow>
@@ -387,11 +439,23 @@ export default function CashInflowsPage() {
                             <TableCell>{inflow.joNumber ? formatJoNumber(inflow.joNumber) : '-'}</TableCell>
                             <TableCell>{inflow.processedBy}</TableCell>
                             <TableCell className="text-right">{formatCurrency(inflow.amount)}</TableCell>
+                            <TableCell className="text-center">
+                              {inflow.source === 'Other' && (
+                                <div className="flex justify-center gap-1">
+                                  <Button variant="ghost" size="icon" onClick={() => setEditingInflow(inflow as OtherCashInflow)}>
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeletingInflow(inflow as OtherCashInflow)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center text-muted-foreground">
                           No cash inflow data available for the selected filters.
                         </TableCell>
                       </TableRow>
@@ -404,5 +468,20 @@ export default function CashInflowsPage() {
         </div>
       </main>
     </Header>
+    <AlertDialog open={!!deletingInflow} onOpenChange={() => setDeletingInflow(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the inflow record. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
