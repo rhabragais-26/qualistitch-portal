@@ -337,6 +337,8 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                   const shipmentStatus = getShipmentStatus(lead);
                   const hasAddOns = lead.addOns && Object.values(lead.addOns).flat().some((group: any) => Object.values(group).some(val => Number(val) > 0));
                   const hasDiscounts = lead.discounts && Object.values(lead.discounts).some((discount: any) => discount.value > 0);
+                  const wasPaidInFullViaReceivables = lead.payments?.some(p => p.type === 'balance');
+                  const displayPaymentType = wasPaidInFullViaReceivables ? 'Balance Payment' : lead.paymentType;
 
                   return (
                     <React.Fragment key={lead.id}>
@@ -435,7 +437,7 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                               {lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}
                             </TableCell>
                             <TableCell className={cn("text-xs align-middle text-center py-2 font-bold", lead.balance === 0 ? "text-muted-foreground" : "text-destructive")}>{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
-                            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType}</TableCell>
+                            <TableCell className="text-xs align-middle text-center py-2 text-black">{displayPaymentType}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType === 'COD' ? 'CASH' : (lead.modeOfPayment || '-')}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">
                                 {format(
