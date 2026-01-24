@@ -64,6 +64,7 @@
       landlineNumber?: string;
       location: string;
       salesRepresentative: string;
+      scesFullName?: string;
       priorityType: 'Rush' | 'Regular';
       paymentType: string;
       orderType: string;
