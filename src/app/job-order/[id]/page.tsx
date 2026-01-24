@@ -1,5 +1,3 @@
-
-
 'use client';
 
     import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -179,7 +177,7 @@
       useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = `${'\'\'\''}textareaRef.current.scrollHeight{'\'\'\''}px`;
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
         }
       }, [lead?.location]);
 
@@ -377,6 +375,42 @@
           setLead({ ...lead, layouts: newLayouts });
         }
       };
+
+      const handleLayoutImageDelete = async (layoutIndex: number) => {
+        if (!lead || !lead.layouts || !leadRef) return;
+    
+        const originalLayouts = lead.layouts;
+        const newLayouts = [...originalLayouts];
+        
+        if (!newLayouts[layoutIndex]) return;
+
+        newLayouts[layoutIndex] = {
+            ...newLayouts[layoutIndex],
+            layoutImage: '',
+            layoutImageUploadTime: null
+        };
+
+        setLead({ ...lead, layouts: newLayouts });
+
+        try {
+            await updateDoc(leadRef, {
+                layouts: newLayouts
+            });
+            toast({
+                title: "Image Removed",
+                description: "The layout image has been removed.",
+            });
+            refetchLead();
+        } catch (e: any) {
+            console.error("Error deleting image:", e);
+            setLead({ ...lead, layouts: originalLayouts });
+            toast({
+                variant: "destructive",
+                title: "Delete Failed",
+                description: e.message || "Could not remove the image.",
+            });
+        }
+      };
       
       const handleNamedOrderChange = (layoutIndex: number, orderIndex: number, field: keyof NamedOrder, value: any) => {
         if (lead && lead.layouts) {
@@ -488,7 +522,7 @@
         const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
         if (mobile && landline) {
-          return `${'\'\'\''}mobile{'\'\'\''} / ${'\'\'\''}landline{'\'\'\''}`;
+          return `${mobile} / ${landline}`;
         }
         return mobile || landline || 'N/A';
       };
@@ -776,7 +810,7 @@
             >
               {currentLayout.layoutImage ? (
                 <>
-                  <Image src={currentLayout.layoutImage} alt={`Layout ${'\'\'\''}currentLayoutIndex + 1{'\'\'\''}`} layout="fill" objectFit="contain" />
+                  <Image src={currentLayout.layoutImage} alt={`Layout ${currentLayoutIndex + 1}`} layout="fill" objectFit="contain" />
                   {canEdit && (
                     <Button
                       variant="destructive"
@@ -784,7 +818,7 @@
                       className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleLayoutChange(currentLayoutIndex, 'layoutImage', '');
+                        handleLayoutImageDelete(currentLayoutIndex);
                       }}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -803,7 +837,7 @@
 
             <h2 className="2xl font-bold text-center mb-4">
               {lead.layouts && lead.layouts.length > 1
-                ? `LAYOUT #${'\'\'\''}currentLayoutIndex + 1{'\'\'\''}`
+                ? `LAYOUT #${currentLayoutIndex + 1}`
                 : "LAYOUT"}
             </h2>
             <table className="w-full border-collapse border border-black mb-6">
@@ -899,5 +933,3 @@
     </div>
   );
 }
-
-    
