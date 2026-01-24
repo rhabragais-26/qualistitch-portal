@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirestore } from '@/firebase';
@@ -216,7 +217,7 @@ export default function JobOrderPrintPage() {
                 <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
                 <p><strong>Type of Order:</strong> {lead.orderType}</p>
                 <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
-                <p><strong>SCES Name:</strong> {lead.salesRepresentative}</p>
+                <p><strong>SCES Name:</strong> {toTitleCase(lead.scesFullName || lead.salesRepresentative)}</p>
             </div>
             <div className="space-y-1">
                 <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
@@ -286,13 +287,13 @@ export default function JobOrderPrintPage() {
                 <p className="font-bold italic">Prepared by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">{toTitleCase(lead.scesFullName || lead.salesRepresentative)}</p>
                 <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
              <div className="space-y-1">
                 <p className="font-bold italic">Noted by:</p>
                 <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
                 <p className="text-center font-bold">Sales Head</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
 
             <div className="col-span-2 mt-0">
@@ -303,37 +304,37 @@ export default function JobOrderPrintPage() {
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Programming</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Inventory</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Production Line Leader</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Production Supervisor</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
              <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Quality Control</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
             <div className="space-y-1">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Logistics</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
              <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
                 <p className="pt-8 border-b border-black"></p>
                 <p className="text-center font-semibold">Operations Supervisor</p>
-                <p className="text-center">(Name & Signature, Date)</p>
+                <p className="text-center">(Name &amp; Signature, Date)</p>
             </div>
         </div>
       </div>

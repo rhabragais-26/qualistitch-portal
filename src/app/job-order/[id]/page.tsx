@@ -1,4 +1,5 @@
 
+
 'use client';
 
     import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -210,12 +211,12 @@
         if (lead && allLeads) {
           const currentYear = new Date().getFullYear().toString().slice(-2);
           if (lead.joNumber) {
-            setJoNumber(`QSBP-${'\'\'\''}currentYear{'\'\'\'\'}-${'\'\'\''}lead.joNumber.toString().padStart(5, '0'){'\'\'\''}`);
+            setJoNumber(`QSBP-${currentYear}-${lead.joNumber.toString().padStart(5, '0')}`);
           } else {
             const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
             const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
             const newJoNum = Math.max(maxJoNumber + 1, 10000);
-            setJoNumber(`QSBP-${'\'\'\''}currentYear{'\'\'\'-${'\'\'\''}newJoNum.toString().padStart(5, '0'){'\'\'\''}`);
+            setJoNumber(`QSBP-${currentYear}-${newJoNum.toString().padStart(5, '0')}`);
           }
         }
       }, [lead, allLeads]);
@@ -470,8 +471,7 @@
       }
       
       const scesProfile = users?.find(u => u.nickname === lead.salesRepresentative);
-      const scesNickname = scesProfile ? scesProfile.nickname : lead.salesRepresentative;
-      const scesFullName = scesProfile ? toTitleCase(`${'\'\'\''}scesProfile.firstName{'\'\'\''} ${'\'\'\''}scesProfile.lastName{'\'\'\''}`) : toTitleCase(lead.salesRepresentative);
+      const scesFullName = scesProfile ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
 
       const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
       
@@ -564,7 +564,7 @@
           {/* Page 1: Job Order Form */}
           <div className={cn("p-10 mx-auto max-w-4xl printable-area mt-16 print-page", currentPage !== 0 && "hidden")}>
             <div className="text-left mb-4">
-                <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{lead.joNumber ? joNumber : 'Not Saved'}</span></p>
+                <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{joNumber || 'Not Saved'}</span></p>
             </div>
             <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
@@ -588,7 +588,7 @@
                     <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
                     <p><strong>Type of Order:</strong> {lead.orderType}</p>
                     <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
-                    <p><strong>SCES Name:</strong> {scesNickname}</p>
+                    <p><strong>SCES Name:</strong> {scesFullName}</p>
                 </div>
                 <div className="space-y-1">
                      <div className="flex items-center gap-2">
