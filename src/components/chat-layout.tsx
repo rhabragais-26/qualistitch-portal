@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -152,6 +151,27 @@ export function ChatLayout() {
   const [moreMessagesLoading, setMoreMessagesLoading] = useState(false);
   const [lastMessageDoc, setLastMessageDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
+
+  const getAvatarColor = (nickname: string | undefined) => {
+    if (!nickname) return 'hsl(var(--primary))';
+    const colors = [
+        'hsl(var(--chart-1))',
+        'hsl(var(--chart-2))',
+        'hsl(var(--chart-3))',
+        'hsl(var(--chart-4))',
+        'hsl(var(--chart-5))',
+        'hsl(270, 90%, 55%)', // A vibrant purple
+    ];
+    let hash = 0;
+    if (nickname.length === 0) return colors[0];
+    for (let i = 0; i < nickname.length; i++) {
+        const char = nickname.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    const index = Math.abs(hash % colors.length);
+    return colors[index];
+  };
 
 
   // Auto-scroll to bottom for new messages, but only if user is already near the bottom
@@ -398,7 +418,12 @@ export function ChatLayout() {
                         <div className="relative">
                         <Avatar>
                             <AvatarImage src={u.photoURL} alt={u.nickname} />
-                            <AvatarFallback className="bg-primary text-primary-foreground">{getInitials(u.nickname)}</AvatarFallback>
+                             <AvatarFallback
+                                className="text-primary-foreground font-bold"
+                                style={{ backgroundColor: getAvatarColor(u.nickname) }}
+                             >
+                                {getInitials(u.nickname)}
+                             </AvatarFallback>
                         </Avatar>
                         </div>
                         <div className="flex-grow overflow-hidden">
@@ -447,7 +472,12 @@ export function ChatLayout() {
             <div className="relative">
             <Avatar>
                 <AvatarImage src={selectedUser.photoURL} alt={selectedUser.nickname} />
-                <AvatarFallback className="bg-primary text-primary-foreground">{getInitials(selectedUser.nickname)}</AvatarFallback>
+                <AvatarFallback
+                    className="text-primary-foreground font-bold"
+                    style={{ backgroundColor: getAvatarColor(selectedUser.nickname) }}
+                >
+                    {getInitials(selectedUser.nickname)}
+                </AvatarFallback>
             </Avatar>
             </div>
             <div className="flex flex-col">
