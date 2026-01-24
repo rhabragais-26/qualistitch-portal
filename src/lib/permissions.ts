@@ -27,7 +27,8 @@ export const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
     { id: 'inventory', label: 'Inventory', path: '/inventory/summary' },
     { id: 'production', label: 'Production', path: '/production/production-queue' },
     { id: 'logistics', label: 'Logistics', path: '/logistics/shipment-queue' },
-    { id: 'finance', label: 'Finance', path: '/finance' },
+    { id: 'finance', label: 'Finance', path: '/finance/dashboard' },
+    { id: 'marketing', label: 'Marketing', path: '/marketing/calendar' },
 ];
 
 const pageGroupMapping: { [key: string]: PageGroup } = {
