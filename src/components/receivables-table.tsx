@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
@@ -27,7 +26,7 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { formatDateTime, toTitleCase, formatCurrency } from '@/lib/utils';
+import { formatDateTime, toTitleCase, formatCurrency, cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
