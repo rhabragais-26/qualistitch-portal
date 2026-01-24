@@ -1,8 +1,9 @@
+
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, doc, updateDoc } from 'firebase/firestore';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query, doc, updateDoc, setDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -34,6 +35,7 @@ type FileObject = {
 };
 
 type Layout = {
+  layoutImage?: string | null;
   testLogoLeftImage?: string | null;
   testLogoRightImage?: string | null;
   testBackLogoImage?: string | null;
@@ -55,18 +57,33 @@ type Lead = {
   isDone?: boolean;
   isEndorsedToLogistics?: boolean;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  shippedTimestamp?: string;
   layouts?: Layout[];
   photoshootDate?: string;
 };
 
 const PhotoshootRequestsTable = () => {
   const firestore = useFirestore();
+  const { userProfile } = useUser();
   const { toast } = useToast();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
   const [photoshootDates, setPhotoshootDates] = useState<Record<string, string>>({});
   const [imageInView, setImageInView] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (leads) {
+        const initialDates = leads.reduce((acc, lead) => {
+            if (lead.photoshootDate) {
+                acc[lead.id] = format(new Date(lead.photoshootDate), 'yyyy-MM-dd');
+            }
+            return acc;
+        }, {} as Record<string, string>);
+        setPhotoshootDates(initialDates);
+    }
+  }, [leads]);
+
 
   const getProductionStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "secondary" | "default" | "destructive" } => {
     if (lead.shipmentStatus === 'Delivered') return { text: "Delivered", variant: "success" };
@@ -98,23 +115,41 @@ const PhotoshootRequestsTable = () => {
 
   const handleSendRequest = async (leadId: string) => {
     const photoshootDate = photoshootDates[leadId];
-    if (!photoshootDate || !firestore) return;
+    if (!photoshootDate || !firestore || !userProfile) return;
 
+    const lead = leads?.find(l => l.id === leadId);
+    if (!lead) return;
+
+    // Firestore write for the lead document
     const leadDocRef = doc(firestore, 'leads', leadId);
-    try {
-      await updateDoc(leadDocRef, {
+    const leadUpdatePromise = updateDoc(leadDocRef, {
         photoshootDate: new Date(photoshootDate).toISOString(),
-      });
-      toast({
-        title: 'Photoshoot Requested',
-        description: `A photoshoot has been scheduled for ${format(new Date(photoshootDate), 'MMMM dd, yyyy')}.`,
-      });
+    });
+
+    // Firestore write for the marketing calendar
+    const eventId = `photoshoot-${lead.id}`;
+    const calendarDocRef = doc(firestore, 'marketingCalendar', eventId);
+    const calendarEventData = {
+        id: eventId,
+        date: new Date(photoshootDate).toISOString(),
+        content: `Photoshoot for ${formatJoNumber(lead.joNumber)}`,
+        imageUrl: lead.layouts?.[0]?.layoutImage || null,
+        uploadedBy: userProfile.nickname,
+    };
+    const calendarUpdatePromise = setDoc(calendarDocRef, calendarEventData, { merge: true });
+
+    try {
+        await Promise.all([leadUpdatePromise, calendarUpdatePromise]);
+        toast({
+            title: 'Photoshoot Requested',
+            description: `A photoshoot has been scheduled for ${format(new Date(photoshootDate), 'MMMM dd, yyyy')}.`,
+        });
     } catch (e: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Request Failed',
-        description: e.message || 'Could not schedule the photoshoot.',
-      });
+        toast({
+            variant: 'destructive',
+            title: 'Request Failed',
+            description: e.message || 'Could not schedule the photoshoot.',
+        });
     }
   };
 
@@ -158,8 +193,12 @@ const PhotoshootRequestsTable = () => {
                 {filteredLeads.map(lead => {
                   const status = getProductionStatus(lead);
                   const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : new Date(lead.submissionDateTime);
-                  const hasDate = !!photoshootDates[lead.id];
                   const layout = lead.layouts?.[0];
+                  
+                  const isSent = !!lead.photoshootDate;
+                  const currentDate = photoshootDates[lead.id] || '';
+                  const savedDate = lead.photoshootDate ? format(new Date(lead.photoshootDate), 'yyyy-MM-dd') : '';
+                  const hasDateChanged = isSent && currentDate !== savedDate && currentDate !== '';
 
                   return (
                     <TableRow key={lead.id}>
@@ -179,22 +218,35 @@ const PhotoshootRequestsTable = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        {lead.photoshootDate ? (
-                          <span className="text-sm font-semibold">{format(new Date(lead.photoshootDate), 'MMM dd, yyyy')}</span>
-                        ) : (
-                          <Input
-                            type="date"
-                            className="w-[150px] mx-auto"
-                            value={photoshootDates[lead.id] || ''}
-                            onChange={(e) => handleDateChange(lead.id, e.target.value)}
-                          />
-                        )}
+                        <Input
+                          type="date"
+                          className="w-[150px] mx-auto"
+                          value={photoshootDates[lead.id] || ''}
+                          onChange={(e) => handleDateChange(lead.id, e.target.value)}
+                        />
                       </TableCell>
                       <TableCell className="text-center">
-                        {!lead.photoshootDate && (
-                          <Button size="sm" onClick={() => handleSendRequest(lead.id)} disabled={!hasDate}>
-                            Send Request
-                          </Button>
+                         {isSent && !hasDateChanged ? (
+                            <div className="flex flex-col items-center gap-1">
+                                <Button size="sm" disabled className="bg-green-600 text-white">Sent</Button>
+                                <span className="text-xs text-muted-foreground">{format(new Date(savedDate), 'MMM dd, yyyy')}</span>
+                            </div>
+                        ) : (
+                            <Button
+                                size="sm"
+                                onClick={() => handleSendRequest(lead.id)}
+                                disabled={!currentDate}
+                                className="group"
+                            >
+                                {isSent && hasDateChanged ? (
+                                    <>
+                                        <span className="group-hover:hidden">Sent</span>
+                                        <span className="hidden group-hover:inline">Resend</span>
+                                    </>
+                                ) : (
+                                    'Send Request'
+                                )}
+                            </Button>
                         )}
                       </TableCell>
                     </TableRow>
