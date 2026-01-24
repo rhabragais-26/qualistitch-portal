@@ -154,6 +154,7 @@ function OtherInflowsForm() {
 
 export default function CashInflowsPage() {
   const firestore = useFirestore();
+  const [monthFilter, setMonthFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('All');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('All');
   const [joNumberSearch, setJoNumberSearch] = useState('');
@@ -202,22 +203,34 @@ export default function CashInflowsPage() {
     return ['All', ...Array.from(allModes).sort()];
   }, [combinedInflows]);
 
-  const dateOptions = useMemo(() => {
-    const seen = new Set<string>();
-    const uniqueDates = combinedInflows.reduce((acc, inflow) => {
-        const dateStr = format(parseISO(inflow.date), 'yyyy-MM-dd');
-        if (!seen.has(dateStr)) {
-            seen.add(dateStr);
-            acc.push(dateStr);
-        }
-        return acc;
-    }, [] as string[]);
-    return ['All', ...uniqueDates];
-  }, [combinedInflows]);
+  const { monthOptions, dateOptions } = useMemo(() => {
+    const uniqueMonths = new Set<string>();
+    const uniqueDates = new Set<string>();
+
+    combinedInflows.forEach(inflow => {
+        const date = parseISO(inflow.date);
+        uniqueMonths.add(format(date, 'yyyy-MM'));
+        uniqueDates.add(format(date, 'yyyy-MM-dd'));
+    });
+
+    const monthOpts = ['All', ...Array.from(uniqueMonths).sort((a,b) => b.localeCompare(a))];
+    
+    let dateOptsForSelectedMonth = Array.from(uniqueDates);
+    if(monthFilter !== 'All') {
+        dateOptsForSelectedMonth = dateOptsForSelectedMonth.filter(d => d.startsWith(monthFilter));
+    }
+    const finalDateOpts = ['All', ...dateOptsForSelectedMonth.sort((a, b) => b.localeCompare(a))];
+
+    return { monthOptions: monthOpts, dateOptions: finalDateOpts };
+  }, [combinedInflows, monthFilter]);
   
   const filteredInflows = useMemo(() => {
     return combinedInflows.filter(inflow => {
-        const inflowDateStr = format(parseISO(inflow.date), 'yyyy-MM-dd');
+        const inflowDate = parseISO(inflow.date);
+        const inflowDateStr = format(inflowDate, 'yyyy-MM-dd');
+        const inflowMonthStr = format(inflowDate, 'yyyy-MM');
+
+        const matchesMonth = monthFilter === 'All' || inflowMonthStr === monthFilter;
         const matchesDate = dateFilter === 'All' || inflowDateStr === dateFilter;
 
         const matchesPaymentMethod = paymentMethodFilter === 'All' || inflow.paymentMode === paymentMethodFilter;
@@ -225,9 +238,9 @@ export default function CashInflowsPage() {
         const formattedJo = inflow.joNumber ? formatJoNumber(inflow.joNumber) : '';
         const matchesJo = !joNumberSearch || (formattedJo && formattedJo.toLowerCase().includes(joNumberSearch.toLowerCase()));
 
-        return matchesDate && matchesPaymentMethod && matchesJo;
+        return matchesMonth && matchesDate && matchesPaymentMethod && matchesJo;
     });
-  }, [combinedInflows, dateFilter, paymentMethodFilter, joNumberSearch]);
+  }, [combinedInflows, monthFilter, dateFilter, paymentMethodFilter, joNumberSearch]);
 
 
   const grandTotal = useMemo(() => {
@@ -262,6 +275,18 @@ export default function CashInflowsPage() {
                 </div>
               </div>
                <div className="flex items-center gap-4 mt-4 pt-4 border-t">
+                  <Select value={monthFilter} onValueChange={(value) => { setMonthFilter(value); setDateFilter('All'); }}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {monthOptions.map(option => (
+                            <SelectItem key={option} value={option}>
+                                {option === 'All' ? 'All Months' : format(parseISO(option + '-01'), 'MMMM yyyy')}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                   <Select value={dateFilter} onValueChange={setDateFilter}>
                     <SelectTrigger className="w-[280px]">
                         <SelectValue placeholder="Filter by date" />
@@ -290,7 +315,7 @@ export default function CashInflowsPage() {
                     onChange={(e) => setJoNumberSearch(e.target.value)}
                     className="w-[240px]"
                   />
-                  <Button onClick={() => { setDateFilter('All'); setPaymentMethodFilter('All'); setJoNumberSearch(''); }}>Reset Filters</Button>
+                  <Button onClick={() => { setMonthFilter('All'); setDateFilter('All'); setPaymentMethodFilter('All'); setJoNumberSearch(''); }}>Reset Filters</Button>
                </div>
             </CardHeader>
             <CardContent>
