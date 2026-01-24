@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -48,6 +47,7 @@ type Payment = {
 
 type Lead = {
   id: string;
+  customerName: string;
   joNumber?: number;
   payments?: Payment[];
   submissionDateTime: string;
@@ -58,6 +58,7 @@ type Lead = {
 type OtherCashInflow = {
   id: string;
   date: string;
+  customerName: string;
   description: string;
   amount: number;
   paymentMode: string;
@@ -67,6 +68,7 @@ type OtherCashInflow = {
 
 const otherInflowSchema = z.object({
   date: z.date({ required_error: 'A date is required.' }),
+  customerName: z.string().min(1, 'Customer name is required.'),
   description: z.string().min(1, 'Description is required.'),
   amount: z.coerce.number().min(0.01, 'Amount must be greater than 0.'),
   paymentMode: z.string().min(1, 'Payment mode is required.'),
@@ -87,6 +89,7 @@ function OtherInflowsForm() {
     resolver: zodResolver(otherInflowSchema),
     defaultValues: {
       date: new Date(),
+      customerName: '',
       description: '',
       amount: 0,
       paymentMode: '',
@@ -103,6 +106,7 @@ function OtherInflowsForm() {
     const dataToSave = {
         id: docId,
         date: values.date.toISOString(),
+        customerName: values.customerName,
         description: values.description,
         amount: values.amount,
         paymentMode: values.paymentMode,
@@ -114,7 +118,7 @@ function OtherInflowsForm() {
         const inflowRef = doc(firestore, 'other_cash_inflows', docId);
         await setDoc(inflowRef, dataToSave);
         toast({ title: 'Success!', description: 'Cash inflow has been recorded.' });
-        form.reset({ date: new Date(), description: '', amount: 0, paymentMode: '' });
+        form.reset({ date: new Date(), customerName: '', description: '', amount: 0, paymentMode: '' });
     } catch (e: any) {
         toast({ variant: "destructive", title: "Save Failed", description: e.message });
     }
@@ -131,6 +135,9 @@ function OtherInflowsForm() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField control={form.control} name="date" render={({ field }) => (
               <FormItem><FormLabel>Date</FormLabel><FormControl><Input type="date" value={format(field.value, 'yyyy-MM-dd')} onChange={(e) => field.onChange(new Date(e.target.value))} /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="customerName" render={({ field }) => (
+              <FormItem><FormLabel>Customer Name</FormLabel><FormControl><Input placeholder="e.g., John Doe" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="description" render={({ field }) => (
               <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="e.g., Sale of scrap materials" {...field} /></FormControl><FormMessage /></FormItem>
@@ -199,6 +206,7 @@ export default function CashInflowsPage() {
                 return {
                     id: `${lead.id}-${i}`,
                     date: p.timestamp || lead.submissionDateTime,
+                    customerName: lead.customerName,
                     description: description,
                     amount: p.amount,
                     paymentMode: p.mode,
@@ -349,6 +357,7 @@ export default function CashInflowsPage() {
                     <TableRow>
                       <TableHead className="text-white font-bold">Date</TableHead>
                       <TableHead className="text-white font-bold">Description</TableHead>
+                      <TableHead className="text-white font-bold">Customer Name</TableHead>
                       <TableHead className="text-white font-bold">Payment Method</TableHead>
                       <TableHead className="text-white font-bold">J.O. Number</TableHead>
                       <TableHead className="text-white font-bold">Processed by</TableHead>
@@ -358,13 +367,13 @@ export default function CashInflowsPage() {
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
-                        <TableCell colSpan={6}>
+                        <TableCell colSpan={7}>
                           <Skeleton className="h-24 w-full" />
                         </TableCell>
                       </TableRow>
                     ) : error ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-destructive">
+                        <TableCell colSpan={7} className="text-center text-destructive">
                           Error loading data: {error.message}
                         </TableCell>
                       </TableRow>
@@ -373,6 +382,7 @@ export default function CashInflowsPage() {
                         <TableRow key={`${inflow.id}-${index}`}>
                             <TableCell className="font-bold">{format(parseISO(inflow.date), 'MMM dd, yyyy')}</TableCell>
                             <TableCell>{inflow.description}</TableCell>
+                            <TableCell>{(inflow as any).customerName}</TableCell>
                             <TableCell>{inflow.paymentMode}</TableCell>
                             <TableCell>{inflow.joNumber ? formatJoNumber(inflow.joNumber) : '-'}</TableCell>
                             <TableCell>{inflow.processedBy}</TableCell>
@@ -381,7 +391,7 @@ export default function CashInflowsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center text-muted-foreground">
                           No cash inflow data available for the selected filters.
                         </TableCell>
                       </TableRow>
