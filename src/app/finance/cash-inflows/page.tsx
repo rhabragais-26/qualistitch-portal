@@ -40,7 +40,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 // Types for downpayments from leads
 type Payment = {
-  type: 'down' | 'full' | 'balance';
+  type: 'down' | 'full' | 'balance' | 'additional';
   amount: number;
   mode: string;
   timestamp?: string;
@@ -236,6 +236,7 @@ export default function CashInflowsPage() {
                     case 'down': description = 'Downpayment'; break;
                     case 'full': description = 'Full Payment'; break;
                     case 'balance': description = 'Balance Payment'; break;
+                    case 'additional': description = 'Additional Payment'; break;
                     default: description = 'Payment'; break;
                 }
 
@@ -504,7 +505,7 @@ export default function CashInflowsPage() {
                             <TableCell className="text-right">{formatCurrency(inflow.amount)}</TableCell>
                             <TableCell className="text-center">
                               {inflow.source === 'Lead Payment' ? (
-                                (inflow.type === 'balance' || inflow.verified) ? (
+                                inflow.verified ? (
                                   <div className="flex flex-col items-center justify-center text-sm text-green-600 font-semibold">
                                       <Check className="mr-2 h-4 w-4" />
                                       Verified

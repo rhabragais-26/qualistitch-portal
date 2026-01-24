@@ -31,7 +31,7 @@ export type Discount = {
 
 export type Payment = {
   id?: string;
-  type: 'down' | 'full' | 'balance';
+  type: 'down' | 'full' | 'balance' | 'additional';
   amount: number;
   mode: string;
   processedBy?: string;
@@ -332,7 +332,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" disabled={isReadOnly || disabled}>{hasPayments ? 'Edit Initial Payment' : 'Add Payment'}</Button>
+        <Button type="button" variant="outline" disabled={isReadOnly || disabled}>{hasPayments ? 'Edit Initial Payment' : 'Add Payment'}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -413,7 +413,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   onOpenChange: (isOpen: boolean) => void;
 }) {
   const { userProfile } = useUser();
-  const [paymentType, setPaymentType] = useState<'balance' | 'full'>('balance');
+  const [paymentType, setPaymentType] = useState<'additional' | 'balance'>('additional');
   const [amount, setAmount] = useState(0);
   const [formattedAmount, setFormattedAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('');
@@ -421,7 +421,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
 
   useEffect(() => {
     if (isOpen) {
-      setPaymentType('balance');
+      setPaymentType('additional');
       setAmount(0);
       setFormattedAmount('');
       setPaymentMode('');
@@ -433,7 +433,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   const isSaveDisabled = amount <= 0 || !paymentMode || !!amountError;
 
   useEffect(() => {
-    if (paymentType === 'full') {
+    if (paymentType === 'balance') {
       setAmount(balance);
       setFormattedAmount(new Intl.NumberFormat('en-PH').format(balance));
     }
@@ -452,7 +452,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   const handleSave = () => {
     const newPayment: Payment = {
       id: uuidv4(),
-      type: paymentType === 'full' ? 'balance' : paymentType, // Treat 'full' as 'balance' type
+      type: paymentType,
       amount: amount,
       mode: paymentMode,
     };
@@ -476,7 +476,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
         description: `${formatCurrency(amount)} via ${paymentMode} has been added.`
     });
 
-    setPaymentType('balance');
+    setPaymentType('additional');
     setAmount(0);
     setFormattedAmount('');
     setPaymentMode('');
@@ -489,14 +489,14 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
           <DialogTitle>Add Payment</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <RadioGroup value={paymentType} onValueChange={(v: 'full' | 'balance') => setPaymentType(v)} className="flex justify-center gap-4">
+          <RadioGroup value={paymentType} onValueChange={(v: 'additional' | 'balance') => setPaymentType(v)} className="flex justify-center gap-4">
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="balance" id="balance" />
-              <Label htmlFor="balance">Additional Payment</Label>
+              <RadioGroupItem value="additional" id="additional" />
+              <Label htmlFor="additional">Additional Payment</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="full" id="full" />
-              <Label htmlFor="full">Balance Payment</Label>
+              <RadioGroupItem value="balance" id="balance" />
+              <Label htmlFor="balance">Balance Payment</Label>
             </div>
           </RadioGroup>
 
@@ -510,7 +510,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
                 onChange={handleAmountChange}
                 className={cn("pl-8", amountError && "border-destructive")}
                 placeholder="0.00"
-                readOnly={paymentType === 'full'}
+                readOnly={paymentType === 'balance'}
               />
             </div>
             {amountError && <p className="text-sm text-destructive mt-1">{amountError}</p>}
