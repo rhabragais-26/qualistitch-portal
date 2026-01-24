@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -416,33 +417,12 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
             <div className="w-full">
                 <Separator />
                 <div className="flex flex-col items-end gap-1">
-                    <div className="w-full flex justify-between items-center text-lg">
-                      {isEditingLead ? (
-                        <div className="flex flex-col items-start gap-2 pt-2">
-                            <Button variant="outline" disabled>Edit Initial Payment</Button>
-                            <Button
-                                type="button"
-                                className="bg-teal-600 hover:bg-teal-700 text-white font-bold"
-                                disabled={isReadOnly || (balance <= 0 && !lastBalancePaymentInfo)}
-                                onClick={() => {
-                                    if (lastBalancePaymentInfo) {
-                                        setPaymentToEdit(lastBalancePaymentInfo);
-                                    } else {
-                                        setPaymentToEdit(null);
-                                    }
-                                    setIsBalanceDialogOpen(true);
-                                }}
-                            >
-                                {lastBalancePaymentInfo ? 'Edit Payment' : 'Add Payment'}
-                            </Button>
-                        </div>
-                      ) : (
-                        <div className="pt-2">
-                          <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly} />
-                        </div>
-                      )}
+                    <div className="w-full flex justify-between items-center text-lg pt-2">
+                      <div className="pt-2">
+                        <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly} disabled={orders.length === 0} />
+                      </div>
                       <div className="text-right flex-1">
-                        <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
+                          <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
                       </div>
                     </div>
                     

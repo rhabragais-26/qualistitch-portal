@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -242,7 +243,7 @@ export const DiscountDialog = React.memo(function DiscountDialog({ groupKey, dis
   );
 });
 
-export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTotal, setPayments, payments, isReadOnly }: { grandTotal: number; setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>>, payments: Record<string, Payment[]>, isReadOnly?: boolean }) {
+export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTotal, setPayments, payments, isReadOnly, disabled }: { grandTotal: number; setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>>, payments: Record<string, Payment[]>, isReadOnly?: boolean, disabled?: boolean }) {
   const [paymentType, setPaymentType] = useState<'down' | 'full'>('down');
   const [amount, setAmount] = useState(0);
   const [formattedAmount, setFormattedAmount] = useState('');
@@ -312,7 +313,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" disabled={isReadOnly}>{hasPayments ? 'Edit Payment' : 'Add Payment'}</Button>
+        <Button variant="outline" disabled={isReadOnly || disabled}>{hasPayments ? 'Edit Payment' : 'Add Payment'}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -541,4 +542,3 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
     </Dialog>
   );
 });
-    
