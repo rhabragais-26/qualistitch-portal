@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/card';
 import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 import { Banknote, Edit, Trash2, Check } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -421,9 +421,9 @@ export default function CashInflowsPage() {
                   <p className="text-2xl font-bold">{formatCurrency(grandTotal)}</p>
                 </div>
               </div>
-               <div className="flex items-center gap-4 mt-4 pt-4 border-t">
+               <div className="flex items-center gap-2 mt-4 pt-4 border-t">
                   <Select value={monthFilter} onValueChange={(value) => { setMonthFilter(value); setDateFilter('All'); }}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[160px]">
                         <SelectValue placeholder="Filter by month" />
                     </SelectTrigger>
                     <SelectContent>
@@ -435,7 +435,7 @@ export default function CashInflowsPage() {
                     </SelectContent>
                   </Select>
                   <Select value={dateFilter} onValueChange={setDateFilter}>
-                    <SelectTrigger className="w-[280px]">
+                    <SelectTrigger className="w-[160px]">
                         <SelectValue placeholder="Filter by date" />
                     </SelectTrigger>
                     <SelectContent>
@@ -446,8 +446,18 @@ export default function CashInflowsPage() {
                         ))}
                     </SelectContent>
                   </Select>
+                  <Button variant="outline" onClick={() => {
+                        const yesterday = subDays(new Date(), 1);
+                        setDateFilter(format(yesterday, 'yyyy-MM-dd'));
+                        setMonthFilter(format(yesterday, 'yyyy-MM'));
+                  }}>Yesterday</Button>
+                   <Button variant="outline" onClick={() => {
+                        const today = new Date();
+                        setDateFilter(format(today, 'yyyy-MM-dd'));
+                        setMonthFilter(format(today, 'yyyy-MM'));
+                  }}>Today</Button>
                   <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
-                      <SelectTrigger className="w-[240px]">
+                      <SelectTrigger className="w-[200px]">
                           <SelectValue placeholder="Filter by Payment Method" />
                       </SelectTrigger>
                       <SelectContent>
@@ -460,7 +470,7 @@ export default function CashInflowsPage() {
                     placeholder="Search by J.O. No..."
                     value={joNumberSearch}
                     onChange={(e) => setJoNumberSearch(e.target.value)}
-                    className="w-[240px]"
+                    className="w-[200px]"
                   />
                   <Button onClick={() => { setMonthFilter('All'); setDateFilter('All'); setPaymentMethodFilter('All'); setJoNumberSearch(''); }}>Reset Filters</Button>
                </div>
