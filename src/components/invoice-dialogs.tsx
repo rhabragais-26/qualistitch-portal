@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -377,7 +376,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   );
 });
 
-export const BalancePaymentDialog = React.memo(function BalancePaymentDialog({
+export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDialog({
   isOpen,
   onOpenChange,
   balance,
@@ -542,4 +541,4 @@ export const BalancePaymentDialog = React.memo(function BalancePaymentDialog({
     </Dialog>
   );
 });
-```
+    
