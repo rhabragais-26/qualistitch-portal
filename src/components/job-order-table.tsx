@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -31,7 +29,7 @@ import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage'
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Check, ChevronDown, Upload, Trash2, ChevronUp } from 'lucide-react';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
@@ -330,8 +328,8 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
 
     const uploadAndGetURL = async (imageData: string, fieldName: string, existingUrl: string | null) => {
         if (!imageData) return null;
-        if (imageData === existingUrl) return existingUrl; // No change
-        if (imageData.startsWith('http')) return imageData; // Already a URL
+        if (imageData === existingUrl) return existingUrl;
+        if (imageData.startsWith('http')) return imageData;
 
         const storageRef = ref(storage, `leads-images/${uploadLead.id}/ref_${fieldName}_${Date.now()}`);
         const snapshot = await uploadString(storageRef, imageData, 'data_url');
@@ -674,5 +672,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               }>Save Images </Button></DialogFooter></DialogContent></Dialog></Card> ); }
 
     
+
 
 
