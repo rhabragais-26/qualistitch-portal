@@ -11,7 +11,7 @@ import { Button } from './ui/button';
 import { X } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { AddOns, Discount, Payment, AddBalancePaymentDialog } from "./invoice-dialogs";
-import { AddOnsDialog, DiscountDialog, AddPaymentDialog } from './invoice-dialogs';
+import { AddOnsDialog, DiscountDialog } from './invoice-dialogs';
 import { formatCurrency } from '@/lib/utils';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -438,9 +438,9 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                             </Button>
                         </div>
                       ) : (
-                        <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly}/>
+                        <div></div>
                       )}
-                      <div className="text-right">
+                      <div className="text-right flex-1">
                         <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
                       </div>
                     </div>
@@ -453,7 +453,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                         } else if (payment.type === 'full') {
                           description = 'Full Payment';
                         } else if (payment.type === 'balance') {
-                          description = balance <= 0 ? 'Balance Payment' : 'Additional Payment';
+                           description = balance <= 0 ? 'Balance Payment' : 'Additional Payment';
                         }
 
                         return (
