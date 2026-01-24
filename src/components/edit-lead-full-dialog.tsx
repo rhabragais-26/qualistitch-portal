@@ -1,4 +1,3 @@
-
 // edit-lead-full-dialog.tsx (WITHOUT ALERTDIALOG)
 "use client";
 
@@ -42,9 +41,10 @@ interface EditLeadFullDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: () => void;
+  isReadOnly?: boolean;
 }
 
-export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLeadFullDialogProps) {
+export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly }: EditLeadFullDialogProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const { user, userProfile, isUserLoading, userError } = useUser();
@@ -315,4 +315,3 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate }: EditLead
     </>
   );
 }
-```
