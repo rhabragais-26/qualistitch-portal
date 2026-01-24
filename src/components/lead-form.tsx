@@ -940,7 +940,7 @@ export function LeadForm({
                     <FormMessage />
                   </FormItem>
                 )}/>
-                <div className="grid grid-cols-2 gap-x-4 mb-3">
+                <div className="grid grid-cols-2 gap-x-4">
                   <FormField control={form.control} name="mobileNo" render={({field}) => (
                     <FormItem>
                       <div className="flex items-center gap-2">
@@ -968,7 +968,7 @@ export function LeadForm({
                         <FormField control={form.control} name="mobileNo2" render={({field}) => (
                             <FormItem>
                             <div className="flex items-center justify-between">
-                                <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">Second Mobile No.</FormLabel>
+                                <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Phone className="h-4 w-4 text-primary" />2nd Mobile No. (Optional)</FormLabel>
                                 {!isReadOnly && (
                                     <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => {
                                         setShowSecondMobile(false);
@@ -979,7 +979,7 @@ export function LeadForm({
                                 )}
                             </div>
                             <FormControl>
-                                <Input type="tel" {...field} placeholder="Second mobile number..." onChange={(e) => handleMobileNoChange(e, field)} />
+                                <Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
