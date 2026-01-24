@@ -27,6 +27,7 @@ export const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
     { id: 'inventory', label: 'Inventory', path: '/inventory/summary' },
     { id: 'production', label: 'Production', path: '/production/production-queue' },
     { id: 'logistics', label: 'Logistics', path: '/logistics/shipment-queue' },
+    { id: 'admin', label: 'Admin', path: '/admin/users' },
     { id: 'finance', label: 'Finance', path: '/finance/dashboard' },
     { id: 'marketing', label: 'Marketing', path: '/marketing/calendar' },
 ];
@@ -70,7 +71,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/marketing/analytics': 'marketing',
 };
 
-const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
+export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'SCES': ['sales', 'marketing'],
   'Sales Supervisor': ['sales', 'marketing'],
   'Sales Manager': ['sales', 'marketing'],
