@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -419,7 +418,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
                                     Add Waybill No.
                                 </Button>
                                 {(waybillNumbers[lead.id]?.length || 0) > 0 && (
-                                    <Badge className="absolute -top-2 -left-2">{waybillNumbers[lead.id].length}</Badge>
+                                    <Badge className="absolute -top-2 -right-2">{waybillNumbers[lead.id].length}</Badge>
                                 )}
                             </div>
                         </TableCell>
@@ -428,7 +427,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
                             <div className="flex flex-col items-center justify-center text-sm text-green-600 font-semibold">
                                 <Check className="mr-2 h-4 w-4" />
                                 Done Audit
-                                {lead.salesAuditCompleteTimestamp && <div className="text-[10px] text-gray-500 ml-2">({formatDateTime(lead.salesAuditCompleteTimestamp).dateTimeShort})</div>}
+                                {lead.salesAuditCompleteTimestamp && <div className="text-[10px] text-gray-500">({formatDateTime(lead.salesAuditCompleteTimestamp).dateTimeShort})</div>}
                             </div>
                           ) : (
                             <Button 
@@ -508,5 +507,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
     </>
   );
 }
+
+    
 
     
