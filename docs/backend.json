@@ -210,7 +210,8 @@
               "inventory": { "type": "boolean" },
               "production": { "type": "boolean" },
               "logistics": { "type": "boolean" },
-              "admin": { "type": "boolean" }
+              "finance": { "type": "boolean" },
+              "marketing": { "type": "boolean" }
             }
           }
         },

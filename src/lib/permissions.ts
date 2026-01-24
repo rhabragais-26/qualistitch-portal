@@ -1,3 +1,4 @@
+
 export type UserPosition = 
   | 'SCES'
   | 'Sales Supervisor'
@@ -19,7 +20,7 @@ export type UserPosition =
   | 'Social Media Manager'
   | 'Not Assigned';
 
-export type PageGroup = 'sales' | 'digitizing' | 'inventory' | 'production' | 'logistics' | 'admin' | 'profile' | 'order-status' | 'finance' | 'marketing';
+export type PageGroup = 'sales' | 'digitizing' | 'inventory' | 'production' | 'logistics' | 'profile' | 'order-status' | 'finance' | 'marketing';
 
 export const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
     { id: 'sales', label: 'Sales', path: '/records' },
@@ -27,7 +28,6 @@ export const allPageGroups: { id: PageGroup, label: string, path: string }[] = [
     { id: 'inventory', label: 'Inventory', path: '/inventory/summary' },
     { id: 'production', label: 'Production', path: '/production/production-queue' },
     { id: 'logistics', label: 'Logistics', path: '/logistics/shipment-queue' },
-    { id: 'admin', label: 'Admin', path: '/admin/users' },
     { id: 'finance', label: 'Finance', path: '/finance/dashboard' },
     { id: 'marketing', label: 'Marketing', path: '/marketing/calendar' },
 ];
@@ -55,7 +55,6 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/logistics/shipped-orders': 'logistics',
   '/logistics/completed-shipments': 'logistics',
   '/logistics/summary': 'logistics',
-  '/admin/users': 'admin',
   '/profile': 'profile',
   '/order-status': 'order-status',
   '/finance/dashboard': 'finance',
@@ -75,7 +74,7 @@ export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'SCES': ['sales'],
   'Sales Supervisor': ['sales'],
   'Sales Manager': ['sales'],
-  'S.E Officer': ['sales'],
+  'S.E Officer': [],
   'Inventory Officer': ['inventory'],
   'Digitizer': ['digitizing'],
   'E.D Coordinator': ['digitizing'],
@@ -86,7 +85,7 @@ export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'Finance': ['finance'],
   'Marketing Head': ['marketing'],
   'Social Media Manager': ['marketing'],
-  'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'admin', 'profile', 'finance', 'marketing'],
+  'Page Admin': ['sales', 'digitizing', 'inventory', 'production', 'logistics', 'profile', 'finance', 'marketing'],
 };
 
 export function hasEditPermission(position: UserPosition | undefined, pathname: string, customPermissions?: UserPermissions): boolean {
@@ -94,6 +93,11 @@ export function hasEditPermission(position: UserPosition | undefined, pathname: 
     return false;
   }
   
+  // Admin page is protected separately by the isAdmin flag in useUser hook
+  if (pathname.startsWith('/admin')) {
+      return false; 
+  }
+
   const pageGroup = Object.keys(pageGroupMapping).find(path => pathname.startsWith(path));
   const group = pageGroup ? pageGroupMapping[pageGroup] : undefined;
   
