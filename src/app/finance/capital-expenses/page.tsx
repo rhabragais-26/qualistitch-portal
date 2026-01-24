@@ -150,7 +150,26 @@ function CapitalExpensesPage() {
                     )} />
                     <div className="grid grid-cols-2 gap-4">
                       <FormField control={form.control} name="cost" render={({ field }) => (
-                        <FormItem><FormLabel>Cost</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Cost</FormLabel>
+                          <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+                              <FormControl>
+                                <Input
+                                  type="text"
+                                  placeholder="0.00"
+                                  className="pl-7 text-right"
+                                  value={field.value ? new Intl.NumberFormat('en-US').format(field.value) : ''}
+                                  onChange={(e) => {
+                                    const value = e.target.value.replace(/,/g, '');
+                                    if (/^\d*\.?\d*$/.test(value) || value === '') {
+                                      const numericValue = parseFloat(value);
+                                      field.onChange(isNaN(numericValue) ? 0 : numericValue);
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                          </div>
+                        <FormMessage /></FormItem>
                       )} />
                       <FormField control={form.control} name="lifespanInYears" render={({ field }) => (
                         <FormItem><FormLabel>Useful Lifespan (Years)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>

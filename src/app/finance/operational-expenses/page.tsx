@@ -151,7 +151,26 @@ function OperationalExpensesPage() {
                       <FormItem><FormLabel>Description</FormLabel><FormControl><Input placeholder="e.g., Office electricity bill" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="amount" render={({ field }) => (
-                      <FormItem><FormLabel>Amount</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Amount</FormLabel>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+                            <FormControl>
+                                <Input
+                                type="text"
+                                placeholder="0.00"
+                                className="pl-7 text-right"
+                                value={field.value ? new Intl.NumberFormat('en-US').format(field.value) : ''}
+                                onChange={(e) => {
+                                    const value = e.target.value.replace(/,/g, '');
+                                    if (/^\d*\.?\d*$/.test(value) || value === '') {
+                                    const numericValue = parseFloat(value);
+                                    field.onChange(isNaN(numericValue) ? 0 : numericValue);
+                                    }
+                                }}
+                                />
+                            </FormControl>
+                        </div>
+                      <FormMessage /></FormItem>
                     )} />
                     <div className="flex justify-end gap-2">
                       {editingExpense && <Button type="button" variant="outline" onClick={() => setEditingExpense(null)}>Cancel</Button>}

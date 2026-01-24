@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -105,8 +106,7 @@ function OtherInflowsForm({
       date: new Date(),
       customerName: '',
       description: '',
-      // @ts-ignore
-      amount: '',
+      amount: 0,
       paymentMode: '',
     },
   });
@@ -125,8 +125,7 @@ function OtherInflowsForm({
         date: new Date(),
         customerName: '',
         description: '',
-        // @ts-ignore
-        amount: '',
+        amount: 0,
         paymentMode: '',
       });
     }
@@ -189,7 +188,19 @@ function OtherInflowsForm({
                     <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
                         <FormControl>
-                            <Input type="text" placeholder="0.00" {...field} className="pl-7" />
+                            <Input
+                                type="text"
+                                placeholder="0.00"
+                                className="pl-7 text-right"
+                                value={field.value ? new Intl.NumberFormat('en-US').format(field.value) : ''}
+                                onChange={(e) => {
+                                    const value = e.target.value.replace(/,/g, '');
+                                    if (/^\d*\.?\d*$/.test(value) || value === '') {
+                                    const numericValue = parseFloat(value);
+                                    field.onChange(isNaN(numericValue) ? 0 : numericValue);
+                                    }
+                                }}
+                            />
                         </FormControl>
                     </div>
                     <FormMessage />
@@ -635,5 +646,3 @@ export default function CashInflowsPage() {
     </>
   );
 }
-
-    

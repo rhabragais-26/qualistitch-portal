@@ -79,7 +79,8 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
   };
 
   const handleNumericChange = (field: keyof AddOns, value: string) => {
-    const numericValue = parseInt(value.replace(/[^0-9]/g, ''), 10);
+    const sanitizedValue = value.replace(/,/g, '').replace(/[^0-9.]/g, "");
+    const numericValue = parseFloat(sanitizedValue);
     setLocalAddOns(prev => ({
         ...prev,
         [field]: isNaN(numericValue) ? 0 : numericValue
@@ -132,14 +133,14 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
             <Label htmlFor="rushFee" className="text-base">Rush Fee</Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
-              <Input id="rushFee" value={localAddOns.rushFee || ''} onChange={(e) => handleNumericChange('rushFee', e.target.value)} className="w-32 pl-7" placeholder="0" />
+              <Input id="rushFee" type="text" value={localAddOns.rushFee ? new Intl.NumberFormat('en-US').format(localAddOns.rushFee) : ''} onChange={(e) => handleNumericChange('rushFee', e.target.value)} className="w-32 pl-7 text-right" placeholder="0.00" />
             </div>
           </div>
            <div className="flex items-center justify-between">
             <Label htmlFor="shippingFee" className="text-base">Shipping Fee</Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
-              <Input id="shippingFee" value={localAddOns.shippingFee || ''} onChange={(e) => handleNumericChange('shippingFee', e.target.value)} className="w-32 pl-7" placeholder="0" />
+              <Input id="shippingFee" type="text" value={localAddOns.shippingFee ? new Intl.NumberFormat('en-US').format(localAddOns.shippingFee) : ''} onChange={(e) => handleNumericChange('shippingFee', e.target.value)} className="w-32 pl-7 text-right" placeholder="0.00" />
             </div>
           </div>
         </div>
@@ -174,12 +175,11 @@ export const DiscountDialog = React.memo(function DiscountDialog({ groupKey, dis
 
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
-    const sanitizedValue = rawValue.replace(/[^0-9.]/g, '');
-
+    const sanitizedValue = rawValue.replace(/,/g, '').replace(/[^0-9.]/g, '');
     const parts = sanitizedValue.split('.');
     if (parts.length > 2) return;
 
-    setInputValue(sanitizedValue);
+    setInputValue(new Intl.NumberFormat('en-US').format(parseFloat(sanitizedValue) || 0));
     setLocalDiscount(prev => ({ ...prev, value: parseFloat(sanitizedValue) || 0 }));
   };
 
@@ -220,7 +220,7 @@ export const DiscountDialog = React.memo(function DiscountDialog({ groupKey, dis
           </RadioGroup>
           <div className="flex justify-center">
              <div className="relative w-48">
-              {localDiscount.type === 'fixed' && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₱</span>}
+              {localDiscount.type === 'fixed' && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>}
               <Input
                 type="text"
                 value={inputValue}
@@ -255,7 +255,6 @@ export const DiscountDialog = React.memo(function DiscountDialog({ groupKey, dis
 export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTotal, setPayments, payments, isReadOnly, disabled }: { grandTotal: number; setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>>, payments: Record<string, Payment[]>, isReadOnly?: boolean, disabled?: boolean }) {
   const [paymentType, setPaymentType] = useState<'down' | 'full'>('down');
   const [amount, setAmount] = useState(0);
-  const [formattedAmount, setFormattedAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [amountError, setAmountError] = useState<string | null>(null);
@@ -271,12 +270,10 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
       if (hasPayments && firstPayment) {
         setPaymentType(firstPayment.type as 'down' | 'full');
         setAmount(firstPayment.amount);
-        setFormattedAmount(new Intl.NumberFormat('en-PH').format(firstPayment.amount));
         setPaymentMode(firstPayment.mode);
       } else {
         setPaymentType('down');
         setAmount(0);
-        setFormattedAmount('');
         setPaymentMode('');
       }
       setAmountError(null);
@@ -286,31 +283,25 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   useEffect(() => {
     if (paymentType === 'full') {
       setAmount(grandTotal);
-      setFormattedAmount(new Intl.NumberFormat('en-PH').format(grandTotal));
       setAmountError(null);
     } else if (isOpen && !hasPayments) { 
       setAmount(0);
-      setFormattedAmount('');
       setAmountError(null);
     }
   }, [paymentType, grandTotal, isOpen, hasPayments]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value;
-    const sanitizedValue = rawValue.replace(/[^0-9.]/g, '');
-    const parts = sanitizedValue.split('.');
-    if (parts.length > 2) {
-      return;
-    }
-    
-    setFormattedAmount(sanitizedValue);
-    const numericValue = parseFloat(sanitizedValue);
-    setAmount(isNaN(numericValue) ? 0 : numericValue);
-    
-    if (grandTotal > 0 && !isNaN(numericValue) && numericValue > grandTotal) {
-      setAmountError(`Amount cannot exceed the total of ${formatCurrency(grandTotal)}.`);
-    } else {
-      setAmountError(null);
+    const value = e.target.value.replace(/,/g, '');
+    if (/^\d*\.?\d*$/.test(value) || value === '') {
+        const numericValue = parseFloat(value);
+        const finalValue = isNaN(numericValue) ? 0 : numericValue;
+        setAmount(finalValue);
+        
+        if (grandTotal > 0 && finalValue > grandTotal) {
+          setAmountError(`Amount cannot exceed the total of ${formatCurrency(grandTotal)}.`);
+        } else {
+          setAmountError(null);
+        }
     }
   };
   
@@ -354,12 +345,12 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
           <div className="space-y-1">
             <Label>Amount</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₱</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
               <Input
                 type="text"
-                value={formattedAmount}
+                value={amount ? new Intl.NumberFormat('en-US').format(amount) : ''}
                 onChange={handleAmountChange}
-                className={cn("pl-8", amountError && "border-destructive")}
+                className={cn("pl-8 text-right", amountError && "border-destructive")}
                 placeholder="0.00"
                 readOnly={paymentType === 'full'}
               />
@@ -416,7 +407,6 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   const { userProfile } = useUser();
   const [paymentType, setPaymentType] = useState<'additional' | 'balance'>('additional');
   const [amount, setAmount] = useState(0);
-  const [formattedAmount, setFormattedAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('');
   const { toast } = useToast();
 
@@ -424,7 +414,6 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
     if (isOpen) {
       setPaymentType('additional');
       setAmount(0);
-      setFormattedAmount('');
       setPaymentMode('');
     }
   }, [isOpen]);
@@ -436,18 +425,15 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   useEffect(() => {
     if (paymentType === 'balance') {
       setAmount(balance);
-      setFormattedAmount(new Intl.NumberFormat('en-PH').format(balance));
     }
   }, [paymentType, balance]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value;
-    const sanitizedValue = rawValue.replace(/[^0-9.]/g, '');
-    const parts = sanitizedValue.split('.');
-    if (parts.length > 2) return;
-    setFormattedAmount(sanitizedValue);
-    const numericValue = parseFloat(sanitizedValue) || 0;
-    setAmount(numericValue);
+    const value = e.target.value.replace(/,/g, '');
+    if (/^\d*\.?\d*$/.test(value) || value === '') {
+        const numericValue = parseFloat(value) || 0;
+        setAmount(numericValue);
+    }
   };
 
   const handleSave = () => {
@@ -488,7 +474,6 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
 
     setPaymentType('additional');
     setAmount(0);
-    setFormattedAmount('');
     setPaymentMode('');
     onOpenChange(false);
   };
@@ -514,12 +499,12 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
           <div className="space-y-1">
             <Label>Amount</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₱</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
               <Input
                 type="text"
-                value={formattedAmount}
+                value={amount ? new Intl.NumberFormat('en-US').format(amount) : ''}
                 onChange={handleAmountChange}
-                className={cn("pl-8", amountError && "border-destructive")}
+                className={cn("pl-8 text-right", amountError && "border-destructive")}
                 placeholder="0.00"
                 readOnly={paymentType === 'balance'}
               />
@@ -557,6 +542,3 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
     </Dialog>
   );
 });
-
-
-    

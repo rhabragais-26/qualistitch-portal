@@ -205,7 +205,26 @@ function AdsVsInquiriesPage() {
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="adsSpent" render={({ field }) => (
-                      <FormItem><FormLabel>Ads Spent</FormLabel><FormControl><Input type="number" placeholder="0.00" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Ads Spent</FormLabel>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+                            <FormControl>
+                                <Input
+                                type="text"
+                                placeholder="0.00"
+                                className="pl-7 text-right"
+                                value={field.value ? new Intl.NumberFormat('en-US').format(field.value) : ''}
+                                onChange={(e) => {
+                                    const value = e.target.value.replace(/,/g, '');
+                                    if (/^\d*\.?\d*$/.test(value) || value === '') {
+                                    const numericValue = parseFloat(value);
+                                    field.onChange(isNaN(numericValue) ? 0 : numericValue);
+                                    }
+                                }}
+                                />
+                            </FormControl>
+                        </div>
+                      <FormMessage /></FormItem>
                     )} />
                     <div className="grid grid-cols-2 gap-4">
                       <FormField control={form.control} name="metaInquiries" render={({ field }) => (
@@ -308,4 +327,3 @@ function AdsVsInquiriesPage() {
 }
 
 export default AdsVsInquiriesPage;
-
