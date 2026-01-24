@@ -78,7 +78,7 @@
       lastModifiedBy?: string;
     };
 
-    const courierOptions = ['Lalamove', 'J&T', 'In-house', 'Pick-up', 'DHL', 'FedEx'];
+    const courierOptions = ['Lalamove', 'J&T', 'LBC', 'In-house', 'Pick-up', 'DHL', 'FedEx'];
 
     type UserProfileInfo = {
       uid: string;
@@ -178,7 +178,7 @@
       useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+            textareaRef.current.style.height = `${'\'\'\''}textareaRef.current.scrollHeight{'\'\'\''}px`;
         }
       }, [lead?.location]);
 
@@ -210,12 +210,12 @@
         if (lead && allLeads) {
           const currentYear = new Date().getFullYear().toString().slice(-2);
           if (lead.joNumber) {
-            setJoNumber(`QSBP-${currentYear}-${lead.joNumber.toString().padStart(5, '0')}`);
+            setJoNumber(`QSBP-${'\'\'\''}currentYear{'\'\'\'\'}-${'\'\'\''}lead.joNumber.toString().padStart(5, '0'){'\'\'\''}`);
           } else {
             const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
             const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
             const newJoNum = Math.max(maxJoNumber + 1, 10000);
-            setJoNumber(`QSBP-${currentYear}-${newJoNum.toString().padStart(5, '0')}`);
+            setJoNumber(`QSBP-${'\'\'\''}currentYear{'\'\'\'-${'\'\'\''}newJoNum.toString().padStart(5, '0'){'\'\'\''}`);
           }
         }
       }, [lead, allLeads]);
@@ -234,7 +234,7 @@
         let printWindow: Window | null = null;
         
         try {
-          const jobOrderUrl = `/job-order/${id}/print`;
+          const jobOrderUrl = `/job-order/${'\'\'\''}id{'\'\'\''}/print`;
           printWindow = window.open(jobOrderUrl, '_blank', 'noopener,noreferrer,height=800,width=1200,scrollbars=yes');
 
         } catch (error: any) {
@@ -471,7 +471,7 @@
       
       const scesProfile = users?.find(u => u.nickname === lead.salesRepresentative);
       const scesNickname = scesProfile ? scesProfile.nickname : lead.salesRepresentative;
-      const scesFullName = scesProfile ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
+      const scesFullName = scesProfile ? toTitleCase(`${'\'\'\''}scesProfile.firstName{'\'\'\''} ${'\'\'\''}scesProfile.lastName{'\'\'\''}`) : toTitleCase(lead.salesRepresentative);
 
       const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
       
@@ -480,7 +480,7 @@
         const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
         if (mobile && landline) {
-          return `${mobile} / ${landline}`;
+          return `${'\'\'\''}mobile{'\'\'\''} / ${'\'\'\''}landline{'\'\'\''}`;
         }
         return mobile || landline || 'N/A';
       };
@@ -768,7 +768,7 @@
             >
               {currentLayout.layoutImage ? (
                 <>
-                  <Image src={currentLayout.layoutImage} alt={`Layout ${currentLayoutIndex + 1}`} layout="fill" objectFit="contain" />
+                  <Image src={currentLayout.layoutImage} alt={`Layout ${'\'\'\''}currentLayoutIndex + 1{'\'\'\''}`} layout="fill" objectFit="contain" />
                   {canEdit && (
                     <Button
                       variant="destructive"
@@ -795,7 +795,7 @@
 
             <h2 className="2xl font-bold text-center mb-4">
               {lead.layouts && lead.layouts.length > 1
-                ? `LAYOUT #${currentLayoutIndex + 1}`
+                ? `LAYOUT #${'\'\'\''}currentLayoutIndex + 1{'\'\'\''}`
                 : "LAYOUT"}
             </h2>
             <table className="w-full border-collapse border border-black mb-6">
@@ -891,3 +891,5 @@
     </div>
   );
 }
+
+    

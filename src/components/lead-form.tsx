@@ -219,7 +219,7 @@ const poloShirtColors = [
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
 
-const courierOptions = ['Lalamove', 'J&T', 'In-house', 'Pick-up', 'DHL', 'FedEx'];
+const courierOptions = ['Lalamove', 'J&T', 'LBC', 'In-house', 'Pick-up', 'DHL', 'FedEx'];
 
 type LeadFormProps = {
   stagedOrders: Order[];
@@ -1491,6 +1491,8 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
+
+    
 
     
 
