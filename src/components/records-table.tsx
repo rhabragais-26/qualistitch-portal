@@ -65,7 +65,7 @@ const orderSchema = z.object({
 export type Order = z.infer<typeof orderSchema>;
 
 const paymentSchema = z.object({
-    type: z.enum(['down', 'full', 'balance']),
+    type: z.enum(['down', 'full', 'balance', 'additional']),
     amount: z.number(),
     mode: z.string(),
     processedBy: z.string().optional(),
