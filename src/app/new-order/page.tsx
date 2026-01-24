@@ -7,7 +7,7 @@ import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFi
 import { useRouter, usePathname } from 'next/navigation';
 import { Order } from '@/components/lead-form';
 import { Button } from '@/components/ui/button';
-import { CalculatorIcon, Ruler, Tag } from 'lucide-react';
+import { CalculatorIcon, Ruler, Tag, Tv } from 'lucide-react';
 import { Calculator } from '@/components/calculator';
 import { SizeChartDialog } from '@/components/size-chart-dialog';
 import { cn } from '@/lib/utils';
@@ -24,6 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { ItemPricesDialog } from '@/components/item-prices-dialog';
+import { RunningAdsDialog } from '@/components/running-ads-dialog';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { collection, doc, query } from 'firebase/firestore';
@@ -52,9 +53,11 @@ export default function NewOrderPage() {
   const [showCalculator, setShowCalculator] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
   const [showItemPrices, setShowItemPrices] = useState(false);
+  const [showRunningAds, setShowRunningAds] = useState(false);
   const [isCalculatorDragging, setIsCalculatorDragging] = useState(false);
   const [isSizeChartDragging, setIsSizeChartDragging] = useState(false);
   const [isItemPricesDragging, setIsItemPricesDragging] = useState(false);
+  const [isRunningAdsDragging, setIsRunningAdsDragging] = useState(false);
   
   const [orderType, setOrderType] = useState<'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | undefined>(undefined);
 
@@ -216,11 +219,12 @@ export default function NewOrderPage() {
       {showCalculator && <Calculator onClose={() => setShowCalculator(false)} onDraggingChange={setIsCalculatorDragging} />}
       {showSizeChart && <SizeChartDialog onClose={() => setShowSizeChart(false)} onDraggingChange={setIsSizeChartDragging} />}
       {showItemPrices && <ItemPricesDialog onClose={() => setShowItemPrices(false)} onDraggingChange={setIsItemPricesDragging} />}
+      {showRunningAds && <RunningAdsDialog onClose={() => setShowRunningAds(false)} onDraggingChange={setIsRunningAdsDragging} />}
 
       <Header isNewOrderPageDirty={isFormDirty}>
         <FormProvider {...formMethods}>
           <form id={formId} onSubmit={formMethods.handleSubmit(handleNewOrderSubmit)}>
-            <main className={cn("flex-1 w-full p-4 sm:p-6 lg:p-8", (isCalculatorDragging || isSizeChartDragging || isItemPricesDragging) && "select-none")}>
+            <main className={cn("flex-1 w-full p-4 sm:p-6 lg:p-8", (isCalculatorDragging || isSizeChartDragging || isItemPricesDragging || isRunningAdsDragging) && "select-none")}>
                 <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 items-start">
                     <div className="xl:col-span-3">
                         <LeadForm 
@@ -233,7 +237,7 @@ export default function NewOrderPage() {
                         />
                     </div>
                     <div className="xl:col-span-2 space-y-4">
-                        <div className="flex justify-center gap-4">
+                        <div className="flex justify-center gap-2 flex-wrap">
                             <Button type="button" variant="outline" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowCalculator(true)}>
                                 <CalculatorIcon className="mr-2 h-4 w-4" />
                                 Show Calculator
@@ -245,6 +249,10 @@ export default function NewOrderPage() {
                             <Button type="button" variant="outline" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowItemPrices(true)}>
                                 <Tag className="mr-2 h-4 w-4" />
                                 Check Item Prices
+                            </Button>
+                            <Button type="button" variant="outline" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowRunningAds(true)}>
+                                <Tv className="mr-2 h-4 w-4" />
+                                Check Running Ads
                             </Button>
                         </div>
                         <InvoiceCard 
