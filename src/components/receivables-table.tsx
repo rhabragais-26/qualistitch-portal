@@ -34,6 +34,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { z } from 'zod';
 import Link from 'next/link';
 import { Label } from './ui/label';
+import { ScrollArea } from './ui/scroll-area';
 
 const leadSchema = z.object({
   id: z.string(),
@@ -429,8 +430,10 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
                                     <span>-</span>
                                 )}
                             </TableCell>
-                            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}</TableCell>
-                            <TableCell className="text-xs align-middle text-center py-2 font-bold text-destructive">{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
+                            <TableCell className={cn("text-xs align-middle text-center py-2", lead.paidAmount == null || lead.paidAmount === 0 ? "text-muted-foreground" : "text-black")}>
+                              {lead.paidAmount != null ? formatCurrency(lead.paidAmount) : '-'}
+                            </TableCell>
+                            <TableCell className={cn("text-xs align-middle text-center py-2 font-bold", lead.balance === 0 ? "text-muted-foreground" : "text-destructive")}>{lead.balance != null ? formatCurrency(lead.balance) : '-'}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.paymentType === 'COD' ? 'CASH' : (lead.modeOfPayment || '-')}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">
