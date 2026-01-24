@@ -30,6 +30,11 @@ export type Payment = {
   type: 'down' | 'full' | 'balance';
   amount: number;
   mode: string;
+  processedBy?: string;
+  timestamp?: string;
+  verified?: boolean;
+  verifiedBy?: string;
+  verifiedTimestamp?: string;
 };
 
 export const AddOnsDialog = React.memo(function AddOnsDialog({
@@ -249,7 +254,9 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   const [formattedAmount, setFormattedAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const isSaveDisabled = amount <= 0 || !paymentMode;
+  const [amountError, setAmountError] = useState<string | null>(null);
+
+  const isSaveDisabled = amount <= 0 || !paymentMode || !!amountError;
 
   const hasPayments = useMemo(() => Object.keys(payments).length > 0, [payments]);
   const firstPayment = useMemo(() => hasPayments ? Object.values(payments)[0][0] : null, [hasPayments, payments]);
@@ -267,6 +274,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
         setFormattedAmount('');
         setPaymentMode('');
       }
+      setAmountError(null);
     }
   }, [isOpen, hasPayments, firstPayment]);
 
@@ -274,29 +282,31 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
     if (paymentType === 'full') {
       setAmount(grandTotal);
       setFormattedAmount(new Intl.NumberFormat('en-PH').format(grandTotal));
+      setAmountError(null);
     } else if (isOpen && !hasPayments) { 
       setAmount(0);
       setFormattedAmount('');
+      setAmountError(null);
     }
   }, [paymentType, grandTotal, isOpen, hasPayments]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
-    // Allow only numbers and one decimal point. Remove any other characters.
     const sanitizedValue = rawValue.replace(/[^0-9.]/g, '');
-
-    // To prevent entering multiple decimal points.
     const parts = sanitizedValue.split('.');
     if (parts.length > 2) {
-      // Re-join the first two parts to form a valid number string.
-      const validValue = `${parts[0]}.${parts.slice(1).join('')}`;
-      setFormattedAmount(validValue);
-      setAmount(parseFloat(validValue) || 0);
       return;
     }
-
+    
     setFormattedAmount(sanitizedValue);
-    setAmount(parseFloat(sanitizedValue) || 0);
+    const numericValue = parseFloat(sanitizedValue);
+    setAmount(isNaN(numericValue) ? 0 : numericValue);
+    
+    if (grandTotal > 0 && !isNaN(numericValue) && numericValue > grandTotal) {
+      setAmountError(`Amount cannot exceed the total of ${formatCurrency(grandTotal)}.`);
+    } else {
+      setAmountError(null);
+    }
   };
   
   const handleSave = () => {
@@ -313,7 +323,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" disabled={isReadOnly || disabled}>{hasPayments ? 'Edit Payment' : 'Add Payment'}</Button>
+        <Button variant="outline" disabled={isReadOnly || disabled}>{hasPayments ? 'Edit Initial Payment' : 'Add Payment'}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -331,7 +341,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
             </div>
           </RadioGroup>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label>Amount</Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₱</span>
@@ -339,11 +349,12 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
                 type="text"
                 value={formattedAmount}
                 onChange={handleAmountChange}
-                className="pl-8"
+                className={cn("pl-8", amountError && "border-destructive")}
                 placeholder="0.00"
                 readOnly={paymentType === 'full'}
               />
             </div>
+             {amountError && <p className="text-sm text-destructive mt-1">{amountError}</p>}
           </div>
           <div className="space-y-2">
             <Label>Mode of Payment</Label>
