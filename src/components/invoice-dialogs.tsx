@@ -25,7 +25,7 @@ export type Discount = {
 };
 
 export type Payment = {
-  type: 'down' | 'full';
+  type: 'down' | 'full' | 'balance';
   amount: number;
   mode: string;
 };

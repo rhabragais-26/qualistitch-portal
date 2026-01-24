@@ -65,10 +65,16 @@ const orderSchema = z.object({
 export type Order = z.infer<typeof orderSchema>;
 
 const paymentSchema = z.object({
-    type: z.enum(['down', 'full']),
+    type: z.enum(['down', 'full', 'balance']),
     amount: z.number(),
     mode: z.string(),
+    processedBy: z.string().optional(),
+    timestamp: z.string().optional(),
+    verified: z.boolean().optional(),
+    verifiedBy: z.string().optional(),
+    verifiedTimestamp: z.string().optional(),
 });
+
 
 const layoutSchema = z.object({
     logoLeftImage: z.string().nullable().optional(),
