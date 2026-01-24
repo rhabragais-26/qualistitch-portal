@@ -104,6 +104,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const [hoveredLeadId, setHoveredLeadId] = React.useState<string | null>(null);
   const router = useRouter();
   const [confirmingPrint, setConfirmingPrint] = useState<Lead | null>(null);
+  const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
   
   const [uploadLead, setUploadLead] = useState<Lead | null>(null);
   const [logoLeftImage, setLogoLeftImage] = useState<string>('');
@@ -172,12 +173,24 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
         title: "Update Failed",
         description: e.message || "Could not update the printed status.",
       });
+      setOptimisticChanges(prev => {
+        const newChanges = { ...prev[leadId] };
+        delete newChanges.isJoPrinted;
+        delete newChanges.joPrintedTimestamp;
+        return { ...prev, [leadId]: newChanges };
+      });
     }
   };
 
   const handleConfirmPrint = () => {
     if (confirmingPrint) {
-      handlePrintedChange(confirmingPrint.id, true);
+      const leadId = confirmingPrint.id;
+      const optimisticUpdate = {
+        isJoPrinted: true,
+        joPrintedTimestamp: new Date().toISOString()
+      };
+      setOptimisticChanges(prev => ({...prev, [leadId]: {...prev[leadId], ...optimisticUpdate }}));
+      handlePrintedChange(leadId, true);
       setConfirmingPrint(null);
     }
   };
@@ -238,6 +251,14 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
       return matchesSearch && matchesCsr && matchesJo;
     });
   }, [processedLeads, searchTerm, csrFilter, joNumberSearch, formatJoNumber]);
+  
+  const displayedLeads = useMemo(() => {
+    if (!filteredLeads) return [];
+    return filteredLeads.map(lead => ({
+      ...lead,
+      ...(optimisticChanges[lead.id] || {})
+    }));
+  }, [filteredLeads, optimisticChanges]);
   
   const handleOpenUploadDialog = useCallback((lead: Lead) => {
       const layout = lead.layouts?.[0];
@@ -417,7 +438,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                     </TableRow>
                   </TableHeader>
                     <TableBody>
-                    {filteredLeads.map((lead) => {
+                    {displayedLeads.map((lead) => {
                       const isJoSaved = !!lead.joNumber;
                       const isCompleted = lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered';
                       const creationDate = formatDateTime(lead.submissionDateTime);
@@ -442,7 +463,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                                         </div>
                                     </div>
                                 </CollapsibleTrigger>
-                                <div className="text-gray-500 text-center">{creationDate.dayOfWeek}</div>
+                                    <div className="text-gray-500 text-center">{creationDate.dayOfWeek}</div>
                                 <CollapsibleContent className="pt-1 text-gray-500 text-xs text-center">
                                   <div className="text-center">
                                     <span className='font-bold text-gray-600'>Last Modified:</span>
