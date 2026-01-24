@@ -1213,7 +1213,7 @@ export function LeadForm({
                                     onChange={(e) => setNewOrderColor(e.target.value)}
                                 />
                             ) : (
-                                <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={isPatches}>
+                                <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={!newOrderProductType || isPatches}>
                                 <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
                                 <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
                                 </Select>

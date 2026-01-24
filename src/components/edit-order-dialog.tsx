@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -118,7 +119,7 @@ const EditOrderDialogMemo = React.memo(function EditOrderDialog({ isOpen, onOpen
           </div>
           <div className='grid grid-cols-2 gap-4'>
             <div className="flex items-center gap-2">
-              <Label htmlFor="edit-color" className='text-sm'>Color:</Label>              <Select onValueChange={setColor} value={color} disabled={productType === 'Patches'}>
+              <Label htmlFor="edit-color" className='text-sm'>Color:</Label>              <Select onValueChange={setColor} value={color} disabled={!productType || productType === 'Patches'}>
                 <SelectTrigger id="edit-color">
                   <SelectValue placeholder="Select a Color" />
                 </SelectTrigger>
