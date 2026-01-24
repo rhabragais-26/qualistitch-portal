@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
@@ -238,19 +239,19 @@ export default function NewOrderPage() {
                     </div>
                     <div className="xl:col-span-2 space-y-4">
                         <div className="flex justify-center gap-2 flex-wrap">
-                            <Button type="button" variant="outline" size="sm" className="bg-gray-700 text-white hover:bg-gray-600 font-bold text-xs" onClick={() => setShowCalculator(true)}>
+                            <Button type="button" variant="outline" size="sm" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowCalculator(true)}>
                                 <CalculatorIcon className="mr-2 h-4 w-4" />
                                 Show Calculator
                             </Button>
-                            <Button type="button" variant="outline" size="sm" className="bg-gray-700 text-white hover:bg-gray-600 font-bold text-xs" onClick={() => setShowSizeChart(true)}>
+                            <Button type="button" variant="outline" size="sm" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowSizeChart(true)}>
                                 <Ruler className="mr-2 h-4 w-4" />
                                 Check Size Chart
                             </Button>
-                            <Button type="button" variant="outline" size="sm" className="bg-gray-700 text-white hover:bg-gray-600 font-bold text-xs" onClick={() => setShowItemPrices(true)}>
+                            <Button type="button" variant="outline" size="sm" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowItemPrices(true)}>
                                 <Tag className="mr-2 h-4 w-4" />
                                 Check Item Prices
                             </Button>
-                            <Button type="button" variant="outline" size="sm" className="bg-gray-700 text-white hover:bg-gray-600 font-bold text-xs" onClick={() => setShowRunningAds(true)}>
+                            <Button type="button" variant="outline" size="sm" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowRunningAds(true)}>
                                 <Tv className="mr-2 h-4 w-4" />
                                 Check Running Ads
                             </Button>
