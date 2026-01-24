@@ -244,6 +244,26 @@ const HeaderMemo = React.memo(function Header({
     return nickname.charAt(0).toUpperCase();
   };
 
+  const getAvatarColor = (nickname: string | undefined) => {
+    if (!nickname) return 'hsl(var(--primary))';
+    const colors = [
+        'hsl(var(--chart-1))',
+        'hsl(var(--chart-2))',
+        'hsl(var(--chart-3))',
+        'hsl(var(--chart-4))',
+        'hsl(var(--chart-5))',
+        'hsl(270, 90%, 55%)',
+    ];
+    let hash = 0;
+    if (nickname.length === 0) return colors[0];
+    for (let i = 0; i < nickname.length; i++) {
+        const char = nickname.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    const index = Math.abs(hash % colors.length);
+    return colors[index];
+  };
 
   return (
     <>
@@ -466,7 +486,10 @@ const HeaderMemo = React.memo(function Header({
                 <Button variant="ghost" className="flex items-center gap-2 h-10 rounded-md pl-3 text-white hover:bg-accent/90">
                     <Avatar className="h-8 w-8">
                     <AvatarImage src={userProfile?.photoURL || ''} alt={userProfile.nickname} />
-                    <AvatarFallback className="bg-primary text-primary-foreground font-bold">
+                    <AvatarFallback 
+                        className="text-primary-foreground font-bold"
+                        style={{ backgroundColor: getAvatarColor(userProfile?.nickname) }}
+                    >
                         {getInitials(userProfile?.nickname)}
                     </AvatarFallback>
                     </Avatar>
