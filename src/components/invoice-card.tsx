@@ -10,8 +10,8 @@ import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOptio
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { AddOns, Discount, Payment, AddBalancePaymentDialog } from "./invoice-dialogs";
-import { AddOnsDialog, DiscountDialog } from './invoice-dialogs';
+import { AddOns, Discount, Payment } from "./invoice-dialogs";
+import { AddOnsDialog, DiscountDialog, AddPaymentDialog, AddBalancePaymentDialog } from './invoice-dialogs';
 import { formatCurrency } from '@/lib/utils';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -177,7 +177,6 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
         }
     }));
   };
-
 
   return (
     <>
@@ -416,10 +415,10 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
         <CardFooter className="py-2 mt-auto">
             <div className="w-full">
                 <Separator />
-                <div className="mt-2 flex flex-col items-end gap-1">
+                <div className="flex flex-col items-end gap-1">
                     <div className="w-full flex justify-between items-center text-lg">
                       {isEditingLead ? (
-                        <div className="flex flex-col items-start gap-2">
+                        <div className="flex flex-col items-start gap-2 pt-2">
                             <Button variant="outline" disabled>Edit Initial Payment</Button>
                             <Button
                                 type="button"
@@ -438,7 +437,9 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                             </Button>
                         </div>
                       ) : (
-                        <div></div>
+                        <div className="pt-2">
+                          <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly} />
+                        </div>
                       )}
                       <div className="text-right flex-1">
                         <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
