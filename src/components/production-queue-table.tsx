@@ -935,4 +935,3 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     </Card>
   );
 }
-```
