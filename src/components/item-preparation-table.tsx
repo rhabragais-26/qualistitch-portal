@@ -1,4 +1,3 @@
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -91,7 +90,7 @@ type ItemPreparationTableProps = {
   filterType?: 'ONGOING' | 'COMPLETED';
 };
 
-const ItemPreparationTableRowGroup = React.memo(({
+const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRowGroup({
     lead,
     getProgrammingStatus,
     formatJoNumber,
@@ -176,6 +175,7 @@ const ItemPreparationTableRowGroup = React.memo(({
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
                                 disabled={isStockJacketOnly ? !lead.isJoPrinted : (!lead.isFinalProgram || isReadOnly || isCompleted)}
+                                className="disabled:opacity-100"
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                         </div>
@@ -196,7 +196,7 @@ const ItemPreparationTableRowGroup = React.memo(({
                                     size="sm"
                                     onClick={() => handleOpenPreparedDialog(lead)}
                                     className="h-7 px-2"
-                                    disabled={(!isStockJacketOnly && programmingStatus.text !== 'Final Program Uploaded') || isReadOnly || isCompleted}
+                                    disabled={isReadOnly || isCompleted}
                                 >
                                     Prepared
                                 </Button>
@@ -429,11 +429,11 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
             return (lead.isSentToProduction || lead.isEndorsedToLogistics);
         }
         
-        // ONGOING logic for items needing preparation
-        const isNormalOrderReady = lead.isFinalProgram && !lead.isSentToProduction && !lead.isEndorsedToLogistics;
-        const isStockJacketReady = lead.orderType === 'Stock (Jacket Only)' && lead.joNumber && !lead.isEndorsedToLogistics;
-        
-        return isNormalOrderReady || isStockJacketReady;
+        // ONGOING logic
+        const hasJoNumber = !!lead.joNumber;
+        const isNotSentOrEndorsed = !lead.isSentToProduction && !lead.isEndorsedToLogistics;
+
+        return hasJoNumber && isNotSentOrEndorsed;
     });
     
     return leadsInQueue.filter(lead => {
@@ -649,4 +649,3 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
-
