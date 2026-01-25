@@ -932,8 +932,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     </Button>
                 </div>
                  <Separator />
-
-                <div className="space-y-4">
+                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <div className="flex justify-between items-center mb-2">
@@ -972,7 +971,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         </div>
                     </div>
                   </div>
-                  <Separator />
+                </div>
+                <Separator />
+
+                <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <div className="flex justify-between items-center mb-2">
@@ -1592,6 +1594,7 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
 
 
 
