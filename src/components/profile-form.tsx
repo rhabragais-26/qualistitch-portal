@@ -1,5 +1,5 @@
 
-'use client';
+"use client";
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -147,7 +147,7 @@ export function ProfileForm() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        form.setValue('photoURL', e.target?.result as string, { shouldDirty: true });
+        form.setValue('photoURL', e.target.result as string, { shouldDirty: true });
       };
       reader.readAsDataURL(file);
     }
@@ -155,7 +155,7 @@ export function ProfileForm() {
 
   async function onSubmit(values: FormValues) {
     if (!user || !firestore) {
-      toast({ variant: 'destructive', title: 'Error', description: 'User or database not available.' });
+      console.error('User or database not available.');
       return;
     }
     setIsSaving(true);
@@ -265,7 +265,7 @@ export function ProfileForm() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="flex flex-col items-center gap-4">
                 <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
-                  <Avatar className="h-32 w-32">
+                  <Avatar className="h-32 w-32 border-4 border-white">
                       <AvatarImage src={form.getValues('photoURL') || userProfile?.photoURL || ''} alt={userProfile?.nickname} />
                       <AvatarFallback className="text-4xl bg-primary text-primary-foreground">
                           {getInitials(userProfile?.nickname)}
@@ -440,4 +440,3 @@ export function ProfileForm() {
     </>
   );
 }
-
