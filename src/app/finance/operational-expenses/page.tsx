@@ -201,7 +201,7 @@ function OperationalExpensesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {isLoading ? [...Array(5)].map((_, i) => (<TableRow key={i}><TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell></TableRow>))
+                      {isLoading ? [...Array(8)].map((_, i) => (<TableRow key={i}><TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell></TableRow>))
                         : error ? <TableRow><TableCell colSpan={6} className="text-center text-destructive">Error: {error.message}</TableCell></TableRow>
                         : expenses && expenses.length > 0 ? expenses.map(expense => (
                           <TableRow key={expense.id}>

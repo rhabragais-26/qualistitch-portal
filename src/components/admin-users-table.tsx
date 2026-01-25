@@ -356,7 +356,7 @@ export function AdminUsersTable() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  [...Array(5)].map((_, i) => (
+                  [...Array(8)].map((_, i) => (
                     <TableRow key={i}>
                       <TableCell colSpan={8}>
                         <Skeleton className="h-8 w-full" />

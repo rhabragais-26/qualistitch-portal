@@ -208,7 +208,7 @@ function CostOfGoodsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {isLoading ? [...Array(5)].map((_, i) => (<TableRow key={i}><TableCell colSpan={7}><Skeleton className="h-8 w-full" /></TableCell></TableRow>))
+                      {isLoading ? [...Array(8)].map((_, i) => (<TableRow key={i}><TableCell colSpan={7}><Skeleton className="h-8 w-full" /></TableCell></TableRow>))
                         : error ? <TableRow><TableCell colSpan={7} className="text-center text-destructive">Error: {error.message}</TableCell></TableRow>
                         : cogsData && cogsData.length > 0 ? cogsData.map(cogs => (
                           <TableRow key={cogs.id}>
