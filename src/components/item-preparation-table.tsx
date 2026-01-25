@@ -173,7 +173,6 @@ const ItemPreparationTableRowGroup = React.memo(({
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
                                 disabled={isStockJacketOnly ? !lead.isJoPrinted : (!lead.isFinalProgram || isReadOnly || isCompleted)}
-                                className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                         </div>
@@ -393,7 +392,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
         enrichedLeads.push({
           ...lead,
           orderNumber: index + 1,
-          totalCustomerQuantity: totalCustomerQuantity,
+          totalCustomerQuantity,
         });
       });
     });
