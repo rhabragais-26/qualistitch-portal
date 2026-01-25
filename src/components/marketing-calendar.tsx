@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -161,7 +162,7 @@ export function MarketingCalendar() {
           }
           map.get(dateKey)!.push(event);
         } catch (e) {
-          console.warn(`Invalid date format for event ${'\'\'\''}event.id{'\'\'\''}: ${'\'\'\''}event.date{'\'\'\''}`);
+          console.warn(`Invalid date format for event ${event.id}: ${event.date}`);
         }
       });
     }
@@ -191,7 +192,7 @@ export function MarketingCalendar() {
     const fileToUpload = eventData._fileToUpload;
 
     if (fileToUpload && finalImageUrl?.startsWith('data:')) {
-        const storageRef = ref(storage, `marketingCalendar/${'\'\'\''}eventId{'\'\'\''}/${'\'\'\''}fileToUpload.name{'\'\'\''}`);
+        const storageRef = ref(storage, `marketingCalendar/${eventId}/${fileToUpload.name}`);
         const uploadResult = await uploadString(storageRef, finalImageUrl, 'data_url');
         finalImageUrl = await getDownloadURL(uploadResult.ref);
     }
@@ -208,7 +209,7 @@ export function MarketingCalendar() {
 
     try {
         await setDoc(eventDocRef, dataToSave, { merge: true });
-        toast({ title: `Event ${'\'\'\''}isNew ? 'Added' : 'Updated'}` });
+        toast({ title: `Event ${isNew ? 'Added' : 'Updated'}` });
         setCurrentEvent(null);
         setDialogView('list');
     } catch (error: any) {
@@ -268,7 +269,7 @@ export function MarketingCalendar() {
           </div>
         </div>
       )}
-      <div className="flex flex-col w-full border rounded-lg h-auto">
+      <div className={cn("flex flex-col w-full border rounded-lg h-auto")}>
         <header className="grid grid-cols-3 items-center px-6 py-4 border-b">
           <div className="justify-self-start">
              <h2 className="text-2xl font-bold uppercase">MARKETING CALENDAR</h2>
@@ -374,7 +375,7 @@ export function MarketingCalendar() {
             <DialogHeader>
                 <DialogTitle>
                     {dialogView === 'list' 
-                        ? `Events for ${'\'\'\''}selectedDate ? format(selectedDate, 'MMMM dd, yyyy') : ''}` 
+                        ? `Events for ${selectedDate ? format(selectedDate, 'MMMM dd, yyyy') : ''}`
                         : currentEvent?.id && events?.some(e => e.id === currentEvent.id) ? 'Edit Event' : 'Add New Event'
                     }
                 </DialogTitle>
@@ -410,7 +411,6 @@ export function MarketingCalendar() {
                     event={currentEvent}
                     onSave={handleSaveEvent}
                     onCancel={() => setDialogView('list')}
-                    onClose={() => {}}
                 />
             ) : null}
         </DialogContent>
