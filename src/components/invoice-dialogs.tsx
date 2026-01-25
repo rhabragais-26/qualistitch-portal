@@ -253,7 +253,7 @@ export const DiscountDialog = React.memo(function DiscountDialog({ groupKey, dis
 });
 
 export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTotal, setPayments, payments, isReadOnly, disabled }: { grandTotal: number; setPayments: React.Dispatch<React.SetStateAction<Record<string, Payment[]>>>, payments: Record<string, Payment[]>, isReadOnly?: boolean, disabled?: boolean }) {
-  const [paymentType, setPaymentType] = useState<'down' | 'full'>('down');
+  const [paymentType, setPaymentType] = useState<'down' | 'full' | 'securityDeposit'>('down');
   const [amount, setAmount] = useState(0);
   const [paymentMode, setPaymentMode] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -268,7 +268,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
   useEffect(() => {
     if (isOpen) {
       if (hasPayments && firstPayment) {
-        setPaymentType(firstPayment.type as 'down' | 'full');
+        setPaymentType(firstPayment.type as 'down' | 'full' | 'securityDeposit');
         setAmount(firstPayment.amount);
         setPaymentMode(firstPayment.mode);
       } else {
@@ -297,7 +297,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
         const finalValue = isNaN(numericValue) ? 0 : numericValue;
         setAmount(finalValue);
         
-        if (grandTotal > 0 && finalValue > grandTotal) {
+        if (grandTotal > 0 && finalValue > grandTotal && paymentType !== 'securityDeposit') {
           setAmountError(`Amount cannot exceed the total of ${formatCurrency(grandTotal)}.`);
         } else {
           setAmountError(null);
@@ -331,7 +331,7 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
           <DialogTitle>{hasPayments ? 'Edit Payment' : 'Add Payment'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <RadioGroup value={paymentType} onValueChange={(v: 'full' | 'down') => setPaymentType(v)} className="flex justify-center gap-4">
+          <RadioGroup value={paymentType} onValueChange={(v: 'full' | 'down' | 'securityDeposit') => setPaymentType(v)} className="flex justify-center gap-4">
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="down" id="down" />
               <Label htmlFor="down">Down Payment</Label>
@@ -339,6 +339,10 @@ export const AddPaymentDialog = React.memo(function AddPaymentDialog({ grandTota
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="full" id="full" />
               <Label htmlFor="full">Full Payment</Label>
+            </div>
+             <div className="flex items-center space-x-2">
+              <RadioGroupItem value="securityDeposit" id="security-deposit" />
+              <Label htmlFor="security-deposit">Security Deposit</Label>
             </div>
           </RadioGroup>
 
