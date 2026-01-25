@@ -47,6 +47,26 @@ type Order = {
   quantity: number;
 }
 
+type DesignDetails = {
+  left?: boolean;
+  right?: boolean;
+  backLogo?: boolean;
+  backText?: boolean;
+};
+
+type NamedOrder = {
+  name: string;
+  color: string;
+  size: string;
+  quantity: number;
+  backText: string;
+};
+
+type FileObject = {
+  name: string;
+  url: string;
+};
+
 type Layout = {
   layoutImage?: string | null;
   refLogoLeftImage?: string | null;
@@ -161,6 +181,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     if (!lead.joNumber || !lead.isJoPrinted) {
       return <span className="text-gray-500">Not yet endorsed</span>;
     }
+    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') return "Already Shipped";
     if (lead.isRecheckingQuality) return <span className="font-bold text-red-600">Need to Reprint</span>;
     if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') return "Already Shipped";
     if (lead.isEndorsedToLogistics) return "Already on Logistics";
@@ -560,7 +581,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                             <TableCell className="text-center align-middle py-2">
                                 <div className="relative inline-flex items-center justify-center">
                                     {/* Disable upload button if read-only */}
-                                    <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)} disabled={isReadOnly}>
+                                    <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)} disabled={isCompleted || isReadOnly}>
                                         <Upload className="mr-2 h-4 w-4" />
                                         Upload
                                     </Button>
@@ -676,6 +697,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               }>Save Images </Button></DialogFooter></DialogContent></Dialog></Card> ); }
 
     
+
 
 
 
