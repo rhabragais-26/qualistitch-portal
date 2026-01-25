@@ -35,7 +35,9 @@ const positions: UserPosition[] = [
     'SCES',
     'Sales Supervisor',
     'Sales Manager',
+    'S.E Officer',
     'Digitizer',
+    'E.D Coordinator',
     'Inventory Officer',
     'Production Line Leader',
     'Production Head',
@@ -203,11 +205,7 @@ export function ProfileForm() {
         form.reset(values);
 
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Update Failed',
-        description: error.message || 'Could not update your profile.',
-      });
+      // Error handling toast removed as requested
     } finally {
       setIsSaving(false);
     }
