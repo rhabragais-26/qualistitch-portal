@@ -102,9 +102,9 @@ export function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialIte
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Product Type</TableHead>
-                                <TableHead>Color</TableHead>
-                                <TableHead>Size</TableHead>
+                                <TableHead className="w-[40%]">Product Type</TableHead>
+                                <TableHead className="w-[25%]">Color</TableHead>
+                                <TableHead className="w-[15%]">Size</TableHead>
                                 <TableHead className="w-[150px] text-center">Quantity</TableHead>
                                 <TableHead className="w-[50px]"></TableHead>
                             </TableRow>
@@ -114,18 +114,18 @@ export function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialIte
                                 const maxQty = getMaxQuantity(item.productType, item.color, item.size);
                                 return (
                                 <TableRow key={item.id}>
-                                    <TableCell className="min-w-[200px]">
+                                    <TableCell>
                                         <Select 
                                             value={item.productType} 
                                             onValueChange={(v) => updateItem(item.id, 'productType', v)}
                                             open={openDropdown === `${item.id}-productType`}
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-productType`, open)}
                                         >
-                                            <SelectTrigger className="w-auto"><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger className="w-full"><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>{availableProductTypes.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                                         </Select>
                                     </TableCell>
-                                    <TableCell className="min-w-[150px]">
+                                    <TableCell>
                                         <Select 
                                             value={item.color} 
                                             onValueChange={(v) => updateItem(item.id, 'color', v)}
@@ -133,7 +133,7 @@ export function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialIte
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-color`, open)}
                                             disabled={!item.productType}
                                         >
-                                            <SelectTrigger className="w-auto"><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger className="w-full"><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>
                                                 {getAvailableColors(item.productType).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                                             </SelectContent>
@@ -147,7 +147,7 @@ export function QuantityDialog({ isOpen, onClose, onSave, leadOrders, initialIte
                                             onOpenChange={(open) => handleOpenChange(`${item.id}-size`, open)}
                                             disabled={!item.productType || !item.color}
                                         >
-                                            <SelectTrigger className="w-auto"><SelectValue placeholder="Select..." /></SelectTrigger>
+                                            <SelectTrigger className="w-full"><SelectValue placeholder="Select..." /></SelectTrigger>
                                             <SelectContent>
                                                 {getAvailableSizes(item.productType, item.color).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                                             </SelectContent>
