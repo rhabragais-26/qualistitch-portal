@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/card';
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from './ui/button';
-import { Check, ChevronDown, Send } from 'lucide-react';
+import { Check, ChevronDown, Send, ChevronUp } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Input } from './ui/input';
@@ -65,6 +65,7 @@ type Lead = {
   sentToProductionTimestamp?: string;
   priorityType: 'Rush' | 'Regular';
   deliveryDate?: string;
+  isJoPrinted?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -90,6 +91,7 @@ type ItemPreparationTableProps = {
 
 const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRowGroup({
     lead,
+    isRepeat,
     getProgrammingStatus,
     formatJoNumber,
     getContactDisplay,
@@ -100,6 +102,7 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
     filterType,
 }: {
     lead: EnrichedLead;
+    isRepeat: boolean;
     getProgrammingStatus: (lead: Lead) => { text: string; variant: "success" | "destructive" | "warning" | "default" | "secondary"; };
     formatJoNumber: (joNumber: number | undefined) => string;
     getContactDisplay: (lead: Lead) => string | null;
@@ -109,7 +112,6 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
     isReadOnly: boolean;
     filterType?: 'ONGOING' | 'COMPLETED';
 }) {
-    const isRepeat = lead.orderNumber > 1;
     const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
     const numOrders = lead.orders.length;
     const programmingStatus = getProgrammingStatus(lead);
@@ -172,7 +174,6 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                             <Checkbox
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                disabled={isStockJacketOnly ? !lead.isJoPrinted : (!lead.isFinalProgram || isReadOnly || isCompleted)}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                         </div>
@@ -423,11 +424,13 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
     
     const leadsInQueue = processedLeads.filter(lead => {
         if (filterType === 'COMPLETED') {
-            return (lead.isSentToProduction || lead.isEndorsedToLogistics);
+            return lead.isSentToProduction || lead.isEndorsedToLogistics;
         }
         
         const hasJoNumber = !!lead.joNumber;
         const isNotSentOrEndorsed = !lead.isSentToProduction && !lead.isEndorsedToLogistics;
+
+        // Display if JO number exists and it's not yet sent to prod/logistics
         return hasJoNumber && isNotSentOrEndorsed;
     });
     
@@ -469,38 +472,36 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
-       {confirmingLead && (
-        <AlertDialog open={!!confirmingLead} onOpenChange={() => setConfirmingLead(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are the prepared items correct?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Please check all items to confirm they have been prepared correctly.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="max-h-60 overflow-y-auto my-4 space-y-2 pr-2">
-              {confirmingLead.orders.map((order, index) => (
-                <div key={index} className="flex items-center space-x-2 p-2 rounded-md border">
-                  <Checkbox
-                    id={`item-${index}`}
-                    checked={checkedItems[index] || false}
-                    onCheckedChange={(checked) => handleCheckboxChange(index, !!checked)}
-                  />
-                   <Label htmlFor={`item-${index}`} className="text-sm font-normal flex-1 cursor-pointer">
-                     <span className="font-bold text-teal-700">{order.quantity}x</span> {order.productType} ( Color: <span className="font-bold text-teal-700">{order.color}</span> | Size: <span className="font-bold text-teal-700">{order.size}</span> )
-                  </Label>
-                </div>
-              ))}
-            </div>
-            <AlertDialogFooter>
-              <AlertDialogCancel>No</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmPrepared} disabled={!areAllItemsChecked}>
-                Yes
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+      <AlertDialog open={!!confirmingLead} onOpenChange={() => setConfirmingLead(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are the prepared items correct?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please check all items to confirm they have been prepared correctly.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="max-h-60 overflow-y-auto my-4 space-y-2 pr-2">
+            {confirmingLead?.orders.map((order, index) => (
+              <div key={index} className="flex items-center space-x-2 p-2 rounded-md border">
+                <Checkbox
+                  id={`item-${index}`}
+                  checked={checkedItems[index] || false}
+                  onCheckedChange={(checked) => handleCheckboxChange(index, !!checked)}
+                />
+                 <Label htmlFor={`item-${index}`} className="text-sm font-normal flex-1 cursor-pointer">
+                   <span className="font-bold text-teal-700">{order.quantity}x</span> {order.productType} ( Color: <span className="font-bold text-teal-700">{order.color}</span> | Size: <span className="font-bold text-teal-700">{order.size}</span> )
+                </Label>
+              </div>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmPrepared} disabled={!areAllItemsChecked}>
+              Yes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {leadToSend && (
           <AlertDialog open={!!leadToSend} onOpenChange={() => setLeadToSend(null)}>
@@ -603,7 +604,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
         </div>
       </CardHeader>
       <CardContent>
-           <div className="border rounded-md pb-4">
+           <div className="border rounded-md">
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
@@ -624,6 +625,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
                     <ItemPreparationTableRowGroup
                         key={lead.id}
                         lead={lead}
+                        isRepeat={lead.orderNumber > 1}
                         getProgrammingStatus={getProgrammingStatus}
                         formatJoNumber={formatJoNumber}
                         getContactDisplay={getContactDisplay}
@@ -644,5 +646,3 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
-
-
