@@ -1,3 +1,4 @@
+
 'use client';
 
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
@@ -17,22 +18,24 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import React, { useState, useMemo, useCallback } from 'react';
+import { Button } from './ui/button';
+import { Check, ChevronDown, Send, FileText, X, Download, AlertTriangle } from 'lucide-react';
+import { Badge } from './ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Badge } from './ui/badge';
-import { addDays, differenceInDays, format } from 'date-fns';
-import { formatDateTime, cn, toTitleCase } from '@/lib/utils';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
-import { ChevronDown, Send, FileText, X, Download, Check, AlertTriangle } from 'lucide-react';
+import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { Checkbox } from './ui/checkbox';
+import { Label } from './ui/label';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
-import { Checkbox } from './ui/checkbox';
-import { Button } from './ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import Image from 'next/image';
 import Link from 'next/link';
+import { addDays, differenceInDays, format } from 'date-fns';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 type Order = {
   productType: string;
@@ -299,7 +302,7 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
 });
 ProductionDocuments.displayName = 'ProductionDocuments';
 
-const ProductionQueueTableRow = React.memo(({
+const ProductionQueueTableRowGroup = React.memo(({
     lead,
     deadlineInfo,
     productionStatus,
@@ -327,205 +330,131 @@ const ProductionQueueTableRow = React.memo(({
     filterType?: 'ONGOING' | 'COMPLETED';
 }) => {
     const isRepeat = lead.orderNumber > 1;
-    const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
+    const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+    const numOrders = lead.orders.length;
+    const isStockJacketOnly = lead.orderType === 'Stock (Jacket Only)';
     const isCompleted = filterType === 'COMPLETED';
 
     return (
-        <>
-            <TableRow>
-                <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
-                    <Collapsible>
-                        <CollapsibleTrigger asChild>
-                            <div className="flex items-center justify-center cursor-pointer">
-                                <span>{toTitleCase(lead.customerName)}</span>
-                                <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
-                            </div>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
-                            {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {toTitleCase(lead.companyName)}</div>}
-                            {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
-                        </CollapsibleContent>
-                    </Collapsible>
-                    {isRepeat ? (
-                        <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                            <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
-                                <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                {lead.orderNumber}
-                                </span>
-                            </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                            <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                            </TooltipContent>
-                        </Tooltip>
-                        </TooltipProvider>
-                    ) : (
-                        <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                    )}
-                </TableCell>
-                <TableCell className="text-xs align-middle py-3 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
-                <TableCell className="align-middle py-3 text-center">
-                    <div className="flex flex-col items-center gap-1">
-                        <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                        {lead.priorityType}
-                        </Badge>
-                        <div className={cn("text-gray-500 text-[10px] whitespace-nowrap", specialOrderTypes.includes(lead.orderType) && "font-bold")}>
-                        {lead.orderType}
-                        </div>
-                    </div>
-                </TableCell>
-                <TableCell className={cn(
-                    "text-center text-xs align-middle py-3 font-medium",
-                    deadlineInfo.isOverdue && "text-red-500",
-                    deadlineInfo.isUrgent && "text-amber-600",
-                    !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
-                )}>
-                    {deadlineInfo.text}
-                </TableCell>
-                <TableCell className="text-xs align-middle py-3 text-black text-center">
-                    <Button variant="ghost" className="h-auto py-1 px-2 flex items-center gap-1 text-black hover:bg-gray-100 hover:text-black" onClick={() => toggleLeadDetails(lead.id)}>
-                    <FileText className="h-4 w-4" />
-                    <span className="whitespace-normal break-words leading-tight">View Documents</span>
-                    <ChevronDown className={cn("h-4 w-4 transition-transform", openLeadId === lead.id && "rotate-180")} />
-                    </Button>
-                </TableCell>
-                 <TableCell className="text-center align-middle py-2">
-                    <div className="flex flex-col items-center justify-center gap-1">
-                        <Checkbox
-                        checked={lead.isJoHardcopyReceived || false}
-                        onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                        disabled={!lead.isSentToProduction || isReadOnly || isCompleted}
-                        className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
-                        />
-                        {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
-                    </div>
-                </TableCell>
-                <TableCell className="text-center align-middle py-3">
-                    <div className="flex flex-col items-center justify-center gap-1">
-                    <Checkbox
-                        checked={lead.isCutting || false}
-                        onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
-                        disabled={!lead.isJoHardcopyReceived || isReadOnly || isCompleted}
-                        className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
-                    />
-                    {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
-                    </div>
-                </TableCell>
-                <TableCell className="text-center align-middle py-3">
-                    <Select
-                    value={lead.productionType || 'Pending'}
-                    onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)}
-                    disabled={!lead.isCutting || lead.isEmbroideryDone || isReadOnly || isCompleted}
-                    >
-                    <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.productionType), isReadOnly || isCompleted ? "disabled:opacity-100" : "")}>
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {productionOptions.map(option => (
-                            <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
-                    </SelectContent>
-                    </Select>
-                </TableCell>
-                <TableCell className="text-center align-middle py-3">
-                    <div className="flex flex-col items-center justify-center gap-1">
-                    <Checkbox
-                        checked={lead.isEmbroideryDone || false}
-                        onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
-                        disabled={!lead.isCutting || !lead.productionType || lead.productionType === 'Pending' || isReadOnly || isCompleted}
-                        className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
-                    />
-                    {lead.embroideryDoneTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.embroideryDoneTimestamp).dateTimeShort}</div>}
-                    </div>
-                </TableCell>
-                <TableCell className="text-center align-middle py-3">
-                    <Select
-                    value={lead.sewerType || 'Pending'}
-                    onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)}
-                    disabled={!lead.isEmbroideryDone || lead.isSewing || isReadOnly || isCompleted}
-                    >
-                    <SelectTrigger className={cn("w-auto min-w-[110px] text-xs h-8 mx-auto font-semibold disabled:opacity-100", getStatusColor(lead.sewerType), isReadOnly || isCompleted ? "disabled:opacity-100" : "")}>
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {productionOptions.map(option => (
-                            <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
-                    </SelectContent>
-                    </Select>
-                </TableCell>
-                <TableCell className="text-center align-middle py-3">
-                    <div className="flex flex-col items-center justify-center gap-1">
-                    <Checkbox
-                        checked={lead.isSewing || false}
-                        onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
-                        disabled={!lead.isEmbroideryDone || !lead.sewerType || lead.sewerType === 'Pending' || isReadOnly || isCompleted}
-                        className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
-                    />
-                    {lead.sewingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
-                    </div>
-                </TableCell>
-                <TableCell className="text-center align-middle py-3">
-                    <Badge variant={productionStatus.variant}>{productionStatus.text}</Badge>
-                </TableCell>
-                <TableCell className="text-center align-middle py-3">
-                    <div className="flex items-center justify-center gap-2">
-                        {lead.isRecheckingQuality && (
-                            <TooltipProvider>
+        <React.Fragment>
+            {lead.orders.map((order, orderIndex) => (
+                <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex === 0 ? "border-t-2 border-black" : ""}>
+                    {orderIndex === 0 && (
+                        <TableCell rowSpan={numOrders + 1} className="font-medium text-xs align-middle py-3 text-black border-b-2 border-black text-center">
+                            <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                    <div className="flex items-center justify-center cursor-pointer">
+                                        <span>{lead.customerName}</span>
+                                        <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                    </div>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
+                                    {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
+                                    {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
+                                </CollapsibleContent>
+                            </Collapsible>
+                            {isRepeat ? (
+                                <TooltipProvider>
                                 <Tooltip>
-                                    <TooltipTrigger>
-                                        <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                                    <TooltipTrigger asChild>
+                                    <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
+                                        <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                        <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                          {lead.orderNumber}
+                                        </span>
+                                    </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p>Quality Error</p>
+                                    <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
                                     </TooltipContent>
                                 </Tooltip>
-                            </TooltipProvider>
-                        )}
-                        {filterType === 'COMPLETED' ? (
-                            lead.isEndorsedToLogistics && (
-                                <div className="flex flex-col items-center gap-1">
-                                    <div className="flex items-center text-sm text-green-600 font-semibold">
-                                        <Check className="mr-2 h-4 w-4" /> Endorsed
-                                    </div>
-                                    {lead.endorsedToLogisticsTimestamp && (
-                                        <div className="text-xs text-gray-500">
-                                            {formatDateTime(lead.endorsedToLogisticsTimestamp).dateTimeShort}
-                                        </div>
-                                    )}
-                                </div>
-                            )
-                        ) : (
-                            <Button
-                                size="sm"
-                                onClick={() => handleEndorseToLogistics(lead.id)}
-                                disabled={!lead.isDone || isReadOnly}
-                                className={cn(
-                                    "h-auto px-3 py-3 text-white font-bold text-xs bg-teal-600 disabled:bg-gray-400 transition-all duration-300 ease-in-out transform hover:scale-105",
-                                    isReadOnly && "disabled:opacity-100"
-                                )}
-                            >
-                                <Send className="h-3.5 w-3.5" />
-                                <span className='whitespace-normal break-words'>Send to Logistics</span>
-                            </Button>
-                        )}
-                    </div>
-                </TableCell>
-            </TableRow>
-            {openLeadId === lead.id && (
-                <TableRow>
-                    <TableCell colSpan={13} className="p-0">
-                        <ProductionDocuments lead={lead} />
+                                </TooltipProvider>
+                            ) : (
+                                <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                            )}
+                        </TableCell>
+                    )}
+                    {orderIndex === 0 && (
+                        <TableCell rowSpan={numOrders + 1} className="text-xs align-middle py-3 text-black border-b-2 border-black text-center">
+                        <div>{formatJoNumber(lead.joNumber)}</div>
+                        </TableCell>
+                    )}
+                    {orderIndex === 0 && (
+                        <TableCell rowSpan={numOrders + 1} className="align-middle py-3 border-b-2 border-black text-center">
+                        <Badge variant={productionStatus.variant as any}>{productionStatus.text}</Badge>
+                        {isStockJacketOnly && <p className="text-xs font-bold mt-1">Stocks (Jacket Only)</p>}
+                        </TableCell>
+                    )}
+                    {orderIndex === 0 && (
+                        <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
+                        <div className="flex flex-col items-center justify-center gap-1">
+                            <Checkbox
+                                checked={lead.isJoHardcopyReceived || false}
+                                onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
+                                disabled={!lead.isSentToProduction || isReadOnly || isCompleted}
+                                className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
+                            />
+                            {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
+                        </div>
                     </TableCell>
+                    )}
+                <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
+                    <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
+                    <TableCell className="py-1 px-2 text-xs text-black text-center">{order.size}</TableCell>
+                    <TableCell className="py-1 px-2 text-xs text-black text-center">{order.quantity}</TableCell>
+                    {orderIndex === 0 && (
+                        <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
+                        {lead.isPreparedForProduction ? (
+                            <div className="flex items-center justify-center text-sm text-green-600 font-semibold">
+                                <Check className="mr-2 h-4 w-4" /> Prepared
+                            </div>
+                            ) : (
+                                <Button
+                                    size="sm"
+                                    onClick={() => {}}
+                                    className="h-7 px-2"
+                                    disabled
+                                >
+                                    Prepared
+                                </Button>
+                            )}
+                        </TableCell>
+                    )}
+                    {orderIndex === 0 && (
+                        <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
+                            {lead.isSentToProduction || lead.isEndorsedToLogistics ? (
+                            <div className="flex flex-col items-center gap-1">
+                                <div className="flex items-center text-sm text-green-600 font-semibold">
+                                    <Check className="mr-2 h-4 w-4" /> Sent
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                    <div>{formatDateTime(lead.sentToProductionTimestamp!).dateTimeShort}</div>
+                                </div>
+                            </div>
+                            ) : (
+                                <Button
+                                    size="sm"
+                                    onClick={() => {}}
+                                    disabled
+                                    className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
+                                >
+                                    <Send className="mr-2 h-4 w-4" /> 
+                                    {isStockJacketOnly ? 'Send to Logistics' : 'Send to Prod'}
+                                </Button>
+                            )}
+                        </TableCell>
+                    )}
                 </TableRow>
-            )}
-        </>
+            ))}
+            <TableRow className="border-b-2 border-black bg-gray-50">
+                <TableCell colSpan={3} className="py-1 px-2 text-xs font-bold text-right">Total Quantity</TableCell>
+                <TableCell className="py-1 px-2 text-xs text-center font-bold">{totalQuantity}</TableCell>
+            </TableRow>
+        </React.Fragment>
     );
 });
-ProductionQueueTableRow.displayName = 'ProductionQueueTableRow';
+ProductionQueueTableRowGroup.displayName = 'ProductionQueueTableRowGroup';
+
 
 type ProductionQueueTableProps = {
   isReadOnly: boolean;
@@ -543,7 +472,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
-  
+
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
@@ -757,12 +686,24 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         enrichedLeads.push({
           ...lead,
           orderNumber: index + 1,
-          totalCustomerQuantity: totalCustomerQuantity,
+          totalCustomerQuantity,
         });
       });
     });
   
     return enrichedLeads;
+  }, [leads]);
+
+  const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
+    const lead = leads?.find((l) => l.id === leadId);
+    if (!lead) return;
+    const isCurrentlyChecked = lead.isJoHardcopyReceived || false;
+
+    if (!checked && isCurrentlyChecked) {
+      setUncheckConfirmation({ leadId, field: 'isJoHardcopyReceived' });
+    } else if (checked && !isCurrentlyChecked) {
+      setJoReceivedConfirmation(leadId);
+    }
   }, [leads]);
 
   const productionQueue = useMemo(() => {
@@ -903,7 +844,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                 <TableBody>
                 {productionQueue && productionQueue.length > 0 ? (
                     productionQueue.map((lead) => (
-                        <ProductionQueueTableRow
+                        <ProductionQueueTableRowGroup
                             key={lead.id}
                             lead={lead}
                             deadlineInfo={calculateProductionDeadline(lead)}
