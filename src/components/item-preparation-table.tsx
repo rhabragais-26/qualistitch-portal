@@ -1,3 +1,4 @@
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -32,9 +33,6 @@ import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import Link from 'next/link';
-import { addDays, differenceInDays, format } from 'date-fns';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 
 type Order = {
   productType: string;
@@ -110,7 +108,7 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
     setLeadToSend: (lead: Lead) => void;
     isReadOnly: boolean;
     filterType?: 'ONGOING' | 'COMPLETED';
-}) => {
+}) {
     const isRepeat = lead.orderNumber > 1;
     const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
     const numOrders = lead.orders.length;
@@ -175,7 +173,6 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
                                 disabled={isStockJacketOnly ? !lead.isJoPrinted : (!lead.isFinalProgram || isReadOnly || isCompleted)}
-                                className="disabled:opacity-100"
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                         </div>
@@ -429,10 +426,8 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
             return (lead.isSentToProduction || lead.isEndorsedToLogistics);
         }
         
-        // ONGOING logic
         const hasJoNumber = !!lead.joNumber;
         const isNotSentOrEndorsed = !lead.isSentToProduction && !lead.isEndorsedToLogistics;
-
         return hasJoNumber && isNotSentOrEndorsed;
     });
     
@@ -649,3 +644,5 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
+
