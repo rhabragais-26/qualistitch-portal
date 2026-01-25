@@ -146,11 +146,23 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     let isUrgent = false;
 
     if (lead.shipmentStatus === 'Delivered' && lead.deliveredTimestamp) {
-        statusText = <><span className="font-bold">Delivered:</span> {formatDateTime(lead.deliveredTimestamp).dateTimeShort}</>;
-        remainingDays = Infinity;
+        const deliveredDate = new Date(lead.deliveredTimestamp);
+        remainingDays = differenceInDays(deadlineDate, deliveredDate);
+        if (remainingDays < 0) {
+            isOverdue = true;
+            statusText = <><span className="font-bold">Delivered:</span> {formatDateTime(lead.deliveredTimestamp).dateTimeShort} <br /> ({Math.abs(remainingDays)} day(s) late)</>;
+        } else {
+            statusText = <><span className="font-bold">Delivered:</span> {formatDateTime(lead.deliveredTimestamp).dateTimeShort}</>;
+        }
     } else if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
-        statusText = <><span className="font-bold">Shipped:</span> {formatDateTime(lead.shippedTimestamp).dateTimeShort}</>;
-        remainingDays = Infinity;
+        const shippedDate = new Date(lead.shippedTimestamp);
+        remainingDays = differenceInDays(deadlineDate, shippedDate);
+        if (remainingDays < 0) {
+            isOverdue = true;
+            statusText = <><span className="font-bold">Shipped:</span> {formatDateTime(lead.shippedTimestamp).dateTimeShort} <br /> ({Math.abs(remainingDays)} day(s) late)</>;
+        } else {
+            statusText = <><span className="font-bold">Shipped:</span> {formatDateTime(lead.shippedTimestamp).dateTimeShort}</>;
+        }
     } else {
         remainingDays = differenceInDays(deadlineDate, new Date());
         if (remainingDays < 0) {
@@ -347,7 +359,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     return (
       <div className="space-y-2 p-4">
         {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full" />
+          <Skeleton key={i} className="h-16 w-full bg-gray-200" />
         ))}
       </div>
     );
@@ -572,9 +584,9 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                             </TableCell>
                             <TableCell className={cn(
                               "text-center text-xs align-middle py-3",
-                              deadlineInfo.isOverdue && "text-red-500",
-                              deadlineInfo.isUrgent && "text-amber-600",
-                              !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
+                              deadlineInfo.isOverdue && "text-red-500 font-bold",
+                              deadlineInfo.isUrgent && "text-amber-600 font-bold",
+                              !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600 font-bold"
                             )}>{deadlineInfo.text}</TableCell>
                             <TableCell className="text-center text-xs align-middle py-3 font-medium">
                                 {lead.operationalCase ? (
@@ -691,3 +703,5 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   );
 }
 
+
+```
