@@ -479,15 +479,25 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
 
             {totalPaid > 0 ? (
               Object.values(payments).flat().map((payment, index) => {
-                let description = 'Payment';
-                if (payment.type === 'down' || (payment.type === 'full' && balance > 0)) {
-                  description = 'Down Payment';
-                } else if (payment.type === 'full' && balance <= 0) {
-                   description = 'Full Payment';
-                } else if (payment.type === 'balance') {
-                   description = balance <= 0 ? 'Balance Payment' : 'Additional Payment';
-                } else if (payment.type === 'securityDeposit') {
+                let description: string;
+                switch (payment.type) {
+                  case 'down':
+                    description = 'Down Payment';
+                    break;
+                  case 'full':
+                    description = 'Full Payment';
+                    break;
+                  case 'balance':
+                    description = 'Balance Payment';
+                    break;
+                  case 'additional':
+                    description = 'Additional Payment';
+                    break;
+                  case 'securityDeposit':
                     description = 'Security Deposit';
+                    break;
+                  default:
+                    description = 'Payment';
                 }
 
                 return (
@@ -549,3 +559,5 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     </>
   );
 }
+
+    
