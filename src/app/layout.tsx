@@ -2,10 +2,9 @@ import type {Metadata} from 'next';
 import {Toaster} from '@/components/ui/toaster';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase';
-import { CollapsibleChat } from '@/components/collapsible-chat';
 import { RealtimeConfetti } from '@/components/realtime-confetti';
-import { CollapsibleRightPanel } from '@/components/collapsible-right-panel';
 import { RealtimeBanner } from '@/components/realtime-banner';
+import { AppShell } from '@/components/AppShell';
 
 export const metadata: Metadata = {
   title: 'Qualistitch Inc.',
@@ -31,11 +30,11 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <RealtimeConfetti />
           <RealtimeBanner />
-          <div className="flex-1 flex flex-col">
-            {children}
-          </div>
-          <CollapsibleChat />
-          <CollapsibleRightPanel />
+          <AppShell>
+            <div className="flex-1 flex flex-col">
+              {children}
+            </div>
+          </AppShell>
           <Toaster />
         </FirebaseClientProvider>
       </body>
