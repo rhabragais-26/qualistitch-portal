@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -265,7 +264,7 @@ export function ProfileForm() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="flex flex-col items-center gap-4">
                 <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
-                  <Avatar className="h-32 w-32 border-4 border-white">
+                  <Avatar className="h-32 w-32 border-4 border-white shadow-lg">
                       <AvatarImage src={form.getValues('photoURL') || userProfile?.photoURL || ''} alt={userProfile?.nickname} />
                       <AvatarFallback className="text-4xl bg-primary text-primary-foreground">
                           {getInitials(userProfile?.nickname)}
