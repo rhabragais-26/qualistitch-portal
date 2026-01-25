@@ -335,7 +335,12 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     setLeadToReopen: (lead: Lead) => void;
     toggleLeadDetails: (leadId: string) => void;
     openLeadId: string | null;
-}) => {
+}) {
+    const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+    const numOrders = lead.orders.length;
+    const programmingStatus = getProductionStatusLabel(lead);
+    const isStockJacketOnly = lead.orderType === 'Stock (Jacket Only)';
+
     return (
         <React.Fragment>
             <TableRow>
