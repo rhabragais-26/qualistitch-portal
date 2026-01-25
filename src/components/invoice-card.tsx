@@ -92,7 +92,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       let subtotal = groupData.totalQuantity * unitPrice;
 
       
-      const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 };
+      const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, ...(addOns[groupKey] || {}) };
       const groupDiscount = discounts[groupKey];
       const itemTotalQuantity = groupData.totalQuantity;
 
@@ -197,7 +197,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned, orderType);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
-                const groupAddOns = addOns[groupKey] || { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 };
+                const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, ...(addOns[groupKey] || {}) };
                 const groupDiscount = discounts[groupKey];
                 const itemTotalQuantity = groupData.totalQuantity;
 
