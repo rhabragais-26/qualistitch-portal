@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -161,6 +162,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
       return <span className="text-gray-500">Not yet endorsed</span>;
     }
     if (lead.isRecheckingQuality) return <span className="font-bold text-red-600">Need to Reprint</span>;
+    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') return "Already Shipped";
     if (lead.isEndorsedToLogistics) return "Already on Logistics";
     if (lead.isSentToProduction) return "Already on Production Dept.";
     if (lead.isPreparedForProduction) return "Already on Inventory";
@@ -674,6 +676,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               }>Save Images </Button></DialogFooter></DialogContent></Dialog></Card> ); }
 
     
+
 
 
 
