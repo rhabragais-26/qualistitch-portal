@@ -31,8 +31,11 @@ import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import Link from 'next/link';
+import { addDays, differenceInDays, format } from 'date-fns';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 type Order = {
   productType: string;
@@ -326,19 +329,36 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
     }
   }, [leads]);
   
-  const confirmUncheck = useCallback(() => {
-    if (uncheckConfirmation) {
-      handleUpdateStatus(uncheckConfirmation.leadId, uncheckConfirmation.field, false);
-      setUncheckConfirmation(null);
+  const confirmUncheck = useCallback(async () => {
+    if (!uncheckConfirmation || !firestore) return;
+    const { leadId, field } = uncheckConfirmation;
+    const leadDocRef = doc(firestore, 'leads', leadId);
+    try {
+        const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
+        await updateDoc(leadDocRef, { [field]: false, [timestampField]: null });
+    } catch (e: any) {
+        console.error(`Error unchecking ${field}:`, e);
+        toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
+    } finally {
+        setUncheckConfirmation(null);
     }
-  }, [uncheckConfirmation, handleUpdateStatus]);
+  }, [uncheckConfirmation, firestore, toast]);
 
-  const confirmJoReceived = useCallback(() => {
-    if (joReceivedConfirmation) {
-      handleUpdateStatus(joReceivedConfirmation, 'isJoHardcopyReceived', true);
+  const confirmJoReceived = useCallback(async () => {
+    if (!joReceivedConfirmation || !firestore) return;
+    const leadDocRef = doc(firestore, 'leads', joReceivedConfirmation);
+    try {
+      await updateDoc(leadDocRef, { 
+        isJoHardcopyReceived: true,
+        joHardcopyReceivedTimestamp: new Date().toISOString()
+      });
+    } catch (e: any) {
+      console.error("Error updating J.O. receipt status:", e);
+      toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
+    } finally {
       setJoReceivedConfirmation(null);
     }
-  }, [joReceivedConfirmation, handleUpdateStatus]);
+  }, [joReceivedConfirmation, firestore, toast]);
 
 
   const handleConfirmPrepared = useCallback(async () => {
@@ -408,11 +428,12 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
         if (filterType === 'COMPLETED') {
             return (lead.isSentToProduction || lead.isEndorsedToLogistics);
         }
-        // ONGOING logic
-        return (
-            (lead.joNumber && !lead.isSentToProduction && !lead.isEndorsedToLogistics) || 
-            (lead.orderType === 'Stock (Jacket Only)' && lead.joNumber && !lead.isEndorsedToLogistics)
-        );
+        
+        // ONGOING logic for items needing preparation
+        const isNormalOrderReady = lead.isFinalProgram && !lead.isSentToProduction && !lead.isEndorsedToLogistics;
+        const isStockJacketReady = lead.orderType === 'Stock (Jacket Only)' && lead.joNumber && !lead.isEndorsedToLogistics;
+        
+        return isNormalOrderReady || isStockJacketReady;
     });
     
     return leadsInQueue.filter(lead => {
@@ -555,7 +576,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="w-full max-w-xs">
+                <div className="w-full max-w-lg">
                   <Input
                     placeholder="Search customer, company, contact..."
                     value={searchTerm}
@@ -589,7 +610,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
       <CardContent>
            <div className="border rounded-md pb-4">
             <Table>
-                <TableHeader className="bg-neutral-800">
+                <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">J.O. No.</TableHead>
@@ -628,3 +649,4 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
