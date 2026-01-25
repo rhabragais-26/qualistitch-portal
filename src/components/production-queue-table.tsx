@@ -388,7 +388,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                         <Checkbox
                         checked={lead.isJoHardcopyReceived || false}
                         onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                        disabled={!lead.isFinalProgram || isCompleted}
+                        disabled={isCompleted}
                         className={isCompleted ? 'disabled:opacity-100' : ''}
                         />
                         {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
@@ -492,7 +492,6 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField } | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
-  const [leadToSend, setLeadToSend] = useState<Lead | null>(null);
   const [leadToReopen, setLeadToReopen] = useState<Lead | null>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -608,6 +607,39 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     }
   }, [joReceivedConfirmation, firestore, toast]);
 
+  const calculateProductionDeadline = useCallback((lead: Lead) => {
+    const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
+    
+    let statusText: React.ReactNode;
+    let remainingDays: number;
+    let isOverdue = false;
+    let isUrgent = false;
+
+    if (lead.isDone && lead.doneProductionTimestamp) {
+        const doneDate = new Date(lead.doneProductionTimestamp);
+        remainingDays = differenceInDays(deliveryDate, doneDate);
+         if (remainingDays < 0) {
+            statusText = <><span className="font-bold">{Math.abs(remainingDays)} day(s)</span> overdue</>;
+            isOverdue = true;
+        } else {
+             statusText = <><span className="font-bold">{remainingDays} day(s)</span> remaining</>;
+        }
+    } else {
+        remainingDays = differenceInDays(new Date(), deliveryDate);
+        if (remainingDays > 0) {
+            isOverdue = true;
+            statusText = <><span className="font-bold">{remainingDays} day(s)</span> overdue</>;
+        } else if (remainingDays >= -3) {
+            isUrgent = true;
+            statusText = <><span className="font-bold">{Math.abs(remainingDays)} day(s)</span> remaining</>;
+        } else {
+            statusText = <><span className="font-bold">{Math.abs(remainingDays)} day(s)</span> remaining</>;
+        }
+    }
+
+    return { text: statusText, isOverdue, isUrgent, remainingDays };
+  }, []);
+
   const handleEndorseToLogistics = useCallback(async (leadId: string) => {
     if (!firestore || !leads) return;
     const lead = leads.find(l => l.id === leadId);
@@ -618,6 +650,8 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         await updateDoc(leadDocRef, { isEndorsedToLogistics: true, endorsedToLogisticsTimestamp: new Date().toISOString() });
         
         const deadlineInfo = calculateProductionDeadline(lead);
+        const overdueStatusText = deadlineInfo.isOverdue ? `${Math.abs(deadlineInfo.remainingDays)} day(s) overdue` : `${deadlineInfo.remainingDays} day(s) remaining`;
+
         const notification = {
             id: `progress-${lead.id}-${new Date().toISOString()}`,
             type: 'progress',
@@ -627,7 +661,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
             companyName: lead.companyName,
             contactNumber: getContactDisplay(lead),
             message: `Order endorsed to Logistics.`,
-            overdueStatus: deadlineInfo.text,
+            overdueStatus: overdueStatusText,
             isRead: false,
             timestamp: new Date().toISOString(),
             isDisapproved: false
@@ -648,40 +682,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         description: e.message || "Could not endorse the order.",
       });
     }
-  }, [firestore, toast, leads, getContactDisplay]);
-
-  const calculateProductionDeadline = useCallback((lead: Lead) => {
-    const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
-    
-    let statusText: React.ReactNode;
-    let remainingDays: number;
-    let isOverdue = false;
-    let isUrgent = false;
-
-    if (lead.isDone && lead.doneProductionTimestamp) {
-        const doneDate = new Date(lead.doneProductionTimestamp);
-        remainingDays = differenceInDays(deliveryDate, doneDate);
-         if (remainingDays < 0) {
-            statusText = <><span className="font-bold">{Math.abs(remainingDays)} day(s)</span> overdue</>;
-            isOverdue = true;
-        } else {
-             statusText = <><span className="font-bold">{remainingDays} day(s)</span> remaining</>;
-        }
-    } else {
-        remainingDays = differenceInDays(deliveryDate, new Date());
-        if (remainingDays < 0) {
-            isOverdue = true;
-            statusText = <><span className="font-bold">{Math.abs(remainingDays)} day(s)</span> overdue</>;
-        } else if (remainingDays <= 3) {
-            isUrgent = true;
-            statusText = <><span className="font-bold">{remainingDays} day(s)</span> remaining</>;
-        } else {
-            statusText = <><span className="font-bold">{remainingDays} day(s)</span> remaining</>;
-        }
-    }
-
-    return { text: statusText, isOverdue, isUrgent, remainingDays };
-  }, []);
+  }, [firestore, toast, leads, getContactDisplay, calculateProductionDeadline, formatJoNumber]);
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
