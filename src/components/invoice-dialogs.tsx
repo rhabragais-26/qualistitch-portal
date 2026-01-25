@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -21,6 +20,9 @@ export type AddOns = {
   plusSize: number;
   rushFee: number;
   shippingFee: number;
+  logoProgramming: number;
+  backDesignProgramming: number;
+  holdingFee: number;
 };
 
 export type Discount = {
@@ -53,17 +55,17 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
   isReadOnly?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [localAddOns, setLocalAddOns] = useState<AddOns>({ backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0 });
+  const [localAddOns, setLocalAddOns] = useState<AddOns>({ backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 });
 
   useEffect(() => {
     if (isOpen) {
-      setLocalAddOns({ backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0 });
+      setLocalAddOns({ backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 });
     }
   }, [isOpen]);
 
   const handleSave = () => {
     setAddOns(prev => {
-      const existingAddOns = prev[groupKey] || { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0 };
+      const existingAddOns = prev[groupKey] || { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 };
       
       const newAddOns: AddOns = {
         backLogo: existingAddOns.backLogo + localAddOns.backLogo,
@@ -71,6 +73,9 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
         plusSize: existingAddOns.plusSize + localAddOns.plusSize,
         rushFee: localAddOns.rushFee > 0 ? localAddOns.rushFee : existingAddOns.rushFee,
         shippingFee: localAddOns.shippingFee > 0 ? localAddOns.shippingFee : existingAddOns.shippingFee,
+        logoProgramming: localAddOns.logoProgramming > 0 ? localAddOns.logoProgramming : existingAddOns.logoProgramming,
+        backDesignProgramming: localAddOns.backDesignProgramming > 0 ? localAddOns.backDesignProgramming : existingAddOns.backDesignProgramming,
+        holdingFee: localAddOns.holdingFee > 0 ? localAddOns.holdingFee : existingAddOns.holdingFee,
       };
 
       return { ...prev, [groupKey]: newAddOns };
@@ -141,6 +146,27 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
               <Input id="shippingFee" type="text" value={localAddOns.shippingFee ? new Intl.NumberFormat('en-US').format(localAddOns.shippingFee) : ''} onChange={(e) => handleNumericChange('shippingFee', e.target.value)} className="w-32 pl-7 text-right" placeholder="0.00" />
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="logoProgramming" className="text-base">Logo Programming</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+              <Input id="logoProgramming" type="text" value={localAddOns.logoProgramming ? new Intl.NumberFormat('en-US').format(localAddOns.logoProgramming) : ''} onChange={(e) => handleNumericChange('logoProgramming', e.target.value)} className="w-32 pl-7 text-right" placeholder="0.00" />
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="backDesignProgramming" className="text-base">Back Design Programming</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+              <Input id="backDesignProgramming" type="text" value={localAddOns.backDesignProgramming ? new Intl.NumberFormat('en-US').format(localAddOns.backDesignProgramming) : ''} onChange={(e) => handleNumericChange('backDesignProgramming', e.target.value)} className="w-32 pl-7 text-right" placeholder="0.00" />
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="holdingFee" className="text-base">Holding Fee</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+              <Input id="holdingFee" type="text" value={localAddOns.holdingFee ? new Intl.NumberFormat('en-US').format(localAddOns.holdingFee) : ''} onChange={(e) => handleNumericChange('holdingFee', e.target.value)} className="w-32 pl-7 text-right" placeholder="0.00" />
             </div>
           </div>
         </div>
@@ -552,5 +578,3 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
     </Dialog>
   );
 });
-
-    
