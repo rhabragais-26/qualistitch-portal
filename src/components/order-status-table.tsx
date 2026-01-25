@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -702,6 +701,3 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     </Card>
   );
 }
-
-
-```
