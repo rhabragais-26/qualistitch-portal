@@ -1,3 +1,4 @@
+
 'use client';
 
 import { collection, query, doc, updateDoc, getDocs, where } from 'firebase/firestore';
@@ -301,7 +302,7 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
 });
 ProductionDocuments.displayName = 'ProductionDocuments';
 
-const ProductionQueueTableRowGroup = React.memo(({
+const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRowGroup({
     lead,
     isRepeat,
     status,
@@ -329,7 +330,7 @@ const ProductionQueueTableRowGroup = React.memo(({
     setLeadToReopen: (lead: Lead) => void;
     toggleLeadDetails: (leadId: string) => void;
     openLeadId: string | null;
-}) => {
+}) {
     return (
         <React.Fragment>
             <TableRow>
@@ -382,7 +383,7 @@ const ProductionQueueTableRowGroup = React.memo(({
                         <FileText className="h-4 w-4" />
                     </Button>
                 </TableCell>
-                <TableCell className="text-center align-middle py-2">
+                 <TableCell className="text-center align-middle py-2">
                     <div className="flex flex-col items-center justify-center gap-1">
                         <Checkbox
                         checked={lead.isJoHardcopyReceived || false}
