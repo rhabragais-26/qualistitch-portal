@@ -219,7 +219,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   }
 
   const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
-    if (lead.shipmentStatus === 'Delivered') {
+    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
         return { text: 'COMPLETED', variant: 'success' };
     }
     if (!lead.joNumber) {
@@ -285,7 +285,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
         enrichedLeads.push({
           ...lead,
           orderNumber: index + 1,
-          totalCustomerQuantity: totalCustomerQuantity,
+          totalCustomerQuantity,
         });
       });
     });
@@ -690,3 +690,4 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     </Card>
   );
 }
+
