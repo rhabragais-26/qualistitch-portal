@@ -540,16 +540,15 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   
     return enrichedLeads;
   }, [leads]);
-
+  
   const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
     const lead = leads?.find((l) => l.id === leadId);
     if (!lead) return;
-    const isCurrentlyChecked = lead.isJoHardcopyReceived || false;
-
-    if (!checked && isCurrentlyChecked) {
-      setUncheckConfirmation({ leadId, field: 'isJoHardcopyReceived' });
-    } else if (checked && !isCurrentlyChecked) {
-      setJoReceivedConfirmation(leadId);
+    
+    if (!checked) {
+        setUncheckConfirmation({ leadId, field: 'isJoHardcopyReceived' });
+    } else {
+        setJoReceivedConfirmation(leadId);
     }
   }, [leads]);
 
@@ -714,7 +713,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
       <CardContent>
            <div className="border rounded-md">
             <Table>
-                <TableHeader className="bg-neutral-800">
+                <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">J.O. No.</TableHead>
@@ -739,40 +738,40 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                     const deadlineInfo = calculateProductionDeadline(lead);
                     const isCompleted = filterType === 'COMPLETED';
                     return (
-                    <React.Fragment key={lead.id}>
+                        <React.Fragment key={lead.id}>
                         <TableRow>
-                        <TableCell className="text-xs align-middle text-center py-2 text-black">
-                            <Collapsible>
-                                <CollapsibleTrigger asChild>
-                                    <div className="flex items-center justify-center cursor-pointer">
-                                        <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                        <span className="font-bold">{toTitleCase(lead.customerName)}</span>
-                                    </div>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-[11px] font-normal text-center">
-                                    {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
-                                    {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
-                                </CollapsibleContent>
-                            </Collapsible>
-                            {isRepeat ? (
-                                <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                    <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
-                                        <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                        <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                        {lead.orderNumber}
-                                        </span>
-                                    </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                    <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                                </TooltipProvider>
-                            ) : (
-                                <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                            )}
+                            <TableCell className="text-xs align-middle text-center py-2 text-black">
+                                <Collapsible>
+                                    <CollapsibleTrigger asChild>
+                                        <div className="flex items-center justify-center cursor-pointer">
+                                            <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                            <span className="font-bold">{toTitleCase(lead.customerName)}</span>
+                                        </div>
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-[11px] font-normal text-center">
+                                        {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
+                                        {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                                    </CollapsibleContent>
+                                </Collapsible>
+                                {isRepeat ? (
+                                    <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                        <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
+                                            <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                            <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                            {lead.orderNumber}
+                                            </span>
+                                        </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                        <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    </TooltipProvider>
+                                ) : (
+                                    <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                                )}
                             </TableCell>
                             <TableCell className="text-xs align-middle py-2 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                             <TableCell className="align-middle py-2 text-center">
@@ -795,8 +794,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                                     <Checkbox
                                     checked={lead.isJoHardcopyReceived || false}
                                     onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                    disabled={!lead.isSentToProduction || isReadOnly || isCompleted}
-                                    className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
+                                    disabled={!lead.isFinalProgram || isReadOnly || isCompleted}
                                     />
                                     {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                                 </div>
@@ -807,7 +805,6 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                                     checked={lead.isCutting || false}
                                     onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
                                     disabled={!lead.isJoHardcopyReceived || isReadOnly || isCompleted}
-                                    className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                                     />
                                     {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
                                 </div>
@@ -828,7 +825,6 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                                     checked={lead.isEmbroideryDone || false}
                                     onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
                                     disabled={!lead.productionType || lead.productionType === 'Pending' || isReadOnly || isCompleted}
-                                    className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                                     />
                                     {lead.embroideryDoneTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.embroideryDoneTimestamp).dateTimeShort}</div>}
                                 </div>
@@ -849,7 +845,6 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                                     checked={lead.isSewing || false}
                                     onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
                                     disabled={!lead.sewerType || lead.sewerType === 'Pending' || isReadOnly || isCompleted}
-                                    className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                                     />
                                     {lead.sewingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
                                 </div>
@@ -898,5 +893,3 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     </Card>
   );
 }
-
-    
