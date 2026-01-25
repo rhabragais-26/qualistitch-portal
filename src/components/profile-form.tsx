@@ -205,7 +205,7 @@ export function ProfileForm() {
         form.reset(values);
 
     } catch (error: any) {
-      // Error handling toast removed as requested
+        console.error('Profile Update Error:', error);
     } finally {
       setIsSaving(false);
     }
@@ -440,3 +440,4 @@ export function ProfileForm() {
     </>
   );
 }
+
