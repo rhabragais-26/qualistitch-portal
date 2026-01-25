@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/card';
 import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from './ui/button';
-import { Check, ChevronDown, Send, FileText, X, Download, AlertTriangle, ChevronUp } from 'lucide-react';
+import { Check, ChevronDown, Send, FileText, X, Download, AlertTriangle, ChevronUp, RefreshCcw } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Input } from './ui/input';
@@ -733,8 +733,11 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                 </TableHeader>
                 <TableBody>
                 {productionQueue && productionQueue.length > 0 ? (
-                    productionQueue.map((lead) => {
+                  productionQueue.map((lead) => {
                     const isRepeat = lead.orderNumber > 1;
+                    const status = getProductionStatusLabel(lead);
+                    const deadlineInfo = calculateProductionDeadline(lead);
+                    const isCompleted = filterType === 'COMPLETED';
                     return (
                     <React.Fragment key={lead.id}>
                         <TableRow>
@@ -779,15 +782,15 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                             </TableCell>
                              <TableCell className={cn(
                                 "text-center text-xs align-middle py-3 font-medium",
-                                calculateProductionDeadline(lead).isOverdue && "text-red-500",
-                                calculateProductionDeadline(lead).isUrgent && "text-amber-600"
-                                )}>{calculateProductionDeadline(lead).text}</TableCell>
+                                deadlineInfo.isOverdue && "text-red-500",
+                                deadlineInfo.isUrgent && "text-amber-600"
+                                )}>{deadlineInfo.text}</TableCell>
                             <TableCell className="text-center align-middle py-2">
                                 <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)}>
                                     <FileText className="h-4 w-4" />
                                 </Button>
                             </TableCell>
-                            <TableCell className="text-center align-middle py-2">
+                             <TableCell className="text-center align-middle py-2">
                                 <div className="flex flex-col items-center justify-center gap-1">
                                     <Checkbox
                                     checked={lead.isJoHardcopyReceived || false}
@@ -879,9 +882,9 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                           </TableRow>
                         )}
                     </React.Fragment>
-                  )
-                )
-                ) : (
+                  );
+                })
+              ) : (
                   <TableRow>
                     <TableCell colSpan={13} className="text-center text-muted-foreground">
                       No current orders endorsed to production yet.
@@ -896,3 +899,4 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   );
 }
 
+    
