@@ -171,8 +171,8 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
   ];
 
   const handleJobOrderPrint = () => {
-    const jobOrderUrl = `/job-order/${lead.id}/print`;
-    window.open(jobOrderUrl, '_blank', 'height=800,width=1200,scrollbars=yes');
+    const jobOrderUrl = `/job-order/${lead.id}`;
+    window.open(jobOrderUrl, '_blank');
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -659,7 +659,6 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
             statusText = <><span className="font-bold">{Math.abs(remainingDays)} day(s)</span> remaining</>;
         }
     }
-
     return { text: statusText, isOverdue, isUrgent, remainingDays };
   }, []);
 
@@ -816,7 +815,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         });
         toast({
             title: 'Production Reopened',
-            description: `The order for J.O. ${formatJoNumber(leadToReopen.joNumber)} has been moved back to the production queue.`,
+            description: `The order for J.O. ${formatJoNumber(leadToReopen.joNumber)} has been moved back to the ongoing production queue.`,
         });
     } catch (e: any) {
         console.error("Error reopening production:", e);
