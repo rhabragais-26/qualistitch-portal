@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -485,6 +486,8 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                    description = 'Full Payment';
                 } else if (payment.type === 'balance') {
                    description = balance <= 0 ? 'Balance Payment' : 'Additional Payment';
+                } else if (payment.type === 'securityDeposit') {
+                    description = 'Security Deposit';
                 }
 
                 return (

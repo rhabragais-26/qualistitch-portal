@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
@@ -65,7 +66,7 @@ const orderSchema = z.object({
 export type Order = z.infer<typeof orderSchema>;
 
 const paymentSchema = z.object({
-    type: z.enum(['down', 'full', 'balance', 'additional']),
+    type: z.enum(['down', 'full', 'balance', 'additional', 'securityDeposit']),
     amount: z.number(),
     mode: z.string(),
     processedBy: z.string().optional(),
