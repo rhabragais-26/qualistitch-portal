@@ -502,6 +502,7 @@
         "isSewing": { "type": "boolean", "description": "Indicates if the order is in the sewing stage." },
         "sewingTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when 'isSewing' was checked." },
         "isTrimming": { "type": "boolean", "description": "Indicates if the order is in the trimming stage." },
+        "trimmingTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when 'isTrimming' was checked." },
         "isDone": { "type": "boolean", "description": "Indicates if the order is completely done." },
         "doneProductionTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the production is marked as done." },
         "isEndorsedToLogistics": { "type": "boolean", "description": "Indicates if the order has been endorsed to logistics." },

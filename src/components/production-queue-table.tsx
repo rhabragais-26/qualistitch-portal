@@ -28,6 +28,7 @@ import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Checkbox } from './ui/checkbox';
+import { Label } from './ui/label';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
@@ -96,6 +97,7 @@ type Lead = {
   isSewing?: boolean;
   sewingTimestamp?: string;
   isTrimming?: boolean;
+  trimmingTimestamp?: string;
   isDone?: boolean;
   productionType?: ProductionType;
   sewerType?: ProductionType;
@@ -123,7 +125,7 @@ type EnrichedLead = Lead & {
   totalCustomerQuantity: number;
 };
 
-type CheckboxField = 'isCutting' | 'isEmbroideryDone' | 'isSewing' | 'isJoHardcopyReceived';
+type CheckboxField = 'isCutting' | 'isEmbroideryDone' | 'isSewing' | 'isTrimming' | 'isJoHardcopyReceived';
 
 const productionOptions: ProductionType[] = ["Pending", "In-house", "Outsource 1", "Outsource 2", "Outsource 3"];
 
@@ -145,7 +147,9 @@ const getStatusColor = (status?: ProductionType) => {
 
 const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success" | "warning" | "secondary" | "default" | "destructive" } => {
     if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
-    if (lead.isSewing) return { text: "Done Production", variant: "success" };
+    if (lead.isDone) return { text: "Done Production", variant: "success" };
+    if (lead.isTrimming) return { text: "Trimming/Cleaning", variant: "warning" };
+    if (lead.isSewing) return { text: "Done Sewing", variant: "warning" };
     if (lead.isEmbroideryDone) return { text: "Endorsed to Sewer", variant: "warning" };
     if(lead.isCutting) return { text: "Ongoing Embroidery", variant: "warning" };
     return { text: "Pending", variant: "secondary" };
@@ -374,7 +378,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                     </Badge>
                 </TableCell>
                 <TableCell className={cn(
-                    "text-center text-xs align-middle py-3 font-medium",
+                    "text-center text-xs align-middle py-3",
                     deadlineInfo.isOverdue && "text-red-500",
                     deadlineInfo.isUrgent && "text-amber-600"
                     )}>{deadlineInfo.text}</TableCell>
@@ -399,7 +403,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                         <Checkbox
                         checked={lead.isCutting || false}
                         onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
-                        disabled={!lead.isJoHardcopyReceived || isCompleted}
+                        disabled={!lead.isFinalProgram || isCompleted}
                         className={isCompleted ? 'disabled:opacity-100' : ''}
                         />
                         {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
@@ -447,6 +451,17 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                         {lead.sewingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
                     </div>
                 </TableCell>
+                <TableCell className="text-center align-middle py-2">
+                    <div className="flex flex-col items-center justify-center gap-1">
+                        <Checkbox
+                        checked={lead.isTrimming || false}
+                        onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isTrimming', !!checked)}
+                        disabled={!lead.isSewing || isCompleted}
+                        className={isCompleted ? 'disabled:opacity-100' : ''}
+                        />
+                        {lead.trimmingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.trimmingTimestamp).dateTimeShort}</div>}
+                    </div>
+                </TableCell>
                 <TableCell className="align-middle py-2 text-center">
                     <Badge variant={status.variant}>{status.text}</Badge>
                 </TableCell>
@@ -469,7 +484,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
             </TableRow>
             {openLeadId === lead.id && (
                 <TableRow>
-                <TableCell colSpan={13} className="p-0">
+                <TableCell colSpan={14} className="p-0">
                     <ProductionDocuments lead={lead} />
                 </TableCell>
                 </TableRow>
@@ -500,7 +515,10 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
-    if (mobile && landline) return `${mobile} / ${landline}`;
+
+    if (mobile && landline) {
+      return `${mobile} / ${landline}`;
+    }
     return mobile || landline || null;
   }, []);
 
@@ -536,7 +554,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
     const updateData: {[key:string]: any} = { [field]: value, [timestampField]: now };
 
-    if (field === 'isSewing' && value) {
+    if (field === 'isTrimming' && value) {
       updateData.isDone = true;
       updateData.doneProductionTimestamp = now;
     }
@@ -559,12 +577,19 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
         const updateData: {[key:string]: any} = { [field]: false, [timestampField]: null };
 
-        if (field === 'isSewing') {
-          updateData.isDone = false;
-          updateData.doneProductionTimestamp = null;
+        if (field === 'isTrimming') {
+            updateData.isDone = false;
+            updateData.doneProductionTimestamp = null;
+        } else if (field === 'isSewing') {
+            updateData.isTrimming = false;
+            updateData.trimmingTimestamp = null;
+            updateData.isDone = false;
+            updateData.doneProductionTimestamp = null;
         } else if (field === 'isEmbroideryDone') {
             updateData.isSewing = false;
             updateData.sewingTimestamp = null;
+            updateData.isTrimming = false;
+            updateData.trimmingTimestamp = null;
             updateData.isDone = false;
             updateData.sewerType = 'Pending';
             updateData.doneProductionTimestamp = null;
@@ -573,6 +598,8 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
           updateData.embroideryDoneTimestamp = null;
           updateData.isSewing = false;
           updateData.sewingTimestamp = null;
+          updateData.isTrimming = false;
+          updateData.trimmingTimestamp = null;
           updateData.isDone = false;
           updateData.productionType = 'Pending';
           updateData.sewerType = 'Pending';
@@ -581,11 +608,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         await updateDoc(leadDocRef, updateData);
     } catch (e: any) {
         console.error(`Error unchecking ${field}:`, e);
-        toast({
-            variant: 'destructive',
-            title: "Update Failed",
-            description: e.message || "Could not update the status.",
-        });
+        toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
     } finally {
         setUncheckConfirmation(null);
     }
@@ -595,15 +618,15 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     if (!joReceivedConfirmation || !firestore) return;
     const leadDocRef = doc(firestore, 'leads', joReceivedConfirmation);
     try {
-        await updateDoc(leadDocRef, { 
-            isJoHardcopyReceived: true,
-            joHardcopyReceivedTimestamp: new Date().toISOString()
-        });
+      await updateDoc(leadDocRef, { 
+        isJoHardcopyReceived: true,
+        joHardcopyReceivedTimestamp: new Date().toISOString()
+      });
     } catch (e: any) {
-        console.error("Error updating J.O. receipt status:", e);
-        toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
+      console.error("Error updating J.O. receipt status:", e);
+      toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
     } finally {
-        setJoReceivedConfirmation(null);
+      setJoReceivedConfirmation(null);
     }
   }, [joReceivedConfirmation, firestore, toast]);
 
@@ -923,6 +946,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Embroidery</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Sewing Category</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Sewing</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Trimming/Cleaning</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Production Status</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Endorsement</TableHead>
                   </TableRow>
@@ -949,7 +973,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={13} className="text-center text-muted-foreground">
+                    <TableCell colSpan={14} className="text-center text-muted-foreground">
                       No current orders endorsed to production yet.
                     </TableCell>
                   </TableRow>
