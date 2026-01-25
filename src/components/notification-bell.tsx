@@ -42,7 +42,7 @@ type ProgressNotification = {
     companyName?: string;
     contactNumber?: string;
     message: string;
-    overdueStatus: React.ReactNode;
+    overdueStatus: string;
     isRead: boolean;
     timestamp: string;
     isDisapproved: boolean;
@@ -335,7 +335,9 @@ export function NotificationBell() {
                                           {notification.message}
                                       </p>
                                       <p className={cn("text-xs mt-1", notification.isDisapproved ? "text-destructive font-bold" : "text-gray-500")}>
-                                          {notification.overdueStatus}
+                                        {typeof notification.overdueStatus === 'string'
+                                            ? notification.overdueStatus
+                                            : 'Status unavailable'}
                                       </p>
                                     </div>
                                     <p className={cn("text-xs mt-2", !notification.isRead ? "text-blue-600 font-bold" : "text-muted-foreground")}>

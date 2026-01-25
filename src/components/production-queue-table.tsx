@@ -640,6 +640,31 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     return { text: statusText, isOverdue, isUrgent, remainingDays };
   }, []);
 
+  const getOverdueStatusText = useCallback((lead: Lead): string => {
+    const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
+    
+    let statusText: string;
+    let remainingDays: number;
+
+    if (lead.isDone && lead.doneProductionTimestamp) {
+        const doneDate = new Date(lead.doneProductionTimestamp);
+        remainingDays = differenceInDays(deliveryDate, doneDate);
+         if (remainingDays < 0) {
+            statusText = `${Math.abs(remainingDays)} day(s) overdue`;
+        } else {
+             statusText = `${remainingDays} day(s) remaining`;
+        }
+    } else {
+        remainingDays = differenceInDays(new Date(), deliveryDate);
+        if (remainingDays > 0) {
+            statusText = `${remainingDays} day(s) overdue`;
+        } else {
+            statusText = `${Math.abs(remainingDays)} day(s) remaining`;
+        }
+    }
+    return statusText;
+  }, []);
+
   const handleEndorseToLogistics = useCallback(async (leadId: string) => {
     if (!firestore || !leads) return;
     const lead = leads.find(l => l.id === leadId);
@@ -649,8 +674,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     try {
         await updateDoc(leadDocRef, { isEndorsedToLogistics: true, endorsedToLogisticsTimestamp: new Date().toISOString() });
         
-        const deadlineInfo = calculateProductionDeadline(lead);
-        const overdueStatusText = deadlineInfo.isOverdue ? `${Math.abs(deadlineInfo.remainingDays)} day(s) overdue` : `${deadlineInfo.remainingDays} day(s) remaining`;
+        const overdueStatusText = getOverdueStatusText(lead);
 
         const notification = {
             id: `progress-${lead.id}-${new Date().toISOString()}`,
@@ -666,7 +690,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
             timestamp: new Date().toISOString(),
             isDisapproved: false
         };
-        const existingNotifications = JSON.parse(localStorage.getItem('progress-notifications') || '[]');
+        const existingNotifications = JSON.parse(localStorage.getItem('progress-notifications') || '[]') as any[];
         localStorage.setItem('progress-notifications', JSON.stringify([...existingNotifications, notification]));
         window.dispatchEvent(new StorageEvent('storage', { key: 'progress-notifications' }));
         
@@ -682,7 +706,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         description: e.message || "Could not endorse the order.",
       });
     }
-  }, [firestore, toast, leads, getContactDisplay, calculateProductionDeadline, formatJoNumber]);
+  }, [firestore, toast, leads, getContactDisplay, getOverdueStatusText, formatJoNumber]);
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
