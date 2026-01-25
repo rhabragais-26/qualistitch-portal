@@ -31,9 +31,10 @@ export const getUnitPrice = (
   embroidery: EmbroideryOption,
   pricingConfig: PricingConfig,
   patchPrice: number = 0,
-  orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services'
+  orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | 'Item Sample'
 ): number => {
   if (!pricingConfig) return 0;
+  if (orderType === 'Item Sample') return 0;
   if (productType === 'Client Owned') return 0;
   if (productType === 'Patches') return patchPrice;
 
@@ -101,9 +102,9 @@ export const getProgrammingFees = (
   quantity: number,
   embroidery: EmbroideryOption,
   isClientOwned: boolean = false,
-  orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services'
+  orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | 'Item Sample'
 ): { logoFee: number; backTextFee: number } => {
-  const specialOrderTypes = ["Services", "MTO", "Stock (Jacket Only)"];
+  const specialOrderTypes = ["Services", "MTO", "Stock (Jacket Only)", "Item Sample"];
   if (orderType && specialOrderTypes.includes(orderType)) {
     return { logoFee: 0, backTextFee: 0 };
   }
@@ -125,3 +126,5 @@ export const getProgrammingFees = (
   }
   return { logoFee: 0, backTextFee: 0 };
 };
+
+    

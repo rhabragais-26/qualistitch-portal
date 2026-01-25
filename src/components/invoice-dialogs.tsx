@@ -31,7 +31,7 @@ export type Discount = {
 
 export type Payment = {
   id?: string;
-  type: 'down' | 'full' | 'balance' | 'additional';
+  type: 'down' | 'full' | 'balance' | 'additional' | 'securityDeposit';
   amount: number;
   mode: string;
   processedBy?: string;
@@ -405,7 +405,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   onOpenChange: (isOpen: boolean) => void;
 }) {
   const { userProfile } = useUser();
-  const [paymentType, setPaymentType] = useState<'additional' | 'balance'>('additional');
+  const [paymentType, setPaymentType] = useState<'additional' | 'balance' | 'securityDeposit'>('additional');
   const [amount, setAmount] = useState(0);
   const [paymentMode, setPaymentMode] = useState('');
   const { toast } = useToast();
@@ -419,12 +419,14 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   }, [isOpen]);
 
   const maxAmount = balance;
-  const amountError = amount > maxAmount ? `Amount cannot exceed balance of ${formatCurrency(maxAmount)}` : null;
+  const amountError = paymentType !== 'securityDeposit' && amount > maxAmount ? `Amount cannot exceed balance of ${formatCurrency(maxAmount)}` : null;
   const isSaveDisabled = amount <= 0 || !paymentMode || !!amountError || !userProfile;
 
   useEffect(() => {
     if (paymentType === 'balance') {
       setAmount(balance);
+    } else {
+      setAmount(0);
     }
   }, [paymentType, balance]);
 
@@ -485,7 +487,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
           <DialogTitle>Add Payment</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <RadioGroup value={paymentType} onValueChange={(v: 'additional' | 'balance') => setPaymentType(v)} className="flex justify-center gap-4">
+          <RadioGroup value={paymentType} onValueChange={(v: 'additional' | 'balance' | 'securityDeposit') => setPaymentType(v)} className="flex justify-center gap-4">
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="additional" id="additional" />
               <Label htmlFor="additional">Additional Payment</Label>
@@ -493,6 +495,10 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="balance" id="balance" />
               <Label htmlFor="balance">Balance Payment</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="securityDeposit" id="security-deposit" />
+              <Label htmlFor="security-deposit">Security Deposit</Label>
             </div>
           </RadioGroup>
 
@@ -542,3 +548,5 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
     </Dialog>
   );
 });
+
+    

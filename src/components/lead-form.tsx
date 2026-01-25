@@ -111,7 +111,7 @@ export const formSchema = z.object({
   province: z.string().optional(),
   internationalAddress: z.string().optional(),
   courier: z.string().optional(),
-  orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'], {required_error: "You need to select an order type."}),
+  orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services', 'Item Sample'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   orders: z.array(orderSchema).min(1, "Please add at least one order."),
 }).refine(data => {
@@ -1124,7 +1124,7 @@ export function LeadForm({
                             <SelectValue placeholder="Select Order Type" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                      <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services', 'Item Sample'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
                   </Select>
                   <FormMessage />
                   </FormItem>
@@ -1491,6 +1491,8 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
+
+    
 
     
 
