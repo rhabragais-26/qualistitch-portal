@@ -1,7 +1,7 @@
 'use client';
 
     import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-    import { collection, doc, query, updateDoc, getDoc } from 'firebase/firestore';
+    import { collection, doc, query, updateDoc, getDoc, runTransaction } from 'firebase/firestore';
     import { useParams, useRouter, usePathname } from 'next/navigation';
     import { Button } from '@/components/ui/button';
     import { Printer, Save, X, ArrowLeft, ArrowRight, Plus, Trash2, Upload } from 'lucide-react';
@@ -114,7 +114,6 @@
 
       const { data: fetchedLead, isLoading: isLeadLoading, error, refetch: refetchLead } = useDoc<Lead>(leadRef);
       const [lead, setLead] = useState<Lead | null>(null);
-      const [joNumber, setJoNumber] = useState<string>('');
       const [deliveryDate, setDeliveryDate] = useState<string>('');
       const [showConfirmDialog, setShowConfirmDialog] = useState(false);
       const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -205,20 +204,6 @@
           setDeliveryDate(initialDate);
         }
       }, [fetchedLead]);
-
-      useEffect(() => {
-        if (lead && allLeads) {
-          const currentYear = new Date().getFullYear().toString().slice(-2);
-          if (lead.joNumber) {
-            setJoNumber(`QSBP-${currentYear}-${lead.joNumber.toString().padStart(5, '0')}`);
-          } else {
-            const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
-            const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
-            const newJoNum = Math.max(maxJoNumber + 1, 10000);
-            setJoNumber(`QSBP-${currentYear}-${newJoNum.toString().padStart(5, '0')}`);
-          }
-        }
-      }, [lead, allLeads]);
 
       const handlePrint = async () => {
         if (!leadRef || !id || !lead) {
@@ -318,14 +303,33 @@
       };
       
       const handleSaveChanges = async (navigateOnSuccess = false) => {
-        if (!lead || !leadRef || !allLeads || !userProfile) return;
+        if (!lead || !leadRef || !firestore || !userProfile) return;
 
         let newJoNumber: number | undefined = lead.joNumber;
         
         if (!newJoNumber) {
-            const leadsThisYear = allLeads.filter(l => l.joNumber && new Date(l.submissionDateTime).getFullYear() === new Date().getFullYear());
-            const maxJoNumber = leadsThisYear.reduce((max, l) => Math.max(max, l.joNumber || 0), 0);
-            newJoNumber = Math.max(maxJoNumber + 1, 10000);
+            const counterRef = doc(firestore, 'counters', 'jo_counter');
+            try {
+                newJoNumber = await runTransaction(firestore, async (transaction) => {
+                    const counterDoc = await transaction.get(counterRef);
+                    if (!counterDoc.exists()) {
+                        // Initialize if it doesn't exist
+                        transaction.set(counterRef, { currentNumber: 10000 });
+                        return 10000;
+                    }
+                    const newNumber = counterDoc.data().currentNumber + 1;
+                    transaction.update(counterRef, { currentNumber: newNumber });
+                    return newNumber;
+                });
+            } catch (e) {
+                console.error("JO Number transaction failed: ", e);
+                toast({
+                    variant: "destructive",
+                    title: "Could not generate J.O. Number",
+                    description: "There was an error generating a unique Job Order number. Please try saving again.",
+                });
+                return; // Stop the save process
+            }
         }
 
         const layoutsToSave = (lead.layouts || []).filter(hasLayoutContent);
@@ -607,7 +611,7 @@
           {/* Page 1: Job Order Form */}
           <div className={cn("p-10 mx-auto max-w-4xl printable-area mt-16 print-page", currentPage !== 0 && "hidden")}>
             <div className="text-left mb-4">
-                <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{joNumber || 'Not Saved'}</span></p>
+                <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{lead.joNumber ? `QSBP-${new Date().getFullYear().toString().slice(-2)}-${lead.joNumber.toString().padStart(5, '0')}` : 'Will be generated on save'}</span></p>
             </div>
             <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
