@@ -4,7 +4,7 @@
 
 import { useFirestore } from '@/firebase';
 import { collection, doc, getDoc, query, where, getDocs } from 'firebase/firestore';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -72,7 +72,9 @@ type Lead = {
 
 export default function JobOrderPrintPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = React.useMemo(() => (params?.id ? (Array.isArray(params.id) ? params.id[0] : params.id) : ''), [params]);
+  const isViewOnly = searchParams.get('view') === 'true';
   const firestore = useFirestore();
   const [lead, setLead] = useState<Lead | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -128,7 +130,9 @@ export default function JobOrderPrintPage() {
         if (leadData) {
           setLead(leadData);
           setIsLoading(false);
-          setTimeout(() => window.print(), 500);
+          if (!isViewOnly) {
+            setTimeout(() => window.print(), 500);
+          }
         } else {
           setIsLoading(false);
           if (!error) {
@@ -144,19 +148,27 @@ export default function JobOrderPrintPage() {
       if (id) {
         localStorage.removeItem(`job-order-${id}`);
       }
-      window.close();
-    };
-
-    window.addEventListener('afterprint', handleAfterPrint);
-
-    return () => {
-      isMounted = false;
-      window.removeEventListener('afterprint', handleAfterPrint);
-      if (id) {
-        localStorage.removeItem(`job-order-${id}`);
+      if (!isViewOnly) {
+        window.close();
       }
     };
-  }, [firestore, id, error]);
+
+    if (!isViewOnly) {
+      window.addEventListener('afterprint', handleAfterPrint);
+    }
+
+    return () => {
+      if (isMounted) {
+          isMounted = false;
+          if (!isViewOnly) {
+              window.removeEventListener('afterprint', handleAfterPrint);
+          }
+          if (id) {
+            localStorage.removeItem(`job-order-${id}`);
+          }
+      }
+    };
+  }, [firestore, id, error, isViewOnly]);
   
   if (isLoading || !lead) {
     return (
@@ -435,4 +447,3 @@ export default function JobOrderPrintPage() {
     </div>
   );
 }
-

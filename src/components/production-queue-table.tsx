@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { collection, query, doc, updateDoc, getDocs, where } from 'firebase/firestore';
@@ -171,8 +172,8 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
   ];
 
   const handleJobOrderPrint = () => {
-    const jobOrderUrl = `/job-order/${lead.id}`;
-    window.open(jobOrderUrl, '_blank');
+    const jobOrderUrl = `/job-order/${lead.id}/print?view=true`;
+    window.open(jobOrderUrl, '_blank', 'width=1200,height=800,scrollbars=yes');
   };
 
   const handleDownload = async (url: string, name: string) => {
@@ -334,7 +335,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     setLeadToReopen: (lead: Lead) => void;
     toggleLeadDetails: (leadId: string) => void;
     openLeadId: string | null;
-}) {
+}) => {
     return (
         <React.Fragment>
             <TableRow>
