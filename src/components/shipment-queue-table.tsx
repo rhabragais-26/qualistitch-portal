@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/card';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, doc, updateDoc, setDoc, getDocs, where } from 'firebase/firestore';
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useState, useEffect } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
@@ -26,7 +26,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send } from 'lucide-react';
+import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
@@ -64,6 +64,7 @@ type Lead = {
   isSalesAuditComplete?: boolean;
   salesAuditCompleteTimestamp?: string;
   isWaybillPrinted?: boolean;
+  waybillNumbers?: string[];
   isQualityApproved?: boolean;
   qualityApprovedTimestamp?: string;
   isRecheckingQuality?: boolean;
@@ -116,10 +117,25 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   const [remarks, setRemarks] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived' } | null>(null);
+  const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived'; } | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
+  
+  const [waybillNumbers, setWaybillNumbers] = useState<Record<string, string[]>>({});
+  const [editingWaybills, setEditingWaybills] = useState<{ leadId: string; numbers: string[] } | null>(null);
 
   const isCompleted = filterType === 'COMPLETED';
+  
+  useEffect(() => {
+    if(leads) {
+        const initialWaybills: Record<string, string[]> = {};
+        leads.forEach(lead => {
+            if (lead.waybillNumbers) {
+                initialWaybills[lead.id] = lead.waybillNumbers;
+            }
+        });
+        setWaybillNumbers(initialWaybills);
+    }
+  }, [leads]);
 
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
@@ -136,6 +152,42 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     }
     return mobile || landline || null;
   }, []);
+  
+  const handleOpenWaybillDialog = (lead: Lead) => {
+    setEditingWaybills({ leadId: lead.id, numbers: waybillNumbers[lead.id] || [''] });
+  };
+  
+  const handleSaveWaybills = () => {
+      if (!editingWaybills || !firestore) return;
+      const { leadId, numbers } = editingWaybills;
+      const filteredNumbers = numbers.filter(n => n.trim() !== '');
+
+      setWaybillNumbers(prev => ({ ...prev, [leadId]: filteredNumbers }));
+      
+      const leadDocRef = doc(firestore, 'leads', leadId);
+      updateDoc(leadDocRef, { waybillNumbers: filteredNumbers }).catch((e: any) => {
+          toast({ variant: 'destructive', title: 'Save Failed', description: e.message });
+      });
+
+      setEditingWaybills(null);
+  };
+  
+  const handleWaybillPrintedChange = async (leadId: string, checked: boolean) => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', leadId);
+    try {
+      await updateDoc(leadDocRef, {
+        isWaybillPrinted: checked,
+      });
+    } catch (e: any) {
+      console.error("Error updating waybill status:", e);
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: e.message || "Could not update the waybill status.",
+      });
+    }
+  };
 
   const handleDisapprove = async () => {
     if (!disapprovingLead || !firestore || !remarks.trim()) {
@@ -290,6 +342,20 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
 
   const handleConfirmShip = async () => {
     if (!shippingLead || !firestore) return;
+
+    if (shippingLead.isWaybillPrinted) {
+        const waybillNos = waybillNumbers[shippingLead.id];
+        if (!waybillNos || waybillNos.length === 0) {
+            toast({
+                variant: 'destructive',
+                title: 'Waybill Number Required',
+                description: 'Please enter at least one waybill number before shipping.',
+            });
+            setShippingLead(null);
+            return;
+        }
+    }
+
     const leadDocRef = doc(firestore, 'leads', shippingLead.id);
     try {
       await updateDoc(leadDocRef, {
@@ -463,7 +529,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start">
             <div>
-                <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Shipped Orders' : 'Shipment Queue'}</CardTitle>
+                <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Shipments' : 'Shipment Queue'}</CardTitle>
                 <CardDescription className="text-gray-600">
                 {filterType === 'COMPLETED' ? 'Orders that have been shipped or delivered.' : 'Track the status of all shipments.'}
                 </CardDescription>
@@ -493,8 +559,8 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                           View Shipment Queue
                       </Link>
                   ) : (
-                      <Link href="/logistics/shipped-orders" className="text-sm text-primary hover:underline">
-                          View Shipped Orders
+                      <Link href="/logistics/completed-shipments" className="text-sm text-primary hover:underline">
+                          View Completed Shipments
                       </Link>
                   )}
                 </div>
@@ -515,7 +581,9 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                 <TableHead className="text-white font-bold text-xs text-center">Sales Audit</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Expected Delivery Date</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Courier</TableHead>
-                <TableHead className="text-white font-bold text-xs">Status</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Waybill Printed</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Waybill No.</TableHead>
+                <TableHead className="text-white font-bold text-xs text-center">Status</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">{filterType === 'COMPLETED' ? 'Mark as Delivered' : 'Ship Order'}</TableHead>
               </TableRow>
             </TableHeader>
@@ -658,6 +726,30 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                            {daysOverdue !== null && daysOverdue > 0 && <div className="text-red-500 font-medium">({daysOverdue} days overdue)</div>}
                         </TableCell>
                         <TableCell className="text-xs text-center">{lead.courier}</TableCell>
+                        <TableCell className="text-center">
+                            <Checkbox
+                                checked={lead.isWaybillPrinted}
+                                onCheckedChange={(checked) => handleWaybillPrintedChange(lead.id, !!checked)}
+                                disabled={isReadOnly || isCompleted || !lead.isSalesAuditComplete}
+                                className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
+                            />
+                        </TableCell>
+                        <TableCell>
+                            <div className="relative">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full justify-start text-left font-normal h-8"
+                                    onClick={() => handleOpenWaybillDialog(lead)}
+                                    disabled={!lead.isWaybillPrinted || isReadOnly || isCompleted}
+                                >
+                                    Add Waybill No.
+                                </Button>
+                                {(waybillNumbers[lead.id]?.length || 0) > 0 && (
+                                    <Badge className="absolute -top-2 -right-2">{waybillNumbers[lead.id].length}</Badge>
+                                )}
+                            </div>
+                        </TableCell>
                         <TableCell className="text-xs text-center">
                           <Badge variant={status.variant}>{status.text}</Badge>
                         </TableCell>
@@ -700,7 +792,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={12} className="text-center text-muted-foreground text-xs">
+                  <TableCell colSpan={13} className="text-center text-muted-foreground text-xs">
                     No orders in shipment queue.
                   </TableCell>
                 </TableRow>
@@ -819,8 +911,55 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
             </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+        {editingWaybills && (
+          <Dialog open={!!editingWaybills} onOpenChange={(isOpen) => !isOpen && setEditingWaybills(null)}>
+              <DialogContent>
+                  <DialogHeader>
+                      <DialogTitle>Add Waybill Numbers</DialogTitle>
+                  </DialogHeader>
+                  <div className="py-4 space-y-2">
+                      {editingWaybills.numbers.map((number, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                              <Input
+                                  value={number}
+                                  onChange={(e) => {
+                                      const newNumbers = [...editingWaybills.numbers];
+                                      newNumbers[index] = e.target.value;
+                                      setEditingWaybills({ ...editingWaybills, numbers: newNumbers });
+                                  }}
+                                  placeholder={`Waybill No. ${index + 1}`}
+                              />
+                              <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-destructive h-8 w-8"
+                                  onClick={() => {
+                                      const newNumbers = editingWaybills.numbers.filter((_, i) => i !== index);
+                                      setEditingWaybills({ ...editingWaybills, numbers: newNumbers.length > 0 ? newNumbers : [''] });
+                                  }}
+                              >
+                                  <Trash2 className="h-4 w-4" />
+                              </Button>
+                          </div>
+                      ))}
+                      <Button
+                          variant="outline"
+                          onClick={() => {
+                              setEditingWaybills({ ...editingWaybills, numbers: [...editingWaybills.numbers, ''] });
+                          }}
+                      >
+                          <Plus className="mr-2 h-4 w-4" /> Add another
+                      </Button>
+                  </div>
+                  <DialogFooter>
+                      <DialogClose asChild>
+                          <Button type="button" variant="outline">Cancel</Button>
+                      </DialogClose>
+                      <Button onClick={handleSaveWaybills}>Save Waybills</Button>
+                  </DialogFooter>
+              </DialogContent>
+          </Dialog>
+        )}
     </>
   );
 }
-
-    
