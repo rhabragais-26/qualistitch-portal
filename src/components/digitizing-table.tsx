@@ -386,24 +386,18 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     if (!checked && isCurrentlyChecked) {
       setUncheckConfirmation({ leadId, field });
     } else if (checked && !isCurrentlyChecked) {
-      if (field === 'isUnderProgramming') {
-        setUploadLeadId(leadId);
-        setUploadField(field);
-        setLogoLeftImage('');
-        setLogoRightImage('');
-        setBackLogoImage('');
-        setBackDesignImage('');
-        setIsUploadDialogOpen(true);
-      } else if (field === 'isLogoTesting') {
+      if (field === 'isUnderProgramming' || field === 'isLogoTesting') {
         setUploadLeadId(leadId);
         setUploadField(field);
         const layout = lead.layouts?.[0];
+        const fieldPrefix = field === 'isUnderProgramming' ? '' : 'test';
+
         const initialImages = {
-          logoLeftImage: layout?.testLogoLeftImage || '',
-          logoRightImage: layout?.testLogoRightImage || '',
-          backLogoImage: layout?.testBackLogoImage || '',
-          backDesignImage: layout?.testBackDesignImage || '',
-        }
+          logoLeftImage: layout?.[`${fieldPrefix}LogoLeftImage` as keyof Layout] as string || '',
+          logoRightImage: layout?.[`${fieldPrefix}LogoRightImage` as keyof Layout] as string || '',
+          backLogoImage: layout?.[`${fieldPrefix}BackLogoImage` as keyof Layout] as string || '',
+          backDesignImage: layout?.[`${fieldPrefix}BackDesignImage` as keyof Layout] as string || '',
+        };
         setInitialDialogImages(initialImages);
         setLogoLeftImage(initialImages.logoLeftImage);
         setLogoRightImage(initialImages.logoRightImage);
@@ -780,7 +774,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     if (uploadField === 'isUnderProgramming' || uploadField === 'isLogoTesting') {
       const title = uploadField === 'isUnderProgramming' ? 'Upload Program Files' : 'Upload Actual Tested Image';
       const isDialogDirty = initialDialogImages.logoLeftImage !== logoLeftImage || initialDialogImages.logoRightImage !== logoRightImage || initialDialogImages.backLogoImage !== backLogoImage || initialDialogImages.backDesignImage !== backDesignImage;
-      const isButtonDisabled = uploadField === 'isUnderProgramming' ? !logoLeftImage && !logoRightImage && !backLogoImage && !backDesignImage : !isDialogDirty;
+      const isButtonDisabled = !isDialogDirty;
 
       return (
         <>
@@ -1598,6 +1592,7 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
 
 
 
