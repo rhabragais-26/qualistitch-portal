@@ -726,7 +726,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             timestamp: new Date().toISOString(),
             isDisapproved: false
         };
-        const existingNotifications = JSON.parse(localStorage.getItem('progress-notifications') || '[]');
+        const existingNotifications = JSON.parse(localStorage.getItem('progress-notifications') || '[]') as any[];
         localStorage.setItem('progress-notifications', JSON.stringify([...existingNotifications, notification]));
         window.dispatchEvent(new StorageEvent('storage', { key: 'progress-notifications' }));
 
@@ -834,7 +834,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             <DialogTitle>Upload Final Program Files</DialogTitle>
           </DialogHeader>
            <ScrollArea className="max-h-[70vh] pr-6">
-            <div className="space-y-6 py-4">
+            <div className="space-y-6 py-4 pl-2">
               <div className="grid grid-cols-2 gap-x-8">
                   <div className="space-y-2">
                       <Label>Logo (EMB)</Label>
@@ -1330,7 +1330,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             <Checkbox
                               checked={lead.isJoHardcopyReceived || false}
                               onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                              disabled={!lead.isJoPrinted || isViewOnly}
+                              disabled={isViewOnly}
                               className={isViewOnly ? "disabled:opacity-100" : ""}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
@@ -1594,6 +1594,7 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
 
 
 
