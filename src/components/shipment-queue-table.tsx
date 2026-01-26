@@ -610,8 +610,8 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
 
                    return (
                       <TableRow key={lead.id}>
-                        <TableCell className="text-xs text-center">
-                            <div className="flex items-center justify-center gap-2">
+                        <TableCell className="text-xs text-left">
+                            <div className="flex items-center justify-start gap-2">
                                 <div>{formatJoNumber(lead.joNumber)}</div>
                                 {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
                                     <TooltipProvider>
@@ -792,7 +792,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                  })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={13} className="text-center text-muted-foreground text-xs">
+                  <TableCell colSpan={13} className="text-center text-muted-foreground">
                     No orders in shipment queue.
                   </TableCell>
                 </TableRow>
