@@ -1,4 +1,3 @@
-
 // edit-lead-full-dialog.tsx (WITHOUT ALERTDIALOG)
 "use client";
 
@@ -73,8 +72,8 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
       const initialFormValues = {
         customerName: toTitleCase(lead.customerName || ''),
         companyName: lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '',
-        mobileNo: lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '',
-        mobileNo2: lead.contactNumber2 && lead.contactNumber2 !== '-' ? lead.contactNumber2 : '',
+        contactNumber: lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '',
+        contactNumber2: lead.contactNumber2 && lead.contactNumber2 !== '-' ? lead.contactNumber2 : '',
         landlineNo: lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber : '',
         isInternational: lead.isInternational ?? false,
         houseStreet: lead.houseStreet ? toTitleCase(lead.houseStreet) : '',
@@ -159,6 +158,8 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
             paymentType = 'COD';
         }
         
+        const paymentsToSave = Object.values(payments).flat().map(({ isNew, ...p }) => p);
+
         const dataToUpdate = {
             ...formValuesToSave,
             customerName: toTitleCase(formValuesToSave.customerName),
@@ -176,7 +177,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
             productType: [...new Set(stagedOrders.map(o => o.productType))].join(', '),
             addOns,
             discounts,
-            payments: Object.values(payments).flat().map(({ isNew, ...p }) => p),
+            payments: paymentsToSave,
             grandTotal,
             balance,
             paidAmount,
