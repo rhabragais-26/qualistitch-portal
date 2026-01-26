@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,7 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TriangleAlert, Upload, Trash2, User, Building, Phone, Hash, CalendarDays, Inbox, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, query, setDoc, updateDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
@@ -79,6 +80,8 @@ type OperationalCase = {
   caseItems: CaseItem[];
   isArchived?: boolean;
   isDeleted?: boolean;
+  submittedBy?: string;
+  quantity?: number;
 };
 
 const formSchema = z.object({
@@ -109,6 +112,7 @@ const allCaseTypes = ['Return to Sender (RTS)', 'Quality Errors', 'Replacement']
 const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ editingCase, onCancelEdit, onSaveComplete, onDirtyChange, isReadOnly, setImageInView, initialJoNumber, source }: OperationalCasesFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { userProfile } = useUser();
   const imageUploadRef = useRef<HTMLInputElement>(null);
   const [joInput, setJoInput] = useState('');
   const [foundLead, setFoundLead] = useState<Lead | null>(null);
@@ -295,7 +299,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
   };
 
   async function onSubmit(values: FormValues) {
-    if (!firestore) {
+    if (!firestore || !userProfile) {
       toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available. Please try again later.' });
       return;
     }
@@ -342,6 +346,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                 contactNumber: foundLead?.contactNumber || '',
                 landlineNumber: foundLead?.landlineNumber || '',
                 submissionDateTime: new Date().toISOString(),
+                submittedBy: userProfile.nickname,
             };
 
             await setDoc(caseDocRef, fullData);
@@ -622,3 +627,5 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
 });
 
 export { OperationalCasesFormMemo as OperationalCasesForm };
+
+    

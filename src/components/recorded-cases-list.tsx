@@ -2,7 +2,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, updateDoc, deleteDoc, getDocs, where } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, getDocs, where } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from './ui/scroll-area';
 import { Skeleton } from './ui/skeleton';
@@ -37,6 +37,7 @@ type OperationalCase = {
   quantity?: number;
   isArchived?: boolean;
   isDeleted?: boolean;
+  submittedBy?: string;
 };
 
 type RecordedCasesListProps = {
@@ -204,6 +205,7 @@ const RecordedCasesListMemo = React.memo(function RecordedCasesList({ onEdit, is
                         <div className="md:col-span-3">
                           <p className="text-xs text-gray-500">Date Recorded</p>
                           <p className="text-sm font-medium">{formatDateTime(caseItem.submissionDateTime).dateTime}</p>
+                          {caseItem.submittedBy && <p className="text-xs text-gray-500">By: {caseItem.submittedBy}</p>}
                           <p className="text-sm font-semibold mt-2">{caseItem.joNumber}</p>
                           <p className="text-xs text-gray-600">{caseItem.customerName}</p>
                           <p className="text-xs text-gray-500">{getContactDisplay(caseItem)}</p>
@@ -228,7 +230,7 @@ const RecordedCasesListMemo = React.memo(function RecordedCasesList({ onEdit, is
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
-                          <p className="text-sm mt-1 whitespace-pre-wrap">
+                          <p className="text-base mt-1 whitespace-pre-wrap">
                             {caseItem.remarks && caseItem.remarks.split('\n').map((line, index) => {
                                   if (line.startsWith('(') && line.endsWith(')')) {
                                       return <i key={index} className="block">{line}</i>;
@@ -342,3 +344,5 @@ const RecordedCasesListMemo = React.memo(function RecordedCasesList({ onEdit, is
 });
 
 export { RecordedCasesListMemo as RecordedCasesList };
+
+    
