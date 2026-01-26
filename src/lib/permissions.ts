@@ -81,7 +81,7 @@ export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'Digitizer': ['digitizing'],
   'E.D Coordinator': ['digitizing'],
   'Production Line Leader': ['production'],
-  'Production Head': ['inventory', 'logistics'],
+  'Production Head': ['production'],
   'Logistics Officer': ['logistics'],
   'Operations Manager': ['inventory', 'production', 'logistics'],
   'Finance': ['finance'],

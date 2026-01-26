@@ -1207,7 +1207,7 @@
         }
       },
       {
-        "path": "/operationalCases/{caseId}",
+        "path": "/operationalCases/{operationalCaseId}",
         "definition": {
           "entityName": "OperationalCase",
           "schema": {
