@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, setDoc, getDocs, where } from 'firebase/firestore';
@@ -545,19 +546,17 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
             </div>
             <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center gap-4">
-                    <div className="w-full max-w-lg">
                     <Input
-                        placeholder="Search customer, company or contact..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-gray-100 text-black placeholder:text-gray-500"
-                    />
-                    </div>
-                    <div className="w-full max-w-xs">
-                        <Input
                         placeholder="Search by J.O. No..."
                         value={joNumberSearch}
                         onChange={(e) => setJoNumberSearch(e.target.value)}
+                        className="bg-gray-100 text-black placeholder:text-gray-500 w-48"
+                    />
+                    <div className="flex-1 min-w-[300px]">
+                        <Input
+                        placeholder="Search customer, company or contact..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                         className="bg-gray-100 text-black placeholder:text-gray-500"
                         />
                     </div>
@@ -581,7 +580,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
           <Table>
             <TableHeader className="bg-neutral-800">
               <TableRow>
-                <TableHead className="text-white font-bold text-xs">J.O. Number</TableHead>
+                <TableHead className="text-white font-bold text-xs text-left">J.O. Number</TableHead>
                 <TableHead className="text-white font-bold text-xs">Customer</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center w-[150px]">Received Printed J.O.?</TableHead>
                 <TableHead className="text-white font-bold text-xs text-center">Quality Check</TableHead>
@@ -620,9 +619,8 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                    return (
                       <TableRow key={lead.id}>
                         <TableCell className="text-xs text-left">
-                          <div className="flex items-center justify-start gap-2">
-                            <div>
-                                {formatJoNumber(lead.joNumber)}
+                          <div className="flex items-center justify-start gap-1">
+                                <span>{formatJoNumber(lead.joNumber)}</span>
                                 {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
                                 <TooltipProvider>
                                     <Tooltip>
@@ -636,7 +634,6 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                                 </TooltipProvider>
                                 )}
                             </div>
-                          </div>
                         </TableCell>
                         <TableCell className="text-xs">
                           <Collapsible>
@@ -676,7 +673,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                                 <Checkbox
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                disabled={!lead.isEndorsedToLogistics || isReadOnly || isCompleted}
+                                disabled={isReadOnly || isCompleted}
                                 className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                                 />
                                 {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
