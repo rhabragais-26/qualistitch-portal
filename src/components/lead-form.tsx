@@ -1358,8 +1358,8 @@ export function LeadForm({
                                 </Button>
                             </div>
                           </TableCell>
-                           <TableCell className={cn("py-1 px-2 text-black font-bold text-center align-middle", isNegative && "text-destructive")}>
-                             {remainingStock}
+                           <TableCell className={cn("py-1 px-2 text-black font-bold text-center align-middle", isNegative && order.productType !== 'Patches' && "text-destructive")}>
+                            {order.productType === 'Patches' ? 'N/A' : remainingStock}
                            </TableCell>
                           <TableCell className="py-1 px-2 text-center align-middle">
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-gray-200" onClick={() => handleEditOrder(order, index)} disabled={isReadOnly}>
@@ -1491,6 +1491,8 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
+
+    
 
     
 
