@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { collection, query, doc, updateDoc, getDocs, where } from 'firebase/firestore';
@@ -18,9 +17,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Check, ChevronDown, Send, FileText, X, Download, AlertTriangle, ChevronUp, RefreshCcw } from 'lucide-react';
+import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2 } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Input } from './ui/input';
@@ -409,7 +408,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                         <Checkbox
                         checked={lead.isCutting || false}
                         onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
-                        disabled={!lead.isFinalProgram || isCompleted}
+                        disabled={!lead.isJoHardcopyReceived || isCompleted}
                         className={isCompleted ? 'disabled:opacity-100' : ''}
                         />
                         {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
