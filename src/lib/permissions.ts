@@ -71,6 +71,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/marketing/campaigns': 'marketing',
   '/marketing/ads-vs-inquiries': 'marketing',
   '/marketing/analytics': 'marketing',
+  '/marketing/founding-anniversaries': 'marketing',
 };
 
 export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
