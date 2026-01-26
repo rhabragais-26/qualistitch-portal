@@ -94,9 +94,10 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
       const paymentsObject: Record<string, Payment[]> = {};
       const leadPayments = lead.payments as any;
       if (leadPayments && Array.isArray(leadPayments) && leadPayments.length > 0) {
-        paymentsObject['main'] = leadPayments as Payment[];
+        paymentsObject['main'] = leadPayments.map((p: Payment) => ({ ...p, id: p.id || uuidv4() }));
       } else if (lead.paidAmount) {
           paymentsObject['main'] = [{
+              id: uuidv4(),
               type: lead.balance === 0 && lead.paidAmount === lead.grandTotal ? 'full' : 'down',
               amount: lead.paidAmount,
               mode: lead.modeOfPayment || 'Unknown',

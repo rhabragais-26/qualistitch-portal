@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -426,6 +427,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   payments,
   setPayments,
   isReadOnly,
+  editingPayment,
 }: {
   balance: number;
   payments: Record<string, Payment[]>;
@@ -433,6 +435,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
   isReadOnly?: boolean;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  editingPayment?: Payment | null;
 }) {
   const { userProfile } = useUser();
   const [paymentType, setPaymentType] = useState<'additional' | 'balance' | 'securityDeposit'>('additional');
@@ -442,23 +445,29 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
 
   useEffect(() => {
     if (isOpen) {
-      setPaymentType('additional');
-      setAmount(0);
-      setPaymentMode('');
+      if (editingPayment) {
+        setPaymentType(editingPayment.type as 'additional' | 'balance' | 'securityDeposit');
+        setAmount(editingPayment.amount);
+        setPaymentMode(editingPayment.mode);
+      } else {
+        setPaymentType('additional');
+        setAmount(0);
+        setPaymentMode('');
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, editingPayment]);
 
-  const maxAmount = balance;
+  const maxAmount = balance + (editingPayment ? editingPayment.amount : 0);
   const amountError = paymentType !== 'securityDeposit' && amount > maxAmount ? `Amount cannot exceed balance of ${formatCurrency(maxAmount)}` : null;
   const isSaveDisabled = amount <= 0 || !paymentMode || !!amountError || !userProfile;
 
   useEffect(() => {
     if (paymentType === 'balance') {
-      setAmount(balance);
-    } else {
+      setAmount(balance + (editingPayment ? editingPayment.amount : 0));
+    } else if (!editingPayment) {
       setAmount(0);
     }
-  }, [paymentType, balance]);
+  }, [paymentType, balance, editingPayment]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/,/g, '');
@@ -478,35 +487,52 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
         return;
     }
 
-    const newPayment: Payment = {
-      id: uuidv4(),
-      type: paymentType,
-      amount: amount,
-      mode: paymentMode,
-    };
-    
-    setPayments(prev => {
-      const newPayments = JSON.parse(JSON.stringify(prev)); // deep copy
-      const paymentKey = Object.keys(newPayments)[0] || new Date().toISOString();
-      if (!newPayments[paymentKey]) {
-        newPayments[paymentKey] = [];
-      }
-      newPayments[paymentKey].push({
-        ...(newPayment as any),
-        processedBy: userProfile.nickname,
-        timestamp: new Date().toISOString(),
-      });
-      return newPayments;
-    });
-    
-    toast({
-        title: "Payment Added",
-        description: `${formatCurrency(amount)} via ${paymentMode} has been added.`
-    });
+    if (editingPayment) {
+        setPayments(prev => {
+            const newPayments = JSON.parse(JSON.stringify(prev));
+            const paymentKey = Object.keys(newPayments)[0];
+            if (paymentKey) {
+                const paymentIndex = newPayments[paymentKey].findIndex((p: Payment) => p.id === editingPayment.id);
+                if (paymentIndex > -1) {
+                    newPayments[paymentKey][paymentIndex] = {
+                        ...newPayments[paymentKey][paymentIndex],
+                        type: paymentType,
+                        amount: amount,
+                        mode: paymentMode,
+                    };
+                }
+            }
+            return newPayments;
+        });
+        toast({ title: "Payment Updated" });
+    } else {
+        const newPayment: Payment = {
+          id: uuidv4(),
+          type: paymentType,
+          amount: amount,
+          mode: paymentMode,
+        };
+        
+        setPayments(prev => {
+          const newPayments = JSON.parse(JSON.stringify(prev));
+          const paymentKey = Object.keys(newPayments)[0] || new Date().toISOString();
+          if (!newPayments[paymentKey]) {
+            newPayments[paymentKey] = [];
+          }
+          newPayments[paymentKey].push({
+            ...(newPayment as any),
+            processedBy: userProfile.nickname,
+            timestamp: new Date().toISOString(),
+          });
+          return newPayments;
+        });
+        
+        toast({
+            title: "Payment Added",
+            description: `${formatCurrency(amount)} via ${paymentMode} has been added.`
+        });
+    }
 
-    setPaymentType('additional');
-    setAmount(0);
-    setPaymentMode('');
     onOpenChange(false);
   };
 
@@ -514,7 +540,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Payment</DialogTitle>
+          <DialogTitle>{editingPayment ? 'Edit Payment' : 'Add Payment'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <RadioGroup value={paymentType} onValueChange={(v: 'additional' | 'balance' | 'securityDeposit') => setPaymentType(v)} className="flex justify-center gap-4">
@@ -572,7 +598,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
           <DialogClose asChild>
             <Button type="button" variant="outline">Close</Button>
           </DialogClose>
-          <Button onClick={handleSave} disabled={isSaveDisabled}>Save Payment</Button>
+          <Button onClick={handleSave} disabled={isSaveDisabled}>{editingPayment ? 'Update Payment' : 'Save Payment'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

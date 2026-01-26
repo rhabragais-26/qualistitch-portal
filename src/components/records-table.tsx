@@ -55,7 +55,7 @@ const formatCurrency = (value: number) => {
 };
 
 const orderSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().optional(), // Keep track of original order if needed
   productType: z.string(),
   color: z.string(),
   size: z.string(),
@@ -66,6 +66,7 @@ const orderSchema = z.object({
 export type Order = z.infer<typeof orderSchema>;
 
 const paymentSchema = z.object({
+    id: z.string().optional(),
     type: z.enum(['down', 'full', 'balance', 'additional', 'securityDeposit']),
     amount: z.number(),
     mode: z.string(),
