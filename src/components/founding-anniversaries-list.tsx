@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -9,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from './ui/scroll-area';
 import { anniversaryData, Organization } from '@/lib/anniversaries-data';
 import { format } from 'date-fns';
+import { Button } from './ui/button';
 
 const organizationTypes = ['All', ...[...new Set(anniversaryData.map(org => org.type))].sort()];
 const months = [
@@ -58,6 +58,15 @@ export function FoundingAnniversariesList() {
       return matchesSearch && matchesMonth && matchesType && matchesCountry && matchesIndustry && matchesSubDepartment;
     }).sort((a,b) => new Date(a.dateFounded).getTime() - new Date(b.dateFounded).getTime());
   }, [searchTerm, selectedMonth, selectedType, selectedCountry, selectedIndustry, selectedSubDepartment]);
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setSelectedMonth('All');
+    setSelectedType('All');
+    setSelectedCountry('All');
+    setSelectedIndustry('All');
+    setSelectedSubDepartment('All');
+  };
 
   return (
     <Card className="w-full shadow-xl">
@@ -124,6 +133,7 @@ export function FoundingAnniversariesList() {
                         ))}
                     </SelectContent>
                 </Select>
+                <Button onClick={handleResetFilters} variant="outline">Reset</Button>
             </div>
         </div>
       </CardHeader>
@@ -160,5 +170,3 @@ export function FoundingAnniversariesList() {
     </Card>
   );
 }
-
-    
