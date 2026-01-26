@@ -53,14 +53,9 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
 
   const lastAddedPayment = useMemo(() => {
+    // Only consider a payment editable if it was just added in this session.
     const allPayments = Object.values(payments).flat();
-    const addedPaymentTypes: Payment['type'][] = ['additional', 'balance', 'securityDeposit'];
-    for (let i = allPayments.length - 1; i >= 0; i--) {
-        if (addedPaymentTypes.includes(allPayments[i].type)) {
-            return allPayments[i];
-        }
-    }
-    return null;
+    return allPayments.find(p => p.isNew);
   }, [payments]);
 
   const groupedOrders = useMemo(() => {
@@ -473,18 +468,22 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
             <div className="w-full flex justify-between items-center">
               <div className="pt-2">
                 {isEditingLead ? (
-                   <>
-                    {lastAddedPayment ? (
-                        <Button type="button" variant="outline" onClick={() => { setEditingPayment(lastAddedPayment); setIsBalanceDialogOpen(true); }} disabled={isReadOnly}>
-                            Edit Payment
+                    <>
+                    {balance > 0 ? (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                // If a new payment was just added, edit it. Otherwise, add a new one.
+                                const newPayment = Object.values(payments).flat().find(p => p.isNew);
+                                setEditingPayment(newPayment || null);
+                                setIsBalanceDialogOpen(true);
+                            }}
+                            disabled={isReadOnly}
+                        >
+                            {Object.values(payments).flat().some(p => p.isNew) ? 'Edit Payment' : 'Add Payment'}
                         </Button>
-                    ) : (
-                        balance > 0 ? (
-                            <Button type="button" variant="outline" onClick={() => { setEditingPayment(null); setIsBalanceDialogOpen(true); }} disabled={isReadOnly}>
-                                Add Payment
-                            </Button>
-                        ) : null
-                    )}
+                    ) : null}
                     </>
                 ) : (
                   <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly} disabled={orders.length === 0} />
@@ -521,7 +520,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 return (
                   <div key={payment.id || index} className="flex justify-end items-center text-sm text-right w-full">
                       <span className="text-muted-foreground mr-2">
-                        {description} <span className="italic">(via {payment.mode})</span>:
+                        {description} {payment.mode && <span className="italic">(via {payment.mode})</span>}:
                       </span>
                       <span className="font-medium">{formatCurrency(payment.amount)}</span>
                   </div>
