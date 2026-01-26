@@ -2,6 +2,18 @@
 
 {
   "entities": {
+    "JOCounter": {
+      "title": "JOCounter",
+      "type": "object",
+      "description": "A counter to generate unique Job Order numbers.",
+      "properties": {
+        "currentNumber": {
+          "type": "number",
+          "description": "The last used Job Order number."
+        }
+      },
+      "required": ["currentNumber"]
+    },
     "OtherCashInflow": {
       "title": "OtherCashInflow",
       "type": "object",
@@ -1264,6 +1276,22 @@
             "$ref": "#/backend/entities/OtherCashInflow"
           },
           "description": "Stores records of other cash inflows."
+        }
+      },
+      {
+        "path": "/counters/{counterId}",
+        "definition": {
+          "entityName": "JOCounter",
+          "schema": {
+            "$ref": "#/backend/entities/JOCounter"
+          },
+          "description": "Stores global counters. The 'jo_counter' document is used for generating unique Job Order numbers.",
+          "params": [
+            {
+              "name": "counterId",
+              "description": "The ID of the counter, e.g., 'jo_counter'."
+            }
+          ]
         }
       }
     ],
