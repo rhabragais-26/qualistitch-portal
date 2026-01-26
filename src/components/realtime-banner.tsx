@@ -1,12 +1,12 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 type AppState = {
   announcementText?: string;
@@ -17,6 +17,9 @@ type AppState = {
 
 export function RealtimeBanner() {
   const firestore = useFirestore();
+  const { user, userProfile, isUserLoading } = useUser();
+  const pathname = usePathname();
+
   const appStateRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'appState', 'global') : null),
     [firestore]
@@ -47,7 +50,7 @@ export function RealtimeBanner() {
     }
   };
 
-  if (!isVisible) {
+  if (!isVisible || isUserLoading || !user || !userProfile || pathname === '/login' || pathname === '/pending-approval') {
     return null;
   }
 
@@ -72,5 +75,3 @@ export function RealtimeBanner() {
     </div>
   );
 }
-
-    
