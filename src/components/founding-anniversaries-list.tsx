@@ -10,7 +10,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { anniversaryData, Organization } from '@/lib/anniversaries-data';
 import { format } from 'date-fns';
 
-const organizationTypes = ['All', 'Private Company', 'Government Agency', 'NGO', 'Other'];
+const organizationTypes = ['All', 'Private Company', 'BPO/In-House', 'Government Agency', 'NGO', 'Brotherhood', 'Other'];
 const months = [
   { value: 'All', label: 'All Months' }, { value: '1', label: 'January' },
   { value: '2', label: 'February' }, { value: '3', label: 'March' },
@@ -26,11 +26,18 @@ export function FoundingAnniversariesList() {
   const [selectedMonth, setSelectedMonth] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
   const [selectedCountry, setSelectedCountry] = useState('All');
+  const [selectedIndustry, setSelectedIndustry] = useState('All');
 
   const countries = useMemo(() => {
     const allCountries = [...new Set(anniversaryData.map(org => org.countryOfOrigin))].sort();
     return ['All', ...allCountries];
   }, []);
+
+  const industries = useMemo(() => {
+    const allIndustries = [...new Set(anniversaryData.map(org => org.industry))].sort();
+    return ['All', ...allIndustries];
+  }, []);
+
 
   const filteredData = useMemo(() => {
     const lowercasedSearchTerm = searchTerm.toLowerCase();
@@ -40,9 +47,10 @@ export function FoundingAnniversariesList() {
       const matchesMonth = selectedMonth === 'All' || new Date(org.dateFounded).getUTCMonth() + 1 === parseInt(selectedMonth);
       const matchesType = selectedType === 'All' || org.type === selectedType;
       const matchesCountry = selectedCountry === 'All' || org.countryOfOrigin === selectedCountry;
-      return matchesSearch && matchesMonth && matchesType && matchesCountry;
+      const matchesIndustry = selectedIndustry === 'All' || org.industry === selectedIndustry;
+      return matchesSearch && matchesMonth && matchesType && matchesCountry && matchesIndustry;
     }).sort((a,b) => new Date(a.dateFounded).getTime() - new Date(b.dateFounded).getTime());
-  }, [searchTerm, selectedMonth, selectedType, selectedCountry]);
+  }, [searchTerm, selectedMonth, selectedType, selectedCountry, selectedIndustry]);
 
   return (
     <Card className="w-full shadow-xl">
@@ -76,6 +84,16 @@ export function FoundingAnniversariesList() {
                     <SelectContent>
                         {organizationTypes.map(type => (
                             <SelectItem key={type} value={type}>{type === 'All' ? 'All Types' : type}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <Select value={selectedIndustry} onValueChange={setSelectedIndustry}>
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Filter by Industry" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {industries.map(industry => (
+                            <SelectItem key={industry} value={industry}>{industry === 'All' ? 'All Industries' : industry}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>

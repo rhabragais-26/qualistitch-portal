@@ -4,7 +4,7 @@ export type Organization = {
   dateFounded: string; // Global founding date
   phStart?: string | null; // Optional: PH operations start date
   countryOfOrigin: string;
-  type: "Private Company" | "Government Agency" | "NGO" | "Other";
+  type: "Private Company" | "BPO/In-House" | "Government Agency" | "NGO" | "Brotherhood" | "Other";
   industry: string;
 };
 
@@ -92,5 +92,65 @@ export const anniversaryData: Organization[] = [
   { name: "Ateneo de Manila University", dateFounded: "1859-12-10", countryOfOrigin: "Philippines", type: "Other", industry: "Education" },
   { name: "De La Salle University", dateFounded: "1911-06-16", countryOfOrigin: "Philippines", type: "Other", industry: "Education" },
   { name: "University of Santo Tomas", dateFounded: "1611-04-28", countryOfOrigin: "Philippines", type: "Other", industry: "Education" },
-  { name: "Cultural Center of the Philippines (CCP)", dateFounded: "1966-06-25", countryOfOrigin: "Philippines", type: "Other", industry: "Arts & Culture" }
+  { name: "Cultural Center of the Philippines (CCP)", dateFounded: "1966-06-25", countryOfOrigin: "Philippines", type: "Other", industry: "Arts & Culture" },
+
+  // --- NEW DATA ---
+
+  // BPO & In-House Companies
+  { name: "Accenture Philippines", dateFounded: "1989-01-01", phStart: "1985-01-01", countryOfOrigin: "Ireland", type: "BPO/In-House", industry: "IT-BPM" },
+  { name: "Teleperformance Philippines", dateFounded: "1978-01-01", phStart: "1996-01-01", countryOfOrigin: "France", type: "BPO/In-House", industry: "IT-BPM" },
+  { name: "Concentrix Philippines", dateFounded: "1983-01-01", phStart: "2007-01-01", countryOfOrigin: "USA", type: "BPO/In-House", industry: "IT-BPM" },
+  { name: "Telus International Philippines", dateFounded: "2005-01-01", phStart: "2001-01-01", countryOfOrigin: "Canada", type: "BPO/In-House", industry: "IT-BPM" },
+  { name: "Alorica Philippines", dateFounded: "1999-01-01", phStart: "2005-01-01", countryOfOrigin: "USA", type: "BPO/In-House", industry: "IT-BPM" },
+  { name: "Foundever (formerly Sitel)", dateFounded: "1985-01-01", phStart: "2000-01-01", countryOfOrigin: "USA", type: "BPO/In-House", industry: "IT-BPM" },
+  { name: "TaskUs Philippines", dateFounded: "2008-01-01", phStart: "2008-01-01", countryOfOrigin: "USA", type: "BPO/In-House", industry: "IT-BPM" },
+  { name: "Genpact Philippines", dateFounded: "1997-01-01", phStart: "2006-01-01", countryOfOrigin: "USA", type: "BPO/In-House", industry: "IT-BPM" },
+  { name: "VXI Global Solutions Philippines", dateFounded: "1998-01-01", phStart: "2003-01-01", countryOfOrigin: "USA", type: "BPO/In-House", industry: "IT-BPM" },
+  { name: "IBEX Philippines", dateFounded: "2002-01-01", phStart: "2013-01-01", countryOfOrigin: "USA", type: "BPO/In-House", industry: "IT-BPM" },
+  { name: "Deutsche Bank (Philippines)", dateFounded: "1870-03-10", phStart: "1975-01-01", countryOfOrigin: "Germany", type: "BPO/In-House", industry: "Banking & Finance" },
+  { name: "Wells Fargo Philippines", dateFounded: "1852-03-18", phStart: "2011-01-01", countryOfOrigin: "USA", type: "BPO/In-House", industry: "Banking & Finance" },
+  { name: "Manulife Philippines", dateFounded: "1887-01-01", phStart: "1907-01-01", countryOfOrigin: "Canada", type: "BPO/In-House", industry: "Insurance" },
+  { name: "Sun Life Philippines", dateFounded: "1865-01-01", phStart: "1895-01-01", countryOfOrigin: "Canada", type: "BPO/In-House", industry: "Insurance" },
+  
+  // More Private Companies
+  { name: "Petron Corporation", dateFounded: "1933-09-07", countryOfOrigin: "Philippines", type: "Private Company", industry: "Energy & Utilities" },
+  { name: "Puregold Price Club, Inc.", dateFounded: "1998-09-08", countryOfOrigin: "Philippines", type: "Private Company", industry: "Retail" },
+  { name: "Robinsons Retail Holdings, Inc.", dateFounded: "1980-01-01", countryOfOrigin: "Philippines", type: "Private Company", industry: "Retail" },
+  { name: "Lazada Philippines", dateFounded: "2012-03-27", phStart: "2012-01-01", countryOfOrigin: "Singapore", type: "Private Company", industry: "E-commerce" },
+  { name: "Grab Philippines", dateFounded: "2012-01-01", phStart: "2013-01-01", countryOfOrigin: "Singapore", type: "Private Company", industry: "Technology" },
+  { name: "Shopee Philippines", dateFounded: "2015-01-01", phStart: "2015-01-01", countryOfOrigin: "Singapore", type: "Private Company", industry: "E-commerce" },
+  { name: "Huawei Philippines", dateFounded: "1987-01-01", phStart: "2002-01-01", countryOfOrigin: "China", type: "Private Company", industry: "Technology" },
+  { name: "Macquarie Group Philippines", dateFounded: "1969-01-01", phStart: "2006-01-01", countryOfOrigin: "Australia", type: "Private Company", industry: "Banking & Finance" },
+  { name: "Emirates Philippines", dateFounded: "1985-03-25", phStart: "1990-01-01", countryOfOrigin: "UAE", type: "Private Company", industry: "Aviation" },
+  
+  // More Government Agencies
+  { name: "Department of Foreign Affairs (DFA)", dateFounded: "1898-06-23", countryOfOrigin: "Philippines", type: "Government Agency", industry: "Government & Public Sector" },
+  { name: "Department of Public Works and Highways (DPWH)", dateFounded: "1901-01-01", countryOfOrigin: "Philippines", type: "Government Agency", industry: "Government & Public Sector" },
+  { name: "Department of Trade and Industry (DTI)", dateFounded: "1981-01-01", countryOfOrigin: "Philippines", type: "Government Agency", industry: "Government & Public Sector" },
+  { name: "National Economic and Development Authority (NEDA)", dateFounded: "1973-01-24", countryOfOrigin: "Philippines", type: "Government Agency", industry: "Government & Public Sector" },
+  { name: "Philippine Statistics Authority (PSA)", dateFounded: "2013-09-12", countryOfOrigin: "Philippines", type: "Government Agency", industry: "Government & Public Sector" },
+  { name: "Securities and Exchange Commission (SEC)", dateFounded: "1936-10-26", countryOfOrigin: "Philippines", type: "Government Agency", industry: "Government & Public Sector" },
+  { name: "Philippine Coast Guard (PCG)", dateFounded: "1967-10-10", countryOfOrigin: "Philippines", type: "Government Agency", industry: "Government & Public Sector" },
+
+  // More NGOs
+  { name: "Habitat for Humanity Philippines", dateFounded: "1976-01-01", phStart: "1988-01-01", countryOfOrigin: "USA", type: "NGO", industry: "Community Development" },
+  { name: "Save the Children Philippines", dateFounded: "1919-01-01", phStart: "1981-01-01", countryOfOrigin: "United Kingdom", type: "NGO", industry: "Child Welfare" },
+  { name: "World Vision Philippines", dateFounded: "1950-01-01", phStart: "1957-01-01", countryOfOrigin: "USA", type: "NGO", industry: "Humanitarian Aid" },
+  { name: "UNICEF Philippines", dateFounded: "1946-12-11", phStart: "1948-01-01", countryOfOrigin: "USA", type: "NGO", industry: "Child Welfare" },
+
+  // Brotherhoods, Fraternities, and Civic Orgs
+  { name: "Alpha Phi Omega (Philippines)", dateFounded: "1925-12-16", phStart: "1950-03-02", countryOfOrigin: "USA", type: "Brotherhood", industry: "Fraternity" },
+  { name: "Tau Gamma Phi", dateFounded: "1968-10-04", countryOfOrigin: "Philippines", type: "Brotherhood", industry: "Fraternity" },
+  { name: "Alpha Kappa Rho", dateFounded: "1973-08-08", countryOfOrigin: "Philippines", type: "Brotherhood", industry: "Fraternity" },
+  { name: "Scouts Royale Brotherhood", dateFounded: "1975-09-21", countryOfOrigin: "Philippines", type: "Brotherhood", industry: "Fraternity" },
+  { name: "Rotary Club of Manila", dateFounded: "1905-02-23", phStart: "1919-06-01", countryOfOrigin: "USA", type: "Other", industry: "Civic Organization" },
+  { name: "Lions Clubs International (Philippines)", dateFounded: "1917-06-07", phStart: "1949-01-01", countryOfOrigin: "USA", type: "Other", industry: "Civic Organization" },
+  { name: "Kiwanis International Philippines", dateFounded: "1915-01-21", phStart: "1964-01-01", countryOfOrigin: "USA", type: "Other", industry: "Civic Organization" },
+  { name: "JCI Philippines (Jaycees)", dateFounded: "1944-12-11", phStart: "1947-12-20", countryOfOrigin: "USA", type: "Other", industry: "Civic Organization" },
+  { name: "The Most Worshipful Grand Lodge of Free and Accepted Masons of the Philippines", dateFounded: "1912-12-19", countryOfOrigin: "Philippines", type: "Brotherhood", industry: "Fraternal Organization" },
+
+  // More Other Organizations
+  { name: "IT & Business Process Association of the Philippines (IBPAP)", dateFounded: "2004-01-01", countryOfOrigin: "Philippines", type: "Other", industry: "Business Association" },
+  { name: "Philippine Retailers Association (PRA)", dateFounded: "1976-01-01", countryOfOrigin: "Philippines", type: "Other", industry: "Business Association" },
+  { name: "Management Association of the Philippines (MAP)", dateFounded: "1950-01-01", countryOfOrigin: "Philippines", type: "Other", industry: "Business Association" }
 ];
