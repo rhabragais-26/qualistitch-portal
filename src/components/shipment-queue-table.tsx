@@ -617,7 +617,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                                                <AlertTriangle className="h-4 w-4 text-red-500" />
                                             </TooltipTrigger>
                                             <TooltipContent>
                                                 <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
