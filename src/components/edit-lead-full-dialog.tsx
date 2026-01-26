@@ -176,7 +176,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
             productType: [...new Set(stagedOrders.map(o => o.productType))].join(', '),
             addOns,
             discounts,
-            payments: Object.values(payments).flat(),
+            payments: Object.values(payments).flat().map(({ isNew, ...p }) => p),
             grandTotal,
             balance,
             paidAmount,
