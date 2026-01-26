@@ -10,7 +10,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { anniversaryData, Organization } from '@/lib/anniversaries-data';
 import { format } from 'date-fns';
 
-const organizationTypes = ['All', 'Private Company', 'BPO/In-House', 'Government Agency', 'NGO', 'Brotherhood', 'Other'];
+const organizationTypes = ['All', ...[...new Set(anniversaryData.map(org => org.type))].sort()];
 const months = [
   { value: 'All', label: 'All Months' }, { value: '1', label: 'January' },
   { value: '2', label: 'February' }, { value: '3', label: 'March' },
@@ -27,6 +27,7 @@ export function FoundingAnniversariesList() {
   const [selectedType, setSelectedType] = useState('All');
   const [selectedCountry, setSelectedCountry] = useState('All');
   const [selectedIndustry, setSelectedIndustry] = useState('All');
+  const [selectedSubDepartment, setSelectedSubDepartment] = useState('All');
 
   const countries = useMemo(() => {
     const allCountries = [...new Set(anniversaryData.map(org => org.countryOfOrigin))].sort();
@@ -36,6 +37,11 @@ export function FoundingAnniversariesList() {
   const industries = useMemo(() => {
     const allIndustries = [...new Set(anniversaryData.map(org => org.industry))].sort();
     return ['All', ...allIndustries];
+  }, []);
+
+  const subDepartments = useMemo(() => {
+    const allSubDepartments = [...new Set(anniversaryData.map(org => org.subDepartment))].sort();
+    return ['All', ...allSubDepartments];
   }, []);
 
 
@@ -48,9 +54,10 @@ export function FoundingAnniversariesList() {
       const matchesType = selectedType === 'All' || org.type === selectedType;
       const matchesCountry = selectedCountry === 'All' || org.countryOfOrigin === selectedCountry;
       const matchesIndustry = selectedIndustry === 'All' || org.industry === selectedIndustry;
-      return matchesSearch && matchesMonth && matchesType && matchesCountry && matchesIndustry;
+      const matchesSubDepartment = selectedSubDepartment === 'All' || org.subDepartment === selectedSubDepartment;
+      return matchesSearch && matchesMonth && matchesType && matchesCountry && matchesIndustry && matchesSubDepartment;
     }).sort((a,b) => new Date(a.dateFounded).getTime() - new Date(b.dateFounded).getTime());
-  }, [searchTerm, selectedMonth, selectedType, selectedCountry, selectedIndustry]);
+  }, [searchTerm, selectedMonth, selectedType, selectedCountry, selectedIndustry, selectedSubDepartment]);
 
   return (
     <Card className="w-full shadow-xl">
@@ -60,15 +67,15 @@ export function FoundingAnniversariesList() {
                 <CardTitle>Founding Anniversaries</CardTitle>
                 <CardDescription>A list of Philippine organizations and their founding dates.</CardDescription>
             </div>
-            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:items-center gap-2 w-full sm:w-auto">
                 <Input
                     placeholder="Search name or industry..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full sm:w-48"
+                    className="w-full lg:w-48"
                 />
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger className="w-full sm:w-[140px]">
+                    <SelectTrigger className="w-full lg:w-[140px]">
                         <SelectValue placeholder="Filter by month" />
                     </SelectTrigger>
                     <SelectContent>
@@ -78,7 +85,7 @@ export function FoundingAnniversariesList() {
                     </SelectContent>
                 </Select>
                  <Select value={selectedType} onValueChange={setSelectedType}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectTrigger className="w-full lg:w-[180px]">
                         <SelectValue placeholder="Filter by Type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -87,8 +94,18 @@ export function FoundingAnniversariesList() {
                         ))}
                     </SelectContent>
                 </Select>
+                <Select value={selectedSubDepartment} onValueChange={setSelectedSubDepartment}>
+                    <SelectTrigger className="w-full lg:w-[180px]">
+                        <SelectValue placeholder="Filter by Sub-Department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {subDepartments.map(sub => (
+                            <SelectItem key={sub} value={sub}>{sub === 'All' ? 'All Sub-Departments' : sub}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
                 <Select value={selectedIndustry} onValueChange={setSelectedIndustry}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectTrigger className="w-full lg:w-[180px]">
                         <SelectValue placeholder="Filter by Industry" />
                     </SelectTrigger>
                     <SelectContent>
@@ -98,7 +115,7 @@ export function FoundingAnniversariesList() {
                     </SelectContent>
                 </Select>
                  <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                    <SelectTrigger className="w-full sm:w-[160px]">
+                    <SelectTrigger className="w-full lg:w-[160px]">
                         <SelectValue placeholder="Filter by Country" />
                     </SelectTrigger>
                     <SelectContent>
@@ -118,17 +135,19 @@ export function FoundingAnniversariesList() {
                     <TableHead className="w-1/4">Organization Name</TableHead>
                     <TableHead>Industry/Sector</TableHead>
                     <TableHead>Organization Type</TableHead>
+                    <TableHead>Sub-Department</TableHead>
                     <TableHead>Country of Origin</TableHead>
                     <TableHead className="text-center">Date Founded (Global)</TableHead>
                     <TableHead className="text-center">PH Operations Start</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {filteredData.map((org) => (
-                    <TableRow key={org.name}>
+                    {filteredData.map((org, index) => (
+                    <TableRow key={`${org.name}-${index}`}>
                         <TableCell className="font-medium">{org.name}</TableCell>
                         <TableCell>{org.industry}</TableCell>
                         <TableCell>{org.type}</TableCell>
+                        <TableCell>{org.subDepartment}</TableCell>
                         <TableCell>{org.countryOfOrigin}</TableCell>
                         <TableCell className="text-center">{format(new Date(org.dateFounded), 'MMMM d, yyyy')}</TableCell>
                         <TableCell className="text-center">{org.phStart ? format(new Date(org.phStart), 'yyyy') : '-'}</TableCell>
@@ -141,3 +160,5 @@ export function FoundingAnniversariesList() {
     </Card>
   );
 }
+
+    
