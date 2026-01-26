@@ -684,6 +684,7 @@ export function LeadForm({
   
   const getRemainingStock = (order: z.infer<typeof orderSchema>) => {
     if (!inventoryItems) return 'N/A';
+    if (order.productType === 'Patches') return 'N/A';
     const itemInInventory = inventoryItems.find(item =>
       item.productType === order.productType &&
       item.color === order.color &&
@@ -1220,7 +1221,7 @@ export function LeadForm({
                             )}
                         </div>
                       )}
-                      {!isClientOwned && !isPatches && (
+                      {!isClientOwned && !isPatches && orderTypeValue !== 'Stock Design' && orderTypeValue !== 'Stock (Jacket Only)' && (
                           <div className="flex items-center gap-4">
                             <Label>Embroidery Option:</Label>
                             <RadioGroup onValueChange={(v) => setNewOrderEmbroidery(v as 'logo' | 'logoAndText' | 'name')} value={newOrderEmbroidery} className="flex">
