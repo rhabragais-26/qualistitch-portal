@@ -23,7 +23,7 @@ import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { differenceInDays, addDays, format } from 'date-fns';
-import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
+import { cn, formatDateTime, toTitleCase, formatJoNumber } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import Image from 'next/image';
@@ -47,6 +47,7 @@ type FileObject = {
 };
 
 type Layout = {
+  layoutImage?: string | null;
   finalProgrammedLogo?: (FileObject | null)[];
   finalProgrammedBackDesign?: (FileObject | null)[];
 };
@@ -266,12 +267,6 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     }
     return mobile || landline || null;
   }, []);
-  
-  const formatJoNumber = useCallback((joNumber: number | undefined) => {
-    if (!joNumber) return '';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-  }, []);
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
@@ -468,8 +463,8 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                     <TableHead className="text-white font-bold align-middle w-[250px]">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle w-[150px] text-center">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle w-[150px] text-center">SCES</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[150px]">Priority Type</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[150px]">Ordered Items</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[150px]">Priority Type</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[150px]">Ordered Items</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[400px]">Order Fulfillment Progress</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Overdue Status</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Operational Case</TableHead>
@@ -520,8 +515,18 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                     {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                 </div>
                             </TableCell>
-                            <TableCell className="text-xs align-middle text-center py-2 text-black">
-                                {formatJoNumber(lead.joNumber)}
+                            <TableCell className="text-xs align-middle text-left py-2 text-black">
+                                <div className="flex items-center justify-start gap-2">
+                                    {lead.layouts?.[0]?.layoutImage && (
+                                        <div
+                                            className="relative w-12 h-12 border rounded-md cursor-pointer flex-shrink-0"
+                                            onClick={() => setImageInView(lead.layouts![0]!.layoutImage!)}
+                                        >
+                                            <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
+                                        </div>
+                                    )}
+                                    <span>{formatJoNumber(lead.joNumber)}</span>
+                                </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3 text-sm">{lead.salesRepresentative}</TableCell>
                             <TableCell className="text-center align-middle py-3">
@@ -621,7 +626,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                           <div className="flex-shrink-0 w-48 h-48">
                                             <div
                                               className="relative w-full h-full cursor-pointer"
-                                              onClick={() => setImageInView(lead.operationalCase!.image!)}
+                                              onClick={()={() => setImageInView(lead.operationalCase!.image!)}}
                                             >
                                               <Image
                                                 src={lead.operationalCase.image}
