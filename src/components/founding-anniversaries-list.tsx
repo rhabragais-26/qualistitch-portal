@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -7,14 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from './ui/scroll-area';
 import { anniversaryData, Organization } from '@/lib/anniversaries-data';
+import { format } from 'date-fns';
 
-const organizationTypes = [
-  "Private Companies",
-  "Government Agencies",
-  "Non-Government Organizations (NGOs)",
-  "Other Organizations",
-];
-
+const organizationTypes = ['All', 'Private Company', 'Government Agency', 'NGO', 'Other'];
 const months = [
   { value: 'All', label: 'All Months' }, { value: '1', label: 'January' },
   { value: '2', label: 'February' }, { value: '3', label: 'March' },
@@ -28,40 +24,43 @@ const months = [
 export function FoundingAnniversariesList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('All');
+  const [selectedType, setSelectedType] = useState('All');
+  const [selectedCountry, setSelectedCountry] = useState('All');
+
+  const countries = useMemo(() => {
+    const allCountries = [...new Set(anniversaryData.map(org => org.countryOfOrigin))].sort();
+    return ['All', ...allCountries];
+  }, []);
 
   const filteredData = useMemo(() => {
     const lowercasedSearchTerm = searchTerm.toLowerCase();
 
-    const filtered = anniversaryData.filter(org => {
-      const matchesSearch = org.name.toLowerCase().includes(lowercasedSearchTerm);
-      const matchesMonth = selectedMonth === 'All' || new Date(org.dateFounded).getMonth() + 1 === parseInt(selectedMonth);
-      return matchesSearch && matchesMonth;
-    });
-
-    return organizationTypes.map(type => ({
-      type,
-      organizations: filtered.filter(org => org.type === type).sort((a, b) => new Date(a.dateFounded).getMonth() - new Date(b.dateFounded).getMonth()),
-    }));
-
-  }, [searchTerm, selectedMonth]);
+    return anniversaryData.filter(org => {
+      const matchesSearch = org.name.toLowerCase().includes(lowercasedSearchTerm) || org.industry.toLowerCase().includes(lowercasedSearchTerm);
+      const matchesMonth = selectedMonth === 'All' || new Date(org.dateFounded).getUTCMonth() + 1 === parseInt(selectedMonth);
+      const matchesType = selectedType === 'All' || org.type === selectedType;
+      const matchesCountry = selectedCountry === 'All' || org.countryOfOrigin === selectedCountry;
+      return matchesSearch && matchesMonth && matchesType && matchesCountry;
+    }).sort((a,b) => new Date(a.dateFounded).getTime() - new Date(b.dateFounded).getTime());
+  }, [searchTerm, selectedMonth, selectedType, selectedCountry]);
 
   return (
     <Card className="w-full shadow-xl">
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <CardTitle>Founding Anniversaries</CardTitle>
                 <CardDescription>A list of Philippine organizations and their founding dates.</CardDescription>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
                 <Input
-                    placeholder="Search organization..."
+                    placeholder="Search name or industry..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-64"
+                    className="w-full sm:w-48"
                 />
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-full sm:w-[140px]">
                         <SelectValue placeholder="Filter by month" />
                     </SelectTrigger>
                     <SelectContent>
@@ -70,38 +69,55 @@ export function FoundingAnniversariesList() {
                         ))}
                     </SelectContent>
                 </Select>
+                 <Select value={selectedType} onValueChange={setSelectedType}>
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Filter by Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {organizationTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type === 'All' ? 'All Types' : type}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                 <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                    <SelectTrigger className="w-full sm:w-[160px]">
+                        <SelectValue placeholder="Filter by Country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {countries.map(country => (
+                            <SelectItem key={country} value={country}>{country === 'All' ? 'All Countries' : country}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
         </div>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[calc(100vh-20rem)]">
-          <div className="space-y-8">
-            {filteredData.map(({ type, organizations }) => (
-                organizations.length > 0 && (
-                <div key={type}>
-                  <h3 className="text-xl font-semibold mb-4 text-primary border-b-2 border-primary/20 pb-2">{type}</h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-1/2">Organization Name</TableHead>
-                        <TableHead className="text-center">Date Founded</TableHead>
-                        <TableHead className="text-center">Anniversary Month</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {organizations.map((org) => (
-                        <TableRow key={org.name}>
-                          <TableCell className="font-medium">{org.name}</TableCell>
-                          <TableCell className="text-center">{new Date(org.dateFounded).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</TableCell>
-                          <TableCell className="text-center">{new Date(org.dateFounded).toLocaleString('en-US', { month: 'long' })}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )
-            ))}
-          </div>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead className="w-1/4">Organization Name</TableHead>
+                    <TableHead>Industry/Sector</TableHead>
+                    <TableHead>Organization Type</TableHead>
+                    <TableHead>Country of Origin</TableHead>
+                    <TableHead className="text-center">Date Founded (Global)</TableHead>
+                    <TableHead className="text-center">PH Operations Start</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {filteredData.map((org) => (
+                    <TableRow key={org.name}>
+                        <TableCell className="font-medium">{org.name}</TableCell>
+                        <TableCell>{org.industry}</TableCell>
+                        <TableCell>{org.type}</TableCell>
+                        <TableCell>{org.countryOfOrigin}</TableCell>
+                        <TableCell className="text-center">{format(new Date(org.dateFounded), 'MMMM d, yyyy')}</TableCell>
+                        <TableCell className="text-center">{org.phStart ? format(new Date(org.phStart), 'yyyy') : '-'}</TableCell>
+                    </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
         </ScrollArea>
       </CardContent>
     </Card>
