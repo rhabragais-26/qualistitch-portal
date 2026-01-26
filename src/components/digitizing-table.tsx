@@ -196,7 +196,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([]);
   const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
   const [sequenceLogo, setSequenceLogo] = useState<(FileObject | null)[]>([null]);
-  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([null]);
+  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
   const [finalProgrammedLogo, setFinalProgrammedLogo] = useState<(FileObject | null)[]>([null]);
   const [finalProgrammedBackDesign, setFinalProgrammedBackDesign] = useState<(FileObject | null)[]>([]);
   const [isNamesOnly, setIsNamesOnly] = useState(false);
@@ -1406,12 +1406,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             )}
                           </Button>
                         </TableCell>
-                        <TableCell className="text-center align-middle p-2">
+                        <TableCell className="text-center align-middle py-2">
                           <div className="flex flex-col items-center justify-start h-full gap-1">
                             <Checkbox
                               checked={lead.isJoHardcopyReceived || false}
                               onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                              disabled={isViewOnly}
+                              disabled={!lead.isJoPrinted || isViewOnly}
                               className={isViewOnly ? "disabled:opacity-100" : ""}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
