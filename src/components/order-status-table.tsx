@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -215,7 +216,9 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   const getProductionStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "secondary" } => {
     if (lead.orderType === 'Stock (Jacket Only)') return { text: "Skipped", variant: "secondary" };
     if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
-    if (lead.isSewing) return { text: "Done Production", variant: "success" };
+    if (lead.isDone) return { text: "Done Production", variant: "success" };
+    if (lead.isTrimming) return { text: "Trimming/Cleaning", variant: "warning" };
+    if (lead.isSewing) return { text: "Done Sewing", variant: "warning" };
     if (lead.isEmbroideryDone) return { text: "Endorsed to Sewer", variant: "warning" };
     if(lead.isCutting) return { text: "Ongoing Embroidery", variant: "warning" };
     return { text: 'Pending', variant: 'secondary' };
@@ -246,8 +249,9 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     if (lead.shipmentStatus === 'Packed' || (lead.orderType === 'Stock (Jacket Only)' && lead.isPacked)) return 95;
     if (lead.isDone || (lead.orderType === 'Stock (Jacket Only)' && lead.isEndorsedToLogistics)) return lead.orderType === 'Stock (Jacket Only)' ? 30 : 90;
     if (lead.isTrimming) return 85;
-    if (lead.sewerType && lead.sewerType !== 'Pending') return 70;
-    if (lead.productionType && lead.productionType !== 'Pending') return 50;
+    if (lead.isSewing) return 70;
+    if (lead.isEmbroideryDone) return 50;
+    if(lead.isCutting) return 40;
     if (lead.isSentToProduction) return 40;
     if (lead.isFinalProgram) return 30;
     if (lead.isFinalApproval) return 20;
@@ -521,7 +525,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                     <span>{formatJoNumber(lead.joNumber)}</span>
                                     {lead.layouts?.[0]?.layoutImage && (
                                         <div
-                                            className="relative w-32 h-20 border rounded-md cursor-pointer mt-1"
+                                            className="relative w-40 h-24 border rounded-md cursor-pointer mt-1"
                                             onClick={() => setImageInView(lead.layouts![0]!.layoutImage!)}
                                         >
                                             <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
@@ -605,7 +609,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                           <div className="space-y-1">
                                             <h4 className="font-medium leading-none">{lead.operationalCase.caseType}</h4>
                                             <p className="text-sm text-muted-foreground">
-                                              Case for J.O. {lead.operationalCase.joNumber}
+                                              Case for J.O. {formatJoNumber(parseInt(lead.operationalCase.joNumber.split('-')[2], 10))}
                                             </p>
                                           </div>
                                           <div className="grid gap-2 text-sm">
@@ -615,7 +619,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                             </div>
                                             <div className="flex flex-col items-start gap-1">
                                               <span className="font-medium">Remarks:</span>
-                                              <p className="whitespace-pre-wrap bg-background p-2 rounded-md text-xs w-full" onClick={() => {if (lead.operationalCase?.image) setImageInView(lead.operationalCase.image)}}>{lead.operationalCase.remarks}</p>
+                                              <p className="whitespace-pre-wrap bg-background p-2 rounded-md text-sm w-full">{lead.operationalCase.remarks}</p>
                                             </div>
                                             <div className="flex items-center gap-2">
                                               <span className="font-medium">Recorded:</span>
@@ -627,7 +631,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                           <div className="flex-shrink-0 w-48 h-48">
                                             <div
                                               className="relative w-full h-full cursor-pointer"
-                                              onClick={() => {if (lead.operationalCase?.image) setImageInView(lead.operationalCase.image)}}
+                                              onClick={() => {if (lead.operationalCase?.image) setImageInView(lead.operationalCase.image!)}}
                                             >
                                               <Image
                                                 src={lead.operationalCase.image}
@@ -716,4 +720,3 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   );
 }
 
-    
