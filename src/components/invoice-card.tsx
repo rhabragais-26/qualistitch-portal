@@ -149,14 +149,18 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     if (!removingAddOn) return;
     const { groupKey, addOnType } = removingAddOn;
     setAddOns(prev => {
-      const newGroupAddOns = {
-        ...(prev[groupKey] || { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 }),
-        [addOnType]: 0,
-      };
-      return {
-        ...prev,
-        [groupKey]: newGroupAddOns,
-      }
+        const defaultAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 };
+        const existingAddOns = { ...defaultAddOns, ...(prev[groupKey] || {}) };
+        
+        const newGroupAddOns = {
+            ...existingAddOns,
+            [addOnType]: 0,
+        };
+
+        return {
+            ...prev,
+            [groupKey]: newGroupAddOns,
+        };
     });
     setRemovingAddOn(null);
   };
@@ -577,5 +581,3 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     </>
   );
 }
-
-    

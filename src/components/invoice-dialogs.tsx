@@ -67,7 +67,8 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
 
   const handleSave = () => {
     setAddOns(prev => {
-      const existingAddOns = prev[groupKey] || { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 };
+        const defaultAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 };
+        const existingAddOns = { ...defaultAddOns, ...(prev[groupKey] || {}) };
       
       const newAddOns: AddOns = {
         backLogo: existingAddOns.backLogo + localAddOns.backLogo,
