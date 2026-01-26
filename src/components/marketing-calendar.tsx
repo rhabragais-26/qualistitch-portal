@@ -38,6 +38,8 @@ import { cn } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from './ui/alert-dialog';
 import { ScrollArea } from './ui/scroll-area';
+import { hasEditPermission } from '@/lib/permissions';
+import { usePathname } from 'next/navigation';
 
 type MarketingEvent = {
   id: string;
@@ -144,12 +146,8 @@ export function MarketingCalendar() {
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
 
-
-  const canEdit = useMemo(() => {
-    if (!userProfile) return false;
-    const allowedPositions = ['CEO', 'Sales Manager', 'Operations Manager', 'HR', 'Finance', 'Page Admin', 'SCES', 'Sales Supervisor', 'S.E Officer'];
-    return allowedPositions.includes(userProfile.position);
-  }, [userProfile]);
+  const pathname = usePathname();
+  const canEdit = hasEditPermission(userProfile?.position as any, pathname);
   
   const eventsByDate = useMemo(() => {
     const map = new Map<string, MarketingEvent[]>();
@@ -375,7 +373,7 @@ export function MarketingCalendar() {
             <DialogHeader>
                 <DialogTitle>
                     {dialogView === 'list' 
-                        ? `Events for ${selectedDate ? format(selectedDate, 'MMMM dd, yyyy') : ''}`
+                        ? `Events for ${selectedDate ? format(selectedDate, 'MMMM dd, yyyy') : ''}` 
                         : currentEvent?.id && events?.some(e => e.id === currentEvent.id) ? 'Edit Event' : 'Add New Event'
                     }
                 </DialogTitle>
@@ -411,6 +409,7 @@ export function MarketingCalendar() {
                     event={currentEvent}
                     onSave={handleSaveEvent}
                     onCancel={() => setDialogView('list')}
+                    onClose={() => {}}
                 />
             ) : null}
         </DialogContent>
