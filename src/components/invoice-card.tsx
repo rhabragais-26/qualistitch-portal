@@ -50,6 +50,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
   const [removingAddOn, setRemovingAddOn] = useState<{ groupKey: string; addOnType: keyof AddOns; } | null>(null);
   const [removedFees, setRemovedFees] = useState<Record<string, { logo?: boolean; backText?: boolean }>>({});
   const [isBalanceDialogOpen, setIsBalanceDialogOpen] = useState(false);
+  
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
 
   const lastAddedPayment = useMemo(() => {
@@ -57,6 +58,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     const allPayments = Object.values(payments).flat();
     return allPayments.find(p => p.isNew);
   }, [payments]);
+
 
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
@@ -107,14 +109,14 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const namesPrice = getAddOnPrice('names', itemTotalQuantity, pricingConfig);
       const plusSizePrice = getAddOnPrice('plusSize', itemTotalQuantity, pricingConfig);
 
-      subtotal += groupAddOns.backLogo * backLogoPrice;
-      subtotal += groupAddOns.names * namesPrice;
-      subtotal += groupAddOns.plusSize * plusSizePrice;
-      subtotal += groupAddOns.rushFee;
-      subtotal += groupAddOns.shippingFee;
-      subtotal += groupAddOns.logoProgramming;
-      subtotal += groupAddOns.backDesignProgramming;
-      subtotal += groupAddOns.holdingFee;
+      subtotal += (groupAddOns.backLogo || 0) * backLogoPrice;
+      subtotal += (groupAddOns.names || 0) * namesPrice;
+      subtotal += (groupAddOns.plusSize || 0) * plusSizePrice;
+      subtotal += (groupAddOns.rushFee || 0);
+      subtotal += (groupAddOns.shippingFee || 0);
+      subtotal += (groupAddOns.logoProgramming || 0);
+      subtotal += (groupAddOns.backDesignProgramming || 0);
+      subtotal += (groupAddOns.holdingFee || 0);
       
       subtotal += logoFee + backTextFee;
 
@@ -216,9 +218,9 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const namesPrice = getAddOnPrice('names', itemTotalQuantity, pricingConfig);
                 const plusSizePrice = getAddOnPrice('plusSize', itemTotalQuantity, pricingConfig);
 
-                const backLogoTotal = groupAddOns.backLogo * backLogoPrice;
-                const namesTotal = groupAddOns.names * namesPrice;
-                const plusSizeTotal = groupAddOns.plusSize * plusSizePrice;
+                const backLogoTotal = (groupAddOns.backLogo || 0) * backLogoPrice;
+                const namesTotal = (groupAddOns.names || 0) * namesPrice;
+                const plusSizeTotal = (groupAddOns.plusSize || 0) * plusSizePrice;
 
                 const isLogoFeeRemoved = removedFees[groupKey]?.logo;
                 const isBackTextFeeRemoved = removedFees[groupKey]?.backText;
@@ -226,7 +228,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const finalLogoFee = !isLogoFeeRemoved ? logoFee : 0;
                 const finalBackTextFee = !isBackTextFeeRemoved ? backTextFee : 0;
 
-                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + plusSizeTotal + groupAddOns.rushFee + groupAddOns.shippingFee + finalLogoFee + finalBackTextFee + groupAddOns.logoProgramming + groupAddOns.backDesignProgramming + groupAddOns.holdingFee;
+                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + plusSizeTotal + (groupAddOns.rushFee || 0) + (groupAddOns.shippingFee || 0) + finalLogoFee + finalBackTextFee + (groupAddOns.logoProgramming || 0) + (groupAddOns.backDesignProgramming || 0) + (groupAddOns.holdingFee || 0);
 
                 let discountAmount = 0;
                 if(groupDiscount) {
@@ -276,7 +278,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                 <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                     <div className="flex items-center gap-2">
                                         <span>Add On: Back Logo</span>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'backLogo' })}>
+                                        <Button type="button" variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'backLogo' })}>
                                             <X className="h-3 w-3" />
                                         </Button>
                                     </div>
@@ -294,7 +296,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                 <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                      <div className="flex items-center gap-2">
                                         <span>Add On: Names</span>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'names' })}>
+                                        <Button type="button" variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'names' })}>
                                             <X className="h-3 w-3" />
                                         </Button>
                                     </div>
@@ -312,7 +314,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                 <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                      <div className="flex items-center gap-2">
                                         <span>Add On: Plus Size</span>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'plusSize' })}>
+                                        <Button type="button" variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'plusSize' })}>
                                             <X className="h-3 w-3" />
                                         </Button>
                                     </div>
@@ -330,7 +332,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                 <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                     <div className="flex items-center gap-2">
                                         <span>Add On: Rush Fee</span>
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'rushFee' })}>
+                                        <Button type="button" variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'rushFee' })}>
                                             <X className="h-3 w-3" />
                                         </Button>
                                     </div>
@@ -346,7 +348,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                         <div className="flex items-center gap-2">
                                             <span>Add On: Shipping Fee</span>
-                                            <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'shippingFee' })}>
+                                            <Button type="button" variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'shippingFee' })}>
                                                 <X className="h-3 w-3" />
                                             </Button>
                                         </div>
@@ -362,7 +364,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                         <div className="flex items-center gap-2">
                                             <span>Add On: Logo Programming</span>
-                                            <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'logoProgramming' })}>
+                                            <Button type="button" variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'logoProgramming' })}>
                                                 <X className="h-3 w-3" />
                                             </Button>
                                         </div>
@@ -378,7 +380,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                         <div className="flex items-center gap-2">
                                             <span>Add On: Back Design Programming</span>
-                                            <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'backDesignProgramming' })}>
+                                            <Button type="button" variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'backDesignProgramming' })}>
                                                 <X className="h-3 w-3" />
                                             </Button>
                                         </div>
@@ -394,7 +396,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                         <div className="flex items-center gap-2">
                                             <span>Add On: Holding Fee</span>
-                                            <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'holdingFee' })}>
+                                            <Button type="button" variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'holdingFee' })}>
                                                 <X className="h-3 w-3" />
                                             </Button>
                                         </div>
@@ -409,7 +411,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                             <TableRow className="group">
                                 <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">
                                     <div className="flex justify-end items-center gap-2">
-                                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveFee(groupKey, 'logo')}>
+                                        <Button type="button" variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveFee(groupKey, 'logo')}>
                                             <X className="h-3 w-3" />
                                         </Button>
                                         <span>One-time Logo Programming Fee</span>
@@ -422,7 +424,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                              <TableRow className="group">
                                 <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">
                                   <div className="flex justify-end items-center gap-2">
-                                      <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveFee(groupKey, 'backText')}>
+                                      <Button type="button" variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveFee(groupKey, 'backText')}>
                                           <X className="h-3 w-3" />
                                       </Button>
                                       <span>One-time Back Text Programming Fee</span>
@@ -435,7 +437,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                             <TableRow className="group">
                                <TableCell colSpan={4} className="py-1 px-3 text-right font-medium text-destructive">
                                   <div className="flex justify-end items-center gap-2">
-                                    <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveDiscount(groupKey)}>
+                                    <Button type="button" variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveDiscount(groupKey)}>
                                       <X className="h-3 w-3" />
                                     </Button>
                                     <span>Discount ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})</span>
