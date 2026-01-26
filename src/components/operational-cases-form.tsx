@@ -355,6 +355,11 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
 
     } catch (e: any) {
         console.error("Error saving operational case: ", e);
+        toast({
+            variant: "destructive",
+            title: "Save Failed",
+            description: e.message || "Could not save the operational case. Please check your network and permissions.",
+        });
     }
   }
   
