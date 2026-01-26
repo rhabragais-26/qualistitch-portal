@@ -104,7 +104,7 @@ export const getProgrammingFees = (
   isClientOwned: boolean = false,
   orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | 'Item Sample'
 ): { logoFee: number; backTextFee: number } => {
-  const specialOrderTypes = ["Services", "MTO", "Stock (Jacket Only)", "Item Sample"];
+  const specialOrderTypes = ["Services", "MTO", "Stock (Jacket Only)", "Item Sample", "Stock Design"];
   if (orderType && specialOrderTypes.includes(orderType)) {
     return { logoFee: 0, backTextFee: 0 };
   }
