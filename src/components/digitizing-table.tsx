@@ -1341,7 +1341,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             <Checkbox
                               checked={lead.isUnderProgramming || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isUnderProgramming', !!checked)}
-                              disabled={!lead.isJoPrinted || isViewOnly}
+                              disabled={isViewOnly}
                               className={isViewOnly ? "disabled:opacity-100" : ""}
                             />
                             {lead.underProgrammingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.underProgrammingTimestamp).dateTimeShort}</div>}
@@ -1594,6 +1594,7 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
 
 
 
