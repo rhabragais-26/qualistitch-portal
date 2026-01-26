@@ -521,7 +521,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                     <span>{formatJoNumber(lead.joNumber)}</span>
                                     {lead.layouts?.[0]?.layoutImage && (
                                         <div
-                                            className="relative w-16 h-16 border rounded-md cursor-pointer"
+                                            className="relative w-32 h-20 border rounded-md cursor-pointer mt-1"
                                             onClick={() => setImageInView(lead.layouts![0]!.layoutImage!)}
                                         >
                                             <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
@@ -674,6 +674,14 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                       </TableRow>
                                     ))}
                                   </TableBody>
+                                  {lead.orders && lead.orders.length > 1 && (
+                                    <TableFooter>
+                                        <TableRow>
+                                        <TableCell colSpan={3} className="text-right font-bold text-black pt-1 px-2">Total Quantity</TableCell>
+                                        <TableCell className="font-bold text-black text-right pt-1 px-2">{totalQuantity}</TableCell>
+                                        </TableRow>
+                                    </TableFooter>
+                                  )}
                                 </Table>
                                 {(finalProgrammedLogo?.some(f => f?.url) || finalProgrammedBackDesign?.some(f => f?.url)) && (
                                     <div>
@@ -708,3 +716,4 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   );
 }
 
+    
