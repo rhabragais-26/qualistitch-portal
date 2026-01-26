@@ -332,7 +332,7 @@ const HeaderMemo = React.memo(function Header({
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/marketing/founding-anniversaries')}>
                       <Gift className="mr-2" />
-                      Founding Anniversaries
+                      List of Founding Anniversaries
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/marketing/photoshoot-requests')}>
                       <Camera className="mr-2" />
