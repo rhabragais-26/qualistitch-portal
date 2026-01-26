@@ -51,7 +51,7 @@ function CapitalExpensesPage() {
   const [deletingExpense, setDeletingExpense] = useState<CapitalExpense | null>(null);
 
   const expensesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'capital_expenses'), orderBy('timestamp', 'desc')) : null, [firestore]);
-  const { data: expenses, isLoading, error, refetch } = useCollection<CapitalExpense>(expensesQuery);
+  const { data: expenses, isLoading, error, refetch } = useCollection<CapitalExpense>(expensesQuery, undefined, { listen: false });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

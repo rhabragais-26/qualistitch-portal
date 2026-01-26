@@ -240,10 +240,10 @@ export default function CashInflowsPage() {
   const [activeQuickFilter, setActiveQuickFilter] = useState<'yesterday' | 'today' | null>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: leadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading: leadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
   const otherInflowsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'other_cash_inflows'), orderBy('date', 'desc')) : null, [firestore]);
-  const { data: otherInflows, isLoading: otherInflowsLoading, error: otherInflowsError, refetch: refetchOtherInflows } = useCollection<OtherCashInflow>(otherInflowsQuery);
+  const { data: otherInflows, isLoading: otherInflowsLoading, error: otherInflowsError, refetch: refetchOtherInflows } = useCollection<OtherCashInflow>(otherInflowsQuery, undefined, { listen: false });
 
   const formatJoNumber = (joNumber: number | undefined): string => {
     if (!joNumber) return '';

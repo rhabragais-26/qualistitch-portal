@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -59,7 +60,7 @@ const RecordedCasesListMemo = React.memo(function RecordedCasesList({ onEdit, is
     return query(collection(firestore, 'operationalCases'), orderBy('submissionDateTime', 'desc'));
   }, [firestore, user]);
 
-  const { data: cases, isLoading: areCasesLoading, error } = useCollection<OperationalCase>(casesQuery);
+  const { data: cases, isLoading: areCasesLoading, error } = useCollection<OperationalCase>(casesQuery, undefined, { listen: false });
   const isLoading = isAuthLoading || areCasesLoading;
 
   const getContactDisplay = (caseItem: OperationalCase) => {
@@ -344,5 +345,3 @@ const RecordedCasesListMemo = React.memo(function RecordedCasesList({ onEdit, is
 });
 
 export { RecordedCasesListMemo as RecordedCasesList };
-
-    

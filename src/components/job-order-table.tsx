@@ -150,7 +150,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const salesRepresentatives = useMemo(() => {
     if (!leads) return [];
@@ -252,7 +252,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
         enrichedLeads.push({
           ...lead,
           orderNumber: index + 1,
-          totalCustomerQuantity: totalCustomerQuantity,
+          totalCustomerQuantity,
         });
       });
     });

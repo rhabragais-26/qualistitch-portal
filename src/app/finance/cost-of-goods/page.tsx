@@ -51,7 +51,7 @@ function CostOfGoodsPage() {
   const [deletingCogs, setDeletingCogs] = useState<CostOfGoods | null>(null);
 
   const cogsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'cost_of_goods'), orderBy('timestamp', 'desc')) : null, [firestore]);
-  const { data: cogsData, isLoading, error, refetch } = useCollection<CostOfGoods>(cogsQuery);
+  const { data: cogsData, isLoading, error, refetch } = useCollection<CostOfGoods>(cogsQuery, undefined, { listen: false });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

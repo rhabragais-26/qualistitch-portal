@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react"
@@ -347,10 +348,10 @@ export function LeadForm({
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads } = useCollection<Lead>(leadsQuery);
+  const { data: leads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const inventoryQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'inventory')) : null, [firestore]);
-  const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery);
+  const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery, undefined, { listen: false });
 
   
   useEffect(() => {
@@ -1502,3 +1503,4 @@ function SetCustomerStatusDialog({
     
 
     
+

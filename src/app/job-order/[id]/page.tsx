@@ -1,3 +1,4 @@
+
 'use client';
 
     import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -105,7 +106,7 @@
       const { data: allLeads, isLoading: areAllLeadsLoading } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
       
       const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
-      const { data: users, isLoading: areUsersLoading } = useCollection<UserProfileInfo>(usersQuery);
+      const { data: users, isLoading: areUsersLoading } = useCollection<UserProfileInfo>(usersQuery, undefined, { listen: false });
 
       const leadRef = useMemoFirebase(
         () => (firestore && id ? doc(firestore, 'leads', id as string) : null),

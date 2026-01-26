@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -252,10 +253,6 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
       date: new Date(),
       adAccount: '',
       adCampaign: '',
-      smallTicketInquiries: 0,
-      mediumTicketInquiries: 0,
-      largeTicketInquiries: 0,
-      highTicketInquiries: 0,
     },
   });
   
@@ -302,10 +299,6 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
             date: new Date(),
             adAccount: '',
             adCampaign: '',
-            smallTicketInquiries: 0,
-            mediumTicketInquiries: 0,
-            largeTicketInquiries: 0,
-            highTicketInquiries: 0,
         });
     }
   }, [editingInquiry, campaigns, form, isEditing]);
@@ -347,10 +340,6 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
             date: new Date(),
             adAccount: values.adAccount,
             adCampaign: '',
-            smallTicketInquiries: 0,
-            mediumTicketInquiries: 0,
-            largeTicketInquiries: 0,
-            highTicketInquiries: 0,
         });
         onFormSubmit();
         onCancelEdit();
