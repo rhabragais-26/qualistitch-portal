@@ -33,6 +33,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Progress } from './ui/progress';
 import Link from 'next/link';
+import { AlertTriangle } from 'lucide-react';
 
 type Order = {
   productType: string;
@@ -626,7 +627,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                           <div className="flex-shrink-0 w-48 h-48">
                                             <div
                                               className="relative w-full h-full cursor-pointer"
-                                              onClick={()={() => setImageInView(lead.operationalCase!.image!)}}
+                                              onClick={() => setImageInView(lead.operationalCase!.image!)}
                                             >
                                               <Image
                                                 src={lead.operationalCase.image}
@@ -706,3 +707,5 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     </Card>
   );
 }
+
+    
