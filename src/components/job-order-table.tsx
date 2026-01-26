@@ -330,7 +330,9 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               if (blob) {
                   const reader = new FileReader();
                   reader.onload = (readEvent) => {
-                      setter(readEvent.target?.result as string);
+                      if (readEvent.target?.result) {
+                        setter(readEvent.target.result as string);
+                      }
                   };
                   reader.readAsDataURL(blob);
               }
@@ -399,7 +401,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
             description: 'The reference images have been saved.',
         });
         setUploadLead(null);
-        refetch();
     } catch (e: any) {
         console.error("Error saving images: ", e);
         toast({
@@ -408,7 +409,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
             description: e.message || "Could not save the images.",
         });
     }
-  }, [uploadLead, firestore, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, refetch]);
+  }, [uploadLead, firestore, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage]);
 
   const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
@@ -698,6 +699,10 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               }>Save Images </Button></DialogFooter></DialogContent></Dialog></Card> ); }
 
     
+
+
+
+
 
 
 
