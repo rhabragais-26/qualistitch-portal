@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
+import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import {
   Table,
@@ -166,6 +166,7 @@ const RecordsTableRow = React.memo(({
     openCustomerDetails,
     isRepeat,
     isReadOnly,
+    canDelete,
     filterType,
     getContactDisplay,
     toggleCustomerDetails,
@@ -178,6 +179,7 @@ const RecordsTableRow = React.memo(({
     openCustomerDetails: string | null;
     isRepeat: boolean;
     isReadOnly: boolean;
+    canDelete: boolean;
     filterType?: 'COMPLETED' | 'ONGOING';
     getContactDisplay: (lead: Lead) => string | null;
     toggleCustomerDetails: (id: string) => void;
@@ -285,7 +287,7 @@ const RecordsTableRow = React.memo(({
                 </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-red-100" disabled={isReadOnly}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:bg-red-100" disabled={isReadOnly || !canDelete}>
                         <Trash2 className="h-5 w-5" />
                     </Button>
                     </AlertDialogTrigger>
@@ -313,6 +315,7 @@ RecordsTableRow.displayName = 'RecordsTableRow';
 
 export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; filterType?: 'ONGOING' | 'COMPLETED' }) {
   const firestore = useFirestore();
+  const { userProfile, isAdmin } = useUser();
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -587,6 +590,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                 </TableHeader>
                 <TableBody>
                 {filteredLeads.map((lead) => {
+                  const canDelete = isAdmin || userProfile?.nickname === lead.salesRepresentative;
                   const isRepeat = lead.orderNumber > 1;
                   return (
                     <React.Fragment key={lead.id}>
@@ -596,6 +600,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                             openCustomerDetails={openCustomerDetails}
                             isRepeat={isRepeat}
                             isReadOnly={isReadOnly}
+                            canDelete={canDelete}
                             filterType={filterType}
                             getContactDisplay={getContactDisplay}
                             toggleCustomerDetails={toggleCustomerDetails}
