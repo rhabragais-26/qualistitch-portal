@@ -47,6 +47,7 @@ const positions: UserPosition[] = [
     'Digitizer',
     'E.D Coordinator',
     'Inventory Officer',
+    'Purchasing Officer',
     'Production Line Leader',
     'Production Head',
     'Logistics Officer',

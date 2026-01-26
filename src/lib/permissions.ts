@@ -5,6 +5,7 @@ export type UserPosition =
   | 'Sales Manager'
   | 'S.E Officer'
   | 'Inventory Officer'
+  | 'Purchasing Officer'
   | 'Production Line Leader'
   | 'Production Head'
   | 'Logistics Officer'
@@ -78,6 +79,7 @@ export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'Sales Manager': ['sales'],
   'S.E Officer': ['sales'],
   'Inventory Officer': ['inventory'],
+  'Purchasing Officer': ['inventory'],
   'Digitizer': ['digitizing'],
   'E.D Coordinator': ['digitizing'],
   'Production Line Leader': ['production'],
