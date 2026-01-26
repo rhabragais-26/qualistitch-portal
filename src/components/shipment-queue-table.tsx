@@ -1,6 +1,7 @@
 
 'use client';
 
+import { doc, updateDoc, collection, query, setDoc, getDocs, where } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -16,10 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, doc, updateDoc, setDoc, getDocs, where } from 'firebase/firestore';
-import { useMemo, useCallback, useState, useEffect } from 'react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
 import { Label } from './ui/label';
@@ -37,7 +35,9 @@ import { addDays, differenceInDays, format } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { Skeleton } from './ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 type Order = {
   productType: string;
@@ -621,28 +621,20 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                       <TableRow key={lead.id}>
                         <TableCell className="text-xs text-left">
                           <div className="flex items-center justify-start gap-2">
-                            {lead.layouts?.[0]?.layoutImage && (
-                                <div
-                                    className="relative w-12 h-12 border rounded-md cursor-pointer flex-shrink-0"
-                                    onClick={() => setImageInView(lead.layouts![0]!.layoutImage!)}
-                                >
-                                    <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
-                                </div>
-                            )}
                             <div>
-                              <div>{formatJoNumber(lead.joNumber)}</div>
-                              {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
+                                {formatJoNumber(lead.joNumber)}
+                                {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
                                 <TooltipProvider>
-                                  <Tooltip>
+                                    <Tooltip>
                                     <TooltipTrigger>
-                                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                                        <AlertTriangle className="h-4 w-4 text-red-500" />
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
+                                        <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
                                     </TooltipContent>
-                                  </Tooltip>
+                                    </Tooltip>
                                 </TooltipProvider>
-                              )}
+                                )}
                             </div>
                           </div>
                         </TableCell>

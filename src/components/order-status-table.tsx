@@ -516,17 +516,17 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                     {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                 </div>
                             </TableCell>
-                            <TableCell className="text-xs align-middle text-left py-2 text-black">
-                                <div className="flex items-center justify-start gap-2">
+                             <TableCell className="text-xs align-middle text-center py-2 text-black">
+                                <div className="flex flex-col items-center justify-center gap-2">
+                                    <span>{formatJoNumber(lead.joNumber)}</span>
                                     {lead.layouts?.[0]?.layoutImage && (
                                         <div
-                                            className="relative w-12 h-12 border rounded-md cursor-pointer flex-shrink-0"
+                                            className="relative w-16 h-16 border rounded-md cursor-pointer"
                                             onClick={() => setImageInView(lead.layouts![0]!.layoutImage!)}
                                         >
                                             <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
                                         </div>
                                     )}
-                                    <span>{formatJoNumber(lead.joNumber)}</span>
                                 </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3 text-sm">{lead.salesRepresentative}</TableCell>
@@ -615,7 +615,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                             </div>
                                             <div className="flex flex-col items-start gap-1">
                                               <span className="font-medium">Remarks:</span>
-                                              <p className="whitespace-pre-wrap bg-background p-2 rounded-md text-xs w-full">{lead.operationalCase.remarks}</p>
+                                              <p className="whitespace-pre-wrap bg-background p-2 rounded-md text-xs w-full" onClick={() => {if (lead.operationalCase?.image) setImageInView(lead.operationalCase.image)}}>{lead.operationalCase.remarks}</p>
                                             </div>
                                             <div className="flex items-center gap-2">
                                               <span className="font-medium">Recorded:</span>
@@ -627,7 +627,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                           <div className="flex-shrink-0 w-48 h-48">
                                             <div
                                               className="relative w-full h-full cursor-pointer"
-                                              onClick={() => setImageInView(lead.operationalCase!.image!)}
+                                              onClick={() => {if (lead.operationalCase?.image) setImageInView(lead.operationalCase.image)}}
                                             >
                                               <Image
                                                 src={lead.operationalCase.image}
@@ -708,4 +708,3 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   );
 }
 
-    
