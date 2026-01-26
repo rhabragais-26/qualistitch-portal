@@ -36,6 +36,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collap
 import { addDays, differenceInDays, format } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 
 type Order = {
@@ -44,6 +45,12 @@ type Order = {
   size: string;
   quantity: number;
 }
+
+type Layout = {
+  layoutImage?: string | null;
+  waybillNumbers?: string[];
+  isWaybillPrinted?: boolean;
+};
 
 type Lead = {
   id: string;
@@ -80,6 +87,7 @@ type Lead = {
   isJoPrinted?: boolean;
   isDone?: boolean;
   photoshootDate?: string;
+  layouts?: Layout[];
 }
 
 type OperationalCase = {
@@ -119,6 +127,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   const [searchTerm, setSearchTerm] = useState('');
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived'; } | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
+  const [imageInView, setImageInView] = useState<string | null>(null);
   
   const [waybillNumbers, setWaybillNumbers] = useState<Record<string, string[]>>({});
   const [editingWaybills, setEditingWaybills] = useState<{ leadId: string; numbers: string[] } | null>(null);
@@ -611,21 +620,31 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                    return (
                       <TableRow key={lead.id}>
                         <TableCell className="text-xs text-left">
-                            <div className="flex items-center justify-start gap-2">
-                                <div>{formatJoNumber(lead.joNumber)}</div>
-                                {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger>
-                                                <AlertTriangle className="h-4 w-4 text-red-500" />
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                )}
+                          <div className="flex items-center justify-start gap-2">
+                            {lead.layouts?.[0]?.layoutImage && (
+                                <div
+                                    className="relative w-12 h-12 border rounded-md cursor-pointer flex-shrink-0"
+                                    onClick={() => setImageInView(lead.layouts![0]!.layoutImage!)}
+                                >
+                                    <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
+                                </div>
+                            )}
+                            <div>
+                              <div>{formatJoNumber(lead.joNumber)}</div>
+                              {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
                             </div>
+                          </div>
                         </TableCell>
                         <TableCell className="text-xs">
                           <Collapsible>
