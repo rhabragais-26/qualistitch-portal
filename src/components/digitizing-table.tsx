@@ -196,7 +196,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([]);
   const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
   const [sequenceLogo, setSequenceLogo] = useState<(FileObject | null)[]>([null]);
-  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
+  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([null]);
   const [finalProgrammedLogo, setFinalProgrammedLogo] = useState<(FileObject | null)[]>([null]);
   const [finalProgrammedBackDesign, setFinalProgrammedBackDesign] = useState<(FileObject | null)[]>([]);
   const [isNamesOnly, setIsNamesOnly] = useState(false);
@@ -1243,7 +1243,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center whitespace-nowrap">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Overdue Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Received Printed J.O.?</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Initial Program</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Initial Approval</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Tested</span></TableHead>
@@ -1251,6 +1250,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Final Approval</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Final Program</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Details</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Received Printed J.O.?</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">{filterType === 'COMPLETED' ? 'Date Completed' : 'Review'}</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -1328,20 +1328,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         <TableCell className="text-center align-middle p-2">
                           <div className="flex flex-col items-center justify-start h-full gap-1">
                             <Checkbox
-                              checked={lead.isJoHardcopyReceived || false}
-                              onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                              disabled={isViewOnly}
-                              className={isViewOnly ? "disabled:opacity-100" : ""}
-                            />
-                            {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center align-middle p-2">
-                          <div className="flex flex-col items-center justify-start h-full gap-1">
-                            <Checkbox
                               checked={lead.isUnderProgramming || false}
                               onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isUnderProgramming', !!checked)}
-                              disabled={isViewOnly}
+                              disabled={isViewOnly || !lead.joNumber}
                               className={isViewOnly ? "disabled:opacity-100" : ""}
                             />
                             {lead.underProgrammingTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.underProgrammingTimestamp).dateTimeShort}</div>}
@@ -1416,6 +1405,17 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                               <ChevronDown className="h-4 w-4 ml-1" />
                             )}
                           </Button>
+                        </TableCell>
+                        <TableCell className="text-center align-middle p-2">
+                          <div className="flex flex-col items-center justify-start h-full gap-1">
+                            <Checkbox
+                              checked={lead.isJoHardcopyReceived || false}
+                              onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
+                              disabled={isViewOnly}
+                              className={isViewOnly ? "disabled:opacity-100" : ""}
+                            />
+                            {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
+                          </div>
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                            {filterType === 'COMPLETED' ? (
@@ -1603,3 +1603,6 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
 
+
+
+    
