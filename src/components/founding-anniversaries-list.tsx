@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -73,7 +74,7 @@ export function FoundingAnniversariesList() {
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <CardTitle>Founding Anniversaries</CardTitle>
+                <CardTitle>List of Founding Anniversaries</CardTitle>
                 <CardDescription>A list of Philippine organizations and their founding dates.</CardDescription>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:items-center gap-2 w-full sm:w-auto">
