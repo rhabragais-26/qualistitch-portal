@@ -38,7 +38,7 @@ export function FoundingAnniversariesList() {
     const allIndustries = [...new Set(anniversaryData.map(org => org.industry))].sort();
     return ['All', ...allIndustries];
   }, []);
-
+  
   const subDepartments = useMemo(() => {
     const allSubDepartments = [...new Set(anniversaryData.map(org => org.subDepartment))].sort();
     return ['All', ...allSubDepartments];
@@ -94,7 +94,7 @@ export function FoundingAnniversariesList() {
                         ))}
                     </SelectContent>
                 </Select>
-                <Select value={selectedSubDepartment} onValueChange={setSelectedSubDepartment}>
+                 <Select value={selectedSubDepartment} onValueChange={setSelectedSubDepartment}>
                     <SelectTrigger className="w-full lg:w-[180px]">
                         <SelectValue placeholder="Filter by Sub-Department" />
                     </SelectTrigger>

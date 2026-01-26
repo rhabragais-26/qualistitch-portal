@@ -4,7 +4,7 @@ export type Organization = {
   dateFounded: string; // Global founding date
   phStart?: string | null; // Optional: PH operations start date
   countryOfOrigin: string;
-  type: "Private Company" | "BPO/In-House" | "Government Agency" | "NGO" | "Brotherhood" | "Other";
+  type: "Private Company" | "BPO/In-House" | "Government Agency" | "NGO" | "Brotherhood" | "Sorority" | "Other" | "Educational Institution";
   subDepartment: string;
   industry: string;
 };
@@ -114,10 +114,10 @@ export const anniversaryData: Organization[] = [
   { name: "Makati Business Club (MBC)", dateFounded: "1981-01-01", countryOfOrigin: "Philippines", type: "Other", subDepartment: "Other", industry: "Business Association" },
   { name: "American Chamber of Commerce of the Philippines (AmCham)", dateFounded: "1920-01-01", countryOfOrigin: "USA", type: "Other", subDepartment: "Other", industry: "Business Association" },
   { name: "European Chamber of Commerce of the Philippines (ECCP)", dateFounded: "1978-01-01", countryOfOrigin: "Europe", type: "Other", subDepartment: "Other", industry: "Business Association" },
-  { name: "University of the Philippines", dateFounded: "1908-06-18", countryOfOrigin: "Philippines", type: "Other", subDepartment: "Other", industry: "Education" },
-  { name: "Ateneo de Manila University", dateFounded: "1859-12-10", countryOfOrigin: "Philippines", type: "Other", subDepartment: "Other", industry: "Education" },
-  { name: "De La Salle University", dateFounded: "1911-06-16", countryOfOrigin: "Philippines", type: "Other", subDepartment: "Other", industry: "Education" },
-  { name: "University of Santo Tomas", dateFounded: "1611-04-28", countryOfOrigin: "Philippines", type: "Other", subDepartment: "Other", industry: "Education" },
+  { name: "University of the Philippines", dateFounded: "1908-06-18", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Ateneo de Manila University", dateFounded: "1859-12-10", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "De La Salle University", dateFounded: "1911-06-16", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "University of Santo Tomas", dateFounded: "1611-04-28", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
   { name: "Cultural Center of the Philippines (CCP)", dateFounded: "1966-06-25", countryOfOrigin: "Philippines", type: "Other", subDepartment: "Other", industry: "Arts & Culture" },
   { name: "Habitat for Humanity Philippines", dateFounded: "1976-01-01", phStart: "1988-01-01", countryOfOrigin: "USA", type: "NGO", subDepartment: "Community Development", industry: "Community Development" },
   { name: "Save the Children Philippines", dateFounded: "1919-01-01", phStart: "1981-01-01", countryOfOrigin: "United Kingdom", type: "NGO", subDepartment: "Community Development", industry: "Child Welfare" },
@@ -175,7 +175,79 @@ export const anniversaryData: Organization[] = [
 
   // More NGOs
   { name: "Philippine Animal Welfare Society (PAWS)", dateFounded: "1954-01-01", countryOfOrigin: "Philippines", type: "NGO", subDepartment: "Other", industry: "Animal Welfare" },
-  { name: "Angels of Hope Foundation Inc. (AHFI)", dateFounded: "2003-01-01", countryOfOrigin: "Philippines", type: "NGO", subDepartment: "Community Development", industry: "Child Welfare" }
-];
+  { name: "Angels of Hope Foundation Inc. (AHFI)", dateFounded: "2003-01-01", countryOfOrigin: "Philippines", type: "NGO", subDepartment: "Community Development", industry: "Child Welfare" },
+  
+  // --- NEWLY ADDED EDUCATIONAL INSTITUTIONS ---
+  // Luzon
+  { name: "Mariano Marcos State University (MMSU)", dateFounded: "1978-01-06", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Don Mariano Marcos Memorial State University (DMMMSU)", dateFounded: "1981-01-15", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "University of Northern Philippines (UNP)", dateFounded: "1906-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Cagayan State University (CSU)", dateFounded: "1978-06-11", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Isabela State University (ISU)", dateFounded: "1978-06-10", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Nueva Vizcaya State University (NVSU)", dateFounded: "1916-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Central Luzon State University (CLSU)", dateFounded: "1907-04-12", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Bulacan State University (BulSU)", dateFounded: "1904-12-12", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Pampanga State Agricultural University (PSAU)", dateFounded: "1974-06-12", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Tarlac State University (TSU)", dateFounded: "1906-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Bataan Peninsula State University (BPSU)", dateFounded: "1953-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "University of Rizal System (URS)", dateFounded: "2001-08-11", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Cavite State University (CvSU)", dateFounded: "1906-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Laguna State Polytechnic University (LSPU)", dateFounded: "1952-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Batangas State University (BatStateU)", dateFounded: "1903-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Southern Luzon State University (SLSU)", dateFounded: "1964-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Bicol University (BU)", dateFounded: "1969-06-21", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Ateneo de Naga University", dateFounded: "1940-06-05", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "University of Saint Anthony", dateFounded: "1947-08-18", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Holy Angel University", dateFounded: "1933-03-08", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "University of the Assumption", dateFounded: "1963-01-12", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Far Eastern University (FEU)", dateFounded: "1928-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "National University (NU)", dateFounded: "1900-08-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Mapúa University", dateFounded: "1925-01-25", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Centro Escolar University (CEU)", dateFounded: "1907-06-03", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "University of the East (UE)", dateFounded: "1946-09-11", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Adamson University", dateFounded: "1932-06-20", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Lyceum of the Philippines University (LPU)", dateFounded: "1952-07-07", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Polytechnic University of the Philippines (PUP)", dateFounded: "1904-10-19", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Pamantasan ng Lungsod ng Maynila (PLM)", dateFounded: "1965-06-19", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  
+  // Visayas
+  { name: "University of the Philippines Visayas (UPV)", dateFounded: "1947-05-22", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "West Visayas State University (WVSU)", dateFounded: "1902-06-16", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Central Philippine University (CPU)", dateFounded: "1905-10-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "University of San Agustin (USA)", dateFounded: "1904-07-15", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Silliman University", dateFounded: "1901-08-28", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Negros Oriental State University (NORSU)", dateFounded: "1907-12-03", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "University of San Carlos (USC)", dateFounded: "1595-08-21", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Cebu Normal University (CNU)", dateFounded: "1902-06-13", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Cebu Institute of Technology – University (CIT-U)", dateFounded: "1946-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "University of San Jose–Recoletos (USJ-R)", dateFounded: "1947-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Visayas State University (VSU)", dateFounded: "1924-06-02", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Eastern Visayas State University (EVSU)", dateFounded: "1907-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Bohol Island State University (BISU)", dateFounded: "1907-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "University of Bohol (UB)", dateFounded: "1946-01-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  
+  // Mindanao
+  { name: "University of the Philippines Mindanao (UPMin)", dateFounded: "1995-02-20", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Ateneo de Davao University (AdDU)", dateFounded: "1948-06-23", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "University of Mindanao (UM)", dateFounded: "1946-07-27", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Mindanao State University - Iligan Institute of Technology (MSU-IIT)", dateFounded: "1968-07-12", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Central Mindanao University (CMU)", dateFounded: "1910-09-01", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Xavier University – Ateneo de Cagayan", dateFounded: "1933-06-07", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Western Mindanao State University (WMSU)", dateFounded: "1904-07-08", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Ateneo de Zamboanga University (AdZU)", dateFounded: "1912-10-12", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "Caraga State University (CSU)", dateFounded: "1920-02-14", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
+  { name: "University of Southeastern Philippines (USeP)", dateFounded: "1978-12-15", countryOfOrigin: "Philippines", type: "Educational Institution", subDepartment: "Academic & Educational Service", industry: "Education" },
 
-    
+  // --- NEWLY ADDED BROTHERHOODS/SORORITIES/CIVIC ORGS ---
+  { name: "Alpha Phi Beta Fraternity", dateFounded: "1939-02-10", countryOfOrigin: "Philippines", type: "Brotherhood", subDepartment: "Academic & Educational Service", industry: "Fraternity" },
+  { name: "Sigma Rho Fraternity", dateFounded: "1938-01-01", countryOfOrigin: "Philippines", type: "Brotherhood", subDepartment: "Academic & Educational Service", industry: "Fraternity" },
+  { name: "Scintilla Juris", dateFounded: "1968-09-28", countryOfOrigin: "Philippines", type: "Brotherhood", subDepartment: "Academic & Educational Service", industry: "Fraternity" },
+  { name: "Alpha Delta Mu Sorority", dateFounded: "1952-01-01", countryOfOrigin: "Philippines", type: "Sorority", subDepartment: "Academic & Educational Service", industry: "Sorority" },
+  { name: "Sigma Delta Phi Sorority", dateFounded: "1931-02-24", countryOfOrigin: "Philippines", type: "Sorority", subDepartment: "Academic & Educational Service", industry: "Sorority" },
+  { name: "Alpha Sigma Fraternity", dateFounded: "1972-08-14", countryOfOrigin: "Philippines", type: "Brotherhood", subDepartment: "Academic & Educational Service", industry: "Fraternity" },
+  { name: "Upsilon Sigma Phi", dateFounded: "1918-11-19", countryOfOrigin: "Philippines", type: "Brotherhood", subDepartment: "Academic & Educational Service", industry: "Fraternity" },
+  { name: "Fraternal Order of Eagles (Philippine Eagles)", dateFounded: "1979-06-22", countryOfOrigin: "Philippines", type: "Brotherhood", subDepartment: "Community Development", industry: "Civic Organization" },
+  { name: "Philippine Medical Association", dateFounded: "1903-09-15", countryOfOrigin: "Philippines", type: "Other", subDepartment: "Community Development", industry: "Professional Association" },
+  { name: "Integrated Bar of the Philippines", dateFounded: "1973-01-09", countryOfOrigin: "Philippines", type: "Other", subDepartment: "Community Development", industry: "Professional Association" },
+  { name: "Knights of Rizal", dateFounded: "1911-12-30", countryOfOrigin: "Philippines", type: "Other", subDepartment: "Community Development", industry: "Civic Organization" }
+];
