@@ -1,6 +1,6 @@
 
 
-"use client";
+'use client';
 
 import { useFirestore, useMemoFirebase, useCollection } from '@/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
@@ -386,7 +386,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
         enrichedLeads.push({
           ...lead,
           orderNumber: index + 1,
-          totalCustomerQuantity: totalCustomerQuantity,
+          totalCustomerQuantity,
         });
       });
     });

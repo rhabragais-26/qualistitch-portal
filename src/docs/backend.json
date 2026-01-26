@@ -853,7 +853,8 @@
           "items": {
               "type": "object",
               "properties": {
-                  "type": { "type": "string", "enum": ["down", "full", "balance", "additional"] },
+                  "id": { "type": "string" },
+                  "type": { "type": "string", "enum": ["down", "full", "balance", "additional", "securityDeposit"] },
                   "amount": { "type": "number" },
                   "mode": { "type": "string" },
                   "processedBy": { "type": "string" },

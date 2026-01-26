@@ -42,6 +42,7 @@ export type Payment = {
   verified?: boolean;
   verifiedBy?: string;
   verifiedTimestamp?: string;
+  isNew?: boolean;
 };
 
 export const AddOnsDialog = React.memo(function AddOnsDialog({
@@ -499,6 +500,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
                         type: paymentType,
                         amount: amount,
                         mode: paymentMode,
+                        isNew: true,
                     };
                 }
             }
@@ -511,6 +513,7 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
           type: paymentType,
           amount: amount,
           mode: paymentMode,
+          isNew: true,
         };
         
         setPayments(prev => {
