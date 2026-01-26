@@ -321,7 +321,8 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
       }
   };
 
-  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
+  const handleImagePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
+      if (isReadOnly) return;
       const items = e.clipboardData.items;
       for (const item of items) {
           if (item.type.includes('image')) {
@@ -335,12 +336,12 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               }
           }
       }
-  };
+    }, [isReadOnly]);
 
-  const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<string>>) => {
+  const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<string>>) => {
       e.stopPropagation();
       setter('');
-  };
+  }, []);
 
   const handleSaveImages = useCallback(async () => {
     if (!uploadLead || !firestore) return;
@@ -697,6 +698,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               }>Save Images </Button></DialogFooter></DialogContent></Dialog></Card> ); }
 
     
+
 
 
 
