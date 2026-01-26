@@ -36,7 +36,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import Link from 'next/link';
@@ -57,14 +57,19 @@ type FileObject = {
 type Layout = {
   layoutImage?: string;
   layoutImageUploadTime?: string | null;
+  layoutImageUploadedBy?: string | null;
   refLogoLeftImage?: string | null;
   refLogoLeftImageUploadTime?: string | null;
+  refLogoLeftImageUploadedBy?: string | null;
   refLogoRightImage?: string | null;
   refLogoRightImageUploadTime?: string | null;
+  refLogoRightImageUploadedBy?: string | null;
   refBackLogoImage?: string | null;
   refBackLogoImageUploadTime?: string | null;
+  refBackLogoImageUploadedBy?: string | null;
   refBackDesignImage?: string | null;
   refBackDesignImageUploadTime?: string | null;
+  refBackDesignImageUploadedBy?: string | null;
   dstLogoLeft?: string;
   dstLogoRight?: string;
   dstBackLogo?: string;
@@ -72,38 +77,55 @@ type Layout = {
   namedOrders?: NamedOrder[];
   logoLeftImage?: string | null;
   logoLeftImageUploadTime?: string | null;
+  logoLeftImageUploadedBy?: string | null;
   logoRightImage?: string | null;
   logoRightImageUploadTime?: string | null;
+  logoRightImageUploadedBy?: string | null;
   backLogoImage?: string | null;
   backLogoImageUploadTime?: string | null;
+  backLogoImageUploadedBy?: string | null;
   backDesignImage?: string | null;
   backDesignImageUploadTime?: string | null;
+  backDesignImageUploadedBy?: string | null;
   testLogoLeftImage?: string | null;
   testLogoLeftImageUploadTime?: string | null;
+  testLogoLeftImageUploadedBy?: string | null;
   testLogoRightImage?: string | null;
   testLogoRightImageUploadTime?: string | null;
+  testLogoRightImageUploadedBy?: string | null;
   testBackLogoImage?: string | null;
   testBackLogoImageUploadTime?: string | null;
+  testBackLogoImageUploadedBy?: string | null;
   testBackDesignImage?: string | null;
   testBackDesignImageUploadTime?: string | null;
+  testBackDesignImageUploadedBy?: string | null;
   finalLogoEmb?: (FileObject | null)[];
   finalLogoEmbUploadTimes?: (string | null)[];
+  finalLogoEmbUploadedBy?: (string | null)[];
   finalBackDesignEmb?: (FileObject | null)[];
   finalBackDesignEmbUploadTimes?: (string | null)[];
+  finalBackDesignEmbUploadedBy?: (string | null)[];
   finalLogoDst?: (FileObject | null)[];
   finalLogoDstUploadTimes?: (string | null)[];
+  finalLogoDstUploadedBy?: (string | null)[];
   finalBackDesignDst?: (FileObject | null)[];
   finalBackDesignDstUploadTimes?: (string | null)[];
+  finalBackDesignDstUploadedBy?: (string | null)[];
   finalNamesDst?: (FileObject | null)[];
   finalNamesDstUploadTimes?: (string | null)[];
+  finalNamesDstUploadedBy?: (string | null)[];
   sequenceLogo?: (FileObject | null)[];
   sequenceLogoUploadTimes?: (string | null)[];
+  sequenceLogoUploadedBy?: (string | null)[];
   sequenceBackDesign?: (FileObject | null)[];
   sequenceBackDesignUploadTimes?: (string | null)[];
+  sequenceBackDesignUploadedBy?: (string | null)[];
   finalProgrammedLogo?: (FileObject | null)[];
   finalProgrammedLogoUploadTimes?: (string | null)[];
+  finalProgrammedLogoUploadedBy?: (string | null)[];
   finalProgrammedBackDesign?: (FileObject | null)[];
   finalProgrammedBackDesignUploadTimes?: (string | null)[];
+  finalProgrammedBackDesignUploadedBy?: (string | null)[];
 };
 
 type Lead = {
@@ -161,6 +183,7 @@ type DigitizingTableProps = {
 const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: DigitizingTableProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { userProfile } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
@@ -196,7 +219,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([]);
   const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
   const [sequenceLogo, setSequenceLogo] = useState<(FileObject | null)[]>([null]);
-  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
+  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([null]);
   const [finalProgrammedLogo, setFinalProgrammedLogo] = useState<(FileObject | null)[]>([null]);
   const [finalProgrammedBackDesign, setFinalProgrammedBackDesign] = useState<(FileObject | null)[]>([]);
   const [isNamesOnly, setIsNamesOnly] = useState(false);
@@ -463,7 +486,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   }, [joReceivedConfirmation, updateStatus, toast]);
 
   const handleUploadDialogSave = useCallback(async () => {
-    if (!uploadLeadId || !uploadField || !firestore || !leads) return;
+    if (!uploadLeadId || !uploadField || !firestore || !leads || !userProfile) return;
   
     const lead = leads.find(l => l.id === uploadLeadId);
     if (!lead) return;
@@ -501,16 +524,27 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           uploadAndGetURL(backLogoImage, `${fieldPrefix}BackLogo`, updatedFirstLayout[`${fieldPrefix}BackLogoImage`]),
           uploadAndGetURL(backDesignImage, `${fieldPrefix}BackDesign`, updatedFirstLayout[`${fieldPrefix}BackDesignImage`]),
         ]);
+
+        const getNewTimestamp = (newUrl: string | null, oldUrl: string | null | undefined, oldTimestamp: string | null | undefined) => newUrl ? (oldUrl === newUrl ? oldTimestamp : now) : null;
+        const getNewUploader = (newUrl: string | null, oldUrl: string | null | undefined, oldUploader: string | null | undefined) => newUrl ? (oldUrl === newUrl ? oldUploader : userProfile.nickname) : null;
+
         updatedFirstLayout = {
           ...updatedFirstLayout,
           [`${fieldPrefix}LogoLeftImage`]: logoLeftImageUrl,
-          [`${fieldPrefix}LogoLeftImageUploadTime`]: logoLeftImageUrl ? (updatedFirstLayout[`${fieldPrefix}LogoLeftImage`] === logoLeftImageUrl ? updatedFirstLayout[`${fieldPrefix}LogoLeftImageUploadTime`] : now) : null,
+          [`${fieldPrefix}LogoLeftImageUploadTime`]: getNewTimestamp(logoLeftImageUrl, updatedFirstLayout[`${fieldPrefix}LogoLeftImage`], updatedFirstLayout[`${fieldPrefix}LogoLeftImageUploadTime`]),
+          [`${fieldPrefix}LogoLeftImageUploadedBy`]: getNewUploader(logoLeftImageUrl, updatedFirstLayout[`${fieldPrefix}LogoLeftImage`], updatedFirstLayout[`${fieldPrefix}LogoLeftImageUploadedBy`]),
+          
           [`${fieldPrefix}LogoRightImage`]: logoRightImageUrl,
-          [`${fieldPrefix}LogoRightImageUploadTime`]: logoRightImageUrl ? (updatedFirstLayout[`${fieldPrefix}LogoRightImage`] === logoRightImageUrl ? updatedFirstLayout[`${fieldPrefix}LogoRightImageUploadTime`] : now) : null,
+          [`${fieldPrefix}LogoRightImageUploadTime`]: getNewTimestamp(logoRightImageUrl, updatedFirstLayout[`${fieldPrefix}LogoRightImage`], updatedFirstLayout[`${fieldPrefix}LogoRightImageUploadTime`]),
+          [`${fieldPrefix}LogoRightImageUploadedBy`]: getNewUploader(logoRightImageUrl, updatedFirstLayout[`${fieldPrefix}LogoRightImage`], updatedFirstLayout[`${fieldPrefix}LogoRightImageUploadedBy`]),
+
           [`${fieldPrefix}BackLogoImage`]: backLogoImageUrl,
-          [`${fieldPrefix}BackLogoImageUploadTime`]: backLogoImageUrl ? (updatedFirstLayout[`${fieldPrefix}BackLogoImage`] === backLogoImageUrl ? updatedFirstLayout[`${fieldPrefix}BackLogoImageUploadTime`] : now) : null,
+          [`${fieldPrefix}BackLogoImageUploadTime`]: getNewTimestamp(backLogoImageUrl, updatedFirstLayout[`${fieldPrefix}BackLogoImage`], updatedFirstLayout[`${fieldPrefix}BackLogoImageUploadTime`]),
+          [`${fieldPrefix}BackLogoImageUploadedBy`]: getNewUploader(backLogoImageUrl, updatedFirstLayout[`${fieldPrefix}BackLogoImage`], updatedFirstLayout[`${fieldPrefix}BackLogoImageUploadedBy`]),
+
           [`${fieldPrefix}BackDesignImage`]: backDesignImageUrl,
-          [`${fieldPrefix}BackDesignImageUploadTime`]: backDesignImageUrl ? (updatedFirstLayout[`${fieldPrefix}BackDesignImage`] === backDesignImageUrl ? updatedFirstLayout[`${fieldPrefix}BackDesignImageUploadTime`] : now) : null,
+          [`${fieldPrefix}BackDesignImageUploadTime`]: getNewTimestamp(backDesignImageUrl, updatedFirstLayout[`${fieldPrefix}BackDesignImage`], updatedFirstLayout[`${fieldPrefix}BackDesignImageUploadTime`]),
+          [`${fieldPrefix}BackDesignImageUploadedBy`]: getNewUploader(backDesignImageUrl, updatedFirstLayout[`${fieldPrefix}BackDesignImage`], updatedFirstLayout[`${fieldPrefix}BackDesignImageUploadedBy`]),
         };
       } else if (uploadField === 'isFinalProgram') {
         const [
@@ -533,27 +567,44 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               return file && file.url === existingFile?.url ? existingTime : (file ? now : null);
           });
         };
+
+        const createUploaderArray = (newFiles: (FileObject|null)[], oldFiles?: (FileObject|null)[], oldUploaders?: (string|null)[]) => {
+            return newFiles.map((file, index) => {
+                const existingFile = oldFiles?.[index];
+                const existingUploader = oldUploaders?.[index];
+                return file && file.url === existingFile?.url ? existingUploader : (file ? userProfile.nickname : null);
+            });
+        };
   
         updatedFirstLayout = {
           ...updatedFirstLayout,
           finalLogoEmb: finalLogoEmbUrls,
           finalLogoEmbUploadTimes: createTimestampArray(finalLogoEmbUrls, updatedFirstLayout.finalLogoEmb, updatedFirstLayout.finalLogoEmbUploadTimes),
+          finalLogoEmbUploadedBy: createUploaderArray(finalLogoEmbUrls, updatedFirstLayout.finalLogoEmb, updatedFirstLayout.finalLogoEmbUploadedBy),
           finalBackDesignEmb: finalBackDesignEmbUrls,
           finalBackDesignEmbUploadTimes: createTimestampArray(finalBackDesignEmbUrls, updatedFirstLayout.finalBackDesignEmb, updatedFirstLayout.finalBackDesignEmbUploadTimes),
+          finalBackDesignEmbUploadedBy: createUploaderArray(finalBackDesignEmbUrls, updatedFirstLayout.finalBackDesignEmb, updatedFirstLayout.finalBackDesignEmbUploadedBy),
           finalLogoDst: finalLogoDstUrls,
           finalLogoDstUploadTimes: createTimestampArray(finalLogoDstUrls, updatedFirstLayout.finalLogoDst, updatedFirstLayout.finalLogoDstUploadTimes),
+          finalLogoDstUploadedBy: createUploaderArray(finalLogoDstUrls, updatedFirstLayout.finalLogoDst, updatedFirstLayout.finalLogoDstUploadedBy),
           finalBackDesignDst: finalBackDesignDstUrls,
           finalBackDesignDstUploadTimes: createTimestampArray(finalBackDesignDstUrls, updatedFirstLayout.finalBackDesignDst, updatedFirstLayout.finalBackDesignDstUploadTimes),
+          finalBackDesignDstUploadedBy: createUploaderArray(finalBackDesignDstUrls, updatedFirstLayout.finalBackDesignDst, updatedFirstLayout.finalBackDesignDstUploadedBy),
           finalNamesDst: finalNamesDstUrls,
           finalNamesDstUploadTimes: createTimestampArray(finalNamesDstUrls, updatedFirstLayout.finalNamesDst, updatedFirstLayout.finalNamesDstUploadTimes),
+          finalNamesDstUploadedBy: createUploaderArray(finalNamesDstUrls, updatedFirstLayout.finalNamesDst, updatedFirstLayout.finalNamesDstUploadedBy),
           sequenceLogo: sequenceLogoUrls,
           sequenceLogoUploadTimes: createTimestampArray(sequenceLogoUrls, updatedFirstLayout.sequenceLogo, updatedFirstLayout.sequenceLogoUploadTimes),
+          sequenceLogoUploadedBy: createUploaderArray(sequenceLogoUrls, updatedFirstLayout.sequenceLogo, updatedFirstLayout.sequenceLogoUploadedBy),
           sequenceBackDesign: sequenceBackDesignUrls,
           sequenceBackDesignUploadTimes: createTimestampArray(sequenceBackDesignUrls, updatedFirstLayout.sequenceBackDesign, updatedFirstLayout.sequenceBackDesignUploadTimes),
+          sequenceBackDesignUploadedBy: createUploaderArray(sequenceBackDesignUrls, updatedFirstLayout.sequenceBackDesign, updatedFirstLayout.sequenceBackDesignUploadedBy),
           finalProgrammedLogo: finalProgrammedLogoUrls,
           finalProgrammedLogoUploadTimes: createTimestampArray(finalProgrammedLogoUrls, updatedFirstLayout.finalProgrammedLogo, updatedFirstLayout.finalProgrammedLogoUploadTimes),
+          finalProgrammedLogoUploadedBy: createUploaderArray(finalProgrammedLogoUrls, updatedFirstLayout.finalProgrammedLogo, updatedFirstLayout.finalProgrammedLogoUploadedBy),
           finalProgrammedBackDesign: finalProgrammedBackDesignUrls,
           finalProgrammedBackDesignUploadTimes: createTimestampArray(finalProgrammedBackDesignUrls, updatedFirstLayout.finalProgrammedBackDesign, updatedFirstLayout.finalProgrammedBackDesignUploadTimes),
+          finalProgrammedBackDesignUploadedBy: createUploaderArray(finalProgrammedBackDesignUrls, updatedFirstLayout.finalProgrammedBackDesign, updatedFirstLayout.finalProgrammedBackDesignUploadedBy),
         };
       }
   
@@ -581,7 +632,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         description: e.message || 'Could not save the images and update status.',
       });
     }
-  }, [uploadLeadId, uploadField, firestore, leads, updateStatus, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign]);
+  }, [uploadLeadId, uploadField, firestore, leads, updateStatus, toast, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, userProfile]);
 
 
   const confirmUncheck = useCallback(() => {
@@ -710,7 +761,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           digitizingArchivedTimestamp: new Date().toISOString(),
         });
         
-        // Create and save notification
         const deadlineInfo = calculateDigitizingDeadline(reviewConfirmLead);
         const notification = {
             id: `progress-${reviewConfirmLead.id}-${new Date().toISOString()}`,
@@ -1026,11 +1076,27 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     return null;
   }, [uploadField, handleImagePaste, handleFileUpload, handleRemoveImage, handleMultipleFileUpload, addFile, removeFile, handleUploadDialogSave, logoLeftImage, logoRightImage, backLogoImage, backDesignImage, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, isNamesOnly, initialDialogImages]);
 
-  const ImagePreview = ({ src, alt, className }: { src: string; alt: string; className?:string;}) => (
-    <div className={cn("relative cursor-pointer", className)} onClick={() => setImageInView(src)}>
-      <Image src={src} alt={alt} layout="fill" objectFit="contain" className="rounded-md border" />
-    </div>
-  );
+  const ImageDisplayCard = ({ title, images }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[] }) => {
+    if (images.length === 0) return null;
+
+    return (
+        <Card className="bg-white">
+            <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
+            <CardContent className="flex gap-4 text-xs p-2 flex-wrap">
+                {images.map((img, index) => (
+                    <div key={index} className="flex flex-col items-center text-center w-28">
+                        <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
+                        <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => setImageInView(img.src)}>
+                            <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
+                        </div>
+                        {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
+                        {img.uploadedBy && <p className='text-gray-500 text-[10px] font-bold'>by {img.uploadedBy}</p>}
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -1257,16 +1323,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 <TableBody>
                 {displayedLeads.map((lead) => {
                   const deadlineInfo = calculateDigitizingDeadline(lead);
-                  const hasRefImages = lead.layouts?.[0]?.refLogoLeftImage || lead.layouts?.[0]?.refLogoRightImage || lead.layouts?.[0]?.refBackLogoImage || lead.layouts?.[0]?.refBackDesignImage;
-                  const hasInitialImages = lead.layouts?.[0]?.logoLeftImage || lead.layouts?.[0]?.logoRightImage || lead.layouts?.[0]?.backLogoImage || lead.layouts?.[0]?.backDesignImage;
-                  const hasTestImages = lead.layouts?.[0]?.testLogoLeftImage || lead.layouts?.[0]?.testLogoRightImage || lead.layouts?.[0]?.testBackLogoImage || lead.layouts?.[0]?.testBackDesignImage;
-                  const hasFinalFiles = lead.layouts?.[0]?.sequenceLogo?.some(s => s?.url) || 
-                                       lead.layouts?.[0]?.sequenceBackDesign?.some(s => s?.url) ||
-                                       lead.layouts?.[0]?.finalProgrammedLogo?.some(f => f?.url) ||
-                                       lead.layouts?.[0]?.finalProgrammedBackDesign?.some(f => f?.url);
-                  const hasLayoutImages = lead.layouts?.some(l => l.layoutImage);
                   const isRepeat = lead.orderNumber > 1;
                   const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
+                  
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
@@ -1443,138 +1502,55 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       <TableRow className="bg-gray-50">
                         <TableCell colSpan={14} className="p-0">
                            <div className="flex flex-wrap gap-4 p-4 items-start">
-                                {hasRefImages && (
-                                    <Card className="bg-white">
-                                        <CardHeader className="p-2"><CardTitle className="text-sm text-center">Reference Images</CardTitle></CardHeader>
-                                        <CardContent className="flex gap-4 text-xs p-2">
-                                            {lead.layouts?.[0]?.refLogoLeftImage && <ImagePreview src={lead.layouts[0].refLogoLeftImage} alt="Reference Logo Left" className="w-24 h-24"/>}
-                                            {lead.layouts?.[0]?.refLogoRightImage && <ImagePreview src={lead.layouts[0].refLogoRightImage} alt="Reference Logo Right" className="w-24 h-24"/>}
-                                            {lead.layouts?.[0]?.refBackLogoImage && <ImagePreview src={lead.layouts[0].refBackLogoImage} alt="Reference Back Logo" className="w-24 h-24"/>}
-                                            {lead.layouts?.[0]?.refBackDesignImage && <ImagePreview src={lead.layouts[0].refBackDesignImage} alt="Reference Back Design" className="w-32 h-24"/>}
-                                        </CardContent>
-                                    </Card>
-                                )}
-                                {hasInitialImages && (
-                                    <Card className="bg-white">
-                                        <CardHeader className="p-2"><CardTitle className="text-sm text-center">Initial Program Images</CardTitle></CardHeader>
-                                        <CardContent className="flex gap-4 text-xs p-2">
-                                            {lead.layouts?.[0]?.logoLeftImage && (
-                                              <div className="flex flex-col items-center text-center"> 
-                                                <p className="font-semibold text-gray-500 mb-2">Logo Left</p> 
-                                                <ImagePreview src={lead.layouts[0].logoLeftImage} alt="Initial Program Logo Left" className="w-24 h-24"/>
-                                                {lead.layouts[0].logoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoLeftImageUploadTime).dateTime}</p>}
-                                              </div>
-                                            )}
-                                            {lead.layouts?.[0]?.logoRightImage && (
-                                              <div className="flex flex-col items-center text-center">
-                                                <p className="font-semibold text-gray-500 mb-2">Logo Right</p>
-                                                <ImagePreview src={lead.layouts[0].logoRightImage} alt="Initial Program Logo Right" className="w-24 h-24"/>
-                                                {lead.layouts[0].logoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].logoRightImageUploadTime).dateTime}</p>}
-                                              </div>
-                                            )}
-                                            {lead.layouts?.[0]?.backLogoImage && (
-                                              <div className="flex flex-col items-center text-center">
-                                                <p className="font-semibold text-gray-500 mb-2">Back Logo</p>
-                                                <ImagePreview src={lead.layouts[0].backLogoImage} alt="Initial Program Back Logo" className="w-24 h-24"/>
-                                                {lead.layouts[0].backLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backLogoImageUploadTime).dateTime}</p>}
-                                              </div>
-                                            )}
-                                            {lead.layouts?.[0]?.backDesignImage && (
-                                              <div className="flex flex-col items-center text-center">
-                                                <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                                <ImagePreview src={lead.layouts[0].backDesignImage} alt="Initial Program Back Design" className="w-32 h-24"/>
-                                                {lead.layouts[0].backDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].backDesignImageUploadTime).dateTime}</p>}
-                                              </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                )}
-                                 {hasTestImages && (
-                                    <Card className="bg-white">
-                                        <CardHeader className="p-2"><CardTitle className="text-sm text-center">Tested Images</CardTitle></CardHeader>
-                                        <CardContent className="flex gap-4 text-xs p-2">
-                                          {lead.layouts?.[0]?.testLogoLeftImage && (
-                                            <div className="flex flex-col items-center text-center">
-                                              <p className="font-semibold text-gray-500 mb-2">Logo Left</p>
-                                              <ImagePreview src={lead.layouts[0].testLogoLeftImage} alt="Test Logo Left" className="w-24 h-24"/>
-                                              {lead.layouts[0].testLogoLeftImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoLeftImageUploadTime).dateTime}</p>}
-                                            </div>
-                                          )}
-                                          {lead.layouts?.[0]?.testLogoRightImage && (
-                                            <div className="flex flex-col items-center text-center">
-                                              <p className="font-semibold text-gray-500 mb-2">Logo Right</p>
-                                              <ImagePreview src={lead.layouts[0].testLogoRightImage} alt="Test Logo Right" className="w-24 h-24"/>
-                                              {lead.layouts[0].testLogoRightImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testLogoRightImageUploadTime).dateTime}</p>}
-                                            </div>
-                                          )}
-                                           {lead.layouts?.[0]?.testBackLogoImage && (
-                                            <div className="flex flex-col items-center text-center">
-                                              <p className="font-semibold text-gray-500 mb-2">Back Logo</p>
-                                              <ImagePreview src={lead.layouts[0].testBackLogoImage} alt="Test Back Logo" className="w-24 h-24"/>
-                                              {lead.layouts[0].testBackLogoImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackLogoImageUploadTime).dateTime}</p>}
-                                            </div>
-                                          )}
-                                          {lead.layouts?.[0]?.testBackDesignImage && (
-                                            <div className="flex flex-col items-center text-center">
-                                              <p className="font-semibold text-gray-500 mb-2">Back Design</p>
-                                              <ImagePreview src={lead.layouts[0].testBackDesignImage} alt="Test Back Design" className="w-32 h-24"/>
-                                              {lead.layouts[0].testBackDesignImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].testBackDesignImageUploadTime).dateTime}</p>}
-                                            </div>
-                                          )}
-                                        </CardContent>
-                                    </Card>
-                                 )}
-                                 {hasFinalFiles && (
-                                    <Card className="bg-white">
-                                        <CardHeader className="p-2"><CardTitle className="text-sm text-center">Final Program Files</CardTitle></CardHeader>
-                                        <CardContent className="grid grid-cols-auto-fit-100 gap-4 text-xs p-2">
-                                          {lead.layouts?.[0]?.sequenceLogo?.map((file, index) => file && (
-                                              <div className="flex flex-col items-center text-center" key={`seq-logo-${index}`}>
-                                                  <p className="font-semibold text-gray-500 mb-2">Sequence Logo {index + 1}</p>
-                                                  <ImagePreview src={file.url} alt={`Sequence Logo ${index + 1}`} className="w-24 h-24"/>
-                                                  {Array.isArray(lead.layouts?.[0]?.sequenceLogoUploadTimes) && lead.layouts?.[0]?.sequenceLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceLogoUploadTimes![index]!).dateTime}</p>}
-                                              </div>
-                                          ))}
-                                          {lead.layouts?.[0]?.sequenceBackDesign?.map((file, index) => file && (
-                                              <div className="flex flex-col items-center text-center" key={`seq-back-${index}`}>
-                                                  <p className="font-semibold text-gray-500 mb-2">Sequence Back Design {index + 1}</p>
-                                                  <ImagePreview src={file.url} alt="Sequence Back Design" className="w-32 h-24"/>
-                                                  {Array.isArray(lead.layouts?.[0]?.sequenceBackDesignUploadTimes) && lead.layouts?.[0]?.sequenceBackDesignUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].sequenceBackDesignUploadTimes![index]!).dateTime}</p>}
-                                              </div>
-                                          ))}
-                                           {lead.layouts?.[0]?.finalProgrammedLogo?.map((file, index) => file && (
-                                              <div className="flex flex-col items-center text-center" key={`final-prog-logo-${index}`}>
-                                                  <p className="font-semibold text-gray-500 mb-2">Final Program Logo {index + 1}</p>
-                                                  <ImagePreview src={file.url} alt={`Final Program Logo ${index + 1}`} className="w-24 h-24"/>
-                                                  {Array.isArray(lead.layouts?.[0]?.finalProgrammedLogoUploadTimes) && lead.layouts?.[0]?.finalProgrammedLogoUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalProgrammedLogoUploadTimes![index]!).dateTime}</p>}
-                                              </div>
-                                          ))}
-                                          {lead.layouts?.[0]?.finalProgrammedBackDesign?.map((file, index) => file && (
-                                              <div className="flex flex-col items-center text-center" key={`final-prog-back-${index}`}>
-                                                  <p className="font-semibold text-gray-500 mb-2">Final Program Back Design {index + 1}</p>
-                                                  <ImagePreview src={file.url} alt={`Final Program Back Design ${index + 1}`} className="w-32 h-24"/>
-                                                  {Array.isArray(lead.layouts?.[0]?.finalProgrammedBackDesignUploadTimes) && lead.layouts?.[0]?.finalProgrammedBackDesignUploadTimes?.[index] && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(lead.layouts[0].finalProgrammedBackDesignUploadTimes![index]!).dateTime}</p>}
-                                              </div>
-                                          ))}
-                                        </CardContent>
-                                    </Card>
-                                  )}
-                                {hasLayoutImages && (
-                                    <Card className="bg-white">
-                                        <CardHeader className="p-2"><CardTitle className="text-sm text-center">Layout Designs</CardTitle></CardHeader>
-                                        <CardContent className="flex gap-4 text-xs p-2 items-start">
-                                            {lead.layouts?.map((layout, index) => (
-                                                layout.layoutImage && (
-                                                    <div className="flex flex-col items-center text-center" key={index}>
-                                                        <p className="font-semibold text-gray-500 mb-2">Layout {index + 1}</p>
-                                                        <ImagePreview src={layout.layoutImage} alt={`Layout ${index + 1}`} className="w-32 h-24"/>
-                                                        {layout.layoutImageUploadTime && <p className='text-gray-500 text-xs mt-1'>{formatDateTime(layout.layoutImageUploadTime).dateTime}</p>}
-                                                    </div>
-                                                )
-                                            ))}
-                                        </CardContent>
-                                    </Card>
-                                )}
+                               {(() => {
+                                   const layout = lead.layouts?.[0];
+                                   if (!layout) return null;
+
+                                    const imageGroups = [
+                                        {
+                                            title: 'Reference Images',
+                                            images: [
+                                                layout.refLogoLeftImage && { src: layout.refLogoLeftImage, label: 'Logo Left', timestamp: layout.refLogoLeftImageUploadTime, uploadedBy: layout.refLogoLeftImageUploadedBy },
+                                                layout.refLogoRightImage && { src: layout.refLogoRightImage, label: 'Logo Right', timestamp: layout.refLogoRightImageUploadTime, uploadedBy: layout.refLogoRightImageUploadedBy },
+                                                layout.refBackLogoImage && { src: layout.refBackLogoImage, label: 'Back Logo', timestamp: layout.refBackLogoImageUploadTime, uploadedBy: layout.refBackLogoImageUploadedBy },
+                                                layout.refBackDesignImage && { src: layout.refBackDesignImage, label: 'Back Design', timestamp: layout.refBackDesignImageUploadTime, uploadedBy: layout.refBackDesignImageUploadedBy },
+                                            ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
+                                        },
+                                        {
+                                            title: 'Layout Designs',
+                                            images: lead.layouts?.map((l, i) => l.layoutImage && { src: l.layoutImage, label: `Layout ${i + 1}`, timestamp: l.layoutImageUploadTime, uploadedBy: l.layoutImageUploadedBy }).filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
+                                        },
+                                        {
+                                            title: 'Initial Program Images',
+                                            images: [
+                                                layout.logoLeftImage && { src: layout.logoLeftImage, label: 'Logo Left', timestamp: layout.logoLeftImageUploadTime, uploadedBy: layout.logoLeftImageUploadedBy },
+                                                layout.logoRightImage && { src: layout.logoRightImage, label: 'Logo Right', timestamp: layout.logoRightImageUploadTime, uploadedBy: layout.logoRightImageUploadedBy },
+                                                layout.backLogoImage && { src: layout.backLogoImage, label: 'Back Logo', timestamp: layout.backLogoImageUploadTime, uploadedBy: layout.backLogoImageUploadedBy },
+                                                layout.backDesignImage && { src: layout.backDesignImage, label: 'Back Design', timestamp: layout.backDesignImageUploadTime, uploadedBy: layout.backDesignImageUploadedBy },
+                                            ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
+                                        },
+                                        {
+                                            title: 'Tested Images',
+                                            images: [
+                                                layout.testLogoLeftImage && { src: layout.testLogoLeftImage, label: 'Logo Left', timestamp: layout.testLogoLeftImageUploadTime, uploadedBy: layout.testLogoLeftImageUploadedBy },
+                                                layout.testLogoRightImage && { src: layout.testLogoRightImage, label: 'Logo Right', timestamp: layout.testLogoRightImageUploadTime, uploadedBy: layout.testLogoRightImageUploadedBy },
+                                                layout.testBackLogoImage && { src: layout.testBackLogoImage, label: 'Back Logo', timestamp: layout.testBackLogoImageUploadTime, uploadedBy: layout.testBackLogoImageUploadedBy },
+                                                layout.testBackDesignImage && { src: layout.testBackDesignImage, label: 'Back Design', timestamp: layout.testBackDesignImageUploadTime, uploadedBy: layout.testBackDesignImageUploadedBy },
+                                            ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
+                                        },
+                                        {
+                                            title: 'Final Program Files',
+                                            images: [
+                                                ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Logo ${i + 1}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] }),
+                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Back Design ${i + 1}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] }),
+                                                ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] }),
+                                                ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i + 1}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i], uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] }),
+                                            ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
+                                        }
+                                    ];
+
+                                   return imageGroups.map(group => <ImageDisplayCard key={group.title} title={group.title} images={group.images} />);
+                               })()}
                             </div>
                         </TableCell>
                       </TableRow>
@@ -1592,17 +1568,28 @@ DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
 
+const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
+    if (images.length === 0) return null;
 
+    return (
+        <Card className="bg-white">
+            <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
+            <CardContent className="flex gap-4 text-xs p-2 flex-wrap">
+                {images.map((img, index) => (
+                    <div key={index} className="flex flex-col items-center text-center w-28">
+                        <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
+                        <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
+                            <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
+                        </div>
+                        {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
+                        {img.uploadedBy && <p className='text-gray-500 text-[10px] font-bold'>by {img.uploadedBy}</p>}
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
+    );
+};
     
-
-
-
-
-
-
-
-
-
 
 
     
