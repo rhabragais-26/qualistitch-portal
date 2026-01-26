@@ -155,7 +155,7 @@ export function ReceivablesTable({ isReadOnly, filterType = 'RECEIVABLES' }: { i
 
     return processedLeads.filter(lead => {
       if (filterType === 'RECEIVABLES') {
-        if (lead.balance === undefined || lead.balance <= 0) return false;
+        if (lead.balance === undefined || lead.balance <= 0 || lead.shipmentStatus !== 'Shipped') return false;
       } else { // 'FULLY_PAID'
         if (lead.paymentType !== 'Fully Paid' || (lead.balance !== undefined && lead.balance > 0)) return false;
       }
