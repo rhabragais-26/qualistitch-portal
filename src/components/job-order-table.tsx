@@ -39,6 +39,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import Image from 'next/image';
 import { Label } from './ui/label';
 import { toTitleCase } from '@/lib/utils';
+import { ScrollArea } from './ui/scroll-area';
 
 type Order = {
   productType: string;
@@ -85,6 +86,10 @@ type Layout = {
   finalLogoDst?: (FileObject | null)[];
   finalBackDesignDst?: (FileObject | null)[];
   finalNamesDst?: (FileObject | null)[];
+  sequenceLogo?: (FileObject | null)[];
+  sequenceBackDesign?: (FileObject | null)[];
+  finalProgrammedLogo?: (FileObject | null)[];
+  finalProgrammedBackDesign?: (FileObject | null)[];
 };
 
 type Lead = {
@@ -660,4 +665,3 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     </Card>
   );
 }
-
