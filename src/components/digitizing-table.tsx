@@ -781,11 +781,19 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     }
   }, []);
 
+  const handleClearImage = (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    setter(prev => {
+        const newImages = [...prev];
+        newImages[index] = null;
+        return newImages;
+    });
+  };
 
   const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
     e.stopPropagation();
     setter(prev => prev.filter((_, i) => i !== index));
   };
+
 
   const handleConfirmReview = useCallback(async () => {
     if (!reviewConfirmLead || !firestore) return;
@@ -860,20 +868,41 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const displayImages = images.length > 0 ? images : [null];
     return (
       <div className="space-y-2">
-          <Label className="flex items-center gap-2">{label}
-              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])} disabled={images.length >= 3}>
-                  <PlusCircle className="h-4 w-4" />
-              </Button>
-          </Label>
+          <div className="flex items-center gap-2">
+            <Label>{label}</Label>
+              {images.length < 3 && (
+                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])}>
+                    <PlusCircle className="h-4 w-4" />
+                </Button>
+              )}
+          </div>
           {displayImages.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
-                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-digitizing-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
+                  <div
+                    tabIndex={0}
+                    className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer"
+                    onClick={() => image && setImageInView(image)}
+                    onDoubleClick={() => document.getElementById(`file-input-digitizing-${label}-${index}`)?.click()}
+                    onPaste={(e) => handleImagePaste(e, setter, index)}
+                    onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
+                  >
                       {image ? (<>
                         <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
+                         <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                          onClick={(e) => {
+                              e.stopPropagation();
+                              handleClearImage(setter, index);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-digitizing-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
                   </div>
-                  {index > 0 || (displayImages.length > 1 && index === 0) ? (
+                  {index > 0 && (
                       <Button
                           variant="ghost"
                           size="icon"
@@ -882,7 +911,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       >
                           <X className="h-5 w-5" />
                       </Button>
-                  ) : <div className="w-8 h-8"/>}
+                  )}
               </div>
           ))}
       </div>

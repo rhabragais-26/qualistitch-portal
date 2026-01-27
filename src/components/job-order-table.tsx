@@ -337,18 +337,19 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
       reader.readAsDataURL(file);
   };
   
-  const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
-    e.stopPropagation();
+  const handleClearImage = (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     setter(prev => {
         const newImages = [...prev];
-        if (newImages.length > 1) {
-            newImages.splice(index, 1);
-        } else {
-            newImages[index] = null;
-        }
+        newImages[index] = null;
         return newImages;
     });
   };
+
+  const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+    e.stopPropagation();
+    setter(prev => prev.filter((_, i) => i !== index));
+  };
+
 
   const handleSaveImages = useCallback(async () => {
     if (!uploadLead || !firestore || !userProfile) return;
@@ -446,22 +447,41 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     const displayImages = images.length > 0 ? images : [null];
     return (
       <div className="space-y-2">
-          <Label className="flex items-center gap-2">{label}
+          <div className="flex items-center gap-2">
+            <Label>{label}</Label>
             {images.length < 3 && (
                 <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])}>
                     <PlusCircle className="h-4 w-4" />
                 </Button>
             )}
-          </Label>
+          </div>
           {displayImages.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
-                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-job-order-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
+                  <div
+                    tabIndex={0}
+                    className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer"
+                    onClick={() => image && setImageInView(image)}
+                    onDoubleClick={() => document.getElementById(`file-input-job-order-${label}-${index}`)?.click()}
+                    onPaste={(e) => handleImagePaste(e, setter, index)}
+                    onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
+                  >
                       {image ? (<>
                         <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                          onClick={(e) => {
+                              e.stopPropagation();
+                              handleClearImage(setter, index);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} />
                   </div>
-                  {(images.length > 1 && image) && (
+                  {index > 0 && (
                       <Button
                           variant="ghost"
                           size="icon"
@@ -622,10 +642,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                     ...(layout?.refLogoRightImages || []).map(i => i.url),
                     ...(layout?.refBackLogoImages || []).map(i => i.url),
                     ...(layout?.refBackDesignImages || []).map(i => i.url),
-                    layout?.refLogoLeftImage,
-                    layout?.refLogoRightImage,
-                    layout?.refBackLogoImage,
-                    layout?.refBackDesignImage,
                   ].filter(Boolean);
                   const imageCount = new Set(allImageUrls).size;
                   
@@ -724,11 +740,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                         </TooltipProvider>
                       </TableCell>
                        <TableCell className="text-center align-middle text-xs">
-                          {lead.layouts && lead.layouts.filter(l => l.layoutImage).length > 0 ? (
-                            <span className="font-semibold">{lead.layouts.filter(l => l.layoutImage).length} Layout{lead.layouts.filter(l => l.layoutImage).length > 1 ? 's' : ''} Uploaded</span>
-                          ) : (
-                            <span className="text-red-500 font-semibold">No Uploaded Layout</span>
-                          )}
+                           <span className="font-semibold">{lead.layouts?.filter(l => l.layoutImage).length || 0} Layouts Uploaded</span>
                         </TableCell>
                       <TableCell className="text-center align-middle py-2">
                         <div className="flex flex-col items-center justify-center gap-1">
