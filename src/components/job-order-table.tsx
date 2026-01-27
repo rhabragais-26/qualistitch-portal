@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Table,
@@ -17,7 +18,7 @@ import {
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Upload, Edit, Trash2, X, PlusCircle } from 'lucide-react';
+import { Upload, Edit, Trash2, X, PlusCircle, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
@@ -25,7 +26,7 @@ import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Checkbox } from './ui/checkbox';
@@ -144,6 +145,11 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const [refLogoRightImages, setRefLogoRightImages] = useState<(string | null)[]>(['']);
   const [refBackLogoImages, setRefBackLogoImages] = useState<(string | null)[]>(['']);
   const [refBackDesignImages, setRefBackDesignImages] = useState<(string | null)[]>(['']);
+
+  const refLogoLeftInputRef = useRef<HTMLInputElement>(null);
+  const refLogoRightInputRef = useRef<HTMLInputElement>(null);
+  const refBackLogoInputRef = useRef<HTMLInputElement>(null);
+  const refBackDesignInputRef = useRef<HTMLInputElement>(null);
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -309,7 +315,15 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   
   const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
     e.stopPropagation();
-    setter(prev => prev.filter((_, i) => i !== index));
+    setter(prev => {
+        const newImages = [...prev];
+        if (index > 0) { // Only allow removing added fields
+            newImages.splice(index, 1);
+        } else {
+            newImages[index] = null; // Clear the first field but don't remove it
+        }
+        return newImages;
+    });
   };
 
   const handleSaveImages = useCallback(async () => {
@@ -390,7 +404,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     }
   };
 
-  const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+  const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, ref: React.RefObject<HTMLInputElement>) => {
     return (
       <div className="space-y-2">
           <Label className="flex items-center gap-2">{label}
@@ -455,10 +469,10 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
             </DialogHeader>
             <ScrollArea className="max-h-[70vh] p-4">
               <div className="grid grid-cols-2 gap-6">
-                  {renderUploadBoxes('Logo Left', refLogoLeftImages, setRefLogoLeftImages)}
-                  {renderUploadBoxes('Logo Right', refLogoRightImages, setRefLogoRightImages)}
-                  {renderUploadBoxes('Back Logo', refBackLogoImages, setRefBackLogoImages)}
-                  {renderUploadBoxes('Back Design', refBackDesignImages, setRefBackDesignImages)}
+                  {renderUploadBoxes('Logo Left', refLogoLeftImages, setRefLogoLeftImages, refLogoLeftInputRef)}
+                  {renderUploadBoxes('Logo Right', refLogoRightImages, setRefLogoRightImages, refLogoRightInputRef)}
+                  {renderUploadBoxes('Back Logo', refBackLogoImages, setRefBackLogoImages, refBackLogoInputRef)}
+                  {renderUploadBoxes('Back Design', refBackDesignImages, setRefBackDesignImages, refBackDesignInputRef)}
               </div>
             </ScrollArea>
             <DialogFooter>
@@ -629,3 +643,5 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     </Card>
   );
 }
+
+    
