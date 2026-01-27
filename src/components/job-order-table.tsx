@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -155,6 +156,8 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const [refBackLogoImages, setRefBackLogoImages] = useState<(string | null)[]>([]);
   const [refBackDesignImages, setRefBackDesignImages] = useState<(string | null)[]>([]);
 
+  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
+
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
@@ -162,6 +165,20 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     if (!leads) return [];
     return [...new Set(leads.map(lead => lead.salesRepresentative).filter(Boolean))].sort();
   }, [leads]);
+  
+  const toggleCustomerDetails = useCallback((leadId: string) => {
+    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
+  }, [openCustomerDetails]);
+
+  const getContactDisplay = useCallback((lead: Lead) => {
+    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
+    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+
+    if (mobile && landline) {
+      return `${mobile} / ${landline}`;
+    }
+    return mobile || landline || null;
+  }, []);
 
   const handleProcessJobOrder = useCallback((lead: Lead) => {
     router.push(`/job-order/${lead.id}`);
@@ -442,7 +459,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} />
                   </div>
-                  {(displayImages.length > 1 || image !== null) && index !== 0 ? (
+                  {(displayImages.length > 1 || (index === 0 && image !== null)) && (
                       <Button
                           variant="ghost"
                           size="icon"
@@ -451,7 +468,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       >
                           <X className="h-5 w-5" />
                       </Button>
-                  ) : <div className="w-8 h-8"/>}
+                  )}
               </div>
           ))}
       </div>
@@ -595,16 +612,13 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   const creationDate = formatDateTime(lead.submissionDateTime);
                   const modifiedDate = formatDateTime(lead.lastModified);
                   const isHovered = hoveredLeadId === lead.id;
+                  const isRepeat = lead.orderNumber > 1;
                   
                   const imageCount = [
                     ...(lead.layouts?.[0]?.refLogoLeftImages || []).map(i => i.url),
-                    lead.layouts?.[0]?.refLogoLeftImage,
                     ...(lead.layouts?.[0]?.refLogoRightImages || []).map(i => i.url),
-                    lead.layouts?.[0]?.refLogoRightImage,
                     ...(lead.layouts?.[0]?.refBackLogoImages || []).map(i => i.url),
-                    lead.layouts?.[0]?.refBackLogoImage,
                     ...(lead.layouts?.[0]?.refBackDesignImages || []).map(i => i.url),
-                    lead.layouts?.[0]?.refBackDesignImage,
                   ].filter(Boolean).length;
                   
                   return (
@@ -613,7 +627,41 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                         <div>{creationDate.dateTime}</div>
                         <div className="text-gray-500">{creationDate.dayOfWeek}</div>
                       </TableCell>
-                      <TableCell className="font-medium text-xs align-middle py-2 text-black text-center">{toTitleCase(lead.customerName)}</TableCell>
+                       <TableCell className="text-xs align-middle text-center py-2 text-black">
+                        <div className="flex items-center justify-center">
+                          <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
+                            {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </Button>
+                          <div className='flex flex-col items-center'>
+                            <span className="font-medium">{toTitleCase(lead.customerName)}</span>
+                            {isRepeat ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1.5 cursor-pointer">
+                                      <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                      <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                        {lead.orderNumber}
+                                      </span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <span className="text-xs text-blue-600 font-semibold">New Customer</span>
+                            )}
+                            {openCustomerDetails === lead.id && (
+                              <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
+                                {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
+                                {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.salesRepresentative}</TableCell>
                       <TableCell className="align-middle py-2 text-center">
                         <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
@@ -667,22 +715,13 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                            </Tooltip>
                         </TooltipProvider>
                       </TableCell>
-                      <TableCell className="text-center align-middle text-xs">
-                        {lead.layouts && lead.layouts.length > 0 && lead.layouts[0].layoutImage ? (
-                          <div
-                            className="relative w-24 h-24 mx-auto border rounded-md cursor-pointer"
-                            onClick={() => {
-                              if (lead.layouts?.[0]?.layoutImage) {
-                                setImageInView(lead.layouts[0].layoutImage);
-                              }
-                            }}
-                          >
-                            <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
-                          </div>
-                        ) : (
-                          <span className="text-red-500 font-semibold">No</span>
-                        )}
-                      </TableCell>
+                       <TableCell className="text-center align-middle text-xs">
+                          {lead.layouts && lead.layouts.length > 0 && lead.layouts.some(l => l.layoutImage) ? (
+                            '1 Layout Uploaded'
+                          ) : (
+                            <span className="text-red-500 font-semibold">No Uploaded Layout</span>
+                          )}
+                        </TableCell>
                       <TableCell className="text-center align-middle py-2">
                         <div className="flex flex-col items-center justify-center gap-1">
                             <Checkbox
@@ -712,5 +751,3 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     </>
   );
 }
-
-    
