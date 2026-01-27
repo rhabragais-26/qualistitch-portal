@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -28,7 +29,7 @@ import { collection, query, doc, updateDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { Check, ChevronDown, Upload, Trash2, ChevronUp, PlusCircle } from 'lucide-react';
+import { Check, ChevronDown, Upload, Trash2, ChevronUp, PlusCircle, Minus } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
@@ -430,6 +431,11 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               <Button type="button" size="icon" variant="ghost" className="h-5 w-5" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
                   <PlusCircle className="h-4 w-4" />
               </Button>
+              {images.length > 1 && (
+                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 text-destructive" onClick={() => setter(prev => prev.slice(0, -1))}>
+                    <Minus className="h-4 w-4" />
+                </Button>
+              )}
           </Label>
           {images.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -694,3 +700,5 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     </Card>
   );
 }
+
+    

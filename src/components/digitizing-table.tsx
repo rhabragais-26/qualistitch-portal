@@ -20,7 +20,7 @@ import {
 import React, { ChangeEvent, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X, Download } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X, Download, Minus } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
 import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
@@ -827,6 +827,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               <Button type="button" size="icon" variant="ghost" className="h-5 w-5" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
                   <PlusCircle className="h-4 w-4" />
               </Button>
+              {images.length > 1 && (
+                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 text-destructive" onClick={() => setter(prev => prev.slice(0, -1))}>
+                    <Minus className="h-4 w-4" />
+                </Button>
+              )}
           </Label>
           {images.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -974,7 +979,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   if (error) {
     return <div className="text-red-500 p-4">Error loading records: {error.message}</div>;
   }
-
+  
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
        <AlertDialog open={!!uncheckConfirmation} onOpenChange={(open) => !open && setUncheckConfirmation(null)}>
@@ -1449,9 +1454,5 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
         </Card>
     );
 };
-    
-
-
-    
 
     
