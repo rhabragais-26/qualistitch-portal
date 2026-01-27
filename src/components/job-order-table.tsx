@@ -634,19 +634,19 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   const isHovered = hoveredLeadId === lead.id;
                   const isRepeat = lead.orderNumber > 1;
                   
-                  const layout = lead.layouts?.[0];
-                  const allImageUrls = [
-                    ...(layout?.refLogoLeftImages?.map(i => i.url) || []),
-                    ...(layout?.refLogoRightImages?.map(i => i.url) || []),
-                    ...(layout?.refBackLogoImages?.map(i => i.url) || []),
-                    ...(layout?.refBackDesignImages?.map(i => i.url) || []),
-                    layout?.refLogoLeftImage,
-                    layout?.refLogoRightImage,
-                    layout?.refBackLogoImage,
-                    layout?.refBackDesignImage,
-                  ].filter(Boolean);
-                  const imageCount = new Set(allImageUrls).size;
-                  
+                  const layoutImageCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
+                  const refImageCount = useMemo(() => {
+                    const layout = lead.layouts?.[0];
+                    if (!layout) return 0;
+                    
+                    const count = 
+                      (layout.refLogoLeftImages?.length || (layout.refLogoLeftImage ? 1 : 0)) +
+                      (layout.refLogoRightImages?.length || (layout.refLogoRightImage ? 1 : 0)) +
+                      (layout.refBackLogoImages?.length || (layout.refBackLogoImage ? 1 : 0)) +
+                      (layout.refBackDesignImages?.length || (layout.refBackDesignImage ? 1 : 0));
+                    return count;
+                  }, [lead.layouts]);
+
                   return (
                     <TableRow key={lead.id} onMouseEnter={() => setHoveredLeadId(lead.id)} onMouseLeave={() => setHoveredLeadId(null)} className={cn(isHovered && "bg-gray-100")}>
                       <TableCell className="text-xs align-middle py-2 text-black text-center">
@@ -700,11 +700,11 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                                 <Upload className="mr-2 h-4 w-4" />
                                 Upload
                             </Button>
-                            {imageCount > 0 && (
+                            {refImageCount > 0 && (
                                 <div
                                     className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
                                 >
-                                   {imageCount}
+                                   {refImageCount}
                                 </div>
                             )}
                         </div>
@@ -741,9 +741,13 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                            </Tooltip>
                         </TooltipProvider>
                       </TableCell>
-                       <TableCell className="text-center align-middle text-xs">
-                           <span className="font-semibold">{lead.layouts?.filter(l => l.layoutImage).length || 0} Layouts Uploaded</span>
-                        </TableCell>
+                      <TableCell className="text-center align-middle text-xs font-semibold">
+                        {layoutImageCount > 0 ? (
+                            <span className="text-black">{layoutImageCount} Layout{layoutImageCount > 1 ? 's' : ''} Uploaded</span>
+                        ) : (
+                            <span className="text-destructive">No Uploaded Layout</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-center align-middle py-2">
                         <div className="flex flex-col items-center justify-center gap-1">
                             <Checkbox
@@ -773,3 +777,4 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     </>
   );
 }
+
