@@ -1075,7 +1075,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       {imageInView && (
         <div
           className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
-          onClick={()={() => setImageInView(null)}
+          onClick={() => setImageInView(null)}
         >
           <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
             <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
@@ -1438,7 +1438,7 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
                 {images.map((img, index) => (
                     <div key={index} className="flex flex-col items-center text-center w-28">
                         <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
-                        <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={()={() => onImageClick(img.src)}
+                        <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
                             <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
                         </div>
                         {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
