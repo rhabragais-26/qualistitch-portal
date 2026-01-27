@@ -257,7 +257,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
       });
     });
   
-    return enrichedLeads;
+    return enrichedLeads.sort((a, b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
   }, [leads]);
 
   const filteredLeads = React.useMemo(() => {
@@ -699,14 +699,3 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               }>Save Images </Button></DialogFooter></DialogContent></Dialog></Card> ); }
 
     
-
-
-
-
-
-
-
-
-
-
-

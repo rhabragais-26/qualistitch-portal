@@ -394,7 +394,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
       });
     });
   
-    return enrichedLeads;
+    return enrichedLeads.sort((a,b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
   }, [leads]);
   
   const filteredLeads = useMemo(() => {
@@ -425,7 +425,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
 
 
       return matchesSearch && matchesCsr && matchesYear && matchesMonth && matchesStatus;
-    }).sort((a,b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
+    });
   }, [processedLeads, searchTerm, csrFilter, selectedYear, selectedMonth, filterType, getOverallStatus]);
 
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
@@ -663,3 +663,4 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     </Card>
   );
 }
+
