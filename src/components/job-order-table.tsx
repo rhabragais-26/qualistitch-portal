@@ -161,6 +161,8 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  
+  const canEdit = !isReadOnly;
 
   const salesRepresentatives = useMemo(() => {
     if (!leads) return [];
@@ -437,6 +439,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   }, [uploadLead, firestore, userProfile, toast, refetch, refLogoLeftImages, refLogoRightImages, refBackLogoImages, refBackDesignImages]);
   
   const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    if (!canEdit) return;
     const file = e.clipboardData.files[0];
     if (file && file.type.startsWith('image/')) {
         handleImageUpload(file, setter, index);
@@ -459,7 +462,11 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               <div key={index} className="flex items-center gap-2">
                   <div
                     tabIndex={0}
-                    className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer focus:outline-none focus:border-primary focus:border-solid"
+                    className={cn(
+                        "relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center",
+                        canEdit && "cursor-pointer",
+                        "focus:outline-none focus:border-solid focus:border-teal-500 select-none"
+                    )}
                     onClick={() => image && setImageInView(image)}
                     onDoubleClick={() => canEdit && !image && document.getElementById(`file-input-job-order-${label}-${index}`)?.click()}
                     onPaste={(e) => canEdit && handleImagePaste(e, setter, index)}
@@ -644,10 +651,10 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                     if (!layout) return 0;
                     
                     const count = 
-                      (layout.refLogoLeftImages?.length || (layout.refLogoLeftImage ? 1 : 0)) +
-                      (layout.refLogoRightImages?.length || (layout.refLogoRightImage ? 1 : 0)) +
-                      (layout.refBackLogoImages?.length || (layout.refBackLogoImage ? 1 : 0)) +
-                      (layout.refBackDesignImages?.length || (layout.refBackDesignImage ? 1 : 0));
+                      (layout.refLogoLeftImages?.length || 0) +
+                      (layout.refLogoRightImages?.length || 0) +
+                      (layout.refBackLogoImages?.length || 0) +
+                      (layout.refBackDesignImages?.length || 0);
                     return count;
                   })();
 
@@ -746,7 +753,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                         </TooltipProvider>
                       </TableCell>
                       <TableCell className="text-center align-middle text-xs font-semibold">
-                          {layoutImageCount > 0 ? (
+                        {layoutImageCount > 0 ? (
                             <span className="text-black">{layoutImageCount} Layout{layoutImageCount > 1 ? 's' : ''} Uploaded</span>
                         ) : (
                             <span className="text-destructive">No Uploaded Layout</span>
