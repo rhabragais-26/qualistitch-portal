@@ -80,7 +80,7 @@ export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'Sales Manager': ['sales'],
   'S.E Officer': ['sales'],
   'Inventory Officer': ['inventory'],
-  'Purchasing Officer': ['inventory'],
+  'Purchasing Officer': ['inventory', 'logistics'],
   'Digitizer': ['digitizing'],
   'E.D Coordinator': ['digitizing'],
   'Production Line Leader': ['production'],
