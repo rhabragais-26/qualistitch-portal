@@ -1,6 +1,8 @@
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import {
   Table,
   TableBody,
@@ -23,10 +25,9 @@ import { Upload, Edit, Trash2, X, PlusCircle, Download, Check, Calendar as Calen
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
-import { formatDateTime, toTitleCase } from '@/lib/utils';
+import { formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Checkbox } from './ui/checkbox';
@@ -146,6 +147,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const router = useRouter();
   const [confirmingPrint, setConfirmingPrint] = useState<Lead | null>(null);
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
+  const [imageInView, setImageInView] = useState<string | null>(null);
   
   const [uploadLead, setUploadLead] = useState<Lead | null>(null);
   const [refLogoLeftImages, setRefLogoLeftImages] = useState<(string | null)[]>([]);
@@ -319,7 +321,15 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   
   const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
     e.stopPropagation();
-    setter(prev => prev.filter((_, i) => i !== index));
+    setter(prev => {
+        const newImages = [...prev];
+        if (newImages.length > 1) {
+            newImages.splice(index, 1);
+        } else {
+            newImages[index] = null; // Clear the image if it's the last one
+        }
+        return newImages;
+    });
   };
 
   const handleSaveImages = useCallback(async () => {
@@ -373,18 +383,16 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
             refBackDesignImages: backDesignImages.filter(Boolean),
         };
         
-        delete updatedFirstLayout.refLogoLeftImage;
-        delete updatedFirstLayout.refLogoRightImage;
-        delete updatedFirstLayout.refBackLogoImage;
-        delete updatedFirstLayout.refBackDesignImage;
-        delete updatedFirstLayout.refLogoLeftImageUploadTime;
-        delete updatedFirstLayout.refLogoLeftImageUploadedBy;
-        delete updatedFirstLayout.refLogoRightImageUploadTime;
-        delete updatedFirstLayout.refLogoRightImageUploadedBy;
-        delete updatedFirstLayout.refBackLogoImageUploadTime;
-        delete updatedFirstLayout.refBackLogoImageUploadedBy;
-        delete updatedFirstLayout.refBackDesignImageUploadTime;
-        delete updatedFirstLayout.refBackDesignImageUploadedBy;
+        // Clean up old single-image fields if they exist
+        const fieldsToClean: (keyof Layout)[] = [
+            'refLogoLeftImage', 'refLogoRightImage', 'refBackLogoImage', 'refBackDesignImage',
+            'refLogoLeftImageUploadTime', 'refLogoLeftImageUploadedBy',
+            'refLogoRightImageUploadTime', 'refLogoRightImageUploadedBy',
+            'refBackLogoImageUploadTime', 'refBackLogoImageUploadedBy',
+            'refBackDesignImageUploadTime', 'refBackDesignImageUploadedBy'
+        ];
+        fieldsToClean.forEach(field => delete updatedFirstLayout[field]);
+
 
         layouts[0] = updatedFirstLayout;
         
@@ -434,7 +442,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} />
                   </div>
-                   {displayImages.length > 1 ? (
+                  {(displayImages.length > 1 || image !== null) && index !== 0 ? (
                       <Button
                           variant="ghost"
                           size="icon"
@@ -465,7 +473,27 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   }
   
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
+    <>
+      {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+            </Button>
+          </div>
+        </div>
+      )}
+      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
        <AlertDialog open={!!confirmingPrint} onOpenChange={(open) => !open && setConfirmingPrint(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -639,11 +667,20 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                            </Tooltip>
                         </TooltipProvider>
                       </TableCell>
-                       <TableCell className="text-center align-middle text-xs">
+                      <TableCell className="text-center align-middle text-xs">
                         {lead.layouts && lead.layouts.length > 0 && lead.layouts[0].layoutImage ? (
-                            'Yes'
+                          <div
+                            className="relative w-24 h-24 mx-auto border rounded-md cursor-pointer"
+                            onClick={() => {
+                              if (lead.layouts?.[0]?.layoutImage) {
+                                setImageInView(lead.layouts[0].layoutImage);
+                              }
+                            }}
+                          >
+                            <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
+                          </div>
                         ) : (
-                            <span className="text-red-500 font-semibold">No</span>
+                          <span className="text-red-500 font-semibold">No</span>
                         )}
                       </TableCell>
                       <TableCell className="text-center align-middle py-2">
@@ -672,5 +709,8 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
           </div>
       </CardContent>
     </Card>
+    </>
   );
 }
+
+    
