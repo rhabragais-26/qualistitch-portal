@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -69,9 +67,13 @@ type FileObject = {
 };
 
 type Layout = {
+  refLogoLeftImage?: string | null;
   refLogoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refLogoRightImage?: string | null;
   refLogoRightImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refBackLogoImage?: string | null;
   refBackLogoImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refBackDesignImage?: string | null;
   refBackDesignImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
   logoLeftImage?: string | null;
   logoRightImage?: string | null;
@@ -293,10 +295,24 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   
   const handleOpenUploadDialog = useCallback((lead: Lead) => {
     const layout = lead.layouts?.[0];
-    setRefLogoLeftImages(layout?.refLogoLeftImages?.map(i => i.url) || ['']);
-    setRefLogoRightImages(layout?.refLogoRightImages?.map(i => i.url) || ['']);
-    setRefBackLogoImages(layout?.refBackLogoImages?.map(i => i.url) || ['']);
-    setRefBackDesignImages(layout?.refBackDesignImages?.map(i => i.url) || ['']);
+    
+    const getInitialImages = (pluralField: { url: string }[] | undefined, singularField: string | null | undefined): (string|null)[] => {
+        if (pluralField && pluralField.length > 0) {
+            const urls = pluralField.map(i => i.url);
+            if (urls.length < 3) urls.push(''); // Always have a blank spot to add more
+            return urls;
+        }
+        if (singularField) {
+            return [singularField, ''];
+        }
+        return [''];
+    };
+
+    setRefLogoLeftImages(getInitialImages((layout as any)?.refLogoLeftImages, (layout as any)?.refLogoLeftImage));
+    setRefLogoRightImages(getInitialImages((layout as any)?.refLogoRightImages, (layout as any)?.refLogoRightImage));
+    setRefBackLogoImages(getInitialImages((layout as any)?.refBackLogoImages, (layout as any)?.refBackLogoImage));
+    setRefBackDesignImages(getInitialImages((layout as any)?.refBackDesignImages, (layout as any)?.refBackDesignImage));
+
     setUploadLead(lead);
   }, []);
 
@@ -331,30 +347,41 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     const now = new Date().toISOString();
     const storage = getStorage();
 
-    const uploadAndGetURL = async (image: string | null, fieldName: string, index: number, existingUrl?: string): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
-        if (!image) return null;
-        if (image === existingUrl) { // Find the existing data to preserve timestamp and uploader
-          const existingArray = (existingLayout[fieldName] as { url: string; uploadTime: string; uploadedBy: string }[]) || [];
-          const existingImageObject = existingArray.find(img => img.url === existingUrl);
-          if (existingImageObject) return existingImageObject;
+    const uploadAndGetURL = async (imageData: string | null, fieldName: string, index: number): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
+        if (!imageData) return null;
+        
+        if (imageData.startsWith('http')) {
+            const pluralFieldName = `${fieldName}s`;
+            const existingArray = (uploadLead.layouts?.[0]?.[pluralFieldName as keyof Layout] as { url: string; uploadTime: string; uploadedBy: string }[]) || [];
+            const existingImageObject = existingArray.find(img => img.url === imageData);
+            if (existingImageObject) return existingImageObject;
+            return { url: imageData, uploadTime: now, uploadedBy: userProfile.nickname };
         }
-        if (image.startsWith('http')) return { url: image, uploadTime: now, uploadedBy: userProfile.nickname };
+
+        if(!imageData.startsWith('data:')) return null;
 
         const storageRef = ref(storage, `leads-images/${uploadLead.id}/${fieldName}_${index}_${Date.now()}`);
-        const snapshot = await uploadString(storageRef, image, 'data_url');
+        const snapshot = await uploadString(storageRef, imageData, 'data_url');
         const downloadURL = await getDownloadURL(snapshot.ref);
         return { url: downloadURL, uploadTime: now, uploadedBy: userProfile.nickname };
     };
 
     try {
         const updatedImages = {
-          refLogoLeftImages: (await Promise.all(refLogoLeftImages.map((img, i) => uploadAndGetURL(img, 'refLogoLeftImages', i, uploadLead.layouts?.[0]?.refLogoLeftImages?.[i]?.url)))).filter(Boolean),
-          refLogoRightImages: (await Promise.all(refLogoRightImages.map((img, i) => uploadAndGetURL(img, 'refLogoRightImages', i, uploadLead.layouts?.[0]?.refLogoRightImages?.[i]?.url)))).filter(Boolean),
-          refBackLogoImages: (await Promise.all(refBackLogoImages.map((img, i) => uploadAndGetURL(img, 'refBackLogoImages', i, uploadLead.layouts?.[0]?.refBackLogoImages?.[i]?.url)))).filter(Boolean),
-          refBackDesignImages: (await Promise.all(refBackDesignImages.map((img, i) => uploadAndGetURL(img, 'refBackDesignImages', i, uploadLead.layouts?.[0]?.refBackDesignImages?.[i]?.url)))).filter(Boolean),
+          refLogoLeftImages: (await Promise.all(refLogoLeftImages.map((img, i) => uploadAndGetURL(img, 'refLogoLeftImage', i)))).filter(Boolean),
+          refLogoRightImages: (await Promise.all(refLogoRightImages.map((img, i) => uploadAndGetURL(img, 'refLogoRightImage', i)))).filter(Boolean),
+          refBackLogoImages: (await Promise.all(refBackLogoImages.map((img, i) => uploadAndGetURL(img, 'refBackLogoImage', i)))).filter(Boolean),
+          refBackDesignImages: (await Promise.all(refBackDesignImages.map((img, i) => uploadAndGetURL(img, 'refBackDesignImage', i)))).filter(Boolean),
         };
 
         const updatedFirstLayout = { ...existingLayout, ...updatedImages };
+        
+        // Clean up old singular fields
+        delete updatedFirstLayout.refLogoLeftImage;
+        delete updatedFirstLayout.refLogoRightImage;
+        delete updatedFirstLayout.refBackLogoImage;
+        delete updatedFirstLayout.refBackDesignImage;
+
         layouts[0] = updatedFirstLayout;
         
         await updateDoc(leadDocRef, {
@@ -408,7 +435,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               <div key={index} className="flex items-center gap-2">
                   <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
                       {image ? (<> <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setter, index)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                      <input id={`file-input-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0], setter, index)} />
+                      <input id={`file-input-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
                   </div>
               </div>
           ))}
@@ -527,10 +554,12 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   const modifiedDate = formatDateTime(lead.lastModified);
                   const isRepeat = lead.orderNumber > 1;
                   
-                  const imageCount = (lead.layouts?.[0]?.refLogoLeftImages?.length || 0) +
-                                      (lead.layouts?.[0]?.refLogoRightImages?.length || 0) +
-                                      (lead.layouts?.[0]?.refBackLogoImages?.length || 0) +
-                                      (lead.layouts?.[0]?.refBackDesignImages?.length || 0);
+                  const imageCount = [
+                    ...(lead.layouts?.[0]?.refLogoLeftImages || []),
+                    ...(lead.layouts?.[0]?.refLogoRightImages || []),
+                    ...(lead.layouts?.[0]?.refBackLogoImages || []),
+                    ...(lead.layouts?.[0]?.refBackDesignImages || []),
+                  ].filter(Boolean).length;
 
                   return (
                     <React.Fragment key={lead.id}>
