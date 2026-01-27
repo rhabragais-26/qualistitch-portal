@@ -1,3 +1,4 @@
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -19,7 +20,7 @@ import {
 import React, { ChangeEvent, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X, Download } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
 import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
@@ -28,7 +29,7 @@ import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from './ui/dialog';
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
@@ -197,7 +198,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
   
@@ -416,17 +417,22 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         const layout = lead.layouts?.[0];
         
         const getInitialImages = (pluralField: { url: string }[] | undefined, singularField: string | null | undefined): (string|null)[] => {
-            if (pluralField && pluralField.length > 0) return pluralField.map(i => i.url);
-            if (singularField) return [singularField];
+            if (pluralField && pluralField.length > 0) {
+              const urls = pluralField.map(i => i.url);
+              if (urls.length < 3) urls.push(''); // Always have a blank spot to add more
+              return urls;
+            }
+            if (singularField) {
+              return [singularField, ''];
+            }
             return [''];
         };
 
-        const fieldPrefix = field === 'isUnderProgramming' ? '' : 'test';
         if (field === 'isUnderProgramming') {
-            setInitialLogoLeftImages(getInitialImages((layout as any)?.initialLogoLeftImages, layout?.logoLeftImage));
-            setInitialLogoRightImages(getInitialImages((layout as any)?.initialLogoRightImages, layout?.logoRightImage));
-            setInitialBackLogoImages(getInitialImages((layout as any)?.initialBackLogoImages, layout?.backLogoImage));
-            setInitialBackDesignImages(getInitialImages((layout as any)?.initialBackDesignImages, layout?.backDesignImage));
+            setInitialLogoLeftImages(getInitialImages((layout as any)?.logoLeftImages, layout?.logoLeftImage));
+            setInitialLogoRightImages(getInitialImages((layout as any)?.logoRightImages, layout?.logoRightImage));
+            setInitialBackLogoImages(getInitialImages((layout as any)?.backLogoImages, layout?.backLogoImage));
+            setInitialBackDesignImages(getInitialImages((layout as any)?.backDesignImages, layout?.backDesignImage));
         } else { // isLogoTesting
             setTestLogoLeftImages(getInitialImages((layout as any)?.testLogoLeftImages, layout?.testLogoLeftImage));
             setTestLogoRightImages(getInitialImages((layout as any)?.testLogoRightImages, layout?.testLogoRightImage));
@@ -533,7 +539,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       let updatedFirstLayout = currentLayouts[0] || {};
   
       if (uploadField === 'isUnderProgramming' || uploadField === 'isLogoTesting') {
-        const fieldPrefix = uploadField === 'isUnderProgramming' ? 'initial' : 'test';
+        const fieldPrefix = uploadField === 'isUnderProgramming' ? '' : 'test';
 
         const imageStates = uploadField === 'isUnderProgramming'
             ? { left: initialLogoLeftImages, right: initialLogoRightImages, backLogo: initialBackLogoImages, backDesign: initialBackDesignImages }
@@ -680,11 +686,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     const file = event.clipboardData.files[0];
     if (file && file.type.startsWith('image/')) {
-        handleFileUpload(file, setter, index);
+        handleImageUpload(file, setter, index);
     }
   }, []);
 
-  const handleFileUpload = useCallback((file: File | null, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+  const handleImageUpload = useCallback((file: File | null, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     if (file) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -739,7 +745,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     e.stopPropagation();
     setter(prev => {
         const newImages = [...prev];
-        newImages[index] = null;
+        newImages.splice(index, 1);
+        if (newImages.length === 0) return [''];
         return newImages;
     });
   }, []);
@@ -813,11 +820,126 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     return finalProgramFiles.filter(item => item.uploaded);
   }, [reviewConfirmLead]);
 
-  const renderUploadDialogContent = useCallback(() => {
-    // ... (This function now needs to be re-implemented to handle multiple images)
-  }, [/* dependencies */]);
+  const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+    return (
+      <div className="space-y-2">
+          <Label className="flex items-center gap-2">{label}
+              <Button type="button" size="icon" variant="ghost" className="h-5 w-5" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
+                  <PlusCircle className="h-4 w-4" />
+              </Button>
+          </Label>
+          {images.map((image, index) => (
+              <div key={index} className="flex items-center gap-2">
+                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
+                      {image ? (<> <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setter, index)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
+                      <input id={`file-input-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
+                  </div>
+              </div>
+          ))}
+      </div>
+    );
+  };
+  
+  const renderMultipleFileUpload = (label: string, files: (FileObject | null)[], setFiles: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]> ) => {
+    return (
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">{label}
+          <Button type="button" size="icon" variant="ghost" className="h-5 w-5" onClick={() => addFile(files, setFiles)}>
+            <PlusCircle className="h-4 w-4" />
+          </Button>
+        </Label>
+        {files.map((file, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 justify-start overflow-hidden"
+              onClick={() => refs.current[index]?.click()}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              <span className="truncate">{file?.name || 'Upload File'}</span>
+            </Button>
+            <input
+              type="file"
+              ref={el => refs.current[index] = el}
+              className="hidden"
+              onChange={(e) => handleMultipleFileUpload(e, files, setFiles, index)}
+            />
+            {index > 0 && <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="text-destructive h-8 w-8"
+              onClick={() => removeFile(files, setFiles, index, refs)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>}
+          </div>
+        ))}
+      </div>
+    )
+  }
 
-  const ImageDisplayCard = ({ title, images }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[] }) => {
+  const renderUploadDialogContent = useCallback(() => {
+    if (!uploadField || !uploadLeadId) return null;
+    
+    if (uploadField === 'isUnderProgramming') {
+      return (
+        <div className="grid grid-cols-2 gap-6">
+            {renderUploadBoxes('Logo Left', initialLogoLeftImages, setInitialLogoLeftImages)}
+            {renderUploadBoxes('Logo Right', initialLogoRightImages, setInitialLogoRightImages)}
+            {renderUploadBoxes('Back Logo', initialBackLogoImages, setInitialBackLogoImages)}
+            {renderUploadBoxes('Back Design', initialBackDesignImages, setInitialBackDesignImages)}
+        </div>
+      );
+    } else if (uploadField === 'isLogoTesting') {
+       return (
+        <div className="grid grid-cols-2 gap-6">
+            {renderUploadBoxes('Logo Left', testLogoLeftImages, setTestLogoLeftImages)}
+            {renderUploadBoxes('Logo Right', testLogoRightImages, setTestLogoRightImages)}
+            {renderUploadBoxes('Back Logo', testBackLogoImages, setTestBackLogoImages)}
+            {renderUploadBoxes('Back Design', testBackDesignImages, setTestBackDesignImages)}
+        </div>
+      );
+    } else if (uploadField === 'isFinalProgram') {
+      return (
+        <div className="space-y-6">
+          <div>
+            <h4 className="font-semibold mb-2 text-primary">Sequence Files</h4>
+            <div className="grid grid-cols-2 gap-4">
+              {renderMultipleFileUpload('Sequence Logo', sequenceLogo, setSequenceLogo, sequenceLogoUploadRefs)}
+              {renderMultipleFileUpload('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign, sequenceBackDesignUploadRefs)}
+            </div>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-2 text-primary">Final DST Files</h4>
+            <div className="grid grid-cols-2 gap-4">
+              {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+              {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
+              {renderMultipleFileUpload('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
+            </div>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-2 text-primary">Final EMB Files</h4>
+            <div className="grid grid-cols-2 gap-4">
+              {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
+              {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+            </div>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-2 text-primary">Final Programmed Images</h4>
+            <div className="grid grid-cols-2 gap-4">
+                {renderMultipleFileUpload('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo, finalProgrammedLogoUploadRefs)}
+                {renderMultipleFileUpload('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign, finalProgrammedBackDesignUploadRefs)}
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  }, [uploadField, uploadLeadId, initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign]);
+
+  const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
     if (images.length === 0) return null;
 
     return (
@@ -827,7 +949,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 {images.map((img, index) => (
                     <div key={index} className="flex flex-col items-center text-center w-28">
                         <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
-                        <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => setImageInView(img.src)}>
+                        <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
                             <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
                         </div>
                         {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
@@ -923,15 +1045,37 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         }
         setIsUploadDialogOpen(isOpen);
        }}>
-        <DialogContent className="sm:max-w-4xl">
-          {renderUploadDialogContent()}
+        <DialogContent className="sm:max-w-4xl flex flex-col">
+          <DialogHeader>
+              <DialogTitle>
+                  {uploadField === 'isUnderProgramming' && 'Upload Initial Program Images'}
+                  {uploadField === 'isLogoTesting' && 'Upload Tested Images'}
+                  {uploadField === 'isFinalProgram' && 'Upload Final Program Files'}
+              </DialogTitle>
+              <DialogDescription>
+                  {uploadField === 'isUnderProgramming' && 'Upload the initial program images for client approval.'}
+                  {uploadField === 'isLogoTesting' && 'Upload images of the tested embroidery.'}
+                  {uploadField === 'isFinalProgram' && 'Upload all final DST, EMB, and sequence files.'}
+              </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh] -mx-6 px-6">
+              <div className="p-4">
+                {renderUploadDialogContent()}
+              </div>
+          </ScrollArea>
+          <DialogFooter>
+              <DialogClose asChild>
+                  <Button type="button" variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button onClick={handleUploadDialogSave}>Save and Update Status</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       
       {imageInView && (
         <div
           className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
-          onClick={() => setImageInView(null)}
+          onClick={()={() => setImageInView(null)}
         >
           <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
             <Image src={imageInView} alt="Enlarged Case Image" layout="fill" objectFit="contain" />
@@ -1226,10 +1370,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         {
                                             title: 'Reference Images',
                                             images: [
-                                                ...(layout.refLogoLeftImages || []).map((img, i) => ({ ...img, label: `Logo Left ${i + 1}` })),
-                                                ...(layout.refLogoRightImages || []).map((img, i) => ({ ...img, label: `Logo Right ${i + 1}` })),
-                                                ...(layout.refBackLogoImages || []).map((img, i) => ({ ...img, label: `Back Logo ${i + 1}` })),
-                                                ...(layout.refBackDesignImages || []).map((img, i) => ({ ...img, label: `Back Design ${i + 1}` })),
+                                                ...(layout.refLogoLeftImages || []).map((img, i) => ({ ...img, label: `Logo Left ${i + 1}`, src: img.url })),
+                                                ...(layout.refLogoRightImages || []).map((img, i) => ({ ...img, label: `Logo Right ${i + 1}`, src: img.url })),
+                                                ...(layout.refBackLogoImages || []).map((img, i) => ({ ...img, label: `Back Logo ${i + 1}`, src: img.url })),
+                                                ...(layout.refBackDesignImages || []).map((img, i) => ({ ...img, label: `Back Design ${i + 1}`, src: img.url })),
                                             ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
                                         },
                                         {
@@ -1239,10 +1383,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         {
                                             title: 'Initial Program Images',
                                             images: [
-                                                ...((layout as any).initialLogoLeftImages || []).map((img: any, i: number) => ({ src: img.url, label: `Logo Left ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
-                                                ...((layout as any).initialLogoRightImages || []).map((img: any, i: number) => ({ src: img.url, label: `Logo Right ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
-                                                ...((layout as any).initialBackLogoImages || []).map((img: any, i: number) => ({ src: img.url, label: `Back Logo ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
-                                                ...((layout as any).initialBackDesignImages || []).map((img: any, i: number) => ({ src: img.url, label: `Back Design ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
+                                                ...((layout as any).logoLeftImages || []).map((img: any, i: number) => ({ src: img.url, label: `Logo Left ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
+                                                ...((layout as any).logoRightImages || []).map((img: any, i: number) => ({ src: img.url, label: `Logo Right ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
+                                                ...((layout as any).backLogoImages || []).map((img: any, i: number) => ({ src: img.url, label: `Back Logo ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
+                                                ...((layout as any).backDesignImages || []).map((img: any, i: number) => ({ src: img.url, label: `Back Design ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
                                             ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
                                         },
                                         {
@@ -1294,7 +1438,7 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
                 {images.map((img, index) => (
                     <div key={index} className="flex flex-col items-center text-center w-28">
                         <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
-                        <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
+                        <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={()={() => onImageClick(img.src)}
                             <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
                         </div>
                         {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
@@ -1307,5 +1451,7 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
 };
     
 
+
+    
 
     
