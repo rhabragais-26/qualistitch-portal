@@ -2,7 +2,7 @@
 
 'use client';
 
-import { doc, updateDoc, collection, query } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, deleteDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import {
   Table,
@@ -447,9 +447,11 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     return (
       <div className="space-y-2">
           <Label className="flex items-center gap-2">{label}
-            <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])} disabled={images.length >= 3}>
-                <PlusCircle className="h-4 w-4" />
-            </Button>
+            {images.length < 3 && (
+                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])}>
+                    <PlusCircle className="h-4 w-4" />
+                </Button>
+            )}
           </Label>
           {displayImages.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -459,7 +461,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} />
                   </div>
-                  {displayImages.length > 1 && (
+                  {index > 0 || (displayImages.length > 1 && index === 0) ? (
                       <Button
                           variant="ghost"
                           size="icon"
@@ -468,7 +470,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       >
                           <X className="h-5 w-5" />
                       </Button>
-                  )}
+                  ) : <div className="w-8 h-8"/>}
               </div>
           ))}
       </div>
