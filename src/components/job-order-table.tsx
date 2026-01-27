@@ -314,7 +314,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
         } else if (singularField) {
             images.push(singularField);
         }
-        return images.length > 0 ? images : [];
+        return images.length > 0 ? images : [null];
     };
 
     setRefLogoLeftImages(getInitialImages((layout as any)?.refLogoLeftImages, layout?.refLogoLeftImage));
@@ -449,11 +449,9 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
       <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Label>{label}</Label>
-            {images.length < 3 && (
-                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])}>
-                    <PlusCircle className="h-4 w-4" />
-                </Button>
-            )}
+              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])}>
+                  <PlusCircle className="h-4 w-4" />
+              </Button>
           </div>
           {displayImages.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -467,7 +465,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   >
                       {image ? (<>
                         <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
-                        <Button
+                         <Button
                           variant="destructive"
                           size="icon"
                           className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
@@ -638,10 +636,14 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   
                   const layout = lead.layouts?.[0];
                   const allImageUrls = [
-                    ...(layout?.refLogoLeftImages || []).map(i => i.url),
-                    ...(layout?.refLogoRightImages || []).map(i => i.url),
-                    ...(layout?.refBackLogoImages || []).map(i => i.url),
-                    ...(layout?.refBackDesignImages || []).map(i => i.url),
+                    ...(layout?.refLogoLeftImages?.map(i => i.url) || []),
+                    ...(layout?.refLogoRightImages?.map(i => i.url) || []),
+                    ...(layout?.refBackLogoImages?.map(i => i.url) || []),
+                    ...(layout?.refBackDesignImages?.map(i => i.url) || []),
+                    layout?.refLogoLeftImage,
+                    layout?.refLogoRightImage,
+                    layout?.refBackLogoImage,
+                    layout?.refBackDesignImage,
                   ].filter(Boolean);
                   const imageCount = new Set(allImageUrls).size;
                   
