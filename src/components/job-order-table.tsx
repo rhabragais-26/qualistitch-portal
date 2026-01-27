@@ -18,7 +18,7 @@ import {
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Upload, Edit, Trash2, X, PlusCircle, Check } from 'lucide-react';
+import { Upload, Edit, Trash2, X, PlusCircle, Check, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
@@ -315,15 +315,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   
   const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
     e.stopPropagation();
-    setter(prev => {
-        const newImages = [...prev];
-        if (index > 0) { // Only allow removing added fields
-            newImages.splice(index, 1);
-        } else {
-            newImages[index] = null; // Clear the first field but don't remove it
-        }
-        return newImages;
-    });
+    setter(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveImages = useCallback(async () => {
@@ -404,11 +396,11 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     }
   };
 
-  const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, ref: React.RefObject<HTMLInputElement>) => {
+  const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
     return (
       <div className="space-y-2">
           <Label className="flex items-center gap-2">{label}
-              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-transparent" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
+              <Button type="button" size="icon" variant="ghost" className="h-5 w-5" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
                   <PlusCircle className="h-4 w-4" />
               </Button>
           </Label>
@@ -417,9 +409,9 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-job-order-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
                       {image ? (<> 
                         <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
-                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setter, index)}> 
-                            <Trash2 className="h-4 w-4" />
-                        </Button> 
+                        {index > 0 && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setter, index)}> 
+                            <X className="h-4 w-4" />
+                        </Button>}
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
                   </div>
@@ -469,10 +461,10 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
             </DialogHeader>
             <ScrollArea className="max-h-[70vh] p-4">
               <div className="grid grid-cols-2 gap-6">
-                  {renderUploadBoxes('Logo Left', refLogoLeftImages, setRefLogoLeftImages, refLogoLeftInputRef)}
-                  {renderUploadBoxes('Logo Right', refLogoRightImages, setRefLogoRightImages, refLogoRightInputRef)}
-                  {renderUploadBoxes('Back Logo', refBackLogoImages, setRefBackLogoImages, refBackLogoInputRef)}
-                  {renderUploadBoxes('Back Design', refBackDesignImages, setRefBackDesignImages, refBackDesignInputRef)}
+                  {renderUploadBoxes('Logo Left', refLogoLeftImages, setRefLogoLeftImages)}
+                  {renderUploadBoxes('Logo Right', refLogoRightImages, setRefLogoRightImages)}
+                  {renderUploadBoxes('Back Logo', refBackLogoImages, setRefBackLogoImages)}
+                  {renderUploadBoxes('Back Design', refBackDesignImages, setRefBackDesignImages)}
               </div>
             </ScrollArea>
             <DialogFooter>
@@ -533,8 +525,8 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">J.O. No.</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">No. of Layouts</TableHead>
                   <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Uploaded Layout</TableHead>
                   <TableHead className="text-center text-white font-bold align-middle">Printed</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">J.O. Status</TableHead>
                 </TableRow>
@@ -583,7 +575,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                         </div>
                       </TableCell>
                       <TableCell className="font-medium text-xs align-middle py-2 text-black whitespace-nowrap text-center">{formatJoNumber(lead.joNumber)}</TableCell>
-                      <TableCell className="text-center align-middle py-2">{lead.layouts?.length || 0}</TableCell>
                       <TableCell className="text-center align-middle py-2">
                         <TooltipProvider>
                            <Tooltip>
@@ -615,6 +606,13 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                            </Tooltip>
                         </TooltipProvider>
                       </TableCell>
+                      <TableCell className="text-center align-middle text-xs">
+                        {lead.layouts && lead.layouts.length > 0 && lead.layouts[0].layoutImage ? (
+                            <span>1 Layout Uploaded</span>
+                        ) : (
+                            <span className="text-red-500 font-semibold">No Uploaded Layout</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-center align-middle py-2">
                         <div className="flex flex-col items-center justify-center gap-1">
                             <Checkbox
@@ -643,5 +641,3 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     </Card>
   );
 }
-
-    
