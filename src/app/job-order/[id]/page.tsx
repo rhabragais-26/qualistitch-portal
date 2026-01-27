@@ -19,6 +19,7 @@
     import Image from 'next/image';
     import { v4 as uuidv4 } from 'uuid';
     import { hasEditPermission } from '@/lib/permissions';
+    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
     type DesignDetails = {
       left?: boolean;
@@ -49,6 +50,7 @@
       id: string;
       layoutImage?: string;
       layoutImageUploadTime?: string | null;
+      layoutImageUploadedBy?: string | null;
       dstLogoLeft?: string;
       dstLogoRight?: string;
       dstBackLogo?: string;
@@ -99,6 +101,7 @@
       const { userProfile } = useUser();
       const pathname = usePathname();
       const canEdit = hasEditPermission(userProfile?.position as any, `/job-order`);
+      const storage = getStorage();
       
       const [currentPage, setCurrentPage] = useState(0);
       const [imageInView, setImageInView] = useState<string | null>(null);
@@ -122,6 +125,62 @@
       const layoutImageUploadRef = useRef<HTMLInputElement>(null);
       
       const totalPages = 1 + (lead?.layouts?.length || 0);
+
+      const handleLayoutChange = useCallback((layoutIndex: number, field: keyof Layout, value: any) => {
+        if (lead && lead.layouts) {
+          const newLayouts = [...lead.layouts];
+          const updatedLayout = { ...newLayouts[layoutIndex] };
+          (updatedLayout as any)[field] = value;
+          
+          if (field === 'layoutImage') {
+            updatedLayout.layoutImageUploadTime = value ? new Date().toISOString() : null;
+            updatedLayout.layoutImageUploadedBy = value ? userProfile?.nickname || null : null;
+          }
+
+          newLayouts[layoutIndex] = updatedLayout;
+
+          setLead(currentLead => currentLead ? ({ ...currentLead, layouts: newLayouts }) : null);
+        }
+      }, [lead, userProfile?.nickname]);
+
+      const uploadLayoutImage = useCallback(async (file: File, layoutIndex: number) => {
+          if (!lead || !userProfile) return;
+          const layout = lead.layouts?.[layoutIndex];
+          if (!layout) return;
+  
+          const storageRef = ref(storage, `leads-images/${lead.id}/${layout.id}/layoutImage.png`);
+  
+          try {
+              toast({ title: "Uploading image..." });
+              const snapshot = await uploadBytes(storageRef, file);
+              const downloadURL = await getDownloadURL(snapshot.ref);
+              handleLayoutChange(layoutIndex, 'layoutImage', downloadURL);
+              toast({ title: "Image uploaded successfully!" });
+          } catch (error) {
+              console.error("Error uploading image:", error);
+              toast({ variant: 'destructive', title: "Upload failed" });
+          }
+      }, [lead, userProfile, storage, toast, handleLayoutChange]);
+
+      const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, layoutIndex: number) => {
+          const file = event.target.files?.[0];
+          if (file) {
+              uploadLayoutImage(file, layoutIndex);
+          }
+      };
+  
+      const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, layoutIndex: number) => {
+          if (!canEdit) return;
+          const items = event.clipboardData.items;
+          for (let i = 0; i < items.length; i++) {
+              if (items[i].type.indexOf('image') !== -1) {
+                  const blob = items[i].getAsFile();
+                  if (blob) {
+                      uploadLayoutImage(blob as File, layoutIndex);
+                  }
+              }
+          }
+      }, [canEdit, uploadLayoutImage]);
 
       const isDirty = useMemo(() => {
         if (!fetchedLead || !lead) return false;
@@ -147,6 +206,7 @@
                 id: layout.id,
                 layoutImage: layout.layoutImage || '',
                 layoutImageUploadTime: layout.layoutImageUploadTime || null,
+                layoutImageUploadedBy: layout.layoutImageUploadedBy || null,
                 dstLogoLeft: layout.dstLogoLeft || '',
                 dstLogoRight: layout.dstLogoRight || '',
                 dstBackLogo: layout.dstBackLogo || '',
@@ -192,8 +252,8 @@
           }));
           
           const initializedLayouts = fetchedLead.layouts && fetchedLead.layouts.length > 0 
-            ? fetchedLead.layouts.map(l => ({ ...l, namedOrders: l.namedOrders || [], id: l.id || uuidv4(), layoutImageUploadTime: l.layoutImageUploadTime || null }))
-            : [{ id: uuidv4(), layoutImage: '', layoutImageUploadTime: null, dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
+            ? fetchedLead.layouts.map(l => ({ ...l, namedOrders: l.namedOrders || [], id: l.id || uuidv4(), layoutImageUploadTime: l.layoutImageUploadTime || null, layoutImageUploadedBy: l.layoutImageUploadedBy || null }))
+            : [{ id: uuidv4(), layoutImage: '', layoutImageUploadTime: null, layoutImageUploadedBy: null, dstLogoLeft: '', dstLogoRight: '', dstBackLogo: '', dstBackText: '', namedOrders: [] }];
 
           setLead({ ...fetchedLead, orders: initializedOrders, courier: fetchedLead.courier || 'Pick-up', layouts: initializedLayouts });
 
@@ -367,39 +427,31 @@
         }
       };
 
-      const handleLayoutChange = (layoutIndex: number, field: keyof Layout, value: any) => {
-        if (lead && lead.layouts) {
-          const newLayouts = [...lead.layouts];
-          const updatedLayout = { ...newLayouts[layoutIndex] };
-          (updatedLayout as any)[field] = value;
-          
-          if (field === 'layoutImage') {
-            updatedLayout.layoutImageUploadTime = value ? new Date().toISOString() : null;
-          }
-
-          newLayouts[layoutIndex] = updatedLayout;
-
-          setLead({ ...lead, layouts: newLayouts });
-        }
-      };
-
       const handleLayoutImageDelete = async (layoutIndex: number) => {
         if (!lead || !lead.layouts || !leadRef) return;
     
         const originalLayouts = lead.layouts;
-        const newLayouts = [...originalLayouts];
-        
-        if (!newLayouts[layoutIndex]) return;
+        const layoutToDelete = originalLayouts[layoutIndex];
+        if (!layoutToDelete?.layoutImage) return;
 
+        const imageUrl = layoutToDelete.layoutImage;
+    
+        const newLayouts = [...originalLayouts];
         newLayouts[layoutIndex] = {
             ...newLayouts[layoutIndex],
             layoutImage: '',
-            layoutImageUploadTime: null
+            layoutImageUploadTime: null,
+            layoutImageUploadedBy: null
         };
-
+    
         setLead({ ...lead, layouts: newLayouts });
-
+    
         try {
+            if (imageUrl.includes('firebasestorage.googleapis.com')) {
+              const imageRef = ref(storage, imageUrl);
+              await deleteObject(imageRef);
+            }
+    
             await updateDoc(leadRef, {
                 layouts: newLayouts
             });
@@ -470,36 +522,6 @@
           setCurrentPage(Math.max(0, currentPage - 1));
         }
       };
-
-      const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, layoutIndex: number) => {
-        const file = event.target.files?.[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            handleLayoutChange(layoutIndex, 'layoutImage', e.target?.result as string);
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-
-      const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, layoutIndex: number) => {
-        const items = event.clipboardData.items;
-        for (let i = 0; i < items.length; i++) {
-            if (items[i].type.indexOf('image') !== -1) {
-                const blob = items[i].getAsFile();
-                if (blob) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        if (e.target?.result) {
-                            handleLayoutChange(layoutIndex, 'layoutImage', e.target.result as string);
-                        }
-                    };
-                    reader.readAsDataURL(blob);
-                }
-            }
-        }
-      }, [lead]);
-
 
       if (isLeadLoading || areAllLeadsLoading || !lead || areUsersLoading) {
         return (

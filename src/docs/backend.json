@@ -1,6 +1,19 @@
 
+
 {
   "entities": {
+    "JOCounter": {
+      "title": "JOCounter",
+      "type": "object",
+      "description": "A counter to generate unique Job Order numbers.",
+      "properties": {
+        "currentNumber": {
+          "type": "number",
+          "description": "The last used Job Order number."
+        }
+      },
+      "required": ["currentNumber"]
+    },
     "OtherCashInflow": {
       "title": "OtherCashInflow",
       "type": "object",
@@ -607,213 +620,72 @@
           "items": {
             "type": "object",
             "properties": {
-              "layoutImage": {
-                "type": ["string", "null"],
-                "description": "Data URL of the uploaded layout image."
-              },
-              "layoutImageUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for when the layout image was uploaded."
-              },
-              "refLogoLeftImage": {
-                "type": ["string", "null"],
-                "description": "Data URL of the uploaded left logo image for Reference."
-              },
-              "refLogoLeftImageUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for Reference left logo upload."
-              },
-              "refLogoRightImage": {
-                "type": ["string", "null"],
-                "description": "Data URL of the uploaded right logo image for Reference."
-              },
-              "refLogoRightImageUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for Reference right logo upload."
-              },
-              "refBackLogoImage": {
-                "type": ["string", "null"],
-                "description": "Data URL of the uploaded back logo image for Reference."
-              },
-              "refBackLogoImageUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for Reference back logo upload."
-              },
-              "refBackDesignImage": {
-                "type": ["string", "null"],
-                "description": "Data URL of the uploaded back design image for Reference."
-              },
-              "refBackDesignImageUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for Reference back design upload."
-              },
-              "logoLeftImage": {
-                "type": ["string", "null"],
-                "description": "Data URL of the uploaded left logo image for Initial Program."
-              },
-              "logoLeftImageUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for Initial Program left logo upload."
-              },
-              "logoRightImage": {
-                "type": ["string", "null"],
-                "description": "Data URL of the uploaded right logo image for Initial Program."
-              },
-              "logoRightImageUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for Initial Program right logo upload."
-              },
-              "backLogoImage": {
-                "type": ["string", "null"],
-                "description": "Data URL of the uploaded back logo image for Initial Program."
-              },
-              "backLogoImageUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for Initial Program back logo upload."
-              },
-              "backDesignImage": {
-                "type": ["string", "null"],
-                "description": "Data URL of the uploaded back design image for Initial Program."
-              },
-              "backDesignImageUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for Initial Program back design upload."
-              },
-              "testLogoLeftImage": {
-                "type": ["string", "null"],
-                "description": "Data URL of the uploaded left logo image for Test."
-              },
-              "testLogoLeftImageUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for Test left logo upload."
-              },
-              "testLogoRightImage": {
-                "type": ["string", "null"],
-                "description": "Data URL of the uploaded right logo image for Test."
-              },
-              "testLogoRightImageUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for Test right logo upload."
-              },
-              "testBackLogoImage": {
-                "type": ["string", "null"],
-                "description": "Data URL of the uploaded back logo image for Test."
-              },
-              "testBackLogoImageUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for Test back logo upload."
-              },
-              "testBackDesignImage": {
-                "type": ["string", "null"],
-                "description": "Data URL of the uploaded back design image for Test."
-              },
-              "testBackDesignImageUploadTime": {
-                "type": ["string", "null"],
-                "format": "date-time",
-                "description": "Timestamp for Test back design upload."
-              },
-              "finalLogoEmb": {
-                "type": "array",
-                "description": "Data URLs for the final logo EMB files.",
-                "items": { "type": ["string", "null"] }
-              },
-              "finalLogoEmbUploadTimes": {
-                "type": "array",
-                "description": "Timestamps for final logo EMB file uploads.",
-                "items": { "type": ["string", "null"], "format": "date-time" }
-              },
-              "finalBackDesignEmb": {
-                "type": "array",
-                "description": "Data URLs for the final back design EMB files.",
-                "items": { "type": ["string", "null"] }
-              },
-              "finalBackDesignEmbUploadTimes": {
-                "type": "array",
-                "description": "Timestamps for final back design EMB file uploads.",
-                "items": { "type": ["string", "null"], "format": "date-time" }
-              },
-              "finalLogoDst": {
-                 "type": "array",
-                "description": "Data URLs for the final logo DST files.",
-                "items": { "type": ["string", "null"] }
-              },
-              "finalLogoDstUploadTimes": {
-                "type": "array",
-                "description": "Timestamps for final logo DST file uploads.",
-                "items": { "type": ["string", "null"], "format": "date-time" }
-              },
-              "finalBackDesignDst": {
-                "type": "array",
-                "description": "Data URLs for the final back design DST files.",
-                "items": { "type": ["string", "null"] }
-              },
-              "finalBackDesignDstUploadTimes": {
-                "type": "array",
-                "description": "Timestamps for final back design DST file uploads.",
-                "items": { "type": ["string", "null"], "format": "date-time" }
-              },
-               "finalNamesDst": {
-                "type": "array",
-                "description": "Data URLs for the final names DST files.",
-                "items": { "type": ["string", "null"] }
-              },
-              "finalNamesDstUploadTimes": {
-                "type": "array",
-                "description": "Timestamps for final names DST file uploads.",
-                "items": { "type": ["string", "null"], "format": "date-time" }
-              },
-              "sequenceLogo": {
-                "type": "array",
-                "description": "Data URLs for the sequence logo files.",
-                "items": { "type": ["string", "null"] }
-              },
-              "sequenceLogoUploadTimes": {
-                "type": "array",
-                "description": "Timestamps for sequence logo file uploads.",
-                "items": { "type": ["string", "null"], "format": "date-time" }
-              },
-              "sequenceBackDesign": {
-                "type": "array",
-                "description": "Data URLs for the sequence back design files.",
-                "items": { "type": ["string", "null"] }
-              },
-              "sequenceBackDesignUploadTimes": {
-                "type": "array",
-                "description": "Timestamps for sequence back design file uploads.",
-                "items": { "type": ["string", "null"], "format": "date-time" }
-              },
-              "finalProgrammedLogo": {
-                "type": "array",
-                "description": "Data URLs for the final programmed logo files.",
-                "items": { "type": ["string", "null"] }
-              },
-              "finalProgrammedLogoUploadTimes": {
-                "type": "array",
-                "description": "Timestamps for final programmed logo file uploads.",
-                "items": { "type": ["string", "null"], "format": "date-time" }
-              },
-              "finalProgrammedBackDesign": {
-                "type": "array",
-                "description": "Data URLs for the final programmed back design files.",
-                "items": { "type": ["string", "null"] }
-              },
-              "finalProgrammedBackDesignUploadTimes": {
-                "type": "array",
-                "description": "Timestamps for final programmed back design file uploads.",
-                "items": { "type": ["string", "null"], "format": "date-time" }
-              },
+              "layoutImage": { "type": ["string", "null"] },
+              "layoutImageUploadTime": { "type": ["string", "null"], "format": "date-time" },
+              "layoutImageUploadedBy": { "type": ["string", "null"] },
+              "refLogoLeftImage": { "type": ["string", "null"] },
+              "refLogoLeftImageUploadTime": { "type": ["string", "null"], "format": "date-time" },
+              "refLogoLeftImageUploadedBy": { "type": ["string", "null"] },
+              "refLogoRightImage": { "type": ["string", "null"] },
+              "refLogoRightImageUploadTime": { "type": ["string", "null"], "format": "date-time" },
+              "refLogoRightImageUploadedBy": { "type": ["string", "null"] },
+              "refBackLogoImage": { "type": ["string", "null"] },
+              "refBackLogoImageUploadTime": { "type": ["string", "null"], "format": "date-time" },
+              "refBackLogoImageUploadedBy": { "type": ["string", "null"] },
+              "refBackDesignImage": { "type": ["string", "null"] },
+              "refBackDesignImageUploadTime": { "type": ["string", "null"], "format": "date-time" },
+              "refBackDesignImageUploadedBy": { "type": ["string", "null"] },
+              "logoLeftImage": { "type": ["string", "null"] },
+              "logoLeftImageUploadTime": { "type": ["string", "null"], "format": "date-time" },
+              "logoLeftImageUploadedBy": { "type": ["string", "null"] },
+              "logoRightImage": { "type": ["string", "null"] },
+              "logoRightImageUploadTime": { "type": ["string", "null"], "format": "date-time" },
+              "logoRightImageUploadedBy": { "type": ["string", "null"] },
+              "backLogoImage": { "type": ["string", "null"] },
+              "backLogoImageUploadTime": { "type": ["string", "null"], "format": "date-time" },
+              "backLogoImageUploadedBy": { "type": ["string", "null"] },
+              "backDesignImage": { "type": ["string", "null"] },
+              "backDesignImageUploadTime": { "type": ["string", "null"], "format": "date-time" },
+              "backDesignImageUploadedBy": { "type": ["string", "null"] },
+              "testLogoLeftImage": { "type": ["string", "null"] },
+              "testLogoLeftImageUploadTime": { "type": ["string", "null"], "format": "date-time" },
+              "testLogoLeftImageUploadedBy": { "type": ["string", "null"] },
+              "testLogoRightImage": { "type": ["string", "null"] },
+              "testLogoRightImageUploadTime": { "type": ["string", "null"], "format": "date-time" },
+              "testLogoRightImageUploadedBy": { "type": ["string", "null"] },
+              "testBackLogoImage": { "type": ["string", "null"] },
+              "testBackLogoImageUploadTime": { "type": ["string", "null"], "format": "date-time" },
+              "testBackLogoImageUploadedBy": { "type": ["string", "null"] },
+              "testBackDesignImage": { "type": ["string", "null"] },
+              "testBackDesignImageUploadTime": { "type": ["string", "null"], "format": "date-time" },
+              "testBackDesignImageUploadedBy": { "type": ["string", "null"] },
+              "finalLogoEmb": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "url": { "type": "string" } } } },
+              "finalLogoEmbUploadTimes": { "type": "array", "items": { "type": ["string", "null"], "format": "date-time" } },
+              "finalLogoEmbUploadedBy": { "type": "array", "items": { "type": ["string", "null"] } },
+              "finalBackDesignEmb": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "url": { "type": "string" } } } },
+              "finalBackDesignEmbUploadTimes": { "type": "array", "items": { "type": ["string", "null"], "format": "date-time" } },
+              "finalBackDesignEmbUploadedBy": { "type": "array", "items": { "type": ["string", "null"] } },
+              "finalLogoDst": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "url": { "type": "string" } } } },
+              "finalLogoDstUploadTimes": { "type": "array", "items": { "type": ["string", "null"], "format": "date-time" } },
+              "finalLogoDstUploadedBy": { "type": "array", "items": { "type": ["string", "null"] } },
+              "finalBackDesignDst": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "url": { "type": "string" } } } },
+              "finalBackDesignDstUploadTimes": { "type": "array", "items": { "type": ["string", "null"], "format": "date-time" } },
+              "finalBackDesignDstUploadedBy": { "type": "array", "items": { "type": ["string", "null"] } },
+              "finalNamesDst": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "url": { "type": "string" } } } },
+              "finalNamesDstUploadTimes": { "type": "array", "items": { "type": ["string", "null"], "format": "date-time" } },
+              "finalNamesDstUploadedBy": { "type": "array", "items": { "type": ["string", "null"] } },
+              "sequenceLogo": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "url": { "type": "string" } } } },
+              "sequenceLogoUploadTimes": { "type": "array", "items": { "type": ["string", "null"], "format": "date-time" } },
+              "sequenceLogoUploadedBy": { "type": "array", "items": { "type": ["string", "null"] } },
+              "sequenceBackDesign": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "url": { "type": "string" } } } },
+              "sequenceBackDesignUploadTimes": { "type": "array", "items": { "type": ["string", "null"], "format": "date-time" } },
+              "sequenceBackDesignUploadedBy": { "type": "array", "items": { "type": ["string", "null"] } },
+              "finalProgrammedLogo": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "url": { "type": "string" } } } },
+              "finalProgrammedLogoUploadTimes": { "type": "array", "items": { "type": ["string", "null"], "format": "date-time" } },
+              "finalProgrammedLogoUploadedBy": { "type": "array", "items": { "type": ["string", "null"] } },
+              "finalProgrammedBackDesign": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "url": { "type": "string" } } } },
+              "finalProgrammedBackDesignUploadTimes": { "type": "array", "items": { "type": ["string", "null"], "format": "date-time" } },
+              "finalProgrammedBackDesignUploadedBy": { "type": "array", "items": { "type": ["string", "null"] } },
               "dstLogoLeft": { "type": "string" },
               "dstLogoRight": { "type": "string" },
               "dstBackLogo": { "type": "string" },
@@ -926,6 +798,7 @@
         "remarks": { "type": "string", "description": "Initial remarks for the case. Can be appended with reopening remarks." },
         "image": { "type": "string", "description": "Data URL of the uploaded image." },
         "submissionDateTime": { "type": "string", "format": "date-time" },
+        "submittedBy": { "type": "string" },
         "customerName": { "type": "string" },
         "companyName": { "type": "string" },
         "contactNumber": { "type": "string" },
@@ -949,7 +822,7 @@
         "isArchived": { "type": "boolean", "description": "Indicates if the case is resolved and archived." },
         "isDeleted": { "type": "boolean", "description": "Indicates if the case is soft-deleted." }
       },
-      "required": ["id", "joNumber", "caseType", "remarks", "submissionDateTime", "caseItems"]
+      "required": ["id", "joNumber", "caseType", "remarks", "submissionDateTime", "caseItems", "submittedBy"]
     },
     "CampaignInquiry": {
       "title": "CampaignInquiry",
@@ -1194,7 +1067,7 @@
         }
       },
       {
-        "path": "/operationalCases/{caseId}",
+        "path": "/operationalCases/{operationalCaseId}",
         "definition": {
           "entityName": "OperationalCase",
           "schema": {
@@ -1264,8 +1137,25 @@
           },
           "description": "Stores records of other cash inflows."
         }
+      },
+      {
+        "path": "/counters/{counterId}",
+        "definition": {
+          "entityName": "JOCounter",
+          "schema": {
+            "$ref": "#/backend/entities/JOCounter"
+          },
+          "description": "Stores global counters. The 'jo_counter' document is used for generating unique Job Order numbers.",
+          "params": [
+            {
+              "name": "counterId",
+              "description": "The ID of the counter, e.g., 'jo_counter'."
+            }
+          ]
+        }
       }
     ],
     "reasoning": "The data structure is designed to store lead information collected via the LeadTracker application. To ensure security and efficient data retrieval, leads are stored under a collection called `leads`. This design promotes a flat structure, avoiding nested collections and complex queries, especially considering the app's focus is on data input rather than deeply relational data. Each lead document contains all relevant lead data. This simplifies data access and minimizes the need for complex joins or subqueries, aligning with the app's focus on simplicity and ease of use.\\n\\n**Authorization Independence:** Since there are no explicit user roles, collaborative features, or ownership details mentioned in the requirements, the system assumes open access to leads. If access control becomes a requirement in the future, a `members` map or a separate `/roles` collection would be used in combination with denormalization to achieve authorization independence.\\n\\n**QAPs (Rules are not Filters):** The structure supports secure `list` operations because all lead data is stored within a single, top-level collection. Security rules can be applied at the collection level, ensuring that only authorized users can access lead data, without needing to filter data based on document content. If more sophisticated access controls are required (e.g., restricting access based on CSR assignment), denormalization of CSR assignment directly into the lead documents combined with security rules based on the `request.auth.uid` will ensure that filtering within the rules is not required."
   }
 }
+
