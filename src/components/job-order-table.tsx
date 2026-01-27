@@ -110,6 +110,7 @@ type Lead = {
   contactNumber: string;
   landlineNumber?: string;
   salesRepresentative: string;
+  orderType: string;
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
   lastModified: string;
@@ -313,7 +314,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
         } else if (singularField) {
             images.push(singularField);
         }
-        return images.length > 0 ? images : [null];
+        return images.length > 0 ? images : [];
     };
 
     setRefLogoLeftImages(getInitialImages((layout as any)?.refLogoLeftImages, layout?.refLogoLeftImage));
@@ -343,7 +344,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
         if (newImages.length > 1) {
             newImages.splice(index, 1);
         } else {
-            newImages[index] = null; // Clear the image if it's the last one
+            newImages[index] = null;
         }
         return newImages;
     });
@@ -400,7 +401,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
             refBackDesignImages: backDesignImages.filter(Boolean),
         };
         
-        // Clean up old single-image fields if they exist
         const fieldsToClean: (keyof Layout)[] = [
             'refLogoLeftImage', 'refLogoRightImage', 'refBackLogoImage', 'refBackDesignImage',
             'refLogoLeftImageUploadTime', 'refLogoLeftImageUploadedBy',
@@ -461,7 +461,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} />
                   </div>
-                  {index > 0 || (displayImages.length > 1 && index === 0) ? (
+                  {(images.length > 1 && image) && (
                       <Button
                           variant="ghost"
                           size="icon"
@@ -470,7 +470,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       >
                           <X className="h-5 w-5" />
                       </Button>
-                  ) : <div className="w-8 h-8"/>}
+                  )}
               </div>
           ))}
       </div>
@@ -724,13 +724,8 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                         </TooltipProvider>
                       </TableCell>
                        <TableCell className="text-center align-middle text-xs">
-                          {lead.layouts && lead.layouts.length > 0 && lead.layouts[0].layoutImage ? (
-                                <div
-                                    className="relative w-24 h-16 mx-auto border rounded-md cursor-pointer"
-                                    onClick={() => setImageInView(lead.layouts![0]!.layoutImage!)}
-                                >
-                                    <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
-                                </div>
+                          {lead.layouts && lead.layouts.filter(l => l.layoutImage).length > 0 ? (
+                            <span className="font-semibold">{lead.layouts.filter(l => l.layoutImage).length} Layout{lead.layouts.filter(l => l.layoutImage).length > 1 ? 's' : ''} Uploaded</span>
                           ) : (
                             <span className="text-red-500 font-semibold">No Uploaded Layout</span>
                           )}
