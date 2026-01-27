@@ -1,5 +1,3 @@
-
-
 'use client';
 import {
   Table,
@@ -19,14 +17,15 @@ import {
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Upload, Edit, Trash2, X } from 'lucide-react';
+import { Upload, Edit, Trash2, X, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
 import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, doc, updateDoc, getStorage, ref, uploadString, getDownloadURL } from 'firebase/firestore';
+import { collection, query, doc, updateDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Checkbox } from './ui/checkbox';
@@ -36,6 +35,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from './ui/label';
 import { toTitleCase } from '@/lib/utils';
 import { ScrollArea } from './ui/scroll-area';
+import Image from 'next/image';
 
 type Order = {
   productType: string;
@@ -132,6 +132,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const { userProfile } = useUser();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [joNumberSearch, setJoNumberSearch] = React.useState('');
   const [csrFilter, setCsrFilter] = React.useState('All');
   const [hoveredLeadId, setHoveredLeadId] = React.useState<string | null>(null);
   const router = useRouter();
@@ -308,7 +309,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   
   const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
     e.stopPropagation();
-    setter(prev => prev.map((img, i) => i === index ? null : img));
+    setter(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveImages = useCallback(async () => {
@@ -408,18 +409,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
                   </div>
-                   {index > 0 && (
-                      <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive self-center"
-                          onClick={() => {
-                              setter(prev => prev.filter((_, i) => i !== index));
-                          }}
-                      >
-                          <X className="h-5 w-5" />
-                      </Button>
-                  )}
               </div>
           ))}
       </div>
