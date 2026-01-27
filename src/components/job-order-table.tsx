@@ -635,7 +635,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   const isRepeat = lead.orderNumber > 1;
                   
                   const layoutImageCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
-                  const refImageCount = useMemo(() => {
+                  const refImageCount = (() => {
                     const layout = lead.layouts?.[0];
                     if (!layout) return 0;
                     
@@ -645,7 +645,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       (layout.refBackLogoImages?.length || (layout.refBackLogoImage ? 1 : 0)) +
                       (layout.refBackDesignImages?.length || (layout.refBackDesignImage ? 1 : 0));
                     return count;
-                  }, [lead.layouts]);
+                  })();
 
                   return (
                     <TableRow key={lead.id} onMouseEnter={() => setHoveredLeadId(lead.id)} onMouseLeave={() => setHoveredLeadId(null)} className={cn(isHovered && "bg-gray-100")}>
@@ -742,7 +742,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                         </TooltipProvider>
                       </TableCell>
                       <TableCell className="text-center align-middle text-xs font-semibold">
-                        {layoutImageCount > 0 ? (
+                          {layoutImageCount > 0 ? (
                             <span className="text-black">{layoutImageCount} Layout{layoutImageCount > 1 ? 's' : ''} Uploaded</span>
                         ) : (
                             <span className="text-destructive">No Uploaded Layout</span>
