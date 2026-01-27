@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -20,7 +21,7 @@ import {
 import React, { ChangeEvent, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X, Download, MinusCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X, Download } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
 import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
@@ -741,7 +742,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   }, []);
 
 
-  const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+  const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
     e.stopPropagation();
     setter(prev => {
         const newImages = [...prev];
@@ -749,7 +750,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         if (newImages.length === 0) return [''];
         return newImages;
     });
-  }, []);
+  };
 
   const handleConfirmReview = useCallback(async () => {
     if (!reviewConfirmLead || !firestore) return;
@@ -827,18 +828,25 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-transparent" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
                   <PlusCircle className="h-4 w-4" />
               </Button>
-              {images.length > 1 && (
-                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 text-destructive hover:bg-transparent" onClick={() => setter(prev => prev.slice(0, -1))}>
-                    <MinusCircle className="h-4 w-4" />
-                </Button>
-              )}
           </Label>
           {images.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
-                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
-                      {image ? (<> <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setter, index)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                      <input id={`file-input-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
+                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-digitizing-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
+                      {image ? (<> <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => { e.stopPropagation(); setter(prev => prev.map((img, i) => i === index ? null : img));}}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
+                      <input id={`file-input-digitizing-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
                   </div>
+                  {index > 0 && (
+                      <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive self-center"
+                          onClick={() => {
+                              setter(prev => prev.filter((_, i) => i !== index));
+                          }}
+                      >
+                          <X className="h-5 w-5" />
+                      </Button>
+                  )}
               </div>
           ))}
       </div>
@@ -877,7 +885,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               className="text-destructive h-8 w-8"
               onClick={() => removeFile(files, setFiles, index, refs)}
             >
-              <Trash2 className="h-4 w-4" />
+              <X className="h-4 w-4" />
             </Button>}
           </div>
         ))}

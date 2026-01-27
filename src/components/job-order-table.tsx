@@ -1,6 +1,6 @@
 
-'use client';
 
+'use client';
 import {
   Table,
   TableBody,
@@ -16,26 +16,23 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { useMemo, useCallback, useState, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
+import { Upload, Edit, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
 import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, doc, updateDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { collection, query, doc, updateDoc, getStorage, ref, uploadString, getDownloadURL } from 'firebase/firestore';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { Check, ChevronDown, Upload, Trash2, ChevronUp, PlusCircle, MinusCircle, X } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose, DialogFooter } from "@/components/ui/dialog"
-import Image from 'next/image';
 import { Label } from './ui/label';
 import { toTitleCase } from '@/lib/utils';
 import { ScrollArea } from './ui/scroll-area';
@@ -68,6 +65,7 @@ type FileObject = {
 };
 
 type Layout = {
+  layoutImage?: string;
   refLogoLeftImage?: string | null;
   refLogoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
   refLogoRightImage?: string | null;
@@ -134,7 +132,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const { userProfile } = useUser();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [joNumberSearch, setJoNumberSearch] = React.useState('');
   const [csrFilter, setCsrFilter] = React.useState('All');
   const [hoveredLeadId, setHoveredLeadId] = React.useState<string | null>(null);
   const router = useRouter();
@@ -142,13 +139,11 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
   
   const [uploadLead, setUploadLead] = useState<Lead | null>(null);
-
   const [refLogoLeftImages, setRefLogoLeftImages] = useState<(string | null)[]>(['']);
   const [refLogoRightImages, setRefLogoRightImages] = useState<(string | null)[]>(['']);
   const [refBackLogoImages, setRefBackLogoImages] = useState<(string | null)[]>(['']);
   const [refBackDesignImages, setRefBackDesignImages] = useState<(string | null)[]>(['']);
 
-  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
@@ -162,16 +157,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     router.push(`/job-order/${lead.id}`);
   }, [router]);
   
-  const getContactDisplay = useCallback((lead: Lead) => {
-    const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
-    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
-
-    if (mobile && landline) {
-      return `${mobile} / ${landline}`;
-    }
-    return mobile || landline || null;
-  }, []);
-
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
     const currentYear = new Date().getFullYear().toString().slice(-2);
@@ -240,7 +225,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
         customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+      const orderQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
       customerOrderStats[name].totalCustomerQuantity += orderQuantity;
     });
   
@@ -273,18 +258,10 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
         : true;
       
       const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
-      
-      const lowercasedJoSearch = (joNumberSearch || '').toLowerCase();
-      const matchesJo = joNumberSearch ? 
-        (lead.joNumber && (
-            formatJoNumber(lead.joNumber).toLowerCase().includes(lowercasedJoSearch) ||
-            lead.joNumber.toString().padStart(5, '0').slice(-5) === lowercasedJoSearch.slice(-5)
-        ))
-        : true;
 
-      return matchesSearch && matchesCsr && matchesJo;
+      return matchesSearch && matchesCsr;
     });
-  }, [processedLeads, searchTerm, csrFilter, joNumberSearch, formatJoNumber]);
+  }, [processedLeads, searchTerm, csrFilter]);
   
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
@@ -331,12 +308,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   
   const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
     e.stopPropagation();
-    setter(prev => {
-        const newImages = [...prev];
-        newImages.splice(index, 1);
-        if (newImages.length === 0) return [''];
-        return newImages;
-    });
+    setter(prev => prev.map((img, i) => i === index ? null : img));
   };
 
   const handleSaveImages = useCallback(async () => {
@@ -350,7 +322,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
 
     const uploadAndGetURL = async (imageData: string | null, fieldName: string, index: number): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
         if (!imageData) return null;
-        
         if (imageData.startsWith('http')) {
             const pluralFieldName = `${fieldName}s`;
             const existingArray = (uploadLead.layouts?.[0]?.[pluralFieldName as keyof Layout] as { url: string; uploadTime: string; uploadedBy: string }[]) || [];
@@ -358,7 +329,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
             if (existingImageObject) return existingImageObject;
             return { url: imageData, uploadTime: now, uploadedBy: userProfile.nickname };
         }
-
         if(!imageData.startsWith('data:')) return null;
 
         const storageRef = ref(storage, `leads-images/${uploadLead.id}/${fieldName}_${index}_${Date.now()}`);
@@ -368,14 +338,20 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     };
 
     try {
-        const updatedImages = {
-          refLogoLeftImages: (await Promise.all(refLogoLeftImages.map((img, i) => uploadAndGetURL(img, 'refLogoLeftImage', i)))).filter(Boolean),
-          refLogoRightImages: (await Promise.all(refLogoRightImages.map((img, i) => uploadAndGetURL(img, 'refLogoRightImage', i)))).filter(Boolean),
-          refBackLogoImages: (await Promise.all(refBackLogoImages.map((img, i) => uploadAndGetURL(img, 'refBackLogoImage', i)))).filter(Boolean),
-          refBackDesignImages: (await Promise.all(refBackDesignImages.map((img, i) => uploadAndGetURL(img, 'refBackDesignImage', i)))).filter(Boolean),
-        };
+        const [leftImages, rightImages, backLogoImages, backDesignImages] = await Promise.all([
+            Promise.all(refLogoLeftImages.map((img, i) => uploadAndGetURL(img, 'refLogoLeftImage', i))),
+            Promise.all(refLogoRightImages.map((img, i) => uploadAndGetURL(img, 'refLogoRightImage', i))),
+            Promise.all(refBackLogoImages.map((img, i) => uploadAndGetURL(img, 'refBackLogoImage', i))),
+            Promise.all(refBackDesignImages.map((img, i) => uploadAndGetURL(img, 'refBackDesignImage', i))),
+        ]);
 
-        const updatedFirstLayout = { ...existingLayout, ...updatedImages };
+        const updatedFirstLayout = {
+            ...existingLayout,
+            refLogoLeftImages: leftImages.filter(Boolean),
+            refLogoRightImages: rightImages.filter(Boolean),
+            refBackLogoImages: backLogoImages.filter(Boolean),
+            refBackDesignImages: backDesignImages.filter(Boolean),
+        };
         
         // Clean up old singular fields
         delete updatedFirstLayout.refLogoLeftImage;
@@ -406,9 +382,49 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     }
   }, [uploadLead, firestore, userProfile, toast, refLogoLeftImages, refLogoRightImages, refBackLogoImages, refBackDesignImages]);
   
-  const toggleCustomerDetails = useCallback((leadId: string) => {
-    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
-  }, [openCustomerDetails]);
+  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    const file = e.clipboardData.files[0];
+    if (file && file.type.startsWith('image/')) {
+        handleImageUpload(file, setter, index);
+    }
+  };
+
+  const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+    return (
+      <div className="space-y-2">
+          <Label className="flex items-center gap-2">{label}
+              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-transparent" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
+                  <PlusCircle className="h-4 w-4" />
+              </Button>
+          </Label>
+          {images.map((image, index) => (
+              <div key={index} className="flex items-center gap-2">
+                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-job-order-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
+                      {image ? (<> 
+                        <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
+                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setter, index)}> 
+                            <Trash2 className="h-4 w-4" />
+                        </Button> 
+                      </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
+                      <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
+                  </div>
+                   {index > 0 && (
+                      <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive self-center"
+                          onClick={() => {
+                              setter(prev => prev.filter((_, i) => i !== index));
+                          }}
+                      >
+                          <X className="h-5 w-5" />
+                      </Button>
+                  )}
+              </div>
+          ))}
+      </div>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -424,39 +440,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     return <div className="text-red-500 p-4">Error loading records: {error.message}</div>;
   }
   
-  const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
-    return (
-      <div className="space-y-2">
-          <Label className="flex items-center gap-2">{label}
-              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-transparent" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
-                  <PlusCircle className="h-4 w-4" />
-              </Button>
-              {images.length > 1 && (
-                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 text-destructive hover:bg-transparent" onClick={() => setter(prev => prev.slice(0, -1))}>
-                    <MinusCircle className="h-4 w-4" />
-                </Button>
-              )}
-          </Label>
-          {images.map((image, index) => (
-              <div key={index} className="flex items-center gap-2">
-                  <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-job-order-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
-                      {image ? (<> <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setter, index)}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                      <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
-                  </div>
-              </div>
-          ))}
-      </div>
-    );
-  };
-  
-  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    const file = e.clipboardData.files[0];
-    if (file && file.type.startsWith('image/')) {
-        handleImageUpload(file, setter, index);
-    }
-  };
-
-
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
        <AlertDialog open={!!confirmingPrint} onOpenChange={(open) => !open && setConfirmingPrint(null)}>
@@ -473,7 +456,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
       <Dialog open={!!uploadLead} onOpenChange={(isOpen) => !isOpen && setUploadLead(null)}>
         <DialogContent className="sm:max-w-4xl">
             <DialogHeader>
@@ -491,18 +473,19 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               </div>
             </ScrollArea>
             <DialogFooter>
-                <DialogClose asChild><Button type="button" variant="outline"> Cancel </Button></DialogClose>
+                <DialogClose asChild>
+                    <Button type="button" variant="outline"> Cancel </Button>
+                </DialogClose>
                 <Button onClick={handleSaveImages}>Save Images</Button>
             </DialogFooter>
         </DialogContent>
       </Dialog>
-      
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
               <CardTitle className="text-black">Process Job Order</CardTitle>
               <CardDescription className="text-gray-600">
-                Search for a lead and process their job order.
+                A list of all customer orders that have not been completed.
               </CardDescription>
             </div>
              <div className="flex items-center gap-4">
@@ -517,7 +500,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   ))}
                 </SelectContent>
               </Select>
-              <div className="w-full max-w-sm">
+              <div className="w-full max-w-xs">
                 <Input
                   placeholder="Search by J.O. No..."
                   value={joNumberSearch}
@@ -547,6 +530,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center w-[140px]"><span className="block w-[120px] break-words">Reference Image for Digitizing</span></TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">J.O. No.</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">No. of Layouts</TableHead>
                   <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
                   <TableHead className="text-center text-white font-bold align-middle">Printed</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">J.O. Status</TableHead>
@@ -558,7 +542,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   const isCompleted = lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered';
                   const creationDate = formatDateTime(lead.submissionDateTime);
                   const modifiedDate = formatDateTime(lead.lastModified);
-                  const isRepeat = lead.orderNumber > 1;
+                  const isHovered = hoveredLeadId === lead.id;
                   
                   const imageCount = [
                     ...(lead.layouts?.[0]?.refLogoLeftImages || []),
@@ -566,131 +550,87 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                     ...(lead.layouts?.[0]?.refBackLogoImages || []),
                     ...(lead.layouts?.[0]?.refBackDesignImages || []),
                   ].filter(Boolean).length;
-
+                  
                   return (
-                    <React.Fragment key={lead.id}>
-                        <TableRow>
-                            <TableCell className="text-xs align-middle py-2 text-black text-center">
-                              <Collapsible>
-                                <CollapsibleTrigger asChild>
-                                    <div className="flex items-center justify-center cursor-pointer">
-                                        <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                        <div className='flex items-center'>
-                                            <span>{creationDate.dateTime}</span>
-                                        </div>
-                                    </div>
-                                </CollapsibleTrigger>
-                                    <div className="text-gray-500 text-center">{creationDate.dayOfWeek}</div>
-                                <CollapsibleContent className="pt-1 text-gray-500 text-xs text-center">
-                                  <div className="text-center">
-                                    <span className='font-bold text-gray-600'>Last Modified:</span>
-                                    <div>{modifiedDate.dateTime}</div>
-                                    <div>{modifiedDate.dayOfWeek}{lead.lastModifiedBy ? ` (${lead.lastModifiedBy})` : ''}</div>
-                                  </div>
-                                </CollapsibleContent>
-                              </Collapsible>
-                            </TableCell>
-                            <TableCell className="font-medium text-xs align-middle py-2 text-black text-center">
-                                <div className="flex items-center justify-center">
-                                    <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
-                                    {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                                    </Button>
-                                    <div className='flex flex-col items-center'>
-                                    <span className="font-medium">{toTitleCase(lead.customerName)}</span>
-                                    {isRepeat ? (
-                                        <TooltipProvider>
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <div className="flex items-center gap-1.5 cursor-pointer">
-                                                <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                                <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                                  {lead.orderNumber}
-                                                </span>
-                                              </div>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                              <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                            </TooltipContent>
-                                          </Tooltip>
-                                        </TooltipProvider>
-                                      ) : (
-                                        <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                                      )}
-                                    {openCustomerDetails === lead.id && (
-                                        <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
-                                        {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
-                                        {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
-                                        </div>
-                                    )}
-                                    </div>
-                                </div>
-                            </TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.salesRepresentative}</TableCell>
-                            <TableCell className="align-middle py-2 text-center">
-                               <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                                {lead.priorityType}
-                              </Badge>
-                            </TableCell>
-                             <TableCell className="text-center align-middle py-2">
-                                <div className="relative inline-flex items-center justify-center">
-                                    <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)} disabled={isCompleted || isReadOnly}>
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        Upload
-                                    </Button>
-                                    {imageCount > 0 && (
-                                        <div
-                                            className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
-                                        >
-                                           {imageCount}
-                                        </div>
-                                    )}
-                                </div>
-                            </TableCell>
-                            <TableCell className="font-medium text-xs align-middle py-2 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
-                            <TableCell className="text-center align-middle py-2">
-                               <Button 
-                                  size="sm" 
-                                  className={cn(
-                                    'h-8 px-3 text-white font-bold',
-                                     isCompleted ? 'bg-slate-500' : (isJoSaved ? (lead.isJoPrinted ? 'bg-blue-900 hover:bg-blue-800' : 'bg-emerald-600 hover:bg-emerald-700') : 'bg-primary hover:bg-primary/90')
-                                  )}
-                                  onClick={() => handleProcessJobOrder(lead)}
-                                   onMouseEnter={() => setHoveredLeadId(lead.id)}
-                                   onMouseLeave={() => setHoveredLeadId(null)}
-                                   disabled={isCompleted || isReadOnly}
+                    <TableRow key={lead.id} onMouseEnter={() => setHoveredLeadId(lead.id)} onMouseLeave={() => setHoveredLeadId(null)} className={cn(isHovered && "bg-gray-100")}>
+                      <TableCell className="text-xs align-middle py-2 text-black text-center">
+                        <div>{creationDate.dateTime}</div>
+                        <div className="text-gray-500">{creationDate.dayOfWeek}</div>
+                      </TableCell>
+                      <TableCell className="font-medium text-xs align-middle py-2 text-black text-center">{toTitleCase(lead.customerName)}</TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.salesRepresentative}</TableCell>
+                      <TableCell className="align-middle py-2 text-center">
+                        <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                          {lead.priorityType}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center align-middle py-2">
+                        <div className="relative inline-flex items-center justify-center">
+                            <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => handleOpenUploadDialog(lead)} disabled={isReadOnly}>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Upload
+                            </Button>
+                            {imageCount > 0 && (
+                                <div
+                                    className="absolute -top-1 -left-1 h-4 w-4 flex items-center justify-center rounded-full bg-teal-600 text-white text-[10px] font-bold"
                                 >
-                                  {isCompleted ? (
-                                    <>
-                                        <Check className="mr-2 h-4 w-4" />
-                                        J.O. Saved
-                                    </>
-                                  ) : isJoSaved ? (
-                                    lead.isJoPrinted ? 'Re-Print/Edit' : (hoveredLeadId === lead.id ? 'Edit J.O.' : 'J.O. Saved')
-                                  ) : (
-                                    'Process J.O.'
-                                  )}
-                                </Button>
-                            </TableCell>
-                             <TableCell className="text-center align-middle py-2">
-                                <div className="flex flex-col items-center justify-center gap-1">
-                                    <Checkbox
-                                        checked={lead.isJoPrinted || false}
-                                        onCheckedChange={(checked) => {
-                                            if (checked && !lead.isJoPrinted) {
-                                                setConfirmingPrint(lead);
-                                            }
-                                        }}
-                                        disabled={!isJoSaved || lead.isJoPrinted || isReadOnly}
-                                        className={cn(lead.isJoPrinted && "cursor-default data-[state=checked]:opacity-100 data-[state=checked]:bg-primary")}
-                                    />
-                                    {lead.isJoPrinted && lead.joPrintedTimestamp && (
-                                        <div className="text-[10px] text-gray-500">{formatDateTime(lead.joPrintedTimestamp).dateTimeShort}</div>
-                                    )}
+                                   {imageCount}
                                 </div>
-                             </TableCell>
-                            <TableCell className="text-xs align-middle py-2 text-black font-medium text-center">{getJoStatus(lead)}</TableCell>
-                        </TableRow>
-                    </React.Fragment>
+                            )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium text-xs align-middle py-2 text-black whitespace-nowrap text-center">{formatJoNumber(lead.joNumber)}</TableCell>
+                      <TableCell className="text-center align-middle py-2">{lead.layouts?.length || 0}</TableCell>
+                      <TableCell className="text-center align-middle py-2">
+                        <TooltipProvider>
+                           <Tooltip>
+                               <TooltipTrigger asChild>
+                                    <Button 
+                                      size="sm" 
+                                      className={cn(
+                                        'h-8 px-3 text-white font-bold',
+                                        isCompleted ? 'bg-slate-500' : (isJoSaved ? (lead.isJoPrinted ? 'bg-blue-900 hover:bg-blue-800' : 'bg-emerald-600 hover:bg-emerald-700') : 'bg-primary hover:bg-primary/90')
+                                      )}
+                                      onClick={() => handleProcessJobOrder(lead)}
+                                      disabled={isReadOnly}
+                                    >
+                                      {isCompleted ? (
+                                        <>
+                                            <Check className="mr-2 h-4 w-4" />
+                                            J.O. Saved
+                                        </>
+                                      ) : isJoSaved ? (
+                                        lead.isJoPrinted ? 'Re-Print/Edit' : (isHovered ? 'Edit J.O.' : 'J.O. Saved')
+                                      ) : (
+                                        'Process J.O.'
+                                      )}
+                                    </Button>
+                               </TooltipTrigger>
+                               <TooltipContent>
+                                <p>{isCompleted ? "This J.O. is complete." : isJoSaved ? (lead.isJoPrinted ? "Print a new copy or edit the J.O. details." : "Edit the Job Order before printing.") : "Process this lead to create a Job Order."}</p>
+                               </TooltipContent>
+                           </Tooltip>
+                        </TooltipProvider>
+                      </TableCell>
+                      <TableCell className="text-center align-middle py-2">
+                        <div className="flex flex-col items-center justify-center gap-1">
+                            <Checkbox
+                                checked={lead.isJoPrinted || false}
+                                onCheckedChange={(checked) => {
+                                    if (checked && !lead.isJoPrinted) {
+                                        setConfirmingPrint(lead);
+                                    }
+                                }}
+                                disabled={!isJoSaved || lead.isJoPrinted || isCompleted || isReadOnly}
+                                className={cn((lead.isJoPrinted || isCompleted) && "cursor-default data-[state=checked]:opacity-100 data-[state=checked]:bg-primary")}
+                            />
+                            {lead.isJoPrinted && lead.joPrintedTimestamp && (
+                                <div className="text-[10px] text-gray-500">{formatDateTime(lead.joPrintedTimestamp).dateTimeShort}</div>
+                            )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs align-middle py-2 text-black font-medium text-center">{getJoStatus(lead)}</TableCell>
+                    </TableRow>
                   );
                 })}
               </TableBody>
