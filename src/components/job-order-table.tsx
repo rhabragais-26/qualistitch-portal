@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -139,7 +137,7 @@ interface JobOrderTableProps {
 
 export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const firestore = useFirestore();
-  const { userProfile } = useUser();
+  const { userProfile, isAdmin } = useUser();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [joNumberSearch, setJoNumberSearch] = React.useState('');
@@ -296,7 +294,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
         } else if (singularField) {
             images.push(singularField);
         }
-        return images;
+        return images.length > 0 ? images : [null];
     };
 
     setRefLogoLeftImages(getInitialImages((layout as any)?.refLogoLeftImages, layout?.refLogoLeftImage));
@@ -401,6 +399,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
             description: 'The reference images have been saved.',
         });
         setUploadLead(null);
+        refetch();
     } catch (e: any) {
         console.error("Error saving images: ", e);
         toast({
@@ -409,7 +408,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
             description: e.message || "Could not save the images.",
         });
     }
-  }, [uploadLead, firestore, userProfile, toast, refLogoLeftImages, refLogoRightImages, refBackLogoImages, refBackDesignImages]);
+  }, [uploadLead, firestore, userProfile, toast, refetch, refLogoLeftImages, refLogoRightImages, refBackLogoImages, refBackDesignImages]);
   
   const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     const file = e.clipboardData.files[0];
@@ -433,9 +432,9 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       {image ? (<>
                         <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                      <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
+                      <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} />
                   </div>
-                  {index > 0 ? (
+                   {displayImages.length > 1 ? (
                       <Button
                           variant="ghost"
                           size="icon"
@@ -640,11 +639,11 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                            </Tooltip>
                         </TooltipProvider>
                       </TableCell>
-                      <TableCell className="text-center align-middle text-xs">
+                       <TableCell className="text-center align-middle text-xs">
                         {lead.layouts && lead.layouts.length > 0 && lead.layouts[0].layoutImage ? (
-                            <span>{lead.layouts?.length} Layout(s)</span>
+                            'Yes'
                         ) : (
-                            <span className="text-red-500 font-semibold">No Uploaded Layout</span>
+                            <span className="text-red-500 font-semibold">No</span>
                         )}
                       </TableCell>
                       <TableCell className="text-center align-middle py-2">
