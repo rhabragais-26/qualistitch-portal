@@ -18,7 +18,7 @@ import {
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Upload, Edit, Trash2, X, PlusCircle, Download } from 'lucide-react';
+import { Upload, Edit, Trash2, X, PlusCircle, Download, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
@@ -315,7 +315,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   
   const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
     e.stopPropagation();
-    setter(prev => prev.filter((_, i) => i !== index));
+    setter(prev => prev.map((img, i) => i === index ? null : img));
   };
 
   const handleSaveImages = useCallback(async () => {
@@ -403,11 +403,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
                   <PlusCircle className="h-4 w-4" />
               </Button>
-              {images.length > 1 && (
-                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 text-destructive hover:bg-red-100" onClick={() => setter(prev => prev.slice(0, -1))}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
           </Label>
           {images.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -546,9 +541,13 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   
                   const imageCount = [
                     ...(lead.layouts?.[0]?.refLogoLeftImages || []),
+                    lead.layouts?.[0]?.refLogoLeftImage,
                     ...(lead.layouts?.[0]?.refLogoRightImages || []),
+                    lead.layouts?.[0]?.refLogoRightImage,
                     ...(lead.layouts?.[0]?.refBackLogoImages || []),
+                    lead.layouts?.[0]?.refBackLogoImage,
                     ...(lead.layouts?.[0]?.refBackDesignImages || []),
+                    lead.layouts?.[0]?.refBackDesignImage,
                   ].filter(Boolean).length;
                   
                   return (
@@ -595,6 +594,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                                     >
                                       {isCompleted ? (
                                         <>
+                                            <Check className="mr-2 h-4 w-4" />
                                             J.O. Saved
                                         </>
                                       ) : isJoSaved ? (
@@ -612,7 +612,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       </TableCell>
                       <TableCell className="text-center align-middle text-xs">
                         {lead.layouts && lead.layouts.length > 0 && lead.layouts[0].layoutImage ? (
-                            <span>1 Layout Uploaded</span>
+                            <span>{lead.layouts?.length} Layout(s)</span>
                         ) : (
                             <span className="text-red-500 font-semibold">No Uploaded Layout</span>
                         )}
