@@ -207,14 +207,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [uploadLeadId, setUploadLeadId] = useState<string | null>(null);
   const [uploadField, setUploadField] = useState<CheckboxField | null>(null);
   
-  const [initialLogoLeftImages, setInitialLogoLeftImages] = useState<(string | null)[]>(['']);
-  const [initialLogoRightImages, setInitialLogoRightImages] = useState<(string | null)[]>(['']);
-  const [initialBackLogoImages, setInitialBackLogoImages] = useState<(string | null)[]>(['']);
-  const [initialBackDesignImages, setInitialBackDesignImages] = useState<(string | null)[]>(['']);
-  const [testLogoLeftImages, setTestLogoLeftImages] = useState<(string | null)[]>(['']);
-  const [testLogoRightImages, setTestLogoRightImages] = useState<(string | null)[]>(['']);
-  const [testBackLogoImages, setTestBackLogoImages] = useState<(string | null)[]>(['']);
-  const [testBackDesignImages, setTestBackDesignImages] = useState<(string | null)[]>(['']);
+  const [initialLogoLeftImages, setInitialLogoLeftImages] = useState<(string | null)[]>([]);
+  const [initialLogoRightImages, setInitialLogoRightImages] = useState<(string | null)[]>([]);
+  const [initialBackLogoImages, setInitialBackLogoImages] = useState<(string | null)[]>([]);
+  const [initialBackDesignImages, setInitialBackDesignImages] = useState<(string | null)[]>([]);
+  const [testLogoLeftImages, setTestLogoLeftImages] = useState<(string | null)[]>([]);
+  const [testLogoRightImages, setTestLogoRightImages] = useState<(string | null)[]>([]);
+  const [testBackLogoImages, setTestBackLogoImages] = useState<(string | null)[]>([]);
+  const [testBackDesignImages, setTestBackDesignImages] = useState<(string | null)[]>([]);
   
   const [finalLogoEmb, setFinalLogoEmb] = useState<(FileObject | null)[]>([null]);
   const [finalBackDesignEmb, setFinalBackDesignEmb] = useState<(FileObject | null)[]>([null]);
@@ -419,14 +419,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         
         const getInitialImages = (pluralField: { url: string }[] | undefined, singularField: string | null | undefined): (string|null)[] => {
             if (pluralField && pluralField.length > 0) {
-              const urls = pluralField.map(i => i.url);
-              if (urls.length < 3) urls.push(''); // Always have a blank spot to add more
-              return urls;
+              return pluralField.map(i => i.url);
             }
             if (singularField) {
-              return [singularField, ''];
+              return [singularField];
             }
-            return [''];
+            return [];
         };
 
         if (field === 'isUnderProgramming') {
@@ -744,12 +742,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
   const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
     e.stopPropagation();
-    setter(prev => {
-        const newImages = [...prev];
-        newImages.splice(index, 1);
-        if (newImages.length === 0) return [''];
-        return newImages;
-    });
+    setter(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleConfirmReview = useCallback(async () => {
@@ -825,28 +818,28 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     return (
       <div className="space-y-2">
           <Label className="flex items-center gap-2">{label}
-              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-transparent" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
+              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
                   <PlusCircle className="h-4 w-4" />
               </Button>
           </Label>
           {images.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
                   <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-digitizing-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
-                      {image ? (<> <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" /> <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => { e.stopPropagation(); setter(prev => prev.map((img, i) => i === index ? null : img));}}> <Trash2 className="h-4 w-4" /> </Button> </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
+                      {image ? (<>
+                        <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
+                      </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-digitizing-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
                   </div>
-                  {index > 0 && (
+                  {index > 0 || (image && images.length > 1) ? (
                       <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-destructive self-center"
-                          onClick={() => {
-                              setter(prev => prev.filter((_, i) => i !== index));
-                          }}
+                          onClick={() => handleRemoveImage(new MouseEvent('click'), setter, index)}
                       >
                           <X className="h-5 w-5" />
                       </Button>
-                  )}
+                  ) : null}
               </div>
           ))}
       </div>
@@ -1021,12 +1014,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
       <AlertDialog open={!!reviewConfirmLead} onOpenChange={(open) => !open && setReviewConfirmLead(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Review Uploaded Files</AlertDialogTitle>
-            <AlertDialogDescription>
+          <DialogHeader>
+            <DialogTitle>Review Uploaded Files</DialogTitle>
+            <DialogDescription>
               Please review the uploaded files before proceeding. This action will send the project to the Item Preparation queue.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+            </DialogDescription>
+          </DialogHeader>
           <div className="max-h-60 overflow-y-auto my-4 pr-2">
             <ul className="space-y-2">
               {fileChecklistItems.map((item, index) => (

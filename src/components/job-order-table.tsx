@@ -1,4 +1,5 @@
 
+
 'use client';
 import {
   Table,
@@ -141,10 +142,10 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
   
   const [uploadLead, setUploadLead] = useState<Lead | null>(null);
-  const [refLogoLeftImages, setRefLogoLeftImages] = useState<(string | null)[]>(['']);
-  const [refLogoRightImages, setRefLogoRightImages] = useState<(string | null)[]>(['']);
-  const [refBackLogoImages, setRefBackLogoImages] = useState<(string | null)[]>(['']);
-  const [refBackDesignImages, setRefBackDesignImages] = useState<(string | null)[]>(['']);
+  const [refLogoLeftImages, setRefLogoLeftImages] = useState<(string | null)[]>([]);
+  const [refLogoRightImages, setRefLogoRightImages] = useState<(string | null)[]>([]);
+  const [refBackLogoImages, setRefBackLogoImages] = useState<(string | null)[]>([]);
+  const [refBackDesignImages, setRefBackDesignImages] = useState<(string | null)[]>([]);
 
   const refLogoLeftInputRef = useRef<HTMLInputElement>(null);
   const refLogoRightInputRef = useRef<HTMLInputElement>(null);
@@ -283,14 +284,12 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     
     const getInitialImages = (pluralField: { url: string }[] | undefined, singularField: string | null | undefined): (string|null)[] => {
         if (pluralField && pluralField.length > 0) {
-            const urls = pluralField.map(i => i.url);
-            if (urls.length < 3) urls.push(''); // Always have a blank spot to add more
-            return urls;
+            return pluralField.map(i => i.url);
         }
         if (singularField) {
-            return [singularField, ''];
+            return [singularField];
         }
-        return [''];
+        return [];
     };
 
     setRefLogoLeftImages(getInitialImages((layout as any)?.refLogoLeftImages, (layout as any)?.refLogoLeftImage));
@@ -306,7 +305,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
       reader.onload = (e) => {
           setter(prev => {
               const newImages = [...prev];
-              newImages[index] = e.target?.result as string;
+              newImages[index] = e.target.result as string;
               return newImages;
           });
       };
@@ -315,7 +314,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   
   const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
     e.stopPropagation();
-    setter(prev => prev.map((img, i) => i === index ? null : img));
+    setter(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveImages = useCallback(async () => {
@@ -407,14 +406,21 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
           {images.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
                   <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-job-order-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
-                      {image ? (<> 
+                      {image ? (<>
                         <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
-                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => { e.stopPropagation(); setter(prev => prev.map((img, i) => i === index ? null : img));}}> 
-                            <X className="h-4 w-4" />
-                        </Button>
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
                   </div>
+                  {index > 0 || (image && images.length > 1) ? (
+                      <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive self-center"
+                          onClick={() => handleRemoveImage(new MouseEvent('click'), setter, index)}
+                      >
+                          <X className="h-5 w-5" />
+                      </Button>
+                  ) : null}
               </div>
           ))}
       </div>
@@ -540,13 +546,13 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   const isHovered = hoveredLeadId === lead.id;
                   
                   const imageCount = [
-                    ...(lead.layouts?.[0]?.refLogoLeftImages || []),
+                    ...(lead.layouts?.[0]?.refLogoLeftImages || []).map(i => i.url),
                     lead.layouts?.[0]?.refLogoLeftImage,
-                    ...(lead.layouts?.[0]?.refLogoRightImages || []),
+                    ...(lead.layouts?.[0]?.refLogoRightImages || []).map(i => i.url),
                     lead.layouts?.[0]?.refLogoRightImage,
-                    ...(lead.layouts?.[0]?.refBackLogoImages || []),
+                    ...(lead.layouts?.[0]?.refBackLogoImages || []).map(i => i.url),
                     lead.layouts?.[0]?.refBackLogoImage,
-                    ...(lead.layouts?.[0]?.refBackDesignImages || []),
+                    ...(lead.layouts?.[0]?.refBackDesignImages || []).map(i => i.url),
                     lead.layouts?.[0]?.refBackDesignImage,
                   ].filter(Boolean).length;
                   
