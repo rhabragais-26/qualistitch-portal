@@ -354,7 +354,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
 
     const leadDocRef = doc(firestore, 'leads', uploadLead.id);
     const layouts = uploadLead.layouts?.length ? JSON.parse(JSON.stringify(uploadLead.layouts)) : [{}];
-    const existingLayout = layouts[0] || {};
+    let existingLayout = layouts[0] || {};
     const now = new Date().toISOString();
     const storage = getStorage();
 
@@ -447,9 +447,9 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     return (
       <div className="space-y-2">
           <Label className="flex items-center gap-2">{label}
-              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])} disabled={images.length >= 3}>
-                  <PlusCircle className="h-4 w-4" />
-              </Button>
+            <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])} disabled={images.length >= 3}>
+                <PlusCircle className="h-4 w-4" />
+            </Button>
           </Label>
           {displayImages.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -459,7 +459,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} />
                   </div>
-                  {(displayImages.length > 1 || (index === 0 && image !== null)) && (
+                  {displayImages.length > 1 && (
                       <Button
                           variant="ghost"
                           size="icon"
@@ -614,12 +614,18 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   const isHovered = hoveredLeadId === lead.id;
                   const isRepeat = lead.orderNumber > 1;
                   
-                  const imageCount = [
-                    ...(lead.layouts?.[0]?.refLogoLeftImages || []).map(i => i.url),
-                    ...(lead.layouts?.[0]?.refLogoRightImages || []).map(i => i.url),
-                    ...(lead.layouts?.[0]?.refBackLogoImages || []).map(i => i.url),
-                    ...(lead.layouts?.[0]?.refBackDesignImages || []).map(i => i.url),
-                  ].filter(Boolean).length;
+                  const layout = lead.layouts?.[0];
+                  const allImageUrls = [
+                    ...(layout?.refLogoLeftImages || []).map(i => i.url),
+                    ...(layout?.refLogoRightImages || []).map(i => i.url),
+                    ...(layout?.refBackLogoImages || []).map(i => i.url),
+                    ...(layout?.refBackDesignImages || []).map(i => i.url),
+                    layout?.refLogoLeftImage,
+                    layout?.refLogoRightImage,
+                    layout?.refBackLogoImage,
+                    layout?.refBackDesignImage,
+                  ].filter(Boolean);
+                  const imageCount = new Set(allImageUrls).size;
                   
                   return (
                     <TableRow key={lead.id} onMouseEnter={() => setHoveredLeadId(lead.id)} onMouseLeave={() => setHoveredLeadId(null)} className={cn(isHovered && "bg-gray-100")}>
@@ -716,8 +722,13 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                         </TooltipProvider>
                       </TableCell>
                        <TableCell className="text-center align-middle text-xs">
-                          {lead.layouts && lead.layouts.length > 0 && lead.layouts.some(l => l.layoutImage) ? (
-                            '1 Layout Uploaded'
+                          {lead.layouts && lead.layouts.length > 0 && lead.layouts[0].layoutImage ? (
+                                <div
+                                    className="relative w-24 h-16 mx-auto border rounded-md cursor-pointer"
+                                    onClick={() => setImageInView(lead.layouts![0]!.layoutImage!)}
+                                >
+                                    <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
+                                </div>
                           ) : (
                             <span className="text-red-500 font-semibold">No Uploaded Layout</span>
                           )}
