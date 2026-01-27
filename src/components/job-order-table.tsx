@@ -18,7 +18,7 @@ import {
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Upload, Edit, Trash2, X, PlusCircle, Check, Download } from 'lucide-react';
+import { Upload, Edit, Trash2, X, PlusCircle, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
@@ -26,7 +26,7 @@ import { formatDateTime } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, doc, updateDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Checkbox } from './ui/checkbox';
@@ -400,18 +400,23 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     return (
       <div className="space-y-2">
           <Label className="flex items-center gap-2">{label}
-              <Button type="button" size="icon" variant="ghost" className="h-5 w-5" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
+              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
                   <PlusCircle className="h-4 w-4" />
               </Button>
+              {images.length > 1 && (
+                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 text-destructive hover:bg-red-100" onClick={() => setter(prev => prev.slice(0, -1))}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
           </Label>
           {images.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
                   <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-job-order-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
                       {image ? (<> 
                         <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
-                        {index > 0 && <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => handleRemoveImage(e, setter, index)}> 
+                        <Button variant="destructive" size="icon" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 h-7 w-7" onClick={(e) => { e.stopPropagation(); setter(prev => prev.map((img, i) => i === index ? null : img));}}> 
                             <X className="h-4 w-4" />
-                        </Button>}
+                        </Button>
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
                   </div>
@@ -590,7 +595,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                                     >
                                       {isCompleted ? (
                                         <>
-                                            <Check className="mr-2 h-4 w-4" />
                                             J.O. Saved
                                         </>
                                       ) : isJoSaved ? (
