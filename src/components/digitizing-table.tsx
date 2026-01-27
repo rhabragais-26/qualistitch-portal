@@ -508,13 +508,18 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const handleUploadDialogSave = useCallback(async () => {
     if (!uploadLeadId || !uploadField || !firestore || !leads || !userProfile) return;
   
-    const lead = leads.find(l => l.id === uploadLeadId);
-    if (!lead) return;
+    // Optimistic UI updates
+    const optimisticUpdate = {
+        [uploadField]: true,
+        [`${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: new Date().toISOString()
+    };
+    setOptimisticChanges(prev => ({ ...prev, [uploadLeadId]: { ...prev[uploadLeadId], ...optimisticUpdate } }));
+    setIsUploadDialogOpen(false); // Close dialog immediately
   
     const storage = getStorage();
     const now = new Date().toISOString();
   
-    const uploadAndGetURL = async (imageData: string | null, fieldName: string, index: number): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
+    const uploadAndGetURL = async (lead: Lead, imageData: string | null, fieldName: string, index: number): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
         if (!imageData) return null;
         if (imageData.startsWith('http')) {
             const pluralFieldName = `${fieldName}s`;
@@ -537,26 +542,29 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         return { url: downloadURL, uploadTime: now, uploadedBy: userProfile.nickname };
     };
   
-    const uploadFileArray = async (files: (FileObject | null)[], folderName: string): Promise<(FileObject | null)[]> => {
+    const uploadFileArray = async (lead: Lead, files: (FileObject | null)[], folderName: string): Promise<(FileObject | null)[]> => {
       return Promise.all(
         files.map(async (file, index) => {
           if (!file || !file.url.startsWith('data:')) return file;
-          const url = await uploadAndGetURL(file.url, `${folderName}/${index}_${file.name}`, index);
-          return { name: file.name, url: url!.url };
+          const urlData = await uploadAndGetURL(lead, file.url, `${folderName}/${index}_${file.name}`, index);
+          return urlData ? { name: file.name, url: urlData.url } : null;
         })
       );
     };
   
     try {
+      const lead = leads.find(l => l.id === uploadLeadId);
+      if (!lead) throw new Error("Lead not found");
+
       const currentLayouts = lead.layouts?.length ? JSON.parse(JSON.stringify(lead.layouts)) : [{}];
       let updatedFirstLayout = currentLayouts[0] || {};
   
       if (uploadField === 'isUnderProgramming') {
         const [leftImages, rightImages, backLogoImages, backDesignImages] = await Promise.all([
-            Promise.all(initialLogoLeftImages.map((img, i) => uploadAndGetURL(img, 'logoLeftImage', i))),
-            Promise.all(initialLogoRightImages.map((img, i) => uploadAndGetURL(img, 'logoRightImage', i))),
-            Promise.all(initialBackLogoImages.map((img, i) => uploadAndGetURL(img, 'backLogoImage', i))),
-            Promise.all(initialBackDesignImages.map((img, i) => uploadAndGetURL(img, 'backDesignImage', i))),
+            Promise.all(initialLogoLeftImages.map((img, i) => uploadAndGetURL(lead, img, 'logoLeftImage', i))),
+            Promise.all(initialLogoRightImages.map((img, i) => uploadAndGetURL(lead, img, 'logoRightImage', i))),
+            Promise.all(initialBackLogoImages.map((img, i) => uploadAndGetURL(lead, img, 'backLogoImage', i))),
+            Promise.all(initialBackDesignImages.map((img, i) => uploadAndGetURL(lead, img, 'backDesignImage', i))),
         ]);
 
         updatedFirstLayout = {
@@ -582,10 +590,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
       } else if (uploadField === 'isLogoTesting') {
         const [leftImages, rightImages, backLogoImages, backDesignImages] = await Promise.all([
-            Promise.all(testLogoLeftImages.map((img, i) => uploadAndGetURL(img, `testLogoLeftImage`, i))),
-            Promise.all(testLogoRightImages.map((img, i) => uploadAndGetURL(img, `testLogoRightImage`, i))),
-            Promise.all(testBackLogoImages.map((img, i) => uploadAndGetURL(img, `testBackLogoImage`, i))),
-            Promise.all(testBackDesignImages.map((img, i) => uploadAndGetURL(img, `testBackDesignImage`, i))),
+            Promise.all(testLogoLeftImages.map((img, i) => uploadAndGetURL(lead, img, `testLogoLeftImage`, i))),
+            Promise.all(testLogoRightImages.map((img, i) => uploadAndGetURL(lead, img, `testLogoRightImage`, i))),
+            Promise.all(testBackLogoImages.map((img, i) => uploadAndGetURL(lead, img, `testBackLogoImage`, i))),
+            Promise.all(testBackDesignImages.map((img, i) => uploadAndGetURL(lead, img, `testBackDesignImage`, i))),
         ]);
         
         updatedFirstLayout = {
@@ -614,12 +622,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           finalNamesDstUrls, sequenceLogoUrls, sequenceBackDesignUrls,
           finalProgrammedLogoUrls, finalProgrammedBackDesignUrls,
         ] = await Promise.all([
-          uploadFileArray(finalLogoEmb, 'finalLogoEmb'), uploadFileArray(finalBackDesignEmb, 'finalBackDesignEmb'),
-          uploadFileArray(finalLogoDst, 'finalLogoDst'), uploadFileArray(finalBackDesignDst, 'finalBackDesignDst'),
-          uploadFileArray(finalNamesDst, 'finalNamesDst'), uploadFileArray(sequenceLogo, 'sequenceLogo'),
-          uploadFileArray(sequenceBackDesign, 'sequenceBackDesign'),
-          uploadFileArray(finalProgrammedLogo, 'finalProgrammedLogo'),
-          uploadFileArray(finalProgrammedBackDesign, 'finalProgrammedBackDesign'),
+          uploadFileArray(lead, finalLogoEmb, 'finalLogoEmb'), uploadFileArray(lead, finalBackDesignEmb, 'finalBackDesignEmb'),
+          uploadFileArray(lead, finalLogoDst, 'finalLogoDst'), uploadFileArray(lead, finalBackDesignDst, 'finalBackDesignDst'),
+          uploadFileArray(lead, finalNamesDst, 'finalNamesDst'), uploadFileArray(lead, sequenceLogo, 'sequenceLogo'),
+          uploadFileArray(lead, sequenceBackDesign, 'sequenceBackDesign'),
+          uploadFileArray(lead, finalProgrammedLogo, 'finalProgrammedLogo'),
+          uploadFileArray(lead, finalProgrammedBackDesign, 'finalProgrammedBackDesign'),
         ]);
 
         const createTimestampArray = (newFiles: (FileObject|null)[], oldFiles?: (FileObject|null)[], oldTimes?: (string|null)[]) => {
@@ -672,22 +680,37 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   
       currentLayouts[0] = updatedFirstLayout;
       const leadDocRef = doc(firestore, 'leads', uploadLeadId);
-      await updateDoc(leadDocRef, { layouts: currentLayouts });
-      await updateStatus(uploadLeadId, uploadField, true);
-  
-      // Reset state
-      setIsUploadDialogOpen(false);
+
+      const timestampField = `${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`;
+      const updatePayload = {
+        layouts: currentLayouts,
+        [uploadField]: true,
+        [timestampField]: now,
+        lastModified: now,
+        lastModifiedBy: userProfile.nickname,
+      };
+
+      await updateDoc(leadDocRef, updatePayload);
       
+      toast({
+        title: 'Success!',
+        description: 'Status updated and files saved.',
+      });
+      // No need to call refetch, since onSnapshot should be active
     } catch (e: any) {
       console.error('Error saving images or status:', e);
+      // Revert optimistic update
+      setOptimisticChanges(prev => {
+        const { [uploadField!]: _removed, [`${uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
+        return { ...prev, [uploadLeadId]: rest };
+      });
       toast({
         variant: 'destructive',
         title: 'Save Failed',
-        description: e.message || 'Could not save the images and update status.',
+        description: e.message || 'Could not save the images and update status. Changes have been reverted.',
       });
     }
-  }, [uploadLeadId, uploadField, firestore, leads, updateStatus, toast, userProfile, initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign]);
-
+  }, [uploadLeadId, uploadField, firestore, leads, userProfile, initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, toast]);
 
   const confirmUncheck = useCallback(() => {
     if (uncheckConfirmation) {
