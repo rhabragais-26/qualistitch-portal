@@ -649,12 +649,22 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   const refImageCount = (() => {
                     const layout = lead.layouts?.[0];
                     if (!layout) return 0;
-                    
+                
+                    const countForField = (pluralField: { url: string }[] | undefined, singularField: string | null | undefined): number => {
+                        // If the plural field exists (the new format), its length is the source of truth.
+                        if (Array.isArray(pluralField)) {
+                            return pluralField.length;
+                        }
+                        // Only if the plural field does NOT exist, fall back to the singular field (old format).
+                        return singularField ? 1 : 0;
+                    };
+                
                     const count = 
-                      (layout.refLogoLeftImages?.length || 0) +
-                      (layout.refLogoRightImages?.length || 0) +
-                      (layout.refBackLogoImages?.length || 0) +
-                      (layout.refBackDesignImages?.length || 0);
+                      countForField((layout as any).refLogoLeftImages, layout.refLogoLeftImage) +
+                      countForField((layout as any).refLogoRightImages, layout.refLogoRightImage) +
+                      countForField((layout as any).refBackLogoImages, layout.refBackLogoImage) +
+                      countForField((layout as any).refBackDesignImages, layout.refBackDesignImage);
+                      
                     return count;
                   })();
 
@@ -752,13 +762,13 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                            </Tooltip>
                         </TooltipProvider>
                       </TableCell>
-                      <TableCell className="text-center align-middle text-xs font-semibold">
-                        {layoutImageCount > 0 ? (
-                            <span className="text-black">{layoutImageCount} Layout{layoutImageCount > 1 ? 's' : ''} Uploaded</span>
-                        ) : (
-                            <span className="text-destructive">No Uploaded Layout</span>
-                        )}
-                      </TableCell>
+                       <TableCell className="text-center align-middle text-xs font-semibold">
+                          {layoutImageCount > 0 ? (
+                              <span className="text-black">{layoutImageCount} Layout{layoutImageCount > 1 ? 's' : ''} Uploaded</span>
+                          ) : (
+                              <span className="text-destructive">No Uploaded Layout</span>
+                          )}
+                        </TableCell>
                       <TableCell className="text-center align-middle py-2">
                         <div className="flex flex-col items-center justify-center gap-1">
                             <Checkbox
@@ -788,3 +798,4 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     </>
   );
 }
+
