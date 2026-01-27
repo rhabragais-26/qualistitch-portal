@@ -69,11 +69,11 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
         embroidery: order.embroidery || 'logo',
       }));
 
-      const initialFormValues = {
+      const initialFormValues: Partial<FormValues> = {
         customerName: toTitleCase(lead.customerName || ''),
         companyName: lead.companyName && lead.companyName !== '-' ? toTitleCase(lead.companyName) : '',
-        contactNumber: lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '',
-        contactNumber2: lead.contactNumber2 && lead.contactNumber2 !== '-' ? lead.contactNumber2 : '',
+        mobileNo: lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber : '',
+        mobileNo2: lead.contactNumber2 && lead.contactNumber2 !== '-' ? lead.contactNumber2 : '',
         landlineNo: lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber : '',
         isInternational: lead.isInternational ?? false,
         houseStreet: lead.houseStreet ? toTitleCase(lead.houseStreet) : '',
@@ -161,7 +161,6 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
         const paymentsToSave = Object.values(payments).flat().map(({ isNew, ...p }) => p);
 
         const dataToUpdate = {
-            ...formValuesToSave,
             customerName: toTitleCase(formValuesToSave.customerName),
             companyName: formValuesToSave.companyName ? toTitleCase(formValuesToSave.companyName) : '-',
             contactNumber: formValuesToSave.mobileNo || '-',
@@ -174,6 +173,8 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
             province: formValuesToSave.province ? toTitleCase(formValuesToSave.province) : '',
             courier: formValuesToSave.courier || '-',
             orders: stagedOrders,
+            orderType: formValuesToSave.orderType,
+            priorityType: formValuesToSave.priorityType,
             productType: [...new Set(stagedOrders.map(o => o.productType))].join(', '),
             addOns,
             discounts,

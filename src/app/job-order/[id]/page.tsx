@@ -62,6 +62,7 @@
       recipientName?: string;
       companyName?: string;
       contactNumber: string;
+      contactNumber2?: string;
       landlineNumber?: string;
       location: string;
       salesRepresentative: string;
@@ -525,12 +526,10 @@
       
       const getContactDisplay = () => {
         const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
+        const mobile2 = lead.contactNumber2 && lead.contactNumber2 !== '-' ? lead.contactNumber2.replace(/-/g, '') : null;
         const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
-        if (mobile && landline) {
-          return `${mobile} / ${landline}`;
-        }
-        return mobile || landline || 'N/A';
+        return [mobile, mobile2, landline].filter(Boolean).join(' / ') || 'N/A';
       };
       
       const currentLayoutIndex = currentPage - 1;
