@@ -449,37 +449,41 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
       <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Label>{label}</Label>
-              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])}>
+            {canEdit && (
+              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={(e) => { e.stopPropagation(); setter(prev => [...prev, null]); }}>
                   <PlusCircle className="h-4 w-4" />
               </Button>
+            )}
           </div>
           {displayImages.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
                   <div
                     tabIndex={0}
-                    className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer"
+                    className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer focus:outline-none focus:border-primary focus:border-solid"
                     onClick={() => image && setImageInView(image)}
-                    onDoubleClick={() => document.getElementById(`file-input-job-order-${label}-${index}`)?.click()}
-                    onPaste={(e) => handleImagePaste(e, setter, index)}
+                    onDoubleClick={() => canEdit && !image && document.getElementById(`file-input-job-order-${label}-${index}`)?.click()}
+                    onPaste={(e) => canEdit && handleImagePaste(e, setter, index)}
                     onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
                   >
                       {image ? (<>
                         <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
-                         <Button
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                          onClick={(e) => {
-                              e.stopPropagation();
-                              handleClearImage(setter, index);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
-                      <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} />
+                        {canEdit && (
+                            <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleClearImage(setter, index);
+                            }}
+                            >
+                            <Trash2 className="h-4 w-4" />
+                            </Button>
+                        )}
+                      </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{canEdit ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
+                      <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!canEdit}/>
                   </div>
-                  {index > 0 && (
+                  {canEdit && displayImages.length > 1 && (
                       <Button
                           variant="ghost"
                           size="icon"
@@ -777,4 +781,3 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     </>
   );
 }
-

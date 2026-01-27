@@ -432,7 +432,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             } else if (singularField) {
               images.push(singularField);
             }
-            return images;
+            return images.length > 0 ? images : [null];
         };
 
         if (field === 'isUnderProgramming') {
@@ -870,7 +870,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Label>{label}</Label>
-              {images.length < 3 && (
+              {displayImages.length < 3 && (
                 <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])}>
                     <PlusCircle className="h-4 w-4" />
                 </Button>
@@ -880,7 +880,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               <div key={index} className="flex items-center gap-2">
                   <div
                     tabIndex={0}
-                    className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer"
+                    className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer focus:outline-none focus:border-primary focus:border-solid select-none"
                     onClick={() => image && setImageInView(image)}
                     onDoubleClick={() => document.getElementById(`file-input-digitizing-${label}-${index}`)?.click()}
                     onPaste={(e) => handleImagePaste(e, setter, index)}
