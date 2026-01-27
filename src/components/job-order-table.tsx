@@ -70,12 +70,20 @@ type Layout = {
   layoutImage?: string;
   refLogoLeftImage?: string | null;
   refLogoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refLogoLeftImageUploadTime?: string | null;
+  refLogoLeftImageUploadedBy?: string | null;
   refLogoRightImage?: string | null;
   refLogoRightImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refLogoRightImageUploadTime?: string | null;
+  refLogoRightImageUploadedBy?: string | null;
   refBackLogoImage?: string | null;
   refBackLogoImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refBackLogoImageUploadTime?: string | null;
+  refBackLogoImageUploadedBy?: string | null;
   refBackDesignImage?: string | null;
   refBackDesignImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refBackDesignImageUploadTime?: string | null;
+  refBackDesignImageUploadedBy?: string | null;
   logoLeftImage?: string | null;
   logoRightImage?: string | null;
   backLogoImage?: string | null;
@@ -288,9 +296,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
         } else if (singularField) {
             images.push(singularField);
         }
-        if (images.length === 0) {
-            images.push(null);
-        }
         return images;
     };
 
@@ -329,20 +334,29 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     const storage = getStorage();
 
     const uploadAndGetURL = async (imageData: string | null, fieldName: string, index: number): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
-        if (!imageData) return null;
-        if (imageData.startsWith('http')) {
-            const pluralFieldName = `${fieldName}s`;
-            const existingArray = (uploadLead.layouts?.[0]?.[pluralFieldName as keyof Layout] as { url: string; uploadTime: string; uploadedBy: string }[]) || [];
-            const existingImageObject = existingArray.find(img => img.url === imageData);
-            if (existingImageObject) return existingImageObject;
-            return { url: imageData, uploadTime: now, uploadedBy: userProfile.nickname };
+      if (!imageData) return null;
+      if (imageData.startsWith('http')) {
+        const pluralFieldName = `${fieldName}s`;
+        const existingArray = (uploadLead.layouts?.[0]?.[pluralFieldName as keyof Layout] as { url: string; uploadTime: string; uploadedBy: string }[]) || [];
+        const existingImageObject = existingArray.find(img => img.url === imageData);
+        if (existingImageObject) {
+            return existingImageObject;
         }
-        if(!imageData.startsWith('data:')) return null;
 
-        const storageRef = ref(storage, `leads-images/${uploadLead.id}/${fieldName}_${index}_${Date.now()}`);
-        const snapshot = await uploadString(storageRef, imageData, 'data_url');
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        return { url: downloadURL, uploadTime: now, uploadedBy: userProfile.nickname };
+        if (uploadLead.layouts?.[0]?.[fieldName as keyof Layout] === imageData) {
+            const timestamp = uploadLead.layouts?.[0]?.[`${fieldName}UploadTime` as keyof Layout] as string | null;
+            const uploader = uploadLead.layouts?.[0]?.[`${fieldName}UploadedBy` as keyof Layout] as string | null;
+            return { url: imageData, uploadTime: timestamp || now, uploadedBy: uploader || userProfile.nickname };
+        }
+        
+        return { url: imageData, uploadTime: now, uploadedBy: userProfile.nickname };
+      }
+      if(!imageData.startsWith('data:')) return null;
+
+      const storageRef = ref(storage, `leads-images/${uploadLead.id}/${fieldName}_${index}_${Date.now()}`);
+      const snapshot = await uploadString(storageRef, imageData, 'data_url');
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      return { url: downloadURL, uploadTime: now, uploadedBy: userProfile.nickname };
     };
 
     try {
@@ -361,11 +375,18 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
             refBackDesignImages: backDesignImages.filter(Boolean),
         };
         
-        // Clean up old singular fields
         delete updatedFirstLayout.refLogoLeftImage;
         delete updatedFirstLayout.refLogoRightImage;
         delete updatedFirstLayout.refBackLogoImage;
         delete updatedFirstLayout.refBackDesignImage;
+        delete updatedFirstLayout.refLogoLeftImageUploadTime;
+        delete updatedFirstLayout.refLogoLeftImageUploadedBy;
+        delete updatedFirstLayout.refLogoRightImageUploadTime;
+        delete updatedFirstLayout.refLogoRightImageUploadedBy;
+        delete updatedFirstLayout.refBackLogoImageUploadTime;
+        delete updatedFirstLayout.refBackLogoImageUploadedBy;
+        delete updatedFirstLayout.refBackDesignImageUploadTime;
+        delete updatedFirstLayout.refBackDesignImageUploadedBy;
 
         layouts[0] = updatedFirstLayout;
         
@@ -398,6 +419,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   };
   
   const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+    const displayImages = images.length > 0 ? images : [null];
     return (
       <div className="space-y-2">
           <Label className="flex items-center gap-2">{label}
@@ -405,7 +427,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   <PlusCircle className="h-4 w-4" />
               </Button>
           </Label>
-          {images.map((image, index) => (
+          {displayImages.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
                   <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-job-order-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
                       {image ? (<>
@@ -413,7 +435,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
                   </div>
-                  {images.length > 1 ? (
+                  {index > 0 ? (
                       <Button
                           variant="ghost"
                           size="icon"
@@ -422,7 +444,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       >
                           <X className="h-5 w-5" />
                       </Button>
-                  ) : null}
+                  ) : <div className="w-8 h-8"/>}
               </div>
           ))}
       </div>

@@ -60,12 +60,20 @@ type Layout = {
   layoutImageUploadedBy?: string | null;
   refLogoLeftImage?: string | null;
   refLogoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refLogoLeftImageUploadTime?: string | null;
+  refLogoLeftImageUploadedBy?: string | null;
   refLogoRightImage?: string | null;
   refLogoRightImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refLogoRightImageUploadTime?: string | null;
+  refLogoRightImageUploadedBy?: string | null;
   refBackLogoImage?: string | null;
   refBackLogoImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refBackLogoImageUploadTime?: string | null;
+  refBackLogoImageUploadedBy?: string | null;
   refBackDesignImage?: string | null;
   refBackDesignImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refBackDesignImageUploadTime?: string | null;
+  refBackDesignImageUploadedBy?: string | null;
   dstLogoLeft?: string;
   dstLogoRight?: string;
   dstBackLogo?: string;
@@ -424,9 +432,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             } else if (singularField) {
               images.push(singularField);
             }
-            if (images.length === 0) {
-                images.push(null);
-            }
             return images;
         };
 
@@ -509,21 +514,27 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const storage = getStorage();
     const now = new Date().toISOString();
   
-    const uploadAndGetURL = async (imageData: string | null, fieldName: string, index: number, existingUrl?: string | null): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
-      if (!imageData) return null;
-      if (imageData.startsWith('http')) {
-        const pluralFieldName = `${fieldName}s`;
-        const existingArray = (lead.layouts?.[0]?.[pluralFieldName as keyof Layout] as { url: string; uploadTime: string; uploadedBy: string }[]) || [];
-        const existingImageObject = existingArray.find(img => img.url === imageData);
-        if (existingImageObject) return existingImageObject;
-        return { url: imageData, uploadTime: now, uploadedBy: userProfile.nickname };
-      }
-      if(!imageData.startsWith('data:')) return null;
+    const uploadAndGetURL = async (imageData: string | null, fieldName: string, index: number): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
+        if (!imageData) return null;
+        if (imageData.startsWith('http')) {
+            const pluralFieldName = `${fieldName}s`;
+            const existingArray = (lead.layouts?.[0]?.[pluralFieldName as keyof Layout] as { url: string; uploadTime: string; uploadedBy: string }[]) || [];
+            const existingImageObject = existingArray.find(img => img.url === imageData);
+            if (existingImageObject) return existingImageObject;
+            
+            if (lead.layouts?.[0]?.[fieldName as keyof Layout] === imageData) {
+                const timestamp = lead.layouts?.[0]?.[`${fieldName}UploadTime` as keyof Layout] as string | null;
+                const uploader = lead.layouts?.[0]?.[`${fieldName}UploadedBy` as keyof Layout] as string | null;
+                return { url: imageData, uploadTime: timestamp || now, uploadedBy: uploader || userProfile.nickname };
+            }
+            return { url: imageData, uploadTime: now, uploadedBy: userProfile.nickname };
+        }
+        if(!imageData.startsWith('data:')) return null;
 
-      const storageRef = ref(storage, `leads-images/${uploadLeadId}/${fieldName}_${index}_${Date.now()}`);
-      const snapshot = await uploadString(storageRef, imageData, 'data_url');
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      return { url: downloadURL, uploadTime: now, uploadedBy: userProfile.nickname };
+        const storageRef = ref(storage, `leads-images/${uploadLeadId}/${fieldName}_${index}_${Date.now()}`);
+        const snapshot = await uploadString(storageRef, imageData, 'data_url');
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        return { url: downloadURL, uploadTime: now, uploadedBy: userProfile.nickname };
     };
   
     const uploadFileArray = async (files: (FileObject | null)[], folderName: string): Promise<(FileObject | null)[]> => {
@@ -540,36 +551,64 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       const currentLayouts = lead.layouts?.length ? JSON.parse(JSON.stringify(lead.layouts)) : [{}];
       let updatedFirstLayout = currentLayouts[0] || {};
   
-      if (uploadField === 'isUnderProgramming' || uploadField === 'isLogoTesting') {
-        const fieldPrefix = uploadField === 'isUnderProgramming' ? '' : 'test';
-
-        const imageStates = uploadField === 'isUnderProgramming'
-            ? { left: initialLogoLeftImages, right: initialLogoRightImages, backLogo: initialBackLogoImages, backDesign: initialBackDesignImages }
-            : { left: testLogoLeftImages, right: testLogoRightImages, backLogo: testBackLogoImages, backDesign: testBackDesignImages };
-        
+      if (uploadField === 'isUnderProgramming') {
         const [leftImages, rightImages, backLogoImages, backDesignImages] = await Promise.all([
-            Promise.all(imageStates.left.map((img, i) => uploadAndGetURL(img, `${fieldPrefix}LogoLeftImage`, i, (lead.layouts?.[0] as any)?.[`${fieldPrefix}LogoLeftImages`]?.[i]?.url))),
-            Promise.all(imageStates.right.map((img, i) => uploadAndGetURL(img, `${fieldPrefix}LogoRightImage`, i, (lead.layouts?.[0] as any)?.[`${fieldPrefix}LogoRightImages`]?.[i]?.url))),
-            Promise.all(imageStates.backLogo.map((img, i) => uploadAndGetURL(img, `${fieldPrefix}BackLogoImage`, i, (lead.layouts?.[0] as any)?.[`${fieldPrefix}BackLogoImages`]?.[i]?.url))),
-            Promise.all(imageStates.backDesign.map((img, i) => uploadAndGetURL(img, `${fieldPrefix}BackDesignImage`, i, (lead.layouts?.[0] as any)?.[`${fieldPrefix}BackDesignImages`]?.[i]?.url))),
+            Promise.all(initialLogoLeftImages.map((img, i) => uploadAndGetURL(img, 'logoLeftImage', i))),
+            Promise.all(initialLogoRightImages.map((img, i) => uploadAndGetURL(img, 'logoRightImage', i))),
+            Promise.all(initialBackLogoImages.map((img, i) => uploadAndGetURL(img, 'backLogoImage', i))),
+            Promise.all(initialBackDesignImages.map((img, i) => uploadAndGetURL(img, 'backDesignImage', i))),
         ]);
 
-        const prefixToUse = fieldPrefix === 'initial' ? '' : fieldPrefix;
+        updatedFirstLayout = {
+            ...updatedFirstLayout,
+            logoLeftImages: leftImages.filter(Boolean),
+            logoRightImages: rightImages.filter(Boolean),
+            backLogoImages: backLogoImages.filter(Boolean),
+            backDesignImages: backDesignImages.filter(Boolean),
+        };
+        
+        delete updatedFirstLayout.logoLeftImage;
+        delete updatedFirstLayout.logoRightImage;
+        delete updatedFirstLayout.backLogoImage;
+        delete updatedFirstLayout.backDesignImage;
+        delete updatedFirstLayout.logoLeftImageUploadTime;
+        delete updatedFirstLayout.logoLeftImageUploadedBy;
+        delete updatedFirstLayout.logoRightImageUploadTime;
+        delete updatedFirstLayout.logoRightImageUploadedBy;
+        delete updatedFirstLayout.backLogoImageUploadTime;
+        delete updatedFirstLayout.backLogoImageUploadedBy;
+        delete updatedFirstLayout.backDesignImageUploadTime;
+        delete updatedFirstLayout.backDesignImageUploadedBy;
+
+      } else if (uploadField === 'isLogoTesting') {
+        const [leftImages, rightImages, backLogoImages, backDesignImages] = await Promise.all([
+            Promise.all(testLogoLeftImages.map((img, i) => uploadAndGetURL(img, `testLogoLeftImage`, i))),
+            Promise.all(testLogoRightImages.map((img, i) => uploadAndGetURL(img, `testLogoRightImage`, i))),
+            Promise.all(testBackLogoImages.map((img, i) => uploadAndGetURL(img, `testBackLogoImage`, i))),
+            Promise.all(testBackDesignImages.map((img, i) => uploadAndGetURL(img, `testBackDesignImage`, i))),
+        ]);
         
         updatedFirstLayout = {
             ...updatedFirstLayout,
-            [`${prefixToUse}logoLeftImages`]: leftImages.filter(Boolean),
-            [`${prefixToUse}logoRightImages`]: rightImages.filter(Boolean),
-            [`${prefixToUse}backLogoImages`]: backLogoImages.filter(Boolean),
-            [`${prefixToUse}backDesignImages`]: backDesignImages.filter(Boolean),
+            testLogoLeftImages: leftImages.filter(Boolean),
+            testLogoRightImages: rightImages.filter(Boolean),
+            testBackLogoImages: backLogoImages.filter(Boolean),
+            testBackDesignImages: backDesignImages.filter(Boolean),
         };
-        
-        delete updatedFirstLayout[`${prefixToUse}logoLeftImage`];
-        delete updatedFirstLayout[`${prefixToUse}logoRightImage`];
-        delete updatedFirstLayout[`${prefixToUse}backLogoImage`];
-        delete updatedFirstLayout[`${prefixToUse}backDesignImage`];
+
+        delete updatedFirstLayout.testLogoLeftImage;
+        delete updatedFirstLayout.testLogoRightImage;
+        delete updatedFirstLayout.testBackLogoImage;
+        delete updatedFirstLayout.testBackDesignImage;
+        delete updatedFirstLayout.testLogoLeftImageUploadTime;
+        delete updatedFirstLayout.testLogoLeftImageUploadedBy;
+        delete updatedFirstLayout.testLogoRightImageUploadTime;
+        delete updatedFirstLayout.testLogoRightImageUploadedBy;
+        delete updatedFirstLayout.testBackLogoImageUploadTime;
+        delete updatedFirstLayout.testBackLogoImageUploadedBy;
+        delete updatedFirstLayout.testBackDesignImageUploadTime;
+        delete updatedFirstLayout.testBackDesignImageUploadedBy;
       } else if (uploadField === 'isFinalProgram') {
-        // ... (This logic remains the same as it already handles multiple files)
         const [
           finalLogoEmbUrls, finalBackDesignEmbUrls, finalLogoDstUrls, finalBackDesignDstUrls,
           finalNamesDstUrls, sequenceLogoUrls, sequenceBackDesignUrls,
@@ -818,6 +857,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   }, [reviewConfirmLead]);
 
   const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+    const displayImages = images.length > 0 ? images : [null];
     return (
       <div className="space-y-2">
           <Label className="flex items-center gap-2">{label}
@@ -825,7 +865,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   <PlusCircle className="h-4 w-4" />
               </Button>
           </Label>
-          {images.map((image, index) => (
+          {displayImages.map((image, index) => (
               <div key={index} className="flex items-center gap-2">
                   <div tabIndex={0} className="relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center cursor-pointer" onDoubleClick={() => document.getElementById(`file-input-digitizing-${label}-${index}`)?.click()} onPaste={(e) => handleImagePaste(e, setter, index)}>
                       {image ? (<>
@@ -833,7 +873,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-digitizing-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
                   </div>
-                  {images.length > 1 ? (
+                  {index > 0 || (displayImages.length > 1 && index === 0) ? (
                       <Button
                           variant="ghost"
                           size="icon"
@@ -842,7 +882,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       >
                           <X className="h-5 w-5" />
                       </Button>
-                  ) : null}
+                  ) : <div className="w-8 h-8"/>}
               </div>
           ))}
       </div>
@@ -1145,7 +1185,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       className="bg-gray-100 text-black placeholder:text-gray-500"
                     />
                   </div>
-                  <div className="w-full max-w-xs">
+                  <div className="w-full max-w-sm">
                     <Input
                       placeholder="Search customer, company, or contact..."
                       value={searchTerm}
