@@ -418,13 +418,16 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         const layout = lead.layouts?.[0];
         
         const getInitialImages = (pluralField: { url: string }[] | undefined, singularField: string | null | undefined): (string|null)[] => {
+            const images: (string | null)[] = [];
             if (pluralField && pluralField.length > 0) {
-              return pluralField.map(i => i.url);
+              images.push(...pluralField.map(i => i.url));
+            } else if (singularField) {
+              images.push(singularField);
             }
-            if (singularField) {
-              return [singularField];
+            if (images.length === 0) {
+                images.push(null);
             }
-            return [];
+            return images;
         };
 
         if (field === 'isUnderProgramming') {
@@ -818,7 +821,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     return (
       <div className="space-y-2">
           <Label className="flex items-center gap-2">{label}
-              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
+              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])} disabled={images.length >= 3}>
                   <PlusCircle className="h-4 w-4" />
               </Button>
           </Label>
@@ -830,12 +833,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-digitizing-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
                   </div>
-                  {index > 0 || (image && images.length > 1) ? (
+                  {images.length > 1 ? (
                       <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-destructive self-center"
-                          onClick={() => handleRemoveImage(new MouseEvent('click'), setter, index)}
+                          onClick={(e) => handleRemoveImage(e, setter, index)}
                       >
                           <X className="h-5 w-5" />
                       </Button>

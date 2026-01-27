@@ -1,6 +1,8 @@
 
 
 'use client';
+
+import { doc, updateDoc, collection, query } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -16,17 +18,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect, ChangeEvent } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { Upload, Edit, Trash2, X, PlusCircle, Download, Check } from 'lucide-react';
+import { Upload, Edit, Trash2, X, PlusCircle, Download, Check, Calendar as CalendarIcon, ChevronUp, ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, toTitleCase } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, doc, updateDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
@@ -35,7 +36,6 @@ import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose, DialogFooter } from "@/components/ui/dialog"
 import { Label } from './ui/label';
-import { toTitleCase } from '@/lib/utils';
 import { ScrollArea } from './ui/scroll-area';
 import Image from 'next/image';
 
@@ -146,12 +146,6 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const [refLogoRightImages, setRefLogoRightImages] = useState<(string | null)[]>([]);
   const [refBackLogoImages, setRefBackLogoImages] = useState<(string | null)[]>([]);
   const [refBackDesignImages, setRefBackDesignImages] = useState<(string | null)[]>([]);
-
-  const refLogoLeftInputRef = useRef<HTMLInputElement>(null);
-  const refLogoRightInputRef = useRef<HTMLInputElement>(null);
-  const refBackLogoInputRef = useRef<HTMLInputElement>(null);
-  const refBackDesignInputRef = useRef<HTMLInputElement>(null);
-
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
@@ -267,9 +261,14 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
       
       const matchesCsr = csrFilter === 'All' || lead.salesRepresentative === csrFilter;
 
-      return matchesSearch && matchesCsr;
+      const joString = formatJoNumber(lead.joNumber);
+      const matchesJo = joNumberSearch ? 
+        (joString.toLowerCase().includes(joNumberSearch.toLowerCase()))
+        : true;
+
+      return matchesSearch && matchesCsr && matchesJo;
     });
-  }, [processedLeads, searchTerm, csrFilter]);
+  }, [processedLeads, searchTerm, csrFilter, joNumberSearch, formatJoNumber]);
   
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
@@ -283,19 +282,22 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     const layout = lead.layouts?.[0];
     
     const getInitialImages = (pluralField: { url: string }[] | undefined, singularField: string | null | undefined): (string|null)[] => {
+        const images: (string | null)[] = [];
         if (pluralField && pluralField.length > 0) {
-            return pluralField.map(i => i.url);
+            images.push(...pluralField.map(i => i.url));
+        } else if (singularField) {
+            images.push(singularField);
         }
-        if (singularField) {
-            return [singularField];
+        if (images.length === 0) {
+            images.push(null);
         }
-        return [];
+        return images;
     };
 
-    setRefLogoLeftImages(getInitialImages((layout as any)?.refLogoLeftImages, (layout as any)?.refLogoLeftImage));
-    setRefLogoRightImages(getInitialImages((layout as any)?.refLogoRightImages, (layout as any)?.refLogoRightImage));
-    setRefBackLogoImages(getInitialImages((layout as any)?.refBackLogoImages, (layout as any)?.refBackLogoImage));
-    setRefBackDesignImages(getInitialImages((layout as any)?.refBackDesignImages, (layout as any)?.refBackDesignImage));
+    setRefLogoLeftImages(getInitialImages((layout as any)?.refLogoLeftImages, layout?.refLogoLeftImage));
+    setRefLogoRightImages(getInitialImages((layout as any)?.refLogoRightImages, layout?.refLogoRightImage));
+    setRefBackLogoImages(getInitialImages((layout as any)?.refBackLogoImages, layout?.refBackLogoImage));
+    setRefBackDesignImages(getInitialImages((layout as any)?.refBackDesignImages, layout?.refBackDesignImage));
 
     setUploadLead(lead);
   }, []);
@@ -394,12 +396,12 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
         handleImageUpload(file, setter, index);
     }
   };
-
+  
   const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
     return (
       <div className="space-y-2">
           <Label className="flex items-center gap-2">{label}
-              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, ''])} disabled={images.length >= 3}>
+              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])} disabled={images.length >= 3}>
                   <PlusCircle className="h-4 w-4" />
               </Button>
           </Label>
@@ -411,12 +413,12 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>Double-click to upload or paste image</p> </div>)}
                       <input id={`file-input-job-order-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} />
                   </div>
-                  {index > 0 || (image && images.length > 1) ? (
+                  {images.length > 1 ? (
                       <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-destructive self-center"
-                          onClick={() => handleRemoveImage(new MouseEvent('click'), setter, index)}
+                          onClick={(e) => handleRemoveImage(e, setter, index)}
                       >
                           <X className="h-5 w-5" />
                       </Button>
