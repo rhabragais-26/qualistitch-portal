@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { collection, query, where } from 'firebase/firestore';
@@ -29,8 +28,7 @@ import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { ChevronDown } from 'lucide-react';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from './ui/collapsible';
+import { Plus, Minus } from 'lucide-react';
 
 
 // Simplified types for this component
@@ -95,7 +93,6 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
     const firestore = useFirestore();
     const [searchTerm, setSearchTerm] = useState('');
     const [joNumberSearch, setJoNumberSearch] = useState('');
-    const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
     const [logs, setLogs] = useState<Record<string, LogData>>({});
     const [checkedDesigns, setCheckedDesigns] = useState<Record<string, Record<string, boolean>>>({});
 
@@ -203,10 +200,6 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         return mobile || landline || '';
     }, []);
 
-    const toggleCustomerDetails = useCallback((leadId: string) => {
-        setOpenCustomerDetails(prev => prev === leadId ? null : leadId);
-    }, []);
-
     const enrichedLeads = useMemo(() => {
         if (!leads) return [];
         return leads.map(lead => ({
@@ -293,21 +286,34 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                     quantity: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
                                     shift: '' 
                                 };
+                                const isRepeat = lead.orderNumber > 1;
                                 return (
                                 <TableRow key={lead.id}>
-                                    <TableCell className="text-xs">
-                                        <Collapsible open={openCustomerDetails === lead.id} onOpenChange={() => toggleCustomerDetails(lead.id)}>
-                                            <CollapsibleTrigger asChild>
-                                                <div className="flex items-center cursor-pointer">
-                                                    <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                                    <span className="font-bold">{toTitleCase(lead.customerName)}</span>
-                                                </div>
-                                            </CollapsibleTrigger>
-                                            <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-[11px] font-normal">
-                                                {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
-                                                {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
-                                            </CollapsibleContent>
-                                        </Collapsible>
+                                    <TableCell className="text-xs align-middle text-center">
+                                        <div className="font-bold">{toTitleCase(lead.customerName)}</div>
+                                        {isRepeat ? (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
+                                                    <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                                    <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                                        {lead.orderNumber}
+                                                    </span>
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                                </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        ) : (
+                                        <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                                        )}
+                                        <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
+                                            {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
+                                            {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                                     <TableCell className="text-xs text-center"><Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>{lead.priorityType}</Badge></TableCell>
@@ -315,7 +321,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="border-0">
-                                                    <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs border-r w-[150px]">Design</TableHead>
+                                                    <TableHead className="p-1 h-auto text-left text-blue-900 font-bold text-xs border-r w-[150px]">Design</TableHead>
                                                     <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs border-r w-[80px]">Quantity</TableHead>
                                                     <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs border-r w-[100px]">No. of Stitches</TableHead>
                                                     <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs border-r w-[100px]">Machine RPM</TableHead>
@@ -378,7 +384,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                             </TableBody>
                                             <TableFooter>
                                                 <TableRow>
-                                                    <TableCell colSpan={4} className="text-right font-bold py-1 px-2 text-blue-900">Total Estimated Time</TableCell>
+                                                    <TableCell colSpan={4} className="text-right font-bold py-1 px-2 text-black">Total Estimated Time</TableCell>
                                                     <TableCell className="text-center font-bold py-1 px-2">{calculateTotalEstTime(logData, lead)}</TableCell>
                                                 </TableRow>
                                             </TableFooter>
