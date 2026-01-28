@@ -29,6 +29,7 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Plus, Minus } from 'lucide-react';
+import { Separator } from './ui/separator';
 
 
 // Simplified types for this component
@@ -219,6 +220,51 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         return '-';
     };
 
+    const parseTime = (time: TimeValue): number | null => {
+        let hour = parseInt(time.hour, 10);
+        const minute = parseInt(time.minute, 10);
+
+        if (isNaN(hour) || isNaN(minute) || hour < 1 || hour > 12 || minute < 0 || minute > 59) {
+            return null;
+        }
+
+        if (time.period === 'PM' && hour !== 12) {
+            hour += 12;
+        } else if (time.period === 'AM' && hour === 12) {
+            hour = 0; // Midnight case
+        }
+        
+        return hour * 60 + minute;
+    };
+
+    const calculateDuration = (startTime: TimeValue, endTime: TimeValue): string => {
+        const startMinutes = parseTime(startTime);
+        const endMinutes = parseTime(endTime);
+
+        if (startMinutes === null || endMinutes === null) {
+            return '-';
+        }
+        
+        let diff = endMinutes - startMinutes;
+
+        if (diff < 0) {
+            return 'Check Provided Time';
+        }
+
+        if (diff === 0) return '0 mins';
+
+        const hours = Math.floor(diff / 60);
+        const minutes = diff % 60;
+
+        if (hours > 0 && minutes > 0) {
+            return `${hours} hr ${minutes} mins`;
+        }
+        if (hours > 0) {
+            return `${hours} hr`;
+        }
+        return `${minutes} mins`;
+    };
+
 
     const getContactDisplay = useCallback((lead: Lead) => {
         const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
@@ -302,8 +348,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
                                 <TableHead colSpan={5} className="text-white font-bold text-xs text-center">Embroidery Details</TableHead>
-                                <TableHead className="text-white font-bold text-xs text-center w-[220px]">Start Time</TableHead>
-                                <TableHead className="text-white font-bold text-xs text-center w-[220px]">End Time</TableHead>
+                                <TableHead className="text-white font-bold text-xs text-center w-[220px]">Duration</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Shift</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -422,75 +467,88 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                         </Table>
                                     </TableCell>
                                     <TableCell className="align-middle text-center w-[220px]">
-                                        <div className="flex items-center justify-center gap-1">
-                                            <Input
-                                                type="text"
-                                                placeholder="HH"
-                                                maxLength={2}
-                                                value={logData.startTime.hour}
-                                                onChange={(e) => handleLogChange(lead.id, 'startTime', e.target.value.replace(/\D/g, ''), 'hour')}
-                                                className="w-12 h-8 text-xs text-center"
-                                                disabled={isReadOnly}
-                                            />
-                                            <span>:</span>
-                                            <Input
-                                                type="text"
-                                                placeholder="MM"
-                                                maxLength={2}
-                                                value={logData.startTime.minute}
-                                                onChange={(e) => handleLogChange(lead.id, 'startTime', e.target.value.replace(/\D/g, ''), 'minute')}
-                                                onBlur={(e) => {
-                                                    const val = e.target.value;
-                                                    if (val.length === 1) {
-                                                        handleLogChange(lead.id, 'startTime', val.padStart(2, '0'), 'minute');
-                                                    }
-                                                }}
-                                                className="w-12 h-8 text-xs text-center"
-                                                disabled={isReadOnly}
-                                            />
-                                            <Select value={logData.startTime.period} onValueChange={(v) => handleLogChange(lead.id, 'startTime', v, 'period')} disabled={isReadOnly}>
-                                                <SelectTrigger className="w-[70px] h-8 text-xs"><SelectValue /></SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="AM">AM</SelectItem>
-                                                    <SelectItem value="PM">PM</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="align-middle text-center w-[220px]">
-                                        <div className="flex items-center justify-center gap-1">
-                                            <Input
-                                                type="text"
-                                                placeholder="HH"
-                                                maxLength={2}
-                                                value={logData.endTime.hour}
-                                                onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value.replace(/\D/g, ''), 'hour')}
-                                                className="w-12 h-8 text-xs text-center"
-                                                disabled={isReadOnly}
-                                            />
-                                            <span>:</span>
-                                            <Input
-                                                type="text"
-                                                placeholder="MM"
-                                                maxLength={2}
-                                                value={logData.endTime.minute}
-                                                onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value.replace(/\D/g, ''), 'minute')}
-                                                onBlur={(e) => {
-                                                    const val = e.target.value;
-                                                    if (val.length === 1) {
-                                                        handleLogChange(lead.id, 'endTime', val.padStart(2, '0'), 'minute');
-                                                    }
-                                                }}
-                                                className="w-12 h-8 text-xs text-center"
-                                                disabled={isReadOnly}
-                                            />
-                                            <Select value={logData.endTime.period} onValueChange={(v) => handleLogChange(lead.id, 'endTime', v, 'period')} disabled={isReadOnly}>
-                                                <SelectTrigger className="w-[70px] h-8 text-xs"><SelectValue /></SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="AM">AM</SelectItem>
-                                                    <SelectItem value="PM">PM</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div>
+                                                <Label className="text-xs">Start Time</Label>
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <Input
+                                                        type="text"
+                                                        placeholder="HH"
+                                                        maxLength={2}
+                                                        value={logData.startTime.hour}
+                                                        onChange={(e) => handleLogChange(lead.id, 'startTime', e.target.value.replace(/\D/g, ''), 'hour')}
+                                                        className="w-12 h-8 text-xs text-center"
+                                                        disabled={isReadOnly}
+                                                    />
+                                                    <span>:</span>
+                                                    <Input
+                                                        type="text"
+                                                        placeholder="MM"
+                                                        maxLength={2}
+                                                        value={logData.startTime.minute}
+                                                        onChange={(e) => handleLogChange(lead.id, 'startTime', e.target.value.replace(/\D/g, ''), 'minute')}
+                                                        onBlur={(e) => {
+                                                            const val = e.target.value;
+                                                            if (val.length === 1) {
+                                                                handleLogChange(lead.id, 'startTime', val.padStart(2, '0'), 'minute');
+                                                            }
+                                                        }}
+                                                        className="w-12 h-8 text-xs text-center"
+                                                        disabled={isReadOnly}
+                                                    />
+                                                    <Select value={logData.startTime.period} onValueChange={(v) => handleLogChange(lead.id, 'startTime', v, 'period')} disabled={isReadOnly}>
+                                                        <SelectTrigger className="w-[70px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="AM">AM</SelectItem>
+                                                            <SelectItem value="PM">PM</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <Label className="text-xs">End Time</Label>
+                                                <div className="flex items-center justify-center gap-1">
+                                                     <Input
+                                                        type="text"
+                                                        placeholder="HH"
+                                                        maxLength={2}
+                                                        value={logData.endTime.hour}
+                                                        onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value.replace(/\D/g, ''), 'hour')}
+                                                        className="w-12 h-8 text-xs text-center"
+                                                        disabled={isReadOnly}
+                                                    />
+                                                    <span>:</span>
+                                                    <Input
+                                                        type="text"
+                                                        placeholder="MM"
+                                                        maxLength={2}
+                                                        value={logData.endTime.minute}
+                                                        onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value.replace(/\D/g, ''), 'minute')}
+                                                        onBlur={(e) => {
+                                                            const val = e.target.value;
+                                                            if (val.length === 1) {
+                                                                handleLogChange(lead.id, 'endTime', val.padStart(2, '0'), 'minute');
+                                                            }
+                                                        }}
+                                                        className="w-12 h-8 text-xs text-center"
+                                                        disabled={isReadOnly}
+                                                    />
+                                                    <Select value={logData.endTime.period} onValueChange={(v) => handleLogChange(lead.id, 'endTime', v, 'period')} disabled={isReadOnly}>
+                                                        <SelectTrigger className="w-[70px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="AM">AM</SelectItem>
+                                                            <SelectItem value="PM">PM</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                            <Separator className="my-1" />
+                                            <div className="text-xs font-bold">
+                                                {(() => {
+                                                    const duration = calculateDuration(logData.startTime, logData.endTime);
+                                                    return <span className={cn(duration === 'Check Provided Time' && 'text-destructive')}>{duration}</span>;
+                                                })()}
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell className="align-middle">
