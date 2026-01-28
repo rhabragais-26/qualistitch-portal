@@ -209,7 +209,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         const rpm = parseInt(rpmStr, 10) || 0;
 
         if (stitches > 0 && rpm > 0) {
-            const timeInMinutes = (stitches / rpm) + 10;
+            const timeInMinutes = (stitches / rpm);
             if (timeInMinutes < 60) {
                 return `${Math.ceil(timeInMinutes)} mins`;
             }
@@ -466,9 +466,9 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                             </TableFooter>
                                         </Table>
                                     </TableCell>
-                                    <TableCell className="align-middle text-center w-[220px]">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div>
+                                    <TableCell className="align-middle w-[220px]">
+                                        <div className="flex flex-col gap-2">
+                                            <div className="text-left">
                                                 <Label className="text-xs">Start Time</Label>
                                                 <div className="flex items-center justify-center gap-1">
                                                     <Input
@@ -505,7 +505,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                     </Select>
                                                 </div>
                                             </div>
-                                            <div>
+                                            <div className="text-left">
                                                 <Label className="text-xs">End Time</Label>
                                                 <div className="flex items-center justify-center gap-1">
                                                      <Input
@@ -543,7 +543,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                 </div>
                                             </div>
                                             <Separator className="my-1" />
-                                            <div className="text-xs font-bold">
+                                            <div className="text-center text-xs font-bold">
                                                 {(() => {
                                                     const duration = calculateDuration(logData.startTime, logData.endTime);
                                                     return <span className={cn(duration === 'Check Provided Time' && 'text-destructive')}>{duration}</span>;
@@ -572,5 +572,3 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         </Card>
     );
 }
-
-    
