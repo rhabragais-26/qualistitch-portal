@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Input } from './ui/input';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
@@ -97,9 +97,42 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
     const [joNumberSearch, setJoNumberSearch] = useState('');
     const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
     const [logs, setLogs] = useState<Record<string, LogData>>({});
+    const [checkedDesigns, setCheckedDesigns] = useState<Record<string, Record<string, boolean>>>({});
+
 
     const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads'), where("isCutting", "==", true)) : null, [firestore]);
     const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+
+    useEffect(() => {
+        if (leads) {
+            const initialState: Record<string, Record<string, boolean>> = {};
+            leads.forEach(lead => {
+                initialState[lead.id] = {};
+                designCheckboxes.forEach(design => {
+                    const isPresent = lead.orders.some(o => o.design?.[design.key as keyof Order['design']]);
+                    initialState[lead.id][design.key] = isPresent;
+                });
+            });
+            setCheckedDesigns(initialState);
+        }
+    }, [leads]);
+
+    const handleDesignCheckboxChange = (leadId: string, designKey: DesignType, isChecked: boolean) => {
+        setCheckedDesigns(prev => ({
+            ...prev,
+            [leadId]: {
+                ...(prev[leadId] || {}),
+                [designKey]: isChecked
+            }
+        }));
+
+        if (!isChecked) {
+            handleLogChange(leadId, 'quantity', '', designKey);
+            handleLogChange(leadId, 'stitches', '', designKey);
+            handleLogChange(leadId, 'rpm', '', designKey);
+        }
+    };
+
 
     const handleLogChange = (leadId: string, field: keyof LogData, value: any, subField?: DesignType) => {
         setLogs(prev => {
@@ -119,18 +152,20 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         });
     };
 
-    const calculateTotalEstTime = (log: LogData | undefined) => {
+    const calculateTotalEstTime = (log: LogData | undefined, lead: Lead) => {
         if (!log) return '-';
         
         let totalTimeInMinutes = 0;
         const designKeys = Object.keys(log.stitches) as DesignType[];
 
         for (const key of designKeys) {
-            const stitches = parseInt(log.stitches[key].replace(/,/g, ''), 10) || 0;
-            const rpm = parseInt(log.rpm[key], 10) || 0;
+            if (checkedDesigns[lead.id]?.[key]) {
+                const stitches = parseInt(log.stitches[key].replace(/,/g, ''), 10) || 0;
+                const rpm = parseInt(log.rpm[key], 10) || 0;
 
-            if (stitches > 0 && rpm > 0) {
-                totalTimeInMinutes += (stitches / rpm) + 10;
+                if (stitches > 0 && rpm > 0) {
+                    totalTimeInMinutes += (stitches / rpm) + 10;
+                }
             }
         }
         
@@ -280,34 +315,39 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="border-0">
-                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs border-r w-[150px]">Design</TableHead>
-                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs border-r w-[90px]">Quantity</TableHead>
-                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs border-r w-[120px]">No. of Stitches</TableHead>
-                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs border-r w-[120px]">Machine RPM</TableHead>
-                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs">Est. Time</TableHead>
+                                                    <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs border-r w-[150px]">Design</TableHead>
+                                                    <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs border-r w-[80px]">Quantity</TableHead>
+                                                    <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs border-r w-[100px]">No. of Stitches</TableHead>
+                                                    <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs border-r w-[100px]">Machine RPM</TableHead>
+                                                    <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs">Est. Time</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
                                                 {designCheckboxes.map(design => {
+                                                    const isChecked = checkedDesigns[lead.id]?.[design.key] ?? false;
                                                     const estTime = calculateSingleEstTime(logData.stitches[design.key], logData.rpm[design.key]);
                                                     return (
                                                     <TableRow key={design.key} className="border-0">
                                                         <TableCell className="p-1 border-r">
                                                             <div className="flex items-center h-7">
-                                                                <Checkbox id={`${lead.id}-${design.key}`} checked={lead.orders.some(o => o.design?.[design.key as keyof Order['design']])} disabled className="disabled:opacity-100" />
+                                                                <Checkbox id={`${lead.id}-${design.key}`} 
+                                                                    checked={isChecked}
+                                                                    onCheckedChange={(checked) => handleDesignCheckboxChange(lead.id, design.key, !!checked)}
+                                                                    disabled={isReadOnly}
+                                                                />
                                                                 <Label htmlFor={`${lead.id}-${design.key}`} className="ml-2 text-xs">{design.label}</Label>
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="p-1 border-r w-[90px]">
+                                                        <TableCell className="p-1 border-r w-[80px]">
                                                             <Input
                                                                 type="text" 
                                                                 className="h-7 text-xs text-center" 
                                                                 value={logData.quantity[design.key]}
                                                                 onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'quantity', e.target.value, design.key)}
-                                                                readOnly={isReadOnly}
+                                                                disabled={!isChecked || isReadOnly}
                                                             />
                                                         </TableCell>
-                                                        <TableCell className="p-1 border-r w-[120px]">
+                                                        <TableCell className="p-1 border-r w-[100px]">
                                                             <Input 
                                                                 type="text" 
                                                                 className="h-7 text-xs text-center" 
@@ -318,16 +358,16 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                                         handleLogChange(lead.id, 'stitches', sanitizedValue, design.key);
                                                                     }
                                                                 }}
-                                                                readOnly={isReadOnly}
+                                                                disabled={!isChecked || isReadOnly}
                                                             />
                                                         </TableCell>
-                                                        <TableCell className="p-1 border-r w-[120px]">
+                                                        <TableCell className="p-1 border-r w-[100px]">
                                                             <Input
                                                                 type="text" 
                                                                 className="h-7 text-xs text-center" 
                                                                 value={logData.rpm[design.key]}
                                                                 onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'rpm', e.target.value, design.key)}
-                                                                readOnly={isReadOnly}
+                                                                disabled={!isChecked || isReadOnly}
                                                             />
                                                         </TableCell>
                                                         <TableCell className="p-1 text-xs text-center align-middle">
@@ -338,8 +378,8 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                             </TableBody>
                                             <TableFooter>
                                                 <TableRow>
-                                                    <TableCell colSpan={4} className="text-right font-bold py-1 px-2">Total Est. Time</TableCell>
-                                                    <TableCell className="text-center font-bold py-1 px-2">{calculateTotalEstTime(logData)}</TableCell>
+                                                    <TableCell colSpan={4} className="text-right font-bold py-1 px-2 text-blue-900">Total Estimated Time</TableCell>
+                                                    <TableCell className="text-center font-bold py-1 px-2">{calculateTotalEstTime(logData, lead)}</TableCell>
                                                 </TableRow>
                                             </TableFooter>
                                         </Table>
