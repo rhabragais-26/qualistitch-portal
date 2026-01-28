@@ -2,7 +2,7 @@
 
 'use client';
 
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, doc, setDoc } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/card';
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Input } from './ui/input';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { cn, formatJoNumber, toTitleCase } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -29,9 +29,11 @@ import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, Save, Edit } from 'lucide-react';
 import { Separator } from './ui/separator';
-
+import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from './ui/button';
 
 // Simplified types for this component
 type Order = {
@@ -94,17 +96,35 @@ type LogData = {
     shift: string[];
 };
 
+type EmbroideryLog = LogData & {
+    id: string;
+    leadId: string;
+    date: string;
+    logDate: string;
+    operatorNickname: string;
+    checkedDesigns: Record<string, boolean>;
+};
 
-export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }) {
+
+export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }) {
     const firestore = useFirestore();
+    const { userProfile } = useUser();
+    const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState('');
     const [joNumberSearch, setJoNumberSearch] = useState('');
     const [logs, setLogs] = useState<Record<string, LogData>>({});
     const [checkedDesigns, setCheckedDesigns] = useState<Record<string, Record<string, boolean>>>({});
-
+    const [editingLogLeadId, setEditingLogLeadId] = useState<string | null>(null);
 
     const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads'), where("isCutting", "==", true)) : null, [firestore]);
     const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+
+    const todayStr = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+    const embroideryLogsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'embroidery_logs'), where("logDate", "==", todayStr));
+    }, [firestore, todayStr]);
+    const { data: todaysLogs, refetch: refetchLogs } = useCollection<EmbroideryLog>(embroideryLogsQuery);
 
     useEffect(() => {
         if (leads) {
@@ -119,6 +139,30 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
             setCheckedDesigns(initialState);
         }
     }, [leads]);
+
+    useEffect(() => {
+        if (todaysLogs) {
+            const newLogs: Record<string, LogData> = {};
+            const newCheckedDesigns: Record<string, Record<string, boolean>> = {};
+            todaysLogs.forEach(log => {
+                if (log.leadId) {
+                    newLogs[log.leadId] = {
+                        stitches: log.stitches,
+                        rpm: log.rpm,
+                        quantity: log.quantity,
+                        startTime: log.startTime,
+                        endTime: log.endTime,
+                        shift: log.shift,
+                    };
+                    if (log.checkedDesigns) {
+                        newCheckedDesigns[log.leadId] = log.checkedDesigns;
+                    }
+                }
+            });
+            setLogs(prevLogs => ({ ...prevLogs, ...newLogs }));
+            setCheckedDesigns(prevDesigns => ({...prevDesigns, ...newCheckedDesigns}));
+        }
+    }, [todaysLogs]);
 
     const handleDesignCheckboxChange = (leadId: string, designKey: DesignType, isChecked: boolean) => {
         setCheckedDesigns(prev => ({
@@ -296,6 +340,34 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         return `${minutes} mins`;
     };
 
+    const handleSaveLog = async (leadId: string) => {
+        if (!firestore || !userProfile) return;
+        const logData = logs[leadId];
+        if (!logData) return;
+    
+        const docId = `${leadId}_${todayStr}`;
+        const logDocRef = doc(firestore, 'embroidery_logs', docId);
+    
+        const dataToSave = {
+            id: docId,
+            leadId: leadId,
+            date: new Date().toISOString(),
+            logDate: todayStr,
+            operatorNickname: userProfile.nickname,
+            ...logData,
+            checkedDesigns: checkedDesigns[leadId] || {}
+        };
+    
+        try {
+            await setDoc(logDocRef, dataToSave, { merge: true });
+            toast({ title: 'Log Saved!' });
+            setEditingLogLeadId(null);
+            refetchLogs();
+        } catch (e: any) {
+            toast({ variant: 'destructive', title: 'Save Failed', description: e.message });
+        }
+    };
+
 
     const getContactDisplay = useCallback((lead: Lead) => {
         const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
@@ -308,7 +380,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         if (!leads) return [];
         return leads.map(lead => ({
             ...lead,
-            orderNumber: 0, // Not needed for this table logic
+            orderNumber: 0, 
             totalCustomerQuantity: 0,
         }));
     }, [leads]);
@@ -381,6 +453,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                 <TableHead colSpan={5} className="text-white font-bold text-xs text-center">Embroidery Details</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center w-[220px]">Duration</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Shift</TableHead>
+                                <TableHead className="text-white font-bold text-xs text-center">Action</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -394,6 +467,9 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                     shift: []
                                 };
                                 const isRepeat = lead.orderNumber > 1;
+                                const isSaved = todaysLogs?.some(log => log.leadId === lead.id);
+                                const isEditing = editingLogLeadId === lead.id;
+                                const isDisabled = isReadOnly || (isSaved && !isEditing);
                                 return (
                                 <TableRow key={lead.id}>
                                     <TableCell className="text-xs align-middle">
@@ -446,7 +522,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                                 <Checkbox id={`${lead.id}-${design.key}`} 
                                                                     checked={isChecked}
                                                                     onCheckedChange={(checked) => handleDesignCheckboxChange(lead.id, design.key as DesignType, !!checked)}
-                                                                    disabled={isReadOnly}
+                                                                    disabled={isDisabled}
                                                                 />
                                                                 <Label htmlFor={`${lead.id}-${design.key}`} className="ml-2 text-xs">{design.label}</Label>
                                                             </div>
@@ -457,7 +533,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                                 className="h-7 text-xs text-center" 
                                                                 value={logData.quantity[design.key as DesignType]}
                                                                 onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'quantity', e.target.value, design.key as DesignType)}
-                                                                disabled={!isChecked || isReadOnly}
+                                                                disabled={!isChecked || isDisabled}
                                                             />
                                                         </TableCell>
                                                         <TableCell className="p-1 border-r w-[100px]">
@@ -471,7 +547,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                                         handleLogChange(lead.id, 'stitches', sanitizedValue, design.key as DesignType);
                                                                     }
                                                                 }}
-                                                                disabled={!isChecked || isReadOnly}
+                                                                disabled={!isChecked || isDisabled}
                                                             />
                                                         </TableCell>
                                                         <TableCell className="p-1 border-r w-[100px]">
@@ -480,7 +556,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                                 className="h-7 text-xs text-center" 
                                                                 value={logData.rpm[design.key as DesignType]}
                                                                 onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'rpm', e.target.value, design.key as DesignType)}
-                                                                disabled={!isChecked || isReadOnly}
+                                                                disabled={!isChecked || isDisabled}
                                                             />
                                                         </TableCell>
                                                         <TableCell className="p-1 text-xs text-center align-middle">
@@ -510,12 +586,12 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         onChange={(e) => handleLogChange(lead.id, 'startTime', e.target.value, 'hour')}
                                                          onBlur={(e) => {
                                                             const val = e.target.value;
-                                                            if (val.length === 1 && /^\d$/.test(val)) {
-                                                                handleLogChange(lead.id, 'startTime', '0' + val, 'hour');
+                                                            if (val.length > 0 && /^\d{1,2}$/.test(val)) {
+                                                                handleLogChange(lead.id, 'startTime', val.padStart(2, '0'), 'hour');
                                                             }
                                                         }}
                                                         className="w-12 h-8 text-xs text-center"
-                                                        disabled={isReadOnly}
+                                                        disabled={isDisabled}
                                                     />
                                                     <span>:</span>
                                                     <Input
@@ -526,14 +602,14 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         onChange={(e) => handleLogChange(lead.id, 'startTime', e.target.value, 'minute')}
                                                         onBlur={(e) => {
                                                             const val = e.target.value;
-                                                            if (val.length === 1) {
+                                                            if (val.length > 0 && /^\d{1,2}$/.test(val)) {
                                                                 handleLogChange(lead.id, 'startTime', val.padStart(2, '0'), 'minute');
                                                             }
                                                         }}
                                                         className="w-12 h-8 text-xs text-center"
-                                                        disabled={isReadOnly}
+                                                        disabled={isDisabled}
                                                     />
-                                                    <Select value={logData.startTime.period} onValueChange={(v) => handleLogChange(lead.id, 'startTime', v, 'period')} disabled={isReadOnly}>
+                                                    <Select value={logData.startTime.period} onValueChange={(v) => handleLogChange(lead.id, 'startTime', v, 'period')} disabled={isDisabled}>
                                                         <SelectTrigger className="w-[65px] h-8 text-xs"><SelectValue /></SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="AM">AM</SelectItem>
@@ -553,12 +629,12 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value, 'hour')}
                                                          onBlur={(e) => {
                                                             const val = e.target.value;
-                                                            if (val.length === 1 && /^\d$/.test(val)) {
-                                                                handleLogChange(lead.id, 'endTime', '0' + val, 'hour');
+                                                            if (val.length > 0 && /^\d{1,2}$/.test(val)) {
+                                                                handleLogChange(lead.id, 'endTime', val.padStart(2, '0'), 'hour');
                                                             }
                                                         }}
                                                         className="w-12 h-8 text-xs text-center"
-                                                        disabled={isReadOnly}
+                                                        disabled={isDisabled}
                                                     />
                                                     <span>:</span>
                                                     <Input
@@ -569,14 +645,14 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value, 'minute')}
                                                          onBlur={(e) => {
                                                             const val = e.target.value;
-                                                            if (val.length === 1) {
+                                                            if (val.length > 0 && /^\d{1,2}$/.test(val)) {
                                                                 handleLogChange(lead.id, 'endTime', val.padStart(2, '0'), 'minute');
                                                             }
                                                         }}
                                                         className="w-12 h-8 text-xs text-center"
-                                                        disabled={isReadOnly}
+                                                        disabled={isDisabled}
                                                     />
-                                                    <Select value={logData.endTime.period} onValueChange={(v) => handleLogChange(lead.id, 'endTime', v, 'period')} disabled={isReadOnly}>
+                                                    <Select value={logData.endTime.period} onValueChange={(v) => handleLogChange(lead.id, 'endTime', v, 'period')} disabled={isDisabled}>
                                                         <SelectTrigger className="w-[65px] h-8 text-xs"><SelectValue /></SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="AM">AM</SelectItem>
@@ -602,7 +678,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         id={`${lead.id}-${shiftOption}`}
                                                         checked={(logData.shift || []).includes(shiftOption)}
                                                         onCheckedChange={(checked) => handleShiftChange(lead.id, shiftOption, !!checked)}
-                                                        disabled={isReadOnly}
+                                                        disabled={isDisabled}
                                                     />
                                                     <Label htmlFor={`${lead.id}-${shiftOption}`} className="text-xs font-normal">
                                                         {shiftOption}
@@ -610,6 +686,21 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                 </div>
                                             ))}
                                         </div>
+                                    </TableCell>
+                                    <TableCell className="align-middle text-center">
+                                        {isEditing ? (
+                                            <Button onClick={() => handleSaveLog(lead.id)} size="sm" className="h-8">
+                                                <Save className="mr-2 h-4 w-4" /> Save
+                                            </Button>
+                                        ) : isSaved ? (
+                                            <Button variant="outline" size="sm" className="h-8" onClick={() => setEditingLogLeadId(lead.id)}>
+                                                <Edit className="mr-2 h-4 w-4" /> Edit
+                                            </Button>
+                                        ) : (
+                                            <Button onClick={() => handleSaveLog(lead.id)} size="sm" className="h-8" disabled={isReadOnly}>
+                                                <Save className="mr-2 h-4 w-4" /> Save
+                                            </Button>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             )})}
@@ -620,4 +711,3 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         </Card>
     );
 }
-
