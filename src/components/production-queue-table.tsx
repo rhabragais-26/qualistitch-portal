@@ -19,23 +19,27 @@ import {
 } from '@/components/ui/card';
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2, FileText } from 'lucide-react';
-import { Badge } from './ui/badge';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
-import { Input } from './ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { Checkbox } from './ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
 import { Label } from './ui/label';
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { Skeleton } from './ui/skeleton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import Link from 'next/link';
+import { Textarea } from './ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
+import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2, FileText, Download } from 'lucide-react';
+import { Badge } from './ui/badge';
+import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
+import { Checkbox } from './ui/checkbox';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { Input } from './ui/input';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { addDays, differenceInDays, format } from 'date-fns';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { Skeleton } from './ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+
 
 type Order = {
   productType: string;
