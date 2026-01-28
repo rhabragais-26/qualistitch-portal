@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { collection, query, where } from 'firebase/firestore';
@@ -125,12 +126,11 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         const designKeys = Object.keys(log.stitches) as DesignType[];
 
         for (const key of designKeys) {
-            const stitches = parseInt(log.stitches[key], 10) || 0;
+            const stitches = parseInt(log.stitches[key].replace(/,/g, ''), 10) || 0;
             const rpm = parseInt(log.rpm[key], 10) || 0;
-            const quantity = parseInt(log.quantity[key], 10) || 0;
 
-            if (stitches > 0 && rpm > 0 && quantity > 0) {
-                totalTimeInMinutes += ((stitches / rpm) * quantity) + 10;
+            if (stitches > 0 && rpm > 0) {
+                totalTimeInMinutes += (stitches / rpm) + 10;
             }
         }
         
@@ -144,13 +144,12 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         return `${hours} hr ${minutes} mins`;
     };
     
-    const calculateSingleEstTime = (stitchesStr: string, rpmStr: string, quantityStr: string) => {
-        const stitches = parseInt(stitchesStr, 10) || 0;
+    const calculateSingleEstTime = (stitchesStr: string, rpmStr: string) => {
+        const stitches = parseInt(stitchesStr.replace(/,/g, ''), 10) || 0;
         const rpm = parseInt(rpmStr, 10) || 0;
-        const quantity = parseInt(quantityStr, 10) || 0;
 
-        if (stitches > 0 && rpm > 0 && quantity > 0) {
-            const timeInMinutes = ((stitches / rpm) * quantity) + 10;
+        if (stitches > 0 && rpm > 0) {
+            const timeInMinutes = (stitches / rpm) + 10;
             if (timeInMinutes < 60) {
                 return `${Math.ceil(timeInMinutes)} mins`;
             }
@@ -290,7 +289,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                             </TableHeader>
                                             <TableBody>
                                                 {designCheckboxes.map(design => {
-                                                    const estTime = calculateSingleEstTime(logData.stitches[design.key], logData.rpm[design.key], logData.quantity[design.key]);
+                                                    const estTime = calculateSingleEstTime(logData.stitches[design.key], logData.rpm[design.key]);
                                                     return (
                                                     <TableRow key={design.key} className="border-0">
                                                         <TableCell className="p-1 border-r">
@@ -299,7 +298,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                                 <Label htmlFor={`${lead.id}-${design.key}`} className="ml-2 text-xs">{design.label}</Label>
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="p-1 border-r">
+                                                        <TableCell className="p-1 border-r w-[90px]">
                                                             <Input
                                                                 type="text" 
                                                                 className="h-7 text-xs text-center" 
@@ -308,16 +307,21 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                                 readOnly={isReadOnly}
                                                             />
                                                         </TableCell>
-                                                        <TableCell className="p-1 border-r">
+                                                        <TableCell className="p-1 border-r w-[120px]">
                                                             <Input 
                                                                 type="text" 
                                                                 className="h-7 text-xs text-center" 
-                                                                value={logData.stitches[design.key]}
-                                                                onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'stitches', e.target.value, design.key)}
+                                                                value={logData.stitches[design.key] ? new Intl.NumberFormat().format(Number(logData.stitches[design.key])) : ''}
+                                                                onChange={(e) => {
+                                                                    const sanitizedValue = e.target.value.replace(/,/g, '');
+                                                                    if (/^\d*$/.test(sanitizedValue)) {
+                                                                        handleLogChange(lead.id, 'stitches', sanitizedValue, design.key);
+                                                                    }
+                                                                }}
                                                                 readOnly={isReadOnly}
                                                             />
                                                         </TableCell>
-                                                        <TableCell className="p-1 border-r">
+                                                        <TableCell className="p-1 border-r w-[120px]">
                                                             <Input
                                                                 type="text" 
                                                                 className="h-7 text-xs text-center" 
