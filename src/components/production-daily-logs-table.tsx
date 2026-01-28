@@ -36,10 +36,10 @@ import { Separator } from './ui/separator';
 // Simplified types for this component
 type Order = {
   design?: {
-    left?: boolean;
-    right?: boolean;
+    leftLogo?: boolean;
+    rightLogo?: boolean;
     backLogo?: boolean;
-    backText?: boolean;
+    backDesign?: boolean;
     names?: boolean;
   };
   quantity: number;
@@ -63,7 +63,7 @@ type EnrichedLead = Lead & {
   totalCustomerQuantity: number;
 };
 
-type DesignType = keyof LogData['stitches'];
+type DesignType = 'leftLogo' | 'rightLogo' | 'backLogo' | 'backDesign' | 'names';
 
 type TimeValue = { hour: string; minute: string; period: 'AM' | 'PM' };
 
@@ -158,12 +158,18 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
             } else if ((field === 'startTime' || field === 'endTime') && subField && (subField === 'hour' || subField === 'minute' || subField === 'period')) {
                 const timeField = newLog[field];
                 if (subField === 'hour') {
-                    if (/^\d{0,2}$/.test(value) && (value === '' || (parseInt(value, 10) >= 0 && parseInt(value, 10) <= 12))) {
-                        timeField.hour = value;
+                    if (/^\d{0,2}$/.test(value)) {
+                        let numVal = parseInt(value, 10);
+                        if (value === '' || (numVal >= 0 && numVal <= 12)) {
+                            timeField.hour = value;
+                        }
                     }
                 } else if (subField === 'minute') {
-                     if (/^\d{0,2}$/.test(value) && (value === '' || (parseInt(value, 10) >= 0 && parseInt(value, 10) <= 59))) {
-                        timeField.minute = value;
+                     if (/^\d{0,2}$/.test(value)) {
+                        let numVal = parseInt(value, 10);
+                        if (value === '' || (numVal >= 0 && numVal <= 59)) {
+                            timeField.minute = value;
+                        }
                     }
                 } else if (subField === 'period') {
                     timeField.period = value as 'AM' | 'PM';
@@ -214,7 +220,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                 const quantity = parseInt(log.quantity[key], 10) || 0;
 
                 if (stitches > 0 && rpm > 0 && quantity > 0) {
-                    totalTimeInMinutes += ((stitches / rpm) * quantity) + 10;
+                    totalTimeInMinutes += ((stitches / rpm) * quantity) + 5;
                 }
             }
         }
@@ -249,7 +255,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         let hour = parseInt(time.hour, 10);
         const minute = parseInt(time.minute, 10);
 
-        if (isNaN(hour) || isNaN(minute) || hour < 1 || hour > 12 || minute < 0 || minute > 59) {
+        if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 12 || minute < 0 || minute > 59) {
             return null;
         }
 
@@ -504,8 +510,8 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         onChange={(e) => handleLogChange(lead.id, 'startTime', e.target.value, 'hour')}
                                                          onBlur={(e) => {
                                                             const val = e.target.value;
-                                                            if (val.length === 1) {
-                                                                handleLogChange(lead.id, 'startTime', val.padStart(2, '0'), 'hour');
+                                                            if (val.length === 1 && /^\d$/.test(val)) {
+                                                                handleLogChange(lead.id, 'startTime', '0' + val, 'hour');
                                                             }
                                                         }}
                                                         className="w-12 h-8 text-xs text-center"
@@ -547,8 +553,8 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value, 'hour')}
                                                          onBlur={(e) => {
                                                             const val = e.target.value;
-                                                            if (val.length === 1) {
-                                                                handleLogChange(lead.id, 'endTime', val.padStart(2, '0'), 'hour');
+                                                            if (val.length === 1 && /^\d$/.test(val)) {
+                                                                handleLogChange(lead.id, 'endTime', '0' + val, 'hour');
                                                             }
                                                         }}
                                                         className="w-12 h-8 text-xs text-center"
@@ -614,3 +620,4 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         </Card>
     );
 }
+
