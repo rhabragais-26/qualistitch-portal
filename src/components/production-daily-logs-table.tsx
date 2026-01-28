@@ -158,14 +158,18 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
             } else if ((field === 'startTime' || field === 'endTime') && subField && (subField === 'hour' || subField === 'minute' || subField === 'period')) {
                 const timeField = newLog[field];
                 if (subField === 'hour') {
-                    const num = parseInt(value, 10);
-                    if (value === '' || (!isNaN(num) && num >= 1 && num <= 12)) {
-                        timeField.hour = value;
+                    if (/^\d{0,2}$/.test(value)) {
+                        const num = parseInt(value, 10);
+                        if(value === '' || (value.length === 1 && /^[0-9]$/.test(value)) || (value.length === 2 && !isNaN(num) && num >= 1 && num <= 12)) {
+                            timeField.hour = value;
+                        }
                     }
                 } else if (subField === 'minute') {
-                    const num = parseInt(value, 10);
-                    if (value === '' || (!isNaN(num) && num >= 0 && num <= 59)) {
-                        timeField.minute = value;
+                     if (/^\d{0,2}$/.test(value)) {
+                        const num = parseInt(value, 10);
+                        if(value === '' || (value.length === 1 && /^[0-9]$/.test(value)) || (value.length === 2 && !isNaN(num) && num >= 0 && num <= 59)) {
+                            timeField.minute = value;
+                        }
                     }
                 } else if (subField === 'period') {
                     timeField.period = value as 'AM' | 'PM';
@@ -303,7 +307,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         { label: 'Left Logo', key: 'leftLogo' },
         { label: 'Right Logo', key: 'rightLogo' },
         { label: 'Back Logo', key: 'backLogo' },
-        { label: 'Back Text', key: 'backText' },
+        { label: 'Back Design', key: 'backText' },
         { label: 'Names', key: 'names' },
     ];
     
@@ -537,7 +541,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         maxLength={2}
                                                         value={logData.endTime.minute}
                                                         onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value.replace(/\D/g, ''), 'minute')}
-                                                        onBlur={(e) => {
+                                                         onBlur={(e) => {
                                                             const val = e.target.value;
                                                             if (val.length === 1) {
                                                                 handleLogChange(lead.id, 'endTime', val.padStart(2, '0'), 'minute');
@@ -556,7 +560,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                 </div>
                                             </div>
                                             <Separator className="my-1" />
-                                            <div className="text-center text-xs font-bold">
+                                            <div className="text-center font-bold text-xs">
                                                 {(() => {
                                                     const duration = calculateDuration(logData.startTime, logData.endTime);
                                                     return <span className={cn(duration === 'Check Provided Time' && 'text-destructive')}>{duration}</span>;
