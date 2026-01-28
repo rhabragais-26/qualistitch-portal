@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { collection, query, where } from 'firebase/firestore';
@@ -468,15 +469,21 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                     </TableCell>
                                     <TableCell className="align-middle w-[220px]">
                                         <div className="flex flex-col gap-2">
-                                            <div className="text-left">
+                                            <div className="flex items-center justify-between">
                                                 <Label className="text-xs">Start Time</Label>
-                                                <div className="flex items-center justify-center gap-1">
+                                                <div className="flex items-center gap-1">
                                                     <Input
                                                         type="text"
                                                         placeholder="HH"
                                                         maxLength={2}
                                                         value={logData.startTime.hour}
                                                         onChange={(e) => handleLogChange(lead.id, 'startTime', e.target.value.replace(/\D/g, ''), 'hour')}
+                                                         onBlur={(e) => {
+                                                            const val = e.target.value;
+                                                            if (val.length === 1) {
+                                                                handleLogChange(lead.id, 'startTime', val.padStart(2, '0'), 'hour');
+                                                            }
+                                                        }}
                                                         className="w-12 h-8 text-xs text-center"
                                                         disabled={isReadOnly}
                                                     />
@@ -505,15 +512,21 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                     </Select>
                                                 </div>
                                             </div>
-                                            <div className="text-left">
+                                            <div className="flex items-center justify-between">
                                                 <Label className="text-xs">End Time</Label>
-                                                <div className="flex items-center justify-center gap-1">
-                                                     <Input
+                                                <div className="flex items-center gap-1">
+                                                    <Input
                                                         type="text"
                                                         placeholder="HH"
                                                         maxLength={2}
                                                         value={logData.endTime.hour}
                                                         onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value.replace(/\D/g, ''), 'hour')}
+                                                         onBlur={(e) => {
+                                                            const val = e.target.value;
+                                                            if (val.length === 1) {
+                                                                handleLogChange(lead.id, 'endTime', val.padStart(2, '0'), 'hour');
+                                                            }
+                                                        }}
                                                         className="w-12 h-8 text-xs text-center"
                                                         disabled={isReadOnly}
                                                     />
