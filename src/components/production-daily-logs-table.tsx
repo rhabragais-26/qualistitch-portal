@@ -39,6 +39,7 @@ type Order = {
     right?: boolean;
     backLogo?: boolean;
     backText?: boolean;
+    names?: boolean;
   };
   quantity: number;
 };
@@ -61,6 +62,8 @@ type EnrichedLead = Lead & {
   totalCustomerQuantity: number;
 };
 
+type DesignType = keyof LogData['stitches'];
+
 type LogData = {
     stitches: {
         leftLogo: string;
@@ -76,10 +79,16 @@ type LogData = {
         backText: string;
         names: string;
     };
+    quantity: {
+        leftLogo: string;
+        rightLogo: string;
+        backLogo: string;
+        backText: string;
+        names: string;
+    };
     shift: 'Morning Shift' | 'Mid Shift' | 'Evening Shift' | '';
 };
 
-type DesignType = keyof LogData['stitches'];
 
 export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }) {
     const firestore = useFirestore();
@@ -96,12 +105,13 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
             const newLog = { ...(prev[leadId] || { 
                 stitches: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, 
                 rpm: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
+                quantity: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
                 shift: '' 
             }) };
 
-            if ((field === 'stitches' || field === 'rpm') && subField) {
+            if ((field === 'stitches' || field === 'rpm' || field === 'quantity') && subField) {
                 newLog[field][subField] = value;
-            } else if (field !== 'stitches' && field !== 'rpm') {
+            } else if (field !== 'stitches' && field !== 'rpm' && field !== 'quantity') {
                 (newLog[field] as any) = value;
             }
             return { ...prev, [leadId]: newLog };
@@ -117,9 +127,10 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         for (const key of designKeys) {
             const stitches = parseInt(log.stitches[key], 10) || 0;
             const rpm = parseInt(log.rpm[key], 10) || 0;
+            const quantity = parseInt(log.quantity[key], 10) || 0;
 
-            if (stitches > 0 && rpm > 0) {
-                totalTimeInMinutes += (stitches / rpm) + 10;
+            if (stitches > 0 && rpm > 0 && quantity > 0) {
+                totalTimeInMinutes += ((stitches / rpm) * quantity) + 10;
             }
         }
         
@@ -133,12 +144,13 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         return `${hours} hr ${minutes} mins`;
     };
     
-    const calculateSingleEstTime = (stitchesStr: string, rpmStr: string) => {
+    const calculateSingleEstTime = (stitchesStr: string, rpmStr: string, quantityStr: string) => {
         const stitches = parseInt(stitchesStr, 10) || 0;
         const rpm = parseInt(rpmStr, 10) || 0;
+        const quantity = parseInt(quantityStr, 10) || 0;
 
-        if (stitches > 0 && rpm > 0) {
-            const timeInMinutes = (stitches / rpm) + 10;
+        if (stitches > 0 && rpm > 0 && quantity > 0) {
+            const timeInMinutes = ((stitches / rpm) * quantity) + 10;
             if (timeInMinutes < 60) {
                 return `${Math.ceil(timeInMinutes)} mins`;
             }
@@ -235,13 +247,18 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                 <TableHead className="text-white font-bold text-xs">Customer</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
-                                <TableHead colSpan={4} className="text-white font-bold text-xs text-center">Embroidery Details</TableHead>
+                                <TableHead colSpan={5} className="text-white font-bold text-xs text-center">Embroidery Details</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Shift</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredLeads.map(lead => {
-                                const logData = logs[lead.id] || { stitches: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, rpm: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, shift: '' };
+                                const logData = logs[lead.id] || { 
+                                    stitches: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, 
+                                    rpm: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
+                                    quantity: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
+                                    shift: '' 
+                                };
                                 return (
                                 <TableRow key={lead.id}>
                                     <TableCell className="text-xs">
@@ -260,19 +277,20 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                     </TableCell>
                                     <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                                     <TableCell className="text-xs text-center"><Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>{lead.priorityType}</Badge></TableCell>
-                                    <TableCell colSpan={4} className="p-0 align-top">
+                                    <TableCell colSpan={5} className="p-0 align-top">
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="border-0">
                                                     <TableHead className="p-1 h-auto text-center text-black font-bold text-xs border-r w-[150px]">Design</TableHead>
-                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs border-r">No. of Stitches</TableHead>
-                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs border-r">Machine RPM</TableHead>
+                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs border-r w-[90px]">Quantity</TableHead>
+                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs border-r w-[120px]">No. of Stitches</TableHead>
+                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs border-r w-[120px]">Machine RPM</TableHead>
                                                     <TableHead className="p-1 h-auto text-center text-black font-bold text-xs">Est. Time</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
                                                 {designCheckboxes.map(design => {
-                                                    const estTime = calculateSingleEstTime(logData.stitches[design.key], logData.rpm[design.key]);
+                                                    const estTime = calculateSingleEstTime(logData.stitches[design.key], logData.rpm[design.key], logData.quantity[design.key]);
                                                     return (
                                                     <TableRow key={design.key} className="border-0">
                                                         <TableCell className="p-1 border-r">
@@ -282,11 +300,20 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="p-1 border-r">
+                                                            <Input
+                                                                type="text" 
+                                                                className="h-7 text-xs text-center" 
+                                                                value={logData.quantity[design.key]}
+                                                                onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'quantity', e.target.value, design.key)}
+                                                                readOnly={isReadOnly}
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="p-1 border-r">
                                                             <Input 
                                                                 type="text" 
-                                                                className="h-7 text-xs" 
+                                                                className="h-7 text-xs text-center" 
                                                                 value={logData.stitches[design.key]}
-                                                                onChange={(e) => handleLogChange(lead.id, 'stitches', e.target.value, design.key)}
+                                                                onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'stitches', e.target.value, design.key)}
                                                                 readOnly={isReadOnly}
                                                             />
                                                         </TableCell>
@@ -307,7 +334,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                             </TableBody>
                                             <TableFooter>
                                                 <TableRow>
-                                                    <TableCell colSpan={3} className="text-right font-bold py-1 px-2">Total Est. Time</TableCell>
+                                                    <TableCell colSpan={4} className="text-right font-bold py-1 px-2">Total Est. Time</TableCell>
                                                     <TableCell className="text-center font-bold py-1 px-2">{calculateTotalEstTime(logData)}</TableCell>
                                                 </TableRow>
                                             </TableFooter>
@@ -334,5 +361,3 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         </Card>
     );
 }
-
-    
