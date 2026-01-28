@@ -1,3 +1,4 @@
+
 'use client';
 
 import { collection, query, where } from 'firebase/firestore';
@@ -8,6 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from '@/components/ui/table';
 import {
   Card,
@@ -106,7 +108,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         });
     };
 
-    const calculateEstTime = (log: LogData | undefined) => {
+    const calculateTotalEstTime = (log: LogData | undefined) => {
         if (!log) return '-';
         
         let totalTimeInMinutes = 0;
@@ -124,12 +126,29 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         if (totalTimeInMinutes === 0) return '-';
 
         if (totalTimeInMinutes < 60) {
-            return `${Math.ceil(totalTimeInMinutes)} minutes`;
+            return `${Math.ceil(totalTimeInMinutes)} mins`;
         }
         const hours = Math.floor(totalTimeInMinutes / 60);
         const minutes = Math.ceil(totalTimeInMinutes % 60);
-        return `${hours} hr and ${minutes} mins`;
+        return `${hours} hr ${minutes} mins`;
     };
+    
+    const calculateSingleEstTime = (stitchesStr: string, rpmStr: string) => {
+        const stitches = parseInt(stitchesStr, 10) || 0;
+        const rpm = parseInt(rpmStr, 10) || 0;
+
+        if (stitches > 0 && rpm > 0) {
+            const timeInMinutes = (stitches / rpm) + 10;
+            if (timeInMinutes < 60) {
+                return `${Math.ceil(timeInMinutes)} mins`;
+            }
+            const hours = Math.floor(timeInMinutes / 60);
+            const minutes = Math.ceil(timeInMinutes % 60);
+            return `${hours} hr ${minutes} mins`;
+        }
+        return '-';
+    };
+
 
     const getContactDisplay = useCallback((lead: Lead) => {
         const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
@@ -216,17 +235,13 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                 <TableHead className="text-white font-bold text-xs">Customer</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
-                                <TableHead className="text-white font-bold text-xs">Design Details</TableHead>
-                                <TableHead className="text-white font-bold text-xs text-center">No. of Stitches</TableHead>
-                                <TableHead className="text-white font-bold text-xs text-center">Machine RPM</TableHead>
-                                <TableHead className="text-white font-bold text-xs text-center">Est. Prod. Time</TableHead>
+                                <TableHead colSpan={4} className="text-white font-bold text-xs text-center">Embroidery Details</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Shift</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredLeads.map(lead => {
                                 const logData = logs[lead.id] || { stitches: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, rpm: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, shift: '' };
-                                const estTime = calculateEstTime(logData);
                                 return (
                                 <TableRow key={lead.id}>
                                     <TableCell className="text-xs">
@@ -245,46 +260,60 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                     </TableCell>
                                     <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                                     <TableCell className="text-xs text-center"><Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>{lead.priorityType}</Badge></TableCell>
-                                    <TableCell>
-                                        <div className="space-y-2">
-                                            {designCheckboxes.map(design => (
-                                                <div key={design.key} className="flex items-center h-7">
-                                                    <Checkbox id={`${lead.id}-${design.key}`} checked={lead.orders.some(o => o.design?.[design.key as keyof Order['design']])} disabled className="disabled:opacity-100" />
-                                                    <Label htmlFor={`${lead.id}-${design.key}`} className="ml-2 text-xs">{design.label}</Label>
-                                                </div>
-                                            ))}
-                                        </div>
+                                    <TableCell colSpan={4} className="p-0 align-top">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="border-0">
+                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs border-r w-[150px]">Design</TableHead>
+                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs border-r">No. of Stitches</TableHead>
+                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs border-r">Machine RPM</TableHead>
+                                                    <TableHead className="p-1 h-auto text-center text-black font-bold text-xs">Est. Time</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {designCheckboxes.map(design => {
+                                                    const estTime = calculateSingleEstTime(logData.stitches[design.key], logData.rpm[design.key]);
+                                                    return (
+                                                    <TableRow key={design.key} className="border-0">
+                                                        <TableCell className="p-1 border-r">
+                                                            <div className="flex items-center h-7">
+                                                                <Checkbox id={`${lead.id}-${design.key}`} checked={lead.orders.some(o => o.design?.[design.key as keyof Order['design']])} disabled className="disabled:opacity-100" />
+                                                                <Label htmlFor={`${lead.id}-${design.key}`} className="ml-2 text-xs">{design.label}</Label>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="p-1 border-r">
+                                                            <Input 
+                                                                type="text" 
+                                                                className="h-7 text-xs" 
+                                                                value={logData.stitches[design.key]}
+                                                                onChange={(e) => handleLogChange(lead.id, 'stitches', e.target.value, design.key)}
+                                                                readOnly={isReadOnly}
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="p-1 border-r">
+                                                            <Input
+                                                                type="text" 
+                                                                className="h-7 text-xs text-center" 
+                                                                value={logData.rpm[design.key]}
+                                                                onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'rpm', e.target.value, design.key)}
+                                                                readOnly={isReadOnly}
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell className="p-1 text-xs text-center align-middle">
+                                                            {estTime}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )})}
+                                            </TableBody>
+                                            <TableFooter>
+                                                <TableRow>
+                                                    <TableCell colSpan={3} className="text-right font-bold py-1 px-2">Total Est. Time</TableCell>
+                                                    <TableCell className="text-center font-bold py-1 px-2">{calculateTotalEstTime(logData)}</TableCell>
+                                                </TableRow>
+                                            </TableFooter>
+                                        </Table>
                                     </TableCell>
-                                    <TableCell>
-                                         <div className="space-y-2">
-                                            {designCheckboxes.map(design => (
-                                                <Input 
-                                                    key={design.key} 
-                                                    type="text" 
-                                                    className="h-7 text-xs" 
-                                                    value={logData.stitches[design.key]}
-                                                    onChange={(e) => handleLogChange(lead.id, 'stitches', e.target.value, design.key)}
-                                                    readOnly={isReadOnly}
-                                                />
-                                            ))}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="space-y-2">
-                                            {designCheckboxes.map(design => (
-                                                <Input
-                                                    key={design.key}
-                                                    type="text" 
-                                                    className="h-7 text-xs text-center" 
-                                                    value={logData.rpm[design.key]}
-                                                    onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'rpm', e.target.value, design.key)}
-                                                    readOnly={isReadOnly}
-                                                />
-                                            ))}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-xs text-center font-semibold">{estTime}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="align-top pt-2">
                                         <Select value={logData.shift} onValueChange={(value) => handleLogChange(lead.id, 'shift', value)} disabled={isReadOnly}>
                                             <SelectTrigger className="text-xs h-8">
                                                 <SelectValue placeholder="Select Shift" />
@@ -305,3 +334,5 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         </Card>
     );
 }
+
+    
