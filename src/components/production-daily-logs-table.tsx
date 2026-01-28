@@ -85,6 +85,8 @@ type LogData = {
         backText: string;
         names: string;
     };
+    startTime: string;
+    endTime: string;
     shift: 'Morning Shift' | 'Mid Shift' | 'Evening Shift' | '';
 };
 
@@ -137,6 +139,8 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                 stitches: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, 
                 rpm: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
                 quantity: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
+                startTime: '',
+                endTime: '',
                 shift: '' 
             }) };
 
@@ -275,6 +279,8 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
                                 <TableHead colSpan={5} className="text-white font-bold text-xs text-center">Embroidery Details</TableHead>
+                                <TableHead className="text-white font-bold text-xs text-center w-[120px]">Start Time</TableHead>
+                                <TableHead className="text-white font-bold text-xs text-center w-[120px]">End Time</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Shift</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -284,18 +290,20 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                     stitches: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, 
                                     rpm: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
                                     quantity: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
+                                    startTime: '',
+                                    endTime: '',
                                     shift: '' 
                                 };
                                 const isRepeat = lead.orderNumber > 1;
                                 return (
                                 <TableRow key={lead.id}>
-                                    <TableCell className="text-xs align-middle text-center">
+                                    <TableCell className="text-xs align-middle">
                                         <div className="font-bold">{toTitleCase(lead.customerName)}</div>
                                         {isRepeat ? (
                                             <TooltipProvider>
                                                 <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
+                                                    <div className="flex items-center justify-start gap-1.5 cursor-pointer mt-1">
                                                     <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                                     <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
                                                         {lead.orderNumber}
@@ -357,7 +365,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                             <Input 
                                                                 type="text" 
                                                                 className="h-7 text-xs text-center" 
-                                                                value={logData.stitches[design.key] ? new Intl.NumberFormat().format(Number(logData.stitches[design.key])) : ''}
+                                                                value={logData.stitches[design.key] ? new Intl.NumberFormat().format(Number(logData.stitches[design.key].replace(/,/g, ''))) : ''}
                                                                 onChange={(e) => {
                                                                     const sanitizedValue = e.target.value.replace(/,/g, '');
                                                                     if (/^\d*$/.test(sanitizedValue)) {
@@ -390,7 +398,27 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                             </TableFooter>
                                         </Table>
                                     </TableCell>
-                                    <TableCell className="align-top pt-2">
+                                    <TableCell className="align-middle text-center">
+                                        <Input
+                                            type="text"
+                                            className="h-8 text-xs text-center"
+                                            placeholder="HH:MM am/pm"
+                                            value={logData.startTime}
+                                            onChange={(e) => handleLogChange(lead.id, 'startTime', e.target.value)}
+                                            disabled={isReadOnly}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="align-middle text-center">
+                                        <Input
+                                            type="text"
+                                            className="h-8 text-xs text-center"
+                                            placeholder="HH:MM am/pm"
+                                            value={logData.endTime}
+                                            onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value)}
+                                            disabled={isReadOnly}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="align-middle">
                                         <Select value={logData.shift} onValueChange={(value) => handleLogChange(lead.id, 'shift', value)} disabled={isReadOnly}>
                                             <SelectTrigger className="text-xs h-8">
                                                 <SelectValue placeholder="Select Shift" />
@@ -411,3 +439,5 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         </Card>
     );
 }
+
+    
