@@ -462,7 +462,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                             <TableFooter>
                                                 <TableRow>
                                                     <TableCell colSpan={4} className="text-right font-bold py-1 px-2 text-black">Total Estimated Time</TableCell>
-                                                    <TableCell className="text-center font-bold py-1 px-2">{calculateTotalEstTime(logData, lead)}</TableCell>
+                                                    <TableCell className="text-center font-bold py-1 px-2 text-black">{calculateTotalEstTime(logData, lead)}</TableCell>
                                                 </TableRow>
                                             </TableFooter>
                                         </Table>
@@ -470,7 +470,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                     <TableCell className="align-middle">
                                         <div className="flex flex-col gap-2">
                                             <div className="flex items-center justify-between">
-                                                <Label className="text-xs whitespace-nowrap">Start Time</Label>
+                                                <Label className="text-xs whitespace-nowrap pr-2">Start Time</Label>
                                                 <div className="flex items-center gap-1">
                                                     <Input
                                                         type="text"
@@ -504,7 +504,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         disabled={isReadOnly}
                                                     />
                                                     <Select value={logData.startTime.period} onValueChange={(v) => handleLogChange(lead.id, 'startTime', v, 'period')} disabled={isReadOnly}>
-                                                        <SelectTrigger className="w-[70px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                                                        <SelectTrigger className="w-[65px] h-8 text-xs"><SelectValue /></SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="AM">AM</SelectItem>
                                                             <SelectItem value="PM">PM</SelectItem>
@@ -513,7 +513,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                 </div>
                                             </div>
                                             <div className="flex items-center justify-between">
-                                                <Label className="text-xs whitespace-nowrap">End Time</Label>
+                                                <Label className="text-xs whitespace-nowrap pr-2">End Time</Label>
                                                 <div className="flex items-center gap-1">
                                                     <Input
                                                         type="text"
@@ -547,7 +547,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         disabled={isReadOnly}
                                                     />
                                                     <Select value={logData.endTime.period} onValueChange={(v) => handleLogChange(lead.id, 'endTime', v, 'period')} disabled={isReadOnly}>
-                                                        <SelectTrigger className="w-[70px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                                                        <SelectTrigger className="w-[65px] h-8 text-xs"><SelectValue /></SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="AM">AM</SelectItem>
                                                             <SelectItem value="PM">PM</SelectItem>
