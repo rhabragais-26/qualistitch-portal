@@ -1,3 +1,4 @@
+
 'use client';
 
 import { collection, query, doc, updateDoc, getDocs, where } from 'firebase/firestore';
@@ -28,7 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import Link from 'next/link';
@@ -329,6 +330,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     handleCheckboxChange: (leadId: string, field: CheckboxField, checked: boolean) => void;
     handleStatusChange: (leadId: string, field: "productionType" | "sewerType", value: string) => void;
     handleEndorseToLogistics: (leadId: string) => void;
+    setLeadToReopen: (lead: Lead | null) => void;
     toggleLeadDetails: (leadId: string) => void;
     openLeadId: string | null;
 }) {
@@ -513,7 +515,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const { toast } = useToast();
-  const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField } | null>(null);
+  const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField | 'isJoHardcopyReceived'; } | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
 
@@ -576,6 +578,18 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         });
     });
   }, [firestore, toast]);
+  
+  const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
+    const lead = leads?.find((l) => l.id === leadId);
+    if (!lead) return;
+    const isCurrentlyChecked = lead.isJoHardcopyReceived || false;
+
+    if (!checked && isCurrentlyChecked) {
+      setUncheckConfirmation({ leadId, field: 'isJoHardcopyReceived' });
+    } else if (checked && !isCurrentlyChecked) {
+      setJoReceivedConfirmation(leadId);
+    }
+  }, [leads]);
   
   const confirmUncheck = useCallback(async () => {
     if (!uncheckConfirmation || !firestore) return;
@@ -749,7 +763,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
       customerOrderStats[name].totalCustomerQuantity += orderQuantity;
     });
   
