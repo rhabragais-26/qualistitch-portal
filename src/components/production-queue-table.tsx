@@ -1,4 +1,3 @@
-
 'use client';
 
 import { collection, query, doc, updateDoc, getDocs, where } from 'firebase/firestore';
@@ -784,7 +783,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     if (filterType === 'COMPLETED') {
       relevantLeads = processedLeads.filter(lead => lead.isEndorsedToLogistics);
     } else {
-      relevantLeads = processedLeads.filter(lead => lead.isSentToProduction && !lead.isEndorsedToLogistics && lead.orderType !== 'Stock (Jacket Only)');
+      relevantLeads = processedLeads.filter(lead => lead.isSentToProduction && !lead.isCutting && !lead.isEndorsedToLogistics && lead.orderType !== 'Stock (Jacket Only)');
     }
     
     return relevantLeads.filter(lead => {

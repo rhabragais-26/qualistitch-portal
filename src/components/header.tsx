@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -444,7 +443,7 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenu>
                 <DropdownMenu open={openMenu === 'production'} onOpenChange={(isOpen) => handleMenuOpenChange('production', isOpen)}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/production/production-queue']))}>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/production/production-queue', '/production/daily-logs']))}>
                         <Cog className="mr-2" />
                         Production
                         <ChevronDown className="ml-2 h-4 w-4" />
@@ -454,6 +453,10 @@ const HeaderMemo = React.memo(function Header({
                     <DropdownMenuItem onClick={() => handleNavigation('/production/production-queue')}>
                       <ClipboardList className="mr-2" />
                       Production Queue
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleNavigation('/production/daily-logs')}>
+                      <FileText className="mr-2" />
+                      Production Daily Logs
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

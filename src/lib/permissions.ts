@@ -52,6 +52,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/inventory/reports': 'inventory',
   '/inventory/operational-cases': 'logistics',
   '/production/production-queue': 'production',
+  '/production/daily-logs': 'production',
   '/production/completed-production': 'production',
   '/logistics/shipment-queue': 'logistics',
   '/logistics/shipped-orders': 'logistics',
