@@ -2,6 +2,72 @@
 
 {
   "entities": {
+    "EmbroideryLog": {
+      "title": "EmbroideryLog",
+      "type": "object",
+      "description": "Represents a daily log for embroidery production for a specific lead.",
+      "properties": {
+        "id": { "type": "string" },
+        "leadId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "operatorNickname": { "type": "string" },
+        "stitches": {
+          "type": "object",
+          "properties": {
+            "leftLogo": { "type": "string" },
+            "rightLogo": { "type": "string" },
+            "backLogo": { "type": "string" },
+            "backDesign": { "type": "string" },
+            "names": { "type": "string" }
+          }
+        },
+        "rpm": {
+          "type": "object",
+          "properties": {
+            "leftLogo": { "type": "string" },
+            "rightLogo": { "type": "string" },
+            "backLogo": { "type": "string" },
+            "backDesign": { "type": "string" },
+            "names": { "type": "string" }
+          }
+        },
+        "quantity": {
+          "type": "object",
+          "properties": {
+            "leftLogo": { "type": "string" },
+            "rightLogo": { "type": "string" },
+            "backLogo": { "type": "string" },
+            "backDesign": { "type": "string" },
+            "names": { "type": "string" }
+          }
+        },
+        "startTime": {
+          "type": "object",
+          "properties": {
+            "hour": { "type": "string" },
+            "minute": { "type": "string" },
+            "period": { "type": "string", "enum": ["AM", "PM"] }
+          }
+        },
+        "endTime": {
+          "type": "object",
+          "properties": {
+            "hour": { "type": "string" },
+            "minute": { "type": "string" },
+            "period": { "type": "string", "enum": ["AM", "PM"] }
+          }
+        },
+        "shift": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "checkedDesigns": {
+            "type": "object",
+            "additionalProperties": { "type": "boolean" }
+        }
+      },
+      "required": ["id", "leadId", "date", "operatorNickname"]
+    },
     "JOCounter": {
       "title": "JOCounter",
       "type": "object",
@@ -883,6 +949,22 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/embroidery_logs/{logId}",
+        "definition": {
+          "entityName": "EmbroideryLog",
+          "schema": {
+            "$ref": "#/backend/entities/EmbroideryLog"
+          },
+          "description": "Stores daily embroidery log entries.",
+          "params": [
+            {
+              "name": "logId",
+              "description": "Unique ID for the log, often combining leadId and date."
+            }
+          ]
+        }
+      },
       {
         "path": "/users/{userId}/personalCalendar/{eventId}",
         "definition": {
