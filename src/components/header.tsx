@@ -456,7 +456,7 @@ const HeaderMemo = React.memo(function Header({
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/production/daily-logs')}>
                       <FileText className="mr-2" />
-                      Production Daily Logs
+                      Embroidery Daily Logs
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
