@@ -72,26 +72,26 @@ type LogData = {
         leftLogo: string;
         rightLogo: string;
         backLogo: string;
-        backText: string;
+        backDesign: string;
         names: string;
     };
     rpm: {
         leftLogo: string;
         rightLogo: string;
         backLogo: string;
-        backText: string;
+        backDesign: string;
         names: string;
     };
     quantity: {
         leftLogo: string;
         rightLogo: string;
         backLogo: string;
-        backText: string;
+        backDesign: string;
         names: string;
     };
     startTime: TimeValue;
     endTime: TimeValue;
-    shift: 'Morning Shift' | 'Mid Shift' | 'Evening Shift' | '';
+    shift: string[];
 };
 
 
@@ -145,12 +145,12 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
     ) => {
         setLogs(prev => {
             const newLog = JSON.parse(JSON.stringify(prev[leadId] || { 
-                stitches: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, 
-                rpm: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
-                quantity: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
+                stitches: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' }, 
+                rpm: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
+                quantity: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
                 startTime: { hour: '', minute: '', period: 'AM' },
                 endTime: { hour: '', minute: '', period: 'AM' },
-                shift: '' 
+                shift: [] 
             }));
 
             if ((field === 'stitches' || field === 'rpm' || field === 'quantity') && subField && subField in newLog[field]) {
@@ -158,18 +158,12 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
             } else if ((field === 'startTime' || field === 'endTime') && subField && (subField === 'hour' || subField === 'minute' || subField === 'period')) {
                 const timeField = newLog[field];
                 if (subField === 'hour') {
-                    if (/^\d{0,2}$/.test(value)) {
-                        const num = parseInt(value, 10);
-                        if(value === '' || (value.length === 1 && /^[0-9]$/.test(value)) || (value.length === 2 && !isNaN(num) && num >= 1 && num <= 12)) {
-                            timeField.hour = value;
-                        }
+                    if (/^\d{0,2}$/.test(value) && (value === '' || (parseInt(value, 10) >= 0 && parseInt(value, 10) <= 12))) {
+                        timeField.hour = value;
                     }
                 } else if (subField === 'minute') {
-                     if (/^\d{0,2}$/.test(value)) {
-                        const num = parseInt(value, 10);
-                        if(value === '' || (value.length === 1 && /^[0-9]$/.test(value)) || (value.length === 2 && !isNaN(num) && num >= 0 && num <= 59)) {
-                            timeField.minute = value;
-                        }
+                     if (/^\d{0,2}$/.test(value) && (value === '' || (parseInt(value, 10) >= 0 && parseInt(value, 10) <= 59))) {
+                        timeField.minute = value;
                     }
                 } else if (subField === 'period') {
                     timeField.period = value as 'AM' | 'PM';
@@ -179,6 +173,31 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
             }
             
             return { ...prev, [leadId]: newLog };
+        });
+    };
+
+    const handleShiftChange = (leadId: string, shiftOption: string, isChecked: boolean) => {
+        setLogs(prev => {
+            const currentLog = prev[leadId] || {
+                stitches: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
+                rpm: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
+                quantity: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
+                startTime: { hour: '', minute: '', period: 'AM' },
+                endTime: { hour: '', minute: '', period: 'AM' },
+                shift: [],
+            };
+            const currentShifts = currentLog.shift || [];
+            const newShifts = isChecked
+                ? [...currentShifts, shiftOption]
+                : currentShifts.filter(s => s !== shiftOption);
+            
+            return {
+                ...prev,
+                [leadId]: {
+                    ...currentLog,
+                    shift: newShifts
+                }
+            };
         });
     };
 
@@ -192,9 +211,10 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
             if (checkedDesigns[lead.id]?.[key]) {
                 const stitches = parseInt(log.stitches[key].replace(/,/g, ''), 10) || 0;
                 const rpm = parseInt(log.rpm[key], 10) || 0;
+                const quantity = parseInt(log.quantity[key], 10) || 0;
 
-                if (stitches > 0 && rpm > 0) {
-                    totalTimeInMinutes += (stitches / rpm) + 10;
+                if (stitches > 0 && rpm > 0 && quantity > 0) {
+                    totalTimeInMinutes += ((stitches / rpm) * quantity) + 10;
                 }
             }
         }
@@ -307,7 +327,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
         { label: 'Left Logo', key: 'leftLogo' },
         { label: 'Right Logo', key: 'rightLogo' },
         { label: 'Back Logo', key: 'backLogo' },
-        { label: 'Back Design', key: 'backText' },
+        { label: 'Back Design', key: 'backDesign' },
         { label: 'Names', key: 'names' },
     ];
     
@@ -360,12 +380,12 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                         <TableBody>
                             {filteredLeads.map(lead => {
                                 const logData = logs[lead.id] || { 
-                                    stitches: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, 
-                                    rpm: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
-                                    quantity: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
+                                    stitches: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' }, 
+                                    rpm: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
+                                    quantity: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
                                     startTime: { hour: '', minute: '', period: 'AM' },
                                     endTime: { hour: '', minute: '', period: 'AM' },
-                                    shift: '' 
+                                    shift: []
                                 };
                                 const isRepeat = lead.orderNumber > 1;
                                 return (
@@ -412,14 +432,14 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                             <TableBody>
                                                 {designCheckboxes.map(design => {
                                                     const isChecked = checkedDesigns[lead.id]?.[design.key] ?? false;
-                                                    const estTime = calculateSingleEstTime(logData.stitches[design.key], logData.rpm[design.key]);
+                                                    const estTime = calculateSingleEstTime(logData.stitches[design.key as DesignType], logData.rpm[design.key as DesignType]);
                                                     return (
                                                     <TableRow key={design.key} className="border-0">
                                                         <TableCell className="p-1 border-r">
                                                             <div className="flex items-center h-7">
                                                                 <Checkbox id={`${lead.id}-${design.key}`} 
                                                                     checked={isChecked}
-                                                                    onCheckedChange={(checked) => handleDesignCheckboxChange(lead.id, design.key, !!checked)}
+                                                                    onCheckedChange={(checked) => handleDesignCheckboxChange(lead.id, design.key as DesignType, !!checked)}
                                                                     disabled={isReadOnly}
                                                                 />
                                                                 <Label htmlFor={`${lead.id}-${design.key}`} className="ml-2 text-xs">{design.label}</Label>
@@ -429,8 +449,8 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                             <Input
                                                                 type="text" 
                                                                 className="h-7 text-xs text-center" 
-                                                                value={logData.quantity[design.key]}
-                                                                onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'quantity', e.target.value, design.key)}
+                                                                value={logData.quantity[design.key as DesignType]}
+                                                                onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'quantity', e.target.value, design.key as DesignType)}
                                                                 disabled={!isChecked || isReadOnly}
                                                             />
                                                         </TableCell>
@@ -438,11 +458,11 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                             <Input 
                                                                 type="text" 
                                                                 className="h-7 text-xs text-center" 
-                                                                value={logData.stitches[design.key] ? new Intl.NumberFormat().format(Number(logData.stitches[design.key].replace(/,/g, ''))) : ''}
+                                                                value={logData.stitches[design.key as DesignType] ? new Intl.NumberFormat().format(Number(logData.stitches[design.key as DesignType].replace(/,/g, ''))) : ''}
                                                                 onChange={(e) => {
                                                                     const sanitizedValue = e.target.value.replace(/,/g, '');
                                                                     if (/^\d*$/.test(sanitizedValue)) {
-                                                                        handleLogChange(lead.id, 'stitches', sanitizedValue, design.key);
+                                                                        handleLogChange(lead.id, 'stitches', sanitizedValue, design.key as DesignType);
                                                                     }
                                                                 }}
                                                                 disabled={!isChecked || isReadOnly}
@@ -452,8 +472,8 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                             <Input
                                                                 type="text" 
                                                                 className="h-7 text-xs text-center" 
-                                                                value={logData.rpm[design.key]}
-                                                                onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'rpm', e.target.value, design.key)}
+                                                                value={logData.rpm[design.key as DesignType]}
+                                                                onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'rpm', e.target.value, design.key as DesignType)}
                                                                 disabled={!isChecked || isReadOnly}
                                                             />
                                                         </TableCell>
@@ -481,7 +501,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         placeholder="HH"
                                                         maxLength={2}
                                                         value={logData.startTime.hour}
-                                                        onChange={(e) => handleLogChange(lead.id, 'startTime', e.target.value.replace(/\D/g, ''), 'hour')}
+                                                        onChange={(e) => handleLogChange(lead.id, 'startTime', e.target.value, 'hour')}
                                                          onBlur={(e) => {
                                                             const val = e.target.value;
                                                             if (val.length === 1) {
@@ -497,7 +517,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         placeholder="MM"
                                                         maxLength={2}
                                                         value={logData.startTime.minute}
-                                                        onChange={(e) => handleLogChange(lead.id, 'startTime', e.target.value.replace(/\D/g, ''), 'minute')}
+                                                        onChange={(e) => handleLogChange(lead.id, 'startTime', e.target.value, 'minute')}
                                                         onBlur={(e) => {
                                                             const val = e.target.value;
                                                             if (val.length === 1) {
@@ -524,7 +544,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         placeholder="HH"
                                                         maxLength={2}
                                                         value={logData.endTime.hour}
-                                                        onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value.replace(/\D/g, ''), 'hour')}
+                                                        onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value, 'hour')}
                                                          onBlur={(e) => {
                                                             const val = e.target.value;
                                                             if (val.length === 1) {
@@ -540,7 +560,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         placeholder="MM"
                                                         maxLength={2}
                                                         value={logData.endTime.minute}
-                                                        onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value.replace(/\D/g, ''), 'minute')}
+                                                        onChange={(e) => handleLogChange(lead.id, 'endTime', e.target.value, 'minute')}
                                                          onBlur={(e) => {
                                                             const val = e.target.value;
                                                             if (val.length === 1) {
@@ -568,17 +588,22 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="align-middle">
-                                        <Select value={logData.shift} onValueChange={(value) => handleLogChange(lead.id, 'shift', value)} disabled={isReadOnly}>
-                                            <SelectTrigger className="text-xs h-8">
-                                                <SelectValue placeholder="Select Shift" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Morning Shift">Morning Shift</SelectItem>
-                                                <SelectItem value="Mid Shift">Mid Shift</SelectItem>
-                                                <SelectItem value="Evening Shift">Evening Shift</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                    <TableCell className="align-middle text-center">
+                                       <div className="flex flex-col gap-2 items-start">
+                                            {['Morning Shift', 'Mid Shift', 'Evening Shift'].map(shiftOption => (
+                                                <div key={shiftOption} className="flex items-center gap-2">
+                                                    <Checkbox
+                                                        id={`${lead.id}-${shiftOption}`}
+                                                        checked={(logData.shift || []).includes(shiftOption)}
+                                                        onCheckedChange={(checked) => handleShiftChange(lead.id, shiftOption, !!checked)}
+                                                        disabled={isReadOnly}
+                                                    />
+                                                    <Label htmlFor={`${lead.id}-${shiftOption}`} className="text-xs font-normal">
+                                                        {shiftOption}
+                                                    </Label>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             )})}
