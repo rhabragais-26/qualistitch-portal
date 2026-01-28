@@ -467,10 +467,10 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                             </TableFooter>
                                         </Table>
                                     </TableCell>
-                                    <TableCell className="align-middle w-[220px]">
+                                    <TableCell className="align-middle">
                                         <div className="flex flex-col gap-2">
                                             <div className="flex items-center justify-between">
-                                                <Label className="text-xs">Start Time</Label>
+                                                <Label className="text-xs whitespace-nowrap">Start Time</Label>
                                                 <div className="flex items-center gap-1">
                                                     <Input
                                                         type="text"
@@ -513,7 +513,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                 </div>
                                             </div>
                                             <div className="flex items-center justify-between">
-                                                <Label className="text-xs">End Time</Label>
+                                                <Label className="text-xs whitespace-nowrap">End Time</Label>
                                                 <div className="flex items-center gap-1">
                                                     <Input
                                                         type="text"
