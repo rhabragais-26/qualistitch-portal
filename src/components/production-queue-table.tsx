@@ -316,7 +316,6 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     handleCheckboxChange,
     handleStatusChange,
     handleEndorseToLogistics,
-    setLeadToReopen,
     toggleLeadDetails,
     openLeadId
 }: {
@@ -330,7 +329,6 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     handleCheckboxChange: (leadId: string, field: CheckboxField, checked: boolean) => void;
     handleStatusChange: (leadId: string, field: "productionType" | "sewerType", value: string) => void;
     handleEndorseToLogistics: (leadId: string) => void;
-    setLeadToReopen: (lead: Lead) => void;
     toggleLeadDetails: (leadId: string) => void;
     openLeadId: string | null;
 }) {
@@ -472,13 +470,20 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                 <TableCell className="text-center align-middle py-2">
                     {isCompleted ? (
                         <div className="flex flex-col items-center gap-1">
-                            <Button size="sm" className="h-7 px-3 bg-green-600 text-white font-bold" onClick={() => setLeadToReopen(lead)}><RefreshCcw className="mr-2 h-4 w-4" /> Reopen</Button>
-                        </div>
+                           <div className="flex items-center text-sm text-green-600 font-semibold">
+                               <Check className="mr-2 h-4 w-4" /> Endorsed
+                           </div>
+                           {lead.endorsedToLogisticsTimestamp && (
+                               <div className="text-xs text-gray-500">
+                                   {formatDateTime(lead.endorsedToLogisticsTimestamp).dateTimeShort}
+                               </div>
+                           )}
+                       </div>
                     ) : (
                         <Button
                             size="sm"
                             className={cn("h-7 px-3 text-white font-bold", lead.isDone ? 'bg-primary hover:bg-primary/90' : 'bg-gray-400')}
-                            disabled={!lead.isDone || isCompleted}
+                            disabled={!lead.isDone || isCompleted || isReadOnly}
                             onClick={() => handleEndorseToLogistics(lead.id)}
                         >
                             <Send className="mr-2 h-4 w-4" /> Endorse
@@ -511,7 +516,6 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField } | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
-  const [leadToReopen, setLeadToReopen] = useState<Lead | null>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
@@ -745,7 +749,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+      const orderQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
       customerOrderStats[name].totalCustomerQuantity += orderQuantity;
     });
   
@@ -764,18 +768,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   
     return enrichedLeads;
   }, [leads]);
-  
-  const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
-    const lead = leads?.find((l) => l.id === leadId);
-    if (!lead) return;
-    
-    if (!checked) {
-        setUncheckConfirmation({ leadId, field: 'isJoHardcopyReceived' });
-    } else {
-        setJoReceivedConfirmation(leadId);
-    }
-  }, [leads]);
-  
+
   const productionQueue = useMemo(() => {
     if (!processedLeads) return [];
     
@@ -783,7 +776,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     if (filterType === 'COMPLETED') {
       relevantLeads = processedLeads.filter(lead => lead.isEndorsedToLogistics);
     } else {
-      relevantLeads = processedLeads.filter(lead => lead.isSentToProduction && !lead.isCutting && !lead.isEndorsedToLogistics && lead.orderType !== 'Stock (Jacket Only)');
+      relevantLeads = processedLeads.filter(lead => lead.isSentToProduction && !lead.isEndorsedToLogistics && lead.orderType !== 'Stock (Jacket Only)');
     }
     
     return relevantLeads.filter(lead => {
@@ -806,32 +799,6 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     setOpenLeadId(openLeadId === leadId ? null : leadId);
   }, [openLeadId]);
   
-  const handleReopenProduction = async () => {
-    if (!leadToReopen || !firestore) return;
-    try {
-        const leadDocRef = doc(firestore, 'leads', leadToReopen.id);
-        await updateDoc(leadDocRef, {
-            isEndorsedToLogistics: false,
-            endorsedToLogisticsTimestamp: null,
-            isDone: false,
-            doneProductionTimestamp: null,
-            isRecheckingQuality: true,
-        });
-        toast({
-            title: 'Production Reopened',
-            description: `The order for J.O. ${formatJoNumber(leadToReopen.joNumber)} has been moved back to the ongoing production queue.`,
-        });
-    } catch (e: any) {
-        console.error("Error reopening production:", e);
-        toast({
-            variant: "destructive",
-            title: "Action Failed",
-            description: e.message || "Could not reopen production.",
-        });
-    } finally {
-        setLeadToReopen(null);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -877,21 +844,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <AlertDialog open={!!leadToReopen} onOpenChange={(open) => !open && setLeadToReopen(null)}>
-          <AlertDialogContent>
-              <AlertDialogHeader>
-                  <AlertDialogTitle>Reopen Production?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                      This will move the order for J.O. {formatJoNumber(leadToReopen?.joNumber)} back to the ongoing production queue. Are you sure?
-                  </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleReopenProduction}>Reopen</AlertDialogAction>
-              </AlertDialogFooter>
-          </AlertDialogContent>
-      </AlertDialog>
-
+      
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start">
           <div>
@@ -969,7 +922,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                       handleCheckboxChange={handleCheckboxChange}
                       handleStatusChange={handleStatusChange}
                       handleEndorseToLogistics={handleEndorseToLogistics}
-                      setLeadToReopen={setLeadToReopen}
+                      setLeadToReopen={() => {}}
                       toggleLeadDetails={toggleLeadDetails}
                       openLeadId={openLeadId}
                     />
@@ -988,3 +941,5 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     </Card>
   );
 }
+
+    
