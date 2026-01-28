@@ -67,7 +67,13 @@ type LogData = {
         backText: string;
         names: string;
     };
-    rpm: string;
+    rpm: {
+        leftLogo: string;
+        rightLogo: string;
+        backLogo: string;
+        backText: string;
+        names: string;
+    };
     shift: 'Morning Shift' | 'Mid Shift' | 'Evening Shift' | '';
 };
 
@@ -85,10 +91,15 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
 
     const handleLogChange = (leadId: string, field: keyof LogData, value: any, subField?: DesignType) => {
         setLogs(prev => {
-            const newLog = { ...(prev[leadId] || { stitches: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, rpm: '', shift: '' }) };
-            if (field === 'stitches' && subField) {
-                newLog.stitches[subField] = value;
-            } else if (field !== 'stitches') {
+            const newLog = { ...(prev[leadId] || { 
+                stitches: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, 
+                rpm: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' },
+                shift: '' 
+            }) };
+
+            if ((field === 'stitches' || field === 'rpm') && subField) {
+                newLog[field][subField] = value;
+            } else if (field !== 'stitches' && field !== 'rpm') {
                 (newLog[field] as any) = value;
             }
             return { ...prev, [leadId]: newLog };
@@ -97,16 +108,26 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
 
     const calculateEstTime = (log: LogData | undefined) => {
         if (!log) return '-';
-        const totalStitches = Object.values(log.stitches).reduce((sum, val) => sum + (parseInt(val) || 0), 0);
-        const rpm = parseInt(log.rpm);
-        if (totalStitches === 0 || !rpm || rpm === 0) return '-';
+        
+        let totalTimeInMinutes = 0;
+        const designKeys = Object.keys(log.stitches) as DesignType[];
 
-        const timeInMinutes = (totalStitches / rpm) + 10;
-        if (timeInMinutes < 60) {
-            return `${Math.ceil(timeInMinutes)} minutes`;
+        for (const key of designKeys) {
+            const stitches = parseInt(log.stitches[key], 10) || 0;
+            const rpm = parseInt(log.rpm[key], 10) || 0;
+
+            if (stitches > 0 && rpm > 0) {
+                totalTimeInMinutes += (stitches / rpm) + 10;
+            }
         }
-        const hours = Math.floor(timeInMinutes / 60);
-        const minutes = Math.ceil(timeInMinutes % 60);
+        
+        if (totalTimeInMinutes === 0) return '-';
+
+        if (totalTimeInMinutes < 60) {
+            return `${Math.ceil(totalTimeInMinutes)} minutes`;
+        }
+        const hours = Math.floor(totalTimeInMinutes / 60);
+        const minutes = Math.ceil(totalTimeInMinutes % 60);
         return `${hours} hr and ${minutes} mins`;
     };
 
@@ -204,7 +225,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                         </TableHeader>
                         <TableBody>
                             {filteredLeads.map(lead => {
-                                const logData = logs[lead.id] || { stitches: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, rpm: '', shift: '' };
+                                const logData = logs[lead.id] || { stitches: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, rpm: { leftLogo: '', rightLogo: '', backLogo: '', backText: '', names: '' }, shift: '' };
                                 const estTime = calculateEstTime(logData);
                                 return (
                                 <TableRow key={lead.id}>
@@ -227,7 +248,7 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                     <TableCell>
                                         <div className="space-y-2">
                                             {designCheckboxes.map(design => (
-                                                <div key={design.key} className="flex items-center">
+                                                <div key={design.key} className="flex items-center h-7">
                                                     <Checkbox id={`${lead.id}-${design.key}`} checked={lead.orders.some(o => o.design?.[design.key as keyof Order['design']])} disabled className="disabled:opacity-100" />
                                                     <Label htmlFor={`${lead.id}-${design.key}`} className="ml-2 text-xs">{design.label}</Label>
                                                 </div>
@@ -249,13 +270,18 @@ export function ProductionDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Input
-                                            type="text" 
-                                            className="h-7 text-xs text-center" 
-                                            value={logData.rpm}
-                                            onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'rpm', e.target.value)}
-                                            readOnly={isReadOnly}
-                                        />
+                                        <div className="space-y-2">
+                                            {designCheckboxes.map(design => (
+                                                <Input
+                                                    key={design.key}
+                                                    type="text" 
+                                                    className="h-7 text-xs text-center" 
+                                                    value={logData.rpm[design.key]}
+                                                    onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'rpm', e.target.value, design.key)}
+                                                    readOnly={isReadOnly}
+                                                />
+                                            ))}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-xs text-center font-semibold">{estTime}</TableCell>
                                     <TableCell>
