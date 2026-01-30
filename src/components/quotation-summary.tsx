@@ -105,7 +105,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <header className="flex justify-between items-start mb-6">
                         <div>
                             <h1 className="font-bold text-2xl">BURDA PINAS</h1>
-                            <p className="text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
+                            <p className="text-sm text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
                             <div className="text-xs mt-2 space-y-px">
                                 <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
                                 <p><span className="font-bold">Mobile No:</span> 0966-278-2437 | 0956-204-1950 | 0956-204-1919</p>
@@ -202,28 +202,28 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                         
                                         {(finalLogoFee > 0 || finalBackTextFee > 0) && (
                                             <TableRow>
-                                                <TableCell className="font-bold">Programming Fee<p className="text-xs font-normal pl-4">*** One-Time Payment</p></TableCell>
-                                                <TableCell className="text-center">{ (finalLogoFee > 0 ? 1 : 0) + (finalBackTextFee > 0 ? 1 : 0) }</TableCell>
-                                                <TableCell className="text-right">{formatCurrency(finalLogoFee > 0 ? finalLogoFee : finalBackTextFee)}</TableCell>
-                                                <TableCell className="text-right">{formatCurrency(finalLogoFee + finalBackTextFee)}</TableCell>
+                                                <TableCell className="py-1 px-4 text-xs font-bold">Programming Fee<p className="text-xs font-normal pl-4">*** One-Time Payment</p></TableCell>
+                                                <TableCell className="py-1 px-4 text-center text-xs">{ (finalLogoFee > 0 ? 1 : 0) + (finalBackTextFee > 0 ? 1 : 0) }</TableCell>
+                                                <TableCell className="py-1 px-4 text-right text-xs">{formatCurrency(finalLogoFee > 0 ? finalLogoFee : finalBackTextFee)}</TableCell>
+                                                <TableCell className="py-1 px-4 text-right text-xs">{formatCurrency(finalLogoFee + finalBackTextFee)}</TableCell>
                                             </TableRow>
                                         )}
 
-                                        {groupAddOns.backLogo > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Back Logo</TableCell><TableCell className="text-center">{groupAddOns.backLogo}</TableCell><TableCell className="text-right">{formatCurrency(backLogoPrice)}</TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.backLogo * backLogoPrice)}</TableCell></TableRow>}
-                                        {groupAddOns.names > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Names</TableCell><TableCell className="text-center">{groupAddOns.names}</TableCell><TableCell className="text-right">{formatCurrency(namesPrice)}</TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.names * namesPrice)}</TableCell></TableRow>}
-                                        {groupAddOns.plusSize > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Plus Size</TableCell><TableCell className="text-center">{groupAddOns.plusSize}</TableCell><TableCell className="text-right">{formatCurrency(plusSizePrice)}</TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.plusSize * plusSizePrice)}</TableCell></TableRow>}
-                                        {groupAddOns.rushFee > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Rush Fee</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.rushFee)}</TableCell></TableRow>}
-                                        {groupAddOns.shippingFee > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Shipping Fee</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.shippingFee)}</TableCell></TableRow>}
-                                        {groupAddOns.logoProgramming > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Logo Programming</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.logoProgramming)}</TableCell></TableRow>}
-                                        {groupAddOns.backDesignProgramming > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Back Design Programming</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.backDesignProgramming)}</TableCell></TableRow>}
-                                        {groupAddOns.holdingFee > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Holding Fee</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.holdingFee)}</TableCell></TableRow>}
+                                        {groupAddOns.backLogo > 0 && <TableRow><TableCell className="pl-8 font-bold text-xs py-1">Add On: Back Logo</TableCell><TableCell className="text-center text-xs py-1">{groupAddOns.backLogo}</TableCell><TableCell className="text-right text-xs py-1">{formatCurrency(backLogoPrice)}</TableCell><TableCell className="text-right text-xs py-1">{formatCurrency(groupAddOns.backLogo * backLogoPrice)}</TableCell></TableRow>}
+                                        {groupAddOns.names > 0 && <TableRow><TableCell className="pl-8 font-bold text-xs py-1">Add On: Names</TableCell><TableCell className="text-center text-xs py-1">{groupAddOns.names}</TableCell><TableCell className="text-right text-xs py-1">{formatCurrency(namesPrice)}</TableCell><TableCell className="text-right text-xs py-1">{formatCurrency(groupAddOns.names * namesPrice)}</TableCell></TableRow>}
+                                        {groupAddOns.plusSize > 0 && <TableRow><TableCell className="pl-8 font-bold text-xs py-1">Add On: Plus Size</TableCell><TableCell className="text-center text-xs py-1">{groupAddOns.plusSize}</TableCell><TableCell className="text-right text-xs py-1">{formatCurrency(plusSizePrice)}</TableCell><TableCell className="text-right text-xs py-1">{formatCurrency(groupAddOns.plusSize * plusSizePrice)}</TableCell></TableRow>}
+                                        {groupAddOns.rushFee > 0 && <TableRow><TableCell className="pl-8 font-bold text-xs py-1">Add On: Rush Fee</TableCell><TableCell className="py-1"></TableCell><TableCell className="py-1"></TableCell><TableCell className="text-right text-xs py-1">{formatCurrency(groupAddOns.rushFee)}</TableCell></TableRow>}
+                                        {groupAddOns.shippingFee > 0 && <TableRow><TableCell className="pl-8 font-bold text-xs py-1">Add On: Shipping Fee</TableCell><TableCell className="py-1"></TableCell><TableCell className="py-1"></TableCell><TableCell className="text-right text-xs py-1">{formatCurrency(groupAddOns.shippingFee)}</TableCell></TableRow>}
+                                        {groupAddOns.logoProgramming > 0 && <TableRow><TableCell className="pl-8 font-bold text-xs py-1">Add On: Logo Programming</TableCell><TableCell className="py-1"></TableCell><TableCell className="py-1"></TableCell><TableCell className="text-right text-xs py-1">{formatCurrency(groupAddOns.logoProgramming)}</TableCell></TableRow>}
+                                        {groupAddOns.backDesignProgramming > 0 && <TableRow><TableCell className="pl-8 font-bold text-xs py-1">Add On: Back Design Programming</TableCell><TableCell className="py-1"></TableCell><TableCell className="py-1"></TableCell><TableCell className="text-right text-xs py-1">{formatCurrency(groupAddOns.backDesignProgramming)}</TableCell></TableRow>}
+                                        {groupAddOns.holdingFee > 0 && <TableRow><TableCell className="pl-8 font-bold text-xs py-1">Add On: Holding Fee</TableCell><TableCell className="py-1"></TableCell><TableCell className="py-1"></TableCell><TableCell className="text-right text-xs py-1">{formatCurrency(groupAddOns.holdingFee)}</TableCell></TableRow>}
 
                                         {groupDiscount && (
                                             <TableRow>
-                                                <TableCell colSpan={3} className="text-right font-bold text-destructive">
+                                                <TableCell colSpan={3} className="text-right font-bold text-destructive text-xs py-1">
                                                     Discount {groupDiscount.reason ? `(${groupDiscount.reason})` : ''} ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})
                                                 </TableCell>
-                                                <TableCell className="text-right font-bold text-destructive">-{formatCurrency(discountAmount)}</TableCell>
+                                                <TableCell className="text-right font-bold text-destructive text-xs py-1">-{formatCurrency(discountAmount)}</TableCell>
                                             </TableRow>
                                         )}
                                     </React.Fragment>
