@@ -4,9 +4,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadTableFooter } from '@/components/ui/table';
-import type { Order } from '@/lib/form-schemas';
-import { ScrollArea } from './ui/scroll-area';
-import { Separator } from './ui/separator';
 import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, getTierLabel, type PricingConfig } from '@/lib/pricing';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
@@ -18,6 +15,7 @@ import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { initialPricingConfig } from '@/lib/pricing-data';
 import { cn } from '@/lib/utils';
+import type { Order } from '@/lib/form-schemas';
 
 type InvoiceCardProps = {
   orders: Order[];
