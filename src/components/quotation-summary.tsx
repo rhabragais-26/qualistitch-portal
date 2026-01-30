@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
@@ -82,10 +81,6 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         }
 
         try {
-            toast({
-                title: 'Preparing image...',
-                description: 'Please wait while we generate the image.',
-            });
             const canvas = await html2canvas(quotationRef.current, {
                 useCORS: true,
                 scale: 2, // Increase scale for better resolution
@@ -102,12 +97,22 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                         });
                     } catch (err) {
                         console.error('Failed to copy to clipboard:', err);
+                        let description = 'Could not copy image to clipboard.';
+                        if (err instanceof Error && err.name === 'NotAllowedError') {
+                            description = 'Clipboard access was denied. Please make sure the browser window is focused when you click the button.';
+                        }
                         toast({
                             variant: 'destructive',
                             title: 'Copy Failed',
-                            description: 'Your browser may not support this feature or there was a permission error.',
+                            description: description,
                         });
                     }
+                } else {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Image Generation Failed',
+                        description: 'Could not create an image from the content.',
+                    });
                 }
             });
         } catch (error) {
@@ -164,7 +169,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                 <p><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
                             </div>
                         </div>
-                        <div className="relative h-24 w-24">
+                        <div className="relative h-20 w-20">
                            {logoLoading ? (
                                 <Skeleton className="h-full w-full" />
                             ) : logoUrl ? (
@@ -255,9 +260,9 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                         {(finalLogoFee > 0 || finalBackTextFee > 0) && (
                                             <TableRow>
                                                 <TableCell className="pl-8 text-xs py-1 px-3">Programming Fee<p className="text-xs font-normal pl-4">- One-Time Payment</p></TableCell>
-                                                <TableCell className="py-1 text-center text-xs px-3">{ (finalLogoFee > 0 ? 1 : 0) + (finalBackTextFee > 0 ? 1 : 0) }</TableCell>
-                                                <TableCell className="py-1 text-right text-xs px-3">{formatCurrency(finalLogoFee > 0 ? finalLogoFee : finalBackTextFee)}</TableCell>
-                                                <TableCell className="py-1 text-right text-xs px-3">{formatCurrency(finalLogoFee + finalBackTextFee)}</TableCell>
+                                                <TableCell className="text-center text-xs py-1 px-3">{ (finalLogoFee > 0 ? 1 : 0) + (finalBackTextFee > 0 ? 1 : 0) }</TableCell>
+                                                <TableCell className="text-right text-xs py-1 px-3">{formatCurrency(finalLogoFee > 0 ? finalLogoFee : finalBackTextFee)}</TableCell>
+                                                <TableCell className="text-right text-xs py-1 px-3">{formatCurrency(finalLogoFee + finalBackTextFee)}</TableCell>
                                             </TableRow>
                                         )}
 
