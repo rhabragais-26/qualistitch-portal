@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadTableFooter } from '@/components/ui/table';
 import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, type PricingConfig } from '@/lib/pricing';
@@ -11,12 +11,14 @@ import { doc } from 'firebase/firestore';
 import { initialPricingConfig } from '@/lib/pricing-data';
 import Image from 'next/image';
 import { Button } from './ui/button';
-import { Printer } from 'lucide-react';
+import { ClipboardCopy } from 'lucide-react';
 import { format } from 'date-fns';
 import { useFormContext } from 'react-hook-form';
 import { QuotationFormValues, type Order } from '@/lib/form-schemas';
 import { getStorage, ref, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
+import html2canvas from 'html2canvas';
+import { useToast } from '@/hooks/use-toast';
 
 type QuotationSummaryProps = {
   orders: Order[];
@@ -35,6 +37,9 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
     const app = useFirebaseApp();
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [logoLoading, setLogoLoading] = useState(true);
+    
+    const quotationRef = useRef<HTMLDivElement>(null);
+    const { toast } = useToast();
 
     useEffect(() => {
         if (!app) return;
@@ -65,9 +70,55 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         return initialPricingConfig as PricingConfig;
     }, [fetchedConfig]);
 
-    const handlePrint = () => {
-        window.print();
+    const handleCopyToClipboard = async () => {
+        if (!quotationRef.current) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not find the content to copy.',
+            });
+            return;
+        }
+
+        try {
+            toast({
+                title: 'Preparing image...',
+                description: 'Please wait while we generate the image.',
+            });
+            const canvas = await html2canvas(quotationRef.current, {
+                useCORS: true,
+                scale: 2, // Increase scale for better resolution
+            });
+            canvas.toBlob(async (blob) => {
+                if (blob) {
+                    try {
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ 'image/png': blob })
+                        ]);
+                        toast({
+                            title: 'Copied to clipboard!',
+                            description: 'The quotation has been copied as an image.',
+                        });
+                    } catch (err) {
+                        console.error('Failed to copy to clipboard:', err);
+                        toast({
+                            variant: 'destructive',
+                            title: 'Copy Failed',
+                            description: 'Your browser may not support this feature or there was a permission error.',
+                        });
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error generating canvas:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Image Generation Failed',
+                description: 'An error occurred while creating the image.',
+            });
+        }
     };
+
 
     const groupedOrders = useMemo(() => {
       return orders.reduce((acc, order) => {
@@ -78,7 +129,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         if (!productGroup && !isClientOwned && order.productType !== 'Patches') return acc;
   
         const embroidery = order.embroidery || 'logo';
-        const groupKey = `${order.productType}-${embroidery}`;
+        const groupKey = `${'\'\'\''}${order.productType}-${embroidery}${'\'\'\''}`;
         if (!acc[groupKey]) {
           acc[groupKey] = {
             productType: order.productType,
@@ -97,10 +148,10 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         <Card className="shadow-lg">
             <CardHeader className="flex flex-row justify-between items-center no-print">
                 <CardTitle>Quotation Preview</CardTitle>
-                <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print</Button>
+                <Button onClick={handleCopyToClipboard}><ClipboardCopy className="mr-2 h-4 w-4" /> Copy to Clipboard</Button>
             </CardHeader>
             <CardContent>
-                 <div className="p-8 printable-quotation border rounded-lg" id="quotation-content">
+                 <div className="p-8 printable-quotation border rounded-lg bg-white" id="quotation-content" ref={quotationRef}>
                     <header className="flex justify-between items-start mb-6">
                         <div>
                             <h1 className="font-bold text-2xl">BURDA PINAS</h1>
@@ -144,10 +195,10 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-gray-200">
-                                <TableHead className="text-black font-bold px-3">DETAILS</TableHead>
-                                <TableHead className="text-center text-black font-bold px-3">QTY</TableHead>
-                                <TableHead className="text-right text-black font-bold px-3">RATE</TableHead>
-                                <TableHead className="text-right text-black font-bold px-3">AMOUNT</TableHead>
+                                <TableHead className="text-black font-bold py-1 px-3">DETAILS</TableHead>
+                                <TableHead className="text-center text-black font-bold py-1 px-3">QTY</TableHead>
+                                <TableHead className="text-right text-black font-bold py-1 px-3">RATE</TableHead>
+                                <TableHead className="text-right text-black font-bold py-1 px-3">AMOUNT</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -190,14 +241,14 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                 return (
                                     <React.Fragment key={groupKey}>
                                         <TableRow>
-                                            <TableCell className="font-bold px-3">
+                                            <TableCell className="font-bold py-1 px-3">
                                                 {groupData.productType}
                                                 <p className="text-xs font-normal pl-4">*** Sizes: {groupData.orders.map(o => o.size).join(', ')}</p>
                                                 <p className="text-xs font-normal pl-4">*** Free Design and Layout</p>
                                             </TableCell>
-                                            <TableCell className="text-center px-3">{groupData.totalQuantity}</TableCell>
-                                            <TableCell className="text-right px-3">{formatCurrency(unitPrice)}</TableCell>
-                                            <TableCell className="text-right px-3">{formatCurrency(itemsSubtotal)}</TableCell>
+                                            <TableCell className="text-center py-1 px-3">{groupData.totalQuantity}</TableCell>
+                                            <TableCell className="text-right py-1 px-3">{formatCurrency(unitPrice)}</TableCell>
+                                            <TableCell className="text-right py-1 px-3">{formatCurrency(itemsSubtotal)}</TableCell>
                                         </TableRow>
                                         
                                         {(finalLogoFee > 0 || finalBackTextFee > 0) && (
@@ -220,7 +271,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                         {groupDiscount && (
                                             <TableRow>
                                                 <TableCell colSpan={3} className="text-right font-bold text-destructive text-xs py-0 px-3">
-                                                    Discount {groupDiscount.reason ? `(${groupDiscount.reason})` : ''} ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})
+                                                    Discount {groupDiscount.reason ? `(${groupDiscount.reason})` : ''} ({groupDiscount.type === 'percentage' ? `${'\'\'\''}${groupDiscount.value}%${'\'\'\''}` : formatCurrency(groupDiscount.value)})
                                                 </TableCell>
                                                 <TableCell className="text-right font-bold text-destructive text-xs py-0 px-3">-{formatCurrency(discountAmount)}</TableCell>
                                             </TableRow>
@@ -231,14 +282,14 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                         </TableBody>
                         <ShadTableFooter>
                             <TableRow>
-                                <TableCell colSpan={3} className="text-right font-bold text-sm px-3">TOTAL</TableCell>
-                                <TableCell className="text-right font-bold text-sm px-3">{formatCurrency(grandTotal)}</TableCell>
+                                <TableCell colSpan={3} className="text-right font-bold text-sm py-1 px-3">TOTAL</TableCell>
+                                <TableCell className="text-right font-bold text-sm py-1 px-3">{formatCurrency(grandTotal)}</TableCell>
                             </TableRow>
                         </ShadTableFooter>
                     </Table>
                     <div className="mt-24 flex justify-between text-xs">
                         <div className="w-64 text-center">
-                             <p className="border-b-2 border-dotted border-gray-400 pb-1 font-bold h-7 text-center">
+                             <p className="border-b-2 border-dotted border-gray-400 pb-1 font-bold h-7 text-center text-xs">
                                 {userProfile?.nickname || ''}
                             </p>
                             <p className="text-xs mt-1">Prepared By</p>
