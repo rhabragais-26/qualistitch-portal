@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState } from 'react';
@@ -6,9 +7,19 @@ import { useFormContext } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Order, LeadForm } from './lead-form'; 
-import { InvoiceCard, AddOns, Discount, Payment } from './invoice-card';
-import { QuotationFormValues } from '@/app/sales/quotation/page';
+import { Order, LeadForm, formSchema as leadFormSchema, FormValues as LeadFormValues } from './lead-form'; 
+import { InvoiceCard, AddOns, Discount, Payment } from "./invoice-card";
+import * as z from 'zod';
+
+// Make customer fields optional for quotation context
+export const quotationFormSchema = leadFormSchema.extend({
+  customerName: z.string().optional(),
+  houseStreet: z.string().optional(),
+  barangay: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+});
+export type QuotationFormValues = z.infer<typeof quotationFormSchema>;
 
 type QuotationFormProps = {
   stagedOrders: Order[];

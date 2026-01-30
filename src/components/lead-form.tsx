@@ -227,6 +227,7 @@ type LeadFormProps = {
   setStagedOrders: React.Dispatch<React.SetStateAction<Order[]>>;
   onOrderTypeChange: (orderType: FormValues['orderType'] | undefined) => void;
   isEditing?: boolean;
+  isQuotationMode?: boolean;
   initialLeadData?: (LeadType & { orderNumber: number; totalCustomerQuantity: number; }) | null;
   onDirtyChange?: (isDirty: boolean) => void;
   isReadOnly?: boolean;
@@ -237,6 +238,7 @@ export function LeadForm({
   setStagedOrders, 
   onOrderTypeChange,
   isEditing = false,
+  isQuotationMode = false,
   initialLeadData = null,
   onDirtyChange,
   isReadOnly
@@ -822,8 +824,10 @@ export function LeadForm({
       <CardHeader className='space-y-0 pb-2'>
         <div className="flex justify-between items-start">
           <div className="flex-1 space-y-0">
-             {isEditing ? (
-                <CardTitle className="text-xl font-bold">Customer Details</CardTitle>
+             {isEditing || isQuotationMode ? (
+                <CardTitle className="font-headline text-2xl">
+                  {isEditing ? 'Edit Details' : 'Create Quotation'}
+                </CardTitle>
              ) : (
               <>
                 <CardTitle className="font-headline text-2xl">
@@ -835,7 +839,7 @@ export function LeadForm({
               </>
             )}
           </div>
-          {!isEditing && (
+          {!isEditing && !isQuotationMode && (
             <div className="text-base text-muted-foreground font-mono whitespace-nowrap pt-1 text-right">
               <div>{dateString} - {dayOfWeek} | <span className="blinking-time">{timeString}</span></div>
             </div>
@@ -844,276 +848,278 @@ export function LeadForm({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-              
-              {/* Customer and Contact Info */}
-              <div className="space-y-3 pt-4">
-                 <div className="flex justify-center items-center h-8 mb-4">
-                  {customerStatus && customerNameValue && (
-                    <div className={cn("animate-in fade-in-down flex items-center gap-2")}>
-                      {customerStatus === 'Repeat' ? (
-                         <div onClick={() => !isEditing && setIsStatusDialogOpen(true)} className={!isEditing ? 'cursor-pointer' : ''}>
-                            <StatusBanner
-                                text="Repeat Buyer"
-                                backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
-                                textColorClassName="text-yellow-900 font-bold"
-                                borderClassName="border-yellow-500"
-                                className='w-36'
-                            />
-                         </div>
-                      ) : (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div onClick={() => customerStatus === 'New' && !isEditing && setIsStatusDialogOpen(true)} className={customerStatus === 'New' && !isEditing ? 'cursor-pointer' : ''}>
-                                  <StatusBanner
-                                  text="New Customer"
-                                  backgroundColor="#FFFFFF"
-                                  textColorClassName="text-black font-bold"
-                                  borderClassName="shining-black-border"
-                                  className='w-36'
-                                  />
+            {!isQuotationMode && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                  {/* Customer and Contact Info */}
+                  <div className="space-y-3 pt-4">
+                     <div className="flex justify-center items-center h-8 mb-4">
+                      {customerStatus && customerNameValue && (
+                        <div className={cn("animate-in fade-in-down flex items-center gap-2")}>
+                          {customerStatus === 'Repeat' ? (
+                             <div onClick={() => !isEditing && setIsStatusDialogOpen(true)} className={!isEditing ? 'cursor-pointer' : ''}>
+                                <StatusBanner
+                                    text="Repeat Buyer"
+                                    backgroundClassName="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 animate-glowing-gold"
+                                    textColorClassName="text-yellow-900 font-bold"
+                                    borderClassName="border-yellow-500"
+                                    className='w-36'
+                                />
+                             </div>
+                          ) : (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div onClick={() => customerStatus === 'New' && !isEditing && setIsStatusDialogOpen(true)} className={customerStatus === 'New' && !isEditing ? 'cursor-pointer' : ''}>
+                                      <StatusBanner
+                                      text="New Customer"
+                                      backgroundColor="#FFFFFF"
+                                      textColorClassName="text-black font-bold"
+                                      borderClassName="shining-black-border"
+                                      className='w-36'
+                                      />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Click if the customer have already ordered before to tag as Repeat Buyer</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                           {customerStatus === 'Repeat' && orderCount > 0 && (
+                              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-black text-xs font-bold">
+                                {orderCount}
                               </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Click if the customer have already ordered before to tag as Repeat Buyer</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                            )}
+                        </div>
                       )}
-                       {customerStatus === 'Repeat' && orderCount > 0 && (
-                          <div className="flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-black text-xs font-bold">
-                            {orderCount}
-                          </div>
-                        )}
                     </div>
-                  )}
-                </div>
-                <FormField control={form.control} name="customerName" render={({field}) => (
-                  <FormItem className="relative mt-2">
-                    <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} autoComplete="off"
-                        onFocus={() => setActiveField('customerName')}
-                        onBlur={() => setTimeout(() => { if (activeField === 'customerName') setActiveField(null); }, 150)} 
-                        onChange={(e) => {
-                            field.onChange(e);
-                            if (isEditing) return;
-                            if (manualStatus) {
-                                setManualStatus(null);
-                            }
-                        }}
-                      />
-                    </FormControl>
-                    {!isEditing && customerSuggestions.length > 0 && customerNameValue && activeField === 'customerName' && (
-                      <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                        <CardContent className="p-2 max-h-40 overflow-y-auto">
-                          {customerSuggestions.map((lead) => (
-                            <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
-                              {toTitleCase(lead.customerName)}
-                            </div>
-                          ))}
-                        </CardContent>
-                      </Card>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}/>
-                <FormField control={form.control} name="companyName" render={({field}) => (
-                  <FormItem className="relative">
-                    <FormLabel className="flex items-center gap-2 text-black text-xs"><Building className="h-4 w-4 text-primary" />Company Name (Optional)</FormLabel>
-                    <FormControl>
-                      <Input {...field} autoComplete="off" 
-                        onFocus={() => setActiveField('companyName')}
-                        onBlur={() => setTimeout(() => { if (activeField === 'companyName') setActiveField(null); }, 150)}
-                      />
-                    </FormControl>
-                    {!isEditing && companySuggestions.length > 0 && companyNameValue && activeField === 'companyName' && (
-                      <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                        <CardContent className="p-2 max-h-40 overflow-y-auto">
-                          {companySuggestions.map((lead) => (
-                            <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
-                              {lead.companyName ? toTitleCase(lead.companyName) : ''}
-                            </div>
-                          ))}
-                        </CardContent>
-                      </Card>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}/>
-                <div className="grid grid-cols-2 gap-x-4">
-                  <FormField control={form.control} name="mobileNo" render={({field}) => (
-                    <FormItem>
-                      <div className="flex items-center gap-2">
-                        <FormLabel className="flex items-center gap-2 text-black text-xs"><Phone className="h-4 w-4 text-primary" />Mobile No. (Optional)</FormLabel>
-                        {!showSecondMobile && !isReadOnly && (
-                          <Button type="button" size="icon" variant="ghost" className="h-5 w-5 text-primary" onClick={() => setShowSecondMobile(true)}>
-                            <PlusCircle className="h-4 w-4" />
-                          </Button>
+                    <FormField control={form.control} name="customerName" render={({field}) => (
+                      <FormItem className="relative mt-2">
+                        <FormLabel className="flex items-center gap-2 text-black text-xs"><User className="h-4 w-4 text-primary" />Customer Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} autoComplete="off"
+                            onFocus={() => setActiveField('customerName')}
+                            onBlur={() => setTimeout(() => { if (activeField === 'customerName') setActiveField(null); }, 150)} 
+                            onChange={(e) => {
+                                field.onChange(e);
+                                if (isEditing) return;
+                                if (manualStatus) {
+                                    setManualStatus(null);
+                                }
+                            }}
+                          />
+                        </FormControl>
+                        {!isEditing && customerSuggestions.length > 0 && customerNameValue && activeField === 'customerName' && (
+                          <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                            <CardContent className="p-2 max-h-40 overflow-y-auto">
+                              {customerSuggestions.map((lead) => (
+                                <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
+                                  {toTitleCase(lead.customerName)}
+                                </div>
+                              ))}
+                            </CardContent>
+                          </Card>
                         )}
-                      </div>
-                      <FormControl><Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}/>
-                  <FormField control={form.control} name="landlineNo" render={({field}) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-black text-xs"><PhoneForwarded className="h-4 w-4 text-primary" />Landline No. (Optional)</FormLabel>
-                      <FormControl><Input type="tel" {...field} onChange={(e) => handleLandlineNoChange(e, field)} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}/>
-                </div>
-                {showSecondMobile && (
+                        <FormMessage />
+                      </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="companyName" render={({field}) => (
+                      <FormItem className="relative">
+                        <FormLabel className="flex items-center gap-2 text-black text-xs"><Building className="h-4 w-4 text-primary" />Company Name (Optional)</FormLabel>
+                        <FormControl>
+                          <Input {...field} autoComplete="off" 
+                            onFocus={() => setActiveField('companyName')}
+                            onBlur={() => setTimeout(() => { if (activeField === 'companyName') setActiveField(null); }, 150)}
+                          />
+                        </FormControl>
+                        {!isEditing && companySuggestions.length > 0 && companyNameValue && activeField === 'companyName' && (
+                          <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                            <CardContent className="p-2 max-h-40 overflow-y-auto">
+                              {companySuggestions.map((lead) => (
+                                <div key={lead.id} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSuggestionClick(lead)}>
+                                  {lead.companyName ? toTitleCase(lead.companyName) : ''}
+                                </div>
+                              ))}
+                            </CardContent>
+                          </Card>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}/>
                     <div className="grid grid-cols-2 gap-x-4">
-                        <FormField control={form.control} name="mobileNo2" render={({field}) => (
-                            <FormItem>
-                            <div className="flex items-center justify-between">
-                                <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Phone className="h-4 w-4 text-primary" />2nd Mobile No. (Optional)</FormLabel>
-                                {!isReadOnly && (
-                                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => {
-                                        setShowSecondMobile(false);
-                                        setValue('mobileNo2', '');
-                                    }}>
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                )}
-                            </div>
-                            <FormControl>
-                                <Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}/>
+                      <FormField control={form.control} name="mobileNo" render={({field}) => (
+                        <FormItem>
+                          <div className="flex items-center gap-2">
+                            <FormLabel className="flex items-center gap-2 text-black text-xs"><Phone className="h-4 w-4 text-primary" />Mobile No. (Optional)</FormLabel>
+                            {!showSecondMobile && !isReadOnly && (
+                              <Button type="button" size="icon" variant="ghost" className="h-5 w-5 text-primary" onClick={() => setShowSecondMobile(true)}>
+                                <PlusCircle className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <FormControl><Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}/>
+                      <FormField control={form.control} name="landlineNo" render={({field}) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2 text-black text-xs"><PhoneForwarded className="h-4 w-4 text-primary" />Landline No. (Optional)</FormLabel>
+                          <FormControl><Input type="tel" {...field} onChange={(e) => handleLandlineNoChange(e, field)} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}/>
                     </div>
-                )}
-              </div>
-
-              {/* Address Info */}
-              <div className="space-y-3">
-                 {isInternational ? (
-                    <FormField
-                        control={form.control}
-                        name="internationalAddress"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />International Address</FormLabel>
+                    {showSecondMobile && (
+                        <div className="grid grid-cols-2 gap-x-4">
+                            <FormField control={form.control} name="mobileNo2" render={({field}) => (
+                                <FormItem>
+                                <div className="flex items-center justify-between">
+                                    <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Phone className="h-4 w-4 text-primary" />2nd Mobile No. (Optional)</FormLabel>
+                                    {!isReadOnly && (
+                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-destructive" onClick={() => {
+                                            setShowSecondMobile(false);
+                                            setValue('mobileNo2', '');
+                                        }}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    )}
+                                </div>
                                 <FormControl>
-                                    <Textarea
-                                        placeholder="Enter the full international address"
-                                        className="resize-y min-h-[120px]"
-                                        {...field}
-                                    />
+                                    <Input type="tel" {...field} onChange={(e) => handleMobileNoChange(e, field)} />
                                 </FormControl>
                                 <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                 ) : (
-                    <>
-                        <FormField control={form.control} name="houseStreet" render={({field}) => (
-                        <FormItem>
-                            <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street, Village, Landmark & Others</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}/>
-                        <div className="grid grid-cols-2 gap-x-4">
-                        <FormField control={form.control} name="barangay" render={({field}) => (
-                            <FormItem className="relative">
-                            <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
-                            <FormControl>
-                                <Input {...field} onFocus={() => setActiveField('barangay')} onBlur={() => setTimeout(() => { if (activeField === 'barangay') setActiveField(null);}, 150)} autoComplete="off" />
-                            </FormControl>
-                            {barangayValue && barangaySuggestions.length > 0 && !selectedLead && activeField === 'barangay' && (
-                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                                <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                    {barangaySuggestions.map((b, index) => (
-                                    <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleBarangaySuggestionClick(b)}>
-                                        <p className="font-semibold">{b.barangay}</p>
-                                        {b.showCity && <p className="text-xs text-gray-500">({b.city})</p>}
-                                    </div>
-                                    ))}
-                                </CardContent>
-                                </Card>
-                            )}
-                            <FormMessage />
-                            </FormItem>
-                        )}/>
-                        <FormField control={form.control} name="city" render={({field}) => (
-                            <FormItem className="relative">
-                            <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
-                            <FormControl>
-                                <Input {...field} onFocus={() => setActiveField('city')} onBlur={() => setTimeout(() => { if (activeField === 'city') setActiveField(null);}, 150)} autoComplete="off" />
-                            </FormControl>
-                            {cityValue && citySuggestions.length > 0 && !selectedLead && activeField === 'city' && (
-                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                                <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                    {citySuggestions.map((city, index) => (
-                                    <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCitySuggestionClick(city)}>
-                                        <p className="font-semibold">{city.name} <span className="font-normal text-gray-500">({city.type})</span></p>
-                                        <p className="text-xs text-gray-500">{city.province}</p>
-                                    </div>
-                                    ))}
-                                </CardContent>
-                                </Card>
-                            )}
-                            <FormMessage />
-                            </FormItem>
-                        )}/>
+                                </FormItem>
+                            )}/>
                         </div>
-                        <FormField control={form.control} name="province" render={({field}) => (
-                          <FormItem className="relative">
-                            <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
-                            <FormControl><Input {...field} onFocus={() => setActiveField('province')} onBlur={() => setTimeout(() => { if (activeField === 'province') setActiveField(null);}, 150)} autoComplete="off" /></FormControl>
-                            {provinceValue && provinceSuggestions.length > 0 && !selectedLead && activeField === 'province' && (
-                                <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                                <CardContent className="p-2 max-h-40 overflow-y-auto">
-                                    {provinceSuggestions.map((province, index) => (
-                                        <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleProvinceSuggestionClick(province)}>
-                                            {province}
-                                        </div>
-                                    ))}
-                                </CardContent>
-                                </Card>
-                            )}
-                            <FormMessage />
-                          </FormItem>
-                        )}/>
-                        <FormItem>
-                            <FormLabel className="flex items-center gap-2 text-black text-xs">Complete Address</FormLabel>
-                            <FormControl>
-                            <Input readOnly value={concatenatedAddress} className="h-14 text-xs bg-muted" />
-                            </FormControl>
-                        </FormItem>
-                    </>
-                 )}
-                 <div className='mt-4'>
-                    <FormField
-                        control={form.control}
-                        name="isInternational"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                <FormControl>
-                                    <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                    />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                    <FormLabel className="text-xs">
-                                        Is this order for delivery outside the Philippines? <span className="italic text-muted-foreground">(Check the box to add a custom address.)</span>
-                                    </FormLabel>
-                                </div>
-                            </FormItem>
-                        )}
-                    />
-                </div>
-              </div>
-            </div>
+                    )}
+                  </div>
 
-            <Separator className="my-4" />
+                  {/* Address Info */}
+                  <div className="space-y-3">
+                     {isInternational ? (
+                        <FormField
+                            control={form.control}
+                            name="internationalAddress"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />International Address</FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                            placeholder="Enter the full international address"
+                                            className="resize-y min-h-[120px]"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                     ) : (
+                        <>
+                            <FormField control={form.control} name="houseStreet" render={({field}) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2 text-black text-xs"><Home className="h-4 w-4 text-primary" />House No., Street, Village, Landmark & Others</FormLabel>
+                                <FormControl><Input {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}/>
+                            <div className="grid grid-cols-2 gap-x-4">
+                            <FormField control={form.control} name="barangay" render={({field}) => (
+                                <FormItem className="relative">
+                                <FormLabel className="flex items-center gap-2 text-black text-xs">Barangay</FormLabel>
+                                <FormControl>
+                                    <Input {...field} onFocus={() => setActiveField('barangay')} onBlur={() => setTimeout(() => { if (activeField === 'barangay') setActiveField(null);}, 150)} autoComplete="off" />
+                                </FormControl>
+                                {barangayValue && barangaySuggestions.length > 0 && !selectedLead && activeField === 'barangay' && (
+                                    <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                                    <CardContent className="p-2 max-h-40 overflow-y-auto">
+                                        {barangaySuggestions.map((b, index) => (
+                                        <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleBarangaySuggestionClick(b)}>
+                                            <p className="font-semibold">{b.barangay}</p>
+                                            {b.showCity && <p className="text-xs text-gray-500">({b.city})</p>}
+                                        </div>
+                                        ))}
+                                    </CardContent>
+                                    </Card>
+                                )}
+                                <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="city" render={({field}) => (
+                                <FormItem className="relative">
+                                <FormLabel className="flex items-center gap-2 text-black text-xs">City / Municipality</FormLabel>
+                                <FormControl>
+                                    <Input {...field} onFocus={() => setActiveField('city')} onBlur={() => setTimeout(() => { if (activeField === 'city') setActiveField(null);}, 150)} autoComplete="off" />
+                                </FormControl>
+                                {cityValue && citySuggestions.length > 0 && !selectedLead && activeField === 'city' && (
+                                    <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                                    <CardContent className="p-2 max-h-40 overflow-y-auto">
+                                        {citySuggestions.map((city, index) => (
+                                        <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleCitySuggestionClick(city)}>
+                                            <p className="font-semibold">{city.name} <span className="font-normal text-gray-500">({city.type})</span></p>
+                                            <p className="text-xs text-gray-500">{city.province}</p>
+                                        </div>
+                                        ))}
+                                    </CardContent>
+                                    </Card>
+                                )}
+                                <FormMessage />
+                                </FormItem>
+                            )}/>
+                            </div>
+                            <FormField control={form.control} name="province" render={({field}) => (
+                              <FormItem className="relative">
+                                <FormLabel className="flex items-center gap-2 text-black text-xs">Province</FormLabel>
+                                <FormControl><Input {...field} onFocus={() => setActiveField('province')} onBlur={() => setTimeout(() => { if (activeField === 'province') setActiveField(null);}, 150)} autoComplete="off" /></FormControl>
+                                {provinceValue && provinceSuggestions.length > 0 && !selectedLead && activeField === 'province' && (
+                                    <Card className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                                    <CardContent className="p-2 max-h-40 overflow-y-auto">
+                                        {provinceSuggestions.map((province, index) => (
+                                            <div key={index} className="p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleProvinceSuggestionClick(province)}>
+                                                {province}
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                    </Card>
+                                )}
+                                <FormMessage />
+                              </FormItem>
+                            )}/>
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2 text-black text-xs">Complete Address</FormLabel>
+                                <FormControl>
+                                <Input readOnly value={concatenatedAddress} className="h-14 text-xs bg-muted" />
+                                </FormControl>
+                            </FormItem>
+                        </>
+                     )}
+                     <div className='mt-4'>
+                        <FormField
+                            control={form.control}
+                            name="isInternational"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                    <FormControl>
+                                        <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel className="text-xs">
+                                            Is this order for delivery outside the Philippines? <span className="italic text-muted-foreground">(Check the box to add a custom address.)</span>
+                                        </FormLabel>
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                  </div>
+                </div>
+                <Separator className="my-4" />
+              </>
+            )}
             
             <h3 className="font-headline text-xl mt-4">Order Details</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-4">
@@ -1503,4 +1509,3 @@ function SetCustomerStatusDialog({
     
 
     
-

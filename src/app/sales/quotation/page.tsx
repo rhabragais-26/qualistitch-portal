@@ -2,20 +2,12 @@
 'use client';
 import { useState } from 'react';
 import { Header } from '@/components/header';
-import { QuotationForm } from '@/components/quotation-form';
+import { QuotationForm, QuotationFormValues, quotationFormSchema } from '@/components/quotation-form';
 import { QuotationSummary } from '@/components/quotation-summary';
 import { Order } from '@/components/lead-form';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { AddOns, Discount } from "@/components/invoice-card";
-
-const quotationFormSchema = z.object({
-  orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services', 'Item Sample'], {required_error: "You need to select an order type."}),
-  priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
-  orders: z.array(z.any()).min(1, "Please add at least one order."),
-});
-export type QuotationFormValues = z.infer<typeof quotationFormSchema>;
+import { AddOns, Discount, Payment } from "@/components/invoice-card";
 
 export default function QuotationPage() {
   const [stagedOrders, setStagedOrders] = useState<Order[]>([]);
@@ -27,8 +19,21 @@ export default function QuotationPage() {
   const formMethods = useForm<QuotationFormValues>({
     resolver: zodResolver(quotationFormSchema),
     defaultValues: {
+      customerName: "",
+      companyName: "",
+      mobileNo: "",
+      mobileNo2: "",
+      landlineNo: "",
+      isInternational: false,
+      houseStreet: "",
+      barangay: "",
+      city: "",
+      province: "",
+      internationalAddress: "",
+      orderType: undefined,
       priorityType: 'Regular',
       orders: [],
+      courier: undefined,
     },
   });
 
