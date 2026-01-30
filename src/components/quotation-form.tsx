@@ -1,11 +1,10 @@
 
-
 'use client';
 
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
-import { LeadForm } from './lead-form'; 
+import { LeadForm } from '@/components/lead-form'; 
 import { InvoiceCard, AddOns, Discount, Payment } from "./invoice-card";
 import { type Order, type QuotationFormValues } from '@/lib/form-schemas';
 
@@ -33,22 +32,19 @@ export function QuotationForm({
   setDiscounts,
   onGrandTotalChange,
 }: QuotationFormProps) {
-  const formMethods = useFormContext<QuotationFormValues>();
   const [payments, setPayments] = useState<Record<string, Payment[]>>({});
   const [balance, setBalance] = useState(0);
 
   return (
     <div className="space-y-4">
-      <Form {...formMethods}>
-        <form id="quotation-form" onSubmit={(e) => e.preventDefault()}>
-          <LeadForm
-            isQuotationMode={true}
-            stagedOrders={stagedOrders}
-            setStagedOrders={setStagedOrders}
-            onOrderTypeChange={onOrderTypeChange}
-          />
-        </form>
-      </Form>
+      <form id="quotation-form" onSubmit={(e) => e.preventDefault()}>
+        <LeadForm
+          isQuotationMode={true}
+          stagedOrders={stagedOrders}
+          setStagedOrders={setStagedOrders}
+          onOrderTypeChange={onOrderTypeChange}
+        />
+      </form>
       <InvoiceCard
         orders={stagedOrders}
         orderType={orderType}

@@ -741,7 +741,7 @@ export function LeadForm({
           <div className="flex-1 space-y-0">
              {isEditing || isQuotationMode ? (
                 <CardTitle className="font-headline text-2xl">
-                  {isEditing ? 'Edit Details' : 'Create Quotation'}
+                  {isEditing ? 'Edit Details' : ''}
                 </CardTitle>
              ) : (
               <>
@@ -1036,8 +1036,26 @@ export function LeadForm({
               </>
             )}
             
-            <h3 className="font-headline text-xl mt-4">Order Details</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-4">
+            <h3 className="font-headline text-xl mt-4">{isQuotationMode ? 'Quotation Details' : 'Order Details'}</h3>
+            {isQuotationMode && (
+              <FormField
+                control={form.control}
+                name="customerName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-black text-xs">
+                      <User className="h-4 w-4 text-primary" />
+                      Customer Name (Optional)
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter customer name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            <div className={cn("grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-4", isQuotationMode && "md:grid-cols-1 grid-cols-1")}>
               <FormField control={form.control} name="orderType" render={({field}) => (
                   <FormItem>
                   <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
@@ -1052,56 +1070,60 @@ export function LeadForm({
                   <FormMessage />
                   </FormItem>
               )}/>
-              <FormField
-              control={form.control}
-              name="priorityType"
-              render={({ field }) => (
-                  <FormItem>
-                  <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">
-                      <AlertTriangle className="h-4 w-4 text-primary" />
-                      Priority Type
-                  </FormLabel>
-                  <FormControl>
-                      <RadioGroup
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      className="flex items-center justify-center space-x-4 pt-2"
-                      disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
-                      >
-                      {['Rush', 'Regular'].map((option) => (
-                          <FormItem key={option} className="flex items-center space-x-2 space-y-0">
-                          <FormControl><RadioGroupItem value={option} /></FormControl>
-                          <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
-                          </FormItem>
-                      ))}
-                      </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                  </FormItem>
+              {!isQuotationMode && (
+                <>
+                  <FormField
+                  control={form.control}
+                  name="priorityType"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">
+                          <AlertTriangle className="h-4 w-4 text-primary" />
+                          Priority Type
+                      </FormLabel>
+                      <FormControl>
+                          <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="flex items-center justify-center space-x-4 pt-2"
+                          disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
+                          >
+                          {['Rush', 'Regular'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2 space-y-0">
+                              <FormControl><RadioGroupItem value={option} /></FormControl>
+                              <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
+                              </FormItem>
+                          ))}
+                          </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+                  <FormField control={form.control} name="courier" render={({field}) => {
+                    const allCourierOptions = useMemo(() => {
+                        if (field.value && !courierOptions.includes(field.value)) {
+                            return [field.value, ...courierOptions];
+                        }
+                        return courierOptions;
+                    }, [field.value]);
+    
+                    return (
+                    <FormItem>
+                        <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                            <SelectTrigger className={cn("text-xs w-full", !field.value && "text-muted-foreground")}>
+                                <SelectValue placeholder="Select Courier" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>{allCourierOptions.map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                  )}}/>
+                </>
               )}
-              />
-              <FormField control={form.control} name="courier" render={({field}) => {
-                const allCourierOptions = useMemo(() => {
-                    if (field.value && !courierOptions.includes(field.value)) {
-                        return [field.value, ...courierOptions];
-                    }
-                    return courierOptions;
-                }, [field.value]);
-
-                return (
-                <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><Truck className="h-4 w-4 text-primary" />Courier (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                        <SelectTrigger className={cn("text-xs w-full", !field.value && "text-muted-foreground")}>
-                            <SelectValue placeholder="Select Courier" />
-                        </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>{allCourierOptions.map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
-                    </Select>
-                    <FormMessage />
-                </FormItem>
-              )}}/>
             </div>
 
             <Separator className="my-4" />
@@ -1415,14 +1437,3 @@ function SetCustomerStatusDialog({
     );
 }
 
-    
-
-    
-
-    
-
-    
-
-    
-
-    
