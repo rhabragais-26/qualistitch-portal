@@ -1037,68 +1037,73 @@ export function LeadForm({
             )}
             
             <h3 className="font-headline text-xl mt-4">{isQuotationMode ? 'Quotation Details' : 'Order Details'}</h3>
-            {isQuotationMode && (
-              <FormField
-                control={form.control}
-                name="customerName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2 text-black text-xs">
-                      <User className="h-4 w-4 text-primary" />
-                      Customer Name (Optional)
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter customer name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            <div className={cn("grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-4", isQuotationMode && "md:grid-cols-1 grid-cols-1")}>
-              <FormField control={form.control} name="orderType" render={({field}) => (
-                  <FormItem>
-                  <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+            <div className={cn(
+              "grid gap-x-4 gap-y-4",
+              isQuotationMode ? "grid-cols-1 md:grid-cols-2" : "grid-cols-2 md:grid-cols-3"
+            )}>
+              {isQuotationMode && (
+                <FormField
+                  control={form.control}
+                  name="customerName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-black text-xs">
+                        <User className="h-4 w-4 text-primary" />
+                        Customer Name (Optional)
+                      </FormLabel>
                       <FormControl>
-                        <SelectTrigger className={cn("text-xs w-full", !field.value && "text-muted-foreground")}>
-                            <SelectValue placeholder="Select Order Type" />
-                        </SelectTrigger>
+                        <Input placeholder="Enter customer name" {...field} />
                       </FormControl>
-                      <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services', 'Item Sample'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
-                  </Select>
-                  <FormMessage />
-                  </FormItem>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              
+              <FormField control={form.control} name="orderType" render={({field}) => (
+                 <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0"><ShoppingBag className="h-4 w-4 text-primary" />Order Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className={cn("text-xs w-full", !field.value && "text-muted-foreground")}>
+                              <SelectValue placeholder="Select Order Type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>{['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services', 'Item Sample'].map((option) => (<SelectItem key={option} value={option}>{option}</SelectItem>))}</SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
               )}/>
+
               {!isQuotationMode && (
                 <>
                   <FormField
-                  control={form.control}
-                  name="priorityType"
-                  render={({ field }) => (
-                      <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">
-                          <AlertTriangle className="h-4 w-4 text-primary" />
-                          Priority Type
-                      </FormLabel>
-                      <FormControl>
-                          <RadioGroup
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          className="flex items-center justify-center space-x-4 pt-2"
-                          disabled={orderType === 'MTO' || orderType === 'Stock (Jacket Only)'}
-                          >
-                          {['Rush', 'Regular'].map((option) => (
-                              <FormItem key={option} className="flex items-center space-x-2 space-y-0">
-                              <FormControl><RadioGroupItem value={option} /></FormControl>
-                              <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
-                              </FormItem>
-                          ))}
-                          </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                      </FormItem>
-                  )}
+                    control={form.control}
+                    name="priorityType"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel className="flex items-center gap-2 text-black text-xs shrink-0">
+                            <AlertTriangle className="h-4 w-4 text-primary" />
+                            Priority Type
+                        </FormLabel>
+                        <FormControl>
+                            <RadioGroup
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            className="flex items-center justify-center space-x-4 pt-2"
+                            disabled={orderTypeValue === 'MTO' || orderTypeValue === 'Stock (Jacket Only)'}
+                            >
+                            {['Rush', 'Regular'].map((option) => (
+                                <FormItem key={option} className="flex items-center space-x-2 space-y-0">
+                                <FormControl><RadioGroupItem value={option} /></FormControl>
+                                <FormLabel className="font-normal text-black text-xs">{option}</FormLabel>
+                                </FormItem>
+                            ))}
+                            </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
                   />
                   <FormField control={form.control} name="courier" render={({field}) => {
                     const allCourierOptions = useMemo(() => {
@@ -1437,3 +1442,5 @@ function SetCustomerStatusDialog({
     );
 }
 
+
+    
