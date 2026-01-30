@@ -2,12 +2,13 @@
 'use client';
 import { useState } from 'react';
 import { Header } from '@/components/header';
-import { QuotationForm, QuotationFormValues, quotationFormSchema } from '@/components/quotation-form';
+import { QuotationForm } from '@/components/quotation-form';
 import { QuotationSummary } from '@/components/quotation-summary';
-import { Order } from '@/components/lead-form';
+import { type Order } from '@/lib/form-schemas';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AddOns, Discount, Payment } from "@/components/invoice-card";
+import { AddOns, Discount } from "@/components/invoice-card";
+import { type QuotationFormValues, quotationFormSchema } from '@/lib/form-schemas';
 
 export default function QuotationPage() {
   const [stagedOrders, setStagedOrders] = useState<Order[]>([]);

@@ -12,7 +12,7 @@ export const orderSchema = z.object({
 
 export type Order = z.infer<typeof orderSchema>;
 
-export const formSchema = z.object({
+const baseFormSchema = z.object({
   customerName: z.string().min(1, {message: 'Customer name is required'}),
   companyName: z.string().optional(),
   mobileNo: z.string().optional(),
@@ -28,7 +28,10 @@ export const formSchema = z.object({
   orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services', 'Item Sample'], {required_error: "You need to select an order type."}),
   priorityType: z.enum(['Rush', 'Regular'], {required_error: "You need to select a priority type."}),
   orders: z.array(orderSchema).min(1, "Please add at least one order."),
-}).refine(data => {
+});
+
+
+export const formSchema = baseFormSchema.refine(data => {
     if (data.mobileNo) return /^\d{4}-\d{3}-\d{4}$/.test(data.mobileNo) || data.mobileNo === '';
     return true;
 }, {
@@ -80,3 +83,16 @@ export const formSchema = z.object({
   });
 
 export type FormValues = z.infer<typeof formSchema>;
+
+export const quotationFormSchema = baseFormSchema.extend({
+  customerName: z.string().optional(),
+  houseStreet: z.string().optional(),
+  barangay: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  priorityType: z.enum(['Rush', 'Regular']).optional(),
+  orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services', 'Item Sample']).optional(),
+  orders: z.array(orderSchema).optional(),
+});
+
+export type QuotationFormValues = z.infer<typeof quotationFormSchema>;
