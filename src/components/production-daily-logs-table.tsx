@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { collection, query, where, doc, setDoc } from 'firebase/firestore';
@@ -29,11 +28,12 @@ import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { Plus, Minus, Save, Edit } from 'lucide-react';
+import { Plus, Minus, Save, Edit, X } from 'lucide-react';
 import { Separator } from './ui/separator';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from './ui/button';
+import Image from 'next/image';
 
 // Simplified types for this component
 type Order = {
@@ -47,6 +47,12 @@ type Order = {
   quantity: number;
 };
 
+type Layout = {
+  layoutImage?: string;
+};
+
+type ProductionType = "Pending" | "In-house" | "Outsource 1" | "Outsource 2" | "Outsource 3";
+
 type Lead = {
   id: string;
   customerName: string;
@@ -58,6 +64,8 @@ type Lead = {
   isCutting?: boolean;
   orders: Order[];
   submissionDateTime: string;
+  productionType?: ProductionType;
+  layouts?: Layout[];
 };
 
 type EnrichedLead = Lead & {
@@ -115,8 +123,9 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
     const [logs, setLogs] = useState<Record<string, LogData>>({});
     const [checkedDesigns, setCheckedDesigns] = useState<Record<string, Record<string, boolean>>>({});
     const [editingLogLeadId, setEditingLogLeadId] = useState<string | null>(null);
+    const [imageInView, setImageInView] = useState<string | null>(null);
 
-    const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads'), where("isCutting", "==", true)) : null, [firestore]);
+    const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads'), where("isCutting", "==", true), where("productionType", "==", "In-house")) : null, [firestore]);
     const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
     const todayStr = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
@@ -417,6 +426,26 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
     }
 
     return (
+    <>
+      {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+            </Button>
+          </div>
+        </div>
+      )}
         <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col">
             <CardHeader>
                 <div className="flex justify-between items-center">
@@ -449,6 +478,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                             <TableRow>
                                 <TableHead className="text-white font-bold text-xs">Customer</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
+                                <TableHead className="text-white font-bold text-xs text-center">Layout</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
                                 <TableHead colSpan={5} className="text-white font-bold text-xs text-center">Embroidery Details</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center w-[220px]">Duration</TableHead>
@@ -499,6 +529,18 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
+                                     <TableCell className="text-xs align-middle text-center py-2 text-black">
+                                        {lead.layouts?.[0]?.layoutImage ? (
+                                            <div 
+                                                className="relative w-24 h-16 mx-auto border rounded-md cursor-pointer"
+                                                onClick={() => setImageInView(lead.layouts![0].layoutImage!)}
+                                            >
+                                                <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
+                                            </div>
+                                        ) : (
+                                            <span className="text-muted-foreground text-xs">-</span>
+                                        )}
+                                    </TableCell>
                                     <TableCell className="text-xs text-center"><Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>{lead.priorityType}</Badge></TableCell>
                                     <TableCell colSpan={5} className="p-0 align-top">
                                         <Table>
@@ -709,5 +751,6 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                 </div>
             </CardContent>
         </Card>
+      </>
     );
 }
