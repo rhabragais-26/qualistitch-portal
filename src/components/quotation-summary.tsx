@@ -111,7 +111,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                             <p className="text-xs">fabprintline@gmail.com</p>
                             <p className="text-xs">Govt. UID TIN #: 442-329-118-00000</p>
                         </div>
-                        <div className="relative h-24 w-24">
+                        <div className="relative h-32 w-32">
                            {logoLoading ? (
                                 <Skeleton className="h-full w-full" />
                             ) : logoUrl ? (
