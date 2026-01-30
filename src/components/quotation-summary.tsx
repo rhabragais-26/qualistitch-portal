@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -101,16 +102,18 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
             </CardHeader>
             <CardContent>
                  <div className="p-8 printable-quotation" id="quotation-content">
-                    <header className="flex justify-between items-start mb-8">
+                    <header className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="font-bold text-2xl">BURDA PINAS</h1>
-                            <p className="text-base text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
-                            <p className="text-base"><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
-                            <p className="text-base"><span className="font-bold">Mobile No:</span> 0966 278 2437 | 0956 204 1950 | 0956 204 1919</p>
-                            <p className="text-base"><span className="font-bold">Landline No:</span> (02) 8716-5814</p>
-                            <p className="text-base"><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
+                            <h1 className="font-bold text-2xl mb-0">BURDA PINAS</h1>
+                            <p className="text-sm text-gray-500 mt-0">Owned and Operated by: QUALISTITCH INCORPORATED</p>
+                            <div className="text-xs mt-2 space-y-px">
+                                <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
+                                <p><span className="font-bold">Mobile No:</span> 0966-278-2437 | 0956-204-1950 | 0956-204-1919</p>
+                                <p><span className="font-bold">Landline No:</span> (02) 8716-5814</p>
+                                <p><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
+                            </div>
                         </div>
-                        <div className="relative h-24 w-24">
+                        <div className="relative h-28 w-28">
                            {logoLoading ? (
                                 <Skeleton className="h-full w-full" />
                             ) : logoUrl ? (
@@ -124,16 +127,16 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <div className="flex justify-between items-center mb-8">
                         <div>
                             <h2 className="text-xl font-bold">Quotation</h2>
-                             <div className="flex items-center gap-2 mt-4">
+                             <div className="flex items-center gap-2 mt-4 text-sm">
                                 <p className="font-bold">BILLED TO:</p>
                                 {customerName ? (
-                                    <p className="flex items-center h-4">{customerName}</p>
+                                    <p className="flex items-center h-3">{customerName}</p>
                                 ) : (
                                     <p className="border-b-2 border-dotted border-gray-400 w-64 h-4"></p>
                                 )}
                             </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right text-sm">
                             <p><strong>QUOTATION NO.</strong></p>
                             <p><strong>DATE:</strong> {format(new Date(), 'MM/dd/yyyy')}</p>
                         </div>
