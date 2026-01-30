@@ -105,14 +105,15 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                         <div>
                             <h1 className="font-bold text-3xl">BURDA PINAS</h1>
                             <p className="text-base text-gray-500 mt-0">Owned and Operated by: QUALISTITCH INCORPORATED</p>
-                            <div className="text-sm mt-4 space-y-px">
-                                <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
+                            <div className="text-lg mt-4 space-y-px">
+                                <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan,</p>
+                                <p className="ml-16">San Mateo, Rizal, Philippines 1850</p>
                                 <p><span className="font-bold">Mobile No:</span> 0966-278-2437 | 0956-204-1950 | 0956-204-1919</p>
                                 <p><span className="font-bold">Landline No:</span> (02) 8716-5814</p>
                                 <p><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
                             </div>
                         </div>
-                        <div className="relative h-32 w-32">
+                        <div className="relative h-40 w-40">
                            {logoLoading ? (
                                 <Skeleton className="h-full w-full" />
                             ) : logoUrl ? (
@@ -126,7 +127,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <div className="flex justify-between items-center mb-8">
                         <div>
                             <h2 className="text-xl font-bold">Quotation</h2>
-                             <div className="flex items-center gap-2 mt-4 text-xs">
+                             <div className="flex items-center gap-2 mt-4 text-sm">
                                 <p className="font-bold">BILLED TO:</p>
                                 {customerName ? (
                                     <p className="flex items-center h-3">{customerName}</p>
@@ -135,7 +136,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                 )}
                             </div>
                         </div>
-                        <div className="text-right text-xs">
+                        <div className="text-right text-sm">
                             <p><strong>QUOTATION NO.</strong></p>
                             <p><strong>DATE:</strong> {format(new Date(), 'MM/dd/yyyy')}</p>
                         </div>
@@ -144,10 +145,10 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-gray-200">
-                                <TableHead>DETAILS</TableHead>
-                                <TableHead className="text-center">QTY</TableHead>
-                                <TableHead className="text-right">RATE</TableHead>
-                                <TableHead className="text-right">AMOUNT</TableHead>
+                                <TableHead className="text-black font-bold">DETAILS</TableHead>
+                                <TableHead className="text-center text-black font-bold">QTY</TableHead>
+                                <TableHead className="text-right text-black font-bold">RATE</TableHead>
+                                <TableHead className="text-right text-black font-bold">AMOUNT</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
