@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react"
@@ -82,7 +81,7 @@ import { getTierLabel } from '@/lib/pricing';
 import { formatCurrency } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
-import { FormValues, Order, formSchema } from '@/lib/form-schemas';
+import { type FormValues, type Order } from '@/lib/form-schemas';
 
 type InventoryItem = {
   id: string;
@@ -369,7 +368,7 @@ export function LeadForm({
 
   useEffect(() => {
     const handleCustomerNameChange = () => {
-        if (selectedLead && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
+        if (selectedLead && customerNameValue && customerNameValue.toLowerCase() !== selectedLead.customerName.toLowerCase()) {
             setSelectedLead(null);
             setManualStatus(null);
         }
@@ -1415,6 +1414,8 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
+
+    
 
     
 

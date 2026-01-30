@@ -1,12 +1,24 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
-import { LeadForm, FormValues, formSchema } from '@/components/lead-form';
+import { LeadForm } from '@/components/lead-form';
+import { type FormValues, formSchema, type Order } from '@/lib/form-schemas';
 import { InvoiceCard, AddOns, Discount, Payment } from '@/components/invoice-card';
 import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { useRouter, usePathname } from 'next/navigation';
-import { Order } from '@/components/lead-form';
+import { Button } from '@/components/ui/button';
+import { CalculatorIcon, Ruler, Tag, Tv } from 'lucide-react';
+import { Calculator } from '@/components/calculator';
+import { SizeChartDialog } from '@/components/size-chart-dialog';
+import { cn } from '@/lib![CDATA[
+'use client';
+import { useState, useEffect } from 'react';
+import { Header } from '@/components/header';
+import { LeadForm } from '@/components/lead-form';
+import { type FormValues, formSchema, type Order } from '@/lib/form-schemas';
+import { InvoiceCard, AddOns, Discount, Payment } from '@/components/invoice-card';
+import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
+import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { CalculatorIcon, Ruler, Tag, Tv } from 'lucide-react';
 import { Calculator } from '@/components/calculator';
@@ -329,3 +341,5 @@ export default function NewOrderPage() {
     </div>
   );
 }
+
+    
