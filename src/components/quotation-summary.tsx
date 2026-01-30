@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -104,10 +105,9 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <header className="flex justify-between items-start mb-6">
                         <div>
                             <h1 className="font-bold text-3xl">BURDA PINAS</h1>
-                            <p className="text-base text-gray-500 mt-0">Owned and Operated by: QUALISTITCH INCORPORATED</p>
+                            <p className="text-base text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
                             <div className="text-lg mt-4 space-y-px">
-                                <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan,</p>
-                                <p className="ml-16">San Mateo, Rizal, Philippines 1850</p>
+                                <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
                                 <p><span className="font-bold">Mobile No:</span> 0966-278-2437 | 0956-204-1950 | 0956-204-1919</p>
                                 <p><span className="font-bold">Landline No:</span> (02) 8716-5814</p>
                                 <p><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
@@ -128,7 +128,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                         <div>
                             <h2 className="text-xl font-bold">Quotation</h2>
                              <div className="flex items-center gap-2 mt-4 text-sm">
-                                <p className="font-bold">BILLED TO:</p>
+                                <p className="font-bold">Customer:</p>
                                 {customerName ? (
                                     <p className="flex items-center h-3">{customerName}</p>
                                 ) : (
