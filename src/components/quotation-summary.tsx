@@ -129,7 +129,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         if (!productGroup && !isClientOwned && order.productType !== 'Patches') return acc;
   
         const embroidery = order.embroidery || 'logo';
-        const groupKey = `''${order.productType}-${embroidery}''`;
+        const groupKey = `${order.productType}-${embroidery}`;
         if (!acc[groupKey]) {
           acc[groupKey] = {
             productType: order.productType,
@@ -152,7 +152,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
             </CardHeader>
             <CardContent>
                  <div className="p-8 printable-quotation border rounded-lg bg-white" id="quotation-content" ref={quotationRef}>
-                    <header className="flex justify-between items-start mb-6">
+                    <header className="flex justify-between items-start mb-2">
                         <div>
                             <h2 className="font-bold text-2xl">BURDA PINAS</h2>
                             <p className="text-sm text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
@@ -163,7 +163,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                 <p><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
                             </div>
                         </div>
-                        <div className="relative h-40 w-40">
+                        <div className="relative h-32 w-32">
                            {logoLoading ? (
                                 <Skeleton className="h-full w-full" />
                             ) : logoUrl ? (
@@ -271,7 +271,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                         {groupDiscount && (
                                             <TableRow>
                                                 <TableCell colSpan={3} className="text-right font-bold text-destructive text-xs py-1 px-3">
-                                                    Discount {groupDiscount.reason ? `(${groupDiscount.reason})` : ''} ({groupDiscount.type === 'percentage' ? `''${groupDiscount.value}%''` : formatCurrency(groupDiscount.value)})
+                                                    Discount {groupDiscount.reason ? `(${groupDiscount.reason})` : ''} ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})
                                                 </TableCell>
                                                 <TableCell className="text-right font-bold text-destructive text-xs py-1 px-3">-{formatCurrency(discountAmount)}</TableCell>
                                             </TableRow>
@@ -289,7 +289,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     </Table>
                     <div className="mt-24 flex justify-between text-xs">
                         <div className="w-64 text-center">
-                             <p className="border-b-2 border-dotted border-gray-400 pb-1 font-bold h-7 text-center text-xs">
+                            <p className="border-b-2 border-dotted border-gray-400 pb-1 font-bold h-7 text-center text-xs">
                                 {userProfile?.nickname || ''}
                             </p>
                             <p className="text-xs mt-1">Prepared By</p>
