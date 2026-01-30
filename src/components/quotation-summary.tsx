@@ -104,8 +104,8 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                  <div className="p-8 printable-quotation border rounded-lg" id="quotation-content">
                     <header className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="font-bold text-xl">BURDA PINAS</h1>
-                            <p className="text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
+                            <h1 className="font-bold text-2xl">BURDA PINAS</h1>
+                            <p className="text-gray-500 mt-0">Owned and Operated by: QUALISTITCH INCORPORATED</p>
                             <div className="text-sm mt-4 space-y-px">
                                 <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
                                 <p><span className="font-bold">Mobile No:</span> 0966-278-2437 | 0956-204-1950 | 0956-204-1919</p>
@@ -176,11 +176,10 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                             <TableCell className="text-right">{formatCurrency(itemsSubtotal)}</TableCell>
                                         </TableRow>
                                         
-                                        {groupData.embroidery === 'logo' && <TableRow><TableCell className="pl-8 font-bold">Embroidery Logo<p className="text-xs font-normal pl-4">*** Front Left Chest Logo</p></TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>}
                                         {groupData.embroidery === 'name' && <TableRow><TableCell className="pl-8 font-bold">Embroidery Name</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>}
                                         {groupData.embroidery === 'logoAndText' && (
                                             <>
-                                                <TableRow><TableCell className="pl-8 font-bold">Embroidery Logo<p className="text-xs font-normal pl-4">*** Front Left Chest Logo</p></TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>
+                                                
                                                 <TableRow><TableCell className="pl-8 font-bold">Embroidery Name<p className="text-xs font-normal pl-4">*** Back Texts</p></TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>
                                             </>
                                         )}
@@ -225,3 +224,4 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         </Card>
     );
 }
+    
