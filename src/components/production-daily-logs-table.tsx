@@ -478,7 +478,6 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                             <TableRow>
                                 <TableHead className="text-white font-bold text-xs">Customer</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
-                                <TableHead className="text-white font-bold text-xs text-center">Layout</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
                                 <TableHead colSpan={5} className="text-white font-bold text-xs text-center">Embroidery Details</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center w-[220px]">Duration</TableHead>
@@ -528,20 +527,22 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                             {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
-                                     <TableCell className="text-xs align-middle text-center py-2 text-black">
-                                        {lead.layouts?.[0]?.layoutImage ? (
-                                            <div 
-                                                className="relative w-24 h-16 mx-auto border rounded-md cursor-pointer"
-                                                onClick={() => setImageInView(lead.layouts![0].layoutImage!)}
-                                            >
-                                                <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
-                                            </div>
-                                        ) : (
-                                            <span className="text-muted-foreground text-xs">-</span>
-                                        )}
+                                    <TableCell className="text-xs text-center align-middle">
+                                        <div className="flex flex-col items-center justify-center gap-2">
+                                            <span>{formatJoNumber(lead.joNumber)}</span>
+                                            {lead.layouts?.[0]?.layoutImage ? (
+                                                <div 
+                                                    className="relative w-24 h-16 mx-auto border rounded-md cursor-pointer"
+                                                    onClick={() => setImageInView(lead.layouts![0].layoutImage!)}
+                                                >
+                                                    <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
+                                                </div>
+                                            ) : (
+                                                <span className="text-muted-foreground text-xs">-</span>
+                                            )}
+                                        </div>
                                     </TableCell>
-                                    <TableCell className="text-xs text-center"><Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>{lead.priorityType}</Badge></TableCell>
+                                    <TableCell className="text-xs text-center align-middle"><Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>{lead.priorityType}</Badge></TableCell>
                                     <TableCell colSpan={5} className="p-0 align-top">
                                         <Table>
                                             <TableHeader>
