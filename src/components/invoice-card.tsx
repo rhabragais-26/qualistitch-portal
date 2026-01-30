@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -16,6 +15,8 @@ import { doc } from 'firebase/firestore';
 import { initialPricingConfig } from '@/lib/pricing-data';
 import { cn } from '@/lib/utils';
 import type { Order } from '@/lib/form-schemas';
+import { Separator } from './ui/separator';
+import { ScrollArea } from './ui/scroll-area';
 
 type InvoiceCardProps = {
   orders: Order[];
@@ -594,3 +595,4 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     </>
   );
 }
+    
