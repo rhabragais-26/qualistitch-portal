@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -101,19 +100,19 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                 <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print</Button>
             </CardHeader>
             <CardContent>
-                 <div className="p-8 printable-quotation" id="quotation-content">
+                 <div className="p-8 printable-quotation border rounded-lg" id="quotation-content">
                     <header className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="font-bold text-2xl mb-0">BURDA PINAS</h1>
-                            <p className="text-sm text-gray-500 mt-0">Owned and Operated by: QUALISTITCH INCORPORATED</p>
-                            <div className="text-xs mt-2 space-y-px">
+                            <h1 className="font-bold text-3xl">BURDA PINAS</h1>
+                            <p className="text-base text-gray-500 mt-0">Owned and Operated by: QUALISTITCH INCORPORATED</p>
+                            <div className="text-sm mt-4 space-y-px">
                                 <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
                                 <p><span className="font-bold">Mobile No:</span> 0966-278-2437 | 0956-204-1950 | 0956-204-1919</p>
                                 <p><span className="font-bold">Landline No:</span> (02) 8716-5814</p>
                                 <p><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
                             </div>
                         </div>
-                        <div className="relative h-28 w-28">
+                        <div className="relative h-32 w-32">
                            {logoLoading ? (
                                 <Skeleton className="h-full w-full" />
                             ) : logoUrl ? (
@@ -127,7 +126,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <div className="flex justify-between items-center mb-8">
                         <div>
                             <h2 className="text-xl font-bold">Quotation</h2>
-                             <div className="flex items-center gap-2 mt-4 text-sm">
+                             <div className="flex items-center gap-2 mt-4 text-xs">
                                 <p className="font-bold">BILLED TO:</p>
                                 {customerName ? (
                                     <p className="flex items-center h-3">{customerName}</p>
@@ -136,7 +135,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                 )}
                             </div>
                         </div>
-                        <div className="text-right text-sm">
+                        <div className="text-right text-xs">
                             <p><strong>QUOTATION NO.</strong></p>
                             <p><strong>DATE:</strong> {format(new Date(), 'MM/dd/yyyy')}</p>
                         </div>
