@@ -203,7 +203,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
         </div>
       </CardHeader>
       <CardContent>
-        <ScrollArea className={cn(isQuotationMode ? 'h-auto' : 'h-[calc(100vh-22rem)]', 'pr-4')}>
+        <ScrollArea className={cn(isQuotationMode ? 'h-auto' : 'h-[calc(100vh-25rem)]', 'pr-4')}>
           {Object.keys(groupedOrders).length === 0 ? (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               Add orders to see the price summary.
@@ -450,7 +450,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     <Button type="button" variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => handleRemoveDiscount(groupKey)}>
                                       <X className="h-3 w-3" />
                                     </Button>
-                                    <span>Discount ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})</span>
+                                    <span>Discount {groupDiscount.reason ? `(${groupDiscount.reason})` : ''} ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})</span>
                                   </div>
                                    {groupDiscount.reason && (
                                     <span className="text-xs text-gray-500 block text-right">({groupDiscount.reason})</span>
