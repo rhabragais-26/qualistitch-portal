@@ -17,8 +17,6 @@ import { useFormContext } from 'react-hook-form';
 import { QuotationFormValues, type Order } from '@/lib/form-schemas';
 import { getStorage, ref, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
-import { ScrollArea } from './ui/scroll-area';
-import { Separator } from './ui/separator';
 
 type QuotationSummaryProps = {
   orders: Order[];
@@ -26,9 +24,10 @@ type QuotationSummaryProps = {
   addOns: Record<string, AddOns>;
   discounts: Record<string, Discount>;
   grandTotal: number;
+  removedFees: Record<string, { logo?: boolean; backText?: boolean }>;
 };
 
-export function QuotationSummary({ orders, orderType, addOns, discounts, grandTotal }: QuotationSummaryProps) {
+export function QuotationSummary({ orders, orderType, addOns, discounts, grandTotal, removedFees = {} }: QuotationSummaryProps) {
     const { watch } = useFormContext<QuotationFormValues>();
     const customerName = watch('customerName');
     const { userProfile } = useUser();
@@ -104,9 +103,9 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                  <div className="p-8 printable-quotation border rounded-lg" id="quotation-content">
                     <header className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="font-bold text-2xl">BURDA PINAS</h1>
-                            <p className="text-gray-500 mt-0">Owned and Operated by: QUALISTITCH INCORPORATED</p>
-                            <div className="text-sm mt-4 space-y-px">
+                            <h1 className="font-bold text-xl">BURDA PINAS</h1>
+                            <p className="text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
+                            <div className="text-xs mt-4 space-y-px">
                                 <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
                                 <p><span className="font-bold">Mobile No:</span> 0966-278-2437 | 0956-204-1950 | 0956-204-1919</p>
                                 <p><span className="font-bold">Landline No:</span> (02) 8716-5814</p>
@@ -163,6 +162,9 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                 const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, ...(addOns[groupKey] || {}) };
                                 const backLogoPrice = getAddOnPrice('backLogo', groupData.totalQuantity, pricingConfig);
                                 const namesPrice = getAddOnPrice('names', groupData.totalQuantity, pricingConfig);
+                                
+                                const finalLogoFee = !removedFees[groupKey]?.logo ? logoFee : 0;
+                                const finalBackTextFee = !removedFees[groupKey]?.backText ? backTextFee : 0;
 
                                 return (
                                     <React.Fragment key={groupKey}>
@@ -179,17 +181,16 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                         {groupData.embroidery === 'name' && <TableRow><TableCell className="pl-8 font-bold">Embroidery Name</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>}
                                         {groupData.embroidery === 'logoAndText' && (
                                             <>
-                                                
                                                 <TableRow><TableCell className="pl-8 font-bold">Embroidery Name<p className="text-xs font-normal pl-4">*** Back Texts</p></TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>
                                             </>
                                         )}
                                         
-                                        {(logoFee > 0 || backTextFee > 0) && (
+                                        {(finalLogoFee > 0 || finalBackTextFee > 0) && (
                                             <TableRow>
                                                 <TableCell className="font-bold">Programming Fee<p className="text-xs font-normal pl-4">*** One-Time Payment</p></TableCell>
-                                                <TableCell className="text-center">{ (logoFee > 0 ? 1 : 0) + (backTextFee > 0 ? 1 : 0) }</TableCell>
-                                                <TableCell className="text-right">{formatCurrency(logoFee > 0 ? logoFee : backTextFee)}</TableCell>
-                                                <TableCell className="text-right">{formatCurrency(logoFee + backTextFee)}</TableCell>
+                                                <TableCell className="text-center">{ (finalLogoFee > 0 ? 1 : 0) + (finalBackTextFee > 0 ? 1 : 0) }</TableCell>
+                                                <TableCell className="text-right">{formatCurrency(finalLogoFee > 0 ? finalLogoFee : finalBackTextFee)}</TableCell>
+                                                <TableCell className="text-right">{formatCurrency(finalLogoFee + finalBackTextFee)}</TableCell>
                                             </TableRow>
                                         )}
 
@@ -209,7 +210,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     </Table>
                     <div className="mt-24 flex justify-between text-sm">
                         <div className="w-64 text-center">
-                            <p className="border-b-2 border-dotted border-gray-400 pb-1 font-bold h-7">
+                             <p className="border-b-2 border-dotted border-gray-400 pb-1 font-bold h-7">
                                 {userProfile?.nickname || ''}
                             </p>
                             <p className="text-xs mt-1">Prepared By</p>
@@ -224,4 +225,3 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         </Card>
     );
 }
-    

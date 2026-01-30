@@ -32,9 +32,11 @@ type InvoiceCardProps = {
   isReadOnly?: boolean;
   isEditingLead?: boolean;
   isQuotationMode?: boolean;
+  removedFees?: Record<string, { logo?: boolean; backText?: boolean }>;
+  setRemovedFees?: React.Dispatch<React.SetStateAction<Record<string, { logo?: boolean; backText?: boolean }>>>;
 };
 
-export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, setDiscounts, payments, setPayments, onGrandTotalChange, onBalanceChange, isReadOnly, isEditingLead, isQuotationMode = false }: InvoiceCardProps) {
+export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, setDiscounts, payments, setPayments, onGrandTotalChange, onBalanceChange, isReadOnly, isEditingLead, isQuotationMode = false, removedFees: removedFeesProp, setRemovedFees: setRemovedFeesProp }: InvoiceCardProps) {
   
   const firestore = useFirestore();
   const pricingConfigRef = useMemoFirebase(
@@ -49,7 +51,11 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
   }, [fetchedConfig]);
 
   const [removingAddOn, setRemovingAddOn] = useState<{ groupKey: string; addOnType: keyof AddOns; } | null>(null);
-  const [removedFees, setRemovedFees] = useState<Record<string, { logo?: boolean; backText?: boolean }>>({});
+  
+  const [internalRemovedFees, setInternalRemovedFees] = useState<Record<string, { logo?: boolean; backText?: boolean }>>({});
+  const removedFees = removedFeesProp !== undefined ? removedFeesProp : internalRemovedFees;
+  const setRemovedFees = setRemovedFeesProp !== undefined ? setRemovedFeesProp : setInternalRemovedFees;
+
   const [isBalanceDialogOpen, setIsBalanceDialogOpen] = useState(false);
   
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
@@ -595,4 +601,3 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     </>
   );
 }
-    

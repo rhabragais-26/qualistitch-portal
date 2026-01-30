@@ -1,4 +1,3 @@
-
 'use client';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -19,6 +18,8 @@ type QuotationFormProps = {
   discounts: Record<string, Discount>;
   setDiscounts: React.Dispatch<React.SetStateAction<Record<string, Discount>>>;
   onGrandTotalChange: (total: number) => void;
+  removedFees: Record<string, { logo?: boolean; backText?: boolean }>;
+  setRemovedFees: React.Dispatch<React.SetStateAction<Record<string, { logo?: boolean; backText?: boolean }>>>;
 };
 
 export function QuotationForm({
@@ -31,6 +32,8 @@ export function QuotationForm({
   discounts,
   setDiscounts,
   onGrandTotalChange,
+  removedFees,
+  setRemovedFees,
 }: QuotationFormProps) {
   const [payments, setPayments] = useState<Record<string, Payment[]>>({});
   const [balance, setBalance] = useState(0);
@@ -58,6 +61,8 @@ export function QuotationForm({
         onBalanceChange={setBalance}
         isReadOnly={false}
         isQuotationMode={true}
+        removedFees={removedFees}
+        setRemovedFees={setRemovedFees}
       />
     </div>
   );

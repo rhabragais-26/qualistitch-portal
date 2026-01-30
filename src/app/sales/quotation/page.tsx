@@ -1,4 +1,3 @@
-
 'use client';
 import { useState } from 'react';
 import { Header } from '@/components/header';
@@ -16,6 +15,7 @@ export default function QuotationPage() {
   const [addOns, setAddOns] = useState<Record<string, AddOns>>({});
   const [discounts, setDiscounts] = useState<Record<string, Discount>>({});
   const [grandTotal, setGrandTotal] = useState(0);
+  const [removedFees, setRemovedFees] = useState<Record<string, { logo?: boolean; backText?: boolean }>>({});
 
   const formMethods = useForm<QuotationFormValues>({
     resolver: zodResolver(quotationFormSchema),
@@ -53,6 +53,8 @@ export default function QuotationPage() {
               discounts={discounts}
               setDiscounts={setDiscounts}
               onGrandTotalChange={setGrandTotal}
+              removedFees={removedFees}
+              setRemovedFees={setRemovedFees}
             />
             <QuotationSummary 
               orders={stagedOrders}
@@ -60,6 +62,7 @@ export default function QuotationPage() {
               addOns={addOns}
               discounts={discounts}
               grandTotal={grandTotal}
+              removedFees={removedFees}
             />
           </div>
         </main>
