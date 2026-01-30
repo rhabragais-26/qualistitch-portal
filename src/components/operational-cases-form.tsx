@@ -175,7 +175,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
       setValue('joNumber', editingCase.joNumber);
       setValue('caseType', editingCase.caseType as any);
       setValue('quantity', totalQuantity);
-      setValue('remarks', editingCase.remarks);
+      setValue('remarks', editingCase.remarks || '');
       setValue('image', editingCase.image || '');
     } else {
       handleFormReset();
@@ -573,7 +573,7 @@ const OperationalCasesFormMemo = React.memo(function OperationalCasesForm({ edit
                                     <Button
                                     variant="destructive"
                                     size="icon"
-                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                    className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                                     onClick={handleRemoveImage}
                                     disabled={isReadOnly}
                                     >
