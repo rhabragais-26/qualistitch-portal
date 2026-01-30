@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
@@ -243,8 +244,8 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                         <TableRow>
                                             <TableCell className="font-bold py-1 px-3">
                                                 {groupData.productType}
-                                                <p className="text-xs font-normal pl-4">*** Sizes: {groupData.orders.map(o => o.size).join(', ')}</p>
-                                                <p className="text-xs font-normal pl-4">*** Free Design and Layout</p>
+                                                <p className="text-xs font-normal pl-4">- Sizes: {groupData.orders.map(o => o.size).join(', ')}</p>
+                                                <p className="text-xs font-normal pl-4">- Free Design and Layout</p>
                                             </TableCell>
                                             <TableCell className="text-center py-1 px-3">{groupData.totalQuantity}</TableCell>
                                             <TableCell className="text-right py-1 px-3">{formatCurrency(unitPrice)}</TableCell>
