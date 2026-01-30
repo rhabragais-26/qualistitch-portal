@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo } from 'react';
@@ -72,7 +71,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <header className="flex justify-between items-start mb-8">
                         <div>
                             <h1 className="font-bold text-lg mb-0">BURDA PINAS</h1>
-                            <p className="text-xs text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
+                            <p className="text-sm text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
                             <p className="text-xs">56 Basa St. Del Monte</p>
                             <p className="text-xs">Quezon City, Metro Manila 1105</p>
                             <p className="text-xs">+639987707681</p>
