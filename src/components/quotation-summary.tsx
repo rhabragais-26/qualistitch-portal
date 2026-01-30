@@ -103,18 +103,18 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                  <div className="p-8 printable-quotation" id="quotation-content">
                     <header className="flex justify-between items-start mb-8">
                         <div>
-                            <h1 className="font-bold text-xl mb-2">BURDA PINAS</h1>
-                            <p className="text-base text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
-                            <div className="flex">
-                                <p className="text-sm shrink-0 font-bold">Address:&nbsp;</p>
+                            <h1 className="font-bold text-2xl">BURDA PINAS</h1>
+                            <p className="text-lg text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
+                            <div className="flex mt-2">
+                                <p className="text-base shrink-0 font-bold">Address:&nbsp;</p>
                                 <div className='pl-2'>
-                                    <p className="text-sm">005 Holy Family Subdivision, Silangan</p>
-                                    <p className="text-sm">San Mateo, Rizal, Philippines 1850</p>
+                                    <p className="text-base">005 Holy Family Subdivision, Silangan</p>
+                                    <p className="text-base">San Mateo, Rizal, Philippines 1850</p>
                                 </div>
                             </div>
-                            <p className="text-sm"><span className="font-bold">Mobile No:</span> 0966 278 2437 | 0956 204 1950 | 0956 204 1919</p>
-                            <p className="text-sm"><span className="font-bold">Landline No:</span> (02) 8997-0105 | (02) 8997-0098</p>
-                            <p className="text-sm"><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
+                            <p className="text-base"><span className="font-bold">Mobile No:</span> 0966 278 2437 | 0956 204 1950 | 0956 204 1919</p>
+                            <p className="text-base"><span className="font-bold">Landline No:</span> (02) 8997-0105 | (02) 8997-0098</p>
+                            <p className="text-base"><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
                         </div>
                         <div className="relative h-32 w-32">
                            {logoLoading ? (
