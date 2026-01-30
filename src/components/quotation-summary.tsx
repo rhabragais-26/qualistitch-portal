@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -7,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, type PricingConfig } from '@/lib/pricing';
 import { AddOns, Discount } from "./invoice-dialogs";
 import { formatCurrency } from '@/lib/utils';
-import { useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useFirebaseApp, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { initialPricingConfig } from '@/lib/pricing-data';
 import Image from 'next/image';
@@ -32,6 +31,7 @@ type QuotationSummaryProps = {
 export function QuotationSummary({ orders, orderType, addOns, discounts, grandTotal }: QuotationSummaryProps) {
     const { watch } = useFormContext<QuotationFormValues>();
     const customerName = watch('customerName');
+    const { userProfile } = useUser();
     
     const app = useFirebaseApp();
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -105,7 +105,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <header className="flex justify-between items-start mb-6">
                         <div>
                             <h1 className="font-bold text-xl">BURDA PINAS</h1>
-                            <p>Owned and Operated by: QUALISTITCH INCORPORATED</p>
+                            <p className="text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
                             <div className="text-sm mt-4 space-y-px">
                                 <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
                                 <p><span className="font-bold">Mobile No:</span> 0966-278-2437 | 0956-204-1950 | 0956-204-1919</p>
@@ -127,10 +127,10 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <div className="flex justify-between items-center mb-8">
                         <div>
                             <h2 className="text-xl font-bold">Quotation</h2>
-                             <div className="flex items-center gap-2 mt-4 text-sm">
-                                <p className="font-bold">Customer:</p>
+                             <div className="flex items-center gap-2 mt-4">
+                                <p className="font-bold text-sm">Customer:</p>
                                 {customerName ? (
-                                    <p className="flex items-center h-3">{customerName}</p>
+                                    <p className="flex items-center h-3 text-sm">{customerName}</p>
                                 ) : (
                                     <p className="border-b-2 border-dotted border-gray-400 w-64 h-4"></p>
                                 )}
@@ -208,14 +208,16 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                             </TableRow>
                         </ShadTableFooter>
                     </Table>
-                    <div className="mt-24 flex justify-between">
-                        <div>
-                            <p className="border-b-2 border-dotted border-gray-400 w-64"></p>
-                            <p className="text-center">Prepared By</p>
+                    <div className="mt-24 flex justify-between text-sm">
+                        <div className="w-64 text-center">
+                            <p className="border-b-2 border-dotted border-gray-400 pb-1 font-bold h-7">
+                                {userProfile?.nickname || ''}
+                            </p>
+                            <p className="text-xs mt-1">Prepared By</p>
                         </div>
-                         <div>
-                            <p className="border-b-2 border-dotted border-gray-400 w-64"></p>
-                            <p className="text-center">Noted By</p>
+                         <div className="w-64 text-center">
+                            <p className="border-b-2 border-dotted border-gray-400 h-7"></p>
+                            <p className="text-xs mt-1">Noted By</p>
                         </div>
                     </div>
                 </div>
