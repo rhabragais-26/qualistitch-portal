@@ -79,7 +79,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                             <p className="text-xs">Govt. UID TIN #: 442-329-118-00000</p>
                         </div>
                         <div className="relative h-24 w-24">
-                            <Image src="/fab-logo.png" alt="Burda Pinas Logo" layout="fill" objectFit="contain" />
+                            <Image src="https://firebasestorage.googleapis.com/v0/b/studio-399912310-23c48.firebasestorage.app/o/companyLogo%2Fqualistitch.png?alt=media" alt="Qualistitch Inc. Logo" layout="fill" objectFit="contain" />
                         </div>
                     </header>
 
@@ -177,3 +177,4 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         </Card>
     );
 }
+    
