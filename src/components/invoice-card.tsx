@@ -31,9 +31,10 @@ type InvoiceCardProps = {
   onBalanceChange: (balance: number) => void;
   isReadOnly?: boolean;
   isEditingLead?: boolean;
+  isQuotationMode?: boolean;
 };
 
-export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, setDiscounts, payments, setPayments, onGrandTotalChange, onBalanceChange, isReadOnly, isEditingLead }: InvoiceCardProps) {
+export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, setDiscounts, payments, setPayments, onGrandTotalChange, onBalanceChange, isReadOnly, isEditingLead, isQuotationMode = false }: InvoiceCardProps) {
   
   const firestore = useFirestore();
   const pricingConfigRef = useMemoFirebase(
@@ -187,14 +188,14 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
 
   return (
     <>
-    <Card className="shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full">
+    <Card className={cn("shadow-xl animate-in fade-in-50 duration-500 bg-white text-black", !isQuotationMode && "h-full flex flex-col")}>
       <CardHeader>
         <div className="flex justify-between items-center">
             <CardTitle className="font-headline text-xl">Pricing Summary</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[calc(100vh-22rem)] pr-4">
+        <ScrollArea className={cn(isQuotationMode ? 'h-auto' : 'h-[calc(100vh-22rem)]', 'pr-4')}>
           {Object.keys(groupedOrders).length === 0 ? (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               Add orders to see the price summary.
@@ -471,78 +472,86 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
         <div className="w-full">
           <Separator />
           <div className="pt-2">
-            <div className="w-full flex justify-between items-center">
-              <div className="pt-2">
-                {isEditingLead ? (
-                    <>
-                    {balance > 0 ? (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                                // If a new payment was just added, edit it. Otherwise, add a new one.
-                                const newPayment = Object.values(payments).flat().find(p => p.isNew);
-                                setEditingPayment(newPayment || null);
-                                setIsBalanceDialogOpen(true);
-                            }}
-                            disabled={isReadOnly}
-                        >
-                            {Object.values(payments).flat().some(p => p.isNew) ? 'Edit Payment' : 'Add Payment'}
-                        </Button>
-                    ) : null}
-                    </>
-                ) : (
-                  <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly} disabled={orders.length === 0} />
-                )}
-              </div>
-              <div className="text-right flex-1 text-lg">
+            {isQuotationMode ? (
+              <div className="w-full flex justify-end items-center text-lg">
                 <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
               </div>
-            </div>
-
-            {totalPaid > 0 ? (
-              Object.values(payments).flat().map((payment, index) => {
-                let description: string;
-                switch (payment.type) {
-                  case 'down':
-                    description = 'Down Payment';
-                    break;
-                  case 'full':
-                    description = 'Full Payment';
-                    break;
-                  case 'balance':
-                    description = 'Balance Payment';
-                    break;
-                  case 'additional':
-                    description = 'Additional Payment';
-                    break;
-                  case 'securityDeposit':
-                    description = 'Security Deposit';
-                    break;
-                  default:
-                    description = 'Payment';
-                }
-
-                return (
-                  <div key={payment.id || index} className="flex justify-end items-center text-sm text-right w-full">
-                      <span className="text-muted-foreground mr-2">
-                        {description} {payment.mode && <span className="italic">(via {payment.mode})</span>}:
-                      </span>
-                      <span className="font-medium">{formatCurrency(payment.amount)}</span>
-                  </div>
-                )
-              })
             ) : (
-              <div className="flex justify-end items-center text-sm text-right w-full">
-                  <span className="text-muted-foreground mr-2">Payment:</span>
-                  <span className="font-medium">{formatCurrency(0)}</span>
-              </div>
-            )}
+              <>
+                <div className="w-full flex justify-between items-center">
+                  <div className="pt-2">
+                    {isEditingLead ? (
+                        <>
+                        {balance > 0 ? (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    // If a new payment was just added, edit it. Otherwise, add a new one.
+                                    const newPayment = Object.values(payments).flat().find(p => p.isNew);
+                                    setEditingPayment(newPayment || null);
+                                    setIsBalanceDialogOpen(true);
+                                }}
+                                disabled={isReadOnly}
+                            >
+                                {Object.values(payments).flat().some(p => p.isNew) ? 'Edit Payment' : 'Add Payment'}
+                            </Button>
+                        ) : null}
+                        </>
+                    ) : (
+                      <AddPaymentDialog grandTotal={grandTotal} setPayments={setPayments} payments={payments} isReadOnly={isReadOnly} disabled={orders.length === 0} />
+                    )}
+                  </div>
+                  <div className="text-right flex-1 text-lg">
+                    <span className="font-bold text-black">Grand Total: {formatCurrency(grandTotal)}</span>
+                  </div>
+                </div>
 
-            <div className="flex justify-end items-center text-lg w-full">
-                <span className="font-bold text-black">Balance:</span>
-                <span className="font-bold text-destructive ml-2">{formatCurrency(balance)}</span>
-            </div>
+                {totalPaid > 0 ? (
+                  Object.values(payments).flat().map((payment, index) => {
+                    let description: string;
+                    switch (payment.type) {
+                      case 'down':
+                        description = 'Down Payment';
+                        break;
+                      case 'full':
+                        description = 'Full Payment';
+                        break;
+                      case 'balance':
+                        description = 'Balance Payment';
+                        break;
+                      case 'additional':
+                        description = 'Additional Payment';
+                        break;
+                      case 'securityDeposit':
+                        description = 'Security Deposit';
+                        break;
+                      default:
+                        description = 'Payment';
+                    }
+
+                    return (
+                      <div key={payment.id || index} className="flex justify-end items-center text-sm text-right w-full">
+                          <span className="text-muted-foreground mr-2">
+                            {description} {payment.mode && <span className="italic">(via {payment.mode})</span>}:
+                          </span>
+                          <span className="font-medium">{formatCurrency(payment.amount)}</span>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className="flex justify-end items-center text-sm text-right w-full">
+                      <span className="text-muted-foreground mr-2">Payment:</span>
+                      <span className="font-medium">{formatCurrency(0)}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-end items-center text-lg w-full">
+                    <span className="font-bold text-black">Balance:</span>
+                    <span className="font-bold text-destructive ml-2">{formatCurrency(balance)}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </CardFooter>

@@ -57,6 +57,7 @@ export function QuotationForm({
         onGrandTotalChange={onGrandTotalChange}
         onBalanceChange={setBalance}
         isReadOnly={false}
+        isQuotationMode={true}
       />
     </div>
   );
