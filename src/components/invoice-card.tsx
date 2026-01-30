@@ -17,10 +17,11 @@ import { formatCurrency } from '@/lib/utils';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { initialPricingConfig } from '@/lib/pricing-data';
+import { cn } from '@/lib/utils';
 
 type InvoiceCardProps = {
   orders: Order[];
-  orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services';
+  orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | 'Item Sample';
   addOns: Record<string, AddOns>;
   setAddOns: React.Dispatch<React.SetStateAction<Record<string, AddOns>>>;
   discounts: Record<string, Discount>;
@@ -592,3 +593,5 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     </>
   );
 }
+
+    
