@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
@@ -40,6 +41,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
     
     const quotationRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
+    const [isCopying, setIsCopying] = useState(false);
 
     useEffect(() => {
         if (!app) return;
@@ -71,57 +73,54 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
     }, [fetchedConfig]);
 
     const handleCopyToClipboard = async () => {
-        if (!quotationRef.current) {
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not find the content to copy.',
-            });
+        if (!quotationRef.current || isCopying) {
             return;
         }
+
+        setIsCopying(true);
+
+        const getCanvasBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> => {
+            return new Promise(resolve => {
+                canvas.toBlob(blob => resolve(blob));
+            });
+        };
 
         try {
             const canvas = await html2canvas(quotationRef.current, {
                 useCORS: true,
-                scale: 2, // Increase scale for better resolution
+                scale: 2,
             });
-            canvas.toBlob(async (blob) => {
-                if (blob) {
-                    try {
-                        await navigator.clipboard.write([
-                            new ClipboardItem({ 'image/png': blob })
-                        ]);
-                        toast({
-                            title: 'Copied to clipboard!',
-                            description: 'The quotation has been copied as an image.',
-                        });
-                    } catch (err) {
-                        console.error('Failed to copy to clipboard:', err);
-                        let description = 'Could not copy image to clipboard.';
-                        if (err instanceof Error && err.name === 'NotAllowedError') {
-                            description = 'Clipboard access was denied. Please make sure the browser window is focused when you click the button.';
-                        }
-                        toast({
-                            variant: 'destructive',
-                            title: 'Copy Failed',
-                            description: description,
-                        });
-                    }
+            
+            const blob = await getCanvasBlob(canvas);
+
+            if (blob) {
+                await navigator.clipboard.write([
+                    new ClipboardItem({ 'image/png': blob })
+                ]);
+                toast({
+                    title: 'Copied to clipboard!',
+                    description: 'The quotation has been copied as an image.',
+                });
+            } else {
+                throw new Error('Could not create a blob from the canvas.');
+            }
+        } catch (err) {
+            console.error('Failed to copy to clipboard:', err);
+            let description = 'Could not copy image to clipboard.';
+            if (err instanceof Error) {
+                if (err.name === 'NotAllowedError') {
+                    description = 'Clipboard access was denied. Please make sure the browser window is focused when you click the button.';
                 } else {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Image Generation Failed',
-                        description: 'Could not create an image from the content.',
-                    });
+                    description = err.message;
                 }
-            });
-        } catch (error) {
-            console.error('Error generating canvas:', error);
+            }
             toast({
                 variant: 'destructive',
-                title: 'Image Generation Failed',
-                description: 'An error occurred while creating the image.',
+                title: 'Copy Failed',
+                description: description,
             });
+        } finally {
+            setIsCopying(false);
         }
     };
 
@@ -154,7 +153,10 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         <Card className="shadow-lg">
             <CardHeader className="flex flex-row justify-between items-center no-print">
                 <CardTitle>Quotation Preview</CardTitle>
-                <Button onClick={handleCopyToClipboard}><ClipboardCopy className="mr-2 h-4 w-4" /> Copy to Clipboard</Button>
+                <Button onClick={handleCopyToClipboard} disabled={isCopying}>
+                    <ClipboardCopy className="mr-2 h-4 w-4" />
+                    {isCopying ? 'Copying...' : 'Copy to Clipboard'}
+                </Button>
             </CardHeader>
             <CardContent>
                  <div className="p-8 printable-quotation border rounded-lg bg-white" id="quotation-content" ref={quotationRef}>
@@ -169,7 +171,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                 <p><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
                             </div>
                         </div>
-                        <div className="relative h-20 w-20">
+                        <div className="relative h-16 w-16">
                            {logoLoading ? (
                                 <Skeleton className="h-full w-full" />
                             ) : logoUrl ? (
@@ -310,3 +312,5 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         </Card>
     );
 }
+
+    
