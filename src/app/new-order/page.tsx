@@ -10,19 +10,6 @@ import { Button } from '@/components/ui/button';
 import { CalculatorIcon, Ruler, Tag, Tv } from 'lucide-react';
 import { Calculator } from '@/components/calculator';
 import { SizeChartDialog } from '@/components/size-chart-dialog';
-import { cn } from '@/lib![CDATA[
-'use client';
-import { useState, useEffect } from 'react';
-import { Header } from '@/components/header';
-import { LeadForm } from '@/components/lead-form';
-import { type FormValues, formSchema, type Order } from '@/lib/form-schemas';
-import { InvoiceCard, AddOns, Discount, Payment } from '@/components/invoice-card';
-import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
-import { useRouter, usePathname } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { CalculatorIcon, Ruler, Tag, Tv } from 'lucide-react';
-import { Calculator } from '@/components/calculator';
-import { SizeChartDialog } from '@/components/size-chart-dialog';
 import { cn } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -341,5 +328,3 @@ export default function NewOrderPage() {
     </div>
   );
 }
-
-    
