@@ -1,11 +1,11 @@
 
 'use client';
-
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
 import { LeadForm } from '@/components/lead-form'; 
-import { InvoiceCard, AddOns, Discount, Payment } from "./invoice-card";
+import { InvoiceCard } from "./invoice-card";
+import { AddOns, Discount, Payment } from "./invoice-dialogs";
 import { type Order, type QuotationFormValues } from '@/lib/form-schemas';
 
 

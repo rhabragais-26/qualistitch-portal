@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadTableFooter } from '@/components/ui/table';
 import type { Order } from '@/lib/form-schemas';
 import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, type PricingConfig } from '@/lib/pricing';
-import { AddOns, Discount } from "./invoice-card";
+import { AddOns, Discount } from "./invoice-dialogs";
 import { formatCurrency } from '@/lib/utils';
 import { useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -105,11 +105,12 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                         <div>
                             <h1 className="font-bold text-lg mb-0">BURDA PINAS</h1>
                             <p className="text-sm text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
-                            <p className="text-xs">56 Basa St. Del Monte</p>
-                            <p className="text-xs">Quezon City, Metro Manila 1105</p>
-                            <p className="text-xs">+639987707681</p>
-                            <p className="text-xs">fabprintline@gmail.com</p>
-                            <p className="text-xs">Govt. UID TIN #: 442-329-118-00000</p>
+                            <p className="text-xs">Address: 005 Holy Family Subdivision, Silangan </p>
+                            <p className="text-xs">San Mateo, Rizal, Philippines 1850</p>
+                            <p className="text-xs">Mobile No: 0966 278 2437 | 0956 204 1950 | 0956 204 1919</p>
+                            <p className="text-xs">Landline No: (02) 8716 5814</p>
+                            <p className="text-xs">Email: qualistitch.inc@gmail.com | burdapinas.143@gmail.com</p>
+                            <p className="text-xs">VAT Reg. TIN: 675-385-158-00000</p>
                         </div>
                         <div className="relative h-32 w-32">
                            {logoLoading ? (

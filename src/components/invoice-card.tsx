@@ -92,8 +92,9 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const isClientOwned = groupData.productType === 'Client Owned';
       const isPatches = groupData.productType === 'Patches';
       const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
-      const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery, pricingConfig, patchPrice, orderType);
-      const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned, orderType);
+      const embroidery = groupData.embroidery || 'logo';
+      const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig, patchPrice, orderType);
+      const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
       
       const isLogoFeeRemoved = removedFees[groupKey]?.logo;
       const isBackTextFeeRemoved = removedFees[groupKey]?.backText;
@@ -207,10 +208,11 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
               {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
                 const isClientOwned = groupData.productType === 'Client Owned';
                 const isPatches = groupData.productType === 'Patches';
-                const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, groupData.embroidery, pricingConfig);
+                const embroidery = groupData.embroidery || 'logo';
+                const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig);
                 const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
-                const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery, pricingConfig, patchPrice, orderType);
-                const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned, orderType);
+                const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig, patchPrice, orderType);
+                const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
                 const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, ...(addOns[groupKey] || {}) };
