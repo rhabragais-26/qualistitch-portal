@@ -6,14 +6,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, type PricingConfig } from '@/lib/pricing';
 import { AddOns, Discount } from "./invoice-dialogs";
 import { formatCurrency } from '@/lib/utils';
-import {![CDATA['use client';
-
-import React, { useMemo, useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadTableFooter } from '@/components/ui/table';
-import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, type PricingConfig } from '@/lib/pricing';
-import { AddOns, Discount } from "./invoice-dialogs";
-import { formatCurrency } from '@/lib/utils';
 import { useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { initialPricingConfig } from '@/lib/pricing-data';
