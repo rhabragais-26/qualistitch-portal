@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -103,9 +104,9 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                  <div className="p-8 printable-quotation border rounded-lg" id="quotation-content">
                     <header className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="font-bold text-xl">BURDA PINAS</h1>
+                            <h1 className="font-bold text-2xl">BURDA PINAS</h1>
                             <p className="text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
-                            <div className="text-xs mt-4 space-y-px">
+                            <div className="text-xs mt-2 space-y-px">
                                 <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
                                 <p><span className="font-bold">Mobile No:</span> 0966-278-2437 | 0956-204-1950 | 0956-204-1919</p>
                                 <p><span className="font-bold">Landline No:</span> (02) 8716-5814</p>
@@ -125,7 +126,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
 
                     <div className="flex justify-between items-center mb-8">
                         <div>
-                            <h2 className="text-xl font-bold">Quotation</h2>
+                            <h2 className="text-2xl font-bold">Quotation</h2>
                              <div className="flex items-center gap-2 mt-4">
                                 <p className="font-bold text-sm">Customer:</p>
                                 {customerName ? (
@@ -162,9 +163,30 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                 const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, ...(addOns[groupKey] || {}) };
                                 const backLogoPrice = getAddOnPrice('backLogo', groupData.totalQuantity, pricingConfig);
                                 const namesPrice = getAddOnPrice('names', groupData.totalQuantity, pricingConfig);
+                                const plusSizePrice = getAddOnPrice('plusSize', groupData.totalQuantity, pricingConfig);
                                 
                                 const finalLogoFee = !removedFees[groupKey]?.logo ? logoFee : 0;
                                 const finalBackTextFee = !removedFees[groupKey]?.backText ? backTextFee : 0;
+
+                                const groupDiscount = discounts[groupKey];
+                                let discountAmount = 0;
+                                if(groupDiscount) {
+                                    const subtotalForDiscount = itemsSubtotal + (finalLogoFee + finalBackTextFee) + 
+                                        (groupAddOns.backLogo * backLogoPrice) + 
+                                        (groupAddOns.names * namesPrice) + 
+                                        (groupAddOns.plusSize * plusSizePrice) + 
+                                        groupAddOns.rushFee + 
+                                        groupAddOns.shippingFee +
+                                        groupAddOns.logoProgramming +
+                                        groupAddOns.backDesignProgramming +
+                                        groupAddOns.holdingFee;
+
+                                    if (groupDiscount.type === 'percentage') {
+                                        discountAmount = subtotalForDiscount * (groupDiscount.value / 100);
+                                    } else {
+                                        discountAmount = groupDiscount.value;
+                                    }
+                                }
 
                                 return (
                                     <React.Fragment key={groupKey}>
@@ -178,13 +200,6 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                             <TableCell className="text-right">{formatCurrency(itemsSubtotal)}</TableCell>
                                         </TableRow>
                                         
-                                        {groupData.embroidery === 'name' && <TableRow><TableCell className="pl-8 font-bold">Embroidery Name</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>}
-                                        {groupData.embroidery === 'logoAndText' && (
-                                            <>
-                                                <TableRow><TableCell className="pl-8 font-bold">Embroidery Name<p className="text-xs font-normal pl-4">*** Back Texts</p></TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>
-                                            </>
-                                        )}
-                                        
                                         {(finalLogoFee > 0 || finalBackTextFee > 0) && (
                                             <TableRow>
                                                 <TableCell className="font-bold">Programming Fee<p className="text-xs font-normal pl-4">*** One-Time Payment</p></TableCell>
@@ -196,7 +211,21 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
 
                                         {groupAddOns.backLogo > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Back Logo</TableCell><TableCell className="text-center">{groupAddOns.backLogo}</TableCell><TableCell className="text-right">{formatCurrency(backLogoPrice)}</TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.backLogo * backLogoPrice)}</TableCell></TableRow>}
                                         {groupAddOns.names > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Names</TableCell><TableCell className="text-center">{groupAddOns.names}</TableCell><TableCell className="text-right">{formatCurrency(namesPrice)}</TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.names * namesPrice)}</TableCell></TableRow>}
+                                        {groupAddOns.plusSize > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Plus Size</TableCell><TableCell className="text-center">{groupAddOns.plusSize}</TableCell><TableCell className="text-right">{formatCurrency(plusSizePrice)}</TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.plusSize * plusSizePrice)}</TableCell></TableRow>}
+                                        {groupAddOns.rushFee > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Rush Fee</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.rushFee)}</TableCell></TableRow>}
+                                        {groupAddOns.shippingFee > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Shipping Fee</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.shippingFee)}</TableCell></TableRow>}
+                                        {groupAddOns.logoProgramming > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Logo Programming</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.logoProgramming)}</TableCell></TableRow>}
+                                        {groupAddOns.backDesignProgramming > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Back Design Programming</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.backDesignProgramming)}</TableCell></TableRow>}
+                                        {groupAddOns.holdingFee > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Holding Fee</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.holdingFee)}</TableCell></TableRow>}
 
+                                        {groupDiscount && (
+                                            <TableRow>
+                                                <TableCell colSpan={3} className="text-right font-bold text-destructive">
+                                                    Discount {groupDiscount.reason ? `(${groupDiscount.reason})` : ''} ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})
+                                                </TableCell>
+                                                <TableCell className="text-right font-bold text-destructive">-{formatCurrency(discountAmount)}</TableCell>
+                                            </TableRow>
+                                        )}
                                     </React.Fragment>
                                 );
                             })}
@@ -210,7 +239,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     </Table>
                     <div className="mt-24 flex justify-between text-sm">
                         <div className="w-64 text-center">
-                             <p className="border-b-2 border-dotted border-gray-400 pb-1 font-bold h-7">
+                             <p className="border-b-2 border-dotted border-gray-400 pb-1 font-bold h-7 text-center">
                                 {userProfile?.nickname || ''}
                             </p>
                             <p className="text-xs mt-1">Prepared By</p>
