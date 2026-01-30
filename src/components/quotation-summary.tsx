@@ -144,10 +144,10 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-gray-200">
-                                <TableHead className="text-black font-bold py-1 px-3">DETAILS</TableHead>
-                                <TableHead className="text-center text-black font-bold py-1 px-3">QTY</TableHead>
-                                <TableHead className="text-right text-black font-bold py-1 px-3">RATE</TableHead>
-                                <TableHead className="text-right text-black font-bold py-1 px-3">AMOUNT</TableHead>
+                                <TableHead className="text-black font-bold px-3">DETAILS</TableHead>
+                                <TableHead className="text-center text-black font-bold px-3">QTY</TableHead>
+                                <TableHead className="text-right text-black font-bold px-3">RATE</TableHead>
+                                <TableHead className="text-right text-black font-bold px-3">AMOUNT</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -190,7 +190,8 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                 return (
                                     <React.Fragment key={groupKey}>
                                         <TableRow>
-                                            <TableCell className="font-bold px-3">{groupData.productType}
+                                            <TableCell className="font-bold px-3">
+                                                {groupData.productType}
                                                 <p className="text-xs font-normal pl-4">*** Sizes: {groupData.orders.map(o => o.size).join(', ')}</p>
                                                 <p className="text-xs font-normal pl-4">*** Free Design and Layout</p>
                                             </TableCell>
@@ -230,8 +231,8 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                         </TableBody>
                         <ShadTableFooter>
                             <TableRow>
-                                <TableCell colSpan={3} className="text-right font-bold text-sm py-1 px-3">TOTAL</TableCell>
-                                <TableCell className="text-right font-bold text-sm py-1 px-3">{formatCurrency(grandTotal)}</TableCell>
+                                <TableCell colSpan={3} className="text-right font-bold text-sm px-3">TOTAL</TableCell>
+                                <TableCell className="text-right font-bold text-sm px-3">{formatCurrency(grandTotal)}</TableCell>
                             </TableRow>
                         </ShadTableFooter>
                     </Table>
