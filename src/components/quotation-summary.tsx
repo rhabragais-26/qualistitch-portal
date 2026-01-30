@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
@@ -163,7 +164,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                 <p><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
                             </div>
                         </div>
-                        <div className="relative h-32 w-32">
+                        <div className="relative h-24 w-24">
                            {logoLoading ? (
                                 <Skeleton className="h-full w-full" />
                             ) : logoUrl ? (
@@ -174,7 +175,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                         </div>
                     </header>
 
-                    <div className="flex justify-between items-center mb-8 text-sm">
+                    <div className="flex justify-between items-center mb-4 text-sm">
                         <div>
                             <h2 className="text-2xl font-bold">Quotation</h2>
                              <div className="flex items-center gap-2 mt-4">
@@ -195,10 +196,10 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-gray-200">
-                                <TableHead className="text-black font-bold py-1 px-3">DETAILS</TableHead>
-                                <TableHead className="text-center text-black font-bold py-1 px-3">QTY</TableHead>
-                                <TableHead className="text-right text-black font-bold py-1 px-3">RATE</TableHead>
-                                <TableHead className="text-right text-black font-bold py-1 px-3">AMOUNT</TableHead>
+                                <TableHead className="text-black font-bold py-1 px-3 text-xs">DETAILS</TableHead>
+                                <TableHead className="text-center text-black font-bold py-1 px-3 text-xs">QTY</TableHead>
+                                <TableHead className="text-right text-black font-bold py-1 px-3 text-xs">RATE</TableHead>
+                                <TableHead className="text-right text-black font-bold py-1 px-3 text-xs">AMOUNT</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -282,8 +283,8 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                         </TableBody>
                         <ShadTableFooter>
                             <TableRow>
-                                <TableCell colSpan={3} className="text-right font-bold text-sm py-1 px-3">TOTAL</TableCell>
-                                <TableCell className="text-right font-bold text-sm py-1 px-3">{formatCurrency(grandTotal)}</TableCell>
+                                <TableCell colSpan={3} className="text-right font-bold py-1 px-3">TOTAL</TableCell>
+                                <TableCell className="text-right font-bold py-1 px-3">{formatCurrency(grandTotal)}</TableCell>
                             </TableRow>
                         </ShadTableFooter>
                     </Table>
