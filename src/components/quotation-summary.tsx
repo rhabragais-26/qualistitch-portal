@@ -104,23 +104,17 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <header className="flex justify-between items-start mb-8">
                         <div>
                             <h1 className="font-bold text-2xl">BURDA PINAS</h1>
-                            <p className="text-lg text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
-                            <div className="flex mt-2">
-                                <p className="text-base shrink-0 font-bold">Address:&nbsp;</p>
-                                <div className='pl-2'>
-                                    <p className="text-base">005 Holy Family Subdivision, Silangan</p>
-                                    <p className="text-base">San Mateo, Rizal, Philippines 1850</p>
-                                </div>
-                            </div>
+                            <p className="text-base text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
+                            <p className="text-base"><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
                             <p className="text-base"><span className="font-bold">Mobile No:</span> 0966 278 2437 | 0956 204 1950 | 0956 204 1919</p>
-                            <p className="text-base"><span className="font-bold">Landline No:</span> (02) 8997-0105 | (02) 8997-0098</p>
+                            <p className="text-base"><span className="font-bold">Landline No:</span> (02) 8716-5814</p>
                             <p className="text-base"><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
                         </div>
-                        <div className="relative h-32 w-32">
+                        <div className="relative h-24 w-24">
                            {logoLoading ? (
                                 <Skeleton className="h-full w-full" />
                             ) : logoUrl ? (
-                                <Image src={logoUrl} alt="Qualistitch Inc. Logo" fill className="object-contain" />
+                                <Image src={logoUrl} alt="Qualistitch Inc. Logo" layout="fill" objectFit="contain" />
                             ) : (
                                 <div className="h-full w-full bg-gray-200 flex items-center justify-center text-xs text-center text-gray-500">Logo not found</div>
                             )}
@@ -148,10 +142,10 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-gray-200">
-                                <TableHead className="py-0">DETAILS</TableHead>
-                                <TableHead className="text-center py-0">QTY</TableHead>
-                                <TableHead className="text-right py-0">RATE</TableHead>
-                                <TableHead className="text-right py-0">AMOUNT</TableHead>
+                                <TableHead>DETAILS</TableHead>
+                                <TableHead className="text-center">QTY</TableHead>
+                                <TableHead className="text-right">RATE</TableHead>
+                                <TableHead className="text-right">AMOUNT</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -170,35 +164,35 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                 return (
                                     <React.Fragment key={groupKey}>
                                         <TableRow>
-                                            <TableCell className="font-bold py-0">{groupData.productType}
+                                            <TableCell className="font-bold">{groupData.productType}
                                                 <p className="text-xs font-normal pl-4">*** Sizes: {groupData.orders.map(o => o.size).join(', ')}</p>
                                                 <p className="text-xs font-normal pl-4">*** Free Design and Layout</p>
                                             </TableCell>
-                                            <TableCell className="text-center py-0">{groupData.totalQuantity}</TableCell>
-                                            <TableCell className="text-right py-0">{formatCurrency(unitPrice)}</TableCell>
-                                            <TableCell className="text-right py-0">{formatCurrency(itemsSubtotal)}</TableCell>
+                                            <TableCell className="text-center">{groupData.totalQuantity}</TableCell>
+                                            <TableCell className="text-right">{formatCurrency(unitPrice)}</TableCell>
+                                            <TableCell className="text-right">{formatCurrency(itemsSubtotal)}</TableCell>
                                         </TableRow>
                                         
-                                        {groupData.embroidery === 'logo' && <TableRow><TableCell className="pl-8 font-bold py-0">Embroidery Logo<p className="text-xs font-normal pl-4">*** Front Left Chest Logo</p></TableCell><TableCell className="py-0"></TableCell><TableCell className="py-0"></TableCell><TableCell className="py-0"></TableCell></TableRow>}
-                                        {groupData.embroidery === 'name' && <TableRow><TableCell className="pl-8 font-bold py-0">Embroidery Name</TableCell><TableCell className="py-0"></TableCell><TableCell className="py-0"></TableCell><TableCell className="py-0"></TableCell></TableRow>}
+                                        {groupData.embroidery === 'logo' && <TableRow><TableCell className="pl-8 font-bold">Embroidery Logo<p className="text-xs font-normal pl-4">*** Front Left Chest Logo</p></TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>}
+                                        {groupData.embroidery === 'name' && <TableRow><TableCell className="pl-8 font-bold">Embroidery Name</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>}
                                         {groupData.embroidery === 'logoAndText' && (
                                             <>
-                                                <TableRow><TableCell className="pl-8 font-bold py-0">Embroidery Logo<p className="text-xs font-normal pl-4">*** Front Left Chest Logo</p></TableCell><TableCell className="py-0"></TableCell><TableCell className="py-0"></TableCell><TableCell className="py-0"></TableCell></TableRow>
-                                                <TableRow><TableCell className="pl-8 font-bold py-0">Embroidery Name<p className="text-xs font-normal pl-4">*** Back Texts</p></TableCell><TableCell className="py-0"></TableCell><TableCell className="py-0"></TableCell><TableCell className="py-0"></TableCell></TableRow>
+                                                <TableRow><TableCell className="pl-8 font-bold">Embroidery Logo<p className="text-xs font-normal pl-4">*** Front Left Chest Logo</p></TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>
+                                                <TableRow><TableCell className="pl-8 font-bold">Embroidery Name<p className="text-xs font-normal pl-4">*** Back Texts</p></TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>
                                             </>
                                         )}
                                         
                                         {(logoFee > 0 || backTextFee > 0) && (
                                             <TableRow>
-                                                <TableCell className="font-bold py-0">Programming Fee<p className="text-xs font-normal pl-4">*** One-Time Payment</p></TableCell>
-                                                <TableCell className="text-center py-0">{ (logoFee > 0 ? 1 : 0) + (backTextFee > 0 ? 1 : 0) }</TableCell>
-                                                <TableCell className="text-right py-0">{formatCurrency(logoFee > 0 ? logoFee : backTextFee)}</TableCell>
-                                                <TableCell className="text-right py-0">{formatCurrency(logoFee + backTextFee)}</TableCell>
+                                                <TableCell className="font-bold">Programming Fee<p className="text-xs font-normal pl-4">*** One-Time Payment</p></TableCell>
+                                                <TableCell className="text-center">{ (logoFee > 0 ? 1 : 0) + (backTextFee > 0 ? 1 : 0) }</TableCell>
+                                                <TableCell className="text-right">{formatCurrency(logoFee > 0 ? logoFee : backTextFee)}</TableCell>
+                                                <TableCell className="text-right">{formatCurrency(logoFee + backTextFee)}</TableCell>
                                             </TableRow>
                                         )}
 
-                                        {groupAddOns.backLogo > 0 && <TableRow><TableCell className="pl-8 font-bold py-0">Add On: Back Logo</TableCell><TableCell className="text-center py-0">{groupAddOns.backLogo}</TableCell><TableCell className="text-right py-0">{formatCurrency(backLogoPrice)}</TableCell><TableCell className="text-right py-0">{formatCurrency(groupAddOns.backLogo * backLogoPrice)}</TableCell></TableRow>}
-                                        {groupAddOns.names > 0 && <TableRow><TableCell className="pl-8 font-bold py-0">Add On: Names</TableCell><TableCell className="text-center py-0">{groupAddOns.names}</TableCell><TableCell className="text-right py-0">{formatCurrency(namesPrice)}</TableCell><TableCell className="text-right py-0">{formatCurrency(groupAddOns.names * namesPrice)}</TableCell></TableRow>}
+                                        {groupAddOns.backLogo > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Back Logo</TableCell><TableCell className="text-center">{groupAddOns.backLogo}</TableCell><TableCell className="text-right">{formatCurrency(backLogoPrice)}</TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.backLogo * backLogoPrice)}</TableCell></TableRow>}
+                                        {groupAddOns.names > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Names</TableCell><TableCell className="text-center">{groupAddOns.names}</TableCell><TableCell className="text-right">{formatCurrency(namesPrice)}</TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.names * namesPrice)}</TableCell></TableRow>}
 
                                     </React.Fragment>
                                 );
@@ -206,8 +200,8 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                         </TableBody>
                         <ShadTableFooter>
                             <TableRow>
-                                <TableCell colSpan={3} className="text-right font-bold text-sm py-0">TOTAL</TableCell>
-                                <TableCell className="text-right font-bold text-sm py-0">{formatCurrency(grandTotal)}</TableCell>
+                                <TableCell colSpan={3} className="text-right font-bold text-sm">TOTAL</TableCell>
+                                <TableCell className="text-right font-bold text-sm">{formatCurrency(grandTotal)}</TableCell>
                             </TableRow>
                         </ShadTableFooter>
                     </Table>
