@@ -1,5 +1,12 @@
-
 'use client';
+
+import React, { useMemo, useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadTableFooter } from '@/components/ui/table';
+import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, type PricingConfig } from '@/lib/pricing';
+import { AddOns, Discount } from "./invoice-dialogs";
+import { formatCurrency } from '@/lib/utils';
+import {![CDATA['use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -18,7 +25,8 @@ import { useFormContext } from 'react-hook-form';
 import { QuotationFormValues, type Order } from '@/lib/form-schemas';
 import { getStorage, ref, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
-
+import { ScrollArea } from './ui/scroll-area';
+import { Separator } from './ui/separator';
 
 type QuotationSummaryProps = {
   orders: Order[];
@@ -106,14 +114,15 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                             <h1 className="font-bold text-lg mb-2">BURDA PINAS</h1>
                             <p className="text-sm text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
                             <div className="flex">
-                                <p className="text-xs shrink-0">Address:&nbsp;</p>
+                                <p className="text-xs shrink-0 font-bold">Address:&nbsp;</p>
                                 <div className='pl-2'>
                                     <p className="text-xs">005 Holy Family Subdivision, Silangan</p>
                                     <p className="text-xs">San Mateo, Rizal, Philippines 1850</p>
                                 </div>
                             </div>
-                            <p className="text-xs">Mobile No: 0966 278 2437 | 0956 204 1950 | 0956 204 1919</p>
-                            <p className="text-xs">VAT Reg. TIN: 675-385-158-00000</p>
+                            <p className="text-xs"><span className="font-bold">Mobile No:</span> 0966 278 2437 | 0956 204 1950 | 0956 204 1919</p>
+                            <p className="text-xs"><span className="font-bold">Landline No:</span> (02) 8997-0105 | (02) 8997-0098</p>
+                            <p className="text-xs"><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
                         </div>
                         <div className="relative h-32 w-32">
                            {logoLoading ? (
@@ -132,7 +141,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                              <div className="flex items-center gap-2 mt-4">
                                 <p className="font-bold">BILLED TO:</p>
                                 {customerName ? (
-                                    <p className="w-64 h-4">{customerName}</p>
+                                    <p className="flex items-center h-4">{customerName}</p>
                                 ) : (
                                     <p className="border-b-2 border-dotted border-gray-400 w-64 h-4"></p>
                                 )}
