@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -84,7 +85,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                             <p className="text-xs">Govt. UID TIN #: 442-329-118-00000</p>
                         </div>
                         <div className="relative h-24 w-24">
-                            <Image src="https://firebasestorage.googleapis.com/v0/b/studio-399912310-23c48.firebasestorage.app/o/companyLogo%2Fqualistitch.png?alt=media&token=e183a7ce-5249-4115-9c86-103f07a7183a" alt="Qualistitch Inc. Logo" layout="fill" objectFit="contain" />
+                            <Image src="https://firebasestorage.googleapis.com/v0/b/studio-399912310-23c48.appspot.com/o/companyLogo%2Fqualistitch.png?alt=media&token=e183a7ce-5249-4115-9c86-103f07a7183a" alt="Qualistitch Inc. Logo" fill className="object-contain" />
                         </div>
                     </header>
 
