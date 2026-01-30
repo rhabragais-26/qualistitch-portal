@@ -7,9 +7,10 @@ import { useFormContext } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Order, LeadForm, formSchema as leadFormSchema, FormValues as LeadFormValues } from './lead-form'; 
+import { LeadForm } from './lead-form'; 
 import { InvoiceCard, AddOns, Discount, Payment } from "./invoice-card";
 import * as z from 'zod';
+import { formSchema as leadFormSchema, type Order } from '@/lib/form-schemas';
 
 // Make customer fields optional for quotation context
 export const quotationFormSchema = leadFormSchema.extend({
@@ -18,6 +19,9 @@ export const quotationFormSchema = leadFormSchema.extend({
   barangay: z.string().optional(),
   city: z.string().optional(),
   province: z.string().optional(),
+  priorityType: z.enum(['Rush', 'Regular']).optional(),
+  orderType: z.enum(['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services', 'Item Sample']).optional(),
+  orders: z.array(z.any()).optional(),
 });
 export type QuotationFormValues = z.infer<typeof quotationFormSchema>;
 
