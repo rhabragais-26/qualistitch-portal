@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadTableFooter } from '@/components/ui/table';
-import { Order } from './lead-form';
+import type { Order } from '@/lib/form-schemas';
 import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, type PricingConfig } from '@/lib/pricing';
 import { AddOns, Discount } from "./invoice-card";
 import { formatCurrency } from '@/lib/utils';
