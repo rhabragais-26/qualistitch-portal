@@ -14,6 +14,8 @@ import Image from 'next/image';
 import { Button } from './ui/button';
 import { Printer } from 'lucide-react';
 import { format } from 'date-fns';
+import { useFormContext } from 'react-hook-form';
+import { QuotationFormValues } from '@/lib/form-schemas';
 
 type QuotationSummaryProps = {
   orders: Order[];
@@ -24,6 +26,9 @@ type QuotationSummaryProps = {
 };
 
 export function QuotationSummary({ orders, orderType, addOns, discounts, grandTotal }: QuotationSummaryProps) {
+    const { watch } = useFormContext<QuotationFormValues>();
+    const customerName = watch('customerName');
+    
     const firestore = useFirestore();
     const pricingConfigRef = useMemoFirebase(
         () => (firestore ? doc(firestore, 'pricing', 'default') : null),
@@ -79,16 +84,21 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                             <p className="text-xs">Govt. UID TIN #: 442-329-118-00000</p>
                         </div>
                         <div className="relative h-24 w-24">
-                            <Image src="https://firebasestorage.googleapis.com/v0/b/studio-399912310-23c48.firebasestorage.app/o/companyLogo%2Fqualistitch.png?alt=media" alt="Qualistitch Inc. Logo" layout="fill" objectFit="contain" />
+                            <Image src="https://firebasestorage.googleapis.com/v0/b/studio-399912310-23c48.appspot.com/o/companyLogo%2Fqualistitch.png?alt=media&token=e183a7ce-5249-4115-9c86-103f07a7183a" alt="Qualistitch Inc. Logo" layout="fill" objectFit="contain" />
                         </div>
                     </header>
 
                     <div className="flex justify-between items-center mb-8">
                         <div>
                             <h2 className="text-xl font-bold">Quotation</h2>
-                            <p className="font-bold mt-4">ADDRESS:</p>
-                            <p className="border-b-2 border-dotted border-gray-400 w-64 h-4"></p>
-                            <p className="border-b-2 border-dotted border-gray-400 w-64 h-4"></p>
+                             <div className="flex items-center gap-2 mt-4">
+                                <p className="font-bold">BILLED TO:</p>
+                                {customerName ? (
+                                    <p className="w-64 h-4">{customerName}</p>
+                                ) : (
+                                    <p className="border-b-2 border-dotted border-gray-400 w-64 h-4"></p>
+                                )}
+                            </div>
                         </div>
                         <div className="text-right">
                             <p><strong>QUOTATION NO.</strong></p>
@@ -165,11 +175,11 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <div className="mt-24 flex justify-between">
                         <div>
                             <p className="border-b-2 border-dotted border-gray-400 w-64"></p>
-                            <p className="text-center">Accepted By</p>
+                            <p className="text-center">Prepared By</p>
                         </div>
                          <div>
                             <p className="border-b-2 border-dotted border-gray-400 w-64"></p>
-                            <p className="text-center">Accepted Date</p>
+                            <p className="text-center">Noted By</p>
                         </div>
                     </div>
                 </div>
@@ -177,4 +187,3 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         </Card>
     );
 }
-    
