@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
@@ -130,7 +129,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         if (!productGroup && !isClientOwned && order.productType !== 'Patches') return acc;
   
         const embroidery = order.embroidery || 'logo';
-        const groupKey = `${'\'\'\''}${order.productType}-${embroidery}${'\'\'\''}`;
+        const groupKey = `''${order.productType}-${embroidery}''`;
         if (!acc[groupKey]) {
           acc[groupKey] = {
             productType: order.productType,
@@ -155,7 +154,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                  <div className="p-8 printable-quotation border rounded-lg bg-white" id="quotation-content" ref={quotationRef}>
                     <header className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="font-bold text-2xl">BURDA PINAS</h1>
+                            <h2 className="font-bold text-2xl">BURDA PINAS</h2>
                             <p className="text-sm text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
                             <div className="text-xs mt-2 space-y-px">
                                 <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
@@ -254,7 +253,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                         
                                         {(finalLogoFee > 0 || finalBackTextFee > 0) && (
                                             <TableRow>
-                                                <TableCell className="pl-8 text-xs py-0 px-3">Programming Fee<p className="text-xs font-normal pl-4">*** One-Time Payment</p></TableCell>
+                                                <TableCell className="pl-8 text-xs py-0 px-3">Programming Fee<p className="text-xs font-normal pl-4">- One-Time Payment</p></TableCell>
                                                 <TableCell className="py-0 text-center text-xs px-3">{ (finalLogoFee > 0 ? 1 : 0) + (finalBackTextFee > 0 ? 1 : 0) }</TableCell>
                                                 <TableCell className="py-0 text-right text-xs px-3">{formatCurrency(finalLogoFee > 0 ? finalLogoFee : finalBackTextFee)}</TableCell>
                                                 <TableCell className="py-0 text-right text-xs px-3">{formatCurrency(finalLogoFee + finalBackTextFee)}</TableCell>
@@ -272,7 +271,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                         {groupDiscount && (
                                             <TableRow>
                                                 <TableCell colSpan={3} className="text-right font-bold text-destructive text-xs py-0 px-3">
-                                                    Discount {groupDiscount.reason ? `(${groupDiscount.reason})` : ''} ({groupDiscount.type === 'percentage' ? `${'\'\'\''}${groupDiscount.value}%${'\'\'\''}` : formatCurrency(groupDiscount.value)})
+                                                    Discount {groupDiscount.reason ? `(${groupDiscount.reason})` : ''} ({groupDiscount.type === 'percentage' ? `''${groupDiscount.value}%''` : formatCurrency(groupDiscount.value)})
                                                 </TableCell>
                                                 <TableCell className="text-right font-bold text-destructive text-xs py-0 px-3">-{formatCurrency(discountAmount)}</TableCell>
                                             </TableRow>
