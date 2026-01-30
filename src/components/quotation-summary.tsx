@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -103,8 +104,8 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                  <div className="p-8 printable-quotation border rounded-lg" id="quotation-content">
                     <header className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="font-bold text-3xl">BURDA PINAS</h1>
-                            <p className="text-base text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
+                            <h1 className="font-bold text-xl">BURDA PINAS</h1>
+                            <p>Owned and Operated by: QUALISTITCH INCORPORATED</p>
                             <div className="text-sm mt-4 space-y-px">
                                 <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
                                 <p><span className="font-bold">Mobile No:</span> 0966-278-2437 | 0956-204-1950 | 0956-204-1919</p>
@@ -126,7 +127,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     <div className="flex justify-between items-center mb-8">
                         <div>
                             <h2 className="text-xl font-bold">Quotation</h2>
-                             <div className="flex items-center gap-2 mt-4 text-xs">
+                             <div className="flex items-center gap-2 mt-4 text-sm">
                                 <p className="font-bold">Customer:</p>
                                 {customerName ? (
                                     <p className="flex items-center h-3">{customerName}</p>
@@ -135,7 +136,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                 )}
                             </div>
                         </div>
-                        <div className="text-right text-xs">
+                        <div className="text-right text-sm">
                             <p><strong>QUOTATION NO.</strong></p>
                             <p><strong>DATE:</strong> {format(new Date(), 'MM/dd/yyyy')}</p>
                         </div>
