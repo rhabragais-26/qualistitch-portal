@@ -75,22 +75,16 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         if (!quotationRef.current || isCopying) {
             return;
         }
-    
+
         setIsCopying(true);
-    
-        const getCanvasBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> => {
-            return new Promise(resolve => {
-                canvas.toBlob(blob => resolve(blob));
-            });
-        };
-    
+
         try {
             const canvas = await html2canvas(quotationRef.current, {
                 useCORS: true,
                 scale: 2,
             });
             
-            const blob = await getCanvasBlob(canvas);
+            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
     
             if (blob) {
                 await navigator.clipboard.write([
@@ -133,7 +127,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         if (!productGroup && !isClientOwned && order.productType !== 'Patches') return acc;
   
         const embroidery = order.embroidery || 'logo';
-        const groupKey = `${'\'\'\''}${order.productType}-${embroidery}`.replace(/\s+/g, '-');
+        const groupKey = `${order.productType}-${embroidery}`.replace(/\s+/g, '-');
         if (!acc[groupKey]) {
           acc[groupKey] = {
             productType: order.productType,
@@ -170,7 +164,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                 <p><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
                             </div>
                         </div>
-                        <div className="relative h-16 w-16">
+                        <div className="relative h-20 w-20">
                            {logoLoading ? (
                                 <Skeleton className="h-full w-full" />
                             ) : logoUrl ? (
@@ -181,7 +175,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                         </div>
                     </header>
 
-                    <div className="flex justify-between items-center mb-2 text-sm">
+                    <div className="flex justify-between items-center text-sm">
                         <div>
                             <h2 className="text-2xl font-bold">Quotation</h2>
                              <div className="flex items-center gap-2 mt-4">
