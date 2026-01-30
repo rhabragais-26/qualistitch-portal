@@ -258,30 +258,26 @@
 }
 
 @media print {
-  body::before {
-    display: none;
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  header, .no-print {
+  .no-print {
     display: none !important;
   }
-  main {
-    padding: 0 !important;
-  }
-  .printable-area {
+  .printable-quotation {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
     padding: 2rem;
+    background-color: white;
   }
-  .card {
-    border: 1px solid #ccc;
-    box-shadow: none;
-    background: #fff !important;
-  }
-  .card, .card * {
-    color: #000 !important;
-  }
-  .recharts-wrapper {
-    color: #000 !important;
-  }
-  .recharts-text {
-    fill: #000 !important;
+  .printable-quotation,
+  .printable-quotation * {
+    color: black !important;
+    background-color: white !important;
   }
 }

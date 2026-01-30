@@ -1,0 +1,179 @@
+
+'use client';
+
+import React, { useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadTableFooter } from '@/components/ui/table';
+import { Order } from './lead-form';
+import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, type PricingConfig } from '@/lib/pricing';
+import { AddOns, Discount } from "./invoice-card";
+import { formatCurrency } from '@/lib/utils';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { initialPricingConfig } from '@/lib/pricing-data';
+import Image from 'next/image';
+import { Button } from './ui/button';
+import { Printer } from 'lucide-react';
+import { format } from 'date-fns';
+
+type QuotationSummaryProps = {
+  orders: Order[];
+  orderType?: 'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | 'Item Sample';
+  addOns: Record<string, AddOns>;
+  discounts: Record<string, Discount>;
+  grandTotal: number;
+};
+
+export function QuotationSummary({ orders, orderType, addOns, discounts, grandTotal }: QuotationSummaryProps) {
+    const firestore = useFirestore();
+    const pricingConfigRef = useMemoFirebase(
+        () => (firestore ? doc(firestore, 'pricing', 'default') : null),
+        [firestore]
+    );
+    const { data: fetchedConfig } = useDoc<PricingConfig>(pricingConfigRef);
+
+    const pricingConfig = useMemo(() => {
+        if (fetchedConfig) return fetchedConfig;
+        return initialPricingConfig as PricingConfig;
+    }, [fetchedConfig]);
+
+    const handlePrint = () => {
+        window.print();
+    };
+
+    const groupedOrders = useMemo(() => {
+        return orders.reduce((acc, order) => {
+          const productGroup = getProductGroup(order.productType, pricingConfig);
+          if (!productGroup && order.productType !== 'Patches' && order.productType !== 'Client Owned') return acc;
+    
+          const groupKey = `${order.productType}-${order.embroidery}`;
+          if (!acc[groupKey]) {
+            acc[groupKey] = {
+              productType: order.productType,
+              embroidery: order.embroidery,
+              orders: [],
+              totalQuantity: 0,
+            };
+          }
+          acc[groupKey].orders.push(order);
+          acc[groupKey].totalQuantity += order.quantity;
+          return acc;
+        }, {} as Record<string, { productType: string; embroidery: EmbroideryOption; orders: Order[], totalQuantity: number }>);
+      }, [orders, pricingConfig]);
+
+    return (
+        <Card className="shadow-lg">
+            <CardHeader className="flex flex-row justify-between items-center no-print">
+                <CardTitle>Quotation Preview</CardTitle>
+                <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print</Button>
+            </CardHeader>
+            <CardContent>
+                 <div className="p-8 printable-quotation" id="quotation-content">
+                    <header className="flex justify-between items-start mb-8">
+                        <div>
+                            <h1 className="font-bold text-lg">F.A.B. GC Advertising</h1>
+                            <p className="text-xs">56 Basa St. Del Monte</p>
+                            <p className="text-xs">Quezon City, Metro Manila 1105</p>
+                            <p className="text-xs">+639987707681</p>
+                            <p className="text-xs">fabprintline@gmail.com</p>
+                            <p className="text-xs">Govt. UID TIN #: 442-329-118-00000</p>
+                        </div>
+                        <div className="relative h-24 w-24">
+                            <Image src="/fab-logo.png" alt="F.A.B. Logo" layout="fill" objectFit="contain" />
+                        </div>
+                    </header>
+
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 className="text-xl font-bold">Quotation</h2>
+                            <p className="font-bold mt-4">ADDRESS:</p>
+                            <p className="border-b-2 border-dotted border-gray-400 w-64 h-4"></p>
+                            <p className="border-b-2 border-dotted border-gray-400 w-64 h-4"></p>
+                        </div>
+                        <div className="text-right">
+                            <p><strong>QUOTATION NO.</strong></p>
+                            <p><strong>DATE:</strong> {format(new Date(), 'MM/dd/yyyy')}</p>
+                        </div>
+                    </div>
+
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-gray-200">
+                                <TableHead className="w-1/2">DETAILS</TableHead>
+                                <TableHead className="text-center">QTY</TableHead>
+                                <TableHead className="text-right">RATE</TableHead>
+                                <TableHead className="text-right">AMOUNT</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
+                                const isClientOwned = groupData.productType === 'Client Owned';
+                                const isPatches = groupData.productType === 'Patches';
+                                const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
+                                const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery, pricingConfig, patchPrice, orderType);
+                                const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned, orderType);
+                                const itemsSubtotal = groupData.totalQuantity * unitPrice;
+                                
+                                const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, ...(addOns[groupKey] || {}) };
+                                const backLogoPrice = getAddOnPrice('backLogo', groupData.totalQuantity, pricingConfig);
+                                const namesPrice = getAddOnPrice('names', groupData.totalQuantity, pricingConfig);
+
+                                return (
+                                    <React.Fragment key={groupKey}>
+                                        <TableRow>
+                                            <TableCell className="font-bold">{groupData.productType}
+                                                <p className="text-xs font-normal pl-4">*** Sizes: {groupData.orders.map(o => o.size).join(', ')}</p>
+                                                <p className="text-xs font-normal pl-4">*** Free Design and Layout</p>
+                                            </TableCell>
+                                            <TableCell className="text-center">{groupData.totalQuantity}</TableCell>
+                                            <TableCell className="text-right">{formatCurrency(unitPrice)}</TableCell>
+                                            <TableCell className="text-right">{formatCurrency(itemsSubtotal)}</TableCell>
+                                        </TableRow>
+                                        
+                                        {groupData.embroidery === 'logo' && <TableRow><TableCell className="pl-8 font-bold">Embroidery Logo<p className="text-xs font-normal pl-4">*** Front Left Chest Logo</p></TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>}
+                                        {groupData.embroidery === 'name' && <TableRow><TableCell className="pl-8 font-bold">Embroidery Name</TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>}
+                                        {groupData.embroidery === 'logoAndText' && (
+                                            <>
+                                                <TableRow><TableCell className="pl-8 font-bold">Embroidery Logo<p className="text-xs font-normal pl-4">*** Front Left Chest Logo</p></TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>
+                                                <TableRow><TableCell className="pl-8 font-bold">Embroidery Name<p className="text-xs font-normal pl-4">*** Back Texts</p></TableCell><TableCell></TableCell><TableCell></TableCell><TableCell></TableCell></TableRow>
+                                            </>
+                                        )}
+                                        
+                                        {(logoFee > 0 || backTextFee > 0) && (
+                                            <TableRow>
+                                                <TableCell className="font-bold">Programming Fee<p className="text-xs font-normal pl-4">*** One-Time Payment</p></TableCell>
+                                                <TableCell className="text-center">{ (logoFee > 0 ? 1 : 0) + (backTextFee > 0 ? 1 : 0) }</TableCell>
+                                                <TableCell className="text-right">{formatCurrency(logoFee > 0 ? logoFee : backTextFee)}</TableCell>
+                                                <TableCell className="text-right">{formatCurrency(logoFee + backTextFee)}</TableCell>
+                                            </TableRow>
+                                        )}
+
+                                        {groupAddOns.backLogo > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Back Logo</TableCell><TableCell className="text-center">{groupAddOns.backLogo}</TableCell><TableCell className="text-right">{formatCurrency(backLogoPrice)}</TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.backLogo * backLogoPrice)}</TableCell></TableRow>}
+                                        {groupAddOns.names > 0 && <TableRow><TableCell className="pl-8 font-bold">Add On: Names</TableCell><TableCell className="text-center">{groupAddOns.names}</TableCell><TableCell className="text-right">{formatCurrency(namesPrice)}</TableCell><TableCell className="text-right">{formatCurrency(groupAddOns.names * namesPrice)}</TableCell></TableRow>}
+
+                                    </React.Fragment>
+                                );
+                            })}
+                        </TableBody>
+                        <ShadTableFooter>
+                            <TableRow>
+                                <TableCell colSpan={3} className="text-right font-bold text-lg">TOTAL</TableCell>
+                                <TableCell className="text-right font-bold text-lg">{formatCurrency(grandTotal)}</TableCell>
+                            </TableRow>
+                        </ShadTableFooter>
+                    </Table>
+                    <div className="mt-24 flex justify-between">
+                        <div>
+                            <p className="border-b-2 border-dotted border-gray-400 w-64"></p>
+                            <p className="text-center">Accepted By</p>
+                        </div>
+                         <div>
+                            <p className="border-b-2 border-dotted border-gray-400 w-64"></p>
+                            <p className="text-center">Accepted Date</p>
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
