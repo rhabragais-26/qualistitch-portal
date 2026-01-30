@@ -70,11 +70,12 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       
       if (!productGroup && !isClientOwned && order.productType !== 'Patches') return acc;
 
-      const groupKey = `${order.productType}-${order.embroidery}`;
+      const embroidery = order.embroidery || 'logo';
+      const groupKey = `${order.productType}-${embroidery}`;
       if (!acc[groupKey]) {
         acc[groupKey] = {
           productType: order.productType,
-          embroidery: order.embroidery,
+          embroidery: embroidery,
           orders: [],
           totalQuantity: 0,
         };

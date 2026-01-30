@@ -70,24 +70,28 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
     };
 
     const groupedOrders = useMemo(() => {
-        return orders.reduce((acc, order) => {
-          const productGroup = getProductGroup(order.productType, pricingConfig);
-          if (!productGroup && order.productType !== 'Patches' && order.productType !== 'Client Owned') return acc;
-    
-          const groupKey = `${order.productType}-${order.embroidery}`;
-          if (!acc[groupKey]) {
-            acc[groupKey] = {
-              productType: order.productType,
-              embroidery: order.embroidery,
-              orders: [],
-              totalQuantity: 0,
-            };
-          }
-          acc[groupKey].orders.push(order);
-          acc[groupKey].totalQuantity += order.quantity;
-          return acc;
-        }, {} as Record<string, { productType: string; embroidery: EmbroideryOption; orders: Order[], totalQuantity: number }>);
-      }, [orders, pricingConfig]);
+      return orders.reduce((acc, order) => {
+        const isClientOwned = order.productType === 'Client Owned';
+        const isPatches = order.productType === 'Patches';
+        const productGroup = getProductGroup(order.productType, pricingConfig);
+        
+        if (!productGroup && !isClientOwned && order.productType !== 'Patches') return acc;
+  
+        const embroidery = order.embroidery || 'logo';
+        const groupKey = `${order.productType}-${embroidery}`;
+        if (!acc[groupKey]) {
+          acc[groupKey] = {
+            productType: order.productType,
+            embroidery: embroidery,
+            orders: [],
+            totalQuantity: 0,
+          };
+        }
+        acc[groupKey].orders.push(order);
+        acc[groupKey].totalQuantity += order.quantity;
+        return acc;
+      }, {} as Record<string, { productType: string; embroidery: EmbroideryOption; orders: Order[], totalQuantity: number }>);
+    }, [orders, pricingConfig]);
 
     return (
         <Card className="shadow-lg">
