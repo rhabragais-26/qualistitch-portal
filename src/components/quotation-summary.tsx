@@ -1,14 +1,13 @@
-
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter as ShadTableFooter } from '@/components/ui/table';
 import type { Order } from '@/lib/form-schemas';
 import { getProductGroup, getUnitPrice, getProgrammingFees, type EmbroideryOption, getAddOnPrice, type PricingConfig } from '@/lib/pricing';
 import { AddOns, Discount } from "./invoice-card";
 import { formatCurrency } from '@/lib/utils';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { initialPricingConfig } from '@/lib/pricing-data';
 import Image from 'next/image';
@@ -17,6 +16,9 @@ import { Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { useFormContext } from 'react-hook-form';
 import { QuotationFormValues } from '@/lib/form-schemas';
+import { getStorage, ref, getDownloadURL } from 'firebase/storage';
+import { Skeleton } from './ui/skeleton';
+
 
 type QuotationSummaryProps = {
   orders: Order[];
@@ -30,6 +32,27 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
     const { watch } = useFormContext<QuotationFormValues>();
     const customerName = watch('customerName');
     
+    const app = useFirebaseApp();
+    const [logoUrl, setLogoUrl] = useState<string | null>(null);
+    const [logoLoading, setLogoLoading] = useState(true);
+
+    useEffect(() => {
+        if (!app) return;
+        const storage = getStorage(app);
+        const logoRef = ref(storage, 'companyLogo/qualistitch.png');
+        
+        getDownloadURL(logoRef)
+            .then((url) => {
+                setLogoUrl(url);
+            })
+            .catch((error) => {
+                console.error("Error fetching logo URL:", error);
+            })
+            .finally(() => {
+                setLogoLoading(false);
+            });
+    }, [app]);
+
     const firestore = useFirestore();
     const pricingConfigRef = useMemoFirebase(
         () => (firestore ? doc(firestore, 'pricing', 'default') : null),
@@ -85,7 +108,13 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                             <p className="text-xs">Govt. UID TIN #: 442-329-118-00000</p>
                         </div>
                         <div className="relative h-24 w-24">
-                            <Image src="https://firebasestorage.googleapis.com/v0/b/studio-399912310-23c48.appspot.com/o/companyLogo%2Fqualistitch.png?alt=media&token=e183a7ce-5249-4115-9c86-103f07a7183a" alt="Qualistitch Inc. Logo" fill className="object-contain" />
+                           {logoLoading ? (
+                                <Skeleton className="h-full w-full" />
+                            ) : logoUrl ? (
+                                <Image src={logoUrl} alt="Qualistitch Inc. Logo" fill className="object-contain" />
+                            ) : (
+                                <div className="h-full w-full bg-gray-200 flex items-center justify-center text-xs text-center text-gray-500">Logo not found</div>
+                            )}
                         </div>
                     </header>
 
