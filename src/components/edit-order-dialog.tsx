@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -16,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from './ui/label';
 import { Button } from './ui/button';
 import { Minus, Plus } from 'lucide-react';
-import { z } from 'zod';
+import { type Order } from '@/lib/form-schemas';
 
 const productTypes = [
   'Executive Jacket 1',
@@ -45,14 +44,6 @@ const poloShirtColors = [
 ];
 
 const productSizes = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'];
-
-const orderSchema = z.object({
-  productType: z.string(),
-  color: z.string(),
-  size: z.string(),
-  quantity: z.number(),
-});
-type Order = z.infer<typeof orderSchema>;
 
 const EditOrderDialogMemo = React.memo(function EditOrderDialog({ isOpen, onOpenChange, order, onSave, onClose }: {
   isOpen: boolean;
