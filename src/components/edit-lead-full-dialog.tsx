@@ -17,9 +17,9 @@ import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc, collection } from 'firebase/firestore';
 import { useFirestore, useUser, setDocumentNonBlocking } from '@/firebase';
-import { LeadForm, FormValues, formSchema } from './lead-form';
+import { LeadForm } from './lead-form';
+import { type FormValues, formSchema, type Order } from '@/lib/form-schemas';
 import { InvoiceCard } from './invoice-card';
-import { Order } from './lead-form';
 import { AddOns, Discount, Payment } from "./invoice-dialogs";
 import type { Lead as LeadType } from './records-table';
 import { toTitleCase, formatJoNumber } from '@/lib/utils';
@@ -165,7 +165,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
             companyName: formValuesToSave.companyName ? toTitleCase(formValuesToSave.companyName) : '-',
             contactNumber: formValuesToSave.mobileNo || '-',
             contactNumber2: formValuesToSave.mobileNo2 || '-',
-            landlineNumber: formValuesToSave.landlineNo || '-',
+            landlineNo: formValuesToSave.landlineNo || '-',
             location: formValuesToSave.isInternational ? formValuesToSave.internationalAddress : [[formValuesToSave.houseStreet, formValuesToSave.barangay].filter(v => !!v).map(toTitleCase).join(' '), [formValuesToSave.city, formValuesToSave.province].filter(v => !!v).map(toTitleCase).join(' ')].filter(p => !!p).join(', '),
             houseStreet: formValuesToSave.houseStreet ? toTitleCase(formValuesToSave.houseStreet) : '',
             barangay: formValuesToSave.barangay ? toTitleCase(formValuesToSave.barangay) : '', 
