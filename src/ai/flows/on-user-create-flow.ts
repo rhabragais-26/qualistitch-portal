@@ -1,5 +1,3 @@
-'use server';
-
 import { onUserCreate } from 'firebase-functions/v2/auth';
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
