@@ -110,8 +110,8 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
           <DialogTitle>{lead?.id ? 'Edit Lead' : 'Add New Lead'}</DialogTitle>
         </DialogHeader>
         <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
-          <ScrollArea className="max-h-[70vh] p-6">
-            <div className="grid grid-cols-2 gap-4">
+          <ScrollArea className="max-h-[70vh] -mx-6 px-6">
+            <div className="grid grid-cols-2 gap-4 p-1">
               {formFields.map(f => {
                 if (f.name === 'estimatedTotalAmount') {
                   return (
@@ -256,7 +256,13 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {error ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length + 1} className="text-center">
+                    {/* Intentionally left blank to avoid "Loading..." */}
+                  </TableCell>
+                </TableRow>
+              ) : error ? (
                 <TableRow>
                   <TableCell colSpan={columns.length + 1} className="text-center text-destructive">Error: {error.message}</TableCell>
                 </TableRow>
@@ -264,7 +270,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                 leads.map(lead => (
                   <TableRow key={lead.id}>
                     {columns.map(col => (
-                      <TableCell key={col.key} className="text-center align-middle">
+                      <TableCell key={col.key} className="text-center align-middle text-xs">
                         {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
                           (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500 mx-auto" /> : <X className="text-red-500 mx-auto" />)
                         ) : col.format ? (
@@ -277,7 +283,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                       </TableCell>
                     ))}
                     {!isReadOnly && (
-                      <TableCell className="text-center align-middle">
+                      <TableCell className="text-center align-middle text-xs">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingLead(lead); setIsDialogOpen(true); }}>
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -291,7 +297,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length + 1} className="text-center text-muted-foreground">
-                    {isLoading ? null : 'No Record Yet'}
+                    No Record Yet
                   </TableCell>
                 </TableRow>
               )}
