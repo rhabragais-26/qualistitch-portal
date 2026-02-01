@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
@@ -19,7 +18,7 @@ import { QuotationFormValues, type Order } from '@/lib/form-schemas';
 import { getStorage, ref, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { PreviewQuotationDialog } from './preview-quotation-dialog';
+import html2canvas from 'html2canvas';
 
 type QuotationSummaryProps = {
   orders: Order[];
@@ -45,7 +44,6 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
     
     const [quotationNumber, setQuotationNumber] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const firestore = useFirestore();
     const pricingConfigRef = useMemoFirebase(
@@ -63,7 +61,6 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         if (!firestore) return;
         setIsSaving(true);
         
-        // If a quotation number already exists, we assume we are "updating".
         if (quotationNumber) {
             toast({
                 title: "Quotation Updated",
@@ -73,7 +70,6 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
             return;
         }
 
-        // If no quotation number exists, generate a new one.
         const today = new Date();
         const datePrefix = format(today, 'yyMMdd');
         const counterRef = doc(firestore, 'counters', `quotation_${datePrefix}`);
@@ -123,8 +119,56 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
     }, [app]);
 
     const handleCopyToClipboard = useCallback(() => {
-       setIsPreviewOpen(true);
-    }, []);
+        if (!quotationRef.current) return;
+        setIsCopying(true);
+    
+        html2canvas(quotationRef.current, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+        })
+          .then((canvas) => {
+            canvas.toBlob((blob) => {
+              if (blob) {
+                navigator.clipboard
+                  .write([new ClipboardItem({ 'image/png': blob })])
+                  .then(() => {
+                    toast({
+                      title: 'Copied to clipboard!',
+                      description: 'The quotation image has been copied.',
+                    });
+                  })
+                  .catch((err) => {
+                    console.error('Failed to copy:', err);
+                    toast({
+                      variant: 'destructive',
+                      title: 'Copy Failed',
+                      description:
+                        'Could not copy the image. Your browser might not support this, or the page was not focused.',
+                    });
+                  })
+                  .finally(() => {
+                    setIsCopying(false);
+                  });
+              } else {
+                toast({
+                  variant: 'destructive',
+                  title: 'Failed to generate image blob',
+                });
+                setIsCopying(false);
+              }
+            }, 'image/png');
+          })
+          .catch((err) => {
+            console.error('html2canvas error:', err);
+            toast({
+              variant: 'destructive',
+              title: 'Failed to generate image',
+              description: 'There was an error creating the quotation image.',
+            });
+            setIsCopying(false);
+          });
+      }, [toast]);
 
 
     const groupedOrders = useMemo(() => {
@@ -160,7 +204,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                         <Save className="mr-2 h-4 w-4" />
                         {isSaving ? 'Saving...' : (quotationNumber ? 'Save Changes' : 'Save Quotation')}
                     </Button>
-                    <Button onClick={handleCopyToClipboard} disabled={isCopying}>
+                    <Button onClick={handleCopyToClipboard} disabled={isCopying || orders.length === 0}>
                         <ClipboardCopy className="mr-2 h-4 w-4" />
                         {isCopying ? 'Copying...' : 'Copy to Clipboard'}
                     </Button>
@@ -216,10 +260,10 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-gray-200 border-b-2 border-gray-400">
-                                        <TableHead className="text-black font-bold py-1 px-3 text-[10px]">DETAILS</TableHead>
-                                        <TableHead className="text-center text-black font-bold py-1 px-3 text-[10px]">QTY</TableHead>
-                                        <TableHead className="text-right text-black font-bold py-1 px-3 text-[10px]">RATE</TableHead>
-                                        <TableHead className="text-right text-black font-bold py-1 px-3 text-[10px]">AMOUNT</TableHead>
+                                        <TableHead className="text-black font-bold py-2 px-3 text-[10px]">DETAILS</TableHead>
+                                        <TableHead className="text-center text-black font-bold py-2 px-3 text-[10px]">QTY</TableHead>
+                                        <TableHead className="text-right text-black font-bold py-2 px-3 text-[10px]">RATE</TableHead>
+                                        <TableHead className="text-right text-black font-bold py-2 px-3 text-[10px]">AMOUNT</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -323,16 +367,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                         </div>
                     </div>
                 </div>
-                {isPreviewOpen && (
-                    <PreviewQuotationDialog 
-                        isOpen={isPreviewOpen}
-                        onClose={() => setIsPreviewOpen(false)}
-                        quotationContentRef={quotationRef}
-                    />
-                )}
             </CardContent>
         </Card>
     );
 }
-
-    
