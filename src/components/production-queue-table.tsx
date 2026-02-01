@@ -24,7 +24,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2, FileText, Download } from 'lucide-react';
+import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2, FileText, Download, X } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
@@ -959,5 +959,3 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     </Card>
   );
 }
-
-    
