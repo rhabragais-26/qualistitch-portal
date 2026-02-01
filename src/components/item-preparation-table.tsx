@@ -183,7 +183,7 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                             <Checkbox
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                disabled={(lead.orderType !== 'Stock (Jacket Only)' && !lead.isDigitizingArchived) || isReadOnly || isCompleted}
+                                disabled={shouldSkipProduction ? false : !lead.isDigitizingArchived || isReadOnly || isCompleted}
                                 className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
@@ -205,7 +205,7 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                                     size="sm"
                                     onClick={() => handleOpenPreparedDialog(lead)}
                                     className="h-7 px-2"
-                                    disabled={isReadOnly || isCompleted || !(lead.isJoHardcopyReceived || lead.orderType === 'Stock (Jacket Only)')}
+                                    disabled={isReadOnly || isCompleted || !(lead.isJoHardcopyReceived || shouldSkipProduction)}
                                 >
                                     Prepared
                                 </Button>
@@ -227,7 +227,7 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                                 <Button
                                     size="sm"
                                     onClick={() => setLeadToSend(lead)}
-                                    disabled={!lead.isPreparedForProduction || isReadOnly || isCompleted || !(lead.isJoHardcopyReceived || lead.orderType === 'Stock (Jacket Only)')}
+                                    disabled={!lead.isPreparedForProduction || isReadOnly || isCompleted}
                                     className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
                                 >
                                     <Send className="mr-2 h-4 w-4" /> 
@@ -256,7 +256,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
   const { toast } = useToast();
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const [confirmingLead, setConfirmingLead] = useState<Lead | null>(null);
   const [leadToSend, setLeadToSend] = useState<Lead | null>(null);
@@ -436,20 +436,18 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
     if (!processedLeads) return [];
     
     const leadsInQueue = processedLeads.filter(lead => {
-        if (filterType === 'COMPLETED') {
-            return lead.isSentToProduction || lead.isEndorsedToLogistics;
-        }
-
-        const isClientOrPatchOnly = lead.orders.every(o => o.productType === 'Client Owned' || o.productType === 'Patches');
-        if (isClientOrPatchOnly) {
-            return false; // These orders bypass inventory
-        }
-
-        const isReadyForPrep = lead.isDigitizingArchived || ['Stock Design', 'Item Sample', 'Stock (Jacket Only)'].includes(lead.orderType);
-        
-        const isNotProcessed = !lead.isSentToProduction && !lead.isEndorsedToLogistics;
-        
-        return lead.joNumber && isReadyForPrep && isNotProcessed;
+      if (filterType === 'COMPLETED') {
+        return lead.isSentToProduction || lead.isEndorsedToLogistics;
+      }
+      
+      const isClientOrPatchOnly = lead.orders.every(o => o.productType === 'Client Owned' || o.productType === 'Patches');
+      if (isClientOrPatchOnly) {
+        return false;
+      }
+      
+      const isReadyForPrep = lead.isDigitizingArchived || ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
+      const isNotProcessed = !lead.isSentToProduction && !lead.isEndorsedToLogistics;
+      return lead.joNumber && isReadyForPrep && isNotProcessed;
     });
     
     return leadsInQueue.filter(lead => {
@@ -474,9 +472,6 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
     });
   }, [processedLeads, searchTerm, joNumberSearch, statusFilter, formatJoNumber, getProgrammingStatus, filterType]);
 
-  const isLoading = areLeadsLoading;
-  const error = leadsError;
-  
   if (isLoading) {
     return (
       <div className="space-y-2 p-4">
@@ -664,7 +659,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
     </Card>
   );
 });
-ItemPreparationTableMemo.displayName = 'ItemPreparationTable';
+ItemPreparationTableMemo.displayName = 'ItemPreparationTableMemo';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
 
