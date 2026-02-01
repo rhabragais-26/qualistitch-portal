@@ -144,7 +144,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'unclosedLeads'), orderBy('date', 'desc')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadSchema.passthrough());
+  const { data: leads, isLoading, error, refetch } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadSchema.passthrough());
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<UnclosedLead | null>(null);
@@ -158,6 +158,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
       toast({ title: `Lead ${editingLead ? 'updated' : 'added'} successfully!` });
       setIsDialogOpen(false);
       setEditingLead(null);
+      refetch();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Save failed', description: e.message });
     }
@@ -233,7 +234,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                         {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
                           (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500" /> : <X className="text-red-500" />)
                         ) : col.format ? (
-                          col.format(lead[col.key as keyof UnclosedLead] as string)
+                          (lead[col.key as keyof UnclosedLead] ? col.format(lead[col.key as keyof UnclosedLead] as string) : '')
                         ) : (
                           (lead[col.key as keyof UnclosedLead] as string | number) || ''
                         )}
