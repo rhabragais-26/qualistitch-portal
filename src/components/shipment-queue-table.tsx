@@ -690,8 +690,8 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                                 </div>
                             ) : (
                                 <div className="flex gap-2 justify-center">
-                                    <Button size="sm" className={cn("h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => handleApproveQuality(lead)} disabled={!lead.isJoHardcopyReceived || isReadOnly || isCompleted}>Approve</Button>
-                                    <Button size="sm" variant="destructive" className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => setDisapprovingLead(lead)} disabled={!lead.isJoHardcopyReceived || isReadOnly || isCompleted}>Disapprove</Button>
+                                    <Button size="sm" className={cn("h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => handleApproveQuality(lead)} disabled={(lead.orderType !== 'Stock (Jacket Only)' && !lead.isJoHardcopyReceived) || isReadOnly || isCompleted}>Approve</Button>
+                                    <Button size="sm" variant="destructive" className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => setDisapprovingLead(lead)} disabled={(lead.orderType !== 'Stock (Jacket Only)' && !lead.isJoHardcopyReceived) || isReadOnly || isCompleted}>Disapprove</Button>
                                 </div>
                             )}
                         </TableCell>

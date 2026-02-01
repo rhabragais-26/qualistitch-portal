@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -72,6 +73,14 @@ type Lead = {
 type EnrichedLead = Lead & {
   orderNumber: number;
   totalCustomerQuantity: number;
+};
+
+type OperationalCase = {
+  id: string;
+  joNumber: string;
+  caseType: string;
+  isArchived?: boolean;
+  isDeleted?: boolean;
 };
 
 const programmingStatusOptions = [
@@ -175,7 +184,7 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                             <Checkbox
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                disabled={!lead.isDigitizingArchived || isReadOnly || isCompleted}
+                                disabled={(lead.orderType !== 'Stock (Jacket Only)' && !lead.isDigitizingArchived) || isReadOnly || isCompleted}
                                 className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
@@ -197,7 +206,7 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                                     size="sm"
                                     onClick={() => handleOpenPreparedDialog(lead)}
                                     className="h-7 px-2"
-                                    disabled={isReadOnly || isCompleted || !lead.isJoHardcopyReceived}
+                                    disabled={isReadOnly || isCompleted || !(lead.isJoHardcopyReceived || lead.orderType === 'Stock (Jacket Only)')}
                                 >
                                     Prepared
                                 </Button>
@@ -219,7 +228,7 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                                 <Button
                                     size="sm"
                                     onClick={() => setLeadToSend(lead)}
-                                    disabled={!lead.isPreparedForProduction || !lead.isJoHardcopyReceived || isReadOnly || isCompleted}
+                                    disabled={!lead.isPreparedForProduction || isReadOnly || isCompleted || !(lead.isJoHardcopyReceived || lead.orderType === 'Stock (Jacket Only)')}
                                     className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
                                 >
                                     <Send className="mr-2 h-4 w-4" /> 
