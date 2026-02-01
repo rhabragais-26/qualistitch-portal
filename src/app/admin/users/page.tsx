@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Header } from '@/components/header';
@@ -33,12 +34,12 @@ export default function AdminUsersPage() {
     'leads', 'dailyAds', 'embroidery_logs', 'marketingCalendar', 
     'operational_expenses', 'cost_of_goods', 'capital_expenses', 'direct_messages', 
     'inventory', 'operationalCases', 'campaign_inquiries', 'adCampaigns', 
-    'ad_spend_inquiries', 'other_cash_inflows', 'counters'
+    'ad_spend_inquiries', 'other_cash_inflows', 'counters', 'unclosedLeads', 'sizeCharts'
   ];
 
   const storageFoldersToDelete = [
     'leads-images', 'leads-files', 'operational-cases', 'adCampaigns-images', 
-    'dailyAds', 'marketingCalendar'
+    'dailyAds', 'marketingCalendar', 'sizeCharts'
   ];
 
   const deleteCollection = async (collectionPath: string) => {
@@ -125,8 +126,7 @@ export default function AdminUsersPage() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action is irreversible and will delete all orders, chats, and uploaded photos. 
-                  User accounts will NOT be deleted. Are you sure you want to proceed?
+                  This action is irreversible and will delete all transactional data, including leads, orders, chats, and all uploaded files. User accounts and pricing configuration will NOT be deleted. Are you sure you want to proceed?
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
