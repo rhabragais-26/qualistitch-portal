@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from 'react';
 import { Header } from '@/components/header';
@@ -93,7 +94,7 @@ export default function QuotationPage() {
 
     <Header>
       <FormProvider {...formMethods}>
-        <main className={cn("p-4 sm:p-6 lg:p-8", (isCalculatorDragging || isSizeChartDragging || isItemPricesDragging || isRunningAdsDragging) && "select-none")}>
+        <main className={cn("py-4 sm:py-6 lg:py-8 px-8 sm:px-12 lg:px-16", (isCalculatorDragging || isSizeChartDragging || isItemPricesDragging || isRunningAdsDragging) && "select-none")}>
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
             <QuotationForm 
               stagedOrders={stagedOrders}
