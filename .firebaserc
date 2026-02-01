@@ -1,6 +1,8 @@
 {
   "projects": {
-    "default": "studio-399912310-23c48"
+    "default": "studio-399912310-23c48",
+    "qsbp": "studio-399912310-23c48",
+    "main": "studio-399912310-23c48"
   },
   "targets": {},
   "etags": {}

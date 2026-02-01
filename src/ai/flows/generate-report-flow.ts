@@ -1,3 +1,5 @@
+'use server';
+
 /**
  * @fileOverview A report generation AI agent.
  *

@@ -10,7 +10,7 @@ import { Skeleton } from './ui/skeleton';
 import { format, parse } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { generateReport, GenerateReportOutput } from '@/ai/flows/generate-report-flow';
+import { generateReportAction } from '@/app/reports/actions';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 
@@ -26,6 +26,15 @@ type Lead = {
   }[];
   submissionDateTime: string;
   [key: string]: any;
+};
+
+type GenerateReportOutput = {
+  salesRepData: any[];
+  priorityData: { name: string; value: number }[];
+  dailySalesData: any[];
+  soldQtyByProductType: any[];
+  availableYears: number[];
+  availableWeeks: string[];
 };
 
 const chartConfig = {
@@ -79,7 +88,7 @@ export function ReportsSummary() {
     setIsReportLoading(true);
     setReportError(null);
     try {
-      const result = await generateReport({
+      const result = await generateReportAction({
         leads,
         selectedYear,
         selectedMonth,
