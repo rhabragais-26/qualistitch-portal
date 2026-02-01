@@ -223,7 +223,7 @@ function DailyAdsPage() {
                         <ScrollArea className="h-64 border rounded-md p-4">
                             <div className="space-y-4">
                                 {images.map((image, index) => (
-                                    <div key={image.id} className="flex items-start gap-2">
+                                    <div key={image.id} className="flex items-start gap-2 p-2">
                                         {image.previewUrl ? (
                                             <div className="relative w-20 h-20 flex-shrink-0">
                                                 <Image src={image.previewUrl} alt={`preview ${index}`} layout="fill" objectFit="cover" className="rounded-md" />
@@ -322,5 +322,4 @@ function DailyAdsPage() {
 }
 
 export default DailyAdsPage;
-
     
