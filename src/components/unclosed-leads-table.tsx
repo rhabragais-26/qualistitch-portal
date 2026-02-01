@@ -41,18 +41,19 @@ const unclosedLeadSchema = z.object({
   nextFollowUpDate: z.string().optional(),
   sces: z.string().min(1, 'SCES is required'),
   createdBy: z.string(),
-}).refine(data => data.customerName.length > 0, {
+});
+
+type UnclosedLead = z.infer<typeof unclosedLeadSchema>;
+
+const unclosedLeadFormSchema = unclosedLeadSchema.refine(data => data.customerName.length > 0, {
     message: "Customer name is required",
     path: ["customerName"],
 });
 
-
-type UnclosedLead = z.infer<typeof unclosedLeadSchema>;
-
 const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => void; lead: Partial<UnclosedLead> | null; onClose: () => void; }) => {
   const { userProfile } = useUser();
   const form = useForm<UnclosedLead>({
-    resolver: zodResolver(unclosedLeadSchema),
+    resolver: zodResolver(unclosedLeadFormSchema),
     defaultValues: {
       id: lead?.id || uuidv4(),
       date: lead?.date ? format(new Date(lead.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
