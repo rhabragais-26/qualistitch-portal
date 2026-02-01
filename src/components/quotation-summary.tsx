@@ -45,6 +45,12 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
     const [isCopying, setIsCopying] = useState(false);
     
     const [isSaving, setIsSaving] = useState(false);
+    const [currentDate, setCurrentDate] = useState('');
+
+    useEffect(() => {
+        // This will only run on the client, after hydration
+        setCurrentDate(format(new Date(), 'MM/dd/yyyy'));
+    }, []);
 
     const firestore = useFirestore();
     const pricingConfigRef = useMemoFirebase(
@@ -254,7 +260,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                                         <strong>QUOTATION NO.</strong>
                                         {quotationNumber && <span className="font-mono ml-2">{quotationNumber}</span>}
                                     </p>
-                                    <p><strong>DATE:</strong> {format(new Date(), 'MM/dd/yyyy')}</p>
+                                    <p><strong>DATE:</strong> {currentDate}</p>
                                 </div>
                             </div>
 
