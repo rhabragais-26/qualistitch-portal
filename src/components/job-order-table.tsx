@@ -24,7 +24,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Upload, Edit, Trash2, X, PlusCircle, Download, Check, Calendar as CalendarIcon, ChevronUp, ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { Badge } from './ui/badge';
 import { formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -127,6 +127,8 @@ type Lead = {
   isRecheckingQuality?: boolean;
   layouts?: Layout[];
   lastModifiedBy?: string;
+  isPostingConsentGranted?: boolean;
+  postingConsentTimestamp?: string;
 }
 
 type EnrichedLead = Lead & {
@@ -150,6 +152,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const [confirmingPrint, setConfirmingPrint] = useState<Lead | null>(null);
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
   const [imageInView, setImageInView] = useState<string | null>(null);
+  const [uncheckConsentConfirmation, setUncheckConsentConfirmation] = useState<Lead | null>(null);
   
   const [uploadLead, setUploadLead] = useState<Lead | null>(null);
   const [refLogoLeftImages, setRefLogoLeftImages] = useState<(string | null)[]>([]);
@@ -178,7 +181,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
     if (mobile && landline) {
-      return `${mobile} / ${landline}`;
+      return `${''}${mobile} / ${landline}${''}`;
     }
     return mobile || landline || null;
   }, []);
@@ -228,6 +231,31 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
         delete newChanges.joPrintedTimestamp;
         return { ...prev, [leadId]: newChanges };
       });
+    }
+  };
+
+  const handleConsentChange = async (leadId: string, checked: boolean) => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', leadId);
+    try {
+      await updateDoc(leadDocRef, {
+        isPostingConsentGranted: checked,
+        postingConsentTimestamp: checked ? new Date().toISOString() : null
+      });
+      refetch();
+    } catch (e: any) {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: e.message || "Could not update consent status.",
+      });
+    }
+  };
+
+  const confirmUncheckConsent = () => {
+    if (uncheckConsentConfirmation) {
+      handleConsentChange(uncheckConsentConfirmation.id, false);
+      setUncheckConsentConfirmation(null);
     }
   };
 
@@ -556,6 +584,20 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog open={!!uncheckConsentConfirmation} onOpenChange={(open) => !open && setUncheckConsentConfirmation(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Unchecking this box will revoke the client's posting consent.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmUncheckConsent}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Dialog open={!!uploadLead} onOpenChange={(isOpen) => !isOpen && setUploadLead(null)}>
         <DialogContent className="sm:max-w-4xl">
             <DialogHeader>
@@ -633,6 +675,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Uploaded Layout</TableHead>
                   <TableHead className="text-center text-white font-bold align-middle">Printed</TableHead>
+                  <TableHead className="text-center text-white font-bold align-middle w-[150px]">Posting Consent from Client</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">J.O. Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -786,6 +829,24 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                             )}
                         </div>
                       </TableCell>
+                      <TableCell className="text-center align-middle py-2">
+                        <div className="flex flex-col items-center justify-center gap-1">
+                          <Checkbox
+                            checked={lead.isPostingConsentGranted || false}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                handleConsentChange(lead.id, true);
+                              } else {
+                                setUncheckConsentConfirmation(lead);
+                              }
+                            }}
+                            disabled={isReadOnly}
+                          />
+                          {lead.postingConsentTimestamp && (
+                            <div className="text-[10px] text-gray-500">{formatDateTime(lead.postingConsentTimestamp).dateTimeShort}</div>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black font-medium text-center">{getJoStatus(lead)}</TableCell>
                     </TableRow>
                   );
@@ -798,4 +859,3 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     </>
   );
 }
-
