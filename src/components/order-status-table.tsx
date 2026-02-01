@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -163,21 +162,13 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     if (lead.shipmentStatus === 'Delivered' && lead.deliveredTimestamp) {
         const deliveredDate = new Date(lead.deliveredTimestamp);
         remainingDays = differenceInDays(deadlineDate, deliveredDate);
+        statusText = <><span className="font-bold">Delivered:</span> {formatDateTime(lead.deliveredTimestamp).dateTimeShort}</>;
         if (remainingDays < 0) {
             isOverdue = true;
-            statusText = <><span className="font-bold">Delivered:</span> {formatDateTime(lead.deliveredTimestamp).dateTimeShort} <br /> ({Math.abs(remainingDays)} day(s) late)</>;
-        } else {
-            statusText = <><span className="font-bold">Delivered:</span> {formatDateTime(lead.deliveredTimestamp).dateTimeShort}</>;
         }
     } else if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
-        const shippedDate = new Date(lead.shippedTimestamp);
-        remainingDays = differenceInDays(deadlineDate, shippedDate);
-        if (remainingDays < 0) {
-            isOverdue = true;
-            statusText = <><span className="font-bold">Shipped:</span> {formatDateTime(lead.shippedTimestamp).dateTimeShort} <br /> ({Math.abs(remainingDays)} day(s) late)</>;
-        } else {
-            statusText = <><span className="font-bold">Shipped:</span> {formatDateTime(lead.shippedTimestamp).dateTimeShort}</>;
-        }
+        statusText = <><span className="font-bold">Shipped:</span> {formatDateTime(lead.shippedTimestamp).dateTimeShort}</>;
+        remainingDays = 0; 
     } else {
         remainingDays = differenceInDays(deadlineDate, new Date());
         if (remainingDays < 0) {
@@ -206,7 +197,9 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   }, []);
 
   const getProgrammingStatus = useCallback((lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
-    if (lead.orderType === 'Stock (Jacket Only)') return { text: "Skipped", variant: "secondary" };
+    if (['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType)) {
+      return { text: "Skipped", variant: "secondary" };
+    }
     if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
     if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "default" as const };
     if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const };
@@ -218,6 +211,10 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   }, []);
 
   const getItemPreparationStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "secondary" } => {
+    const isClientOrPatchOnly = lead.orders.every(o => o.productType === 'Client Owned' || o.productType === 'Patches');
+    if (isClientOrPatchOnly) {
+      return { text: 'Skipped', variant: 'secondary' };
+    }
     if (lead.orderType === 'Stock (Jacket Only)' && lead.isEndorsedToLogistics) {
       return { text: 'Sent to Logistics', variant: 'success' };
     }
@@ -227,7 +224,9 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   }, []);
 
   const getProductionStatus = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "secondary" } => {
-    if (lead.orderType === 'Stock (Jacket Only)') return { text: "Skipped", variant: "secondary" };
+    if (['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType)) {
+      return { text: "Skipped", variant: "secondary" };
+    }
     if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
     if (lead.isDone) return { text: "Done Production", variant: "success" };
     if (lead.isTrimming) return { text: "Trimming/Cleaning", variant: "warning" };
@@ -594,7 +593,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                             </TableCell>
                             <TableCell className={cn(
                               "text-center text-xs align-middle py-3",
-                              (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered')
+                                (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered')
                                 ? "text-green-600 font-medium"
                                 : deadlineInfo.isOverdue
                                 ? "text-red-500 font-bold"
@@ -724,5 +723,3 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     </Card>
   );
 }
-
-    
