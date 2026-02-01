@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { useFirestore, useUser } from '@/firebase';
+import { collection, query, orderBy, doc, setDoc, deleteDoc, getDocs } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from './ui/button';
@@ -94,13 +95,13 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
   const formFields = [
     { name: "date", label: "Date", type: "date" },
     { name: "customerName", label: "Customer Name" },
-    { name: "quantity", label: "Quantity" },
     { name: "contactDetails", label: "Contact Details" },
+    { name: "quantity", label: "Quantity" },
     { name: "estimatedTotalAmount", label: "Est. Total Amount" },
-    { name: "sces", label: "Sales Team" },
     { name: "dateOfMeetUp", label: "Date of Meetup", type: "date" },
     { name: "estimatedDateForDp", label: "Est. Date for DP", type: "date" },
     { name: "nextFollowUpDate", label: "Next Follow-up", type: "date" },
+    { name: "sces", label: "Sales Team" },
     { name: "status", label: "Status" },
     { name: "remarks", label: "Remarks", type: "textarea" },
   ] as const;
