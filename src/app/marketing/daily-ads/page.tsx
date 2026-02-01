@@ -255,7 +255,7 @@ function DailyAdsPage() {
                             </ScrollArea>
                         </div>
 
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 pt-4">
                           {editingAd && <Button type="button" variant="outline" onClick={handleFormReset}>Cancel</Button>}
                           <Button type="submit">{editingAd ? 'Save Changes' : 'Record Ad'}</Button>
                         </div>
