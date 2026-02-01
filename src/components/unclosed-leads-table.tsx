@@ -13,7 +13,7 @@ import { Textarea } from './ui/textarea';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -217,33 +217,45 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={columns.length + 1}>Loading...</TableCell></TableRow>}
-              {error && <TableRow><TableCell colSpan={columns.length + 1} className="text-destructive">Error: {error.message}</TableCell></TableRow>}
-              {leads?.map(lead => (
-                <TableRow key={lead.id}>
-                  {columns.map(col => (
-                    <TableCell key={col.key}>
-                      {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
-                        (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500" /> : <X className="text-red-500" />)
-                      ) : col.format ? (
-                        col.format(lead[col.key as keyof UnclosedLead] as string)
-                      ) : (
-                        (lead[col.key as keyof UnclosedLead] as string | number) || ''
-                      )}
-                    </TableCell>
-                  ))}
-                  {!isReadOnly && (
-                    <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => { setEditingLead(lead); setIsDialogOpen(true); }}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeletingLead(lead)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  )}
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length + 1} className="text-center">Loading...</TableCell>
                 </TableRow>
-              ))}
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length + 1} className="text-center text-destructive">Error: {error.message}</TableCell>
+                </TableRow>
+              ) : leads && leads.length > 0 ? (
+                leads.map(lead => (
+                  <TableRow key={lead.id}>
+                    {columns.map(col => (
+                      <TableCell key={col.key}>
+                        {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
+                          (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500" /> : <X className="text-red-500" />)
+                        ) : col.format ? (
+                          col.format(lead[col.key as keyof UnclosedLead] as string)
+                        ) : (
+                          (lead[col.key as keyof UnclosedLead] as string | number) || ''
+                        )}
+                      </TableCell>
+                    ))}
+                    {!isReadOnly && (
+                      <TableCell>
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingLead(lead); setIsDialogOpen(true); }}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDeletingLead(lead)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length + 1} className="text-center">No Record Yet</TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </ScrollArea>
