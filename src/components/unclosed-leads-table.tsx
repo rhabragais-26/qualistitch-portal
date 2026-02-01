@@ -80,7 +80,7 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
   
   const formFields = [
     { name: "date", label: "Date", type: "date" },
-    { name: "leads", label: "Leads" },
+    { name: "leads", label: "Leads (Customer Name)" },
     { name: "contactDetails", label: "Contact Details" },
     { name: "deadlineLeadTime", label: "Deadline/Lead Time" },
     { name: "quantity", label: "Quantity" },
@@ -109,21 +109,54 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
           </DialogHeader>
           <ScrollArea className="max-h-[70vh] p-6">
             <div className="grid grid-cols-2 gap-4">
-              {formFields.map(f => (
-                <div key={f.name} className="space-y-2">
-                  <Label htmlFor={f.name}>{f.label}</Label>
-                  {f.type === 'textarea' ? (
-                    <Textarea id={f.name} {...form.register(f.name)} />
-                  ) : (
-                    <Input id={f.name} type={f.type || 'text'} {...form.register(f.name)} />
-                  )}
-                  {form.formState.errors[f.name] && <p className="text-sm text-destructive">{form.formState.errors[f.name]?.message}</p>}
-                </div>
-              ))}
+              {formFields.map(f => {
+                if (f.name === 'estimatedTotalAmount') {
+                  return (
+                    <div key={f.name} className="space-y-2">
+                      <Label htmlFor={f.name}>{f.label}</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+                        <Input
+                          id={f.name}
+                          type="text"
+                          className="pl-7 text-right"
+                          value={
+                            form.watch(f.name)
+                              ? new Intl.NumberFormat('en-US').format(Number(form.watch(f.name)!.replace(/[^0-9]/g, '')))
+                              : ''
+                          }
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[^0-9]/g, '');
+                            form.setValue(f.name, value, { shouldValidate: true, shouldDirty: true });
+                          }}
+                        />
+                      </div>
+                      {form.formState.errors[f.name] && <p className="text-sm text-destructive">{form.formState.errors[f.name]?.message}</p>}
+                    </div>
+                  )
+                }
+                return (
+                  <div key={f.name} className="space-y-2">
+                    <Label htmlFor={f.name}>{f.label}</Label>
+                    {f.type === 'textarea' ? (
+                      <Textarea id={f.name} {...form.register(f.name)} />
+                    ) : (
+                      <Input id={f.name} type={f.type || 'text'} {...form.register(f.name)} />
+                    )}
+                    {form.formState.errors[f.name] && <p className="text-sm text-destructive">{form.formState.errors[f.name]?.message}</p>}
+                  </div>
+                )
+              })}
               <div className="col-span-2 grid grid-cols-2 gap-4">
                 {checkboxFields.map(f => (
                   <div key={f.name} className="flex items-center space-x-2">
-                    <Checkbox id={f.name} {...form.register(f.name)} defaultChecked={lead?.[f.name]} />
+                    <Checkbox
+                      id={f.name}
+                      checked={form.watch(f.name)}
+                      onCheckedChange={(checked) => {
+                        form.setValue(f.name, !!checked, { shouldDirty: true });
+                      }}
+                    />
                     <Label htmlFor={f.name}>{f.label}</Label>
                   </div>
                 ))}
@@ -171,6 +204,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
       await deleteDoc(docRef);
       toast({ title: 'Lead deleted successfully!' });
       setDeletingLead(null);
+      refetch();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Delete failed', description: e.message });
     }
@@ -178,7 +212,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
 
   const columns = [
     { key: 'date', label: 'Date', format: (d: string) => format(parseISO(d), 'MM-dd-yyyy') },
-    { key: 'leads', label: 'Leads' },
+    { key: 'leads', label: 'Leads (Customer Name)' },
     { key: 'contactDetails', label: 'Contact Details' },
     { key: 'deadlineLeadTime', label: 'Deadline/Lead Time' },
     { key: 'quantity', label: 'Quantity' },
@@ -254,7 +288,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length + 1} className="text-center">No Record Yet</TableCell>
+                  <TableCell colSpan={columns.length + 1} className="text-center text-muted-foreground">No Record Yet</TableCell>
                 </TableRow>
               )}
             </TableBody>
