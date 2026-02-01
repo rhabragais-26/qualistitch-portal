@@ -594,8 +594,13 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                             </TableCell>
                             <TableCell className={cn(
                               "text-center text-xs align-middle py-3",
-                              deadlineInfo.isOverdue && "text-red-500 font-bold",
-                              deadlineInfo.isUrgent && "text-amber-600 font-bold"
+                              (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered')
+                                ? "text-green-600 font-medium"
+                                : deadlineInfo.isOverdue
+                                ? "text-red-500 font-bold"
+                                : deadlineInfo.isUrgent
+                                ? "text-amber-600 font-bold"
+                                : ""
                             )}>{deadlineInfo.text}</TableCell>
                             <TableCell className="text-center text-xs align-middle py-3 font-medium">
                                 {lead.operationalCase ? (
