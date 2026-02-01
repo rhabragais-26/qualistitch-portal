@@ -1,3 +1,70 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "Executive Jacket 1",
+      "description": "A placeholder for Executive Jacket 1",
+      "imageUrl": "https://images.unsplash.com/photo-1764084052708-c3c0611d89e7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxleGVjdXRpdmUlMjBqYWNrZXR8ZW58MHx8fHwxNzY5OTQxNTk4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "executive jacket"
+    },
+    {
+      "id": "Executive Jacket v2 (with lines)",
+      "description": "A placeholder for Executive Jacket v2",
+      "imageUrl": "https://images.unsplash.com/photo-1758599543142-c61c6a2d3fb8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxleGVjdXRpdmUlMjBqYWNrZXR8ZW58MHx8fHwxNzY5OTQxNTk4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "executive jacket"
+    },
+    {
+      "id": "Turtle Neck Jacket",
+      "description": "A placeholder for Turtle Neck Jacket",
+      "imageUrl": "https://images.unsplash.com/photo-1758532737863-dccded514584?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx0dXJ0bGVuZWNrJTIwamFja2V0fGVufDB8fHx8MTc2OTk0MTU5OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "turtleneck jacket"
+    },
+    {
+      "id": "Corporate Jacket",
+      "description": "A placeholder for Corporate Jacket",
+      "imageUrl": "https://images.unsplash.com/photo-1686973938075-e865d0c7152e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjb3Jwb3JhdGUlMjBqYWNrZXR8ZW58MHx8fHwxNzY5OTQxNTk4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "corporate jacket"
+    },
+    {
+      "id": "Reversible v1",
+      "description": "A placeholder for Reversible Jacket v1",
+      "imageUrl": "https://images.unsplash.com/photo-1652787884343-4ecf0838d240?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxyZXZlcnNpYmxlJTIwamFja2V0fGVufDB8fHx8MTc2OTk0MTU5OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "reversible jacket"
+    },
+    {
+      "id": "Reversible v2",
+      "description": "A placeholder for Reversible Jacket v2",
+      "imageUrl": "https://images.unsplash.com/photo-1592878849122-facb97520f9e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxyZXZlcnNpYmxlJTIwamFja2V0fGVufDB8fHx8MTc2OTk0MTU5OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "reversible jacket"
+    },
+    {
+      "id": "Polo Shirt (Smilee) - Cool Pass",
+      "description": "A placeholder for a polo shirt",
+      "imageUrl": "https://images.unsplash.com/photo-1720514496161-914011a9ee02?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwb2xvJTIwc2hpcnR8ZW58MHx8fHwxNzY5OTExMTQ5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "polo shirt"
+    },
+    {
+      "id": "Polo Shirt (Smilee) - Cotton Blend",
+      "description": "A placeholder for a cotton polo shirt",
+      "imageUrl": "https://images.unsplash.com/photo-1625910513394-ea511bed44ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwb2xvJTIwc2hpcnR8ZW58MHx8fHwxNzY5OTExMTQ5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "polo shirt"
+    },
+    {
+      "id": "Polo Shirt (Lifeline)",
+      "description": "A placeholder for a Lifeline polo shirt",
+      "imageUrl": "https://images.unsplash.com/photo-1625910513399-c9fcba54338c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwb2xvJTIwc2hpcnR8ZW58MHx8fHwxNzY5OTExMTQ5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "polo shirt"
+    },
+    {
+      "id": "Polo Shirt (Blue Corner)",
+      "description": "A placeholder for a Blue Corner polo shirt",
+      "imageUrl": "https://images.unsplash.com/photo-1717127354833-e4d10625d3e7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwb2xvJTIwc2hpcnR8ZW58MHx8fHwxNzY5OTExMTQ5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "polo shirt"
+    },
+    {
+      "id": "Polo Shirt (Softex)",
+      "description": "A placeholder for a Softex polo shirt",
+      "imageUrl": "https://images.unsplash.com/photo-1625910513520-bed0389ce32f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwb2xvJTIwc2hpcnR8ZW58MHx8fHwxNzY5OTExMTQ5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "polo shirt"
+    }
+  ]
 }

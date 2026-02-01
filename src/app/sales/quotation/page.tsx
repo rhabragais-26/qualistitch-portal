@@ -1,13 +1,12 @@
-
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
 import { QuotationForm } from '@/components/quotation-form';
 import { QuotationSummary } from '@/components/quotation-summary';
 import { type Order } from '@/lib/form-schemas';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AddOns, Discount } from "@/components/invoice-card";
+import { AddOns, Discount, Payment } from "@/components/invoice-card";
 import { type QuotationFormValues, quotationFormSchema } from '@/lib/form-schemas';
 import { Button } from '@/components/ui/button';
 import { CalculatorIcon, Ruler, Tag, Tv } from 'lucide-react';
@@ -16,6 +15,9 @@ import { SizeChartDialog } from '@/components/size-chart-dialog';
 import { ItemPricesDialog } from '@/components/item-prices-dialog';
 import { RunningAdsDialog } from '@/components/running-ads-dialog';
 import { cn } from '@/lib/utils';
+import { ImagePlaceholder, PlaceHolderImages } from '@/lib/placeholder-images';
+import Image from 'next/image';
+import { Card, CardContent } from '@/components/ui/card';
 
 
 export default function QuotationPage() {
@@ -35,6 +37,18 @@ export default function QuotationPage() {
   const [isSizeChartDragging, setIsSizeChartDragging] = useState(false);
   const [isItemPricesDragging, setIsItemPricesDragging] = useState(false);
   const [isRunningAdsDragging, setIsRunningAdsDragging] = useState(false);
+  
+  const [productImage, setProductImage] = useState<ImagePlaceholder | null>(null);
+
+  useEffect(() => {
+      if (stagedOrders.length > 0) {
+        const firstProductType = stagedOrders[0].productType;
+        const image = PlaceHolderImages.find(img => img.id === firstProductType);
+        setProductImage(image || null);
+      } else {
+        setProductImage(null);
+      }
+  }, [stagedOrders]);
 
   const formMethods = useForm<QuotationFormValues>({
     resolver: zodResolver(quotationFormSchema),
@@ -110,6 +124,22 @@ export default function QuotationPage() {
               setRemovedFees={setRemovedFees}
             />
             <div className="space-y-4">
+               {productImage && (
+                  <Card>
+                      <CardContent className="p-2">
+                          <div className="relative w-full h-64">
+                              <Image
+                                  src={productImage.imageUrl}
+                                  alt={productImage.description}
+                                  layout="fill"
+                                  objectFit="cover"
+                                  className="rounded-md"
+                                  data-ai-hint={productImage.imageHint}
+                              />
+                          </div>
+                      </CardContent>
+                  </Card>
+              )}
                <div className="flex justify-center gap-2 flex-wrap">
                   <Button type="button" variant="outline" size="sm" className="bg-gray-700 text-white hover:bg-gray-600 font-bold" onClick={() => setShowCalculator(true)}>
                       <CalculatorIcon className="mr-2 h-4 w-4" />
