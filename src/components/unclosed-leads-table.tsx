@@ -225,11 +225,11 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
     { key: 'quotationSent', label: 'Quotation Sent' },
     { key: 'forSampleJacket', label: 'For Sample Jacket' },
     { key: 'forMeetUp', label: 'For Meet Up' },
-    { key: 'dateOfMeetUp', label: 'Date of Meet Up', format: (d: string) => d ? format(parseISO(d), 'MM-dd-yyyy') : '' },
-    { key: 'estimatedDateForDp', label: 'Est. Date for DP', format: (d: string) => d ? format(parseISO(d), 'MM-dd-yyyy') : '' },
+    { key: 'dateOfMeetUp', label: 'Date of Meet Up', format: (d: string) => d ? format(new Date(d), 'MM-dd-yyyy') : '' },
+    { key: 'estimatedDateForDp', label: 'Est. Date for DP', format: (d: string) => d ? format(new Date(d), 'MM-dd-yyyy') : '' },
     { key: 'status', label: 'Status' },
     { key: 'remarks', label: 'Remarks' },
-    { key: 'nextFollowUpDate', label: 'Next Follow-up', format: (d: string) => d ? format(parseISO(d), 'MM-dd-yyyy') : '' },
+    { key: 'nextFollowUpDate', label: 'Next Follow-up', format: (d: string) => d ? format(new Date(d), 'MM-dd-yyyy') : '' },
     { key: 'sces', label: 'SCES' },
   ];
 
@@ -251,8 +251,8 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
           <Table>
             <TableHeader>
               <TableRow>
-                {columns.map(c => <TableHead key={c.key}>{c.label}</TableHead>)}
-                {!isReadOnly && <TableHead>Actions</TableHead>}
+                {columns.map(c => <TableHead key={c.key} className="text-center align-middle">{c.label}</TableHead>)}
+                {!isReadOnly && <TableHead className="text-center align-middle">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -264,9 +264,9 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                 leads.map(lead => (
                   <TableRow key={lead.id}>
                     {columns.map(col => (
-                      <TableCell key={col.key}>
+                      <TableCell key={col.key} className="text-center align-middle">
                         {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
-                          (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500" /> : <X className="text-red-500" />)
+                          (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500 mx-auto" /> : <X className="text-red-500 mx-auto" />)
                         ) : col.format ? (
                           (lead[col.key as keyof UnclosedLead] ? col.format(lead[col.key as keyof UnclosedLead] as string) : '')
                         ) : col.key === 'estimatedTotalAmount' && lead.estimatedTotalAmount ? (
@@ -277,7 +277,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                       </TableCell>
                     ))}
                     {!isReadOnly && (
-                      <TableCell>
+                      <TableCell className="text-center align-middle">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingLead(lead); setIsDialogOpen(true); }}>
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -291,7 +291,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length + 1} className="text-center text-muted-foreground">
-                    {isLoading ? 'Loading...' : 'No Record Yet'}
+                    {isLoading ? null : 'No Record Yet'}
                   </TableCell>
                 </TableRow>
               )}
