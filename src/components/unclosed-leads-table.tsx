@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -69,6 +70,8 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
       createdBy: lead?.createdBy || userProfile?.nickname || '',
     },
   });
+  
+  const formId = `lead-form-${lead?.id || 'new'}`;
 
   const onSubmit = (data: UnclosedLead) => {
     onSave({
@@ -102,11 +105,11 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>{lead?.id ? 'Edit Lead' : 'Add New Lead'}</DialogTitle>
-          </DialogHeader>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>{lead?.id ? 'Edit Lead' : 'Add New Lead'}</DialogTitle>
+        </DialogHeader>
+        <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
           <ScrollArea className="max-h-[70vh] p-6">
             <div className="grid grid-cols-2 gap-4">
               {formFields.map(f => {
@@ -122,7 +125,7 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
                           className="pl-7 text-right"
                           value={
                             form.watch(f.name)
-                              ? new Intl.NumberFormat('en-US').format(Number(form.watch(f.name)!.replace(/[^0-9]/g, '')))
+                              ? new Intl.NumberFormat('en-US').format(Number(String(form.watch(f.name)).replace(/[^0-9]/g, '')))
                               : ''
                           }
                           onChange={(e) => {
@@ -163,15 +166,16 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
               </div>
             </div>
           </ScrollArea>
-          <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-            <Button type="submit">Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </form>
+        </form>
+        <DialogFooter>
+          <DialogClose asChild><Button type="button" variant="outline" onClick={onClose}>Cancel</Button></DialogClose>
+          <Button type="submit" form={formId}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
     </FormProvider>
   );
 };
+
 
 export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const firestore = useFirestore();
@@ -269,6 +273,8 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                           (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500" /> : <X className="text-red-500" />)
                         ) : col.format ? (
                           (lead[col.key as keyof UnclosedLead] ? col.format(lead[col.key as keyof UnclosedLead] as string) : '')
+                        ) : col.key === 'estimatedTotalAmount' && lead.estimatedTotalAmount ? (
+                          `₱${new Intl.NumberFormat('en-US').format(Number(lead.estimatedTotalAmount))}`
                         ) : (
                           (lead[col.key as keyof UnclosedLead] as string | number) || ''
                         )}
