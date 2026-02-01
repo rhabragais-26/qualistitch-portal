@@ -102,8 +102,8 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
     { name: "estimatedDateForDp", label: "Est. Date for DP", type: "date" },
     { name: "status", label: "Status" },
     { name: "nextFollowUpDate", label: "Next Follow-up", type: "date" },
-    { name: "remarks", label: "Remarks", type: "textarea" },
     { name: "sces", label: "Sales Team" },
+    { name: "remarks", label: "Remarks", type: "textarea" },
   ] as const;
 
   const checkboxFields = [
@@ -121,8 +121,17 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
         </DialogHeader>
         <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
           <ScrollArea className="max-h-[70vh] -mx-6 px-6 modern-scrollbar">
-            <div className="grid grid-cols-2 gap-4 p-4">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 p-4">
               {formFields.map(f => {
+                if (f.name === 'remarks') {
+                  return (
+                    <div key={f.name} className="col-span-2 space-y-2">
+                      <Label htmlFor={f.name}>{f.label}</Label>
+                      <Textarea id={f.name} {...form.register(f.name)} />
+                      {form.formState.errors[f.name] && <p className="text-sm text-destructive">{form.formState.errors[f.name]?.message}</p>}
+                    </div>
+                  )
+                }
                 if (f.name === 'estimatedTotalAmount') {
                   return (
                     <div key={f.name} className="space-y-2">
@@ -172,11 +181,7 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
                 return (
                   <div key={f.name} className="space-y-2">
                     <Label htmlFor={f.name}>{f.label}</Label>
-                    {f.type === 'textarea' ? (
-                      <Textarea id={f.name} {...form.register(f.name)} />
-                    ) : (
-                      <Input id={f.name} type={f.type || 'text'} {...form.register(f.name)} />
-                    )}
+                    <Input id={f.name} type={f.type || 'text'} {...form.register(f.name)} />
                     {form.formState.errors[f.name] && <p className="text-sm text-destructive">{form.formState.errors[f.name]?.message}</p>}
                   </div>
                 )
@@ -213,7 +218,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const { toast } = useToast();
   
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'unclosedLeads'), orderBy('date', 'desc')) : null), [firestore]);
-  const { data: leads, isLoading, error } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadFetchSchema, { listen: true });
+  const { data: leads, isLoading, error } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadFetchSchema);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<UnclosedLead | null>(null);
@@ -299,7 +304,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                 leads.map(lead => (
                   <TableRow key={lead.id}>
                     {columns.map(col => (
-                      <TableCell key={col.key} className="p-2 text-center align-middle text-xs">
+                      <TableCell key={col.key} className="p-1 text-center align-middle text-xs">
                         {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
                           (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500 mx-auto" /> : <X className="text-red-500 mx-auto" />)
                         ) : col.key === 'dateOfMeetUp' ? (
@@ -314,7 +319,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                       </TableCell>
                     ))}
                     {!isReadOnly && (
-                      <TableCell className="p-2 text-center align-middle text-xs">
+                      <TableCell className="p-1 text-center align-middle text-xs">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingLead(lead); setIsDialogOpen(true); }}>
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -360,5 +365,3 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
     </Card>
   );
 }
-
-    
