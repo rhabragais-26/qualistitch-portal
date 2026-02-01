@@ -25,9 +25,8 @@ import { Skeleton } from './ui/skeleton';
 const unclosedLeadSchema = z.object({
   id: z.string(),
   date: z.string(),
-  leads: z.string().min(1, 'Lead name is required'),
+  customerName: z.string().min(1, 'Customer name is required'),
   contactDetails: z.string().optional(),
-  deadlineLeadTime: z.string().optional(),
   quantity: z.string().optional(),
   estimatedTotalAmount: z.string().optional(),
   layoutSent: z.boolean().default(false),
@@ -52,9 +51,8 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
     defaultValues: {
       id: lead?.id || uuidv4(),
       date: lead?.date ? format(new Date(lead.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
-      leads: lead?.leads || '',
+      customerName: lead?.customerName || '',
       contactDetails: lead?.contactDetails || '',
-      deadlineLeadTime: lead?.deadlineLeadTime || '',
       quantity: lead?.quantity || '',
       estimatedTotalAmount: lead?.estimatedTotalAmount || '',
       layoutSent: lead?.layoutSent || false,
@@ -85,9 +83,8 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
   
   const formFields = [
     { name: "date", label: "Date", type: "date" },
-    { name: "leads", label: "Leads (Customer Name)" },
+    { name: "customerName", label: "Customer Name" },
     { name: "contactDetails", label: "Contact Details" },
-    { name: "deadlineLeadTime", label: "Deadline/Lead Time" },
     { name: "quantity", label: "Quantity" },
     { name: "estimatedTotalAmount", label: "Est. Total Amount" },
     { name: "dateOfMeetUp", label: "Date of Meetup", type: "date" },
@@ -248,9 +245,8 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
 
   const columns = [
     { key: 'date', label: 'Date', format: (d: string) => format(parseISO(d), 'MM-dd-yyyy') },
-    { key: 'leads', label: 'Leads (Customer Name)' },
+    { key: 'customerName', label: 'Customer Name' },
     { key: 'contactDetails', label: 'Contact Details' },
-    { key: 'deadlineLeadTime', label: 'Deadline/Lead Time' },
     { key: 'quantity', label: 'Quantity' },
     { key: 'estimatedTotalAmount', label: 'Est. Total Amount' },
     { key: 'layoutSent', label: 'Layout Sent' },
@@ -302,7 +298,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                 leads.map(lead => (
                   <TableRow key={lead.id}>
                     {columns.map(col => (
-                      <TableCell key={col.key} className="py-2 px-1 text-center align-middle text-xs">
+                      <TableCell key={col.key} className="p-1 text-center align-middle text-xs">
                         {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
                           (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500 mx-auto" /> : <X className="text-red-500 mx-auto" />)
                         ) : col.key === 'dateOfMeetUp' ? (
@@ -317,7 +313,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                       </TableCell>
                     ))}
                     {!isReadOnly && (
-                      <TableCell className="py-2 px-1 text-center align-middle text-xs">
+                      <TableCell className="p-1 text-center align-middle text-xs">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingLead(lead); setIsDialogOpen(true); }}>
                           <Edit className="h-4 w-4" />
                         </Button>
