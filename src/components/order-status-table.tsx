@@ -91,11 +91,13 @@ type Lead = {
   isRecheckingQuality?: boolean;
   isPacked?: boolean;
   adjustedDeliveryDate?: string;
+  deliveryDate?: string;
   layouts?: Layout[];
   isEndorsedToLogistics?: boolean;
   isCutting?: boolean;
   isEmbroideryDone?: boolean;
   isSewing?: boolean;
+  finalApprovalTimestamp?: string;
 }
 
 type EnrichedLead = Lead & {
@@ -141,7 +143,17 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   }, [openLeadId]);
 
   const calculateDeadline = useCallback((lead: Lead) => {
-    const deadlineDate = lead.adjustedDeliveryDate ? new Date(lead.adjustedDeliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
+    const getDeadline = () => {
+      if (lead.adjustedDeliveryDate) return new Date(lead.adjustedDeliveryDate);
+      if (lead.deliveryDate) return new Date(lead.deliveryDate);
+      
+      const startDate = lead.finalApprovalTimestamp 
+          ? new Date(lead.finalApprovalTimestamp) 
+          : new Date(lead.submissionDateTime);
+      const deadlineDays = lead.priorityType === 'Rush' ? 7 : 22;
+      return addDays(startDate, deadlineDays);
+    };
+    const deadlineDate = getDeadline();
 
     let statusText: React.ReactNode;
     let remainingDays: number;
@@ -521,19 +533,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                     {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                 </div>
                             </TableCell>
-                             <TableCell className="text-xs align-middle text-center py-2 text-black">
-                                <div className="flex flex-col items-center justify-center gap-2">
-                                    <span>{formatJoNumber(lead.joNumber)}</span>
-                                    {lead.layouts?.[0]?.layoutImage && (
-                                        <div
-                                            className="relative w-40 h-24 border rounded-md cursor-pointer mt-1"
-                                            onClick={() => setImageInView(lead.layouts![0]!.layoutImage!)}
-                                        >
-                                            <Image src={lead.layouts[0].layoutImage} alt="Layout" layout="fill" objectFit="contain" />
-                                        </div>
-                                    )}
-                                </div>
-                            </TableCell>
+                            <TableCell className="text-xs align-middle text-center py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                             <TableCell className="text-center align-middle py-3 text-sm">{lead.salesRepresentative}</TableCell>
                             <TableCell className="text-center align-middle py-3">
                                <div className='flex flex-col items-center gap-1'>
@@ -595,8 +595,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                             <TableCell className={cn(
                               "text-center text-xs align-middle py-3",
                               deadlineInfo.isOverdue && "text-red-500 font-bold",
-                              deadlineInfo.isUrgent && "text-amber-600 font-bold",
-                              !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600 font-bold"
+                              deadlineInfo.isUrgent && "text-amber-600 font-bold"
                             )}>{deadlineInfo.text}</TableCell>
                             <TableCell className="text-center text-xs align-middle py-3 font-medium">
                                 {lead.operationalCase ? (
@@ -720,3 +719,5 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     </Card>
   );
 }
+
+    

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { collection, query, doc, updateDoc, getDocs, where } from 'firebase/firestore';
@@ -122,6 +123,8 @@ type Lead = {
   isJoPrinted?: boolean;
   isRecheckingQuality?: boolean;
   isFinalProgram?: boolean;
+  adjustedDeliveryDate?: string;
+  finalApprovalTimestamp?: string;
 }
 
 type EnrichedLead = Lead & {
@@ -361,23 +364,23 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                     </Collapsible>
                     {isRepeat ? (
                         <TooltipProvider>
-                        <Tooltip>
+                          <Tooltip>
                             <TooltipTrigger asChild>
-                            <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
+                              <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
                                 <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                 <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                {lead.orderNumber}
+                                  {lead.orderNumber}
                                 </span>
-                            </div>
+                              </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                            <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                              <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
                             </TooltipContent>
-                        </Tooltip>
+                          </Tooltip>
                         </TooltipProvider>
-                    ) : (
+                      ) : (
                         <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                    )}
+                      )}
                 </TableCell>
                 <TableCell className="text-xs align-middle py-2 text-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>
                 <TableCell className="align-middle py-2 text-center">
@@ -387,8 +390,8 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                 </TableCell>
                 <TableCell className={cn(
                     "text-center text-xs align-middle py-3",
-                    deadlineInfo.isOverdue && "text-red-500",
-                    deadlineInfo.isUrgent && "text-amber-600"
+                    deadlineInfo.isOverdue && "text-red-500 font-bold",
+                    deadlineInfo.isUrgent && "text-amber-600 font-bold"
                     )}>{deadlineInfo.text}</TableCell>
                 <TableCell className="text-center align-middle py-2">
                     <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)}>
@@ -657,7 +660,17 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   }, [joReceivedConfirmation, firestore, toast]);
 
   const calculateProductionDeadline = useCallback((lead: Lead) => {
-    const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
+    const getDeadline = () => {
+        if (lead.adjustedDeliveryDate) return new Date(lead.adjustedDeliveryDate);
+        if (lead.deliveryDate) return new Date(lead.deliveryDate);
+        
+        const startDate = lead.finalApprovalTimestamp 
+            ? new Date(lead.finalApprovalTimestamp) 
+            : new Date(lead.submissionDateTime);
+        const deadlineDays = lead.priorityType === 'Rush' ? 7 : 22;
+        return addDays(startDate, deadlineDays);
+    };
+    const deliveryDate = getDeadline();
     
     let statusText: React.ReactNode;
     let remainingDays: number;
@@ -689,7 +702,17 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   }, []);
 
   const getOverdueStatusText = useCallback((lead: Lead): string => {
-    const deliveryDate = lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22);
+    const getDeadline = () => {
+        if (lead.adjustedDeliveryDate) return new Date(lead.adjustedDeliveryDate);
+        if (lead.deliveryDate) return new Date(lead.deliveryDate);
+        
+        const startDate = lead.finalApprovalTimestamp 
+            ? new Date(lead.finalApprovalTimestamp) 
+            : new Date(lead.submissionDateTime);
+        const deadlineDays = lead.priorityType === 'Rush' ? 7 : 22;
+        return addDays(startDate, deadlineDays);
+    };
+    const deliveryDate = getDeadline();
     
     let statusText: string;
     let remainingDays: number;
@@ -964,3 +987,5 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     </Card>
   );
 }
+
+    
