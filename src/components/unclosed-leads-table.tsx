@@ -107,7 +107,7 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
           <DialogHeader>
             <DialogTitle>{lead?.id ? 'Edit Lead' : 'Add New Lead'}</DialogTitle>
           </DialogHeader>
-          <ScrollArea className="max-h-[70vh] p-4">
+          <ScrollArea className="max-h-[70vh] p-6">
             <div className="grid grid-cols-2 gap-4">
               {formFields.map(f => (
                 <div key={f.name} className="space-y-2">
