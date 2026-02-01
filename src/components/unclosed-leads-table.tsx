@@ -20,6 +20,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format, parseISO } from 'date-fns';
+import { Skeleton } from './ui/skeleton';
 
 const unclosedLeadSchema = z.object({
   id: z.string(),
@@ -282,13 +283,17 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
           <Table>
             <TableHeader>
               <TableRow>
-                {columns.map(c => <TableHead key={c.key} className="text-center align-middle">{c.label}</TableHead>)}
-                {!isReadOnly && <TableHead className="text-center align-middle">Actions</TableHead>}
+                {columns.map(c => <TableHead key={c.key} className="py-2 px-1 text-center align-middle">{c.label}</TableHead>)}
+                {!isReadOnly && <TableHead className="py-2 px-1 text-center align-middle">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                null
+                <TableRow>
+                  <TableCell colSpan={columns.length + 1} className="h-24 text-center">
+                    <Skeleton className="h-24 w-full" />
+                  </TableCell>
+                </TableRow>
               ) : error ? (
                 <TableRow>
                   <TableCell colSpan={columns.length + 1} className="text-center text-destructive">Error: {error.message}</TableCell>
@@ -297,7 +302,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                 leads.map(lead => (
                   <TableRow key={lead.id}>
                     {columns.map(col => (
-                      <TableCell key={col.key} className="p-2 text-center align-middle text-xs">
+                      <TableCell key={col.key} className="py-2 px-1 text-center align-middle text-xs">
                         {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
                           (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500 mx-auto" /> : <X className="text-red-500 mx-auto" />)
                         ) : col.key === 'dateOfMeetUp' ? (
@@ -312,7 +317,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                       </TableCell>
                     ))}
                     {!isReadOnly && (
-                      <TableCell className="p-2 text-center align-middle text-xs">
+                      <TableCell className="py-2 px-1 text-center align-middle text-xs">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingLead(lead); setIsDialogOpen(true); }}>
                           <Edit className="h-4 w-4" />
                         </Button>
