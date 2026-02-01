@@ -7,7 +7,7 @@ import { X, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay } from 'date-fns';
 import Image from 'next/image';
 import { ScrollArea } from './ui/scroll-area';
 import { Skeleton } from './ui/skeleton';
@@ -37,24 +37,22 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
   
   const firestore = useFirestore();
   
-  const dailyAdsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'dailyAds')) : null, [firestore]);
+  const dailyAdsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    const todayStart = startOfDay(new Date()).toISOString();
+    const todayEnd = endOfDay(new Date()).toISOString();
+    return query(
+      collection(firestore, 'dailyAds'),
+      where('date', '>=', todayStart),
+      where('date', '<=', todayEnd)
+    );
+  }, [firestore]);
+
   const { data: dailyAds, isLoading, error } = useCollection<DailyAd>(dailyAdsQuery);
 
-  const todaysAds = useMemo(() => {
-    if (!dailyAds) return [];
-    const todayStr = format(new Date(), 'yyyy-MM-dd');
-    return dailyAds.filter(ad => {
-      try {
-        return format(new Date(ad.date), 'yyyy-MM-dd') === todayStr;
-      } catch {
-        return false;
-      }
-    });
-  }, [dailyAds]);
-
   const allImages = useMemo(() => {
-    return todaysAds?.flatMap(ad => ad.images.map(img => ({...img, adAccount: ad.adAccount, timestamp: ad.timestamp }))) || [];
-  }, [todaysAds]);
+    return dailyAds?.flatMap(ad => ad.images.map(img => ({...img, adAccount: ad.adAccount, timestamp: ad.timestamp }))) || [];
+  }, [dailyAds]);
 
 
   useEffect(() => {
