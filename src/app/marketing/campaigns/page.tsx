@@ -493,7 +493,7 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                 name="mediumTicketInquiries"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Medium Ticket (10-49)</FormLabel>
+                    <FormLabel>Medium Ticket (10-99)</FormLabel>
                     <FormControl>
                        <Input
                         type="text"
@@ -518,7 +518,7 @@ function CampaignInquiryForm({ inquiries, onFormSubmit, editingInquiry, onCancel
                 name="largeTicketInquiries"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Large Ticket (50-199)</FormLabel>
+                    <FormLabel>Large Ticket (100-199)</FormLabel>
                     <FormControl>
                        <Input
                         type="text"
