@@ -9,7 +9,7 @@ import { AppShell } from '@/components/AppShell';
 export const metadata: Metadata = {
   title: 'Qualistitch Inc.',
   icons: {
-    icon: "https://firebasestorage.googleapis.com/v0/b/studio-399912310-23c48.firebasestorage.app/companyLogo/qualistitch.png",
+    icon: "/qs_icon.png",
   },
 };
 
