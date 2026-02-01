@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -23,7 +24,7 @@ import { format, parseISO } from 'date-fns';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
-// Schema for fetching, more lenient
+// Schema for fetching, more lenient to avoid breaking on old data
 const unclosedLeadFetchSchema = z.object({
   id: z.string(),
   date: z.string(),
@@ -96,13 +97,13 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
   const formFields = [
     { name: "date", label: "Date", type: "date" },
     { name: "customerName", label: "Customer Name" },
-    { name: "contactDetails", label: "Contact Details" },
     { name: "quantity", label: "Quantity" },
+    { name: "contactDetails", label: "Contact Details" },
     { name: "estimatedTotalAmount", label: "Est. Total Amount" },
-    { name: "dateOfMeetUp", label: "Date of Meetup", type: "datetime-local" },
-    { name: "estimatedDateForDp", label: "Est. Date for DP", type: "date" },
     { name: "nextFollowUpDate", label: "Next Follow-up", type: "datetime-local" },
     { name: "sces", label: "Sales Team" },
+    { name: "dateOfMeetUp", label: "Date of Meetup", type: "datetime-local" },
+    { name: "estimatedDateForDp", label: "Est. Date for DP", type: "date" },
     { name: "status", label: "Status" },
     { name: "remarks", label: "Remarks", type: "textarea" },
   ] as const;
@@ -244,7 +245,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
     return query(collection(firestore, 'unclosedLeads'), orderBy('date', 'desc'));
   }, [firestore]);
 
-  const { data: leads, isLoading, error, refetch } = useCollection<UnclosedLead>(unclosedLeadsQuery, unclosedLeadFetchSchema);
+  const { data: leads, isLoading, error, refetch } = useCollection<UnclosedLead>(unclosedLeadsQuery, unclosedLeadFetchSchema, { listen: true });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<UnclosedLead | null>(null);
@@ -259,7 +260,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
       toast({ title: `Lead ${editingLead ? 'updated' : 'added'} successfully!` });
       setIsDialogOpen(false);
       setEditingLead(null);
-      refetch();
+      // Real-time listener will handle the update, no need for refetch()
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Save failed', description: e.message });
     }
@@ -272,7 +273,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
       await deleteDoc(docRef);
       toast({ title: 'Lead deleted successfully!' });
       setDeletingLead(null);
-      refetch();
+      // Real-time listener will handle the update
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Delete failed', description: e.message });
     }
