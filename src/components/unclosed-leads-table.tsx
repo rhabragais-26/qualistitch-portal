@@ -309,10 +309,10 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                     ))}
                     {!isReadOnly && (
                       <TableCell className="text-center align-middle text-xs">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingLead(lead); setIsDialogOpen(true); }}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingLead(lead); setIsDialogOpen(true); }}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeletingLead(lead)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeletingLead(lead)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </TableCell>
