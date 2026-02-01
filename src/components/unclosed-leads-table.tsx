@@ -1,9 +1,8 @@
-
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useFirestore, useUser } from '@/firebase';
+import { collection, query, orderBy, doc, setDoc, deleteDoc, getDocs } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from './ui/button';
@@ -180,12 +179,42 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
 export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const firestore = useFirestore();
   const { toast } = useToast();
-  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'unclosedLeads'), orderBy('date', 'desc')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadSchema.passthrough());
   
+  const [leads, setLeads] = useState<UnclosedLead[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<UnclosedLead | null>(null);
   const [deletingLead, setDeletingLead] = useState<UnclosedLead | null>(null);
+
+  const fetchLeads = useCallback(async () => {
+    if (!firestore) return;
+    setIsLoading(true);
+    try {
+      const leadsQuery = query(collection(firestore, 'unclosedLeads'), orderBy('date', 'desc'));
+      const snapshot = await getDocs(leadsQuery);
+      const fetchedLeads = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const result = unclosedLeadSchema.passthrough().safeParse({ id: doc.id, ...data });
+        if (result.success) {
+          return result.data;
+        } else {
+          console.warn("Invalid lead data found:", result.error);
+          return null;
+        }
+      }).filter((l): l is UnclosedLead => l !== null);
+      setLeads(fetchedLeads);
+    } catch (e: any) {
+      setError(e);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [firestore]);
+
+  useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
 
   const handleSave = async (data: UnclosedLead) => {
     if (!firestore) return;
@@ -195,6 +224,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
       toast({ title: `Lead ${editingLead ? 'updated' : 'added'} successfully!` });
       setIsDialogOpen(false);
       setEditingLead(null);
+      await fetchLeads(); // Explicitly refetch
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Save failed', description: e.message });
     }
@@ -207,6 +237,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
       await deleteDoc(docRef);
       toast({ title: 'Lead deleted successfully!' });
       setDeletingLead(null);
+      await fetchLeads(); // Explicitly refetch
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Delete failed', description: e.message });
     }
@@ -323,5 +354,3 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
     </Card>
   );
 }
-
-    
