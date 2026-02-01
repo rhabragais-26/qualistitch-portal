@@ -7,10 +7,7 @@ import { RealtimeBanner } from '@/components/realtime-banner';
 import { AppShell } from '@/components/AppShell';
 
 export const metadata: Metadata = {
-  title: 'Qualistitch Inc.',
-  icons: {
-    icon: "/qs_icon.png",
-  },
+  title: 'Qualistitch Portal',
 };
 
 export default function RootLayout({
