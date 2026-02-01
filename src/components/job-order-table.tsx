@@ -32,6 +32,7 @@ import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebas
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Checkbox } from './ui/checkbox';
+import { Switch } from './ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose, DialogFooter } from "@/components/ui/dialog"
@@ -831,7 +832,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       </TableCell>
                       <TableCell className="text-center align-middle py-2">
                         <div className="flex flex-col items-center justify-center gap-1">
-                          <Checkbox
+                          <Switch
                             checked={lead.isPostingConsentGranted || false}
                             onCheckedChange={(checked) => {
                               if (checked) {
