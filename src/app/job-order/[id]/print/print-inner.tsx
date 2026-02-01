@@ -2,11 +2,9 @@
 
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import { useFirestore } from '@/firebase';
 import { collection, doc, getDoc, query, where, getDocs } from 'firebase/firestore';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -72,10 +70,8 @@ type Lead = {
   publiclyPrintable?: boolean;
 };
 
-export default function JobOrderPrintPage() {
-  const params = useParams();
+export default function JobOrderPrintPage({ id: _id }: { id: string }) {
   const searchParams = useSearchParams();
-  const id = React.useMemo(() => (params?.id ? (Array.isArray(params.id) ? params.id[0] : params.id) : ''), [params]);
   const isViewOnly = searchParams.get('view') === 'true';
   const firestore = useFirestore();
   const [lead, setLead] = useState<Lead | null>(null);
@@ -86,43 +82,41 @@ export default function JobOrderPrintPage() {
     let isMounted = true;
 
     const fetchLeadData = async () => {
-      if (!id) {
-        if(isMounted) setError(new Error("Job order ID is missing."));
+      if (!_id) {
+        if (isMounted) setError(new Error('Job order ID is missing.'));
         return null;
       }
 
-      const storedLeadData = localStorage.getItem(`job-order-${id}`);
+      const storedLeadData = localStorage.getItem(`job-order-${_id}`);
       if (storedLeadData) {
         try {
           return JSON.parse(storedLeadData);
         } catch (e) {
-          if(isMounted) setError(new Error("Failed to parse job order data."));
+          if (isMounted) setError(new Error('Failed to parse job order data.'));
           return null;
         }
       }
 
       if (firestore) {
-        const leadDocRef = doc(firestore, 'leads', id as string);
+        const leadDocRef = doc(firestore, 'leads', _id);
         try {
           const docSnap = await getDoc(leadDocRef);
           if (docSnap.exists()) {
             return { id: docSnap.id, ...docSnap.data() } as Lead;
           } else {
-            if(isMounted) setError(new Error('Job order not found.'));
+            if (isMounted) setError(new Error('Job order not found.'));
             return null;
           }
         } catch (err) {
-          console.error("Error fetching job order for print:", err);
-           if(isMounted) {
-            if (err instanceof Error) {
-                setError(err);
-            } else {
-                setError(new Error('An unknown error occurred during fetch.'));
-            }
-           }
+          console.error('Error fetching job order for print:', err);
+          if (isMounted) {
+            if (err instanceof Error) setError(err);
+            else setError(new Error('An unknown error occurred during fetch.'));
+          }
           return null;
         }
       }
+
       return null;
     };
 
@@ -132,46 +126,36 @@ export default function JobOrderPrintPage() {
         if (leadData) {
           setLead(leadData);
           setIsLoading(false);
-          if (!isViewOnly) {
-            setTimeout(() => window.print(), 500);
-          }
+          if (!isViewOnly) setTimeout(() => window.print(), 500);
         } else {
           setIsLoading(false);
           if (!error) {
-            setError(new Error("Job order data could not be loaded for printing. Please close this tab and try again."));
+            setError(
+              new Error(
+                'Job order data could not be loaded for printing. Please close this tab and try again.'
+              )
+            );
           }
         }
       }
     };
 
     runPrintFlow();
-    
+
     const handleAfterPrint = () => {
-      if (id) {
-        localStorage.removeItem(`job-order-${id}`);
-      }
-      if (!isViewOnly) {
-        window.close();
-      }
+      if (_id) localStorage.removeItem(`job-order-${_id}`);
+      if (!isViewOnly) window.close();
     };
 
-    if (!isViewOnly) {
-      window.addEventListener('afterprint', handleAfterPrint);
-    }
+    if (!isViewOnly) window.addEventListener('afterprint', handleAfterPrint);
 
     return () => {
-      if (isMounted) {
-          isMounted = false;
-          if (!isViewOnly) {
-              window.removeEventListener('afterprint', handleAfterPrint);
-          }
-          if (id) {
-            localStorage.removeItem(`job-order-${id}`);
-          }
-      }
+      isMounted = false;
+      if (!isViewOnly) window.removeEventListener('afterprint', handleAfterPrint);
+      if (_id) localStorage.removeItem(`job-order-${_id}`);
     };
-  }, [firestore, id, error, isViewOnly]);
-  
+  }, [firestore, _id, error, isViewOnly]);
+
   if (isLoading || !lead) {
     return (
       <div className="p-10 bg-white">
