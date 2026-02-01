@@ -8,7 +8,9 @@ import { AppShell } from '@/components/AppShell';
 
 export const metadata: Metadata = {
   title: 'Qualistitch Inc.',
-  description: 'A web based system to track customer leads.',
+  icons: {
+    icon: "https://firebasestorage.googleapis.com/v0/b/studio-399912310-23c48.firebasestorage.app/companyLogo/qualistitch.png",
+  },
 };
 
 export default function RootLayout({
