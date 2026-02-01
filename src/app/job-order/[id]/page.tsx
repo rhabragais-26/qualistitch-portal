@@ -14,12 +14,13 @@
     import { Textarea } from '@/components/ui/textarea';
     import { useToast } from '@/hooks/use-toast';
     import { Input } from '@/components/ui/input';
-    import { cn, toTitleCase } from '@/lib/utils';
+    import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
     import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
     import Image from 'next/image';
     import { v4 as uuidv4 } from 'uuid';
     import { hasEditPermission } from '@/lib/permissions';
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+    import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
     type DesignDetails = {
       left?: boolean;
@@ -46,17 +47,98 @@
       backText: string;
     }
 
+    type FileObject = {
+      name: string;
+      url: string;
+    };
+    
     type Layout = {
       id: string;
       layoutImage?: string;
       layoutImageUploadTime?: string | null;
       layoutImageUploadedBy?: string | null;
+      refLogoLeftImage?: string | null;
+      refLogoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+      refLogoLeftImageUploadTime?: string | null;
+      refLogoLeftImageUploadedBy?: string | null;
+      refLogoRightImage?: string | null;
+      refLogoRightImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+      refLogoRightImageUploadTime?: string | null;
+      refLogoRightImageUploadedBy?: string | null;
+      refBackLogoImage?: string | null;
+      refBackLogoImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+      refBackLogoImageUploadTime?: string | null;
+      refBackLogoImageUploadedBy?: string | null;
+      refBackDesignImage?: string | null;
+      refBackDesignImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+      refBackDesignImageUploadTime?: string | null;
+      refBackDesignImageUploadedBy?: string | null;
       dstLogoLeft?: string;
       dstLogoRight?: string;
       dstBackLogo?: string;
       dstBackText?: string;
-      namedOrders: NamedOrder[];
+      namedOrders?: NamedOrder[];
+      logoLeftImage?: string | null;
+      logoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+      logoLeftImageUploadTime?: string | null;
+      logoLeftImageUploadedBy?: string | null;
+      logoRightImage?: string | null;
+      logoRightImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+      logoRightImageUploadTime?: string | null;
+      logoRightImageUploadedBy?: string | null;
+      backLogoImage?: string | null;
+      backLogoImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+      backLogoImageUploadTime?: string | null;
+      backLogoImageUploadedBy?: string | null;
+      backDesignImage?: string | null;
+      backDesignImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+      backDesignImageUploadTime?: string | null;
+      backDesignImageUploadedBy?: string | null;
+      testLogoLeftImage?: string | null;
+      testLogoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+      testLogoLeftImageUploadTime?: string | null;
+      testLogoLeftImageUploadedBy?: string | null;
+      testLogoRightImage?: string | null;
+      testLogoRightImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+      testLogoRightImageUploadTime?: string | null;
+      testLogoRightImageUploadedBy?: string | null;
+      testBackLogoImage?: string | null;
+      testBackLogoImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+      testBackLogoImageUploadTime?: string | null;
+      testBackLogoImageUploadedBy?: string | null;
+      testBackDesignImage?: string | null;
+      testBackDesignImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+      testBackDesignImageUploadTime?: string | null;
+      testBackDesignImageUploadedBy?: string | null;
+      finalLogoEmb?: (FileObject | null)[];
+      finalLogoEmbUploadTimes?: (string | null)[];
+      finalLogoEmbUploadedBy?: (string | null)[];
+      finalBackDesignEmb?: (FileObject | null)[];
+      finalBackDesignEmbUploadTimes?: (string | null)[];
+      finalBackDesignEmbUploadedBy?: (string | null)[];
+      finalLogoDst?: (FileObject | null)[];
+      finalLogoDstUploadTimes?: (string | null)[];
+      finalLogoDstUploadedBy?: (string | null)[];
+      finalBackDesignDst?: (FileObject | null)[];
+      finalBackDesignDstUploadTimes?: (string | null)[];
+      finalBackDesignDstUploadedBy?: (string | null)[];
+      finalNamesDst?: (FileObject | null)[];
+      finalNamesDstUploadTimes?: (string | null)[];
+      finalNamesDstUploadedBy?: (string | null)[];
+      sequenceLogo?: (FileObject | null)[];
+      sequenceLogoUploadTimes?: (string | null)[];
+      sequenceLogoUploadedBy?: (string | null)[];
+      sequenceBackDesign?: (FileObject | null)[];
+      sequenceBackDesignUploadTimes?: (string | null)[];
+      sequenceBackDesignUploadedBy?: (string | null)[];
+      finalProgrammedLogo?: (FileObject | null)[];
+      finalProgrammedLogoUploadTimes?: (string | null)[];
+      finalProgrammedLogoUploadedBy?: (string | null)[];
+      finalProgrammedBackDesign?: (FileObject | null)[];
+      finalProgrammedBackDesignUploadTimes?: (string | null)[];
+      finalProgrammedBackDesignUploadedBy?: (string | null)[];
     }
+    
 
     type Lead = {
       id: string;
@@ -89,6 +171,28 @@
       firstName: string;
       lastName: string;
       nickname: string;
+    };
+
+    const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
+      if (images.length === 0) return null;
+  
+      return (
+          <Card className="bg-white">
+              <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
+              <CardContent className="flex gap-4 text-xs p-2 flex-wrap">
+                  {images.map((img, index) => (
+                      <div key={index} className="flex flex-col items-center text-center w-28">
+                          <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
+                          <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
+                              <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
+                          </div>
+                          {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
+                          {img.uploadedBy && <p className='text-gray-500 text-[10px] font-bold'>by {img.uploadedBy}</p>}
+                      </div>
+                  ))}
+              </CardContent>
+          </Card>
+      );
     };
 
 
@@ -860,6 +964,53 @@
               )}
               <input type="file" ref={layoutImageUploadRef} onChange={(e) => handleFileUpload(e, currentLayoutIndex)} className="hidden" accept="image/*" disabled={!canEdit}/>
             </div>
+            
+            <div className="flex flex-wrap gap-4 p-4 items-start no-print">
+               {(() => {
+                   if (!currentLayout) return null;
+
+                    const imageGroups = [
+                        {
+                            title: 'Reference Images',
+                            images: [
+                                ...(currentLayout.refLogoLeftImages || []).map((img, i) => ({ ...img, label: `Logo Left ${i + 1}`, src: img.url })),
+                                ...(currentLayout.refLogoRightImages || []).map((img, i) => ({ ...img, label: `Logo Right ${i + 1}`, src: img.url })),
+                                ...(currentLayout.refBackLogoImages || []).map((img, i) => ({ ...img, label: `Back Logo ${i + 1}`, src: img.url })),
+                                ...(currentLayout.refBackDesignImages || []).map((img, i) => ({ ...img, label: `Back Design ${i + 1}`, src: img.url })),
+                            ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
+                        },
+                        {
+                            title: 'Initial Program Images',
+                            images: [
+                                ...((currentLayout as any).logoLeftImages || []).map((img: any, i: number) => ({ src: img.url, label: `Logo Left ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
+                                ...((currentLayout as any).logoRightImages || []).map((img: any, i: number) => ({ src: img.url, label: `Logo Right ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
+                                ...((currentLayout as any).backLogoImages || []).map((img: any, i: number) => ({ src: img.url, label: `Back Logo ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
+                                ...((currentLayout as any).backDesignImages || []).map((img: any, i: number) => ({ src: img.url, label: `Back Design ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
+                            ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
+                        },
+                        {
+                            title: 'Tested Images',
+                            images: [
+                                ...((currentLayout as any).testLogoLeftImages || []).map((img: any, i: number) => ({ src: img.url, label: `Logo Left ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
+                                ...((currentLayout as any).testLogoRightImages || []).map((img: any, i: number) => ({ src: img.url, label: `Logo Right ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
+                                ...((currentLayout as any).testBackLogoImages || []).map((img: any, i: number) => ({ src: img.url, label: `Back Logo ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
+                                ...((currentLayout as any).testBackDesignImages || []).map((img: any, i: number) => ({ src: img.url, label: `Back Design ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
+                            ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
+                        },
+                        {
+                            title: 'Final Program Files',
+                            images: [
+                                ...(currentLayout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Logo ${i + 1}`, timestamp: currentLayout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: currentLayout.finalProgrammedLogoUploadedBy?.[i] }),
+                                ...(currentLayout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Back Design ${i + 1}`, timestamp: currentLayout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: currentLayout.finalProgrammedBackDesignUploadedBy?.[i] }),
+                                ...(currentLayout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: currentLayout.sequenceLogoUploadTimes?.[i], uploadedBy: currentLayout.sequenceLogoUploadedBy?.[i] }),
+                                ...(currentLayout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i + 1}`, timestamp: currentLayout.sequenceBackDesignUploadTimes?.[i], uploadedBy: currentLayout.sequenceBackDesignUploadedBy?.[i] }),
+                            ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
+                        }
+                    ];
+
+                   return imageGroups.map(group => <ImageDisplayCard key={group.title} title={group.title} images={group.images} onImageClick={setImageInView} />);
+               })()}
+            </div>
 
 
             <h2 className="2xl font-bold text-center mb-4">
@@ -960,3 +1111,4 @@
     </div>
   );
 }
+
