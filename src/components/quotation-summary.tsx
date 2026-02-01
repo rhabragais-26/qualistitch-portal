@@ -27,9 +27,11 @@ type QuotationSummaryProps = {
   discounts: Record<string, Discount>;
   grandTotal: number;
   removedFees: Record<string, { logo?: boolean; backText?: boolean }>;
+  quotationNumber: string | null;
+  setQuotationNumber: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
-export function QuotationSummary({ orders, orderType, addOns, discounts, grandTotal, removedFees = {} }: QuotationSummaryProps) {
+export function QuotationSummary({ orders, orderType, addOns, discounts, grandTotal, removedFees = {}, quotationNumber, setQuotationNumber }: QuotationSummaryProps) {
     const { watch } = useFormContext<QuotationFormValues>();
     const customerName = watch('customerName');
     const { userProfile } = useUser();
@@ -42,7 +44,6 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
     const { toast } = useToast();
     const [isCopying, setIsCopying] = useState(false);
     
-    const [quotationNumber, setQuotationNumber] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
     const firestore = useFirestore();
@@ -58,9 +59,6 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
     }, [fetchedConfig]);
     
     const handleSaveQuotation = async () => {
-        if (!firestore) return;
-        setIsSaving(true);
-        
         if (quotationNumber) {
             toast({
                 title: "Quotation Updated",
@@ -70,6 +68,9 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
             return;
         }
 
+        if (!firestore) return;
+        setIsSaving(true);
+        
         const today = new Date();
         const datePrefix = format(today, 'yyMMdd');
         const counterRef = doc(firestore, 'counters', `quotation_${datePrefix}`);

@@ -8,6 +8,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AddOns, Discount } from "@/components/invoice-card";
 import { type QuotationFormValues, quotationFormSchema } from '@/lib/form-schemas';
+import { Button } from '@/components/ui/button';
 
 export default function QuotationPage() {
   const [stagedOrders, setStagedOrders] = useState<Order[]>([]);
@@ -16,6 +17,7 @@ export default function QuotationPage() {
   const [discounts, setDiscounts] = useState<Record<string, Discount>>({});
   const [grandTotal, setGrandTotal] = useState(0);
   const [removedFees, setRemovedFees] = useState<Record<string, { logo?: boolean; backText?: boolean }>>({});
+  const [quotationNumber, setQuotationNumber] = useState<string | null>(null);
 
   const formMethods = useForm<QuotationFormValues>({
     resolver: zodResolver(quotationFormSchema),
@@ -38,6 +40,34 @@ export default function QuotationPage() {
     },
   });
 
+  const handleReset = () => {
+    formMethods.reset({
+      customerName: "",
+      companyName: "",
+      mobileNo: "",
+      mobileNo2: "",
+      landlineNo: "",
+      isInternational: false,
+      houseStreet: "",
+      barangay: "",
+      city: "",
+      province: "",
+      internationalAddress: "",
+      orderType: undefined,
+      priorityType: 'Regular',
+      orders: [],
+      courier: undefined,
+    });
+    setStagedOrders([]);
+    setOrderType(undefined);
+    setAddOns({});
+    setDiscounts({});
+    setGrandTotal(0);
+    setRemovedFees({});
+    setQuotationNumber(null);
+  };
+
+
   return (
     <Header>
       <FormProvider {...formMethods}>
@@ -56,14 +86,21 @@ export default function QuotationPage() {
               removedFees={removedFees}
               setRemovedFees={setRemovedFees}
             />
-            <QuotationSummary 
-              orders={stagedOrders}
-              orderType={orderType}
-              addOns={addOns}
-              discounts={discounts}
-              grandTotal={grandTotal}
-              removedFees={removedFees}
-            />
+            <div className="space-y-4">
+              <QuotationSummary 
+                orders={stagedOrders}
+                orderType={orderType}
+                addOns={addOns}
+                discounts={discounts}
+                grandTotal={grandTotal}
+                removedFees={removedFees}
+                quotationNumber={quotationNumber}
+                setQuotationNumber={setQuotationNumber}
+              />
+              <div className="flex justify-end">
+                <Button onClick={handleReset}>Create Another Quotation</Button>
+              </div>
+            </div>
           </div>
         </main>
       </FormProvider>
