@@ -48,7 +48,7 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
     );
   }, [firestore]);
 
-  const { data: dailyAds, isLoading, error } = useCollection<DailyAd>(dailyAdsQuery);
+  const { data: dailyAds, isLoading, error } = useCollection<DailyAd>(dailyAdsQuery, undefined, { listen: false });
 
   const allImages = useMemo(() => {
     return dailyAds?.flatMap(ad => ad.images.map(img => ({...img, adAccount: ad.adAccount, timestamp: ad.timestamp }))) || [];
