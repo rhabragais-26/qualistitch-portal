@@ -71,29 +71,38 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
         return initialPricingConfig as PricingConfig;
     }, [fetchedConfig]);
 
-    const handleCopyToClipboard = useCallback(async () => {
+    const handleCopyToClipboard = useCallback(() => {
+        // 1. Check if the quotation element is available and not already copying.
         if (!quotationRef.current || isCopying) {
             return;
         }
 
+        // 2. Set loading state to disable the button and provide feedback.
         setIsCopying(true);
         
-        try {
-            const canvas = await html2canvas(quotationRef.current, {
-                useCORS: true,
-                scale: 2,
-            });
-            
+        // 3. Use html2canvas to capture the specified div as a canvas element.
+        //    - useCORS: true is necessary to handle images loaded from other domains (like Firebase Storage).
+        //    - scale: 2 improves the resolution of the output image.
+        html2canvas(quotationRef.current, {
+            useCORS: true,
+            scale: 2,
+        }).then((canvas) => {
+            // 4. Convert the generated canvas into a PNG image blob.
             canvas.toBlob((blob) => {
                 if (blob) {
+                    // 5. Use the modern, asynchronous Clipboard API to write the image blob.
+                    //    This requires the document to be focused, which is why this action
+                    //    must be directly triggered by a user click.
                     navigator.clipboard.write([
                         new ClipboardItem({ 'image/png': blob })
                     ]).then(() => {
+                        // 6. On success, show a confirmation toast.
                         toast({
                             title: 'Copied to clipboard!',
                             description: 'The quotation has been copied as an image.',
                         });
                     }).catch(err => {
+                        // 7. On failure, log the error and show a descriptive toast.
                         console.error('Failed to copy to clipboard:', err);
                         let description = 'Could not copy image to clipboard. Please try again.';
                         if (err instanceof Error && err.name === 'NotAllowedError') {
@@ -105,6 +114,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                             description: description,
                         });
                     }).finally(() => {
+                        // 8. Reset the loading state regardless of success or failure.
                         setIsCopying(false);
                     });
                 } else {
@@ -116,15 +126,15 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                     setIsCopying(false);
                 }
             }, 'image/png');
-        } catch (err) {
-            console.error('Failed to generate canvas:', err);
+        }).catch(err => {
+             console.error('Failed to generate canvas:', err);
              toast({
                 variant: 'destructive',
                 title: 'Image Generation Failed',
                 description: 'Could not generate the image for copying. Please try again.',
             });
             setIsCopying(false);
-        }
+        });
     }, [isCopying, toast]);
 
 
@@ -163,8 +173,8 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
             </CardHeader>
             <CardContent>
                  <div className="printable-quotation" id="quotation-content">
-                    <div ref={quotationRef} className="p-8 bg-white">
-                        <div className="p-4">
+                    <div ref={quotationRef} className="bg-white">
+                        <div className="p-8">
                             <header className="flex justify-between items-start">
                                 <div>
                                     <h2 className="font-bold text-2xl">BURDA PINAS</h2>
