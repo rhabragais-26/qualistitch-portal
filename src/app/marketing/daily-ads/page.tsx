@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,12 +14,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { doc, collection, query, orderBy, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Header } from '@/components/header';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -76,6 +77,16 @@ function DailyAdsPage() {
   const { data: dailyAds, isLoading, error, refetch } = useCollection<DailyAd>(dailyAdsQuery, undefined, { listen: false });
 
   const [images, setImages] = useState<ImageState[]>([]);
+  const [showAll, setShowAll] = useState(false);
+
+  const adsToShow = useMemo(() => {
+    if (!dailyAds) return [];
+    if (showAll) return dailyAds;
+
+    const sevenDaysAgo = subDays(new Date(), 7);
+    return dailyAds.filter(ad => new Date(ad.date) >= sevenDaysAgo);
+  }, [dailyAds, showAll]);
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -272,7 +283,7 @@ function DailyAdsPage() {
                     <TableBody>
                       {isLoading ? [...Array(3)].map((_, i) => (<TableRow key={i}><TableCell colSpan={5}><Skeleton className="h-24 w-full" /></TableCell></TableRow>))
                         : error ? <TableRow><TableCell colSpan={5} className="text-center text-destructive">Error: {error.message}</TableCell></TableRow>
-                        : dailyAds && dailyAds.length > 0 ? dailyAds.map(ad => (
+                        : adsToShow && adsToShow.length > 0 ? adsToShow.map(ad => (
                           <TableRow key={ad.id}>
                             <TableCell className="text-center text-xs">{format(new Date(ad.date), 'MMM d, yyyy')}</TableCell>
                             <TableCell className="text-xs">{ad.adAccount}</TableCell>
@@ -300,6 +311,11 @@ function DailyAdsPage() {
                   </Table>
                 </div>
               </CardContent>
+              <CardFooter className="flex justify-center pt-4">
+                {!showAll && dailyAds && dailyAds.length > adsToShow.length && (
+                    <Button variant="link" onClick={() => setShowAll(true)}>Show Older Ads</Button>
+                )}
+              </CardFooter>
             </Card>
           </div>
         </div>
@@ -321,3 +337,5 @@ function DailyAdsPage() {
 }
 
 export default DailyAdsPage;
+
+    
