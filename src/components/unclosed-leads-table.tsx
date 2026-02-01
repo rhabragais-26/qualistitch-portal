@@ -97,10 +97,10 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
     { name: "quantity", label: "Quantity" },
     { name: "contactDetails", label: "Contact Details" },
     { name: "estimatedTotalAmount", label: "Est. Total Amount" },
-    { name: "nextFollowUpDate", label: "Next Follow-up", type: "date" },
     { name: "sces", label: "Sales Team" },
     { name: "dateOfMeetUp", label: "Date of Meetup", type: "date" },
     { name: "estimatedDateForDp", label: "Est. Date for DP", type: "date" },
+    { name: "nextFollowUpDate", label: "Next Follow-up", type: "date" },
     { name: "status", label: "Status" },
     { name: "remarks", label: "Remarks", type: "textarea" },
   ] as const;
@@ -185,7 +185,7 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
                   </div>
                 )
               })}
-              <div className="col-span-2 grid grid-cols-2 gap-4">
+              <div className="col-span-2 grid grid-cols-2 gap-4 pt-4">
                 {checkboxFields.map(f => (
                   <div key={f.name} className="flex items-center space-x-2">
                     <Checkbox
@@ -216,12 +216,40 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const firestore = useFirestore();
   const { toast } = useToast();
   
-  const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'unclosedLeads'), orderBy('date', 'desc')) : null), [firestore]);
-  const { data: leads, isLoading, error } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadFetchSchema);
+  const [leads, setLeads] = useState<UnclosedLead[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<UnclosedLead | null>(null);
   const [deletingLead, setDeletingLead] = useState<UnclosedLead | null>(null);
+
+  const fetchLeads = useCallback(async () => {
+    if (!firestore) return;
+    setIsLoading(true);
+    try {
+      const leadsQuery = query(collection(firestore, 'unclosedLeads'), orderBy('date', 'desc'));
+      const snapshot = await getDocs(leadsQuery);
+      const fetchedLeads: UnclosedLead[] = [];
+      snapshot.forEach(doc => {
+          const validationResult = unclosedLeadFetchSchema.safeParse({ id: doc.id, ...doc.data() });
+          if (validationResult.success) {
+            fetchedLeads.push(validationResult.data);
+          } else {
+            console.warn(`Invalid lead data for doc ${doc.id}:`, validationResult.error.issues);
+          }
+      });
+      setLeads(fetchedLeads);
+    } catch (e: any) {
+      setError(e);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [firestore]);
+
+  useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
   
   const handleSave = async (data: UnclosedLead) => {
     if (!firestore) return;
@@ -231,6 +259,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
       toast({ title: `Lead ${editingLead ? 'updated' : 'added'} successfully!` });
       setIsDialogOpen(false);
       setEditingLead(null);
+      await fetchLeads(); // Explicitly refetch
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Save failed', description: e.message });
     }
@@ -242,30 +271,29 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
     try {
       await deleteDoc(docRef);
       toast({ title: 'Lead deleted successfully!' });
+      setDeletingLead(null);
+      await fetchLeads(); // Explicitly refetch
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Delete failed', description: e.message });
-    } finally {
-        setDeletingLead(null);
     }
   };
 
   const columns = [
-    { key: 'date', label: 'Date', format: (d: string) => format(parseISO(d), 'MM-dd-yyyy') },
+    { key: 'date', label: 'Date', format: (d: string) => d ? format(parseISO(d), 'MM-dd-yyyy') : '' },
     { key: 'customerName', label: 'Customer Name' },
-    { key: 'quantity', label: 'Quantity' },
     { key: 'contactDetails', label: 'Contact Details' },
+    { key: 'quantity', label: 'Quantity' },
     { key: 'estimatedTotalAmount', label: 'Est. Total Amount' },
     { key: 'layoutSent', label: 'Layout Sent' },
     { key: 'quotationSent', label: 'Quotation Sent' },
     { key: 'forSampleJacket', label: 'For Sample Jacket' },
     { key: 'forMeetUp', label: 'For Meet Up' },
     { key: 'dateOfMeetUp', label: 'Date of Meet Up' },
-    { key: 'estimatedDateForDp', label: 'Est. Date for DP', format: (d: string) => d ? format(new Date(d), 'MM-dd-yyyy') : '' },
     { key: 'status', label: 'Status' },
     { key: 'remarks', label: 'Remarks' },
     { key: 'nextFollowUpDate', label: 'Next Follow-up', format: (d: string) => d ? format(new Date(d), 'MM-dd-yyyy') : '' },
     { key: 'sces', label: 'Sales Team' },
-  ];
+  ] as const;
 
   return (
     <Card>
@@ -285,8 +313,8 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
           <Table>
             <TableHeader>
               <TableRow>
-                {columns.map(c => <TableHead key={c.key} className="py-2 px-1 text-center align-middle">{c.label}</TableHead>)}
-                {!isReadOnly && <TableHead className="py-2 px-1 text-center align-middle">Actions</TableHead>}
+                {columns.map(c => <TableHead key={c.key} className="py-2 px-2 text-center align-middle">{c.label}</TableHead>)}
+                {!isReadOnly && <TableHead className="py-2 px-2 text-center align-middle">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -304,7 +332,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                 leads.map(lead => (
                   <TableRow key={lead.id}>
                     {columns.map(col => (
-                      <TableCell key={col.key} className="p-1 text-center align-middle text-xs">
+                      <TableCell key={col.key} className="p-2 text-center align-middle text-xs">
                         {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
                           (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500 mx-auto" /> : <X className="text-red-500 mx-auto" />)
                         ) : col.key === 'dateOfMeetUp' ? (
