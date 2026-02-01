@@ -275,7 +275,7 @@ function DailyAdsPage() {
                       <TableRow>
                         <TableHead className="text-center text-white font-bold">Date</TableHead>
                         <TableHead className="text-white font-bold">Ad Account</TableHead>
-                        <TableHead className="text-white font-bold">Creatives</TableHead>
+                        <TableHead className="text-center text-white font-bold">Creatives</TableHead>
                         <TableHead className="text-center text-white font-bold">Submitted By</TableHead>
                         <TableHead className="text-center text-white font-bold">Actions</TableHead>
                       </TableRow>
@@ -337,5 +337,3 @@ function DailyAdsPage() {
 }
 
 export default DailyAdsPage;
-
-    
