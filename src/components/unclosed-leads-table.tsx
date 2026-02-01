@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -61,8 +60,8 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
       quotationSent: lead?.quotationSent || false,
       forSampleJacket: lead?.forSampleJacket || false,
       forMeetUp: lead?.forMeetUp || false,
-      dateOfMeetUp: lead?.dateOfMeetUp || '',
-      estimatedDateForDp: lead?.estimatedDateForDp || '',
+      dateOfMeetUp: lead?.dateOfMeetUp ? format(new Date(lead.dateOfMeetUp), 'yyyy-MM-dd') : '',
+      estimatedDateForDp: lead?.estimatedDateForDp ? format(new Date(lead.estimatedDateForDp), 'yyyy-MM-dd') : '',
       status: lead?.status || '',
       remarks: lead?.remarks || '',
       nextFollowUpDate: lead?.nextFollowUpDate ? format(new Date(lead.nextFollowUpDate), 'yyyy-MM-dd') : '',
@@ -77,6 +76,8 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
     onSave({
       ...data,
       date: new Date(data.date).toISOString(),
+      dateOfMeetUp: data.dateOfMeetUp ? new Date(data.dateOfMeetUp).toISOString() : '',
+      estimatedDateForDp: data.estimatedDateForDp ? new Date(data.estimatedDateForDp).toISOString() : '',
       nextFollowUpDate: data.nextFollowUpDate ? new Date(data.nextFollowUpDate).toISOString() : '',
     });
   };
@@ -299,10 +300,12 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                       <TableCell key={col.key} className="p-2 text-center align-middle text-xs">
                         {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
                           (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500 mx-auto" /> : <X className="text-red-500 mx-auto" />)
+                        ) : col.key === 'dateOfMeetUp' ? (
+                          lead.dateOfMeetUp ? format(new Date(lead.dateOfMeetUp), 'MM-dd-yyyy') : <span className="text-gray-500">-</span>
                         ) : col.format ? (
                           (lead[col.key as keyof UnclosedLead] ? col.format(lead[col.key as keyof UnclosedLead] as string) : '')
                         ) : col.key === 'estimatedTotalAmount' && lead.estimatedTotalAmount ? (
-                          `₱${new Intl.NumberFormat('en-US').format(Number(lead.estimatedTotalAmount))}`
+                          `₱${new Intl.NumberFormat('en-US').format(Number(String(lead.estimatedTotalAmount).replace(/,/g, '')))}`
                         ) : (
                           (lead[col.key as keyof UnclosedLead] as string | number) || ''
                         )}
