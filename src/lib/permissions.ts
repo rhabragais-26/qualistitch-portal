@@ -41,6 +41,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/job-order': 'sales',
   '/sales/audit-for-shipment': 'sales',
   '/sales/quotation': 'sales',
+  '/sales/unclosed-leads': 'sales',
   '/reports': 'sales',
   '/digitizing/programming-queue': 'digitizing',
   '/digitizing/completed-programs': 'digitizing',

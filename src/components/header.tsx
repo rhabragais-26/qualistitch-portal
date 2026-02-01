@@ -359,13 +359,17 @@ const HeaderMemo = React.memo(function Header({
                 </DropdownMenu>
                 <DropdownMenu open={openMenu === 'sales'} onOpenChange={(isOpen) => handleMenuOpenChange('sales', isOpen)}>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment', '/sales/quotation']))}>
+                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/new-order', '/records', '/job-order', '/reports', '/sales/audit-for-shipment', '/sales/quotation', '/sales/unclosed-leads']))}>
                       <TrendingUp className="mr-2" />
                       Sales
                       <ChevronDown className="ml-2 h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleNavigation('/sales/unclosed-leads')}>
+                      <ClipboardList className="mr-2" />
+                      Unclosed Leads
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/sales/quotation')}>
                       <PenSquare className="mr-2" />
                       Quotation

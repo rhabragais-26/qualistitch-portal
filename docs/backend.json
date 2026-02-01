@@ -2,6 +2,32 @@
 
 {
   "entities": {
+    "UnclosedLead": {
+      "title": "UnclosedLead",
+      "type": "object",
+      "description": "Represents an unclosed lead not yet converted to an order.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "leads": { "type": "string" },
+        "contactDetails": { "type": "string" },
+        "deadlineLeadTime": { "type": "string" },
+        "quantity": { "type": "string" },
+        "estimatedTotalAmount": { "type": "string" },
+        "layoutSent": { "type": "boolean" },
+        "quotationSent": { "type": "boolean" },
+        "forSampleJacket": { "type": "boolean" },
+        "forMeetUp": { "type": "boolean" },
+        "dateOfMeetUp": { "type": "string" },
+        "estimatedDateForDp": { "type": "string" },
+        "status": { "type": "string" },
+        "remarks": { "type": "string" },
+        "nextFollowUpDate": { "type": "string" },
+        "sces": { "type": "string" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["id", "date", "leads", "sces", "createdBy"]
+    },
     "DailyAd": {
       "title": "DailyAd",
       "type": "object",
@@ -934,8 +960,8 @@
         "adAccount": { "type": "string", "description": "The ad account used for the campaign." },
         "adCampaign": { "type": "string", "description": "The name of the ad campaign." },
         "smallTicketInquiries": { "type": "number", "description": "Number of inquiries for small ticket ads (1-9 pcs)." },
-        "mediumTicketInquiries": { "type": "number", "description": "Number of inquiries for medium ticket ads (10-99 pcs)." },
-        "largeTicketInquiries": { "type": "number", "description": "Number of inquiries for large ticket ads (100-199 pcs)." },
+        "mediumTicketInquiries": { "type": "number", "description": "Number of inquiries for medium ticket ads (10-49 pcs)." },
+        "largeTicketInquiries": { "type": "number", "description": "Number of inquiries for large ticket ads (50-199 pcs)." },
         "highTicketInquiries": { "type": "number", "description": "Number of inquiries for high ticket ads (200+ pcs)." },
         "submittedBy": { "type": "string", "description": "Nickname of the user who submitted the entry." },
         "timestamp": { "type": "string", "format": "date-time", "description": "Timestamp of the submission." }
@@ -983,6 +1009,16 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "/unclosedLeads/{unclosedLeadId}",
+        "definition": {
+          "entityName": "UnclosedLead",
+          "schema": {
+            "$ref": "#/backend/entities/UnclosedLead"
+          },
+          "description": "Stores unclosed lead data."
+        }
+      },
       {
         "path": "/dailyAds/{adId}",
         "definition": {
