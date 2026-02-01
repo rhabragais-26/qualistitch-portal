@@ -1,6 +1,7 @@
+'use client';
+
 export const dynamic = 'force-dynamic';
 
-'use client';
 import { Header } from '@/components/header';
 import { DigitizingReportsSummary } from '@/components/digitizing-reports-summary';
 
