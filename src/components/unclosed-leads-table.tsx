@@ -22,8 +22,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format, parseISO } from 'date-fns';
 import { Skeleton } from './ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
-const unclosedLeadSchema = z.object({
+// Schema for fetching, more lenient
+const unclosedLeadFetchSchema = z.object({
   id: z.string(),
   date: z.string(),
   customerName: z.string().nullable().optional().transform(v => v || ''),
@@ -39,16 +41,19 @@ const unclosedLeadSchema = z.object({
   status: z.string().optional(),
   remarks: z.string().optional(),
   nextFollowUpDate: z.string().optional(),
-  sces: z.string().min(1, 'SCES is required'),
+  sces: z.string().min(1, 'Sales Team is required'),
   createdBy: z.string(),
 });
 
-type UnclosedLead = z.infer<typeof unclosedLeadSchema>;
+type UnclosedLead = z.infer<typeof unclosedLeadFetchSchema>;
 
-const unclosedLeadFormSchema = unclosedLeadSchema.refine(data => data.customerName.length > 0, {
-    message: "Customer name is required",
-    path: ["customerName"],
+// Stricter schema for form validation
+const unclosedLeadFormSchema = unclosedLeadFetchSchema.extend({
+  customerName: z.string().min(1, 'Customer name is required'),
+  sces: z.enum(['Team Cath', 'Team Loise', 'Team Jo', 'Team My'], { required_error: 'Sales Team is required' }),
 });
+
+const salesTeamOptions = ['Team Cath', 'Team Loise', 'Team Jo', 'Team My'];
 
 const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => void; lead: Partial<UnclosedLead> | null; onClose: () => void; }) => {
   const { userProfile } = useUser();
@@ -98,7 +103,7 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
     { name: "status", label: "Status" },
     { name: "remarks", label: "Remarks", type: "textarea" },
     { name: "nextFollowUpDate", label: "Next Follow-up", type: "date" },
-    { name: "sces", label: "SCES" },
+    { name: "sces", label: "Sales Team" },
   ] as const;
 
   const checkboxFields = [
@@ -139,6 +144,27 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
                           }}
                         />
                       </div>
+                      {form.formState.errors[f.name] && <p className="text-sm text-destructive">{form.formState.errors[f.name]?.message}</p>}
+                    </div>
+                  )
+                }
+                if (f.name === 'sces') {
+                  return (
+                    <div key={f.name} className="space-y-2">
+                      <Label htmlFor={f.name}>{f.label}</Label>
+                      <Select
+                        onValueChange={(value) => form.setValue('sces', value as any, { shouldValidate: true, shouldDirty: true })}
+                        value={form.watch('sces')}
+                      >
+                        <SelectTrigger id={f.name}>
+                          <SelectValue placeholder="Select a team" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {salesTeamOptions.map(option => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       {form.formState.errors[f.name] && <p className="text-sm text-destructive">{form.formState.errors[f.name]?.message}</p>}
                     </div>
                   )
@@ -187,7 +213,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const { toast } = useToast();
   
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'unclosedLeads'), orderBy('date', 'desc')) : null), [firestore]);
-  const { data: leads, isLoading, error, refetch } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadSchema);
+  const { data: leads, isLoading, error } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadFetchSchema);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<UnclosedLead | null>(null);
@@ -233,7 +259,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
     { key: 'status', label: 'Status' },
     { key: 'remarks', label: 'Remarks' },
     { key: 'nextFollowUpDate', label: 'Next Follow-up', format: (d: string) => d ? format(new Date(d), 'MM-dd-yyyy') : '' },
-    { key: 'sces', label: 'SCES' },
+    { key: 'sces', label: 'Sales Team' },
   ];
 
   return (
@@ -273,7 +299,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                 leads.map(lead => (
                   <TableRow key={lead.id}>
                     {columns.map(col => (
-                      <TableCell key={col.key} className="p-2 text-center align-middle text-xs">
+                      <TableCell key={col.key} className="p-1 text-center align-middle text-xs">
                         {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
                           (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500 mx-auto" /> : <X className="text-red-500 mx-auto" />)
                         ) : col.key === 'dateOfMeetUp' ? (
