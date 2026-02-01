@@ -101,8 +101,8 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
     { name: "dateOfMeetUp", label: "Date of Meetup", type: "date" },
     { name: "estimatedDateForDp", label: "Est. Date for DP", type: "date" },
     { name: "status", label: "Status" },
-    { name: "remarks", label: "Remarks", type: "textarea" },
     { name: "nextFollowUpDate", label: "Next Follow-up", type: "date" },
+    { name: "remarks", label: "Remarks", type: "textarea" },
     { name: "sces", label: "Sales Team" },
   ] as const;
 
@@ -120,7 +120,7 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
           <DialogTitle>{lead?.id ? 'Edit Lead' : 'Add New Lead'}</DialogTitle>
         </DialogHeader>
         <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
-          <ScrollArea className="max-h-[70vh] -mx-6 px-6">
+          <ScrollArea className="max-h-[70vh] -mx-6 px-6 modern-scrollbar">
             <div className="grid grid-cols-2 gap-4 p-4">
               {formFields.map(f => {
                 if (f.name === 'estimatedTotalAmount') {
@@ -213,7 +213,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const { toast } = useToast();
   
   const leadsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'unclosedLeads'), orderBy('date', 'desc')) : null), [firestore]);
-  const { data: leads, isLoading, error } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadFetchSchema);
+  const { data: leads, isLoading, error } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadFetchSchema, { listen: true });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<UnclosedLead | null>(null);
@@ -299,7 +299,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                 leads.map(lead => (
                   <TableRow key={lead.id}>
                     {columns.map(col => (
-                      <TableCell key={col.key} className="p-1 text-center align-middle text-xs">
+                      <TableCell key={col.key} className="p-2 text-center align-middle text-xs">
                         {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
                           (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500 mx-auto" /> : <X className="text-red-500 mx-auto" />)
                         ) : col.key === 'dateOfMeetUp' ? (
@@ -314,7 +314,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                       </TableCell>
                     ))}
                     {!isReadOnly && (
-                      <TableCell className="p-1 text-center align-middle text-xs">
+                      <TableCell className="p-2 text-center align-middle text-xs">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingLead(lead); setIsDialogOpen(true); }}>
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -360,3 +360,5 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
     </Card>
   );
 }
+
+    
