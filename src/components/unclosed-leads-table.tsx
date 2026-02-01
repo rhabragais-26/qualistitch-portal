@@ -181,7 +181,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'unclosedLeads'), orderBy('date', 'desc')) : null, [firestore]);
-  const { data: leads, isLoading, error, refetch } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadSchema.passthrough());
+  const { data: leads, isLoading, error, refetch } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadSchema.passthrough(), { listen: false });
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<UnclosedLead | null>(null);
@@ -256,11 +256,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length + 1} className="text-center">Loading...</TableCell>
-                </TableRow>
-              ) : error ? (
+              {error ? (
                 <TableRow>
                   <TableCell colSpan={columns.length + 1} className="text-center text-destructive">Error: {error.message}</TableCell>
                 </TableRow>
@@ -294,7 +290,9 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length + 1} className="text-center text-muted-foreground">No Record Yet</TableCell>
+                  <TableCell colSpan={columns.length + 1} className="text-center text-muted-foreground">
+                    {isLoading ? 'Loading...' : 'No Record Yet'}
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
