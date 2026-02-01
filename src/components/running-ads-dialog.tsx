@@ -1,12 +1,31 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Button } from './ui/button';
-import { Card, CardContent, CardHeader } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { X, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
-// Placeholder content
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { format } from 'date-fns';
+import Image from 'next/image';
+import { ScrollArea } from './ui/scroll-area';
 import { Skeleton } from './ui/skeleton';
+
+type AdImage = {
+  name: string;
+  url: string;
+};
+
+type DailyAd = {
+  id: string;
+  date: string;
+  adAccount: string;
+  images: AdImage[];
+  submittedBy: string;
+  timestamp: string;
+};
 
 export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () => void; onDraggingChange: (isDragging: boolean) => void; }) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -14,6 +33,29 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
+  const [imageInView, setImageInView] = useState<string | null>(null);
+  
+  const firestore = useFirestore();
+  
+  const dailyAdsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'dailyAds')) : null, [firestore]);
+  const { data: dailyAds, isLoading, error } = useCollection<DailyAd>(dailyAdsQuery);
+
+  const todaysAds = useMemo(() => {
+    if (!dailyAds) return [];
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    return dailyAds.filter(ad => {
+      try {
+        return format(new Date(ad.date), 'yyyy-MM-dd') === todayStr;
+      } catch {
+        return false;
+      }
+    });
+  }, [dailyAds]);
+
+  const allImages = useMemo(() => {
+    return todaysAds?.flatMap(ad => ad.images.map(img => ({...img, adAccount: ad.adAccount}))) || [];
+  }, [todaysAds]);
+
 
   useEffect(() => {
     onDraggingChange(isDragging);
@@ -80,6 +122,7 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   return (
+    <>
     <div
       ref={cardRef}
       className={cn("fixed z-50", isDragging && "select-none")}
@@ -93,16 +136,64 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
         >
           <div className="flex items-center">
             <GripVertical className="h-5 w-5 text-gray-500"/>
-            <span className="text-sm font-medium text-gray-400">Running Ads</span>
+            <span className="text-sm font-medium text-gray-400">Today's Running Ads</span>
           </div>
           <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:bg-gray-700 hover:text-white" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent className="p-4 flex-1 flex items-center justify-center">
-            <p className="text-gray-400">Content for running ads will be available later.</p>
+        <CardContent className="p-4 flex-1 flex flex-col">
+           {isLoading && (
+              <div className="grid grid-cols-3 gap-4">
+                {[...Array(9)].map((_, i) => <Skeleton key={i} className="h-40 w-full bg-gray-700" />)}
+              </div>
+           )}
+           {error && <p className="text-destructive text-center">Error loading ads: {error.message}</p>}
+           {!isLoading && !error && (
+            allImages.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center">
+                    <p className="text-gray-400">No ads running today.</p>
+                </div>
+            ) : (
+                <ScrollArea className="h-full modern-scrollbar pr-2">
+                    <div className="grid grid-cols-3 gap-4">
+                        {allImages.map((image, index) => (
+                           <div key={index} className="space-y-1 group">
+                             <div className="relative aspect-square w-full rounded-md overflow-hidden cursor-pointer" onClick={() => setImageInView(image.url)}>
+                                <Image src={image.url} alt={image.name} layout="fill" objectFit="cover" />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <span className="text-white text-xs p-1 text-center">{image.name}</span>
+                                </div>
+                             </div>
+                             <p className="text-xs text-center text-gray-400 truncate">{image.adAccount}</p>
+                           </div>
+                        ))}
+                    </div>
+                </ScrollArea>
+            )
+           )}
         </CardContent>
       </Card>
     </div>
+    {imageInView && (
+    <div
+        className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+        onClick={() => setImageInView(null)}
+    >
+        <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+        <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
+            <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setImageInView(null)}
+            className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+        >
+            <X className="h-6 w-6" />
+            <span className="sr-only">Close</span>
+        </Button>
+        </div>
+    </div>
+    )}
+    </>
   );
 }
