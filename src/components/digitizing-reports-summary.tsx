@@ -8,9 +8,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from './ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { generateDigitizingReport, GenerateDigitizingReportOutput } from '@/ai/flows/generate-digitizing-report-flow';
+import { generateDigitizingReportAction } from '@/app/digitizing/reports/actions';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
+
+type GenerateDigitizingReportOutput = {
+  salesRepData: any[];
+  priorityData: { name: string; value: number }[];
+  dailySalesData: any[];
+  soldQtyByProductType: any[];
+  availableYears: number[];
+  availableWeeks: string[];
+};
 
 type Lead = {
   id: string;
@@ -48,7 +57,7 @@ export function DigitizingReportsSummary() {
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   
-  const [reportData, setReportData] = useState<GenerateDigitizingReportOutput | null>(null);
+  const [reportData, setReportData] = useState<any>(null);
   const [isReportLoading, setIsReportLoading] = useState(true);
   const [reportError, setReportError] = useState<string | null>(null);
 
@@ -57,7 +66,7 @@ export function DigitizingReportsSummary() {
     setIsReportLoading(true);
     setReportError(null);
     try {
-      const result = await generateDigitizingReport({
+      const result = await generateDigitizingReportAction({
         leads,
         priorityFilter,
       });
@@ -81,9 +90,12 @@ export function DigitizingReportsSummary() {
   const isLoading = isLeadsLoading || isReportLoading;
   const error = leadsError || reportError;
 
-  const { statusSummary, overdueSummary } = useMemo(() => {
+  const { statusSummary, overdueSummary } = useMemo<{
+    statusSummary: any[];
+    overdueSummary: any[];
+  }>(() => {
     if (!reportData) return { statusSummary: [], overdueSummary: [] };
-    return reportData;
+    return reportData as any;
   }, [reportData]);
 
   if (isLoading) {
