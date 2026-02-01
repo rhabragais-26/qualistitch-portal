@@ -2,8 +2,8 @@
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useFirestore, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, setDoc, deleteDoc, getDocs } from 'firebase/firestore';
+import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from './ui/button';
@@ -70,11 +70,11 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
       quotationSent: lead?.quotationSent || false,
       forSampleJacket: lead?.forSampleJacket || false,
       forMeetUp: lead?.forMeetUp || false,
-      dateOfMeetUp: lead?.dateOfMeetUp ? format(new Date(lead.dateOfMeetUp), 'yyyy-MM-dd') : '',
+      dateOfMeetUp: lead?.dateOfMeetUp ? format(new Date(lead.dateOfMeetUp), "yyyy-MM-dd'T'HH:mm") : '',
       estimatedDateForDp: lead?.estimatedDateForDp ? format(new Date(lead.estimatedDateForDp), 'yyyy-MM-dd') : '',
       status: lead?.status || '',
       remarks: lead?.remarks || '',
-      nextFollowUpDate: lead?.nextFollowUpDate ? format(new Date(lead.nextFollowUpDate), 'yyyy-MM-dd') : '',
+      nextFollowUpDate: lead?.nextFollowUpDate ? format(new Date(lead.nextFollowUpDate), "yyyy-MM-dd'T'HH:mm") : '',
       sces: lead?.sces || userProfile?.nickname || '',
       createdBy: lead?.createdBy || userProfile?.nickname || '',
     },
@@ -95,12 +95,12 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
   const formFields = [
     { name: "date", label: "Date", type: "date" },
     { name: "customerName", label: "Customer Name" },
-    { name: "contactDetails", label: "Contact Details" },
     { name: "quantity", label: "Quantity" },
+    { name: "contactDetails", label: "Contact Details" },
     { name: "estimatedTotalAmount", label: "Est. Total Amount" },
-    { name: "dateOfMeetUp", label: "Date of Meetup", type: "date" },
+    { name: "dateOfMeetUp", label: "Date of Meetup", type: "datetime-local" },
     { name: "estimatedDateForDp", label: "Est. Date for DP", type: "date" },
-    { name: "nextFollowUpDate", label: "Next Follow-up", type: "date" },
+    { name: "nextFollowUpDate", label: "Next Follow-up", type: "datetime-local" },
     { name: "sces", label: "Sales Team" },
     { name: "status", label: "Status" },
     { name: "remarks", label: "Remarks", type: "textarea" },
@@ -217,40 +217,17 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const firestore = useFirestore();
   const { toast } = useToast();
   
-  const [leads, setLeads] = useState<UnclosedLead[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const unclosedLeadsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'unclosedLeads'), orderBy('date', 'desc'));
+  }, [firestore]);
+
+  const { data: leads, isLoading, error, refetch } = useCollection<UnclosedLead>(unclosedLeadsQuery, unclosedLeadFetchSchema);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<UnclosedLead | null>(null);
   const [deletingLead, setDeletingLead] = useState<UnclosedLead | null>(null);
 
-  const fetchLeads = useCallback(async () => {
-    if (!firestore) return;
-    setIsLoading(true);
-    try {
-      const leadsQuery = query(collection(firestore, 'unclosedLeads'), orderBy('date', 'desc'));
-      const snapshot = await getDocs(leadsQuery);
-      const fetchedLeads: UnclosedLead[] = [];
-      snapshot.forEach(doc => {
-          const validationResult = unclosedLeadFetchSchema.safeParse({ id: doc.id, ...doc.data() });
-          if (validationResult.success) {
-            fetchedLeads.push(validationResult.data);
-          } else {
-            console.warn(`Invalid lead data for doc ${doc.id}:`, validationResult.error.issues);
-          }
-      });
-      setLeads(fetchedLeads);
-    } catch (e: any) {
-      setError(e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [firestore]);
-
-  useEffect(() => {
-    fetchLeads();
-  }, [fetchLeads]);
   
   const handleSave = async (data: UnclosedLead) => {
     if (!firestore) return;
@@ -260,7 +237,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
       toast({ title: `Lead ${editingLead ? 'updated' : 'added'} successfully!` });
       setIsDialogOpen(false);
       setEditingLead(null);
-      await fetchLeads(); // Explicitly refetch
+      refetch();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Save failed', description: e.message });
     }
@@ -273,7 +250,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
       await deleteDoc(docRef);
       toast({ title: 'Lead deleted successfully!' });
       setDeletingLead(null);
-      await fetchLeads(); // Explicitly refetch
+      refetch();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Delete failed', description: e.message });
     }
@@ -289,10 +266,10 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
     { key: 'quotationSent', label: 'Quotation Sent' },
     { key: 'forSampleJacket', label: 'For Sample Jacket' },
     { key: 'forMeetUp', label: 'For Meet Up' },
-    { key: 'dateOfMeetUp', label: 'Date of Meet Up' },
+    { key: 'dateOfMeetUp', label: 'Date of Meet Up', format: (d: string) => d ? format(new Date(d), 'MM-dd-yyyy hh:mm a') : '' },
     { key: 'status', label: 'Status' },
     { key: 'remarks', label: 'Remarks' },
-    { key: 'nextFollowUpDate', label: 'Next Follow-up', format: (d: string) => d ? format(new Date(d), 'MM-dd-yyyy') : '' },
+    { key: 'nextFollowUpDate', label: 'Next Follow-up', format: (d: string) => d ? format(new Date(d), 'MM-dd-yyyy hh:mm a') : '' },
     { key: 'sces', label: 'Sales Team' },
   ] as const;
 
@@ -314,8 +291,8 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
           <Table>
             <TableHeader>
               <TableRow>
-                {columns.map(c => <TableHead key={c.key} className="py-2 px-2 text-center align-middle">{c.label}</TableHead>)}
-                {!isReadOnly && <TableHead className="py-2 px-2 text-center align-middle">Actions</TableHead>}
+                {columns.map(c => <TableHead key={c.key} className="py-2 px-1 text-center align-middle">{c.label}</TableHead>)}
+                {!isReadOnly && <TableHead className="py-2 px-1 text-center align-middle">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -336,10 +313,8 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                       <TableCell key={col.key} className="p-2 text-center align-middle text-xs">
                         {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
                           (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500 mx-auto" /> : <X className="text-red-500 mx-auto" />)
-                        ) : col.key === 'dateOfMeetUp' ? (
-                          lead.dateOfMeetUp ? format(new Date(lead.dateOfMeetUp), 'MM-dd-yyyy') : <span className="text-gray-500">-</span>
                         ) : col.format ? (
-                          (lead[col.key as keyof UnclosedLead] ? col.format(lead[col.key as keyof UnclosedLead] as string) : '')
+                          (lead[col.key as keyof UnclosedLead] ? col.format(lead[col.key as keyof UnclosedLead] as string) : <span className="text-gray-500">-</span>)
                         ) : col.key === 'estimatedTotalAmount' && lead.estimatedTotalAmount ? (
                           `₱${new Intl.NumberFormat('en-US').format(Number(String(lead.estimatedTotalAmount).replace(/,/g, '')))}`
                         ) : (
