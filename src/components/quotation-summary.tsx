@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
@@ -86,31 +85,40 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                 scale: 2,
             });
             
-            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
-    
-            if (blob) {
-                await navigator.clipboard.write([
-                    new ClipboardItem({ 'image/png': blob })
-                ]);
-                toast({
-                    title: 'Copied to clipboard!',
-                    description: 'The quotation has been copied as an image.',
-                });
-            } else {
-                throw new Error('Could not create a blob from the canvas.');
-            }
+            canvas.toBlob(async (blob) => {
+                if (blob) {
+                    try {
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ 'image/png': blob })
+                        ]);
+                        toast({
+                            title: 'Copied to clipboard!',
+                            description: 'The quotation has been copied as an image.',
+                        });
+                    } catch (err) {
+                         console.error('Failed to copy to clipboard:', err);
+                        let description = 'Could not copy image to clipboard. Please try again.';
+                        if (err instanceof Error && err.name === 'NotAllowedError') {
+                            description = 'Clipboard access was denied. Please make sure the browser window is focused and grant permission when prompted.';
+                        }
+                        toast({
+                            variant: 'destructive',
+                            title: 'Copy Failed',
+                            description: description,
+                        });
+                    }
+                } else {
+                     throw new Error('Could not create a blob from the canvas.');
+                }
+                 setIsCopying(false);
+            }, 'image/png');
         } catch (err) {
-            console.error('Failed to copy to clipboard:', err);
-            let description = 'Could not copy image to clipboard. Please try again.';
-            if (err instanceof Error && err.name === 'NotAllowedError') {
-                 description = 'Clipboard access was denied. Please make sure the browser window is focused and grant permission when prompted.';
-            }
-            toast({
+            console.error('Failed to generate canvas:', err);
+             toast({
                 variant: 'destructive',
-                title: 'Copy Failed',
-                description: description,
+                title: 'Image Generation Failed',
+                description: 'Could not generate the image for copying. Please try again.',
             });
-        } finally {
             setIsCopying(false);
         }
     }, [isCopying, toast]);
@@ -152,151 +160,153 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
             <CardContent>
                  <div className="printable-quotation" id="quotation-content">
                     <div ref={quotationRef} className="p-8 border rounded-lg bg-white">
-                        <header className="flex justify-between items-start mb-2">
-                            <div>
-                                <h2 className="font-bold text-2xl">BURDA PINAS</h2>
-                                <p className="text-sm text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
-                                <div className="text-xs mt-2 space-y-px">
-                                    <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
-                                    <p><span className="font-bold">Mobile No:</span> 0966-278-2437 | 0956-204-1950 | 0956-204-1919</p>
-                                    <p><span className="font-bold">Landline No:</span> (02) 8716-5814</p>
-                                    <p><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
+                        <div className="p-4">
+                            <header className="flex justify-between items-start">
+                                <div>
+                                    <h2 className="font-bold text-2xl">BURDA PINAS</h2>
+                                    <p className="text-sm text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
+                                    <div className="text-xs mt-2 space-y-px">
+                                        <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
+                                        <p><span className="font-bold">Mobile No:</span> 0966-278-2437 | 0956-204-1950 | 0956-204-1919</p>
+                                        <p><span className="font-bold">Landline No:</span> (02) 8716-5814</p>
+                                        <p><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="relative h-20 w-20">
-                               {logoLoading ? (
-                                    <Skeleton className="h-full w-full" />
-                                ) : logoUrl ? (
-                                    <Image src={logoUrl} alt="Qualistitch Inc. Logo" layout="fill" objectFit="contain" />
-                                ) : (
-                                    <div className="h-full w-full bg-gray-200 flex items-center justify-center text-xs text-center text-gray-500">Logo not found</div>
-                                )}
-                            </div>
-                        </header>
-
-                        <div className="flex justify-between items-center text-sm mb-4">
-                            <div>
-                                <h2 className="text-2xl font-bold">Quotation</h2>
-                                 <div className="flex items-center gap-2 mt-4">
-                                    <p className="font-bold">Customer:</p>
-                                    {customerName ? (
-                                        <p className="flex items-center h-3">{customerName}</p>
+                                <div className="relative h-24 w-24">
+                                {logoLoading ? (
+                                        <Skeleton className="h-full w-full" />
+                                    ) : logoUrl ? (
+                                        <Image src={logoUrl} alt="Qualistitch Inc. Logo" layout="fill" objectFit="contain" />
                                     ) : (
-                                        <p className="border-b-2 border-dotted border-gray-400 w-64 h-4"></p>
+                                        <div className="h-full w-full bg-gray-200 flex items-center justify-center text-xs text-center text-gray-500">Logo not found</div>
                                     )}
                                 </div>
+                            </header>
+
+                            <div className="flex justify-between items-center text-sm mt-4 mb-4">
+                                <div>
+                                    <h2 className="text-2xl font-bold">Quotation</h2>
+                                    <div className="flex items-center gap-2 mt-4">
+                                        <p className="font-bold">Customer:</p>
+                                        {customerName ? (
+                                            <p className="flex items-center h-3">{customerName}</p>
+                                        ) : (
+                                            <p className="border-b-2 border-dotted border-gray-400 w-64 h-4"></p>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="text-sm">
+                                    <p><strong>QUOTATION NO.</strong></p>
+                                    <p><strong>DATE:</strong> {format(new Date(), 'MM/dd/yyyy')}</p>
+                                </div>
                             </div>
-                            <div className="text-sm">
-                                <p><strong>QUOTATION NO.</strong></p>
-                                <p><strong>DATE:</strong> {format(new Date(), 'MM/dd/yyyy')}</p>
-                            </div>
-                        </div>
 
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-gray-200 border-b border-gray-400">
-                                    <TableHead className="text-black font-bold py-1 px-3 text-[10px] align-middle">DETAILS</TableHead>
-                                    <TableHead className="text-center text-black font-bold py-1 px-3 text-[10px] align-middle">QTY</TableHead>
-                                    <TableHead className="text-right text-black font-bold py-1 px-3 text-[10px] align-middle">RATE</TableHead>
-                                    <TableHead className="text-right text-black font-bold py-1 px-3 text-[10px] align-middle">AMOUNT</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
-                                    const isClientOwned = groupData.productType === 'Client Owned';
-                                    const isPatches = groupData.productType === 'Patches';
-                                    const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
-                                    const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery, pricingConfig, patchPrice, orderType);
-                                    const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned, orderType);
-                                    const itemsSubtotal = groupData.totalQuantity * unitPrice;
-                                    
-                                    const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, ...(addOns[groupKey] || {}) };
-                                    const backLogoPrice = getAddOnPrice('backLogo', groupData.totalQuantity, pricingConfig);
-                                    const namesPrice = getAddOnPrice('names', groupData.totalQuantity, pricingConfig);
-                                    const plusSizePrice = getAddOnPrice('plusSize', groupData.totalQuantity, pricingConfig);
-                                    
-                                    const finalLogoFee = !removedFees[groupKey]?.logo ? logoFee : 0;
-                                    const finalBackTextFee = !removedFees[groupKey]?.backText ? backTextFee : 0;
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-gray-200 border-b border-gray-400">
+                                        <TableHead className="text-black font-bold py-1 px-3 text-[10px] align-middle">DETAILS</TableHead>
+                                        <TableHead className="text-center text-black font-bold py-1 px-3 text-[10px] align-middle">QTY</TableHead>
+                                        <TableHead className="text-right text-black font-bold py-1 px-3 text-[10px] align-middle">RATE</TableHead>
+                                        <TableHead className="text-right text-black font-bold py-1 px-3 text-[10px] align-middle">AMOUNT</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
+                                        const isClientOwned = groupData.productType === 'Client Owned';
+                                        const isPatches = groupData.productType === 'Patches';
+                                        const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
+                                        const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, groupData.embroidery, pricingConfig, patchPrice, orderType);
+                                        const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, groupData.embroidery, isClientOwned, orderType);
+                                        const itemsSubtotal = groupData.totalQuantity * unitPrice;
+                                        
+                                        const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, ...(addOns[groupKey] || {}) };
+                                        const backLogoPrice = getAddOnPrice('backLogo', groupData.totalQuantity, pricingConfig);
+                                        const namesPrice = getAddOnPrice('names', groupData.totalQuantity, pricingConfig);
+                                        const plusSizePrice = getAddOnPrice('plusSize', groupData.totalQuantity, pricingConfig);
+                                        
+                                        const finalLogoFee = !removedFees[groupKey]?.logo ? logoFee : 0;
+                                        const finalBackTextFee = !removedFees[groupKey]?.backText ? backTextFee : 0;
 
-                                    const groupDiscount = discounts[groupKey];
-                                    let discountAmount = 0;
-                                    if(groupDiscount) {
-                                        const subtotalForDiscount = itemsSubtotal + (finalLogoFee + finalBackTextFee) + 
-                                            (groupAddOns.backLogo * backLogoPrice) + 
-                                            (groupAddOns.names * namesPrice) + 
-                                            (groupAddOns.plusSize * plusSizePrice) + 
-                                            groupAddOns.rushFee + 
-                                            groupAddOns.shippingFee +
-                                            groupAddOns.logoProgramming +
-                                            groupAddOns.backDesignProgramming +
-                                            groupAddOns.holdingFee;
+                                        const groupDiscount = discounts[groupKey];
+                                        let discountAmount = 0;
+                                        if(groupDiscount) {
+                                            const subtotalForDiscount = itemsSubtotal + (finalLogoFee + finalBackTextFee) + 
+                                                (groupAddOns.backLogo * backLogoPrice) + 
+                                                (groupAddOns.names * namesPrice) + 
+                                                (groupAddOns.plusSize * plusSizePrice) + 
+                                                groupAddOns.rushFee + 
+                                                groupAddOns.shippingFee +
+                                                groupAddOns.logoProgramming +
+                                                groupAddOns.backDesignProgramming +
+                                                groupAddOns.holdingFee;
 
-                                        if (groupDiscount.type === 'percentage') {
-                                            discountAmount = subtotalForDiscount * (groupDiscount.value / 100);
-                                        } else {
-                                            discountAmount = groupDiscount.value;
+                                            if (groupDiscount.type === 'percentage') {
+                                                discountAmount = subtotalForDiscount * (groupDiscount.value / 100);
+                                            } else {
+                                                discountAmount = groupDiscount.value;
+                                            }
                                         }
-                                    }
 
-                                    return (
-                                        <React.Fragment key={groupKey}>
-                                            <TableRow className="border-none">
-                                                <TableCell className="font-bold py-1 px-3 align-middle border-b border-gray-300">
-                                                    {groupData.productType}
-                                                    <p className="text-xs font-normal pl-4">- Sizes: {groupData.orders.map(o => o.size).join(', ')}</p>
-                                                    <p className="text-xs font-normal pl-4">- Free Design and Layout</p>
-                                                </TableCell>
-                                                <TableCell className="text-center py-1 px-3 align-middle border-b border-gray-300">{groupData.totalQuantity}</TableCell>
-                                                <TableCell className="text-right py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(unitPrice)}</TableCell>
-                                                <TableCell className="text-right py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(itemsSubtotal)}</TableCell>
-                                            </TableRow>
-                                            
-                                            {(finalLogoFee > 0 || finalBackTextFee > 0) && (
-                                                <TableRow className="border-none">
-                                                    <TableCell className="pl-8 text-xs py-1 px-3 align-middle border-b border-gray-300">Programming Fee<p className="text-xs font-normal pl-4">- One-Time Payment</p></TableCell>
-                                                    <TableCell className="text-center text-xs py-1 px-3 align-middle border-b border-gray-300">{ (finalLogoFee > 0 ? 1 : 0) + (finalBackTextFee > 0 ? 1 : 0) }</TableCell>
-                                                    <TableCell className="text-right text-xs py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(finalLogoFee > 0 ? finalLogoFee : finalBackTextFee)}</TableCell>
-                                                    <TableCell className="text-right text-xs py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(finalLogoFee + finalBackTextFee)}</TableCell>
-                                                </TableRow>
-                                            )}
-
-                                            {groupAddOns.backLogo > 0 && <TableRow className="border-none"><TableCell className="pl-8 text-xs py-1 px-3 align-middle border-b border-gray-300">Add On: Back Logo</TableCell><TableCell className="text-center text-xs py-1 px-3 align-middle border-b border-gray-300">{groupAddOns.backLogo}</TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(backLogoPrice)}</TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(groupAddOns.backLogo * backLogoPrice)}</TableCell></TableRow>}
-                                            {groupAddOns.names > 0 && <TableRow className="border-none"><TableCell className="pl-8 text-xs py-1 px-3 align-middle border-b border-gray-300">Add On: Names</TableCell><TableCell className="text-center text-xs py-1 px-3 align-middle border-b border-gray-300">{groupAddOns.names}</TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(namesPrice)}</TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(groupAddOns.names * namesPrice)}</TableCell></TableRow>}
-                                            {groupAddOns.plusSize > 0 && <TableRow className="border-none"><TableCell className="pl-8 text-xs py-1 px-3 align-middle border-b border-gray-300">Add On: Plus Size</TableCell><TableCell className="text-center text-xs py-1 px-3 align-middle border-b border-gray-300">{groupAddOns.plusSize}</TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(plusSizePrice)}</TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(groupAddOns.plusSize * plusSizePrice)}</TableCell></TableRow>}
-                                            {groupAddOns.rushFee > 0 && <TableRow className="border-none"><TableCell className="pl-8 text-xs py-1 px-3 align-middle border-b border-gray-300">Add On: Rush Fee</TableCell><TableCell className="py-1 px-3 align-middle border-b border-gray-300"></TableCell><TableCell className="py-1 px-3 align-middle border-b border-gray-300"></TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(groupAddOns.rushFee)}</TableCell></TableRow>}
-                                            {groupAddOns.shippingFee > 0 && <TableRow className="border-none"><TableCell className="pl-8 text-xs py-1 px-3 align-middle border-b border-gray-300">Add On: Shipping Fee</TableCell><TableCell className="py-1 px-3 align-middle border-b border-gray-300"></TableCell><TableCell className="py-1 px-3 align-middle border-b border-gray-300"></TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(groupAddOns.shippingFee)}</TableCell></TableRow>}
-                                            {groupAddOns.logoProgramming > 0 && <TableRow className="border-none"><TableCell className="pl-8 text-xs py-1 px-3 align-middle border-b border-gray-300">Add On: Logo Programming</TableCell><TableCell className="py-1 px-3 align-middle border-b border-gray-300"></TableCell><TableCell className="py-1 px-3 align-middle border-b border-gray-300"></TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(groupAddOns.logoProgramming)}</TableCell></TableRow>}
-                                            {groupAddOns.backDesignProgramming > 0 && <TableRow className="border-none"><TableCell className="pl-8 text-xs py-1 px-3 align-middle border-b border-gray-300">Add On: Back Design Programming</TableCell><TableCell className="py-1 px-3 align-middle border-b border-gray-300"></TableCell><TableCell className="py-1 px-3 align-middle border-b border-gray-300"></TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(groupAddOns.backDesignProgramming)}</TableCell></TableRow>}
-                                            {groupAddOns.holdingFee > 0 && <TableRow className="border-none"><TableCell className="pl-8 text-xs py-1 px-3 align-middle border-b border-gray-300">Add On: Holding Fee</TableCell><TableCell className="py-1 px-3 align-middle border-b border-gray-300"></TableCell><TableCell className="py-1 px-3 align-middle border-b border-gray-300"></TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle border-b border-gray-300">{formatCurrency(groupAddOns.holdingFee)}</TableCell></TableRow>}
-                                            {groupDiscount && (
-                                                <TableRow className="border-none">
-                                                    <TableCell colSpan={3} className="text-right font-bold text-destructive text-xs py-1 px-3 align-middle border-b border-gray-300">
-                                                        Discount {groupDiscount.reason ? `(${groupDiscount.reason})` : ''} ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})
+                                        return (
+                                            <React.Fragment key={groupKey}>
+                                                <TableRow>
+                                                    <TableCell className="font-bold py-1 px-3 align-middle">
+                                                        {groupData.productType}
+                                                        <p className="text-xs font-normal pl-4">- Sizes: {groupData.orders.map(o => o.size).join(', ')}</p>
+                                                        <p className="text-xs font-normal pl-4">- Free Design and Layout</p>
                                                     </TableCell>
-                                                    <TableCell className="text-right font-bold text-destructive text-xs py-1 px-3 align-middle border-b border-gray-300">-{formatCurrency(discountAmount)}</TableCell>
+                                                    <TableCell className="text-center py-1 px-3 align-middle">{groupData.totalQuantity}</TableCell>
+                                                    <TableCell className="text-right py-1 px-3 align-middle">{formatCurrency(unitPrice)}</TableCell>
+                                                    <TableCell className="text-right py-1 px-3 align-middle">{formatCurrency(itemsSubtotal)}</TableCell>
                                                 </TableRow>
-                                            )}
-                                        </React.Fragment>
-                                    );
-                                })}
-                            </TableBody>
-                            <ShadTableFooter>
-                                <TableRow className="border-t-2 border-gray-400">
-                                    <TableCell colSpan={3} className="text-right font-bold py-1 px-3">TOTAL</TableCell>
-                                    <TableCell className="text-right font-bold py-1 px-3">{formatCurrency(grandTotal)}</TableCell>
-                                </TableRow>
-                            </ShadTableFooter>
-                        </Table>
-                        <div className="mt-24 flex justify-between text-xs">
-                            <div className="w-64 text-center">
-                                <p className="border-b-2 border-dotted border-gray-400 pb-1 font-bold h-7 text-center text-xs">
-                                    {userProfile?.nickname || ''}
-                                </p>
-                                <p className="text-xs mt-1">Prepared By</p>
-                            </div>
-                             <div className="w-64 text-center">
-                                <p className="border-b-2 border-dotted border-gray-400 h-7"></p>
-                                <p className="text-xs mt-1">Noted By</p>
+                                                
+                                                {(finalLogoFee > 0 || finalBackTextFee > 0) && (
+                                                    <TableRow>
+                                                        <TableCell className="pl-8 text-xs py-1 px-3 align-middle">Programming Fee<p className="text-xs font-normal pl-4">- One-Time Payment</p></TableCell>
+                                                        <TableCell className="text-center text-xs py-1 px-3 align-middle">{ (finalLogoFee > 0 ? 1 : 0) + (finalBackTextFee > 0 ? 1 : 0) }</TableCell>
+                                                        <TableCell className="text-right text-xs py-1 px-3 align-middle">{formatCurrency(finalLogoFee > 0 ? finalLogoFee : finalBackTextFee)}</TableCell>
+                                                        <TableCell className="text-right text-xs py-1 px-3 align-middle">{formatCurrency(finalLogoFee + finalBackTextFee)}</TableCell>
+                                                    </TableRow>
+                                                )}
+
+                                                {groupAddOns.backLogo > 0 && <TableRow><TableCell className="pl-8 text-xs py-1 px-3 align-middle">Add On: Back Logo</TableCell><TableCell className="text-center text-xs py-1 px-3 align-middle">{groupAddOns.backLogo}</TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle">{formatCurrency(backLogoPrice)}</TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle">{formatCurrency(groupAddOns.backLogo * backLogoPrice)}</TableCell></TableRow>}
+                                                {groupAddOns.names > 0 && <TableRow><TableCell className="pl-8 text-xs py-1 px-3 align-middle">Add On: Names</TableCell><TableCell className="text-center text-xs py-1 px-3 align-middle">{groupAddOns.names}</TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle">{formatCurrency(namesPrice)}</TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle">{formatCurrency(groupAddOns.names * namesPrice)}</TableCell></TableRow>}
+                                                {groupAddOns.plusSize > 0 && <TableRow><TableCell className="pl-8 text-xs py-1 px-3 align-middle">Add On: Plus Size</TableCell><TableCell className="text-center text-xs py-1 px-3 align-middle">{groupAddOns.plusSize}</TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle">{formatCurrency(plusSizePrice)}</TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle">{formatCurrency(groupAddOns.plusSize * plusSizePrice)}</TableCell></TableRow>}
+                                                {groupAddOns.rushFee > 0 && <TableRow><TableCell className="pl-8 text-xs py-1 px-3 align-middle">Add On: Rush Fee</TableCell><TableCell className="py-1 px-3 align-middle"></TableCell><TableCell className="py-1 px-3 align-middle"></TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle">{formatCurrency(groupAddOns.rushFee)}</TableCell></TableRow>}
+                                                {groupAddOns.shippingFee > 0 && <TableRow><TableCell className="pl-8 text-xs py-1 px-3 align-middle">Add On: Shipping Fee</TableCell><TableCell className="py-1 px-3 align-middle"></TableCell><TableCell className="py-1 px-3 align-middle"></TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle">{formatCurrency(groupAddOns.shippingFee)}</TableCell></TableRow>}
+                                                {groupAddOns.logoProgramming > 0 && <TableRow><TableCell className="pl-8 text-xs py-1 px-3 align-middle">Add On: Logo Programming</TableCell><TableCell className="py-1 px-3 align-middle"></TableCell><TableCell className="py-1 px-3 align-middle"></TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle">{formatCurrency(groupAddOns.logoProgramming)}</TableCell></TableRow>}
+                                                {groupAddOns.backDesignProgramming > 0 && <TableRow><TableCell className="pl-8 text-xs py-1 px-3 align-middle">Add On: Back Design Programming</TableCell><TableCell className="py-1 px-3 align-middle"></TableCell><TableCell className="py-1 px-3 align-middle"></TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle">{formatCurrency(groupAddOns.backDesignProgramming)}</TableCell></TableRow>}
+                                                {groupAddOns.holdingFee > 0 && <TableRow><TableCell className="pl-8 text-xs py-1 px-3 align-middle">Add On: Holding Fee</TableCell><TableCell className="py-1 px-3 align-middle"></TableCell><TableCell className="py-1 px-3 align-middle"></TableCell><TableCell className="text-right text-xs py-1 px-3 align-middle">{formatCurrency(groupAddOns.holdingFee)}</TableCell></TableRow>}
+                                                {groupDiscount && (
+                                                    <TableRow>
+                                                        <TableCell colSpan={3} className="text-right font-bold text-destructive text-xs py-1 px-3 align-middle">
+                                                            Discount {groupDiscount.reason ? `(${groupDiscount.reason})` : ''} ({groupDiscount.type === 'percentage' ? `${groupDiscount.value}%` : formatCurrency(groupDiscount.value)})
+                                                        </TableCell>
+                                                        <TableCell className="text-right font-bold text-destructive text-xs py-1 px-3 align-middle">-{formatCurrency(discountAmount)}</TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </React.Fragment>
+                                        );
+                                    })}
+                                </TableBody>
+                                <ShadTableFooter>
+                                    <TableRow className="border-t-2 border-gray-400">
+                                        <TableCell colSpan={3} className="text-right font-bold py-1 px-3">TOTAL</TableCell>
+                                        <TableCell className="text-right font-bold py-1 px-3">{formatCurrency(grandTotal)}</TableCell>
+                                    </TableRow>
+                                </ShadTableFooter>
+                            </Table>
+                            <div className="mt-24 flex justify-between text-xs">
+                                <div className="w-64 text-center">
+                                    <p className="border-b-2 border-dotted border-gray-400 pb-1 font-bold h-7 text-center text-xs">
+                                        {userProfile?.nickname || ''}
+                                    </p>
+                                    <p className="text-xs mt-1">Prepared By</p>
+                                </div>
+                                <div className="w-64 text-center">
+                                    <p className="border-b-2 border-dotted border-gray-400 h-7"></p>
+                                    <p className="text-xs mt-1">Noted By</p>
+                                </div>
                             </div>
                         </div>
                     </div>
