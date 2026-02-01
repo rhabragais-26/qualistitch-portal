@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -54,6 +53,8 @@ const unclosedLeadFormSchema = unclosedLeadFetchSchema.extend({
 });
 
 const salesTeamOptions = ['Team Cath', 'Team Loise', 'Team Jo', 'Team My'];
+const statusOptions = ["Waiting for DP", "For Follow Up", "For Layout", "For Quotation", "For Meet-Up", "CLOSED"];
+
 
 const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => void; lead: Partial<UnclosedLead> | null; onClose: () => void; }) => {
   const { userProfile } = useUser();
@@ -95,8 +96,8 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
   const formFields = [
     { name: "date", label: "Date", type: "date" },
     { name: "customerName", label: "Customer Name" },
-    { name: "quantity", label: "Quantity" },
     { name: "contactDetails", label: "Contact Details" },
+    { name: "quantity", label: "Quantity" },
     { name: "estimatedTotalAmount", label: "Est. Total Amount" },
     { name: "dateOfMeetUp", label: "Date of Meetup", type: "datetime-local" },
     { name: "estimatedDateForDp", label: "Est. Date for DP", type: "date" },
@@ -170,6 +171,27 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
                         </SelectTrigger>
                         <SelectContent>
                           {salesTeamOptions.map(option => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {form.formState.errors[f.name] && <p className="text-sm text-destructive">{form.formState.errors[f.name]?.message}</p>}
+                    </div>
+                  )
+                }
+                if (f.name === 'status') {
+                  return (
+                    <div key={f.name} className="space-y-2">
+                      <Label htmlFor={f.name}>{f.label}</Label>
+                      <Select
+                        onValueChange={(value) => form.setValue('status', value, { shouldValidate: true, shouldDirty: true })}
+                        value={form.watch('status')}
+                      >
+                        <SelectTrigger id={f.name}>
+                          <SelectValue placeholder="Select a status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map(option => (
                             <SelectItem key={option} value={option}>{option}</SelectItem>
                           ))}
                         </SelectContent>
