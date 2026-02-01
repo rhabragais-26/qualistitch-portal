@@ -111,7 +111,7 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
         </DialogHeader>
         <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
           <ScrollArea className="max-h-[70vh] -mx-6 px-6">
-            <div className="grid grid-cols-2 gap-4 p-1">
+            <div className="grid grid-cols-2 gap-4 p-4">
               {formFields.map(f => {
                 if (f.name === 'estimatedTotalAmount') {
                   return (
@@ -181,7 +181,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'unclosedLeads'), orderBy('date', 'desc')) : null, [firestore]);
-  const { data: leads, isLoading, error, refetch } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadSchema.passthrough(), { listen: false });
+  const { data: leads, isLoading, error } = useCollection<UnclosedLead>(leadsQuery, unclosedLeadSchema.passthrough());
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<UnclosedLead | null>(null);
@@ -195,7 +195,6 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
       toast({ title: `Lead ${editingLead ? 'updated' : 'added'} successfully!` });
       setIsDialogOpen(false);
       setEditingLead(null);
-      refetch();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Save failed', description: e.message });
     }
@@ -208,7 +207,6 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
       await deleteDoc(docRef);
       toast({ title: 'Lead deleted successfully!' });
       setDeletingLead(null);
-      refetch();
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Delete failed', description: e.message });
     }
@@ -257,11 +255,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length + 1} className="text-center">
-                    {/* Intentionally left blank to avoid "Loading..." */}
-                  </TableCell>
-                </TableRow>
+                null
               ) : error ? (
                 <TableRow>
                   <TableCell colSpan={columns.length + 1} className="text-center text-destructive">Error: {error.message}</TableCell>
@@ -329,3 +323,5 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
     </Card>
   );
 }
+
+    
