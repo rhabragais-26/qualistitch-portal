@@ -2,6 +2,8 @@
 
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useFirestore } from '@/firebase';
 import { collection, doc, getDoc, query, where, getDocs } from 'firebase/firestore';
 import { useParams, useSearchParams } from 'next/navigation';
