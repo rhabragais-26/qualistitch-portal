@@ -794,7 +794,12 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     if (filterType === 'COMPLETED') {
       relevantLeads = processedLeads.filter(lead => lead.isEndorsedToLogistics);
     } else {
-      relevantLeads = processedLeads.filter(lead => lead.isSentToProduction && !lead.isEndorsedToLogistics && lead.orderType !== 'Stock (Jacket Only)');
+      const orderTypesToExclude = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'];
+      relevantLeads = processedLeads.filter(lead => 
+        lead.isSentToProduction && 
+        !lead.isEndorsedToLogistics && 
+        !orderTypesToExclude.includes(lead.orderType)
+      );
     }
     
     return relevantLeads.filter(lead => {

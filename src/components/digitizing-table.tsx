@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -150,6 +149,7 @@ type Lead = {
   orderType: string;
   priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
+  orders: { productType: string }[];
   joNumber?: number;
   isJoPrinted?: boolean;
   isJoHardcopyReceived?: boolean;
@@ -370,7 +370,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     
     const leadsWithJo = processedLeads.filter(lead => {
         const matchesFilterType = filterType === 'COMPLETED' ? lead.isDigitizingArchived : !lead.isDigitizingArchived;
-        return lead.joNumber && matchesFilterType && lead.orderType !== 'Stock (Jacket Only)';
+        const shouldBypass = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
+        return lead.joNumber && matchesFilterType && !shouldBypass;
     });
 
     const filtered = leadsWithJo.filter(lead => {
@@ -821,23 +822,36 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const handleConfirmReview = useCallback(async () => {
     if (!reviewConfirmLead || !firestore) return;
     try {
-        const leadDocRef = doc(firestore, 'leads', reviewConfirmLead.id);
-        await updateDoc(leadDocRef, { 
-          isPreparedForProduction: true,
-          isDigitizingArchived: true,
-          digitizingArchivedTimestamp: new Date().toISOString(),
-        });
+        const lead = reviewConfirmLead;
+        const leadDocRef = doc(firestore, 'leads', lead.id);
+        const isClientOrPatchOnly = lead.orders.every(o => o.productType === 'Client Owned' || o.productType === 'Patches');
         
-        const deadlineInfo = calculateDigitizingDeadline(reviewConfirmLead);
+        const updateData: any = {
+            isDigitizingArchived: true,
+            digitizingArchivedTimestamp: new Date().toISOString(),
+        };
+
+        if (isClientOrPatchOnly) {
+            updateData.isSentToProduction = true;
+            updateData.sentToProductionTimestamp = new Date().toISOString();
+        } else {
+            updateData.isPreparedForProduction = true;
+        }
+
+        await updateDoc(leadDocRef, updateData);
+        
+        const deadlineInfo = calculateDigitizingDeadline(lead);
         const notification = {
-            id: `progress-${reviewConfirmLead.id}-${new Date().toISOString()}`,
+            id: `progress-${lead.id}-${new Date().toISOString()}`,
             type: 'progress',
-            leadId: reviewConfirmLead.id,
-            joNumber: formatJoNumber(reviewConfirmLead.joNumber),
-            customerName: toTitleCase(reviewConfirmLead.customerName),
-            companyName: reviewConfirmLead.companyName,
-            contactNumber: getContactDisplay(reviewConfirmLead),
-            message: `Order endorsed to Inventory for item preparation.`,
+            leadId: lead.id,
+            joNumber: formatJoNumber(lead.joNumber),
+            customerName: toTitleCase(lead.customerName),
+            companyName: lead.companyName,
+            contactNumber: getContactDisplay(lead),
+            message: isClientOrPatchOnly 
+              ? 'Order endorsed to Production.' 
+              : 'Order endorsed to Inventory for item preparation.',
             overdueStatus: deadlineInfo.text,
             isRead: false,
             timestamp: new Date().toISOString(),
@@ -849,8 +863,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
 
         toast({
-            title: "Project Sent to Production",
-            description: "The project has been moved to the Item Preparation queue.",
+            title: "Project Endorsed",
+            description: isClientOrPatchOnly
+                ? "The project has been sent directly to the Production queue."
+                : "The project has been moved to the Item Preparation queue.",
         });
         setReviewConfirmLead(null);
     } catch (e: any) {
@@ -868,23 +884,19 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     setOpenLeadId(openLeadId === leadId ? null : leadId);
   }, [openLeadId]);
   
-  const toggleCustomerDetails = useCallback((leadId: string) => {
-    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
-  }, [openCustomerDetails]);
-  
   const fileChecklistItems: FileUploadChecklistItem[] = useMemo(() => {
     if (!reviewConfirmLead) return [];
     const layout = reviewConfirmLead.layouts?.[0];
     if (!layout) return [];
 
     const finalProgramFiles = [
-      ...(layout.sequenceLogo || []).map((file, i) => ({ label: `Sequence Logo ${i + 1}`, uploaded: !!file, fileInfo: 'Image', timestamp: Array.isArray(layout.sequenceLogoUploadTimes) ? layout.sequenceLogoUploadTimes[i] : null })),
-      ...(layout.sequenceBackDesign || []).map((file, i) => ({ label: `Sequence Back Design ${i+1}`, uploaded: !!file, fileInfo: 'Image', timestamp: Array.isArray(layout.sequenceBackDesignUploadTimes) ? layout.sequenceBackDesignUploadTimes[i] : null })),
-      ...(layout.finalProgrammedLogo || []).map((file, i) => ({ label: `Final Programmed Logo ${i + 1}`, uploaded: !!file, fileInfo: 'Image', timestamp: Array.isArray(layout.finalProgrammedLogoUploadTimes) ? layout.finalProgrammedLogoUploadTimes[i] : null })),
-      ...(layout.finalProgrammedBackDesign || []).map((file, i) => ({ label: `Final Programmed Back Design ${i + 1}`, uploaded: !!file, fileInfo: 'Image', timestamp: Array.isArray(layout.finalProgrammedBackDesignUploadTimes) ? layout.finalProgrammedBackDesignUploadTimes[i] : null })),
+      ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] }),
+      ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i+1}`, timestamp: Array.isArray(layout.sequenceBackDesignUploadTimes) ? layout.sequenceBackDesignUploadTimes[i] : null }),
+      ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Programmed Logo ${i + 1}`, timestamp: Array.isArray(layout.finalProgrammedLogoUploadTimes) ? layout.finalProgrammedLogoUploadTimes[i] : null }),
+      ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Programmed Back Design ${i + 1}`, timestamp: Array.isArray(layout.finalProgrammedBackDesignUploadTimes) ? layout.finalProgrammedBackDesignUploadTimes[i] : null }),
     ];
     
-    return finalProgramFiles.filter(item => item.uploaded);
+    return finalProgramFiles.filter((item): item is FileUploadChecklistItem => !!item);
   }, [reviewConfirmLead]);
 
   const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {

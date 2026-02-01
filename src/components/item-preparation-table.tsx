@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -25,7 +24,7 @@ import { Badge } from './ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Input } from './ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
+import { cn, formatDateTime, toTitleCase, formatJoNumber } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Checkbox } from './ui/checkbox';
@@ -125,7 +124,7 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
     const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
     const numOrders = lead.orders.length;
     const programmingStatus = getProgrammingStatus(lead);
-    const isStockJacketOnly = lead.orderType === 'Stock (Jacket Only)';
+    const shouldSkipProduction = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
     const isCompleted = filterType === 'COMPLETED';
 
     return (
@@ -175,7 +174,7 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                     {orderIndex === 0 && (
                         <TableCell rowSpan={numOrders + 1} className="align-middle py-3 border-b-2 border-black text-center">
                         <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
-                        {isStockJacketOnly && <p className="text-xs font-bold mt-1">Stocks (Jacket Only)</p>}
+                        {shouldSkipProduction && <p className="text-xs font-bold mt-1">{lead.orderType}</p>}
                         </TableCell>
                     )}
                     {orderIndex === 0 && (
@@ -232,7 +231,7 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                                     className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
                                 >
                                     <Send className="mr-2 h-4 w-4" /> 
-                                    {isStockJacketOnly ? 'Send to Logistics' : 'Send to Prod'}
+                                    {shouldSkipProduction ? 'Send to Logistics' : 'Send to Prod'}
                                 </Button>
                             )}
                         </TableCell>
@@ -267,7 +266,9 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 
 
   const getProgrammingStatus = useCallback((lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
-    if (lead.orderType === 'Stock (Jacket Only)') return { text: "Skipped", variant: "secondary" };
+    if (['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType)) {
+        return { text: "Skipped", variant: "secondary" };
+    }
     if (lead.isFinalProgram) return { text: "Final Program Uploaded", variant: "success" as const };
     if (lead.isFinalApproval) return { text: "Final Program Approved", variant: "default" as const };
     if (lead.isRevision) return { text: "Under Revision", variant: "warning" as const };
@@ -438,12 +439,17 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
         if (filterType === 'COMPLETED') {
             return lead.isSentToProduction || lead.isEndorsedToLogistics;
         }
-        
-        const hasJoNumber = !!lead.joNumber;
-        const isNotSentOrEndorsed = !lead.isSentToProduction && !lead.isEndorsedToLogistics;
 
-        // Display if JO number exists and it's not yet sent to prod/logistics
-        return hasJoNumber && isNotSentOrEndorsed;
+        const isClientOrPatchOnly = lead.orders.every(o => o.productType === 'Client Owned' || o.productType === 'Patches');
+        if (isClientOrPatchOnly) {
+            return false; // These orders bypass inventory
+        }
+
+        const isReadyForPrep = lead.isDigitizingArchived || ['Stock Design', 'Item Sample', 'Stock (Jacket Only)'].includes(lead.orderType);
+        
+        const isNotProcessed = !lead.isSentToProduction && !lead.isEndorsedToLogistics;
+        
+        return lead.joNumber && isReadyForPrep && isNotProcessed;
     });
     
     return leadsInQueue.filter(lead => {
@@ -468,6 +474,9 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
     });
   }, [processedLeads, searchTerm, joNumberSearch, statusFilter, formatJoNumber, getProgrammingStatus, filterType]);
 
+  const isLoading = areLeadsLoading;
+  const error = leadsError;
+  
   if (isLoading) {
     return (
       <div className="space-y-2 p-4">
@@ -521,12 +530,12 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
                   <AlertDialogHeader>
                       <AlertDialogTitle>Confirm Handover</AlertDialogTitle>
                       <AlertDialogDescription>
-                          Are you sure the items for J.O. {formatJoNumber(leadToSend.joNumber)} have been handed over to the {leadToSend.orderType === 'Stock (Jacket Only)' ? 'logistics' : 'production'} team?
+                          Are you sure the items for J.O. {formatJoNumber(leadToSend.joNumber)} have been handed over to the {['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(leadToSend.orderType) ? 'logistics' : 'production'} team?
                       </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={leadToSend.orderType === 'Stock (Jacket Only)' ? handleConfirmSendToLogistics : handleConfirmSendToProd}>Confirm</AlertDialogAction>
+                      <AlertDialogAction onClick={['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(leadToSend.orderType) ? handleConfirmSendToLogistics : handleConfirmSendToProd}>Confirm</AlertDialogAction>
                   </AlertDialogFooter>
               </AlertDialogContent>
           </AlertDialog>
