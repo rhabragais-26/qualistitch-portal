@@ -40,6 +40,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/records': 'sales',
   '/job-order': 'sales',
   '/sales/audit-for-shipment': 'sales',
+  '/sales/quotation': 'sales',
   '/reports': 'sales',
   '/digitizing/programming-queue': 'digitizing',
   '/digitizing/completed-programs': 'digitizing',
@@ -71,6 +72,7 @@ const pageGroupMapping: { [key: string]: PageGroup } = {
   '/marketing/photoshoot-requests': 'marketing',
   '/marketing/campaigns': 'marketing',
   '/marketing/ads-vs-inquiries': 'marketing',
+  '/marketing/daily-ads': 'marketing',
   '/marketing/analytics': 'marketing',
   '/marketing/founding-anniversaries': 'marketing',
 };

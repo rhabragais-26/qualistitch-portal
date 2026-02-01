@@ -31,7 +31,6 @@ import { v4 as uuidv4 } from 'uuid';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { formatDateTime } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 
 type AdImage = {
@@ -68,7 +67,7 @@ type ImageState = {
 
 function DailyAdsPage() {
   const firestore = useFirestore();
-  const { userProfile } = useUser();
+  const { userProfile, isAdmin } = useUser();
   const { toast } = useToast();
   const [editingAd, setEditingAd] = useState<DailyAd | null>(null);
   const [deletingAd, setDeletingAd] = useState<DailyAd | null>(null);
@@ -78,6 +77,8 @@ function DailyAdsPage() {
 
   const [images, setImages] = useState<ImageState[]>([]);
   const [showAll, setShowAll] = useState(false);
+
+  const canEdit = useMemo(() => isAdmin || userProfile?.position === 'Marketing Head' || userProfile?.position === 'Social Media Manager', [isAdmin, userProfile]);
 
   const adsToShow = useMemo(() => {
     if (!dailyAds) return [];
@@ -212,57 +213,59 @@ function DailyAdsPage() {
               <CardContent>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="date" render={({ field }) => (
-                          <FormItem><FormLabel>Date</FormLabel><FormControl><Input type="date" value={format(field.value, 'yyyy-MM-dd')} onChange={(e) => field.onChange(new Date(`${e.target.value}T00:00:00`))} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="adAccount" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>AD Account</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl><SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger></FormControl>
-                                <SelectContent>{adAccountOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                    </div>
-                    
-                    <div className="space-y-4">
-                        <Label>Ad Creatives</Label>
-                        <ScrollArea className="h-64 border rounded-md p-4">
-                            <div className="space-y-4">
-                                {images.map((image, index) => (
-                                    <div key={image.id} className="flex items-start gap-2 p-2">
-                                        {image.previewUrl ? (
-                                            <div className="relative w-20 h-20 flex-shrink-0">
-                                                <Image src={image.previewUrl} alt={`preview ${index}`} layout="fill" objectFit="cover" className="rounded-md" />
+                    <fieldset disabled={!canEdit}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField control={form.control} name="date" render={({ field }) => (
+                            <FormItem><FormLabel>Date</FormLabel><FormControl><Input type="date" value={format(field.value, 'yyyy-MM-dd')} onChange={(e) => field.onChange(new Date(`${e.target.value}T00:00:00`))} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={form.control} name="adAccount" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>AD Account</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger></FormControl>
+                                    <SelectContent>{adAccountOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                            )} />
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <Label>Ad Creatives</Label>
+                            <ScrollArea className="h-64 border rounded-md p-4">
+                                <div className="space-y-4">
+                                    {images.map((image, index) => (
+                                        <div key={image.id} className="flex items-start gap-2 p-2">
+                                            {image.previewUrl ? (
+                                                <div className="relative w-20 h-20 flex-shrink-0">
+                                                    <Image src={image.previewUrl} alt={`preview ${index}`} layout="fill" objectFit="cover" className="rounded-md" />
+                                                </div>
+                                            ) : <div className="w-20 h-20 bg-muted rounded-md flex-shrink-0" />}
+                                            <div className="flex-grow space-y-1">
+                                                <Input placeholder="Image Name / Title" value={image.name} onChange={e => handleImageNameChange(image.id, e.target.value)} />
+                                                <Input type="file" accept="image/*" onChange={e => handleImageFileChange(image.id, e.target.files ? e.target.files[0] : null)} className="text-xs"/>
                                             </div>
-                                        ) : <div className="w-20 h-20 bg-muted rounded-md flex-shrink-0" />}
-                                        <div className="flex-grow space-y-1">
-                                            <Input placeholder="Image Name / Title" value={image.name} onChange={e => handleImageNameChange(image.id, e.target.value)} />
-                                            <Input type="file" accept="image/*" onChange={e => handleImageFileChange(image.id, e.target.files ? e.target.files[0] : null)} className="text-xs"/>
+                                            <Button type="button" variant="ghost" size="icon" className="text-destructive h-8 w-8 mt-1" onClick={() => removeImageInput(image.id)}><Trash2 className="h-4 w-4"/></Button>
                                         </div>
-                                        <Button type="button" variant="ghost" size="icon" className="text-destructive h-8 w-8 mt-1" onClick={() => removeImageInput(image.id)}><Trash2 className="h-4 w-4"/></Button>
-                                    </div>
-                                ))}
-                                <Button type="button" variant="outline" className="w-full" onClick={addImageInput}>
-                                    <PlusCircle className="mr-2 h-4 w-4"/> Add Image
-                                </Button>
-                            </div>
-                        </ScrollArea>
-                    </div>
+                                    ))}
+                                    <Button type="button" variant="outline" className="w-full" onClick={addImageInput}>
+                                        <PlusCircle className="mr-2 h-4 w-4"/> Add Image
+                                    </Button>
+                                </div>
+                            </ScrollArea>
+                        </div>
 
-                    <div className="flex justify-end gap-2">
-                      {editingAd && <Button type="button" variant="outline" onClick={handleFormReset}>Cancel</Button>}
-                      <Button type="submit">{editingAd ? 'Save Changes' : 'Record Ad'}</Button>
-                    </div>
+                        <div className="flex justify-end gap-2">
+                          {editingAd && <Button type="button" variant="outline" onClick={handleFormReset}>Cancel</Button>}
+                          <Button type="submit">{editingAd ? 'Save Changes' : 'Record Ad'}</Button>
+                        </div>
+                    </fieldset>
                   </form>
                 </Form>
               </CardContent>
             </Card>
           </div>
-          <div className="xl:col-span-3">
+          <div className="xl:col-span-3 pr-8">
             <Card>
               <CardHeader>
                 <CardTitle>Recent Ads</CardTitle>
@@ -275,7 +278,7 @@ function DailyAdsPage() {
                       <TableRow>
                         <TableHead className="text-center text-white font-bold">Date</TableHead>
                         <TableHead className="text-white font-bold">Ad Account</TableHead>
-                        <TableHead className="text-center text-white font-bold">Creatives</TableHead>
+                        <TableHead className="text-white font-bold text-center">Creatives</TableHead>
                         <TableHead className="text-center text-white font-bold">Submitted By</TableHead>
                         <TableHead className="text-center text-white font-bold">Actions</TableHead>
                       </TableRow>
@@ -301,8 +304,8 @@ function DailyAdsPage() {
                             </TableCell>
                             <TableCell className="text-center text-xs">{ad.submittedBy}</TableCell>
                             <TableCell className="text-center">
-                              <Button variant="ghost" size="icon" onClick={() => setEditingAd(ad)}><Edit className="h-4 w-4" /></Button>
-                              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeletingAd(ad)}><Trash2 className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => setEditingAd(ad)} disabled={!canEdit}><Edit className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeletingAd(ad)} disabled={!canEdit}><Trash2 className="h-4 w-4" /></Button>
                             </TableCell>
                           </TableRow>
                         ))

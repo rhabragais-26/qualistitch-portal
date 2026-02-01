@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
@@ -18,6 +19,9 @@ import { cn } from '@/lib/utils';
 import { ImagePlaceholder, PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
+import { useUser } from '@/firebase';
+import { usePathname } from 'next/navigation';
+import { hasEditPermission } from '@/lib/permissions';
 
 
 export default function QuotationPage() {
@@ -39,6 +43,10 @@ export default function QuotationPage() {
   const [isRunningAdsDragging, setIsRunningAdsDragging] = useState(false);
   
   const [productImage, setProductImage] = useState<ImagePlaceholder | null>(null);
+
+  const { userProfile } = useUser();
+  const pathname = usePathname();
+  const canEdit = hasEditPermission(userProfile?.position as any, pathname);
 
   useEffect(() => {
       if (stagedOrders.length > 0) {
@@ -122,6 +130,7 @@ export default function QuotationPage() {
               onGrandTotalChange={setGrandTotal}
               removedFees={removedFees}
               setRemovedFees={setRemovedFees}
+              isReadOnly={!canEdit}
             />
             <div className="space-y-4">
                {productImage && (
