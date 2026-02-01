@@ -30,15 +30,15 @@ export default function AdminUsersPage() {
   const [isClearing, setIsClearing] = useState(false);
 
   const collectionsToDelete = [
-    'leads', 'unclosedLeads', 'dailyAds', 'embroidery_logs', 'marketingCalendar', 
+    'leads', 'dailyAds', 'embroidery_logs', 'marketingCalendar', 
     'operational_expenses', 'cost_of_goods', 'capital_expenses', 'direct_messages', 
     'inventory', 'operationalCases', 'campaign_inquiries', 'adCampaigns', 
-    'ad_spend_inquiries', 'other_cash_inflows', 'counters', 'sizeCharts'
+    'ad_spend_inquiries', 'other_cash_inflows', 'counters'
   ];
 
   const storageFoldersToDelete = [
     'leads-images', 'leads-files', 'operational-cases', 'adCampaigns-images', 
-    'dailyAds', 'marketingCalendar', 'sizeCharts'
+    'dailyAds', 'marketingCalendar'
   ];
 
   const deleteCollection = async (collectionPath: string) => {
