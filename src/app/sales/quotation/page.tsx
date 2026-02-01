@@ -104,7 +104,7 @@ export default function QuotationPage() {
               setAddOns={setAddOns}
               discounts={discounts}
               setDiscounts={setDiscounts}
-              onGrandTotalChange={onGrandTotalChange}
+              onGrandTotalChange={setGrandTotal}
               removedFees={removedFees}
               setRemovedFees={setRemovedFees}
             />
