@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -27,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { formatJoNumber } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type FileObject = {
   name: string;
@@ -59,6 +61,7 @@ type Lead = {
   shippedTimestamp?: string;
   layouts?: Layout[];
   photoshootDate?: string;
+  isPostingConsentGranted?: boolean;
 };
 
 const PhotoshootRequestsTable = () => {
@@ -185,6 +188,7 @@ const PhotoshootRequestsTable = () => {
                   <TableHead className="text-white text-center">Layout</TableHead>
                   <TableHead className="text-white text-center">Test Designs</TableHead>
                   <TableHead className="text-white text-center">Final Program Designs</TableHead>
+                  <TableHead className="text-white text-center">Posting Consent</TableHead>
                   <TableHead className="text-white text-center">Set Photoshoot Date</TableHead>
                   <TableHead className="text-white text-center">Action</TableHead>
                 </TableRow>
@@ -225,6 +229,14 @@ const PhotoshootRequestsTable = () => {
                           {layout?.finalProgrammedLogo?.map((f, i) => f?.url && <Image key={i} src={f.url} alt="Final Logo" width={40} height={40} className="rounded-md cursor-pointer" onClick={() => setImageInView(f.url)} />)}
                           {layout?.finalProgrammedBackDesign?.map((f, i) => f?.url && <Image key={i} src={f.url} alt="Final Back Design" width={40} height={40} className="rounded-md cursor-pointer" onClick={() => setImageInView(f.url)} />)}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className={cn(
+                          "font-bold",
+                          lead.isPostingConsentGranted ? "text-green-600" : "text-red-600"
+                        )}>
+                          {lead.isPostingConsentGranted ? 'Yes' : 'No'}
+                        </span>
                       </TableCell>
                       <TableCell className="text-center">
                         <Input
