@@ -32,6 +32,7 @@ import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { formatDateTime } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
 
 type AdImage = {
   name: string;
@@ -321,3 +322,5 @@ function DailyAdsPage() {
 }
 
 export default DailyAdsPage;
+
+    
