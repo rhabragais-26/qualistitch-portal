@@ -43,6 +43,7 @@ import {
   CalendarIcon,
   Camera,
   Gift,
+  Newspaper,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -337,6 +338,10 @@ const HeaderMemo = React.memo(function Header({
                     <DropdownMenuItem onClick={() => handleNavigation('/marketing/photoshoot-requests')}>
                       <Camera className="mr-2" />
                       Photoshoot Request for Orders
+                    </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => handleNavigation('/marketing/daily-ads')}>
+                      <Newspaper className="mr-2" />
+                      Daily Ads
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleNavigation('/marketing/campaigns')}>
                       <Ticket className="mr-2" />
