@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
@@ -17,8 +18,8 @@ import { useFormContext } from 'react-hook-form';
 import { QuotationFormValues, type Order } from '@/lib/form-schemas';
 import { getStorage, ref, getDownloadURL } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
-import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
+import { PreviewQuotationDialog } from './preview-quotation-dialog';
 
 type QuotationSummaryProps = {
   orders: Order[];
@@ -44,6 +45,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
     
     const [quotationNumber, setQuotationNumber] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const firestore = useFirestore();
     const pricingConfigRef = useMemoFirebase(
@@ -60,6 +62,18 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
     const handleSaveQuotation = async () => {
         if (!firestore) return;
         setIsSaving(true);
+        
+        // If a quotation number already exists, we assume we are "updating".
+        if (quotationNumber) {
+            toast({
+                title: "Quotation Updated",
+                description: `Changes for Quotation No. ${quotationNumber} have been saved.`,
+            });
+            setIsSaving(false);
+            return;
+        }
+
+        // If no quotation number exists, generate a new one.
         const today = new Date();
         const datePrefix = format(today, 'yyMMdd');
         const counterRef = doc(firestore, 'counters', `quotation_${datePrefix}`);
@@ -109,58 +123,8 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
     }, [app]);
 
     const handleCopyToClipboard = useCallback(() => {
-        if (!quotationRef.current || isCopying) {
-            return;
-        }
-
-        setIsCopying(true);
-        
-        html2canvas(quotationRef.current, {
-            useCORS: true,
-            scale: 2, 
-        }).then((canvas) => {
-            canvas.toBlob((blob) => {
-                if (blob) {
-                    navigator.clipboard.write([
-                        new ClipboardItem({ 'image/png': blob })
-                    ]).then(() => {
-                        toast({
-                            title: 'Copied to clipboard!',
-                            description: 'The quotation has been copied as an image.',
-                        });
-                    }).catch(err => {
-                        console.error('Failed to copy to clipboard:', err);
-                        let description = 'Could not copy image to clipboard. Please try again.';
-                        if (err instanceof Error && err.name === 'NotAllowedError') {
-                            description = 'Clipboard access was denied. Please make sure the browser window is focused and grant permission when prompted.';
-                        }
-                        toast({
-                            variant: 'destructive',
-                            title: 'Copy Failed',
-                            description: description,
-                        });
-                    }).finally(() => {
-                        setIsCopying(false);
-                    });
-                } else {
-                     toast({
-                        variant: 'destructive',
-                        title: 'Image Generation Failed',
-                        description: 'Could not create an image blob for copying.',
-                    });
-                    setIsCopying(false);
-                }
-            }, 'image/png');
-        }).catch(err => {
-             console.error('Failed to generate canvas:', err);
-             toast({
-                variant: 'destructive',
-                title: 'Image Generation Failed',
-                description: 'Could not generate the image for copying. Please try again.',
-            });
-            setIsCopying(false);
-        });
-    }, [isCopying, toast]);
+       setIsPreviewOpen(true);
+    }, []);
 
 
     const groupedOrders = useMemo(() => {
@@ -192,9 +156,9 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
             <CardHeader className="flex flex-row justify-between items-center no-print">
                 <CardTitle>Quotation Preview</CardTitle>
                 <div className="flex items-center gap-2">
-                    <Button onClick={handleSaveQuotation} disabled={isSaving || !!quotationNumber}>
+                    <Button onClick={handleSaveQuotation} disabled={isSaving || orders.length === 0}>
                         <Save className="mr-2 h-4 w-4" />
-                        {isSaving ? 'Saving...' : (quotationNumber ? 'Saved' : 'Save')}
+                        {isSaving ? 'Saving...' : (quotationNumber ? 'Save Changes' : 'Save Quotation')}
                     </Button>
                     <Button onClick={handleCopyToClipboard} disabled={isCopying}>
                         <ClipboardCopy className="mr-2 h-4 w-4" />
@@ -205,19 +169,19 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
             <CardContent>
                  <div className="printable-quotation" id="quotation-content">
                     <div ref={quotationRef} className="bg-white">
-                        <div className="p-8">
+                        <div className="p-4">
                             <header className="flex justify-between items-start">
                                 <div>
-                                    <h2 className="font-bold text-2xl">BURDA PINAS</h2>
-                                    <p className="text-sm text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
-                                    <div className="text-xs mt-2 space-y-px">
+                                    <h2 className="font-bold text-lg">BURDA PINAS</h2>
+                                    <p className="text-xs text-gray-500">Owned and Operated by: QUALISTITCH INCORPORATED</p>
+                                    <div className="text-[10px] mt-2 space-y-px">
                                         <p><span className="font-bold">Address:</span> 005 Holy Family Subdivision, Silangan, San Mateo, Rizal, Philippines 1850</p>
                                         <p><span className="font-bold">Mobile No:</span> 0966-278-2437 | 0956-204-1950 | 0956-204-1919</p>
                                         <p><span className="font-bold">Landline No:</span> (02) 8716-5814</p>
                                         <p><span className="font-bold">VAT Reg. TIN:</span> 675-385-158-00000</p>
                                     </div>
                                 </div>
-                                <div className="relative h-28 w-28">
+                                <div className="relative h-24 w-24">
                                 {logoLoading ? (
                                         <Skeleton className="h-full w-full" />
                                     ) : logoUrl ? (
@@ -230,7 +194,7 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
 
                             <div className="flex justify-between items-center text-sm mt-4 mb-4">
                                 <div>
-                                    <h2 className="text-2xl font-bold">Quotation</h2>
+                                    <h2 className="text-xl font-bold">Quotation</h2>
                                     <div className="flex items-center gap-2 mt-4">
                                         <p className="font-bold">Customer:</p>
                                         {customerName ? (
@@ -252,10 +216,10 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-gray-200 border-b-2 border-gray-400">
-                                        <TableHead className="text-black font-bold py-2 px-3 text-[10px]">DETAILS</TableHead>
-                                        <TableHead className="text-center text-black font-bold py-2 px-3 text-[10px]">QTY</TableHead>
-                                        <TableHead className="text-right text-black font-bold py-2 px-3 text-[10px]">RATE</TableHead>
-                                        <TableHead className="text-right text-black font-bold py-2 px-3 text-[10px]">AMOUNT</TableHead>
+                                        <TableHead className="text-black font-bold py-1 px-3 text-[10px]">DETAILS</TableHead>
+                                        <TableHead className="text-center text-black font-bold py-1 px-3 text-[10px]">QTY</TableHead>
+                                        <TableHead className="text-right text-black font-bold py-1 px-3 text-[10px]">RATE</TableHead>
+                                        <TableHead className="text-right text-black font-bold py-1 px-3 text-[10px]">AMOUNT</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -359,7 +323,16 @@ export function QuotationSummary({ orders, orderType, addOns, discounts, grandTo
                         </div>
                     </div>
                 </div>
+                {isPreviewOpen && (
+                    <PreviewQuotationDialog 
+                        isOpen={isPreviewOpen}
+                        onClose={() => setIsPreviewOpen(false)}
+                        quotationContentRef={quotationRef}
+                    />
+                )}
             </CardContent>
         </Card>
     );
 }
+
+    
