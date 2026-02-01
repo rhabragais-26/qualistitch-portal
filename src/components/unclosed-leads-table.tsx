@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -26,7 +26,7 @@ import { Skeleton } from './ui/skeleton';
 const unclosedLeadSchema = z.object({
   id: z.string(),
   date: z.string(),
-  customerName: z.string().min(1, 'Customer name is required'),
+  customerName: z.string().nullable().optional().transform(v => v || ''),
   contactDetails: z.string().optional(),
   quantity: z.string().optional(),
   estimatedTotalAmount: z.string().optional(),
@@ -41,7 +41,11 @@ const unclosedLeadSchema = z.object({
   nextFollowUpDate: z.string().optional(),
   sces: z.string().min(1, 'SCES is required'),
   createdBy: z.string(),
+}).refine(data => data.customerName.length > 0, {
+    message: "Customer name is required",
+    path: ["customerName"],
 });
+
 
 type UnclosedLead = z.infer<typeof unclosedLeadSchema>;
 
@@ -223,7 +227,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
     { key: 'quotationSent', label: 'Quotation Sent' },
     { key: 'forSampleJacket', label: 'For Sample Jacket' },
     { key: 'forMeetUp', label: 'For Meet Up' },
-    { key: 'dateOfMeetUp', label: 'Date of Meet Up', format: (d: string) => d ? format(new Date(d), 'MM-dd-yyyy') : '' },
+    { key: 'dateOfMeetUp', label: 'Date of Meet Up' },
     { key: 'estimatedDateForDp', label: 'Est. Date for DP', format: (d: string) => d ? format(new Date(d), 'MM-dd-yyyy') : '' },
     { key: 'status', label: 'Status' },
     { key: 'remarks', label: 'Remarks' },
@@ -268,7 +272,7 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
                 leads.map(lead => (
                   <TableRow key={lead.id}>
                     {columns.map(col => (
-                      <TableCell key={col.key} className="p-1 text-center align-middle text-xs">
+                      <TableCell key={col.key} className="p-2 text-center align-middle text-xs">
                         {typeof lead[col.key as keyof UnclosedLead] === 'boolean' ? (
                           (lead[col.key as keyof UnclosedLead] ? <Check className="text-green-500 mx-auto" /> : <X className="text-red-500 mx-auto" />)
                         ) : col.key === 'dateOfMeetUp' ? (
