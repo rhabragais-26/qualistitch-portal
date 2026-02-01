@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -95,14 +94,14 @@ const LeadForm = ({ onSave, lead, onClose }: { onSave: (data: UnclosedLead) => v
   const formFields = [
     { name: "date", label: "Date", type: "date" },
     { name: "customerName", label: "Customer Name" },
-    { name: "contactDetails", label: "Contact Details" },
     { name: "quantity", label: "Quantity" },
+    { name: "contactDetails", label: "Contact Details" },
     { name: "estimatedTotalAmount", label: "Est. Total Amount" },
+    { name: "nextFollowUpDate", label: "Next Follow-up", type: "date" },
+    { name: "sces", label: "Sales Team" },
     { name: "dateOfMeetUp", label: "Date of Meetup", type: "date" },
     { name: "estimatedDateForDp", label: "Est. Date for DP", type: "date" },
     { name: "status", label: "Status" },
-    { name: "nextFollowUpDate", label: "Next Follow-up", type: "date" },
-    { name: "sces", label: "Sales Team" },
     { name: "remarks", label: "Remarks", type: "textarea" },
   ] as const;
 
@@ -243,17 +242,18 @@ export function UnclosedLeadsTable({ isReadOnly }: { isReadOnly: boolean }) {
     try {
       await deleteDoc(docRef);
       toast({ title: 'Lead deleted successfully!' });
-      setDeletingLead(null);
     } catch (e: any) {
       toast({ variant: 'destructive', title: 'Delete failed', description: e.message });
+    } finally {
+        setDeletingLead(null);
     }
   };
 
   const columns = [
     { key: 'date', label: 'Date', format: (d: string) => format(parseISO(d), 'MM-dd-yyyy') },
     { key: 'customerName', label: 'Customer Name' },
-    { key: 'contactDetails', label: 'Contact Details' },
     { key: 'quantity', label: 'Quantity' },
+    { key: 'contactDetails', label: 'Contact Details' },
     { key: 'estimatedTotalAmount', label: 'Est. Total Amount' },
     { key: 'layoutSent', label: 'Layout Sent' },
     { key: 'quotationSent', label: 'Quotation Sent' },
