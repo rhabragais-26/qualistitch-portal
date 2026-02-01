@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -12,6 +11,7 @@ import { format } from 'date-fns';
 import Image from 'next/image';
 import { ScrollArea } from './ui/scroll-area';
 import { Skeleton } from './ui/skeleton';
+import { formatDateTime } from '@/lib/utils';
 
 type AdImage = {
   name: string;
@@ -53,7 +53,7 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
   }, [dailyAds]);
 
   const allImages = useMemo(() => {
-    return todaysAds?.flatMap(ad => ad.images.map(img => ({...img, adAccount: ad.adAccount}))) || [];
+    return todaysAds?.flatMap(ad => ad.images.map(img => ({...img, adAccount: ad.adAccount, timestamp: ad.timestamp }))) || [];
   }, [todaysAds]);
 
 
@@ -144,8 +144,8 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
         </CardHeader>
         <CardContent className="p-4 flex-1 flex flex-col">
            {isLoading && (
-              <div className="grid grid-cols-3 gap-4">
-                {[...Array(9)].map((_, i) => <Skeleton key={i} className="h-40 w-full bg-gray-700" />)}
+              <div className="grid grid-cols-2 gap-4">
+                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-40 w-full bg-gray-700" />)}
               </div>
            )}
            {error && <p className="text-destructive text-center">Error loading ads: {error.message}</p>}
@@ -156,16 +156,14 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
                 </div>
             ) : (
                 <ScrollArea className="h-full modern-scrollbar pr-2">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                         {allImages.map((image, index) => (
                            <div key={index} className="space-y-1 group">
                              <div className="relative aspect-square w-full rounded-md overflow-hidden cursor-pointer" onClick={() => setImageInView(image.url)}>
                                 <Image src={image.url} alt={image.name} layout="fill" objectFit="cover" />
-                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <span className="text-white text-xs p-1 text-center">{image.name}</span>
-                                </div>
                              </div>
-                             <p className="text-xs text-center text-gray-400 truncate">{image.adAccount}</p>
+                             <p className="text-sm text-center text-white truncate font-semibold">{image.name}</p>
+                             <p className="text-xs text-center text-gray-400">{formatDateTime(image.timestamp).dateTimeShort}</p>
                            </div>
                         ))}
                     </div>
