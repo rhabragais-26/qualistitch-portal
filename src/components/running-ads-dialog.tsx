@@ -11,6 +11,7 @@ import { format, startOfDay, endOfDay } from 'date-fns';
 import Image from 'next/image';
 import { Skeleton } from './ui/skeleton';
 import { formatDateTime } from '@/lib/utils';
+import { ScrollArea } from './ui/scroll-area';
 
 type AdImage = {
   name: string;
@@ -47,7 +48,7 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
     );
   }, [firestore]);
 
-  const { data: dailyAds, isLoading, error } = useCollection<DailyAd>(dailyAdsQuery, undefined, { listen: false });
+  const { data: dailyAds, isLoading, error } = useCollection<DailyAd>(dailyAdsQuery);
 
   const allImages = useMemo(() => {
     return dailyAds?.flatMap(ad => ad.images.map(img => ({...img, adAccount: ad.adAccount, timestamp: ad.timestamp }))) || [];
@@ -139,7 +140,7 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent className="p-4 flex-1 flex flex-col">
+        <CardContent className="p-4 flex-1 flex flex-col min-h-0">
            {isLoading && (
               <div className="grid grid-cols-2 gap-4">
                 {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-40 w-full bg-gray-700" />)}
