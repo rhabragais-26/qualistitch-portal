@@ -192,6 +192,12 @@ type DigitizingTableProps = {
   filterType?: 'ONGOING' | 'COMPLETED';
 };
 
+type UserProfileInfo = {
+    uid: string;
+    nickname: string;
+    position: string;
+};
+
 const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: DigitizingTableProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -204,10 +210,21 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField | 'isJoHardcopyReceived'; } | null>(null);
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
+  const [assignedDigitizers, setAssignedDigitizers] = useState<Record<string, string>>({});
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
+  const { data: usersData, isLoading: areUsersLoading, error: usersError } = useCollection<UserProfileInfo>(usersQuery);
+
+  const isLoading = areLeadsLoading || areUsersLoading;
+  const error = leadsError || usersError;
+
+  const digitizers = useMemo(() => {
+    if (!usersData) return [];
+    return usersData.filter(user => user.position === 'Digitizer').sort((a,b) => a.nickname.localeCompare(b.nickname));
+  }, [usersData]);
 
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
   
@@ -251,6 +268,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [imageInView, setImageInView] = useState<string | null>(null);
   
   const isViewOnly = isReadOnly || filterType === 'COMPLETED';
+
+  const handleDigitizerChange = useCallback((leadId: string, digitizerNickname: string) => {
+    setAssignedDigitizers(prev => ({
+        ...prev,
+        [leadId]: digitizerNickname,
+    }));
+  }, []);
 
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
@@ -1282,6 +1306,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center whitespace-nowrap">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center">Overdue Status</TableHead>
+                    <TableHead className="text-white font-bold align-middle text-center">Digitizer</TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Initial Program</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Initial Approval</span></TableHead>
                     <TableHead className="text-white font-bold align-middle text-center w-[100px]"><span className="block w-[80px] break-words">Tested</span></TableHead>
@@ -1356,6 +1381,23 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                           !deadlineInfo.isOverdue && !deadlineInfo.isUrgent && "text-green-600"
                         )}>
                           {deadlineInfo.text}
+                        </TableCell>
+                        <TableCell className="text-center align-middle p-2">
+                            <Select
+                                value={assignedDigitizers[lead.id] || ''}
+                                onValueChange={(value) => handleDigitizerChange(lead.id, value)}
+                                disabled={isViewOnly}
+                            >
+                                <SelectTrigger className="w-[150px] text-xs h-8">
+                                    <SelectValue placeholder="Assign Digitizer" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="">Unassigned</SelectItem>
+                                    {digitizers.map(d => (
+                                        <SelectItem key={d.uid} value={d.nickname}>{d.nickname}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </TableCell>
                         <TableCell className="text-center align-middle p-2">
                           <div className="flex flex-col items-center justify-start h-full gap-1">
@@ -1473,7 +1515,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     </TableRow>
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
-                        <TableCell colSpan={14} className="p-0">
+                        <TableCell colSpan={15} className="p-0">
                            <div className="flex flex-wrap gap-4 p-4 items-start">
                                {(() => {
                                    const layout = lead.layouts?.[0];
