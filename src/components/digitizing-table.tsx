@@ -1383,7 +1383,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 onValueChange={(value) => handleDigitizerChange(lead.id, value)}
                                 disabled={isViewOnly}
                             >
-                                <SelectTrigger className="w-[140px] text-xs h-8">
+                                <SelectTrigger className="w-[140px] text-xs h-8 justify-center">
                                     <SelectValue placeholder="Assign Digitizer" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1511,10 +1511,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     {openLeadId === lead.id && (
                       <TableRow className="bg-gray-50">
                         <TableCell colSpan={15} className="p-0">
-                           <div className="flex flex-wrap gap-4 p-4 items-start">
-                               {(() => {
-                                   const layout = lead.layouts?.[0];
-                                   if (!layout) return null;
+                           <div className="flex justify-between items-start gap-4 p-4">
+                               <div className="flex flex-wrap gap-4 items-start">
+                                {(() => {
+                                    const layout = lead.layouts?.[0];
+                                    if (!layout) return null;
 
                                     const imageGroups = [
                                         {
@@ -1562,6 +1563,15 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                    return imageGroups.map(group => <ImageDisplayCard key={group.title} title={group.title} images={group.images} onImageClick={setImageInView} />);
                                })()}
                             </div>
+                            <div className="flex-shrink-0 self-center">
+                                <div className="space-y-2">
+                                    <h3 className="font-bold text-lg text-primary text-center">Job Order and Layout</h3>
+                                    <Button onClick={() => window.open(`/job-order/${lead.id}/print?view=true`, '_blank', 'width=1200,height=800,scrollbars=yes')} variant="default" size="lg" className="bg-primary text-white hover:bg-primary/90">
+                                        Check Job Order and Layout
+                                    </Button>
+                                </div>
+                            </div>
+                           </div>
                         </TableCell>
                       </TableRow>
                     )}
@@ -1599,4 +1609,5 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
         </Card>
     );
 };
+
 
