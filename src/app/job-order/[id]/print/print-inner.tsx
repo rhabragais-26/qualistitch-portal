@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useFirestore } from '@/firebase';
@@ -349,8 +348,8 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
           </div>
           
            {layout.layoutImage && (
-             <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
-                <Image src={layout.layoutImage} alt={`Layout ${layoutIndex + 1}`} layout="fill" objectFit="contain" />
+             <div className="w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
+                <img src={layout.layoutImage} alt={`Layout ${layoutIndex + 1}`} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
               </div>
             )}
           
