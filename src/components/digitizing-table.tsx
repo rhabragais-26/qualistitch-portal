@@ -770,7 +770,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   }, [uncheckConfirmation, updateStatus, toast]);
 
   const handleImageUpload = useCallback((file: File | null, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    if (isViewOnly || !file) return;
+    if (!canEdit || !file) return;
     if (file) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -784,15 +784,15 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         };
         reader.readAsDataURL(file);
     }
-  }, [isViewOnly]);
+  }, [canEdit]);
   
   const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    if (isViewOnly) return;
+    if (!canEdit) return;
     const file = event.clipboardData.files[0];
     if (file && file.type.startsWith('image/')) {
         handleImageUpload(file, setter, index);
     }
-  }, [isViewOnly, handleImageUpload]);
+  }, [canEdit, handleImageUpload]);
   
   const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number) => {
       const file = event.target.files?.[0];
@@ -825,19 +825,19 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   }, []);
 
   const handleClearImage = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    if (isViewOnly) return;
+    if (!canEdit) return;
     setter(prev => {
         const newImages = [...prev];
         newImages[index] = null;
         return newImages;
     });
-  }, [isViewOnly]);
+  }, [canEdit]);
 
   const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
-    if (isViewOnly) return;
+    if (!canEdit) return;
     e.stopPropagation();
     setter(prev => prev.filter((_, i) => i !== index));
-  }, [isViewOnly]);
+  }, [canEdit]);
 
 
   const handleConfirmReview = useCallback(async () => {
@@ -964,7 +964,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 </Button>
                             )}
                           </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{!isViewOnly ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
-                          <input id={`file-input-digitizing-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} disabled={isViewOnly}/>
+                          <input id={`file-input-digitizing-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} disabled={!isViewOnly}/>
                       </div>
                       {!isViewOnly && index > 0 && (
                           <Button
@@ -1373,11 +1373,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         </TableCell>
                         <TableCell className="text-center align-middle p-2">
                             <Select
-                                value={assignedDigitizers[lead.id] || ''}
+                                value={assignedDigitizers[lead.id] || 'unassigned'}
                                 onValueChange={(value) => handleDigitizerChange(lead.id, value)}
                                 disabled={isViewOnly}
                             >
-                                <SelectTrigger className="w-[140px] text-xs h-8">
+                                <SelectTrigger className="w-[140px] text-xs h-8 justify-center">
                                     <SelectValue placeholder="Assign Digitizer" />
                                 </SelectTrigger>
                                 <SelectContent>
