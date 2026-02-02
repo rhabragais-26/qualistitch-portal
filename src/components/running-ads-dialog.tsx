@@ -140,21 +140,21 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent className="p-4 flex-1 flex flex-col min-h-0">
+        <CardContent className="p-0 flex-1 flex flex-col min-h-0">
            {isLoading && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 p-4">
                 {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-40 w-full bg-gray-700" />)}
               </div>
            )}
-           {error && <p className="text-destructive text-center">Error loading ads: {error.message}</p>}
+           {error && <p className="text-destructive text-center p-4">Error loading ads: {error.message}</p>}
            {!isLoading && !error && (
             allImages.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center">
+                <div className="flex-1 flex items-center justify-center p-4">
                     <p className="text-gray-400">No ads running today.</p>
                 </div>
             ) : (
-                <div className="h-full modern-scrollbar pr-2 overflow-y-auto">
-                    <div className="grid grid-cols-2 gap-4">
+                <ScrollArea className="h-full modern-scrollbar">
+                    <div className="grid grid-cols-2 gap-4 p-4">
                         {allImages.map((image, index) => (
                            <div key={index} className="space-y-1 group">
                              <div className="relative aspect-square w-full rounded-md overflow-hidden cursor-pointer" onClick={() => setImageInView(image.url)}>
@@ -165,7 +165,7 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
                            </div>
                         ))}
                     </div>
-                </div>
+                </ScrollArea>
             )
            )}
         </CardContent>
