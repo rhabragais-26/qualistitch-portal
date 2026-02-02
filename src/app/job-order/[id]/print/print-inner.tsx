@@ -76,6 +76,12 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const imageRefs = useRef<(HTMLImageElement | null)[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
 
   useEffect(() => {
     let isMounted = true;
@@ -150,7 +156,7 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
   }, [firestore, _id, error, isViewOnly]);
 
   useEffect(() => {
-    if (isLoading || !lead || isViewOnly) {
+    if (!isMounted || isLoading || !lead || isViewOnly) {
       return;
     }
   
@@ -182,10 +188,10 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
     Promise.all(imagePromises).then(() => {
         setTimeout(print, 100);
     });
-  }, [isLoading, lead, isViewOnly]);
+  }, [isMounted, isLoading, lead, isViewOnly]);
 
 
-  if (isLoading || !lead) {
+  if (!isMounted || isLoading || !lead) {
     return (
       <div className="p-10 bg-white">
         <Skeleton className="h-10 w-1/4 mb-4" />
@@ -466,3 +472,4 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
     </div>
   );
 }
+
