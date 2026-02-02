@@ -203,7 +203,7 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
     return <div className="text-red-500 p-10">Error loading lead: {error.message}</div>;
   }
   
-  const joNumber = lead.joNumber ? `QSBP-${new Date().getFullYear().toString().slice(-2)}-${lead.joNumber.toString().padStart(5, '0')}` : 'Not Saved';
+  const joNumber = lead.joNumber ? `QSBP-${new Date(lead.submissionDateTime).getFullYear().toString().slice(-2)}-${lead.joNumber.toString().padStart(5, '0')}` : 'Not Saved';
   const deliveryDate = lead.deliveryDate ? format(new Date(lead.deliveryDate), "MMM dd, yyyy") : format(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22), "MMM dd, yyyy");
   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
 
