@@ -9,7 +9,6 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import Image from 'next/image';
-import { ScrollArea } from './ui/scroll-area';
 import { Skeleton } from './ui/skeleton';
 import { formatDateTime } from '@/lib/utils';
 
@@ -153,7 +152,7 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
                     <p className="text-gray-400">No ads running today.</p>
                 </div>
             ) : (
-                <ScrollArea className="h-full modern-scrollbar pr-2">
+                <div className="h-full modern-scrollbar pr-2 overflow-y-auto">
                     <div className="grid grid-cols-2 gap-4">
                         {allImages.map((image, index) => (
                            <div key={index} className="space-y-1 group">
@@ -165,7 +164,7 @@ export function RunningAdsDialog({ onClose, onDraggingChange }: { onClose: () =>
                            </div>
                         ))}
                     </div>
-                </ScrollArea>
+                </div>
             )
            )}
         </CardContent>
