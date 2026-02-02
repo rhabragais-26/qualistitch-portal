@@ -155,7 +155,7 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
     }
   
     const print = () => {
-      setTimeout(() => window.print(), 300);
+      window.print();
     };
 
     const checkImagesTimer = setTimeout(() => {
