@@ -158,32 +158,30 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
       window.print();
     };
 
-    const checkImagesTimer = setTimeout(() => {
-        const imagesToLoad = imageRefs.current.filter((img): img is HTMLImageElement => img !== null);
+    const imagesToLoad = imageRefs.current.filter((img): img is HTMLImageElement => img !== null);
   
-        if (imagesToLoad.length === 0) {
-            print();
-            return;
-        }
+    if (imagesToLoad.length === 0) {
+        print();
+        return;
+    }
   
-        const imagePromises = imagesToLoad.map(img => {
-            return new Promise<void>((resolve) => {
-                if (img.complete && img.naturalHeight !== 0) {
+    const imagePromises = imagesToLoad.map(img => {
+        return new Promise<void>((resolve) => {
+            if (img.complete && img.naturalHeight !== 0) {
+                resolve();
+            } else {
+                img.onload = () => resolve();
+                img.onerror = () => {
+                    console.error(`Image failed to load for printing: ${img.src}`);
                     resolve();
-                } else {
-                    img.onload = () => resolve();
-                    img.onerror = () => {
-                        console.error(`Image failed to load for printing: ${img.src}`);
-                        resolve();
-                    };
-                }
-            });
+                };
+            }
         });
+    });
   
-        Promise.all(imagePromises).then(print);
-    }, 100);
-
-    return () => clearTimeout(checkImagesTimer);
+    Promise.all(imagePromises).then(() => {
+        setTimeout(print, 100);
+    });
   }, [isLoading, lead, isViewOnly]);
 
 
@@ -385,7 +383,6 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
                     src={layout.layoutImage} 
                     alt={`Layout ${layoutIndex + 1}`} 
                     style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                    crossOrigin="anonymous"
                 />
               </div>
             )}
