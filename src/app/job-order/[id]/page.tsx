@@ -971,15 +971,6 @@
 
                     const imageGroups = [
                         {
-                            title: 'Reference Images',
-                            images: [
-                                ...(currentLayout.refLogoLeftImages || []).map((img, i) => ({ ...img, label: `Logo Left ${i + 1}`, src: img.url })),
-                                ...(currentLayout.refLogoRightImages || []).map((img, i) => ({ ...img, label: `Logo Right ${i + 1}`, src: img.url })),
-                                ...(currentLayout.refBackLogoImages || []).map((img, i) => ({ ...img, label: `Back Logo ${i + 1}`, src: img.url })),
-                                ...(currentLayout.refBackDesignImages || []).map((img, i) => ({ ...img, label: `Back Design ${i + 1}`, src: img.url })),
-                            ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
-                        },
-                        {
                             title: 'Initial Program Images',
                             images: [
                                 ...((currentLayout as any).logoLeftImages || []).map((img: any, i: number) => ({ src: img.url, label: `Logo Left ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
@@ -1111,4 +1102,3 @@
     </div>
   );
 }
-
