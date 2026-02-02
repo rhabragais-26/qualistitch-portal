@@ -23,7 +23,7 @@ import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X, Download } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
-import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
+import { cn, formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { Checkbox } from './ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
@@ -281,7 +281,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
     if (mobile && landline) {
-      return `${mobile} / ${landline}`;
+      return `${''}${mobile} / ${landline}${''}`;
     }
     return mobile || landline || null;
   }, []);
@@ -976,80 +976,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       </div>
     );
   };
-  
-  const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number) => {
-      const file = event.target.files?.[0];
-      if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-              if (e.target?.result) {
-                  const newFiles = [...filesState];
-                  newFiles[index] = { name: file.name, url: e.target.result as string };
-                  setFilesState(newFiles);
-              }
-          };
-          reader.readAsDataURL(file);
-      }
-  }, []);
-
-
-  const addFile = useCallback((filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>) => {
-    setFilesState([...filesState, null]);
-  }, []);
-
-  const removeFile = useCallback((filesState: (FileObject | null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
-    const newFiles = [...filesState];
-    newFiles.splice(index, 1);
-    setFilesState(newFiles);
-
-    const newRefs = [...refs.current];
-    newRefs.splice(index, 1);
-    refs.current = newRefs;
-    
-    if(refs.current[index]) {
-        refs.current[index]!.value = '';
-    }
-  }, []);
-
-  const renderMultipleFileUpload = (label: string, files: (FileObject | null)[], setFiles: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]> ) => {
-    return (
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2">{label}
-          <Button type="button" size="icon" variant="ghost" className="h-5 w-5" onClick={() => addFile(files, setFiles)}>
-            <PlusCircle className="h-4 w-4" />
-          </Button>
-        </Label>
-        {files.map((file, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 justify-start overflow-hidden"
-              onClick={() => refs.current[index]?.click()}
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              <span className="truncate">{file?.name || 'Upload File'}</span>
-            </Button>
-            <input
-              type="file"
-              ref={el => refs.current[index] = el}
-              className="hidden"
-              onChange={(e) => handleMultipleFileUpload(e, files, setFiles, index)}
-            />
-            {index > 0 && <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="text-destructive h-8 w-8"
-              onClick={() => removeFile(files, setFiles, index, refs)}
-            >
-              <X className="h-4 w-4" />
-            </Button>}
-          </div>
-        ))}
-      </div>
-    )
-  }
 
   const renderUploadDialogContent = useCallback(() => {
     if (!uploadField || !uploadLeadId) return null;
@@ -1356,15 +1282,15 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 {displayedLeads.map((lead) => {
                   const deadlineInfo = calculateDigitizingDeadline(lead);
                   const isRepeat = lead.orderNumber > 1;
-                  const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)"];
+                  const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)", "Item Sample"];
                   
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
                       <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
                          <div className="flex items-center justify-center">
-                            <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
-                                {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-5 px-1 mr-1">
+                                {openLeadId === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                             </Button>
                             <div className='flex flex-col items-center'>
                                 <span className="font-medium">{toTitleCase(lead.customerName)}</span>
@@ -1387,7 +1313,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                   ) : (
                                     <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                                   )}
-                                {openCustomerDetails === lead.id && (
+                                {openLeadId === lead.id && (
                                     <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
                                     {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
                                     {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
