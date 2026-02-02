@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -152,6 +151,8 @@ const HeaderMemo = React.memo(function Header({
   const announcementPositions: UserPosition[] = ["CEO", "Sales Manager", "Operations Manager", "HR", "Finance"];
   const canSendAnnouncement = isAdmin || (userProfile && announcementPositions.includes(userProfile.position as UserPosition));
 
+  const canViewFinance = isAdmin || userProfile?.position === 'CEO' || userProfile?.position === 'Finance';
+
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -283,41 +284,43 @@ const HeaderMemo = React.memo(function Header({
           <nav className="flex items-end gap-2 h-full flex-1">
             {isClient && (
               <>
-                <DropdownMenu open={openMenu === 'finance'} onOpenChange={(isOpen) => handleMenuOpenChange('finance', isOpen)}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/finance']))}>
-                      <Banknote className="mr-2" />
-                      Finance
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                     <DropdownMenuItem onClick={() => handleNavigation('/finance/cash-inflows')}>
-                      <Banknote className="mr-2" />
-                      Cash Inflows
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigation('/finance/receivables')}>
-                      <Receipt className="mr-2" />
-                      Receivables
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigation('/finance/operational-expenses')}>
-                      <FileText className="mr-2" />
-                      Operational Expenses
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigation('/finance/cost-of-goods')}>
-                      <ShoppingCart className="mr-2" />
-                      Cost of Goods
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigation('/finance/capital-expenses')}>
-                      <Building className="mr-2" />
-                      Capital Expenses
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleNavigation('/finance/dashboard')}>
-                      <LayoutDashboard className="mr-2" />
-                      Dashboard
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {canViewFinance && (
+                  <DropdownMenu open={openMenu === 'finance'} onOpenChange={(isOpen) => handleMenuOpenChange('finance', isOpen)}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/finance']))}>
+                        <Banknote className="mr-2" />
+                        Finance
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                       <DropdownMenuItem onClick={() => handleNavigation('/finance/cash-inflows')}>
+                        <Banknote className="mr-2" />
+                        Cash Inflows
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleNavigation('/finance/receivables')}>
+                        <Receipt className="mr-2" />
+                        Receivables
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleNavigation('/finance/operational-expenses')}>
+                        <FileText className="mr-2" />
+                        Operational Expenses
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleNavigation('/finance/cost-of-goods')}>
+                        <ShoppingCart className="mr-2" />
+                        Cost of Goods
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleNavigation('/finance/capital-expenses')}>
+                        <Building className="mr-2" />
+                        Capital Expenses
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleNavigation('/finance/dashboard')}>
+                        <LayoutDashboard className="mr-2" />
+                        Dashboard
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
                 <DropdownMenu open={openMenu === 'marketing'} onOpenChange={(isOpen) => handleMenuOpenChange('marketing', isOpen)}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className={cn("h-10 rounded-t-md rounded-b-none px-4 font-bold", getActiveMenuClass(['/marketing']))}>
