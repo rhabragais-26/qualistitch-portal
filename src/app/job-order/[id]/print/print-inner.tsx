@@ -154,31 +154,36 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
       return;
     }
   
-    const imagesToLoad = imageRefs.current.filter((img): img is HTMLImageElement => img !== null);
-    
     const print = () => {
-        setTimeout(() => window.print(), 200); 
+      setTimeout(() => window.print(), 300);
     };
 
-    if (imagesToLoad.length === 0) {
-      print();
-      return;
-    }
-    
-    const imagePromises = imagesToLoad.map(img => {
-      if (img.complete) return Promise.resolve();
-      return new Promise<void>((resolve) => {
-        img.onload = () => resolve();
-        img.onerror = () => {
-          console.error(`Image failed to load: ${img.src}`);
-          resolve(); // Resolve anyway so we can still print
-        };
-        setTimeout(() => resolve(), 5000); // 5-second timeout as a fallback
-      });
-    });
+    const checkImagesTimer = setTimeout(() => {
+        const imagesToLoad = imageRefs.current.filter((img): img is HTMLImageElement => img !== null);
+  
+        if (imagesToLoad.length === 0) {
+            print();
+            return;
+        }
+  
+        const imagePromises = imagesToLoad.map(img => {
+            return new Promise<void>((resolve) => {
+                if (img.complete && img.naturalHeight !== 0) {
+                    resolve();
+                } else {
+                    img.onload = () => resolve();
+                    img.onerror = () => {
+                        console.error(`Image failed to load for printing: ${img.src}`);
+                        resolve();
+                    };
+                }
+            });
+        });
+  
+        Promise.all(imagePromises).then(print);
+    }, 100);
 
-    Promise.all(imagePromises).then(print);
-
+    return () => clearTimeout(checkImagesTimer);
   }, [isLoading, lead, isViewOnly]);
 
 
@@ -367,8 +372,7 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
         </div>
       </div>
 
-       {/* Layout Pages */}
-      {layoutsToPrint.map((layout, layoutIndex) => (
+       {layoutsToPrint.map((layout, layoutIndex) => (
         <div key={layout.id || `layout-${layoutIndex}`} className="p-10 mx-auto max-w-4xl printable-area print-page">
           <div className="text-left mb-4">
               <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{joNumber}</span> - Layout {layoutIndex + 1}</p>
