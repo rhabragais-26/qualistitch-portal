@@ -7,8 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { format, addDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
-import Image from 'next/image';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { toTitleCase } from '@/lib/utils';
 
 
@@ -76,6 +75,7 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
   const [lead, setLead] = useState<Lead | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const imageRefs = useRef<(HTMLImageElement | null)[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -118,28 +118,22 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
 
       return null;
     };
-
-    const runPrintFlow = async () => {
-      const leadData = await fetchLeadData();
-      if (isMounted) {
-        if (leadData) {
-          setLead(leadData);
-          setIsLoading(false);
-          if (!isViewOnly) setTimeout(() => window.print(), 500);
-        } else {
-          setIsLoading(false);
-          if (!error) {
-            setError(
-              new Error(
-                'Job order data could not be loaded for printing. Please close this tab and try again.'
-              )
-            );
-          }
+    
+    const runDataFlow = async () => {
+        const leadData = await fetchLeadData();
+        if(isMounted) {
+            if (leadData) {
+                setLead(leadData);
+            } else {
+                if (!error) {
+                    setError(new Error('Job order data could not be loaded for printing.'));
+                }
+            }
+            setIsLoading(false);
         }
-      }
     };
 
-    runPrintFlow();
+    runDataFlow();
 
     const handleAfterPrint = () => {
       if (_id) localStorage.removeItem(`job-order-${_id}`);
@@ -154,6 +148,39 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
       if (_id) localStorage.removeItem(`job-order-${_id}`);
     };
   }, [firestore, _id, error, isViewOnly]);
+
+  useEffect(() => {
+    if (isLoading || !lead || isViewOnly) {
+      return;
+    }
+  
+    const imagesToLoad = imageRefs.current.filter((img): img is HTMLImageElement => img !== null);
+    
+    const print = () => {
+        setTimeout(() => window.print(), 200); 
+    };
+
+    if (imagesToLoad.length === 0) {
+      print();
+      return;
+    }
+    
+    const imagePromises = imagesToLoad.map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        img.onload = () => resolve();
+        img.onerror = () => {
+          console.error(`Image failed to load: ${img.src}`);
+          resolve(); // Resolve anyway so we can still print
+        };
+        setTimeout(() => resolve(), 5000); // 5-second timeout as a fallback
+      });
+    });
+
+    Promise.all(imagePromises).then(print);
+
+  }, [isLoading, lead, isViewOnly]);
+
 
   if (isLoading || !lead) {
     return (
@@ -349,7 +376,13 @@ export default function JobOrderPrintPage({ id: _id }: { id: string }) {
           
            {layout.layoutImage && (
              <div className="w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
-                <img src={layout.layoutImage} alt={`Layout ${layoutIndex + 1}`} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                <img 
+                    ref={el => { imageRefs.current[layoutIndex] = el; }}
+                    src={layout.layoutImage} 
+                    alt={`Layout ${layoutIndex + 1}`} 
+                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                    crossOrigin="anonymous"
+                />
               </div>
             )}
           
