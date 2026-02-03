@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -62,14 +63,17 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
   
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
 
+  const [editedUnitPrices, setEditedUnitPrices] = useState<Record<string, number>>({});
+  const [editingUnitPriceKey, setEditingUnitPriceKey] = useState<string | null>(null);
+  
+  const [editedAddOnPrices, setEditedAddOnPrices] = useState<Record<string, number>>({});
+  const [editingAddOnPriceKey, setEditingAddOnPriceKey] = useState<string | null>(null);
+
   const lastAddedPayment = useMemo(() => {
     // Only consider a payment editable if it was just added in this session.
     const allPayments = Object.values(payments).flat();
     return allPayments.find(p => p.isNew);
   }, [payments]);
-
-  const [editedUnitPrices, setEditedUnitPrices] = useState<Record<string, number>>({});
-  const [editingUnitPriceKey, setEditingUnitPriceKey] = useState<string | null>(null);
 
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
@@ -117,6 +121,29 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     }
     setEditingUnitPriceKey(null);
   };
+  
+  const handleAddOnPriceChange = (key: string, newPrice: number) => {
+    setEditedAddOnPrices(prev => ({
+        ...prev,
+        [key]: newPrice,
+    }));
+  };
+
+  const handleEditAddOnPrice = (key: string) => {
+      if (!isReadOnly) {
+          setEditingAddOnPriceKey(key);
+      }
+  };
+
+  const handleStopEditingAddOnPrice = (key: string, e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>) => {
+      const rawValue = (e.target as HTMLInputElement).value;
+      const sanitizedValue = rawValue.replace(/[₱,]/g, '');
+      const numericValue = parseFloat(sanitizedValue);
+      if (!isNaN(numericValue)) {
+        handleAddOnPriceChange(key, numericValue);
+      }
+      setEditingAddOnPriceKey(null);
+  };
 
 
   const grandTotal = useMemo(() => {
@@ -143,10 +170,14 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, ...(addOns[groupKey] || {}) };
       const groupDiscount = discounts[groupKey];
       const itemTotalQuantity = groupData.totalQuantity;
+      
+      const backLogoPriceKey = `${groupKey}-backLogo`;
+      const namesPriceKey = `${groupKey}-names`;
+      const plusSizePriceKey = `${groupKey}-plusSize`;
 
-      const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity, pricingConfig);
-      const namesPrice = getAddOnPrice('names', itemTotalQuantity, pricingConfig);
-      const plusSizePrice = getAddOnPrice('plusSize', itemTotalQuantity, pricingConfig);
+      const backLogoPrice = editedAddOnPrices[backLogoPriceKey] ?? getAddOnPrice('backLogo', itemTotalQuantity, pricingConfig);
+      const namesPrice = editedAddOnPrices[namesPriceKey] ?? getAddOnPrice('names', itemTotalQuantity, pricingConfig);
+      const plusSizePrice = editedAddOnPrices[plusSizePriceKey] ?? getAddOnPrice('plusSize', itemTotalQuantity, pricingConfig);
 
       subtotal += (groupAddOns.backLogo || 0) * backLogoPrice;
       subtotal += (groupAddOns.names || 0) * namesPrice;
@@ -170,7 +201,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       total += subtotal;
     });
     return total;
-  }, [groupedOrders, addOns, discounts, orderType, removedFees, pricingConfig, editedUnitPrices]);
+  }, [groupedOrders, addOns, discounts, orderType, removedFees, pricingConfig, editedUnitPrices, editedAddOnPrices]);
   
   const totalPaid = useMemo(() => {
     return Object.values(payments).flat().reduce((sum, payment) => sum + payment.amount, 0);
@@ -256,9 +287,13 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const groupDiscount = discounts[groupKey];
                 const itemTotalQuantity = groupData.totalQuantity;
 
-                const backLogoPrice = getAddOnPrice('backLogo', itemTotalQuantity, pricingConfig);
-                const namesPrice = getAddOnPrice('names', itemTotalQuantity, pricingConfig);
-                const plusSizePrice = getAddOnPrice('plusSize', itemTotalQuantity, pricingConfig);
+                const backLogoPriceKey = `${groupKey}-backLogo`;
+                const namesPriceKey = `${groupKey}-names`;
+                const plusSizePriceKey = `${groupKey}-plusSize`;
+
+                const backLogoPrice = editedAddOnPrices[backLogoPriceKey] ?? getAddOnPrice('backLogo', itemTotalQuantity, pricingConfig);
+                const namesPrice = editedAddOnPrices[namesPriceKey] ?? getAddOnPrice('names', itemTotalQuantity, pricingConfig);
+                const plusSizePrice = editedAddOnPrices[plusSizePriceKey] ?? getAddOnPrice('plusSize', itemTotalQuantity, pricingConfig);
 
                 const backLogoTotal = (groupAddOns.backLogo || 0) * backLogoPrice;
                 const namesTotal = (groupAddOns.names || 0) * namesPrice;
@@ -351,7 +386,28 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     </div>
                                 </TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(backLogoPrice)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">
+                                    {editingAddOnPriceKey === backLogoPriceKey ? (
+                                        <div className="relative flex items-center justify-center">
+                                            <span className="absolute left-3 text-muted-foreground">₱</span>
+                                            <Input
+                                                type="text"
+                                                defaultValue={backLogoPrice ? new Intl.NumberFormat('en-US').format(backLogoPrice) : ''}
+                                                autoFocus
+                                                onBlur={(e) => handleStopEditingAddOnPrice(backLogoPriceKey, e)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') handleStopEditingAddOnPrice(backLogoPriceKey, e);
+                                                    if (e.key === 'Escape') setEditingAddOnPriceKey(null);
+                                                }}
+                                                className="w-24 h-7 text-xs pl-6 text-center"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div onDoubleClick={() => handleEditAddOnPrice(backLogoPriceKey)} className="cursor-pointer p-1 rounded-md hover:bg-gray-200">
+                                            {formatCurrency(backLogoPrice || 0)}
+                                        </div>
+                                    )}
+                                </TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.backLogo}</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
                                     {formatCurrency(backLogoTotal)}
@@ -369,7 +425,28 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     </div>
                                 </TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(namesPrice)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">
+                                    {editingAddOnPriceKey === namesPriceKey ? (
+                                        <div className="relative flex items-center justify-center">
+                                            <span className="absolute left-3 text-muted-foreground">₱</span>
+                                            <Input
+                                                type="text"
+                                                defaultValue={namesPrice ? new Intl.NumberFormat('en-US').format(namesPrice) : ''}
+                                                autoFocus
+                                                onBlur={(e) => handleStopEditingAddOnPrice(namesPriceKey, e)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') handleStopEditingAddOnPrice(namesPriceKey, e);
+                                                    if (e.key === 'Escape') setEditingAddOnPriceKey(null);
+                                                }}
+                                                className="w-24 h-7 text-xs pl-6 text-center"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div onDoubleClick={() => handleEditAddOnPrice(namesPriceKey)} className="cursor-pointer p-1 rounded-md hover:bg-gray-200">
+                                            {formatCurrency(namesPrice || 0)}
+                                        </div>
+                                    )}
+                                </TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.names}</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
                                      {formatCurrency(namesTotal)}
@@ -387,7 +464,28 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     </div>
                                 </TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle"></TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(plusSizePrice)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">
+                                    {editingAddOnPriceKey === plusSizePriceKey ? (
+                                        <div className="relative flex items-center justify-center">
+                                            <span className="absolute left-3 text-muted-foreground">₱</span>
+                                            <Input
+                                                type="text"
+                                                defaultValue={plusSizePrice ? new Intl.NumberFormat('en-US').format(plusSizePrice) : ''}
+                                                autoFocus
+                                                onBlur={(e) => handleStopEditingAddOnPrice(plusSizePriceKey, e)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') handleStopEditingAddOnPrice(plusSizePriceKey, e);
+                                                    if (e.key === 'Escape') setEditingAddOnPriceKey(null);
+                                                }}
+                                                className="w-24 h-7 text-xs pl-6 text-center"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div onDoubleClick={() => handleEditAddOnPrice(plusSizePriceKey)} className="cursor-pointer p-1 rounded-md hover:bg-gray-200">
+                                            {formatCurrency(plusSizePrice || 0)}
+                                        </div>
+                                    )}
+                                </TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupAddOns.plusSize}</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
                                      {formatCurrency(plusSizeTotal)}
