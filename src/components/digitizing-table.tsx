@@ -251,7 +251,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
   const [finalProgrammedLogo, setFinalProgrammedLogo] = useState<(FileObject | null)[]>([null]);
   const [finalProgrammedBackDesign, setFinalProgrammedBackDesign] = useState<(FileObject | null)[]>([]);
-  const [isNamesOnly, setIsNamesOnly] = useState(false);
+  const [isNamesDstEnabled, setIsNamesDstEnabled] = useState(false);
 
 
   const finalLogoEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -607,6 +607,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             setTestBackLogoImages(getInitialImages((layout as any)?.testBackLogoImages, layout?.testBackLogoImage));
             setTestBackDesignImages(getInitialImages((layout as any)?.testBackDesignImages, layout?.testBackDesignImage));
         } else { // isFinalProgram
+          setIsNamesDstEnabled(!!layout?.finalNamesDst?.length);
           setFinalLogoEmb(layout?.finalLogoEmb?.length ? layout.finalLogoEmb : [null]);
           setFinalBackDesignEmb(layout?.finalBackDesignEmb?.length ? layout.finalBackDesignEmb : [null]);
           setFinalLogoDst(layout?.finalLogoDst?.length ? layout.finalLogoDst : [null]);
@@ -791,6 +792,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         delete updatedFirstLayout.testBackDesignImageUploadTime;
         delete updatedFirstLayout.testBackDesignImageUploadedBy;
       } else if (uploadField === 'isFinalProgram') {
+        const finalNamesToUpload = isNamesDstEnabled ? finalNamesDst : [];
         const [
           finalLogoEmbUrls, finalBackDesignEmbUrls, finalLogoDstUrls, finalBackDesignDstUrls,
           finalNamesDstUrls, sequenceLogoUrls, sequenceBackDesignUrls,
@@ -798,7 +800,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         ] = await Promise.all([
           uploadFileArray(lead, finalLogoEmb, 'finalLogoEmb'), uploadFileArray(lead, finalBackDesignEmb, 'finalBackDesignEmb'),
           uploadFileArray(lead, finalLogoDst, 'finalLogoDst'), uploadFileArray(lead, finalBackDesignDst, 'finalBackDesignDst'),
-          uploadFileArray(lead, finalNamesDst, 'finalNamesDst'), uploadFileArray(lead, sequenceLogo, 'sequenceLogo'),
+          uploadFileArray(lead, finalNamesToUpload, 'finalNamesDst'), uploadFileArray(lead, sequenceLogo, 'sequenceLogo'),
           uploadFileArray(lead, sequenceBackDesign, 'sequenceBackDesign'),
           uploadFileArray(lead, finalProgrammedLogo, 'finalProgrammedLogo'),
           uploadFileArray(lead, finalProgrammedBackDesign, 'finalProgrammedBackDesign'),
@@ -883,7 +885,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         description: e.message || 'Could not save the images and update status. Changes have been reverted.',
       });
     }
-  }, [uploadLeadId, uploadField, firestore, leads, userProfile, initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, toast, noTestingNeeded, updateStatus]);
+  }, [uploadLeadId, uploadField, firestore, leads, userProfile, initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, toast, noTestingNeeded, updateStatus, isNamesDstEnabled]);
 
   const confirmUncheck = useCallback(() => {
     if (uncheckConfirmation) {
@@ -1002,6 +1004,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
   const renderUploadDialogContent = useCallback(() => {
     if (!uploadField || !uploadLeadId) return null;
+    const isDisabled = isViewOnly;
     
     const renderUploadBoxes = (label: string, images: (string|null)[], setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
         const displayImages = images.length > 0 ? images : [null];
@@ -1009,7 +1012,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Label>{label}</Label>
-                  {!isViewOnly && displayImages.length < 3 && (
+                  {!isDisabled && displayImages.length < 3 && (
                     <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFile(setter)}>
                         <PlusCircle className="h-4 w-4" />
                     </Button>
@@ -1021,16 +1024,16 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         tabIndex={0}
                         className={cn(
                             "relative group border-2 border-dashed border-gray-400 rounded-lg p-4 text-center h-48 flex-1 flex items-center justify-center focus:outline-none focus:border-primary focus:border-solid select-none",
-                            !isViewOnly && "cursor-pointer"
+                            !isDisabled && "cursor-pointer"
                         )}
                         onClick={() => image && setImageInView(image)}
-                        onDoubleClick={() => !isViewOnly && !image && document.getElementById(`file-input-digitizing-${label}-${index}`)?.click()}
+                        onDoubleClick={() => !isDisabled && !image && document.getElementById(`file-input-digitizing-${label}-${index}`)?.click()}
                         onPaste={(e) => handleImagePaste(e, setter, index)}
                         onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
                       >
                           {image ? (<>
                             <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
-                            {!isViewOnly && (
+                            {!isDisabled && (
                                 <Button
                                 variant="destructive"
                                 size="icon"
@@ -1043,10 +1046,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 <Trash2 className="h-4 w-4" />
                                 </Button>
                             )}
-                          </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{!isViewOnly ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
-                          <input id={`file-input-digitizing-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={isViewOnly}/>
+                          </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{!isDisabled ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
+                          <input id={`file-input-digitizing-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={isDisabled}/>
                       </div>
-                      {!isViewOnly && index > 0 && (
+                      {!isDisabled && index > 0 && (
                           <Button
                               variant="ghost"
                               size="icon"
@@ -1065,8 +1068,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const renderMultipleFileUpload = (label: string, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => (
         <div className="space-y-2">
             <div className="flex items-center gap-2">
-                <Label>{label}</Label>
-                <Button type="button" size="icon" variant="ghost" className="h-5 w-5" onClick={() => addFileMultiple(filesState, setFilesState)}>
+                {label && <Label>{label}</Label>}
+                <Button type="button" size="icon" variant="ghost" className="h-5 w-5" onClick={() => addFileMultiple(filesState, setFilesState)} disabled={isDisabled}>
                     <PlusCircle className="h-4 w-4" />
                 </Button>
             </div>
@@ -1077,8 +1080,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         type="file"
                         className="text-xs flex-1 h-9"
                         onChange={(e) => handleMultipleFileUpload(e, filesState, setFilesState, index)}
+                        disabled={isDisabled}
                     />
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(filesState, setFilesState, index, refs)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(filesState, setFilesState, index, refs)} disabled={isDisabled}>
                         <Trash2 className="h-4 w-4" />
                     </Button>
                 </div>
@@ -1109,7 +1113,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     id="no-testing-needed"
                     checked={noTestingNeeded}
                     onCheckedChange={(checked) => setNoTestingNeeded(!!checked)}
-                    disabled={isViewOnly}
+                    disabled={isDisabled}
                 />
                 <Label htmlFor="no-testing-needed" className="font-medium">
                     No need for testing
@@ -1119,37 +1123,45 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       );
     } else if (uploadField === 'isFinalProgram') {
       return (
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-semibold mb-2 text-primary">Sequence Files</h4>
-            <div className="space-y-2">
-              {renderMultipleFileUpload('Sequence Logo', sequenceLogo, setSequenceLogo, sequenceLogoUploadRefs)}
-              {renderMultipleFileUpload('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign, sequenceBackDesignUploadRefs)}
-            </div>
+          <div className="space-y-6">
+              <div>
+                  <h4 className="font-semibold mb-2 text-primary">Sequence Files</h4>
+                  <div className="grid grid-cols-2 gap-6">
+                      {renderMultipleFileUpload('Sequence Logo', sequenceLogo, setSequenceLogo, sequenceLogoUploadRefs)}
+                      {renderMultipleFileUpload('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign, sequenceBackDesignUploadRefs)}
+                  </div>
+              </div>
+              <Separator />
+              <div>
+                  <h4 className="font-semibold mb-2 text-primary">Final Program Files</h4>
+                  <div className="grid grid-cols-2 gap-6">
+                      {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
+                      {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmbUploadRefs)}
+                      {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+                      {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
+                  </div>
+              </div>
+              <Separator />
+              <div>
+                  <div className="flex items-center space-x-2">
+                      <Checkbox id="names-dst-enabled" checked={isNamesDstEnabled} onCheckedChange={setIsNamesDstEnabled} disabled={isDisabled} />
+                      <Label htmlFor="names-dst-enabled" className="font-semibold text-primary">Names (DST)</Label>
+                  </div>
+                  {isNamesDstEnabled && (
+                      <div className="mt-2 pl-6">
+                          {renderMultipleFileUpload('', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
+                      </div>
+                  )}
+              </div>
+              <Separator />
+              <div>
+                  <h4 className="font-semibold mb-2 text-primary">Final Programmed Images</h4>
+                  <div className="grid grid-cols-2 gap-6">
+                      {renderMultipleFileUpload('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo, finalProgrammedLogoUploadRefs)}
+                      {renderMultipleFileUpload('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign, finalProgrammedBackDesignUploadRefs)}
+                  </div>
+              </div>
           </div>
-          <div>
-            <h4 className="font-semibold mb-2 text-primary">Final DST Files</h4>
-            <div className="space-y-2">
-              {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
-              {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
-              {renderMultipleFileUpload('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
-            </div>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-2 text-primary">Final EMB Files</h4>
-            <div className="space-y-2">
-              {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
-              {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
-            </div>
-          </div>
-          <div>
-            <h4 className="font-semibold mb-2 text-primary">Final Programmed Images</h4>
-            <div className="space-y-2">
-                {renderMultipleFileUpload('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo, finalProgrammedLogoUploadRefs)}
-                {renderMultipleFileUpload('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign, finalProgrammedBackDesignUploadRefs)}
-            </div>
-          </div>
-        </div>
       );
     }
     return null;
@@ -1159,7 +1171,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
       testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
       finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, 
-      sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded
+      sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded, isNamesDstEnabled
   ]);
 
 
