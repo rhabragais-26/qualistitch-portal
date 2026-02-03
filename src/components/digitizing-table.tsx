@@ -21,7 +21,7 @@ import {
 import React, { ChangeEvent, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X, FileText, Download } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X, FileText, Download, Save, Edit } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
 import { cn, formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
@@ -578,6 +578,36 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       });
     }
   }, [joReceivedConfirmation, updateStatus, toast]);
+
+  const handleImageUpload = useCallback((file: File, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    if (isViewOnly) return;
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (e.target?.result) {
+                setter(prev => {
+                    const newImages = [...prev];
+                    newImages[index] = e.target.result as string;
+                    return newImages;
+                });
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+  }, [isViewOnly]);
+  
+  const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    if (isViewOnly) return;
+    const items = event.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+            const blob = items[i].getAsFile();
+            if (blob) {
+                handleImageUpload(blob as File, setter, index);
+            }
+        }
+    }
+  }, [isViewOnly, handleImageUpload]);
 
   const handleUploadDialogSave = useCallback(async () => {
     if (!uploadLeadId || !uploadField || !firestore || !leads || !userProfile) return;
@@ -1206,7 +1236,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     }
     return null;
   }, [
-      uploadField, uploadLeadId, isViewOnly, handleImagePaste, handleImageUpload, handleClearImage, 
+      uploadField, uploadLeadId, isViewOnly, handleImagePaste, handleImageUpload, 
       handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
       testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
@@ -1664,10 +1694,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         {
                                             title: 'Reference Images',
                                             images: [
-                                                ...(layout.refLogoLeftImages || []).map((img, i) => ({ ...img, label: `Logo Left ${i + 1}`, src: img.url })),
-                                                ...(layout.refLogoRightImages || []).map((img, i) => ({ ...img, label: `Logo Right ${i + 1}`, src: img.url })),
-                                                ...(layout.refBackLogoImages || []).map((img, i) => ({ ...img, label: `Back Logo ${i + 1}`, src: img.url })),
-                                                ...(layout.refBackDesignImages || []).map((img, i) => ({ ...img, label: `Back Design ${i + 1}`, src: img.url })),
+                                                ...((layout as any).refLogoLeftImages || []).map((img, i) => ({ ...img, label: `Logo Left ${i + 1}`, src: img.url })),
+                                                ...((layout as any).refLogoRightImages || []).map((img, i) => ({ ...img, label: `Logo Right ${i + 1}`, src: img.url })),
+                                                ...((layout as any).refBackLogoImages || []).map((img, i) => ({ ...img, label: `Back Logo ${i + 1}`, src: img.url })),
+                                                ...((layout as any).refBackDesignImages || []).map((img, i) => ({ ...img, label: `Back Design ${i + 1}`, src: img.url })),
                                             ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
                                         },
                                         {
@@ -1748,3 +1778,4 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
 
 
     
+
