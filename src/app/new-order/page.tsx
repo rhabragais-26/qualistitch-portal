@@ -69,6 +69,11 @@ export default function NewOrderPage() {
   const [grandTotal, setGrandTotal] = useState(0);
   const [balance, setBalance] = useState(0);
 
+  const [removedFees, setRemovedFees] = useState<Record<string, { logo?: boolean; backText?: boolean }>>({});
+  const [editedUnitPrices, setEditedUnitPrices] = useState<Record<string, number>>({});
+  const [editedAddOnPrices, setEditedAddOnPrices] = useState<Record<string, number>>({});
+  const [editedProgrammingFees, setEditedProgrammingFees] = useState<Record<string, { logoFee?: number; backTextFee?: number }>>({});
+
   const formId = "new-lead-form";
 
   const defaultFormValues: FormValues = {
@@ -116,6 +121,10 @@ export default function NewOrderPage() {
     setBalance(0);
     setOrderType(undefined);
     setFormKey(prev => prev + 1);
+    setRemovedFees({});
+    setEditedUnitPrices({});
+    setEditedAddOnPrices({});
+    setEditedProgrammingFees({});
   }
 
   const handleNewOrderSubmit = (values: FormValues) => {
@@ -178,6 +187,10 @@ export default function NewOrderPage() {
       discounts,
       payments: paymentsWithMeta,
       forceNewCustomer: values.forceNewCustomer || false,
+      removedFees,
+      editedUnitPrices,
+      editedAddOnPrices,
+      editedProgrammingFees,
     };
 
     if (allLeads) {
@@ -276,6 +289,14 @@ export default function NewOrderPage() {
                             onGrandTotalChange={setGrandTotal}
                             onBalanceChange={setBalance}
                             isReadOnly={!canEdit}
+                            removedFees={removedFees}
+                            setRemovedFees={setRemovedFees}
+                            editedUnitPrices={editedUnitPrices}
+                            setEditedUnitPrices={setEditedUnitPrices}
+                            editedAddOnPrices={editedAddOnPrices}
+                            setEditedAddOnPrices={setEditedAddOnPrices}
+                            editedProgrammingFees={editedProgrammingFees}
+                            setEditedProgrammingFees={setEditedProgrammingFees}
                         />
                          {canEdit && (
                         <div className="flex justify-end pt-4 col-span-full">

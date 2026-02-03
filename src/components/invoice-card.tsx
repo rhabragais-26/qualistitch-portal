@@ -35,14 +35,14 @@ type InvoiceCardProps = {
   isReadOnly?: boolean;
   isEditingLead?: boolean;
   isQuotationMode?: boolean;
-  removedFees: Record<string, { logo?: boolean; backText?: boolean }>;
-  setRemovedFees: React.Dispatch<React.SetStateAction<Record<string, { logo?: boolean; backText?: boolean }>>>;
-  editedUnitPrices: Record<string, number>;
-  setEditedUnitPrices: React.Dispatch<React.SetStateAction<Record<string, number>>>;
-  editedAddOnPrices: Record<string, number>;
-  setEditedAddOnPrices: React.Dispatch<React.SetStateAction<Record<string, number>>>;
-  editedProgrammingFees: Record<string, { logoFee?: number; backTextFee?: number }>;
-  setEditedProgrammingFees: React.Dispatch<React.SetStateAction<Record<string, { logoFee?: number; backTextFee?: number }>>>;
+  removedFees?: Record<string, { logo?: boolean; backText?: boolean }>;
+  setRemovedFees?: React.Dispatch<React.SetStateAction<Record<string, { logo?: boolean; backText?: boolean }>>>;
+  editedUnitPrices?: Record<string, number>;
+  setEditedUnitPrices?: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  editedAddOnPrices?: Record<string, number>;
+  setEditedAddOnPrices?: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  editedProgrammingFees?: Record<string, { logoFee?: number; backTextFee?: number }>;
+  setEditedProgrammingFees?: React.Dispatch<React.SetStateAction<Record<string, { logoFee?: number; backTextFee?: number }>>>;
 };
 
 export function InvoiceCard({ 
@@ -59,14 +59,14 @@ export function InvoiceCard({
     isReadOnly, 
     isEditingLead, 
     isQuotationMode = false, 
-    removedFees, 
-    setRemovedFees,
-    editedUnitPrices,
-    setEditedUnitPrices,
-    editedAddOnPrices,
-    setEditedAddOnPrices,
-    editedProgrammingFees,
-    setEditedProgrammingFees
+    removedFees = {}, 
+    setRemovedFees = () => {},
+    editedUnitPrices = {},
+    setEditedUnitPrices = () => {},
+    editedAddOnPrices = {},
+    setEditedAddOnPrices = () => {},
+    editedProgrammingFees = {},
+    setEditedProgrammingFees = () => {}
 }: InvoiceCardProps) {
   
   const firestore = useFirestore();
@@ -267,7 +267,7 @@ export function InvoiceCard({
       return 0;
     }
     return calculatedBalance;
-  }, [grandTotal, totalPaid, orderType, payments]);
+  }, [grandTotal, totalPaid, orderType]);
 
   useEffect(() => {
     onGrandTotalChange(grandTotal);
