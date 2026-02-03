@@ -162,7 +162,7 @@ type Lead = {
   isFinalProgram?: boolean;
   isDigitizingArchived?: boolean;
   layouts?: Layout[];
-  assignedDigitizer?: string;
+  assignedDigitizer?: string | null;
   underProgrammingTimestamp?: string;
   initialApprovalTimestamp?: string;
   logoTestingTimestamp?: string;
@@ -211,10 +211,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField | 'isJoHardcopyReceived'; } | null>(null);
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
+  const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch } = useCollection<Lead>(leadsQuery);
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
   const { data: usersData, isLoading: areUsersLoading, error: usersError } = useCollection<UserProfileInfo>(usersQuery);
 
@@ -225,8 +226,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     if (!usersData) return [];
     return usersData.filter(user => user.position === 'Digitizer').sort((a,b) => a.nickname.localeCompare(b.nickname));
   }, [usersData]);
-
-  const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
   
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [uploadLeadId, setUploadLeadId] = useState<string | null>(null);
@@ -268,26 +267,69 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [imageInView, setImageInView] = useState<string | null>(null);
   
   const isViewOnly = isReadOnly || filterType === 'COMPLETED';
+  
+  const getDigitizerColor = (nickname?: string | null): string => {
+    if (!nickname || nickname === 'unassigned') {
+        return 'bg-gray-100 text-gray-800'; // Default for unassigned
+    }
+    const colors = [
+        'bg-sky-100 text-sky-800',
+        'bg-teal-100 text-teal-800',
+        'bg-cyan-100 text-cyan-800',
+        'bg-emerald-100 text-emerald-800',
+        'bg-lime-100 text-lime-800',
+        'bg-amber-100 text-amber-800',
+        'bg-orange-100 text-orange-800',
+        'bg-fuchsia-100 text-fuchsia-800',
+        'bg-pink-100 text-pink-800',
+        'bg-rose-100 text-rose-800',
+    ];
+    let hash = 0;
+    for (let i = 0; i < nickname.length; i++) {
+        hash = nickname.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash % colors.length);
+    return colors[index];
+  };
 
-  const handleDigitizerChange = async (leadId: string, digitizerNickname: string) => {
+  const handleDigitizerChange = (leadId: string, digitizerNickname: string) => {
     if (!firestore || isReadOnly) return;
+    
+    const newValue = digitizerNickname === 'unassigned' ? null : digitizerNickname;
 
+    // Optimistic UI Update
+    setOptimisticChanges(prev => ({
+        ...prev,
+        [leadId]: {
+            ...prev[leadId],
+            assignedDigitizer: newValue,
+        }
+    }));
+
+    // Firestore Update
     const leadDocRef = doc(firestore, 'leads', leadId);
-    try {
-        await updateDoc(leadDocRef, {
-            assignedDigitizer: digitizerNickname === 'unassigned' ? null : digitizerNickname
-        });
+    updateDoc(leadDocRef, {
+        assignedDigitizer: newValue
+    }).then(() => {
         toast({
             title: 'Digitizer Assigned',
-            description: `${digitizerNickname === 'unassigned' ? 'Unassigned' : digitizerNickname} has been assigned.`,
+            description: `${newValue || 'Unassigned'} has been assigned.`,
         });
-    } catch (e: any) {
+    }).catch((e: any) => {
         toast({
             variant: 'destructive',
             title: 'Assignment Failed',
             description: e.message,
         });
-    }
+        // Revert optimistic change on error
+        setOptimisticChanges(prev => {
+            const currentChanges = { ...prev };
+            const leadChanges = { ...currentChanges[leadId] };
+            delete leadChanges.assignedDigitizer;
+            currentChanges[leadId] = leadChanges;
+            return currentChanges;
+        });
+    });
   };
 
   const getContactDisplay = useCallback((lead: Lead) => {
@@ -395,7 +437,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         enrichedLeads.push({
           ...lead,
           orderNumber: index + 1,
-          totalCustomerQuantity: totalCustomerQuantity,
+          totalCustomerQuantity,
         });
       });
     });
@@ -470,9 +512,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   
   const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     if (isViewOnly) return;
-    const file = event.clipboardData.items[0];
-    if (file && file.type.startsWith('image/')) {
-        handleImageUpload(file, setter, index);
+    const items = event.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+            const blob = items[i].getAsFile();
+            if (blob) {
+                handleImageUpload(blob as File, setter, index);
+            }
+        }
     }
   }, [isViewOnly, handleImageUpload]);
   
@@ -1396,13 +1443,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 onValueChange={(value) => handleDigitizerChange(lead.id, value)}
                                 disabled={isViewOnly}
                             >
-                                <SelectTrigger className="w-[140px] text-xs h-8 justify-center">
-                                    <SelectValue placeholder="Assign Digitizer" />
+                                <SelectTrigger className={cn("w-[140px] text-xs h-8 justify-center font-bold", getDigitizerColor(lead.assignedDigitizer))}>
+                                    <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="unassigned">Unassigned</SelectItem>
                                     {digitizers.map(d => (
-                                        <SelectItem key={d.uid} value={d.nickname}>{d.nickname}</SelectItem>
+                                        <SelectItem key={d.uid} value={d.nickname} className={cn("font-bold", getDigitizerColor(d.nickname))}>{d.nickname}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
