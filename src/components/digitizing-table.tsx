@@ -939,7 +939,68 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     
     return finalProgramFiles.filter((item): item is FileUploadChecklistItem => !!item);
   }, [reviewConfirmLead]);
+  
+  const handleImagePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    if (isViewOnly) return;
+    const file = e.clipboardData.files[0];
+    if (file && file.type.startsWith('image/')) {
+        handleImageUpload(file, setter, index);
+    }
+  }, [isViewOnly]);
 
+  const handleImageUpload = (file: File, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+          setter(prev => {
+              const newImages = [...prev];
+              newImages[index] = e.target.result as string;
+              return newImages;
+          });
+      };
+      reader.readAsDataURL(file);
+  };
+  
+  const handleClearImage = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    setter(prev => {
+        const newImages = [...prev];
+        newImages[index] = null;
+        return newImages;
+    });
+  }, []);
+
+  const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+    e.stopPropagation();
+    setter(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const addFile = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>) => {
+    setter(prev => [...prev, null]);
+  }, []);
+
+  const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, filesState: (FileObject | null)[], index: number) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const newFiles = [...filesState];
+        newFiles[index] = { name: file.name, url: e.target!.result as string };
+        setFilesState(newFiles);
+      };
+      reader.readAsDataURL(file);
+    }
+  }, []);
+
+  const addFileMultiple = useCallback((setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>) => {
+    setFilesState(prev => [...prev, null]);
+  }, []);
+
+  const removeFile = useCallback((setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
+    setFilesState(prev => prev.filter((_, i) => i !== index));
+    if (refs.current && refs.current[index]) {
+      refs.current[index]!.value = '';
+    }
+  }, []);
+  
   const renderUploadDialogContent = useCallback(() => {
     if (!uploadField || !uploadLeadId) return null;
     const isDisabled = isViewOnly;
@@ -1137,8 +1198,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     }
     return null;
   }, [
-      uploadField, uploadLeadId, isViewOnly, handleImageUpload, handleClearImage, 
-      handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView, handleImagePaste,
+      uploadField, uploadLeadId, isViewOnly, handleImagePaste, handleImageUpload, handleClearImage, 
+      handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
       testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
       finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, isNamesOnly,
@@ -1234,7 +1295,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 </ul>
               </div>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={()={() => setReviewConfirmLead(null)}>Cancel</AlertDialogCancel>
+                <AlertDialogCancel onClick={() => setReviewConfirmLead(null)}>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleConfirmReview}>Done</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -1677,3 +1738,4 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
         </Card>
     );
 };
+
