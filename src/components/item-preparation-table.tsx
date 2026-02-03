@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -402,44 +403,41 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
-  
+
     const customerOrderGroups: { [key: string]: Lead[] } = {};
-  
+
     // Group all orders by customer
     leads.forEach(lead => {
-      const name = lead.customerName.toLowerCase();
-      if (!customerOrderGroups[name]) {
-        customerOrderGroups[name] = [];
-      }
-      customerOrderGroups[name].push(lead);
-    });
-  
-    const enrichedLeads: EnrichedLead[] = [];
-  
-    Object.values(customerOrderGroups).forEach((orders) => {
-      const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-      
-      const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0), 0);
-      
-      for (let i = 0; i < sortedOrders.length; i++) {
-        const lead = sortedOrders[i];
-        
-        let previousNonSampleCount = 0;
-        for (let j = 0; j < i; j++) {
-            if (sortedOrders[j].orderType !== 'Item Sample') {
-                previousNonSampleCount++;
-            }
+        const name = lead.customerName.toLowerCase();
+        if (!customerOrderGroups[name]) {
+            customerOrderGroups[name] = [];
         }
-        
-        enrichedLeads.push({
-          ...lead,
-          // orderNumber is the count of PREVIOUS non-sample orders.
-          orderNumber: previousNonSampleCount,
-          totalCustomerQuantity,
-        });
-      }
+        customerOrderGroups[name].push(lead);
     });
-  
+
+    const enrichedLeads: EnrichedLead[] = [];
+
+    Object.values(customerOrderGroups).forEach((orders) => {
+        const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+        
+        const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0), 0);
+        
+        for (let i = 0; i < sortedOrders.length; i++) {
+            const lead = sortedOrders[i];
+            
+            // Count previous non-sample orders for this customer
+            const previousNonSampleOrders = sortedOrders
+                .slice(0, i)
+                .filter(o => o.orderType !== 'Item Sample');
+            
+            enrichedLeads.push({
+                ...lead,
+                orderNumber: previousNonSampleOrders.length, // 0-indexed count
+                totalCustomerQuantity,
+            });
+        }
+    });
+
     return enrichedLeads;
   }, [leads]);
 

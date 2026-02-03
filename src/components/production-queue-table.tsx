@@ -369,7 +369,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                               <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
                                 <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                 <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                  {lead.orderNumber}
+                                  {lead.orderNumber + 1}
                                 </span>
                               </div>
                             </TooltipTrigger>
@@ -781,32 +781,41 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
-  
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
-  
+
+    const customerOrderGroups: { [key: string]: Lead[] } = {};
+
+    // Group all orders by customer
     leads.forEach(lead => {
-      const name = lead.customerName.toLowerCase();
-      if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
-      }
-      customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
+        const name = lead.customerName.toLowerCase();
+        if (!customerOrderGroups[name]) {
+            customerOrderGroups[name] = [];
+        }
+        customerOrderGroups[name].push(lead);
     });
-  
+
     const enrichedLeads: EnrichedLead[] = [];
-  
-    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
-      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-      orders.forEach((lead, index) => {
-        enrichedLeads.push({
-          ...lead,
-          orderNumber: index + 1,
-          totalCustomerQuantity,
-        });
-      });
+
+    Object.values(customerOrderGroups).forEach((orders) => {
+        const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+        
+        const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0), 0);
+        
+        for (let i = 0; i < sortedOrders.length; i++) {
+            const lead = sortedOrders[i];
+            
+            // Count previous non-sample orders for this customer
+            const previousNonSampleOrders = sortedOrders
+                .slice(0, i)
+                .filter(o => o.orderType !== 'Item Sample');
+            
+            enrichedLeads.push({
+                ...lead,
+                orderNumber: previousNonSampleOrders.length, // 0-indexed count
+                totalCustomerQuantity,
+            });
+        }
     });
-  
+
     return enrichedLeads;
   }, [leads]);
 
@@ -865,7 +874,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
 
   return (
     <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
-       <AlertDialog open={!!uncheckConfirmation} onOpenChange={(open) => !open && setUncheckConfirmation(null)}>
+      <AlertDialog open={!!uncheckConfirmation} onOpenChange={(open) => !open && setUncheckConfirmation(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -962,7 +971,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                     <ProductionQueueTableRowGroup
                       key={lead.id}
                       lead={lead}
-                      isRepeat={lead.orderNumber > 1}
+                      isRepeat={lead.orderNumber > 0}
                       status={getProductionStatusLabel(lead)}
                       deadlineInfo={calculateProductionDeadline(lead)}
                       isCompleted={filterType === 'COMPLETED'}
@@ -990,5 +999,3 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     </Card>
   );
 }
-
-    

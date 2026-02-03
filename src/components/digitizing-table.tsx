@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -405,34 +406,44 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   
   const processedLeads = useMemo(() => {
     if (!leads) return [];
-  
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
-  
+
+    const customerOrderGroups: { [key: string]: Lead[] } = {};
+
+    // Group all orders by customer
     leads.forEach(lead => {
-      const name = lead.customerName.toLowerCase();
-      if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
-      }
-      customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
+        const name = lead.customerName.toLowerCase();
+        if (!customerOrderGroups[name]) {
+            customerOrderGroups[name] = [];
+        }
+        customerOrderGroups[name].push(lead);
     });
-  
+
     const enrichedLeads: EnrichedLead[] = [];
-  
-    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
-      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-      orders.forEach((lead, index) => {
-        enrichedLeads.push({
-          ...lead,
-          orderNumber: index + 1,
-          totalCustomerQuantity,
-        });
-      });
+
+    Object.values(customerOrderGroups).forEach((orders) => {
+        const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+        
+        const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0), 0);
+        
+        for (let i = 0; i < sortedOrders.length; i++) {
+            const lead = sortedOrders[i];
+            
+            // Count previous non-sample orders for this customer
+            const previousNonSampleOrders = sortedOrders
+                .slice(0, i)
+                .filter(o => o.orderType !== 'Item Sample');
+            
+            enrichedLeads.push({
+                ...lead,
+                orderNumber: previousNonSampleOrders.length, // 0-indexed count
+                totalCustomerQuantity,
+            });
+        }
     });
-  
+
     return enrichedLeads;
   }, [leads]);
+
   
   const filteredLeads = React.useMemo(() => {
     if (!processedLeads) return [];
@@ -527,7 +538,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 if (nextField) {
                   updatedData[nextField] = false;
                   const nextTimestampField = `${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
-                  updateData[nextTimestampField] = null;
+                  updatedData[nextTimestampField] = null;
                 }
             }
         }
@@ -1011,7 +1022,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           <div className={cn(isNamesDst && "col-span-2")}>
               <div className="flex items-center gap-2">
                   {label && <Label>{label}</Label>}
-                  {!isDisabled && !isNamesDst && (
+                  {!isDisabled && (
                       <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFilesState)}>
                           <PlusCircle className="h-4 w-4" />
                       </Button>
@@ -1438,7 +1449,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 <TableBody>
                 {displayedLeads.map((lead) => {
                   const deadlineInfo = calculateDigitizingDeadline(lead);
-                  const isRepeat = lead.orderNumber > 1;
+                  const isRepeat = lead.orderNumber > 0;
                   const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)", "Item Sample"];
                   
                   return (
@@ -1458,7 +1469,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                           <div className="flex items-center gap-1.5 cursor-pointer">
                                             <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                             <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                              {lead.orderNumber}
+                                              {lead.orderNumber + 1}
                                             </span>
                                           </div>
                                         </TooltipTrigger>
