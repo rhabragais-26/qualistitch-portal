@@ -527,7 +527,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 if (nextField) {
                   updatedData[nextField] = false;
                   const nextTimestampField = `${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
-                  updatedData[nextTimestampField] = null;
+                  updateData[nextTimestampField] = null;
                 }
             }
         }
@@ -638,14 +638,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           });
       };
       reader.readAsDataURL(file);
-  }, [isViewOnly]);
+    }, [isViewOnly]);
 
   const handleImagePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-      if (isViewOnly) return;
-      const file = e.clipboardData.files[0];
-      if (file && file.type.startsWith('image/')) {
-          handleImageUpload(file, setter, index);
-      }
+    if (isViewOnly) return;
+    const file = e.clipboardData.files[0];
+    if (file && file.type.startsWith('image/')) {
+        handleImageUpload(file, setter, index);
+    }
   }, [isViewOnly, handleImageUpload]);
 
   const handleClearImage = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
@@ -655,7 +655,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         return newImages;
     });
   }, []);
-  
+
   const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
     e.stopPropagation();
     setter(prev => prev.filter((_, i) => i !== index));
@@ -1008,7 +1008,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const renderMultipleFileUpload = (label: string, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
       const isNamesDst = label === '';
       return (
-          <div className="space-y-2">
+          <div className={cn(isNamesDst && "col-span-2")}>
               <div className="flex items-center gap-2">
                   {label && <Label>{label}</Label>}
                   {!isDisabled && !isNamesDst && (
@@ -1017,7 +1017,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       </Button>
                   )}
               </div>
-              <div className={cn("grid gap-2", isNamesDst ? "grid-cols-2" : "grid-cols-1")}>
+              <div className={cn("grid gap-2 mt-2", isNamesDst ? "grid-cols-2" : "grid-cols-1")}>
                   {filesState.map((file, index) => (
                       <div key={index} className="flex items-center gap-2">
                           {file && file.name ? (
@@ -1143,20 +1143,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       return (
           <div className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
-                  <div>
-                      <h4 className="font-semibold text-primary mb-2">Final Program Files</h4>
-                      <div className="space-y-4">
-                          {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
-                          {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
-                      </div>
-                  </div>
-                  <div>
-                      <h4 className="font-semibold text-primary mb-2">&nbsp;</h4>
-                      <div className="space-y-4">
-                          {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
-                          {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
-                      </div>
-                  </div>
+                  {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
+                  {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+                  {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+                  {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
               </div>
 
               <Separator />
@@ -1295,7 +1285,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 </ul>
               </div>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={()={() => setReviewConfirmLead(null)}>Cancel</AlertDialogCancel>
+                <AlertDialogCancel onClick={() => setReviewConfirmLead(null)}>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleConfirmReview}>Done</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -1738,7 +1728,3 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
         </Card>
     );
 };
-
-
-
-    
