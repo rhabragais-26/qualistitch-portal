@@ -47,6 +47,10 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
   const [payments, setPayments] = useState<Record<string, Payment[]>>({});
   const [grandTotal, setGrandTotal] = useState(0);
   const [balance, setBalance] = useState(0);
+  const [removedFees, setRemovedFees] = useState<Record<string, { logo?: boolean; backText?: boolean; }>>({});
+  const [editedUnitPrices, setEditedUnitPrices] = useState<Record<string, number>>({});
+  const [editedAddOnPrices, setEditedAddOnPrices] = useState<Record<string, number>>({});
+  const [editedProgrammingFees, setEditedProgrammingFees] = useState<Record<string, { logoFee?: number; backTextFee?: number }>>({});
   
   const formMethods = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -99,7 +103,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
       } else if (lead.paidAmount) {
           paymentsObject['main'] = [{
               id: uuidv4(),
-              type: lead.balance === 0 && lead.paidAmount === lead.grandTotal ? 'full' : 'down',
+              type: lead.balance === 0 && lead.grandTotal && lead.paidAmount === lead.grandTotal ? 'full' : 'down',
               amount: lead.paidAmount,
               mode: lead.modeOfPayment || 'Unknown',
           }];
@@ -111,6 +115,10 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
       setGrandTotal(lead.grandTotal || 0);
       setBalance(lead.balance || 0);
       setOrderType(lead.orderType as any);
+      setRemovedFees(lead.removedFees || {});
+      setEditedUnitPrices(lead.editedUnitPrices || {});
+      setEditedAddOnPrices(lead.editedAddOnPrices || {});
+      setEditedProgrammingFees(lead.editedProgrammingFees || {});
 
     } else if (!isOpen) {
         reset();
@@ -121,6 +129,10 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
         setPayments({});
         setGrandTotal(0);
         setBalance(0);
+        setRemovedFees({});
+        setEditedUnitPrices({});
+        setEditedAddOnPrices({});
+        setEditedProgrammingFees({});
     }
   }, [isOpen, lead, reset]);
   
@@ -189,6 +201,9 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
             lastModified: new Date().toISOString(),
             lastModifiedBy: userProfile?.nickname,
             forceNewCustomer: formValuesToSave.forceNewCustomer || false,
+            editedUnitPrices,
+            editedAddOnPrices,
+            editedProgrammingFees,
         };
         
         const leadDocRef = doc(firestore, 'leads', lead.id);
@@ -208,7 +223,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
             description: e.message || "Could not update the lead.",
         });
     }
-  }, [firestore, lead, handleUpdate, onClose, toast, formMethods, stagedOrders, addOns, discounts, payments, grandTotal, balance, userProfile]);
+  }, [firestore, lead, handleUpdate, onClose, toast, formMethods, stagedOrders, addOns, discounts, payments, grandTotal, balance, userProfile, editedUnitPrices, editedAddOnPrices, editedProgrammingFees]);
 
   return (
     <>
@@ -249,6 +264,14 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
                             onBalanceChange={setBalance}
                             isEditingLead={true}
                             isReadOnly={isReadOnly}
+                            removedFees={removedFees}
+                            setRemovedFees={setRemovedFees}
+                            editedUnitPrices={editedUnitPrices}
+                            setEditedUnitPrices={setEditedUnitPrices}
+                            editedAddOnPrices={editedAddOnPrices}
+                            setEditedAddOnPrices={setEditedAddOnPrices}
+                            editedProgrammingFees={editedProgrammingFees}
+                            setEditedProgrammingFees={setEditedProgrammingFees}
                         />
                     </div>
                 </div>
