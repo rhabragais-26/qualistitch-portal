@@ -580,22 +580,37 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   }, [joReceivedConfirmation, updateStatus, toast]);
 
   const handleImageUpload = useCallback((file: File | null, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-      if (isViewOnly || !file) return;
-      if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-              if (e.target?.result) {
-                  setter(prev => {
-                      const newImages = [...prev];
-                      newImages[index] = e.target.result as string;
-                      return newImages;
-                  });
-              }
-          };
-          reader.readAsDataURL(file);
-      }
+    if (isViewOnly || !file) return;
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (e.target?.result) {
+                setter(prev => {
+                    const newImages = [...prev];
+                    newImages[index] = e.target.result as string;
+                    return newImages;
+                });
+            }
+        };
+        reader.readAsDataURL(file);
+    }
   }, [isViewOnly]);
-  
+
+  const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+    if (isViewOnly) return;
+    e.stopPropagation();
+    setter(prev => prev.filter((_, i) => i !== index));
+  }, [isViewOnly]);
+
+  const handleClearImage = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    if (isViewOnly) return;
+    setter(prev => {
+        const newImages = [...prev];
+        newImages[index] = null;
+        return newImages;
+    });
+  }, [isViewOnly]);
+
   const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     if (isViewOnly) return;
     const items = event.clipboardData.items;
@@ -608,12 +623,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         }
     }
   }, [isViewOnly, handleImageUpload]);
-
-  const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
-    if (isViewOnly) return;
-    e.stopPropagation();
-    setter(prev => prev.filter((_, i) => i !== index));
-  }, [isViewOnly]);
 
   const handleUploadDialogSave = useCallback(async () => {
     if (!uploadLeadId || !uploadField || !firestore || !leads || !userProfile) return;
@@ -1021,15 +1030,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       setter(prev => [...prev, null]);
     };
     
-    const handleClearImage = (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-      if (isViewOnly) return;
-      setter(prev => {
-          const newImages = [...prev];
-          newImages[index] = null;
-          return newImages;
-      });
-    };
-  
     const renderMultipleFileUpload = (label: string, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
       const isNamesDst = label === '';
       return (
@@ -1164,7 +1164,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
                       {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, finalBackDesignEmbUploadRefs)}
                       {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
-                      {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, finalBackDesignDstUploadRefs)}
+                      {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
                   </div>
               </div>
               <Separator />
@@ -1748,5 +1748,6 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
 
 
     
+
 
 
