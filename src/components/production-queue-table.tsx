@@ -344,7 +344,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
     const numOrders = lead.orders.length;
     const programmingStatus = getProductionStatusLabel(lead);
-    const isStockJacketOnly = lead.orderType === 'Stock (Jacket Only)';
+    const shouldSkipProduction = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
 
     return (
         <React.Fragment>
@@ -777,7 +777,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         description: e.message || "Could not endorse the order.",
       });
     }
-  }, [firestore, toast, leads, getContactDisplay, getOverdueStatusText, formatJoNumber]);
+  }, [firestore, toast, leads, getContactDisplay, getOverdueStatusText]);
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
@@ -813,11 +813,14 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   const productionQueue = useMemo(() => {
     if (!processedLeads) return [];
     
+    const orderTypesToExclude = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'];
     let relevantLeads;
     if (filterType === 'COMPLETED') {
-      relevantLeads = processedLeads.filter(lead => lead.isEndorsedToLogistics);
-    } else {
-      const orderTypesToExclude = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'];
+      relevantLeads = processedLeads.filter(lead => 
+        lead.isEndorsedToLogistics && 
+        !orderTypesToExclude.includes(lead.orderType)
+      );
+    } else { // ONGOING
       relevantLeads = processedLeads.filter(lead => 
         lead.isSentToProduction && 
         !lead.isEndorsedToLogistics && 
