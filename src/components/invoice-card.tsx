@@ -17,6 +17,8 @@ import { cn } from '@/lib/utils';
 import type { Order } from '@/lib/form-schemas';
 import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';
+import { Input } from './ui/input';
+
 
 type InvoiceCardProps = {
   orders: Order[];
@@ -66,6 +68,8 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     return allPayments.find(p => p.isNew);
   }, [payments]);
 
+  const [unitPrices, setUnitPrices] = useState<Record<string, number>>({});
+  const [editingUnitPriceKey, setEditingUnitPriceKey] = useState<string | null>(null);
 
   const groupedOrders = useMemo(() => {
     return orders.reduce((acc, order) => {
@@ -91,14 +95,56 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     }, {} as Record<string, { productType: string; embroidery: EmbroideryOption; orders: Order[], totalQuantity: number }>);
   }, [orders, pricingConfig]);
 
+  useEffect(() => {
+      const newPrices: Record<string, number> = {};
+      Object.entries(groupedOrders).forEach(([groupKey, groupData]) => {
+          const isPatches = groupData.productType === 'Patches';
+          const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
+          const embroidery = groupData.embroidery || 'logo';
+          const calculatedPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig, patchPrice, orderType);
+          
+          if (unitPrices[groupKey] === undefined) {
+              newPrices[groupKey] = calculatedPrice;
+          } else {
+              newPrices[groupKey] = unitPrices[groupKey];
+          }
+      });
+      setUnitPrices(prevPrices => ({ ...prevPrices, ...newPrices }));
+  }, [groupedOrders, pricingConfig, orderType, unitPrices]);
+
+  const handleUnitPriceChange = (groupKey: string, newPrice: number) => {
+    setUnitPrices(prev => ({
+      ...prev,
+      [groupKey]: newPrice,
+    }));
+  };
+
+  const handleEditUnitPrice = (groupKey: string) => {
+    if (!isReadOnly) {
+        setEditingUnitPriceKey(groupKey);
+    }
+  };
+
+  const handleStopEditingUnitPrice = (groupKey: string, e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>) => {
+    const rawValue = (e.target as HTMLInputElement).value;
+    const sanitizedValue = rawValue.replace(/[₱,]/g, '');
+    const numericValue = parseFloat(sanitizedValue);
+    if (!isNaN(numericValue)) {
+      handleUnitPriceChange(groupKey, numericValue);
+    }
+    setEditingUnitPriceKey(null);
+  };
+
+
   const grandTotal = useMemo(() => {
     let total = 0;
     Object.entries(groupedOrders).forEach(([groupKey, groupData]) => {
       const isClientOwned = groupData.productType === 'Client Owned';
       const isPatches = groupData.productType === 'Patches';
-      const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
       const embroidery = groupData.embroidery || 'logo';
-      const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig, patchPrice, orderType);
+      
+      const unitPrice = unitPrices[groupKey] || 0;
+
       const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
       
       const isLogoFeeRemoved = removedFees[groupKey]?.logo;
@@ -140,7 +186,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       total += subtotal;
     });
     return total;
-  }, [groupedOrders, addOns, discounts, orderType, removedFees, pricingConfig]);
+  }, [groupedOrders, addOns, discounts, orderType, removedFees, pricingConfig, unitPrices]);
   
   const totalPaid = useMemo(() => {
     return Object.values(payments).flat().reduce((sum, payment) => sum + payment.amount, 0);
@@ -212,11 +258,9 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
             <div className="space-y-6">
               {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
                 const isClientOwned = groupData.productType === 'Client Owned';
-                const isPatches = groupData.productType === 'Patches';
                 const embroidery = groupData.embroidery || 'logo';
                 const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig);
-                const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
-                const unitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig, patchPrice, orderType);
+                const unitPrice = unitPrices[groupKey] || 0;
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
@@ -279,7 +323,32 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                             <TableRow>
                                 <TableCell className="py-2 px-3 text-xs font-medium text-black align-middle">Items Ordered</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{tierLabel}</TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{formatCurrency(unitPrice)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">
+                                    {editingUnitPriceKey === groupKey ? (
+                                      <div className="relative flex items-center justify-center">
+                                        <span className="absolute left-3 text-muted-foreground">₱</span>
+                                        <Input
+                                          type="text"
+                                          defaultValue={unitPrices[groupKey] ? new Intl.NumberFormat('en-US').format(unitPrices[groupKey]) : ''}
+                                          autoFocus
+                                          onBlur={(e) => handleStopEditingUnitPrice(groupKey, e)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                handleStopEditingUnitPrice(groupKey, e);
+                                            }
+                                            if (e.key === 'Escape') {
+                                                setEditingUnitPriceKey(null);
+                                            }
+                                          }}
+                                          className="w-24 h-7 text-xs pl-6 text-center"
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div onDoubleClick={() => handleEditUnitPrice(groupKey)} className="cursor-pointer p-1 rounded-md hover:bg-gray-200">
+                                        {formatCurrency(unitPrices[groupKey] || 0)}
+                                      </div>
+                                    )}
+                                </TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle">{groupData.totalQuantity}</TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(itemsSubtotal)}</TableCell>
                             </TableRow>
