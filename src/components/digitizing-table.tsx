@@ -249,8 +249,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
   const [sequenceLogo, setSequenceLogo] = useState<(FileObject | null)[]>([null]);
   const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
-  const [finalProgrammedLogo, setFinalProgrammedLogo] = useState<(FileObject | null)[]>([null]);
-  const [finalProgrammedBackDesign, setFinalProgrammedBackDesign] = useState<(FileObject | null)[]>([]);
+  const [finalProgrammedLogo, setFinalProgrammedLogo] = useState<(string | null)[]>([]);
+  const [finalProgrammedBackDesign, setFinalProgrammedBackDesign] = useState<(string | null)[]>([]);
   const [isNamesDstEnabled, setIsNamesDstEnabled] = useState(false);
 
 
@@ -615,8 +615,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           setFinalNamesDst(layout?.finalNamesDst || []);
           setSequenceLogo(layout?.sequenceLogo?.length ? layout.sequenceLogo : [null]);
           setSequenceBackDesign(layout?.sequenceBackDesign?.length ? layout.sequenceBackDesign : [null]);
-          setFinalProgrammedLogo(layout?.finalProgrammedLogo?.length ? layout.finalProgrammedLogo : [null]);
-          setFinalProgrammedBackDesign(layout?.finalProgrammedBackDesign?.length ? layout.finalProgrammedBackDesign : [null]);
+          setFinalProgrammedLogo(getInitialImages((layout as any)?.finalProgrammedLogo, undefined));
+          setFinalProgrammedBackDesign(getInitialImages((layout as any)?.finalProgrammedBackDesign, undefined));
         }
         setIsUploadDialogOpen(true);
       } else {
@@ -802,11 +802,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           uploadFileArray(lead, finalLogoDst, 'finalLogoDst'), uploadFileArray(lead, finalBackDesignDst, 'finalBackDesignDst'),
           uploadFileArray(lead, finalNamesToUpload, 'finalNamesDst'), uploadFileArray(lead, sequenceLogo, 'sequenceLogo'),
           uploadFileArray(lead, sequenceBackDesign, 'sequenceBackDesign'),
-          uploadFileArray(lead, finalProgrammedLogo, 'finalProgrammedLogo'),
-          uploadFileArray(lead, finalProgrammedBackDesign, 'finalProgrammedBackDesign'),
+          Promise.all(finalProgrammedLogo.map((img, i) => uploadAndGetURL(lead, img, `finalProgrammedLogo`, i))),
+          Promise.all(finalProgrammedBackDesign.map((img, i) => uploadAndGetURL(lead, img, `finalProgrammedBackDesign`, i))),
         ]);
 
-        const createTimestampArray = (newFiles: (FileObject|null)[], oldFiles?: (FileObject|null)[], oldTimes?: (string|null)[]) => {
+        const createTimestampArray = (newFiles: (FileObject|null|{url:string})[], oldFiles?: (FileObject|null)[], oldTimes?: (string|null)[]) => {
           return newFiles.map((file, index) => {
               const existingFile = oldFiles?.[index];
               const existingTime = oldTimes?.[index];
@@ -814,7 +814,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           });
         };
 
-        const createUploaderArray = (newFiles: (FileObject|null)[], oldFiles?: (FileObject|null)[], oldUploaders?: (string|null)[]) => {
+        const createUploaderArray = (newFiles: (FileObject|null|{url:string})[], oldFiles?: (FileObject|null)[], oldUploaders?: (string|null)[]) => {
             return newFiles.map((file, index) => {
                 const existingFile = oldFiles?.[index];
                 const existingUploader = oldUploaders?.[index];
@@ -845,12 +845,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           sequenceBackDesign: sequenceBackDesignUrls,
           sequenceBackDesignUploadTimes: createTimestampArray(sequenceBackDesignUrls, updatedFirstLayout.sequenceBackDesign, updatedFirstLayout.sequenceBackDesignUploadTimes),
           sequenceBackDesignUploadedBy: createUploaderArray(sequenceBackDesignUrls, updatedFirstLayout.sequenceBackDesign, updatedFirstLayout.sequenceBackDesignUploadedBy),
-          finalProgrammedLogo: finalProgrammedLogoUrls,
-          finalProgrammedLogoUploadTimes: createTimestampArray(finalProgrammedLogoUrls, updatedFirstLayout.finalProgrammedLogo, updatedFirstLayout.finalProgrammedLogoUploadTimes),
-          finalProgrammedLogoUploadedBy: createUploaderArray(finalProgrammedLogoUrls, updatedFirstLayout.finalProgrammedLogo, updatedFirstLayout.finalProgrammedLogoUploadedBy),
-          finalProgrammedBackDesign: finalProgrammedBackDesignUrls,
-          finalProgrammedBackDesignUploadTimes: createTimestampArray(finalProgrammedBackDesignUrls, updatedFirstLayout.finalProgrammedBackDesign, updatedFirstLayout.finalProgrammedBackDesignUploadTimes),
-          finalProgrammedBackDesignUploadedBy: createUploaderArray(finalProgrammedBackDesignUrls, updatedFirstLayout.finalProgrammedBackDesign, updatedFirstLayout.finalProgrammedBackDesignUploadedBy),
+          finalProgrammedLogo: finalProgrammedLogoUrls.filter(Boolean),
+          finalProgrammedLogoUploadTimes: createTimestampArray(finalProgrammedLogoUrls, (updatedFirstLayout as any).finalProgrammedLogo, (updatedFirstLayout as any).finalProgrammedLogoUploadTimes),
+          finalProgrammedLogoUploadedBy: createUploaderArray(finalProgrammedLogoUrls, (updatedFirstLayout as any).finalProgrammedLogo, (updatedFirstLayout as any).finalProgrammedLogoUploadedBy),
+          finalProgrammedBackDesign: finalProgrammedBackDesignUrls.filter(Boolean),
+          finalProgrammedBackDesignUploadTimes: createTimestampArray(finalProgrammedBackDesignUrls, (updatedFirstLayout as any).finalProgrammedBackDesign, (updatedFirstLayout as any).finalProgrammedBackDesignUploadTimes),
+          finalProgrammedBackDesignUploadedBy: createUploaderArray(finalProgrammedBackDesignUrls, (updatedFirstLayout as any).finalProgrammedBackDesign, (updatedFirstLayout as any).finalProgrammedBackDesignUploadedBy),
         };
       }
   
@@ -995,8 +995,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const finalProgramFiles = [
       ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] }),
       ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i+1}`, timestamp: Array.isArray(layout.sequenceBackDesignUploadTimes) ? layout.sequenceBackDesignUploadTimes[i] : null }),
-      ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Programmed Logo ${i + 1}`, timestamp: Array.isArray(layout.finalProgrammedLogoUploadTimes) ? layout.finalProgrammedLogoUploadTimes[i] : null }),
-      ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Programmed Back Design ${i + 1}`, timestamp: Array.isArray(layout.finalProgrammedBackDesignUploadTimes) ? layout.finalProgrammedBackDesignUploadTimes[i] : null }),
+      ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Programmed Logo ${i + 1}`, timestamp: (layout as any).finalProgrammedLogoUploadTimes?.[i], uploadedBy: (layout as any).finalProgrammedLogoUploadedBy?.[i] }),
+      ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Programmed Back Design ${i + 1}`, timestamp: (layout as any).finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: (layout as any).finalProgrammedBackDesignUploadedBy?.[i] }),
     ];
     
     return finalProgramFiles.filter((item): item is FileUploadChecklistItem => !!item);
@@ -1124,11 +1124,20 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     } else if (uploadField === 'isFinalProgram') {
       return (
           <div className="space-y-6">
-              <div>
-                  <h4 className="font-semibold mb-2 text-primary">Sequence Files</h4>
-                  <div className="grid grid-cols-2 gap-6">
-                      {renderMultipleFileUpload('Sequence Logo', sequenceLogo, setSequenceLogo, sequenceLogoUploadRefs)}
-                      {renderMultipleFileUpload('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign, sequenceBackDesignUploadRefs)}
+              <div className="grid grid-cols-2 gap-4">
+                  <div>
+                      <h4 className="font-semibold mb-2 text-primary">Sequence Files</h4>
+                      <div className="space-y-2">
+                          {renderMultipleFileUpload('Sequence Logo', sequenceLogo, setSequenceLogo, sequenceLogoUploadRefs)}
+                          {renderMultipleFileUpload('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign, sequenceBackDesignUploadRefs)}
+                      </div>
+                  </div>
+                  <div>
+                      <h4 className="font-semibold mb-2 text-primary">Final Programmed Images</h4>
+                      <div className="space-y-2">
+                          {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
+                          {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
+                      </div>
                   </div>
               </div>
               <Separator />
@@ -1136,7 +1145,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   <h4 className="font-semibold mb-2 text-primary">Final Program Files</h4>
                   <div className="grid grid-cols-2 gap-6">
                       {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
-                      {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmbUploadRefs)}
+                      {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
                       {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
                       {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
                   </div>
@@ -1152,14 +1161,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                           {renderMultipleFileUpload('', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
                       </div>
                   )}
-              </div>
-              <Separator />
-              <div>
-                  <h4 className="font-semibold mb-2 text-primary">Final Programmed Images</h4>
-                  <div className="grid grid-cols-2 gap-6">
-                      {renderMultipleFileUpload('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo, finalProgrammedLogoUploadRefs)}
-                      {renderMultipleFileUpload('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign, finalProgrammedBackDesignUploadRefs)}
-                  </div>
               </div>
           </div>
       );
@@ -1273,7 +1274,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               </DialogDescription>
           </DialogHeader>
           <ScrollArea className="flex-1 -mx-6 px-6 modern-scrollbar">
-              <div className="p-4">
+              <div className="py-4">
                 {renderUploadDialogContent()}
               </div>
           </ScrollArea>
@@ -1639,8 +1640,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         {
                                             title: 'Final Program Files',
                                             images: [
-                                                ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Logo ${i + 1}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] }),
-                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Back Design ${i + 1}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] }),
+                                                ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Logo ${i + 1}`, timestamp: (layout as any).finalProgrammedLogoUploadTimes?.[i], uploadedBy: (layout as any).finalProgrammedLogoUploadedBy?.[i] }),
+                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Back Design ${i + 1}`, timestamp: (layout as any).finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: (layout as any).finalProgrammedBackDesignUploadedBy?.[i] }),
                                                 ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] }),
                                                 ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i + 1}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i], uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] }),
                                             ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
@@ -1688,3 +1689,4 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
         </Card>
     );
 };
+
