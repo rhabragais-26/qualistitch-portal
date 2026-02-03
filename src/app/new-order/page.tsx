@@ -177,6 +177,7 @@ export default function NewOrderPage() {
       addOns,
       discounts,
       payments: paymentsWithMeta,
+      forceNewCustomer: values.forceNewCustomer || false,
     };
 
     if (allLeads) {

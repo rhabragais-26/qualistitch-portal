@@ -188,7 +188,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
             paymentType,
             lastModified: new Date().toISOString(),
             lastModifiedBy: userProfile?.nickname,
-            forceNewCustomer: formValuesToSave.forceNewCustomer,
+            forceNewCustomer: formValuesToSave.forceNewCustomer || false,
         };
         
         const leadDocRef = doc(firestore, 'leads', lead.id);
