@@ -484,18 +484,18 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   }, [filteredLeads, optimisticChanges]);
   
   const handleImageUpload = useCallback((file: File, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-      if (isViewOnly) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-          if (e.target?.result) {
-              setter(prev => {
-                  const newImages = [...prev];
-                  newImages[index] = e.target.result as string;
-                  return newImages;
-              });
-          }
-      };
-      reader.readAsDataURL(file);
+    if (isViewOnly) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        if (e.target?.result) {
+            setter(prev => {
+                const newImages = [...prev];
+                newImages[index] = e.target.result as string;
+                return newImages;
+            });
+        }
+    };
+    reader.readAsDataURL(file);
   }, [isViewOnly]);
 
   const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
@@ -529,6 +529,32 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const addFile = useCallback((setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
     if (isViewOnly) return;
     setter(prev => [...prev, null]);
+  }, [isViewOnly]);
+
+  const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, filesState: (FileObject|null)[], index: number) => {
+    if (isViewOnly) return;
+    const file = event.target.files?.[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (e.target?.result) {
+                const newFiles = [...filesState];
+                newFiles[index] = { name: file.name, url: e.target.result as string };
+                setFilesState(newFiles);
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+  }, [isViewOnly]);
+  
+  const addFileMultiple = useCallback((setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>) => {
+    if (isViewOnly) return;
+    setter(prev => [...prev, null]);
+  }, [isViewOnly]);
+
+  const removeFile = useCallback((setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number) => {
+    if (isViewOnly) return;
+    setter(prev => prev.filter((_, i) => i !== index));
   }, [isViewOnly]);
 
   const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, checked: boolean) => {
@@ -589,7 +615,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         updateStatus(leadId, field, true).catch(() => {
              toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
              setOptimisticChanges(prev => {
-                const { [field]: _removed, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: _removed_ts, ...rest } = prev[leadId] || {};
+                const { [field!]: _removed, [`${field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[leadId] || {};
                 return { ...prev, [leadId]: rest };
              });
         });
@@ -991,43 +1017,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const renderUploadDialogContent = useCallback(() => {
     if (!uploadField || !uploadLeadId) return null;
     const isDisabled = isViewOnly;
-
-    const addFileMultiple = (setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, filesState: (FileObject|null)[]) => {
-      if (isDisabled) return;
-      setFilesState([...filesState, null]);
-    };
-    
-    const handleMultipleFileUpload = (event: ChangeEvent<HTMLInputElement>, setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, filesState: (FileObject|null)[], index: number) => {
-        if (isDisabled) return;
-        const file = event.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                if (e.target?.result) {
-                    const newFiles = [...filesState];
-                    newFiles[index] = { name: file.name, url: e.target.result as string };
-                    setFilesState(newFiles);
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    
-    const removeFile = (setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, filesState: (FileObject|null)[], index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
-      if (isDisabled) return;
-      const newFiles = [...filesState];
-      newFiles.splice(index, 1);
-      setFilesState(newFiles);
-    
-      const newRefs = [...refs.current];
-      newRefs.splice(index, 1);
-      refs.current = newRefs;
-      
-      if(refs.current[index]) {
-          refs.current[index]!.value = '';
-      }
-    };
-
     
     const renderMultipleFileUpload = (label: string, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
       const isNamesDst = label === '';
@@ -1051,13 +1040,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                   disabled={isDisabled}
                               />
                           )}
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setFilesState, filesState, index, refs)} disabled={isDisabled}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setFilesState, index, refs)} disabled={isDisabled}>
                               <Trash2 className="h-4 w-4" />
                           </Button>
                       </div>
                   ))}
               </div>
-              <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => addFileMultiple(setFilesState, filesState)} disabled={isDisabled}>
+              <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => addFileMultiple(setFilesState)} disabled={isDisabled}>
                   <PlusCircle className="mr-2 h-4 w-4" /> Add File
               </Button>
           </div>
@@ -1157,14 +1146,17 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     } else if (uploadField === 'isFinalProgram') {
       return (
           <div className="space-y-6">
-              <div className="space-y-2">
-                  <h4 className="font-semibold text-primary">Final Program Files (EMB/DST)</h4>
-                  <div className="grid grid-cols-2 gap-6">
-                      {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
-                      {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, finalBackDesignEmbUploadRefs)}
-                      {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
-                      {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
-                  </div>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold text-primary mb-2">Final Program Files</h4>
+                  {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
+                  {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-primary mb-2 text-white">.</h4>
+                  {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+                  {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
+                </div>
               </div>
               <Separator />
                <div className="col-span-2">
@@ -1275,37 +1267,39 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!reviewConfirmLead} onOpenChange={(open) => !open && setReviewConfirmLead(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Review Uploaded Files</AlertDialogTitle>
-            <AlertDialogDescription>
-              Please review the uploaded files before proceeding. This action will send the project to the Item Preparation queue.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="max-h-60 overflow-y-auto my-4 pr-2">
-            <ul className="space-y-2">
-              {fileChecklistItems.map((item, index) => (
-                <li key={index} className="flex items-center text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="font-medium flex-1">{item.label}</span>
-                  <span className="text-xs text-muted-foreground">{item.timestamp ? formatDateTime(item.timestamp).dateTime : ''}</span>
-                </li>
-              ))}
-              {fileChecklistItems.length === 0 && (
-                 <li className="flex items-center text-sm text-muted-foreground">
-                    <Circle className="h-4 w-4 mr-2" />
-                    No files have been uploaded for this project.
-                 </li>
-              )}
-            </ul>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setReviewConfirmLead(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmReview}>Done</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {reviewConfirmLead && (
+        <AlertDialog open={!!reviewConfirmLead} onOpenChange={(open) => !open && setReviewConfirmLead(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Review Uploaded Files</AlertDialogTitle>
+              <AlertDialogDescription>
+                Please review the uploaded files before proceeding. This action will send the project to the Item Preparation queue.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="max-h-60 overflow-y-auto my-4 pr-2">
+              <ul className="space-y-2">
+                {fileChecklistItems.map((item, index) => (
+                  <li key={index} className="flex items-center text-sm">
+                    <CheckCircle2 className="h-4 w-4 text-green-500 mr-2" />
+                    <span className="font-medium flex-1">{item.label}</span>
+                    <span className="text-xs text-muted-foreground">{item.timestamp ? formatDateTime(item.timestamp).dateTime : ''}</span>
+                  </li>
+                ))}
+                {fileChecklistItems.length === 0 && (
+                   <li className="flex items-center text-sm text-muted-foreground">
+                      <Circle className="h-4 w-4 mr-2" />
+                      No files have been uploaded for this project.
+                   </li>
+                )}
+              </ul>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setReviewConfirmLead(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmReview}>Done</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
        <Dialog open={isUploadDialogOpen} onOpenChange={(isOpen) => {
         if (!isOpen) {
@@ -1747,6 +1741,7 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
 
 
     
+
 
 
 
