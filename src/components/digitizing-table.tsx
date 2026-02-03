@@ -216,9 +216,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
-  const { data: usersData, isLoading: areUsersLoading, error: usersError } = useCollection<UserProfileInfo>(usersQuery);
+  const { data: usersData, isLoading: areUsersLoading, error: usersError } = useCollection<UserProfileInfo>(usersQuery, undefined, { listen: false });
 
   const isLoading = areLeadsLoading || areUsersLoading;
   const error = leadsError || usersError;
@@ -237,7 +237,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [initialBackLogoImages, setInitialBackLogoImages] = useState<(string | null)[]>([]);
   const [initialBackDesignImages, setInitialBackDesignImages] = useState<(string | null)[]>([]);
   const [testLogoLeftImages, setTestLogoLeftImages] = useState<(string | null)[]>([]);
-  const [testLogoRightImages, setTestLogoRightImages] = useState<(string | null)[]>([]);
+  const [testLogoRightImages, setTestLogoRightImages] = useState<(string | null)[]>(([]);
   const [testBackLogoImages, setTestBackLogoImages] = useState<(string | null)[]>([]);
   const [testBackDesignImages, setTestBackDesignImages] = useState<(string | null)[]>([]);
   const [noTestingNeeded, setNoTestingNeeded] = useState(false);
@@ -552,7 +552,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     setter(prev => [...prev, null]);
   }, [isViewOnly]);
 
-  const removeFile = useCallback((setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number) => {
+  const removeFile = useCallback((setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
     if (isViewOnly) return;
     setter(prev => prev.filter((_, i) => i !== index));
   }, [isViewOnly]);
@@ -857,7 +857,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
           sequenceBackDesign: sequenceBackFiles,
           sequenceBackDesignUploadTimes: sequenceBackTimes,
-          sequenceBackDesignUploadedBy: sequenceBackUploaders,
+          sequenceBackDesignUploadedBy: sequenceBackDesignUploaders,
         };
       }
   
@@ -1022,7 +1022,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       const isNamesDst = label === '';
       return (
           <div className="space-y-2">
-              {label && <Label>{label}</Label>}
+              {label && <div className="flex items-center gap-2">
+                            <Label>{label}</Label>
+                            {!isDisabled && (
+                                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFilesState)}>
+                                    <PlusCircle className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>}
               <div className={cn(isNamesDst && "grid grid-cols-2 gap-2")}>
                   {filesState.map((file, index) => (
                       <div key={index} className="flex items-center gap-2">
@@ -1046,9 +1053,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       </div>
                   ))}
               </div>
-              <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => addFileMultiple(setFilesState)} disabled={isDisabled}>
-                  <PlusCircle className="mr-2 h-4 w-4" /> Add File
-              </Button>
+              {isNamesDst && (
+                <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => addFileMultiple(setFilesState)} disabled={isDisabled}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add File
+                </Button>
+              )}
           </div>
       );
     };
@@ -1146,20 +1155,21 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     } else if (uploadField === 'isFinalProgram') {
       return (
           <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div>
+              <div>
                   <h4 className="font-semibold text-primary mb-2">Final Program Files</h4>
-                  {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
-                  {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
-                </div>
-                <div>
-                  <h4 className="font-semibold text-primary mb-2 text-white">.</h4>
-                  {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
-                  {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
-                </div>
+                  <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                          {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
+                          {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+                      </div>
+                      <div className="space-y-4">
+                          {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+                          {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
+                      </div>
+                  </div>
               </div>
               <Separator />
-               <div className="col-span-2">
+              <div className="col-span-2">
                   <h4 className="font-semibold text-primary">Names (DST)</h4>
                   <div className="mt-2">
                       {renderMultipleFileUpload('', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
@@ -1197,13 +1207,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     }
     return null;
   }, [
-      uploadField, uploadLeadId, isViewOnly, handleImagePaste, handleImageUpload, handleClearImage, 
+      uploadField, uploadLeadId, isViewOnly, handleImageUpload, handleClearImage, 
       handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
       testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
       finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, isNamesOnly,
       sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded,
-      finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs
+      finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs, handleImagePaste
   ]);
   
   const isSaveDisabled = useMemo(() => {
@@ -1269,35 +1279,35 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
       {reviewConfirmLead && (
         <AlertDialog open={!!reviewConfirmLead} onOpenChange={(open) => !open && setReviewConfirmLead(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Review Uploaded Files</AlertDialogTitle>
-              <AlertDialogDescription>
-                Please review the uploaded files before proceeding. This action will send the project to the Item Preparation queue.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="max-h-60 overflow-y-auto my-4 pr-2">
-              <ul className="space-y-2">
-                {fileChecklistItems.map((item, index) => (
-                  <li key={index} className="flex items-center text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-green-500 mr-2" />
-                    <span className="font-medium flex-1">{item.label}</span>
-                    <span className="text-xs text-muted-foreground">{item.timestamp ? formatDateTime(item.timestamp).dateTime : ''}</span>
-                  </li>
-                ))}
-                {fileChecklistItems.length === 0 && (
-                   <li className="flex items-center text-sm text-muted-foreground">
-                      <Circle className="h-4 w-4 mr-2" />
-                      No files have been uploaded for this project.
-                   </li>
-                )}
-              </ul>
-            </div>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setReviewConfirmLead(null)}>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmReview}>Done</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>Review Uploaded Files</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Please review the uploaded files before proceeding. This action will send the project to the Item Preparation queue.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="max-h-60 overflow-y-auto my-4 pr-2">
+                <ul className="space-y-2">
+                  {fileChecklistItems.map((item, index) => (
+                    <li key={index} className="flex items-center text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-green-500 mr-2" />
+                      <span className="font-medium flex-1">{item.label}</span>
+                      <span className="text-xs text-muted-foreground">{item.timestamp ? formatDateTime(item.timestamp).dateTime : ''}</span>
+                    </li>
+                  ))}
+                  {fileChecklistItems.length === 0 && (
+                    <li className="flex items-center text-sm text-muted-foreground">
+                        <Circle className="h-4 w-4 mr-2" />
+                        No files have been uploaded for this project.
+                    </li>
+                  )}
+                </ul>
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={()={() => setReviewConfirmLead(null)}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmReview}>Done</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
         </AlertDialog>
       )}
 
@@ -1747,3 +1757,6 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
 
 
 
+
+
+    
