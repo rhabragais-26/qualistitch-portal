@@ -239,6 +239,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [testLogoRightImages, setTestLogoRightImages] = useState<(string | null)[]>([]);
   const [testBackLogoImages, setTestBackLogoImages] = useState<(string | null)[]>([]);
   const [testBackDesignImages, setTestBackDesignImages] = useState<(string | null)[]>([]);
+  const [noTestingNeeded, setNoTestingNeeded] = useState(false);
   
   const [finalLogoEmb, setFinalLogoEmb] = useState<(FileObject | null)[]>([null]);
   const [finalBackDesignEmb, setFinalBackDesignEmb] = useState<(FileObject | null)[]>([null]);
@@ -270,15 +271,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   
   const getDigitizerColor = (nickname?: string | null): string => {
     if (!nickname || nickname === 'unassigned') {
-        return 'bg-gray-100 text-gray-800'; // Default for unassigned
+        return 'bg-gray-100 text-gray-800';
     }
     const colors = [
-        'bg-sky-100 text-sky-800', 'bg-teal-100 text-teal-800',
-        'bg-cyan-100 text-cyan-800', 'bg-emerald-100 text-emerald-800',
-        'bg-lime-100 text-lime-800', 'bg-amber-100 text-amber-800',
-        'bg-orange-100 text-orange-800', 'bg-fuchsia-100 text-fuchsia-800',
-        'bg-pink-100 text-pink-800', 'bg-rose-100 text-rose-800',
-        'bg-violet-100 text-violet-800', 'bg-indigo-100 text-indigo-800',
+        'bg-sky-100 text-sky-800', 'bg-teal-100 text-teal-800', 'bg-cyan-100 text-cyan-800',
+        'bg-emerald-100 text-emerald-800', 'bg-lime-100 text-lime-800', 'bg-amber-100 text-amber-800',
+        'bg-orange-100 text-orange-800', 'bg-fuchsia-100 text-fuchsia-800', 'bg-pink-100 text-pink-800',
+        'bg-rose-100 text-rose-800', 'bg-violet-100 text-violet-800', 'bg-indigo-100 text-indigo-800',
         'bg-red-100 text-red-800', 'bg-green-100 text-green-800', 'bg-blue-100 text-blue-800'
     ];
     let hash = 0;
@@ -294,7 +293,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     
     const newValue = digitizerNickname === 'unassigned' ? null : digitizerNickname;
 
-    // Optimistic UI Update
     setOptimisticChanges(prev => ({
         ...prev,
         [leadId]: {
@@ -303,7 +301,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         }
     }));
 
-    // Firestore Update
     const leadDocRef = doc(firestore, 'leads', leadId);
     updateDoc(leadDocRef, {
         assignedDigitizer: newValue
@@ -318,7 +315,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             title: 'Assignment Failed',
             description: e.message,
         });
-        // Revert optimistic change on error
         setOptimisticChanges(prev => {
             const currentChanges = { ...prev };
             const leadChanges = { ...currentChanges[leadId] };
@@ -341,8 +337,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+    return formatJoNumberUtil(joNumber);
   }, []);
 
   const calculateDigitizingDeadline = useCallback((lead: Lead) => {
@@ -605,6 +600,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             setInitialBackLogoImages(getInitialImages((layout as any)?.backLogoImages, layout?.backLogoImage));
             setInitialBackDesignImages(getInitialImages((layout as any)?.backDesignImages, layout?.backDesignImage));
         } else if (field === 'isLogoTesting') {
+            setNoTestingNeeded(false);
             setTestLogoLeftImages(getInitialImages((layout as any)?.testLogoLeftImages, layout?.testLogoLeftImage));
             setTestLogoRightImages(getInitialImages((layout as any)?.testLogoRightImages, layout?.testLogoRightImage));
             setTestBackLogoImages(getInitialImages((layout as any)?.testBackLogoImages, layout?.testBackLogoImage));
@@ -667,6 +663,23 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
   const handleUploadDialogSave = useCallback(async () => {
     if (!uploadLeadId || !uploadField || !firestore || !leads || !userProfile) return;
+    
+    if (uploadField === 'isLogoTesting' && noTestingNeeded) {
+        const optimisticUpdate = {
+            [uploadField]: true,
+            [`${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: new Date().toISOString()
+        };
+        setOptimisticChanges(prev => ({ ...prev, [uploadLeadId]: { ...prev[uploadLeadId], ...optimisticUpdate } }));
+        setIsUploadDialogOpen(false);
+        updateStatus(uploadLeadId, uploadField, true).catch(() => {
+            toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
+            setOptimisticChanges(prev => {
+                const { [uploadField!]: _removed, [`${uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
+                return { ...prev, [uploadLeadId]: rest };
+             });
+        });
+        return;
+    }
   
     // Optimistic UI updates
     const optimisticUpdate = {
@@ -856,7 +869,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         title: 'Success!',
         description: 'Status updated and files saved.',
       });
-      // No need to call refetch, since onSnapshot should be active
     } catch (e: any) {
       console.error('Error saving images or status:', e);
       // Revert optimistic update
@@ -870,7 +882,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         description: e.message || 'Could not save the images and update status. Changes have been reverted.',
       });
     }
-  }, [uploadLeadId, uploadField, firestore, leads, userProfile, initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, toast]);
+  }, [uploadLeadId, uploadField, firestore, leads, userProfile, initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, toast, noTestingNeeded, updateStatus]);
 
   const confirmUncheck = useCallback(() => {
     if (uncheckConfirmation) {
@@ -1084,11 +1096,24 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       );
     } else if (uploadField === 'isLogoTesting') {
        return (
-        <div className="grid grid-cols-2 gap-6">
-            {renderUploadBoxes('Logo Left', testLogoLeftImages, setTestLogoLeftImages)}
-            {renderUploadBoxes('Logo Right', testLogoRightImages, setTestLogoRightImages)}
-            {renderUploadBoxes('Back Logo', testBackLogoImages, setTestBackLogoImages)}
-            {renderUploadBoxes('Back Design', testBackDesignImages, setTestBackDesignImages)}
+        <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+                {renderUploadBoxes('Logo Left', testLogoLeftImages, setTestLogoLeftImages)}
+                {renderUploadBoxes('Logo Right', testLogoRightImages, setTestLogoRightImages)}
+                {renderUploadBoxes('Back Logo', testBackLogoImages, setTestBackLogoImages)}
+                {renderUploadBoxes('Back Design', testBackDesignImages, setTestBackDesignImages)}
+            </div>
+            <div className="flex items-center space-x-2 pt-4 border-t">
+                <Checkbox
+                    id="no-testing-needed"
+                    checked={noTestingNeeded}
+                    onCheckedChange={(checked) => setNoTestingNeeded(!!checked)}
+                    disabled={isViewOnly}
+                />
+                <Label htmlFor="no-testing-needed" className="font-medium">
+                    No need for testing
+                </Label>
+            </div>
         </div>
       );
     } else if (uploadField === 'isFinalProgram') {
@@ -1133,7 +1158,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
       testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
       finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, 
-      sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign
+      sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded
   ]);
 
 
