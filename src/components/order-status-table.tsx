@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -257,14 +258,22 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   }, []);
   
   const getProgressValue = useCallback((lead: Lead): number => {
+    const skipsProduction = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
+
     if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') return 100;
-    if (lead.shipmentStatus === 'Packed' || (lead.orderType === 'Stock (Jacket Only)' && lead.isPacked)) return 95;
-    if (lead.isDone || (lead.orderType === 'Stock (Jacket Only)' && lead.isEndorsedToLogistics)) return lead.orderType === 'Stock (Jacket Only)' ? 30 : 90;
+    if (lead.isPacked) return 95;
+    
+    if (skipsProduction && lead.isEndorsedToLogistics) {
+        return 30;
+    }
+    
+    if (lead.isDone) return 90;
     if (lead.isTrimming) return 85;
     if (lead.isSewing) return 70;
     if (lead.isEmbroideryDone) return 50;
-    if(lead.isCutting) return 40;
+    if (lead.isCutting) return 40;
     if (lead.isSentToProduction) return 40;
+    
     if (lead.isFinalProgram) return 30;
     if (lead.isFinalApproval) return 20;
     if (lead.isRevision) return 15;
@@ -533,7 +542,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                 </div>
                             </TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
-                            <TableCell className="text-center align-middle py-3 text-sm">{lead.salesRepresentative}</TableCell>
+                            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.salesRepresentative}</TableCell>
                             <TableCell className="text-center align-middle py-3">
                                <div className='flex flex-col items-center gap-1'>
                                 <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
@@ -723,3 +732,5 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     </Card>
   );
 }
+
+```
