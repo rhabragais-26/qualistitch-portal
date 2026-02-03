@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -68,6 +67,11 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
   
   const [editedAddOnPrices, setEditedAddOnPrices] = useState<Record<string, number>>({});
   const [editingAddOnPriceKey, setEditingAddOnPriceKey] = useState<string | null>(null);
+
+  // New state for editing programming fees
+  const [editedProgrammingFees, setEditedProgrammingFees] = useState<Record<string, { logoFee?: number; backTextFee?: number }>>({});
+  const [editingFeeKey, setEditingFeeKey] = useState<string | null>(null);
+
 
   const lastAddedPayment = useMemo(() => {
     // Only consider a payment editable if it was just added in this session.
@@ -145,6 +149,33 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       setEditingAddOnPriceKey(null);
   };
 
+  // Handlers for programming fees
+  const handleFeeChange = (groupKey: string, feeType: 'logoFee' | 'backTextFee', newPrice: number) => {
+    setEditedProgrammingFees(prev => ({
+        ...prev,
+        [groupKey]: {
+            ...(prev[groupKey] || {}),
+            [feeType]: newPrice,
+        },
+    }));
+  };
+
+  const handleEditFee = (key: string) => {
+      if (!isReadOnly) {
+          setEditingFeeKey(key);
+      }
+  };
+
+  const handleStopEditingFee = (groupKey: string, feeType: 'logoFee' | 'backTextFee', e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>) => {
+      const rawValue = (e.target as HTMLInputElement).value;
+      const sanitizedValue = rawValue.replace(/[₱,]/g, '');
+      const numericValue = parseFloat(sanitizedValue);
+      if (!isNaN(numericValue)) {
+        handleFeeChange(groupKey, feeType, numericValue);
+      }
+      setEditingFeeKey(null);
+  };
+
 
   const grandTotal = useMemo(() => {
     let total = 0;
@@ -161,8 +192,9 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const isLogoFeeRemoved = removedFees[groupKey]?.logo;
       const isBackTextFeeRemoved = removedFees[groupKey]?.backText;
       
-      const logoFee = !isLogoFeeRemoved ? initialLogoFee : 0;
-      const backTextFee = !isBackTextFeeRemoved ? initialBackTextFee : 0;
+      const editedFees = editedProgrammingFees[groupKey];
+      const finalLogoFee = editedFees?.logoFee !== undefined ? editedFees.logoFee : (!isLogoFeeRemoved ? initialLogoFee : 0);
+      const finalBackTextFee = editedFees?.backTextFee !== undefined ? editedFees.backTextFee : (!isBackTextFeeRemoved ? initialBackTextFee : 0);
 
       let subtotal = groupData.totalQuantity * unitPrice;
 
@@ -188,7 +220,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       subtotal += (groupAddOns.backDesignProgramming || 0);
       subtotal += (groupAddOns.holdingFee || 0);
       
-      subtotal += logoFee + backTextFee;
+      subtotal += finalLogoFee + finalBackTextFee;
 
       if (groupDiscount) {
         if (groupDiscount.type === 'percentage') {
@@ -201,7 +233,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       total += subtotal;
     });
     return total;
-  }, [groupedOrders, addOns, discounts, orderType, removedFees, pricingConfig, editedUnitPrices, editedAddOnPrices]);
+  }, [groupedOrders, addOns, discounts, orderType, removedFees, pricingConfig, editedUnitPrices, editedAddOnPrices, editedProgrammingFees]);
   
   const totalPaid = useMemo(() => {
     return Object.values(payments).flat().reduce((sum, payment) => sum + payment.amount, 0);
@@ -280,7 +312,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const calculatedUnitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig, isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0, orderType);
                 const unitPrice = editedUnitPrices[groupKey] ?? calculatedUnitPrice;
                 
-                const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
+                const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
                 const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, ...(addOns[groupKey] || {}) };
@@ -302,8 +334,9 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const isLogoFeeRemoved = removedFees[groupKey]?.logo;
                 const isBackTextFeeRemoved = removedFees[groupKey]?.backText;
                 
-                const finalLogoFee = !isLogoFeeRemoved ? logoFee : 0;
-                const finalBackTextFee = !isBackTextFeeRemoved ? backTextFee : 0;
+                const editedFees = editedProgrammingFees[groupKey];
+                const finalLogoFee = editedFees?.logoFee !== undefined ? editedFees.logoFee : (!isLogoFeeRemoved ? initialLogoFee : 0);
+                const finalBackTextFee = editedFees?.backTextFee !== undefined ? editedFees.backTextFee : (!isBackTextFeeRemoved ? initialBackTextFee : 0);
 
                 let subtotal = itemsSubtotal + backLogoTotal + namesTotal + plusSizeTotal + (groupAddOns.rushFee || 0) + (groupAddOns.shippingFee || 0) + finalLogoFee + finalBackTextFee + (groupAddOns.logoProgramming || 0) + (groupAddOns.backDesignProgramming || 0) + (groupAddOns.holdingFee || 0);
 
@@ -572,7 +605,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     </TableCell>
                                 </TableRow>
                             )}
-                          {logoFee > 0 && !isLogoFeeRemoved && (
+                          {initialLogoFee > 0 && !isLogoFeeRemoved && (
                             <TableRow className="group">
                                 <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">
                                     <div className="flex justify-end items-center gap-2">
@@ -582,10 +615,31 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                         <span>One-time Logo Programming Fee</span>
                                     </div>
                                 </TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(logoFee)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
+                                    {editingFeeKey === `${groupKey}-logoFee` ? (
+                                        <div className="relative flex items-center justify-end">
+                                            <span className="absolute left-3 text-muted-foreground">₱</span>
+                                            <Input
+                                                type="text"
+                                                defaultValue={finalLogoFee ? new Intl.NumberFormat('en-US').format(finalLogoFee) : ''}
+                                                autoFocus
+                                                onBlur={(e) => handleStopEditingFee(groupKey, 'logoFee', e)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') handleStopEditingFee(groupKey, 'logoFee', e);
+                                                    if (e.key === 'Escape') setEditingFeeKey(null);
+                                                }}
+                                                className="w-24 h-7 text-xs pl-6 text-right"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div onDoubleClick={() => handleEditFee(`${groupKey}-logoFee`)} className="cursor-pointer p-1 rounded-md hover:bg-gray-200">
+                                            {formatCurrency(finalLogoFee)}
+                                        </div>
+                                    )}
+                                </TableCell>
                             </TableRow>
                           )}
-                          {backTextFee > 0 && !isBackTextFeeRemoved && (
+                          {initialBackTextFee > 0 && !isBackTextFeeRemoved && (
                              <TableRow className="group">
                                 <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">
                                   <div className="flex justify-end items-center gap-2">
@@ -595,7 +649,28 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                       <span>One-time Back Text Programming Fee</span>
                                   </div>
                                 </TableCell>
-                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">{formatCurrency(backTextFee)}</TableCell>
+                                <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
+                                    {editingFeeKey === `${groupKey}-backTextFee` ? (
+                                        <div className="relative flex items-center justify-end">
+                                            <span className="absolute left-3 text-muted-foreground">₱</span>
+                                            <Input
+                                                type="text"
+                                                defaultValue={finalBackTextFee ? new Intl.NumberFormat('en-US').format(finalBackTextFee) : ''}
+                                                autoFocus
+                                                onBlur={(e) => handleStopEditingFee(groupKey, 'backTextFee', e)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') handleStopEditingFee(groupKey, 'backTextFee', e);
+                                                    if (e.key === 'Escape') setEditingFeeKey(null);
+                                                }}
+                                                className="w-24 h-7 text-xs pl-6 text-right"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div onDoubleClick={() => handleEditFee(`${groupKey}-backTextFee`)} className="cursor-pointer p-1 rounded-md hover:bg-gray-200">
+                                            {formatCurrency(finalBackTextFee)}
+                                        </div>
+                                    )}
+                                </TableCell>
                             </TableRow>
                           )}
                           {groupDiscount && (
