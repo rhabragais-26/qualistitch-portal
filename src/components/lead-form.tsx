@@ -103,6 +103,7 @@ type Lead = {
   barangay?: string;
   city?: string;
   province?: string;
+  orderType?: string;
 };
 
 
@@ -396,9 +397,9 @@ export function LeadForm({
   // Effect for setting initial status in edit mode
   useEffect(() => {
     if (isEditing && initialLeadData) {
-      const isRepeat = initialLeadData.orderNumber > 1;
+      const isRepeat = initialLeadData.orderNumber > 0;
       setCustomerStatus(isRepeat ? 'Repeat' : 'New');
-      setOrderCount(initialLeadData.orderNumber);
+      setOrderCount(initialLeadData.orderNumber + 1);
     }
   }, [isEditing, initialLeadData]);
 
@@ -417,7 +418,10 @@ export function LeadForm({
       (lead) => lead.customerName.toLowerCase() === customerNameValue.toLowerCase()
     ) || [];
     
-    const dbOrderCount = matchingLeads.length;
+    // Filter out 'Item Sample' orders
+    const nonSampleOrders = matchingLeads.filter(lead => lead.orderType !== 'Item Sample');
+    
+    const dbOrderCount = nonSampleOrders.length;
     const totalOrderCount = dbOrderCount + (manualStatus === 'Repeat' ? manualOrderCount : 0);
 
     if (totalOrderCount > 0) {
@@ -803,7 +807,7 @@ export function LeadForm({
                           )}
                            {customerStatus === 'Repeat' && orderCount > 0 && (
                               <div className="flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-black text-xs font-bold">
-                                {orderCount}
+                                {orderCount + 1}
                               </div>
                             )}
                         </div>

@@ -23,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
-import { cn, formatDateTime, formatCurrency } from '@/lib/utils';
+import { cn, formatDateTime, formatCurrency, toTitleCase } from '@/lib/utils';
 import { Input } from './ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
@@ -56,6 +56,7 @@ type Lead = {
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
   adjustedDeliveryDate?: string | null;
   lastModifiedBy?: string;
+  orderType?: string;
 }
 
 type EnrichedLead = Lead & {
@@ -71,7 +72,7 @@ type AdjustmentState = {
 export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads } = useCollection<Lead>(leadsQuery);
+  const { data: leads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
@@ -168,29 +169,41 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
+    const customerOrderGroups: { [key: string]: Lead[] } = {};
   
+    // Group all orders by customer
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
-      if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
+      if (!customerOrderGroups[name]) {
+        customerOrderGroups[name] = [];
       }
-      customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
+      customerOrderGroups[name].push(lead);
     });
   
     const enrichedLeads: EnrichedLead[] = [];
   
-    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
-      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-      orders.forEach((lead, index) => {
+    Object.values(customerOrderGroups).forEach((orders) => {
+      const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+      
+      const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0), 0);
+      
+      for (let i = 0; i < sortedOrders.length; i++) {
+        const lead = sortedOrders[i];
+        
+        let previousNonSampleCount = 0;
+        for (let j = 0; j < i; j++) {
+            if (sortedOrders[j].orderType !== 'Item Sample') {
+                previousNonSampleCount++;
+            }
+        }
+        
         enrichedLeads.push({
           ...lead,
-          orderNumber: index + 1,
-          totalCustomerQuantity: totalCustomerQuantity,
+          // orderNumber is the count of PREVIOUS non-sample orders.
+          orderNumber: previousNonSampleCount,
+          totalCustomerQuantity,
         });
-      });
+      }
     });
   
     return enrichedLeads;
@@ -269,7 +282,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
             <TableBody>
               {auditQueueLeads && auditQueueLeads.length > 0 ? (
                  auditQueueLeads.map(lead => {
-                   const isRepeat = lead.orderNumber > 1;
+                   const isRepeat = lead.orderNumber > 0;
                    const leadAdjustmentState = adjustmentStates[lead.id] || { status: 'NotSelected' };
                    const isProceedDisabled = leadAdjustmentState.status === 'NotSelected' || (leadAdjustmentState.status === 'Yes' && !leadAdjustmentState.date);
 
@@ -281,7 +294,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
                               {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                             </Button>
                             <div className='flex flex-col items-center'>
-                              <span className="font-medium">{lead.customerName}</span>
+                              <span className="font-medium">{toTitleCase(lead.customerName)}</span>
                               {isRepeat ? (
                                 <TooltipProvider>
                                   <Tooltip>
@@ -289,7 +302,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
                                       <div className="flex items-center gap-1.5 cursor-pointer">
                                         <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                         <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                          {lead.orderNumber}
+                                          {lead.orderNumber + 1}
                                         </span>
                                       </div>
                                     </TooltipTrigger>
@@ -303,7 +316,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
                               )}
                               {openCustomerDetails === lead.id && (
                                 <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
-                                  {lead.companyName && lead.companyName !== '-' && <div>{lead.companyName}</div>}
+                                  {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
                                   {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                 </div>
                               )}

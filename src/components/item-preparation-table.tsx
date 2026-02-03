@@ -136,12 +136,12 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                             <Collapsible>
                                 <CollapsibleTrigger asChild>
                                     <div className="flex items-center justify-center cursor-pointer">
-                                        <span>{lead.customerName}</span>
+                                        <span>{toTitleCase(lead.customerName)}</span>
                                         <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
                                     </div>
                                 </CollapsibleTrigger>
                                 <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
-                                    {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {lead.companyName}</div>}
+                                    {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {toTitleCase(lead.companyName)}</div>}
                                     {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
                                 </CollapsibleContent>
                             </Collapsible>
@@ -152,7 +152,7 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                                       <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
                                         <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                         <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                          {lead.orderNumber}
+                                          {lead.orderNumber + 1}
                                         </span>
                                       </div>
                                     </TooltipTrigger>
@@ -403,29 +403,41 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
+    const customerOrderGroups: { [key: string]: Lead[] } = {};
   
+    // Group all orders by customer
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
-      if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
+      if (!customerOrderGroups[name]) {
+        customerOrderGroups[name] = [];
       }
-      customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
+      customerOrderGroups[name].push(lead);
     });
   
     const enrichedLeads: EnrichedLead[] = [];
   
-    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
-      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-      orders.forEach((lead, index) => {
+    Object.values(customerOrderGroups).forEach((orders) => {
+      const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+      
+      const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0), 0);
+      
+      for (let i = 0; i < sortedOrders.length; i++) {
+        const lead = sortedOrders[i];
+        
+        let previousNonSampleCount = 0;
+        for (let j = 0; j < i; j++) {
+            if (sortedOrders[j].orderType !== 'Item Sample') {
+                previousNonSampleCount++;
+            }
+        }
+        
         enrichedLeads.push({
           ...lead,
-          orderNumber: index + 1,
+          // orderNumber is the count of PREVIOUS non-sample orders.
+          orderNumber: previousNonSampleCount,
           totalCustomerQuantity,
         });
-      });
+      }
     });
   
     return enrichedLeads;
@@ -637,11 +649,13 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {jobOrders?.map((lead) => (
+                {jobOrders?.map((lead) => {
+                  const isRepeat = lead.orderNumber > 0;
+                  return (
                     <ItemPreparationTableRowGroup
                         key={lead.id}
                         lead={lead}
-                        isRepeat={lead.orderNumber > 1}
+                        isRepeat={isRepeat}
                         getProgrammingStatus={getProgrammingStatus}
                         formatJoNumber={formatJoNumber}
                         getContactDisplay={getContactDisplay}
@@ -651,7 +665,8 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
                         isReadOnly={isReadOnly}
                         filterType={filterType}
                     />
-                ))}
+                  )
+                })}
                 </TableBody>
             </Table>
           </div>
@@ -662,5 +677,3 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTableMemo';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
-
-    
