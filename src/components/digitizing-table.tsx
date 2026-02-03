@@ -247,11 +247,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [finalLogoDst, setFinalLogoDst] = useState<(FileObject | null)[]>([null]);
   const [finalBackDesignDst, setFinalBackDesignDst] = useState<(FileObject | null)[]>([]);
   const [finalNamesDst, setFinalNamesDst] = useState<(FileObject | null)[]>([]);
-  const [sequenceLogo, setSequenceLogo] = useState<(FileObject | null)[]>([null]);
-  const [sequenceBackDesign, setSequenceBackDesign] = useState<(FileObject | null)[]>([]);
+  const [sequenceLogo, setSequenceLogo] = useState<(string | null)[]>([]);
+  const [sequenceBackDesign, setSequenceBackDesign] = useState<(string | null)[]>([]);
   const [finalProgrammedLogo, setFinalProgrammedLogo] = useState<(string | null)[]>([]);
   const [finalProgrammedBackDesign, setFinalProgrammedBackDesign] = useState<(string | null)[]>([]);
-  const [isNamesDstEnabled, setIsNamesDstEnabled] = useState(false);
+  const [isNamesOnly, setIsNamesOnly] = useState(false);
 
 
   const finalLogoEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -259,10 +259,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const finalLogoDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalBackDesignDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalNamesDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const sequenceLogoUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const sequenceBackDesignUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const finalProgrammedLogoUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const finalProgrammedBackDesignUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
 
 
   const [reviewConfirmLead, setReviewConfirmLead] = useState<Lead | null>(null);
@@ -279,7 +275,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         'bg-emerald-100 text-emerald-800', 'bg-lime-100 text-lime-800', 'bg-amber-100 text-amber-800',
         'bg-orange-100 text-orange-800', 'bg-fuchsia-100 text-fuchsia-800', 'bg-pink-100 text-pink-800',
         'bg-rose-100 text-rose-800', 'bg-violet-100 text-violet-800', 'bg-indigo-100 text-indigo-800',
-        'bg-red-100 text-red-800', 'bg-green-100 text-green-800', 'bg-blue-100 text-blue-800'
+        'bg-red-100 text-red-800', 'bg-green-100 text-green-800', 'bg-blue-100 text-blue-800',
+        'bg-purple-100 text-purple-800', 'bg-yellow-100 text-yellow-800'
     ];
     let hash = 0;
     for (let i = 0; i < nickname.length; i++) {
@@ -594,6 +591,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             }
             return images.length > 0 ? images : [null];
         };
+        
+        const getInitialSequenceImages = (files?: (FileObject | null)[]): (string|null)[] => {
+            if (!files || files.length === 0) return [];
+            return files.map(f => f?.url || null);
+        }
 
         if (field === 'isUnderProgramming') {
             setInitialLogoLeftImages(getInitialImages((layout as any)?.logoLeftImages, layout?.logoLeftImage));
@@ -607,14 +609,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             setTestBackLogoImages(getInitialImages((layout as any)?.testBackLogoImages, layout?.testBackLogoImage));
             setTestBackDesignImages(getInitialImages((layout as any)?.testBackDesignImages, layout?.testBackDesignImage));
         } else { // isFinalProgram
-          setIsNamesDstEnabled(!!layout?.finalNamesDst?.length);
+          setIsNamesOnly(false);
           setFinalLogoEmb(layout?.finalLogoEmb?.length ? layout.finalLogoEmb : [null]);
           setFinalBackDesignEmb(layout?.finalBackDesignEmb?.length ? layout.finalBackDesignEmb : [null]);
           setFinalLogoDst(layout?.finalLogoDst?.length ? layout.finalLogoDst : [null]);
           setFinalBackDesignDst(layout?.finalBackDesignDst?.length ? layout.finalBackDesignDst : [null]);
           setFinalNamesDst(layout?.finalNamesDst || []);
-          setSequenceLogo(layout?.sequenceLogo?.length ? layout.sequenceLogo : [null]);
-          setSequenceBackDesign(layout?.sequenceBackDesign?.length ? layout.sequenceBackDesign : [null]);
+          setSequenceLogo(getInitialSequenceImages(layout?.sequenceLogo));
+          setSequenceBackDesign(getInitialSequenceImages(layout?.sequenceBackDesign));
           setFinalProgrammedLogo(getInitialImages((layout as any)?.finalProgrammedLogo, undefined));
           setFinalProgrammedBackDesign(getInitialImages((layout as any)?.finalProgrammedBackDesign, undefined));
         }
@@ -727,6 +729,21 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       );
     };
   
+    const uploadImageArrayAndCreateFileObjects = async (lead: Lead, images: (string | null)[], fieldName: string): Promise<{
+        files: FileObject[],
+        timestamps: string[],
+        uploaders: string[]
+    }> => {
+        if (!images) return { files: [], timestamps: [], uploaders: [] };
+        const uploads = await Promise.all(images.map((img, i) => uploadAndGetURL(lead, img, fieldName, i)));
+        const successfulUploads = uploads.filter((u): u is { url: string; uploadTime: string; uploadedBy: string } => !!u);
+        return {
+            files: successfulUploads.map(u => ({ name: `${fieldName}_${Date.now()}.png`, url: u.url })),
+            timestamps: successfulUploads.map(u => u.uploadTime),
+            uploaders: successfulUploads.map(u => u.uploadedBy)
+        };
+    };
+
     try {
       const lead = leads.find(l => l.id === uploadLeadId);
       if (!lead) throw new Error("Lead not found");
@@ -792,35 +809,33 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         delete updatedFirstLayout.testBackDesignImageUploadTime;
         delete updatedFirstLayout.testBackDesignImageUploadedBy;
       } else if (uploadField === 'isFinalProgram') {
-        const finalNamesToUpload = isNamesDstEnabled ? finalNamesDst : [];
+        const { files: programmedLogoFiles, timestamps: programmedLogoTimes, uploaders: programmedLogoUploaders } = await uploadImageArrayAndCreateFileObjects(lead, finalProgrammedLogo, 'finalProgrammedLogo');
+        const { files: programmedBackFiles, timestamps: programmedBackTimes, uploaders: programmedBackUploaders } = await uploadImageArrayAndCreateFileObjects(lead, finalProgrammedBackDesign, 'finalProgrammedBackDesign');
+        const { files: sequenceLogoFiles, timestamps: sequenceLogoTimes, uploaders: sequenceLogoUploaders } = await uploadImageArrayAndCreateFileObjects(lead, sequenceLogo, 'sequenceLogo');
+        const { files: sequenceBackFiles, timestamps: sequenceBackTimes, uploaders: sequenceBackUploaders } = await uploadImageArrayAndCreateFileObjects(lead, sequenceBackDesign, 'sequenceBackDesign');
+        
+        const finalNamesToUpload = isNamesOnly ? finalNamesDst : [];
         const [
-          finalLogoEmbUrls, finalBackDesignEmbUrls, finalLogoDstUrls, finalBackDesignDstUrls,
-          finalNamesDstUrls, sequenceLogoUrls, sequenceBackDesignUrls,
-          finalProgrammedLogoUrls, finalProgrammedBackDesignUrls,
+          finalLogoEmbUrls, finalBackDesignEmbUrls, finalLogoDstUrls, finalBackDesignDstUrls, finalNamesDstUrls,
         ] = await Promise.all([
-          uploadFileArray(lead, finalLogoEmb, 'finalLogoEmb'), uploadFileArray(lead, finalBackDesignEmb, 'finalBackDesignEmb'),
-          uploadFileArray(lead, finalLogoDst, 'finalLogoDst'), uploadFileArray(lead, finalBackDesignDst, 'finalBackDesignDst'),
-          uploadFileArray(lead, finalNamesToUpload, 'finalNamesDst'), uploadFileArray(lead, sequenceLogo, 'sequenceLogo'),
-          uploadFileArray(lead, sequenceBackDesign, 'sequenceBackDesign'),
-          Promise.all(finalProgrammedLogo.map((img, i) => uploadAndGetURL(lead, img, `finalProgrammedLogo`, i))),
-          Promise.all(finalProgrammedBackDesign.map((img, i) => uploadAndGetURL(lead, img, `finalProgrammedBackDesign`, i))),
+          uploadFileArray(lead, finalLogoEmb, 'finalLogoEmb'),
+          uploadFileArray(lead, finalBackDesignEmb, 'finalBackDesignEmb'),
+          uploadFileArray(lead, finalLogoDst, 'finalLogoDst'),
+          uploadFileArray(lead, finalBackDesignDst, 'finalBackDesignDst'),
+          uploadFileArray(lead, finalNamesToUpload, 'finalNamesDst'),
         ]);
 
-        const createTimestampArray = (newFiles: (FileObject|null|{url:string})[], oldFiles?: (FileObject|null)[], oldTimes?: (string|null)[]) => {
-          return newFiles.map((file, index) => {
-              const existingFile = oldFiles?.[index];
-              const existingTime = oldTimes?.[index];
-              return file && file.url === existingFile?.url ? existingTime : (file ? now : null);
-          });
-        };
+        const createTimestampArray = (newFiles: (FileObject|null)[], oldFiles?: (FileObject|null)[], oldTimes?: (string|null)[]) => newFiles.map((file, index) => {
+            const existingFile = oldFiles?.[index];
+            const existingTime = oldTimes?.[index];
+            return file && file.url === existingFile?.url ? existingTime : (file ? now : null);
+        });
 
-        const createUploaderArray = (newFiles: (FileObject|null|{url:string})[], oldFiles?: (FileObject|null)[], oldUploaders?: (string|null)[]) => {
-            return newFiles.map((file, index) => {
-                const existingFile = oldFiles?.[index];
-                const existingUploader = oldUploaders?.[index];
-                return file && file.url === existingFile?.url ? existingUploader : (file ? userProfile.nickname : null);
-            });
-        };
+        const createUploaderArray = (newFiles: (FileObject|null)[], oldFiles?: (FileObject|null)[], oldUploaders?: (string|null)[]) => newFiles.map((file, index) => {
+            const existingFile = oldFiles?.[index];
+            const existingUploader = oldUploaders?.[index];
+            return file && file.url === existingFile?.url ? existingUploader : (file ? userProfile.nickname : null);
+        });
   
         updatedFirstLayout = {
           ...updatedFirstLayout,
@@ -839,18 +854,22 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           finalNamesDst: finalNamesDstUrls,
           finalNamesDstUploadTimes: createTimestampArray(finalNamesDstUrls, updatedFirstLayout.finalNamesDst, updatedFirstLayout.finalNamesDstUploadTimes),
           finalNamesDstUploadedBy: createUploaderArray(finalNamesDstUrls, updatedFirstLayout.finalNamesDst, updatedFirstLayout.finalNamesDstUploadedBy),
-          sequenceLogo: sequenceLogoUrls,
-          sequenceLogoUploadTimes: createTimestampArray(sequenceLogoUrls, updatedFirstLayout.sequenceLogo, updatedFirstLayout.sequenceLogoUploadTimes),
-          sequenceLogoUploadedBy: createUploaderArray(sequenceLogoUrls, updatedFirstLayout.sequenceLogo, updatedFirstLayout.sequenceLogoUploadedBy),
-          sequenceBackDesign: sequenceBackDesignUrls,
-          sequenceBackDesignUploadTimes: createTimestampArray(sequenceBackDesignUrls, updatedFirstLayout.sequenceBackDesign, updatedFirstLayout.sequenceBackDesignUploadTimes),
-          sequenceBackDesignUploadedBy: createUploaderArray(sequenceBackDesignUrls, updatedFirstLayout.sequenceBackDesign, updatedFirstLayout.sequenceBackDesignUploadedBy),
-          finalProgrammedLogo: finalProgrammedLogoUrls.filter(Boolean),
-          finalProgrammedLogoUploadTimes: createTimestampArray(finalProgrammedLogoUrls, (updatedFirstLayout as any).finalProgrammedLogo, (updatedFirstLayout as any).finalProgrammedLogoUploadTimes),
-          finalProgrammedLogoUploadedBy: createUploaderArray(finalProgrammedLogoUrls, (updatedFirstLayout as any).finalProgrammedLogo, (updatedFirstLayout as any).finalProgrammedLogoUploadedBy),
-          finalProgrammedBackDesign: finalProgrammedBackDesignUrls.filter(Boolean),
-          finalProgrammedBackDesignUploadTimes: createTimestampArray(finalProgrammedBackDesignUrls, (updatedFirstLayout as any).finalProgrammedBackDesign, (updatedFirstLayout as any).finalProgrammedBackDesignUploadTimes),
-          finalProgrammedBackDesignUploadedBy: createUploaderArray(finalProgrammedBackDesignUrls, (updatedFirstLayout as any).finalProgrammedBackDesign, (updatedFirstLayout as any).finalProgrammedBackDesignUploadedBy),
+          
+          finalProgrammedLogo: programmedLogoFiles,
+          finalProgrammedLogoUploadTimes: programmedLogoTimes,
+          finalProgrammedLogoUploadedBy: programmedLogoUploaders,
+          
+          finalProgrammedBackDesign: programmedBackFiles,
+          finalProgrammedBackDesignUploadTimes: programmedBackTimes,
+          finalProgrammedBackDesignUploadedBy: programmedBackUploaders,
+
+          sequenceLogo: sequenceLogoFiles,
+          sequenceLogoUploadTimes: sequenceLogoTimes,
+          sequenceLogoUploadedBy: sequenceLogoUploaders,
+
+          sequenceBackDesign: sequenceBackFiles,
+          sequenceBackDesignUploadTimes: sequenceBackTimes,
+          sequenceBackDesignUploadedBy: sequenceBackDesignUploaders,
         };
       }
   
@@ -885,7 +904,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         description: e.message || 'Could not save the images and update status. Changes have been reverted.',
       });
     }
-  }, [uploadLeadId, uploadField, firestore, leads, userProfile, initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, toast, noTestingNeeded, updateStatus, isNamesDstEnabled]);
+  }, [uploadLeadId, uploadField, firestore, leads, userProfile, toast, noTestingNeeded, updateStatus,
+      initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
+      testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
+      finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, isNamesOnly,
+      sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign
+  ]);
 
   const confirmUncheck = useCallback(() => {
     if (uncheckConfirmation) {
@@ -1124,44 +1148,43 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     } else if (uploadField === 'isFinalProgram') {
       return (
           <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                  <div>
-                      <h4 className="font-semibold mb-2 text-primary">Sequence Files</h4>
-                      <div className="space-y-2">
-                          {renderMultipleFileUpload('Sequence Logo', sequenceLogo, setSequenceLogo, sequenceLogoUploadRefs)}
-                          {renderMultipleFileUpload('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign, sequenceBackDesignUploadRefs)}
-                      </div>
-                  </div>
-                  <div>
-                      <h4 className="font-semibold mb-2 text-primary">Final Programmed Images</h4>
-                      <div className="space-y-2">
-                          {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
-                          {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
-                      </div>
-                  </div>
+            <h4 className="font-semibold text-primary">Final Program Files (EMB/DST)</h4>
+            <div className="grid grid-cols-2 gap-6">
+              {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
+              {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+              {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+              {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
+            </div>
+            <Separator />
+            <div className="col-span-2">
+              <h4 className="font-semibold text-primary">Names (DST)</h4>
+              <div className="mt-2 pl-6">
+                {renderMultipleFileUpload('', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
               </div>
-              <Separator />
-              <div>
-                  <h4 className="font-semibold mb-2 text-primary">Final Program Files</h4>
-                  <div className="grid grid-cols-2 gap-6">
-                      {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
-                      {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
-                      {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
-                      {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
-                  </div>
-              </div>
-              <Separator />
-              <div>
-                  <div className="flex items-center space-x-2">
-                      <Checkbox id="names-dst-enabled" checked={isNamesDstEnabled} onCheckedChange={setIsNamesDstEnabled} disabled={isDisabled} />
-                      <Label htmlFor="names-dst-enabled" className="font-semibold text-primary">Names (DST)</Label>
-                  </div>
-                  {isNamesDstEnabled && (
-                      <div className="mt-2 pl-6">
-                          {renderMultipleFileUpload('', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
-                      </div>
-                  )}
-              </div>
+            </div>
+            <div className="col-span-2 flex items-center space-x-2 pt-2">
+              <Checkbox
+                id="names-only-checkbox"
+                checked={isNamesOnly}
+                onCheckedChange={(checked) => setIsNamesOnly(!!checked)}
+                disabled={isDisabled}
+              />
+              <Label htmlFor="names-only-checkbox" className="font-medium">
+                Customer wanted Names Only
+              </Label>
+            </div>
+            <Separator />
+            <h4 className="font-semibold text-primary">Final Programmed Images</h4>
+            <div className="grid grid-cols-2 gap-6">
+              {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
+              {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
+            </div>
+            <Separator />
+            <h4 className="font-semibold text-primary">Sequence Files</h4>
+            <div className="grid grid-cols-2 gap-6">
+              {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
+              {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
+            </div>
           </div>
       );
     }
@@ -1171,9 +1194,24 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
       testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
-      finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, 
-      sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded, isNamesDstEnabled
+      finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, isNamesOnly,
+      sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded
   ]);
+  
+  const isSaveDisabled = useMemo(() => {
+      if (uploadField !== 'isFinalProgram') return false;
+
+      if (isNamesOnly) {
+          return finalNamesDst.every(f => !f);
+      }
+      
+      const hasEmb = finalLogoEmb.some(f => f) || finalBackDesignEmb.some(f => f);
+      const hasDst = finalLogoDst.some(f => f) || finalBackDesignDst.some(f => f);
+      const hasSequence = sequenceLogo.some(img => img) || sequenceBackDesign.some(img => img);
+      const hasProgrammedImage = finalProgrammedLogo.some(img => img) || finalProgrammedBackDesign.some(img => img);
+
+      return !(hasEmb && hasDst && hasSequence && hasProgrammedImage);
+  }, [isNamesOnly, finalNamesDst, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, uploadField]);
 
 
   if (isLoading) {
@@ -1282,7 +1320,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               <DialogClose asChild>
                   <Button type="button" variant="outline">Cancel</Button>
               </DialogClose>
-              <Button onClick={handleUploadDialogSave}>Save and Update Status</Button>
+              <Button onClick={handleUploadDialogSave} disabled={isSaveDisabled}>Save and Update Status</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1690,3 +1728,6 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
     );
 };
 
+
+
+    
