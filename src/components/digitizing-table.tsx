@@ -1161,7 +1161,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   <h4 className="font-semibold text-primary">Final Program Files (EMB/DST)</h4>
                   <div className="grid grid-cols-2 gap-6">
                       {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
-                      {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+                      {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, finalBackDesignEmbUploadRefs)}
                       {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
                       {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
                   </div>
@@ -1206,7 +1206,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     return null;
   }, [
       uploadField, uploadLeadId, isViewOnly, handleImagePaste, handleImageUpload, handleClearImage, 
-      handleRemoveImage, addFile, setImageInView,
+      handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
       testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
       finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, isNamesOnly,
@@ -1276,13 +1276,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       </AlertDialog>
 
       <AlertDialog open={!!reviewConfirmLead} onOpenChange={(open) => !open && setReviewConfirmLead(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Review Uploaded Files</DialogTitle>
-            <DialogDescription>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Review Uploaded Files</AlertDialogTitle>
+            <AlertDialogDescription>
               Please review the uploaded files before proceeding. This action will send the project to the Item Preparation queue.
-            </DialogDescription>
-          </DialogHeader>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
           <div className="max-h-60 overflow-y-auto my-4 pr-2">
             <ul className="space-y-2">
               {fileChecklistItems.map((item, index) => (
@@ -1304,7 +1304,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             <AlertDialogCancel onClick={() => setReviewConfirmLead(null)}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmReview}>Done</AlertDialogAction>
           </AlertDialogFooter>
-        </DialogContent>
+        </AlertDialogContent>
       </AlertDialog>
 
        <Dialog open={isUploadDialogOpen} onOpenChange={(isOpen) => {
@@ -1747,6 +1747,7 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
 
 
     
+
 
 
 
