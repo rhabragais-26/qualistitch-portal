@@ -1,3 +1,4 @@
+
 // edit-lead-full-dialog.tsx (WITHOUT ALERTDIALOG)
 "use client";
 
@@ -27,7 +28,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 
 interface EditLeadFullDialogProps {
-  lead: (LeadType & { orderNumber: number, totalCustomerQuantity: number; }) | null;
+  lead: (LeadType & { orderNumber: number; totalCustomerQuantity: number; }) | null;
   isOpen: boolean;
   onClose: () => void;
   onUpdate: () => void;
@@ -40,7 +41,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
   const { user, userProfile, isUserLoading, userError } = useUser();
   
   const [stagedOrders, setStagedOrders] = useState<Order[]>([]);
-  const [orderType, setOrderType] = useState<'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | undefined>(undefined);
+  const [orderType, setOrderType] = useState<'MTO' | 'Personalize' | 'Customize' | 'Stock Design' | 'Stock (Jacket Only)' | 'Services' | 'Item Sample' | undefined>(undefined);
   const [addOns, setAddOns] = useState<Record<string, AddOns>>({});
   const [discounts, setDiscounts] = useState<Record<string, Discount>>({});
   const [payments, setPayments] = useState<Record<string, Payment[]>>({});
@@ -85,6 +86,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
         orderType: lead.orderType as any,
         priorityType: lead.priorityType as any,
         orders: initializedOrders,
+        forceNewCustomer: lead.forceNewCustomer,
       };
       reset(initialFormValues);
 
@@ -186,6 +188,7 @@ export function EditLeadFullDialog({ lead, isOpen, onClose, onUpdate, isReadOnly
             paymentType,
             lastModified: new Date().toISOString(),
             lastModifiedBy: userProfile?.nickname,
+            forceNewCustomer: formValuesToSave.forceNewCustomer,
         };
         
         const leadDocRef = doc(firestore, 'leads', lead.id);

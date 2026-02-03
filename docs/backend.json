@@ -483,6 +483,10 @@
           "type": "string",
           "description": "Province of the lead."
         },
+        "forceNewCustomer": {
+          "type": "boolean",
+          "description": "Admin override to treat a repeat customer as new for display purposes."
+        },
         "paymentType": {
           "type": "string",
           "description": "Payment type for the lead (Partially Paid, Fully Paid, COD)."

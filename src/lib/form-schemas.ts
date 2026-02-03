@@ -31,6 +31,7 @@ export const baseFormSchema = z.object({
   province: z.string().optional(),
   internationalAddress: z.string().optional(),
   courier: z.string().optional(),
+  forceNewCustomer: z.boolean().optional(),
   orderType: z.enum(
     ['MTO', 'Personalize', 'Customize', 'Stock Design', 'Stock (Jacket Only)', 'Services', 'Item Sample'],
     { required_error: "You need to select an order type." }
