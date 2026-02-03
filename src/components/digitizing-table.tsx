@@ -237,7 +237,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [initialBackLogoImages, setInitialBackLogoImages] = useState<(string | null)[]>([]);
   const [initialBackDesignImages, setInitialBackDesignImages] = useState<(string | null)[]>([]);
   const [testLogoLeftImages, setTestLogoLeftImages] = useState<(string | null)[]>([]);
-  const [testLogoRightImages, setTestLogoRightImages] = useState<(string | null)[]>(([]);
+  const [testLogoRightImages, setTestLogoRightImages] = useState<(string | null)[]>([]);
   const [testBackLogoImages, setTestBackLogoImages] = useState<(string | null)[]>([]);
   const [testBackDesignImages, setTestBackDesignImages] = useState<(string | null)[]>([]);
   const [noTestingNeeded, setNoTestingNeeded] = useState(false);
@@ -483,80 +483,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     });
   }, [filteredLeads, optimisticChanges]);
   
-  const handleImageUpload = useCallback((file: File, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    if (isViewOnly) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        if (e.target?.result) {
-            setter(prev => {
-                const newImages = [...prev];
-                newImages[index] = e.target.result as string;
-                return newImages;
-            });
-        }
-    };
-    reader.readAsDataURL(file);
-  }, [isViewOnly]);
-
-  const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    if (isViewOnly) return;
-    const items = event.clipboardData.items;
-    for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-            const blob = items[i].getAsFile();
-            if (blob) {
-                handleImageUpload(blob as File, setter, index);
-            }
-        }
-    }
-  }, [isViewOnly, handleImageUpload]);
-
-  const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
-    e.stopPropagation();
-    if (isViewOnly) return;
-    setter(prev => prev.filter((_, i) => i !== index));
-  }, [isViewOnly]);
-
-  const handleClearImage = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    if (isViewOnly) return;
-    setter(prev => {
-        const newImages = [...prev];
-        newImages[index] = null;
-        return newImages;
-    });
-  }, [isViewOnly]);
-
-  const addFile = useCallback((setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
-    if (isViewOnly) return;
-    setter(prev => [...prev, null]);
-  }, [isViewOnly]);
-
-  const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, filesState: (FileObject|null)[], index: number) => {
-    if (isViewOnly) return;
-    const file = event.target.files?.[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            if (e.target?.result) {
-                const newFiles = [...filesState];
-                newFiles[index] = { name: file.name, url: e.target.result as string };
-                setFilesState(newFiles);
-            }
-        };
-        reader.readAsDataURL(file);
-    }
-  }, [isViewOnly]);
-  
-  const addFileMultiple = useCallback((setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>) => {
-    if (isViewOnly) return;
-    setter(prev => [...prev, null]);
-  }, [isViewOnly]);
-
-  const removeFile = useCallback((setter: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
-    if (isViewOnly) return;
-    setter(prev => prev.filter((_, i) => i !== index));
-  }, [isViewOnly]);
-
   const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, checked: boolean) => {
     const lead = displayedLeads?.find((l) => l.id === leadId);
     if (!lead) return;
@@ -857,7 +783,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
           sequenceBackDesign: sequenceBackFiles,
           sequenceBackDesignUploadTimes: sequenceBackTimes,
-          sequenceBackDesignUploadedBy: sequenceBackDesignUploaders,
+          sequenceBackDesignUploadedBy: sequenceBackUploaders,
         };
       }
   
@@ -1022,15 +948,15 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       const isNamesDst = label === '';
       return (
           <div className="space-y-2">
-              {label && <div className="flex items-center gap-2">
-                            <Label>{label}</Label>
-                            {!isDisabled && (
-                                <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFilesState)}>
-                                    <PlusCircle className="h-4 w-4" />
-                                </Button>
-                            )}
-                        </div>}
-              <div className={cn(isNamesDst && "grid grid-cols-2 gap-2")}>
+              <div className="flex items-center gap-2">
+                  {label && <Label>{label}</Label>}
+                  {!isDisabled && (
+                      <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFilesState)}>
+                          <PlusCircle className="h-4 w-4" />
+                      </Button>
+                  )}
+              </div>
+              <div className={cn("grid gap-2", isNamesDst ? "grid-cols-2" : "grid-cols-1")}>
                   {filesState.map((file, index) => (
                       <div key={index} className="flex items-center gap-2">
                           {file && file.name ? (
@@ -1054,7 +980,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   ))}
               </div>
               {isNamesDst && (
-                <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => addFileMultiple(setFilesState)} disabled={isDisabled}>
+                <Button type="button" size="sm" variant="outline" className="h-8 mt-2" onClick={() => addFileMultiple(setFilesState)} disabled={isDisabled}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add File
                 </Button>
               )}
@@ -1155,19 +1081,23 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     } else if (uploadField === 'isFinalProgram') {
       return (
           <div className="space-y-6">
-              <div>
-                  <h4 className="font-semibold text-primary mb-2">Final Program Files</h4>
-                  <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-6">
+                  <div>
+                      <h4 className="font-semibold text-primary mb-2">Final Program Files</h4>
                       <div className="space-y-4">
                           {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
                           {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
                       </div>
+                  </div>
+                  <div>
+                      <h4 className="font-semibold text-primary mb-2">&nbsp;</h4>
                       <div className="space-y-4">
                           {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
                           {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
                       </div>
                   </div>
               </div>
+
               <Separator />
               <div className="col-span-2">
                   <h4 className="font-semibold text-primary">Names (DST)</h4>
@@ -1176,22 +1106,22 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   </div>
               </div>
               <div className="col-span-2 flex items-center space-x-2 pt-2">
-                <Checkbox
-                  id="names-only-checkbox"
-                  checked={isNamesOnly}
-                  onCheckedChange={(checked) => setIsNamesOnly(!!checked)}
-                  disabled={isDisabled}
-                />
-                <Label htmlFor="names-only-checkbox" className="font-medium">
-                  Customer wanted Names Only
-                </Label>
+                  <Checkbox
+                      id="names-only-checkbox"
+                      checked={isNamesOnly}
+                      onCheckedChange={(checked) => setIsNamesOnly(!!checked)}
+                      disabled={isDisabled}
+                  />
+                  <Label htmlFor="names-only-checkbox" className="font-medium">
+                      Customer wanted Names Only
+                  </Label>
               </div>
               <Separator />
               <div className="space-y-2">
                   <h4 className="font-semibold text-primary">Final Programmed Images</h4>
                   <div className="grid grid-cols-2 gap-6">
-                    {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
-                    {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
+                      {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
+                      {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
                   </div>
               </div>
               <Separator />
@@ -1208,12 +1138,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     return null;
   }, [
       uploadField, uploadLeadId, isViewOnly, handleImageUpload, handleClearImage, 
-      handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
+      handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView, handleImagePaste,
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
       testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
       finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, isNamesOnly,
       sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded,
-      finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs, handleImagePaste
+      finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs
   ]);
   
   const isSaveDisabled = useMemo(() => {
@@ -1622,7 +1552,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                           </div>
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
-                          <div className="flex flex-col items-center justify-start h-full gap-1">
+                          <div className="flex flex-col items-center justify-center gap-1">
                             <Checkbox
                               checked={lead.isJoHardcopyReceived || false}
                               onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
@@ -1747,16 +1677,3 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
         </Card>
     );
 };
-
-
-
-    
-
-
-
-
-
-
-
-
-    
