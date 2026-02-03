@@ -4,6 +4,7 @@
 import * as React from "react"
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import {useState, useEffect, useMemo, useCallback} from 'react';
+import * as z from 'zod';
 
 import {Button} from '@/components/ui/button';
 import {
@@ -81,6 +82,14 @@ import { formatCurrency } from "@/lib/utils";
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { type FormValues, type Order } from '@/lib/form-schemas';
+
+const inventoryItemSchema = z.object({
+    id: z.string(),
+    productType: z.string(),
+    color: z.string(),
+    size: z.string(),
+    stock: z.number(),
+  });
 
 type InventoryItem = {
   id: string;
@@ -402,7 +411,7 @@ export function LeadForm({
   useEffect(() => {
     if (isEditing && initialLeadData) {
         const otherNonSampleOrders = allLeads?.filter(l => l.customerName.toLowerCase() === initialLeadData.customerName.toLowerCase() && l.id !== initialLeadData.id && l.orderType !== 'Item Sample').length || 0;
-        const isRepeat = otherNonSampleOrders > 0 || initialLeadData.orderNumber > 0;
+        const isRepeat = otherNonSampleOrders > 0 || initialLeadData.orderNumber > 0 && initialLeadData.orderType !== 'Item Sample';
 
         setCustomerStatus(isRepeat ? 'Repeat' : 'New');
         setOrderCount(isRepeat ? (otherNonSampleOrders || initialLeadData.orderNumber) : 0);
