@@ -68,7 +68,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     return allPayments.find(p => p.isNew);
   }, [payments]);
 
-  const [unitPrices, setUnitPrices] = useState<Record<string, number>>({});
+  const [editedUnitPrices, setEditedUnitPrices] = useState<Record<string, number>>({});
   const [editingUnitPriceKey, setEditingUnitPriceKey] = useState<string | null>(null);
 
   const groupedOrders = useMemo(() => {
@@ -95,25 +95,8 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     }, {} as Record<string, { productType: string; embroidery: EmbroideryOption; orders: Order[], totalQuantity: number }>);
   }, [orders, pricingConfig]);
 
-  useEffect(() => {
-      const newPrices: Record<string, number> = {};
-      Object.entries(groupedOrders).forEach(([groupKey, groupData]) => {
-          const isPatches = groupData.productType === 'Patches';
-          const patchPrice = isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0;
-          const embroidery = groupData.embroidery || 'logo';
-          const calculatedPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig, patchPrice, orderType);
-          
-          if (unitPrices[groupKey] === undefined) {
-              newPrices[groupKey] = calculatedPrice;
-          } else {
-              newPrices[groupKey] = unitPrices[groupKey];
-          }
-      });
-      setUnitPrices(prevPrices => ({ ...prevPrices, ...newPrices }));
-  }, [groupedOrders, pricingConfig, orderType, unitPrices]);
-
   const handleUnitPriceChange = (groupKey: string, newPrice: number) => {
-    setUnitPrices(prev => ({
+    setEditedUnitPrices(prev => ({
       ...prev,
       [groupKey]: newPrice,
     }));
@@ -143,7 +126,8 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const isPatches = groupData.productType === 'Patches';
       const embroidery = groupData.embroidery || 'logo';
       
-      const unitPrice = unitPrices[groupKey] || 0;
+      const calculatedUnitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig, isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0, orderType);
+      const unitPrice = editedUnitPrices[groupKey] ?? calculatedUnitPrice;
 
       const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
       
@@ -186,7 +170,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       total += subtotal;
     });
     return total;
-  }, [groupedOrders, addOns, discounts, orderType, removedFees, pricingConfig, unitPrices]);
+  }, [groupedOrders, addOns, discounts, orderType, removedFees, pricingConfig, editedUnitPrices]);
   
   const totalPaid = useMemo(() => {
     return Object.values(payments).flat().reduce((sum, payment) => sum + payment.amount, 0);
@@ -258,9 +242,13 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
             <div className="space-y-6">
               {Object.entries(groupedOrders).map(([groupKey, groupData]) => {
                 const isClientOwned = groupData.productType === 'Client Owned';
+                const isPatches = groupData.productType === 'Patches';
                 const embroidery = groupData.embroidery || 'logo';
                 const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig);
-                const unitPrice = unitPrices[groupKey] || 0;
+                
+                const calculatedUnitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig, isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0, orderType);
+                const unitPrice = editedUnitPrices[groupKey] ?? calculatedUnitPrice;
+                
                 const { logoFee, backTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
@@ -329,7 +317,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                         <span className="absolute left-3 text-muted-foreground">₱</span>
                                         <Input
                                           type="text"
-                                          defaultValue={unitPrices[groupKey] ? new Intl.NumberFormat('en-US').format(unitPrices[groupKey]) : ''}
+                                          defaultValue={unitPrice ? new Intl.NumberFormat('en-US').format(unitPrice) : ''}
                                           autoFocus
                                           onBlur={(e) => handleStopEditingUnitPrice(groupKey, e)}
                                           onKeyDown={(e) => {
@@ -345,7 +333,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                       </div>
                                     ) : (
                                       <div onDoubleClick={() => handleEditUnitPrice(groupKey)} className="cursor-pointer p-1 rounded-md hover:bg-gray-200">
-                                        {formatCurrency(unitPrices[groupKey] || 0)}
+                                        {formatCurrency(unitPrice || 0)}
                                       </div>
                                     )}
                                 </TableCell>
