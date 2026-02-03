@@ -188,11 +188,24 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
           </div>
           <div className="space-y-2 pt-2 border-t">
               <Label htmlFor="othersDescription" className="text-base">Others</Label>
-              <Textarea id="othersDescription" value={localAddOns.othersDescription} onChange={(e) => handleTextChange('othersDescription', e.target.value)} placeholder="Please specify add ons" />
-              <div className="flex items-center justify-end">
-                <div className="relative">
+              <div className="flex items-start gap-2">
+                <Textarea 
+                  id="othersDescription" 
+                  value={localAddOns.othersDescription} 
+                  onChange={(e) => handleTextChange('othersDescription', e.target.value)} 
+                  placeholder="Please specify add ons"
+                  className="flex-1"
+                />
+                <div className="relative w-32">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
-                  <Input id="othersFee" type="text" value={localAddOns.othersFee ? new Intl.NumberFormat('en-US').format(localAddOns.othersFee) : ''} onChange={(e) => handleNumericChange('othersFee', e.target.value)} className="w-32 pl-7 text-right" placeholder="0.00" />
+                  <Input 
+                    id="othersFee" 
+                    type="text" 
+                    value={localAddOns.othersFee ? new Intl.NumberFormat('en-US').format(localAddOns.othersFee) : ''} 
+                    onChange={(e) => handleNumericChange('othersFee', e.target.value)} 
+                    className="w-full pl-7 text-right" 
+                    placeholder="0.00" 
+                  />
                 </div>
               </div>
               {isOthersInvalid && <p className="text-destructive text-xs text-right -mt-2">A description is required when a fee is added.</p>}
@@ -633,3 +646,5 @@ export const AddBalancePaymentDialog = React.memo(function AddBalancePaymentDial
     </Dialog>
   );
 });
+
+    
