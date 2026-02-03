@@ -20,7 +20,7 @@ import {
 import React, { ChangeEvent, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X, Download, FileText } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X, FileText } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
 import { cn, formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
@@ -273,18 +273,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         return 'bg-gray-100 text-gray-800'; // Default for unassigned
     }
     const colors = [
-        'bg-sky-100 text-sky-800',
-        'bg-teal-100 text-teal-800',
-        'bg-cyan-100 text-cyan-800',
-        'bg-emerald-100 text-emerald-800',
-        'bg-lime-100 text-lime-800',
-        'bg-amber-100 text-amber-800',
-        'bg-orange-100 text-orange-800',
-        'bg-fuchsia-100 text-fuchsia-800',
-        'bg-pink-100 text-pink-800',
-        'bg-rose-100 text-rose-800',
-        'bg-violet-100 text-violet-800',
-        'bg-indigo-100 text-indigo-800',
+        'bg-sky-100 text-sky-800', 'bg-teal-100 text-teal-800',
+        'bg-cyan-100 text-cyan-800', 'bg-emerald-100 text-emerald-800',
+        'bg-lime-100 text-lime-800', 'bg-amber-100 text-amber-800',
+        'bg-orange-100 text-orange-800', 'bg-fuchsia-100 text-fuchsia-800',
+        'bg-pink-100 text-pink-800', 'bg-rose-100 text-rose-800',
+        'bg-violet-100 text-violet-800', 'bg-indigo-100 text-indigo-800',
+        'bg-red-100 text-red-800', 'bg-green-100 text-green-800', 'bg-blue-100 text-blue-800'
     ];
     let hash = 0;
     for (let i = 0; i < nickname.length; i++) {
@@ -494,38 +489,49 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       return { ...lead, ...(optimisticChanges[lead.id] || {}) };
     });
   }, [filteredLeads, optimisticChanges]);
+  
+  const addFile = useCallback((setter: React.Dispatch<React.SetStateAction<(string|null)[]>>) => {
+    if (isViewOnly) return;
+    setter(prev => [...prev, null]);
+  }, [isViewOnly]);
 
   const handleImageUpload = useCallback((file: File | null, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    if (isViewOnly || !file) return;
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            if (e.target?.result) {
-                setter(prev => {
-                    const newImages = [...prev];
-                    newImages[index] = e.target.result as string;
-                    return newImages;
-                });
-            }
-        };
-        reader.readAsDataURL(file);
-    }
+      if (isViewOnly || !file) return;
+      if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+              if (e.target?.result) {
+                  setter(prev => {
+                      const newImages = [...prev];
+                      newImages[index] = e.target.result as string;
+                      return newImages;
+                  });
+              }
+          };
+          reader.readAsDataURL(file);
+      }
   }, [isViewOnly]);
   
   const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    if (isViewOnly) return;
-    const items = event.clipboardData.items;
-    for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-            const blob = items[i].getAsFile();
-            if (blob) {
-                handleImageUpload(blob as File, setter, index);
-            }
-        }
-    }
+      if (isViewOnly) return;
+      const items = event.clipboardData.items;
+      for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+              const blob = items[i].getAsFile();
+              if (blob) {
+                  handleImageUpload(blob as File, setter, index);
+              }
+          }
+      }
   }, [isViewOnly, handleImageUpload]);
-  
+
+  const addFileMultiple = useCallback((filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>) => {
+      if (isViewOnly) return;
+      setFilesState([...filesState, null]);
+  }, [isViewOnly]);
+
   const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, index: number) => {
+      if (isViewOnly) return;
       const file = event.target.files?.[0];
       if (file) {
           const reader = new FileReader();
@@ -538,9 +544,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           };
           reader.readAsDataURL(file);
       }
-  }, []);
+  }, [isViewOnly]);
 
   const removeFile = useCallback((filesState: (FileObject | null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
+    if (isViewOnly) return;
     const newFiles = [...filesState];
     newFiles.splice(index, 1);
     setFilesState(newFiles);
@@ -552,7 +559,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     if(refs.current[index]) {
         refs.current[index]!.value = '';
     }
-  }, []);
+  }, [isViewOnly]);
 
   const handleClearImage = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     if (isViewOnly) return;
@@ -980,28 +987,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     return finalProgramFiles.filter((item): item is FileUploadChecklistItem => !!item);
   }, [reviewConfirmLead]);
 
-  const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
-    if (images.length === 0) return null;
-
-    return (
-        <Card className="bg-white">
-            <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
-            <CardContent className="flex gap-4 text-xs p-2 flex-wrap">
-                {images.map((img, index) => (
-                    <div key={index} className="flex flex-col items-center text-center w-28">
-                        <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
-                        <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
-                            <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
-                        </div>
-                        {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
-                        {img.uploadedBy && <p className='text-gray-500 text-[10px] font-bold'>by {img.uploadedBy}</p>}
-                    </div>
-                ))}
-            </CardContent>
-        </Card>
-    );
-  };
-
   const renderUploadDialogContent = useCallback(() => {
     if (!uploadField || !uploadLeadId) return null;
     
@@ -1012,7 +997,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               <div className="flex items-center gap-2">
                 <Label>{label}</Label>
                   {!isViewOnly && displayImages.length < 3 && (
-                    <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => setter(prev => [...prev, null])}>
+                    <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFile(setter)}>
                         <PlusCircle className="h-4 w-4" />
                     </Button>
                   )}
@@ -1068,10 +1053,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         <div className="space-y-2">
             <div className="flex items-center gap-2">
                 <Label>{label}</Label>
-                <Button type="button" size="icon" variant="ghost" className="h-5 w-5" onClick={() => {
-                    const newFiles = [...filesState, null];
-                    setFilesState(newFiles);
-                }}>
+                <Button type="button" size="icon" variant="ghost" className="h-5 w-5" onClick={() => addFileMultiple(filesState, setFilesState)}>
                     <PlusCircle className="h-4 w-4" />
                 </Button>
             </div>
@@ -1147,7 +1129,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     return null;
   }, [
       uploadField, uploadLeadId, isViewOnly, handleImagePaste, handleImageUpload, handleClearImage, 
-      handleRemoveImage, handleMultipleFileUpload, removeFile, setImageInView, 
+      handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
       testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
       finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, 
@@ -1239,7 +1221,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         }
         setIsUploadDialogOpen(isOpen);
        }}>
-        <DialogContent className="sm:max-w-4xl flex flex-col">
+        <DialogContent className="sm:max-w-4xl flex flex-col h-[90vh]">
           <DialogHeader>
               <DialogTitle>
                   {uploadField === 'isUnderProgramming' && 'Upload Initial Program Images'}
@@ -1252,7 +1234,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   {uploadField === 'isFinalProgram' && 'Upload all final DST, EMB, and sequence files.'}
               </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="max-h-[70vh] -mx-6 px-6">
+          <ScrollArea className="flex-1 -mx-6 px-6 modern-scrollbar">
               <div className="p-4">
                 {renderUploadDialogContent()}
               </div>
