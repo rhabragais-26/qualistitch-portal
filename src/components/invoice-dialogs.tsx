@@ -14,6 +14,7 @@ import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { useUser } from '@/firebase';
+import { Textarea } from './ui/textarea';
 
 export type AddOns = {
   backLogo: number;
@@ -24,6 +25,8 @@ export type AddOns = {
   logoProgramming: number;
   backDesignProgramming: number;
   holdingFee: number;
+  othersFee: number;
+  othersDescription: string;
 };
 
 export type Discount = {
@@ -57,17 +60,17 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
   isReadOnly?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [localAddOns, setLocalAddOns] = useState<AddOns>({ backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 });
+  const [localAddOns, setLocalAddOns] = useState<AddOns>({ backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, othersFee: 0, othersDescription: '' });
 
   useEffect(() => {
     if (isOpen) {
-      setLocalAddOns({ backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 });
+      setLocalAddOns({ backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, othersFee: 0, othersDescription: '' });
     }
   }, [isOpen]);
 
   const handleSave = () => {
     setAddOns(prev => {
-        const defaultAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 };
+        const defaultAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, othersFee: 0, othersDescription: '' };
         const existingAddOns = { ...defaultAddOns, ...(prev[groupKey] || {}) };
       
       const newAddOns: AddOns = {
@@ -79,6 +82,8 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
         logoProgramming: localAddOns.logoProgramming > 0 ? localAddOns.logoProgramming : existingAddOns.logoProgramming,
         backDesignProgramming: localAddOns.backDesignProgramming > 0 ? localAddOns.backDesignProgramming : existingAddOns.backDesignProgramming,
         holdingFee: localAddOns.holdingFee > 0 ? localAddOns.holdingFee : existingAddOns.holdingFee,
+        othersFee: localAddOns.othersFee > 0 ? localAddOns.othersFee : existingAddOns.othersFee,
+        othersDescription: localAddOns.othersDescription.trim() ? localAddOns.othersDescription.trim() : existingAddOns.othersDescription,
       };
 
       return { ...prev, [groupKey]: newAddOns };
@@ -94,8 +99,17 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
         [field]: isNaN(numericValue) ? 0 : numericValue
     }));
   };
+  
+  const handleTextChange = (field: 'othersDescription', value: string) => {
+    setLocalAddOns(prev => ({
+        ...prev,
+        [field]: value
+    }));
+  };
 
-  const isSaveDisabled = Object.values(localAddOns).every(val => val === 0);
+  const isOthersInvalid = localAddOns.othersFee > 0 && !localAddOns.othersDescription.trim();
+  const isSaveDisabled = Object.values(localAddOns).every(v => (typeof v === 'number' ? v === 0 : v === '')) || isOthersInvalid;
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -171,6 +185,17 @@ export const AddOnsDialog = React.memo(function AddOnsDialog({
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
               <Input id="holdingFee" type="text" value={localAddOns.holdingFee ? new Intl.NumberFormat('en-US').format(localAddOns.holdingFee) : ''} onChange={(e) => handleNumericChange('holdingFee', e.target.value)} className="w-32 pl-7 text-right" placeholder="0.00" />
             </div>
+          </div>
+          <div className="space-y-2 pt-2 border-t">
+              <Label htmlFor="othersDescription" className="text-base">Others</Label>
+              <Textarea id="othersDescription" value={localAddOns.othersDescription} onChange={(e) => handleTextChange('othersDescription', e.target.value)} placeholder="Please specify add ons" />
+              <div className="flex items-center justify-end">
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-black">₱</span>
+                  <Input id="othersFee" type="text" value={localAddOns.othersFee ? new Intl.NumberFormat('en-US').format(localAddOns.othersFee) : ''} onChange={(e) => handleNumericChange('othersFee', e.target.value)} className="w-32 pl-7 text-right" placeholder="0.00" />
+                </div>
+              </div>
+              {isOthersInvalid && <p className="text-destructive text-xs text-right -mt-2">A description is required when a fee is added.</p>}
           </div>
         </div>
         <DialogFooter>

@@ -191,7 +191,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
       const itemsSubtotal = groupData.totalQuantity * unitPrice;
       
-      const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, ...(addOns[groupKey] || {}) };
+      const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, othersFee: 0, othersDescription: '', ...(addOns[groupKey] || {}) };
       const groupDiscount = discounts[groupKey];
       const itemTotalQuantity = groupData.totalQuantity;
 
@@ -221,6 +221,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       subtotal += groupAddOns.logoProgramming;
       subtotal += groupAddOns.backDesignProgramming;
       subtotal += groupAddOns.holdingFee;
+      subtotal += groupAddOns.othersFee;
 
       if (groupDiscount) {
         if (groupDiscount.type === 'percentage') {
@@ -242,11 +243,12 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
   const balance = useMemo(() => {
     const calculatedBalance = grandTotal - totalPaid;
     
-    if (orderType === 'Item Sample' && calculatedBalance < 0) {
+    const isSecurityDeposit = Object.values(payments).flat().some(p => p.type === 'securityDeposit');
+    if (orderType === 'Item Sample' && isSecurityDeposit && calculatedBalance < 0) {
       return 0;
     }
     return calculatedBalance;
-  }, [grandTotal, totalPaid, orderType]);
+  }, [grandTotal, totalPaid, orderType, payments]);
 
   useEffect(() => {
     onGrandTotalChange(grandTotal);
@@ -260,14 +262,18 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     if (!removingAddOn) return;
     const { groupKey, addOnType } = removingAddOn;
     setAddOns(prev => {
-        const defaultAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 };
+        const defaultAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, othersFee: 0, othersDescription: '' };
         const existingAddOns = { ...defaultAddOns, ...(prev[groupKey] || {}) };
       
-      const newGroupAddOns = {
-        ...existingAddOns,
-        [addOnType]: 0,
-      };
+      const newGroupAddOns = { ...existingAddOns };
 
+      if (addOnType === 'othersFee') {
+        newGroupAddOns.othersFee = 0;
+        newGroupAddOns.othersDescription = '';
+      } else {
+        (newGroupAddOns as any)[addOnType] = 0;
+      }
+      
       return {
         ...prev,
         [groupKey]: newGroupAddOns,
@@ -322,7 +328,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
                 
-                const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, ...(addOns[groupKey] || {}) };
+                const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, othersFee: 0, othersDescription: '', ...(addOns[groupKey] || {}) };
                 const groupDiscount = discounts[groupKey];
                 const itemTotalQuantity = groupData.totalQuantity;
 
@@ -352,6 +358,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 subtotal += groupAddOns.logoProgramming;
                 subtotal += groupAddOns.backDesignProgramming;
                 subtotal += groupAddOns.holdingFee;
+                subtotal += groupAddOns.othersFee;
 
                 let discountAmount = 0;
                 if(groupDiscount) {
@@ -618,6 +625,23 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     </TableCell>
                                 </TableRow>
                             )}
+                            {groupAddOns.othersFee > 0 && (
+                                <TableRow className="group">
+                                    <TableCell className="py-2 px-3 text-xs text-black align-middle">
+                                        <div className="flex items-center gap-2">
+                                            <span>Add On: Others</span>
+                                            <Button type="button" variant="ghost" size="icon" className="h-5 w-5 rounded-full bg-transparent text-transparent group-hover:text-red-500 hover:bg-red-100" onClick={() => setRemovingAddOn({ groupKey, addOnType: 'othersFee' })}>
+                                                <X className="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                        {groupAddOns.othersDescription && <p className="pl-4 text-xs text-gray-500 italic">({groupAddOns.othersDescription})</p>}
+                                    </TableCell>
+                                    <TableCell className="py-2 px-3 text-xs text-center text-black align-middle" colSpan={3}></TableCell>
+                                    <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
+                                        {formatCurrency(groupAddOns.othersFee)}
+                                    </TableCell>
+                                </TableRow>
+                            )}
                           {initialLogoFee > 0 && !isLogoFeeRemoved && (
                             <TableRow className="group">
                                 <TableCell colSpan={4} className="py-2 px-3 text-xs text-right text-black align-middle">
@@ -819,7 +843,9 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 removingAddOn?.addOnType === 'shippingFee' ? 'Shipping Fee' : 
                 removingAddOn?.addOnType === 'logoProgramming' ? 'Logo Programming' : 
                 removingAddOn?.addOnType === 'backDesignProgramming' ? 'Back Design Programming' : 
-                removingAddOn?.addOnType === 'holdingFee' ? 'Holding Fee' : 'Rush Fee'
+                removingAddOn?.addOnType === 'holdingFee' ? 'Holding Fee' :
+                removingAddOn?.addOnType === 'othersFee' ? 'Others' :
+                'Rush Fee'
               }" add-on from this group.
             </AlertDialogDescription>
           </AlertDialogHeader>
