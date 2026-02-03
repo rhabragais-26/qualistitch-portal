@@ -163,6 +163,7 @@ type Lead = {
   isFinalProgram?: boolean;
   isDigitizingArchived?: boolean;
   layouts?: Layout[];
+  assignedDigitizer?: string;
   underProgrammingTimestamp?: string;
   initialApprovalTimestamp?: string;
   logoTestingTimestamp?: string;
@@ -211,7 +212,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField | 'isJoHardcopyReceived'; } | null>(null);
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
-  const [assignedDigitizers, setAssignedDigitizers] = useState<Record<string, string>>({});
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -270,12 +270,26 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   
   const isViewOnly = isReadOnly || filterType === 'COMPLETED';
 
-  const handleDigitizerChange = useCallback((leadId: string, digitizerNickname: string) => {
-    setAssignedDigitizers(prev => ({
-        ...prev,
-        [leadId]: digitizerNickname,
-    }));
-  }, []);
+  const handleDigitizerChange = async (leadId: string, digitizerNickname: string) => {
+    if (!firestore || isReadOnly) return;
+
+    const leadDocRef = doc(firestore, 'leads', leadId);
+    try {
+        await updateDoc(leadDocRef, {
+            assignedDigitizer: digitizerNickname === 'unassigned' ? null : digitizerNickname
+        });
+        toast({
+            title: 'Digitizer Assigned',
+            description: `${digitizerNickname === 'unassigned' ? 'Unassigned' : digitizerNickname} has been assigned.`,
+        });
+    } catch (e: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Assignment Failed',
+            description: e.message,
+        });
+    }
+  };
 
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
@@ -457,7 +471,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   
   const handleImagePaste = useCallback((event: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     if (isViewOnly) return;
-    const file = event.clipboardData.files[0];
+    const file = event.clipboardData.items[0];
     if (file && file.type.startsWith('image/')) {
         handleImageUpload(file, setter, index);
     }
@@ -551,7 +565,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 </Button>
                             )}
                           </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{!isViewOnly ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
-                          <input id={`file-input-digitizing-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} disabled={isViewOnly}/>
+                          <input id={`file-input-digitizing-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} disabled={!isViewOnly}/>
                       </div>
                       {!isViewOnly && index > 0 && (
                           <Button
@@ -1379,7 +1393,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         </TableCell>
                         <TableCell className="text-center align-middle p-2">
                             <Select
-                                value={assignedDigitizers[lead.id] || 'unassigned'}
+                                value={lead.assignedDigitizer || 'unassigned'}
                                 onValueChange={(value) => handleDigitizerChange(lead.id, value)}
                                 disabled={isViewOnly}
                             >
@@ -1461,19 +1475,24 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                           </div>
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => toggleLeadDetails(lead.id)}
-                            className="h-7 px-2 text-black hover:bg-gray-200"
-                          >
-                            View
-                            {openLeadId === lead.id ? (
-                              <ChevronUp className="h-4 w-4 ml-1" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4 ml-1" />
-                            )}
-                          </Button>
+                          <div className="flex items-center justify-center">
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => toggleLeadDetails(lead.id)}
+                                className="h-7 px-2 text-black hover:bg-gray-200"
+                            >
+                                View
+                                {openLeadId === lead.id ? (
+                                <ChevronUp className="h-4 w-4 ml-1" />
+                                ) : (
+                                <ChevronDown className="h-4 w-4 ml-1" />
+                                )}
+                            </Button>
+                            <Button onClick={() => window.open(`/job-order/${lead.id}/print?view=true`, '_blank', 'width=1200,height=800,scrollbars=yes')} variant="ghost" size="icon" className="h-7 w-7 text-primary hover:bg-gray-200">
+                                <FileText className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                         <TableCell className="text-center align-middle py-2">
                           <div className="flex flex-col items-center justify-start h-full gap-1">
@@ -1563,14 +1582,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                    return imageGroups.map(group => <ImageDisplayCard key={group.title} title={group.title} images={group.images} onImageClick={setImageInView} />);
                                })()}
                             </div>
-                            <div className="flex-shrink-0 self-center">
-                                <div className="space-y-2">
-                                    <h3 className="font-bold text-lg text-primary text-center">Job Order and Layout</h3>
-                                    <Button onClick={() => window.open(`/job-order/${lead.id}/print?view=true`, '_blank', 'width=1200,height=800,scrollbars=yes')} variant="default" size="lg" className="bg-primary text-white hover:bg-primary/90">
-                                        Check Job Order and Layout
-                                    </Button>
-                                </div>
-                            </div>
                            </div>
                         </TableCell>
                       </TableRow>
@@ -1609,5 +1620,6 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
         </Card>
     );
 };
+
 
 
