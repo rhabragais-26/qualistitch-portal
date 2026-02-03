@@ -189,21 +189,12 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const unitPrice = orderType === 'Item Sample' ? 0 : (editedUnitPrices[groupKey] ?? calculatedUnitPrice);
 
       const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
-      
-      const isLogoFeeRemoved = removedFees[groupKey]?.logo;
-      const isBackTextFeeRemoved = removedFees[groupKey]?.backText;
-      
-      const editedFees = editedProgrammingFees[groupKey];
-      const finalLogoFee = orderType === 'Item Sample' ? 0 : (editedFees?.logoFee !== undefined ? editedFees.logoFee : (!isLogoFeeRemoved ? initialLogoFee : 0));
-      const finalBackTextFee = orderType === 'Item Sample' ? 0 : (editedFees?.backTextFee !== undefined ? editedFees.backTextFee : (!isBackTextFeeRemoved ? initialBackTextFee : 0));
-
-      let subtotal = groupData.totalQuantity * unitPrice;
-
+      const itemsSubtotal = groupData.totalQuantity * unitPrice;
       
       const groupAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0, ...(addOns[groupKey] || {}) };
       const groupDiscount = discounts[groupKey];
       const itemTotalQuantity = groupData.totalQuantity;
-      
+
       const backLogoPriceKey = `${groupKey}-backLogo`;
       const namesPriceKey = `${groupKey}-names`;
       const plusSizePriceKey = `${groupKey}-plusSize`;
@@ -212,19 +203,24 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const namesPrice = orderType === 'Item Sample' ? 0 : (editedAddOnPrices[namesPriceKey] ?? getAddOnPrice('names', itemTotalQuantity, pricingConfig));
       const plusSizePrice = orderType === 'Item Sample' ? 0 : (editedAddOnPrices[plusSizePriceKey] ?? getAddOnPrice('plusSize', itemTotalQuantity, pricingConfig));
 
-      subtotal += (groupAddOns.backLogo || 0) * backLogoPrice;
-      subtotal += (groupAddOns.names || 0) * namesPrice;
-      subtotal += (groupAddOns.plusSize || 0) * plusSizePrice;
+      const backLogoTotal = (groupAddOns.backLogo || 0) * backLogoPrice;
+      const namesTotal = (groupAddOns.names || 0) * namesPrice;
+      const plusSizeTotal = (groupAddOns.plusSize || 0) * plusSizePrice;
+
+      const isLogoFeeRemoved = removedFees[groupKey]?.logo;
+      const isBackTextFeeRemoved = removedFees[groupKey]?.backText;
       
-      if (orderType !== 'Item Sample') {
-        subtotal += (groupAddOns.rushFee || 0);
-        subtotal += (groupAddOns.shippingFee || 0);
-        subtotal += (groupAddOns.logoProgramming || 0);
-        subtotal += (groupAddOns.backDesignProgramming || 0);
-        subtotal += (groupAddOns.holdingFee || 0);
-      }
+      const editedFees = editedProgrammingFees[groupKey];
+      const finalLogoFee = orderType === 'Item Sample' ? 0 : (editedFees?.logoFee !== undefined ? editedFees.logoFee : (!isLogoFeeRemoved ? initialLogoFee : 0));
+      const finalBackTextFee = orderType === 'Item Sample' ? 0 : (editedFees?.backTextFee !== undefined ? editedFees.backTextFee : (!isBackTextFeeRemoved ? initialBackTextFee : 0));
+
+      let subtotal = itemsSubtotal + backLogoTotal + namesTotal + plusSizeTotal + finalLogoFee + finalBackTextFee;
       
-      subtotal += finalLogoFee + finalBackTextFee;
+      subtotal += orderType === 'Item Sample' ? 0 : (groupAddOns.rushFee || 0);
+      subtotal += orderType === 'Item Sample' ? 0 : (groupAddOns.shippingFee || 0);
+      subtotal += orderType === 'Item Sample' ? 0 : (groupAddOns.logoProgramming || 0);
+      subtotal += orderType === 'Item Sample' ? 0 : (groupAddOns.backDesignProgramming || 0);
+      subtotal += orderType === 'Item Sample' ? 0 : (groupAddOns.holdingFee || 0);
 
       if (groupDiscount) {
         if (groupDiscount.type === 'percentage') {
@@ -322,7 +318,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig);
                 
                 const calculatedUnitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig, isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0, orderType);
-                const unitPrice = orderType === 'Item Sample' ? 0 : (editedUnitPrices[groupKey] ?? calculatedUnitPrice);
+                const unitPrice = editedUnitPrices[groupKey] ?? calculatedUnitPrice;
                 
                 const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
@@ -352,13 +348,11 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
 
                 let subtotal = itemsSubtotal + backLogoTotal + namesTotal + plusSizeTotal + finalLogoFee + finalBackTextFee;
 
-                if (orderType !== 'Item Sample') {
-                  subtotal += (groupAddOns.rushFee || 0);
-                  subtotal += (groupAddOns.shippingFee || 0);
-                  subtotal += (groupAddOns.logoProgramming || 0);
-                  subtotal += (groupAddOns.backDesignProgramming || 0);
-                  subtotal += (groupAddOns.holdingFee || 0);
-                }
+                subtotal += orderType === 'Item Sample' ? 0 : (groupAddOns.rushFee || 0);
+                subtotal += orderType === 'Item Sample' ? 0 : (groupAddOns.shippingFee || 0);
+                subtotal += orderType === 'Item Sample' ? 0 : (groupAddOns.logoProgramming || 0);
+                subtotal += orderType === 'Item Sample' ? 0 : (groupAddOns.backDesignProgramming || 0);
+                subtotal += orderType === 'Item Sample' ? 0 : (groupAddOns.holdingFee || 0);
 
                 let discountAmount = 0;
                 if(groupDiscount) {
@@ -851,7 +845,3 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     </>
   );
 }
-
-    
-
-    
