@@ -219,7 +219,7 @@ export function LeadForm({
   useEffect(() => {
     if (isEditing && initialLeadData) {
         setShowSecondMobile(!!initialLeadData.contactNumber2);
-        setIsForcedNew(false);
+        setIsForcedNew(initialLeadData.forceNewCustomer || false);
     } else if (!isEditing) {
         setShowSecondMobile(false);
     }
@@ -410,11 +410,9 @@ export function LeadForm({
   
   useEffect(() => {
     if (isEditing && initialLeadData) {
-        const otherNonSampleOrders = allLeads?.filter(l => l.customerName.toLowerCase() === initialLeadData.customerName.toLowerCase() && l.id !== initialLeadData.id && l.orderType !== 'Item Sample').length || 0;
-        const isRepeat = otherNonSampleOrders > 0 || initialLeadData.orderNumber > 0 && initialLeadData.orderType !== 'Item Sample';
-
-        setCustomerStatus(isRepeat ? 'Repeat' : 'New');
-        setOrderCount(isRepeat ? (otherNonSampleOrders || initialLeadData.orderNumber) : 0);
+      const isRepeat = (allLeads?.filter(l => l.customerName.toLowerCase() === initialLeadData.customerName.toLowerCase() && l.orderType !== 'Item Sample').length || 0) > 1;
+      setCustomerStatus(isRepeat ? 'Repeat' : 'New');
+      setOrderCount(isRepeat ? (allLeads?.filter(l => l.customerName.toLowerCase() === initialLeadData.customerName.toLowerCase() && l.orderType !== 'Item Sample').length || 1) -1 : 0);
     }
   }, [isEditing, initialLeadData, allLeads]);
 
@@ -760,6 +758,7 @@ export function LeadForm({
 
   const handleConfirmForceNew = () => {
     setIsForcedNew(true);
+    setValue('forceNewCustomer', true, { shouldDirty: true });
     setIsForceNewDialogOpen(false);
   };
 
@@ -947,6 +946,17 @@ export function LeadForm({
                               )}/>
                           </div>
                       )}
+                      <FormField
+                        control={form.control}
+                        name="forceNewCustomer"
+                        render={({ field }) => (
+                            <FormItem className="hidden">
+                                <FormControl>
+                                    <Input {...field} />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                      />
                     </div>
 
                     {/* Address Info */}
@@ -1497,3 +1507,5 @@ function SetCustomerStatusDialog({
         </Dialog>
     );
 }
+
+    
