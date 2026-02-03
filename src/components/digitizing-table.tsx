@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -1118,17 +1119,17 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       );
     } else if (uploadField === 'isFinalProgram') {
       return (
-        <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-6">
           <div>
             <h4 className="font-semibold mb-2 text-primary">Sequence Files</h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
               {renderMultipleFileUpload('Sequence Logo', sequenceLogo, setSequenceLogo, sequenceLogoUploadRefs)}
               {renderMultipleFileUpload('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign, sequenceBackDesignUploadRefs)}
             </div>
           </div>
           <div>
             <h4 className="font-semibold mb-2 text-primary">Final DST Files</h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
               {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
               {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
               {renderMultipleFileUpload('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
@@ -1136,14 +1137,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           </div>
           <div>
             <h4 className="font-semibold mb-2 text-primary">Final EMB Files</h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
               {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
               {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
             </div>
           </div>
           <div>
             <h4 className="font-semibold mb-2 text-primary">Final Programmed Images</h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
                 {renderMultipleFileUpload('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo, finalProgrammedLogoUploadRefs)}
                 {renderMultipleFileUpload('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign, finalProgrammedBackDesignUploadRefs)}
             </div>
