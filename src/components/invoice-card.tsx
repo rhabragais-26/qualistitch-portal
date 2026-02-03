@@ -186,7 +186,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const embroidery = groupData.embroidery || 'logo';
       
       const calculatedUnitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig, isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0, orderType);
-      const unitPrice = editedUnitPrices[groupKey] ?? calculatedUnitPrice;
+      const unitPrice = orderType === 'Item Sample' ? 0 : (editedUnitPrices[groupKey] ?? calculatedUnitPrice);
 
       const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
       
@@ -194,8 +194,8 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const isBackTextFeeRemoved = removedFees[groupKey]?.backText;
       
       const editedFees = editedProgrammingFees[groupKey];
-      const finalLogoFee = editedFees?.logoFee !== undefined ? editedFees.logoFee : (!isLogoFeeRemoved ? initialLogoFee : 0);
-      const finalBackTextFee = editedFees?.backTextFee !== undefined ? editedFees.backTextFee : (!isBackTextFeeRemoved ? initialBackTextFee : 0);
+      const finalLogoFee = orderType === 'Item Sample' ? 0 : (editedFees?.logoFee !== undefined ? editedFees.logoFee : (!isLogoFeeRemoved ? initialLogoFee : 0));
+      const finalBackTextFee = orderType === 'Item Sample' ? 0 : (editedFees?.backTextFee !== undefined ? editedFees.backTextFee : (!isBackTextFeeRemoved ? initialBackTextFee : 0));
 
       let subtotal = groupData.totalQuantity * unitPrice;
 
@@ -208,18 +208,21 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
       const namesPriceKey = `${groupKey}-names`;
       const plusSizePriceKey = `${groupKey}-plusSize`;
 
-      const backLogoPrice = editedAddOnPrices[backLogoPriceKey] ?? getAddOnPrice('backLogo', itemTotalQuantity, pricingConfig);
-      const namesPrice = editedAddOnPrices[namesPriceKey] ?? getAddOnPrice('names', itemTotalQuantity, pricingConfig);
-      const plusSizePrice = editedAddOnPrices[plusSizePriceKey] ?? getAddOnPrice('plusSize', itemTotalQuantity, pricingConfig);
+      const backLogoPrice = orderType === 'Item Sample' ? 0 : (editedAddOnPrices[backLogoPriceKey] ?? getAddOnPrice('backLogo', itemTotalQuantity, pricingConfig));
+      const namesPrice = orderType === 'Item Sample' ? 0 : (editedAddOnPrices[namesPriceKey] ?? getAddOnPrice('names', itemTotalQuantity, pricingConfig));
+      const plusSizePrice = orderType === 'Item Sample' ? 0 : (editedAddOnPrices[plusSizePriceKey] ?? getAddOnPrice('plusSize', itemTotalQuantity, pricingConfig));
 
       subtotal += (groupAddOns.backLogo || 0) * backLogoPrice;
       subtotal += (groupAddOns.names || 0) * namesPrice;
       subtotal += (groupAddOns.plusSize || 0) * plusSizePrice;
-      subtotal += (groupAddOns.rushFee || 0);
-      subtotal += (groupAddOns.shippingFee || 0);
-      subtotal += (groupAddOns.logoProgramming || 0);
-      subtotal += (groupAddOns.backDesignProgramming || 0);
-      subtotal += (groupAddOns.holdingFee || 0);
+      
+      if (orderType !== 'Item Sample') {
+        subtotal += (groupAddOns.rushFee || 0);
+        subtotal += (groupAddOns.shippingFee || 0);
+        subtotal += (groupAddOns.logoProgramming || 0);
+        subtotal += (groupAddOns.backDesignProgramming || 0);
+        subtotal += (groupAddOns.holdingFee || 0);
+      }
       
       subtotal += finalLogoFee + finalBackTextFee;
 
@@ -319,7 +322,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const tierLabel = getTierLabel(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig);
                 
                 const calculatedUnitPrice = getUnitPrice(groupData.productType, groupData.totalQuantity, embroidery, pricingConfig, isPatches ? groupData.orders[0]?.pricePerPatch || 0 : 0, orderType);
-                const unitPrice = editedUnitPrices[groupKey] ?? calculatedUnitPrice;
+                const unitPrice = orderType === 'Item Sample' ? 0 : (editedUnitPrices[groupKey] ?? calculatedUnitPrice);
                 
                 const { logoFee: initialLogoFee, backTextFee: initialBackTextFee } = getProgrammingFees(groupData.totalQuantity, embroidery, isClientOwned, orderType);
                 const itemsSubtotal = groupData.totalQuantity * unitPrice;
@@ -332,9 +335,9 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const namesPriceKey = `${groupKey}-names`;
                 const plusSizePriceKey = `${groupKey}-plusSize`;
 
-                const backLogoPrice = editedAddOnPrices[backLogoPriceKey] ?? getAddOnPrice('backLogo', itemTotalQuantity, pricingConfig);
-                const namesPrice = editedAddOnPrices[namesPriceKey] ?? getAddOnPrice('names', itemTotalQuantity, pricingConfig);
-                const plusSizePrice = editedAddOnPrices[plusSizePriceKey] ?? getAddOnPrice('plusSize', itemTotalQuantity, pricingConfig);
+                const backLogoPrice = orderType === 'Item Sample' ? 0 : (editedAddOnPrices[backLogoPriceKey] ?? getAddOnPrice('backLogo', itemTotalQuantity, pricingConfig));
+                const namesPrice = orderType === 'Item Sample' ? 0 : (editedAddOnPrices[namesPriceKey] ?? getAddOnPrice('names', itemTotalQuantity, pricingConfig));
+                const plusSizePrice = orderType === 'Item Sample' ? 0 : (editedAddOnPrices[plusSizePriceKey] ?? getAddOnPrice('plusSize', itemTotalQuantity, pricingConfig));
 
                 const backLogoTotal = (groupAddOns.backLogo || 0) * backLogoPrice;
                 const namesTotal = (groupAddOns.names || 0) * namesPrice;
@@ -344,10 +347,18 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                 const isBackTextFeeRemoved = removedFees[groupKey]?.backText;
                 
                 const editedFees = editedProgrammingFees[groupKey];
-                const finalLogoFee = editedFees?.logoFee !== undefined ? editedFees.logoFee : (!isLogoFeeRemoved ? initialLogoFee : 0);
-                const finalBackTextFee = editedFees?.backTextFee !== undefined ? editedFees.backTextFee : (!isBackTextFeeRemoved ? initialBackTextFee : 0);
+                const finalLogoFee = orderType === 'Item Sample' ? 0 : (editedFees?.logoFee !== undefined ? editedFees.logoFee : (!isLogoFeeRemoved ? initialLogoFee : 0));
+                const finalBackTextFee = orderType === 'Item Sample' ? 0 : (editedFees?.backTextFee !== undefined ? editedFees.backTextFee : (!isBackTextFeeRemoved ? initialBackTextFee : 0));
 
-                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + plusSizeTotal + (groupAddOns.rushFee || 0) + (groupAddOns.shippingFee || 0) + finalLogoFee + finalBackTextFee + (groupAddOns.logoProgramming || 0) + (groupAddOns.backDesignProgramming || 0) + (groupAddOns.holdingFee || 0);
+                let subtotal = itemsSubtotal + backLogoTotal + namesTotal + plusSizeTotal + finalLogoFee + finalBackTextFee;
+
+                if (orderType !== 'Item Sample') {
+                  subtotal += (groupAddOns.rushFee || 0);
+                  subtotal += (groupAddOns.shippingFee || 0);
+                  subtotal += (groupAddOns.logoProgramming || 0);
+                  subtotal += (groupAddOns.backDesignProgramming || 0);
+                  subtotal += (groupAddOns.holdingFee || 0);
+                }
 
                 let discountAmount = 0;
                 if(groupDiscount) {
@@ -534,7 +545,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                 </TableCell>
                             </TableRow>
                            )}
-                           {groupAddOns.rushFee > 0 && (
+                           {groupAddOns.rushFee > 0 && orderType !== 'Item Sample' && (
                             <TableRow className="group">
                                 <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                     <div className="flex items-center gap-2">
@@ -550,7 +561,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                 </TableCell>
                             </TableRow>
                            )}
-                             {groupAddOns.shippingFee > 0 && (
+                             {groupAddOns.shippingFee > 0 && orderType !== 'Item Sample' && (
                                 <TableRow className="group">
                                     <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                         <div className="flex items-center gap-2">
@@ -566,7 +577,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     </TableCell>
                                 </TableRow>
                             )}
-                             {groupAddOns.logoProgramming > 0 && (
+                             {groupAddOns.logoProgramming > 0 && orderType !== 'Item Sample' && (
                                 <TableRow className="group">
                                     <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                         <div className="flex items-center gap-2">
@@ -582,7 +593,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     </TableCell>
                                 </TableRow>
                             )}
-                            {groupAddOns.backDesignProgramming > 0 && (
+                            {groupAddOns.backDesignProgramming > 0 && orderType !== 'Item Sample' && (
                                 <TableRow className="group">
                                     <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                         <div className="flex items-center gap-2">
@@ -598,7 +609,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     </TableCell>
                                 </TableRow>
                             )}
-                            {groupAddOns.holdingFee > 0 && (
+                            {groupAddOns.holdingFee > 0 && orderType !== 'Item Sample' && (
                                 <TableRow className="group">
                                     <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                         <div className="flex items-center gap-2">
