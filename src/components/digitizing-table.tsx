@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -483,72 +482,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     });
   }, [filteredLeads, optimisticChanges]);
   
-  const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, checked: boolean) => {
-    const lead = displayedLeads?.find((l) => l.id === leadId);
-    if (!lead) return;
-    const isCurrentlyChecked = lead[field] as boolean | undefined || false;
-
-    if (!checked && isCurrentlyChecked) {
-      setUncheckConfirmation({ leadId, field });
-    } else if (checked && !isCurrentlyChecked) {
-      if (field === 'isUnderProgramming' || field === 'isLogoTesting' || field === 'isFinalProgram') {
-        setUploadLeadId(leadId);
-        setUploadField(field);
-        const layout = lead.layouts?.[0];
-        
-        const getInitialImages = (pluralField: { url: string }[] | undefined, singularField: string | null | undefined): (string|null)[] => {
-            const images: (string | null)[] = [];
-            if (pluralField && pluralField.length > 0) {
-              images.push(...pluralField.map(i => i.url));
-            } else if (singularField) {
-              images.push(singularField);
-            }
-            return images.length > 0 ? images : [null];
-        };
-        
-        const getInitialSequenceImages = (files?: (FileObject | null)[]): (string|null)[] => {
-            if (!files || files.length === 0) return [];
-            return files.map(f => f?.url || null);
-        }
-
-        if (field === 'isUnderProgramming') {
-            setInitialLogoLeftImages(getInitialImages((layout as any)?.logoLeftImages, layout?.logoLeftImage));
-            setInitialLogoRightImages(getInitialImages((layout as any)?.logoRightImages, layout?.logoRightImage));
-            setInitialBackLogoImages(getInitialImages((layout as any)?.backLogoImages, layout?.backLogoImage));
-            setInitialBackDesignImages(getInitialImages((layout as any)?.backDesignImages, layout?.backDesignImage));
-        } else if (field === 'isLogoTesting') {
-            setNoTestingNeeded(false);
-            setTestLogoLeftImages(getInitialImages((layout as any)?.testLogoLeftImages, layout?.testLogoLeftImage));
-            setTestLogoRightImages(getInitialImages((layout as any)?.testLogoRightImages, layout?.testLogoRightImage));
-            setTestBackLogoImages(getInitialImages((layout as any)?.testBackLogoImages, layout?.testBackLogoImage));
-            setTestBackDesignImages(getInitialImages((layout as any)?.testBackDesignImages, layout?.testBackDesignImage));
-        } else { // isFinalProgram
-          setIsNamesOnly(false);
-          setFinalLogoEmb(layout?.finalLogoEmb?.length ? layout.finalLogoEmb : [null]);
-          setFinalBackDesignEmb(layout?.finalBackDesignEmb?.length ? layout.finalBackDesignEmb : [null]);
-          setFinalLogoDst(layout?.finalLogoDst?.length ? layout.finalLogoDst : [null]);
-          setFinalBackDesignDst(layout?.finalBackDesignDst?.length ? layout.finalBackDesignDst : [null]);
-          setFinalNamesDst(layout?.finalNamesDst || []);
-          setSequenceLogo(getInitialSequenceImages(layout?.sequenceLogo));
-          setSequenceBackDesign(getInitialSequenceImages(layout?.sequenceBackDesign));
-          setFinalProgrammedLogo(getInitialImages((layout as any)?.finalProgrammedLogo, undefined));
-          setFinalProgrammedBackDesign(getInitialImages((layout as any)?.finalProgrammedBackDesign, undefined));
-        }
-        setIsUploadDialogOpen(true);
-      } else {
-        const optimisticUpdate = { [field]: true, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() };
-        setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...optimisticUpdate } }));
-        updateStatus(leadId, field, true).catch(() => {
-             toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
-             setOptimisticChanges(prev => {
-                const { [field!]: _removed, [`${field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[leadId] || {};
-                return { ...prev, [leadId]: rest };
-             });
-        });
-      }
-    }
-  }, [displayedLeads, updateStatus, toast]);
-
   const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
     const lead = displayedLeads?.find((l) => l.id === leadId);
     if (!lead) return;
@@ -578,6 +511,183 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       });
     }
   }, [joReceivedConfirmation, updateStatus, toast]);
+
+  const confirmUncheck = useCallback(() => {
+    if (uncheckConfirmation) {
+      const { leadId, field } = uncheckConfirmation;
+      
+      const updatedData: { [key: string]: any } = { [field]: false, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: null };
+
+      if (field !== 'isJoHardcopyReceived') {
+        const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
+        const currentIndex = sequence.indexOf(field);
+        if (currentIndex > -1) {
+            for (let i = currentIndex + 1; i < sequence.length; i++) {
+                const nextField = sequence[i];
+                if (nextField) {
+                  updatedData[nextField] = false;
+                  const nextTimestampField = `${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
+                  updatedData[nextTimestampField] = null;
+                }
+            }
+        }
+      }
+      
+      setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...updatedData } }));
+      setUncheckConfirmation(null);
+      
+      updateStatus(leadId, field, false).catch(() => {
+        toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
+        setOptimisticChanges(prev => {
+            const { [field]: _removed, ...rest } = prev[leadId] || {};
+            // Simplified revert, real-time listener will fix it.
+            return { ...prev, [leadId]: rest };
+        });
+      });
+    }
+  }, [uncheckConfirmation, updateStatus, toast]);
+
+  const handleConfirmReview = useCallback(async () => {
+    if (!reviewConfirmLead || !firestore) return;
+    try {
+        const lead = reviewConfirmLead;
+        const leadDocRef = doc(firestore, 'leads', lead.id);
+        const isClientOrPatchOnly = lead.orders.every(o => o.productType === 'Client Owned' || o.productType === 'Patches');
+        
+        const updateData: any = {
+            isDigitizingArchived: true,
+            digitizingArchivedTimestamp: new Date().toISOString(),
+        };
+
+        if (isClientOrPatchOnly) {
+            updateData.isSentToProduction = true;
+            updateData.sentToProductionTimestamp = new Date().toISOString();
+        } else {
+            updateData.isPreparedForProduction = true;
+        }
+
+        await updateDoc(leadDocRef, updateData);
+        
+        const deadlineInfo = calculateDigitizingDeadline(lead);
+        const notification = {
+            id: `progress-${lead.id}-${new Date().toISOString()}`,
+            type: 'progress',
+            leadId: lead.id,
+            joNumber: formatJoNumberUtil(lead.joNumber),
+            customerName: toTitleCase(lead.customerName),
+            companyName: lead.companyName,
+            contactNumber: getContactDisplay(lead),
+            message: isClientOrPatchOnly 
+              ? 'Order endorsed to Production.' 
+              : 'Order endorsed to Inventory for item preparation.',
+            overdueStatus: deadlineInfo.text,
+            isRead: false,
+            timestamp: new Date().toISOString(),
+            isDisapproved: false
+        };
+        const existingNotifications = JSON.parse(localStorage.getItem('progress-notifications') || '[]') as any[];
+        localStorage.setItem('progress-notifications', JSON.stringify([...existingNotifications, notification]));
+        window.dispatchEvent(new StorageEvent('storage', { key: 'progress-notifications' }));
+
+
+        toast({
+            title: "Project Endorsed",
+            description: isClientOrPatchOnly
+                ? "The project has been sent directly to the Production queue."
+                : "The project has been moved to the Item Preparation queue.",
+        });
+        setReviewConfirmLead(null);
+    } catch (e: any) {
+        console.error('Error sending to production:', e);
+        toast({
+            variant: 'destructive',
+            title: 'Action Failed',
+            description: e.message || 'Could not send the project to production.',
+        });
+    }
+  }, [reviewConfirmLead, firestore, toast, calculateDigitizingDeadline, getContactDisplay, formatJoNumberUtil]);
+
+
+  const toggleLeadDetails = useCallback((leadId: string) => {
+    setOpenLeadId(openLeadId === leadId ? null : leadId);
+  }, [openLeadId]);
+  
+  const fileChecklistItems: FileUploadChecklistItem[] = useMemo(() => {
+    if (!reviewConfirmLead) return [];
+    const layout = reviewConfirmLead.layouts?.[0];
+    if (!layout) return [];
+
+    const finalProgramFiles = [
+      ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] }),
+      ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i+1}`, timestamp: Array.isArray(layout.sequenceBackDesignUploadTimes) ? layout.sequenceBackDesignUploadTimes[i] : null }),
+      ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Programmed Logo ${i + 1}`, timestamp: (layout as any).finalProgrammedLogoUploadTimes?.[i], uploadedBy: (layout as any).finalProgrammedLogoUploadedBy?.[i] }),
+      ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Programmed Back Design ${i + 1}`, timestamp: (layout as any).finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: (layout as any).finalProgrammedBackDesignUploadedBy?.[i] }),
+    ];
+    
+    return finalProgramFiles.filter((item): item is FileUploadChecklistItem => !!item);
+  }, [reviewConfirmLead]);
+  
+    const handleImageUpload = useCallback((file: File, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+      if (isViewOnly) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+          setter(prev => {
+              const newImages = [...prev];
+              newImages[index] = e.target.result as string;
+              return newImages;
+          });
+      };
+      reader.readAsDataURL(file);
+  }, [isViewOnly]);
+
+  const handleImagePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+      if (isViewOnly) return;
+      const file = e.clipboardData.files[0];
+      if (file && file.type.startsWith('image/')) {
+          handleImageUpload(file, setter, index);
+      }
+  }, [isViewOnly, handleImageUpload]);
+
+  const handleClearImage = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    setter(prev => {
+        const newImages = [...prev];
+        newImages[index] = null;
+        return newImages;
+    });
+  }, []);
+  
+  const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+    e.stopPropagation();
+    setter(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const addFile = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>) => {
+    setter(prev => [...prev, null]);
+  }, []);
+
+  const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, filesState: (FileObject | null)[], index: number) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const newFiles = [...filesState];
+        newFiles[index] = { name: file.name, url: e.target!.result as string };
+        setFilesState(newFiles);
+      };
+      reader.readAsDataURL(file);
+    }
+  }, []);
+
+  const addFileMultiple = useCallback((setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>) => {
+    setFilesState(prev => [...prev, null]);
+  }, []);
+
+  const removeFile = useCallback((setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
+    setFilesState(prev => prev.filter((_, i) => i !== index));
+    if (refs.current && refs.current[index]) {
+      refs.current[index]!.value = '';
+    }
+  }, []);
 
   const handleUploadDialogSave = useCallback(async () => {
     if (!uploadLeadId || !uploadField || !firestore || !leads || !userProfile) return;
@@ -825,182 +935,72 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign
   ]);
 
-  const confirmUncheck = useCallback(() => {
-    if (uncheckConfirmation) {
-      const { leadId, field } = uncheckConfirmation;
-      
-      const updatedData: { [key: string]: any } = { [field]: false, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: null };
+  const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, checked: boolean) => {
+    const lead = displayedLeads?.find((l) => l.id === leadId);
+    if (!lead) return;
+    const isCurrentlyChecked = lead[field] as boolean | undefined || false;
 
-      if (field !== 'isJoHardcopyReceived') {
-        const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
-        const currentIndex = sequence.indexOf(field);
-        if (currentIndex > -1) {
-            for (let i = currentIndex + 1; i < sequence.length; i++) {
-                const nextField = sequence[i];
-                if (nextField) {
-                  updatedData[nextField] = false;
-                  const nextTimestampField = `${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
-                  updatedData[nextTimestampField] = null;
-                }
+    if (!checked && isCurrentlyChecked) {
+      setUncheckConfirmation({ leadId, field });
+    } else if (checked && !isCurrentlyChecked) {
+      if (field === 'isUnderProgramming' || field === 'isLogoTesting' || field === 'isFinalProgram') {
+        setUploadLeadId(leadId);
+        setUploadField(field);
+        const layout = lead.layouts?.[0];
+        
+        const getInitialImages = (pluralField: { url: string }[] | undefined, singularField: string | null | undefined): (string|null)[] => {
+            const images: (string | null)[] = [];
+            if (pluralField && pluralField.length > 0) {
+              images.push(...pluralField.map(i => i.url));
+            } else if (singularField) {
+              images.push(singularField);
             }
+            return images.length > 0 ? images : [null];
+        };
+        
+        const getInitialSequenceImages = (files?: (FileObject | null)[]): (string|null)[] => {
+            if (!files || files.length === 0) return [];
+            return files.map(f => f?.url || null);
         }
+
+        if (field === 'isUnderProgramming') {
+            setInitialLogoLeftImages(getInitialImages((layout as any)?.logoLeftImages, layout?.logoLeftImage));
+            setInitialLogoRightImages(getInitialImages((layout as any)?.logoRightImages, layout?.logoRightImage));
+            setInitialBackLogoImages(getInitialImages((layout as any)?.backLogoImages, layout?.backLogoImage));
+            setInitialBackDesignImages(getInitialImages((layout as any)?.backDesignImages, layout?.backDesignImage));
+        } else if (field === 'isLogoTesting') {
+            setNoTestingNeeded(false);
+            setTestLogoLeftImages(getInitialImages((layout as any)?.testLogoLeftImages, layout?.testLogoLeftImage));
+            setTestLogoRightImages(getInitialImages((layout as any)?.testLogoRightImages, layout?.testLogoRightImage));
+            setTestBackLogoImages(getInitialImages((layout as any)?.testBackLogoImages, layout?.testBackLogoImage));
+            setTestBackDesignImages(getInitialImages((layout as any)?.testBackDesignImages, layout?.testBackDesignImage));
+        } else { // isFinalProgram
+          setIsNamesOnly(false);
+          setFinalLogoEmb(layout?.finalLogoEmb?.length ? layout.finalLogoEmb : [null]);
+          setFinalBackDesignEmb(layout?.finalBackDesignEmb?.length ? layout.finalBackDesignEmb : [null]);
+          setFinalLogoDst(layout?.finalLogoDst?.length ? layout.finalLogoDst : [null]);
+          setFinalBackDesignDst(layout?.finalBackDesignDst?.length ? layout.finalBackDesignDst : [null]);
+          setFinalNamesDst(layout?.finalNamesDst || []);
+          setSequenceLogo(getInitialSequenceImages(layout?.sequenceLogo));
+          setSequenceBackDesign(getInitialSequenceImages(layout?.sequenceBackDesign));
+          setFinalProgrammedLogo(getInitialImages((layout as any)?.finalProgrammedLogo, undefined));
+          setFinalProgrammedBackDesign(getInitialImages((layout as any)?.finalProgrammedBackDesign, undefined));
+        }
+        setIsUploadDialogOpen(true);
+      } else {
+        const optimisticUpdate = { [field]: true, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() };
+        setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...optimisticUpdate } }));
+        updateStatus(leadId, field, true).catch(() => {
+             toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
+             setOptimisticChanges(prev => {
+                const { [field!]: _removed, [`${field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[leadId] || {};
+                return { ...prev, [leadId]: rest };
+             });
+        });
       }
-      
-      setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...updatedData } }));
-      setUncheckConfirmation(null);
-      
-      updateStatus(leadId, field, false).catch(() => {
-        toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
-        setOptimisticChanges(prev => {
-            const { [field]: _removed, ...rest } = prev[leadId] || {};
-            // Simplified revert, real-time listener will fix it.
-            return { ...prev, [leadId]: rest };
-        });
-      });
     }
-  }, [uncheckConfirmation, updateStatus, toast]);
+  }, [displayedLeads, updateStatus, toast]);
 
-  const handleConfirmReview = useCallback(async () => {
-    if (!reviewConfirmLead || !firestore) return;
-    try {
-        const lead = reviewConfirmLead;
-        const leadDocRef = doc(firestore, 'leads', lead.id);
-        const isClientOrPatchOnly = lead.orders.every(o => o.productType === 'Client Owned' || o.productType === 'Patches');
-        
-        const updateData: any = {
-            isDigitizingArchived: true,
-            digitizingArchivedTimestamp: new Date().toISOString(),
-        };
-
-        if (isClientOrPatchOnly) {
-            updateData.isSentToProduction = true;
-            updateData.sentToProductionTimestamp = new Date().toISOString();
-        } else {
-            updateData.isPreparedForProduction = true;
-        }
-
-        await updateDoc(leadDocRef, updateData);
-        
-        const deadlineInfo = calculateDigitizingDeadline(lead);
-        const notification = {
-            id: `progress-${lead.id}-${new Date().toISOString()}`,
-            type: 'progress',
-            leadId: lead.id,
-            joNumber: formatJoNumberUtil(lead.joNumber),
-            customerName: toTitleCase(lead.customerName),
-            companyName: lead.companyName,
-            contactNumber: getContactDisplay(lead),
-            message: isClientOrPatchOnly 
-              ? 'Order endorsed to Production.' 
-              : 'Order endorsed to Inventory for item preparation.',
-            overdueStatus: deadlineInfo.text,
-            isRead: false,
-            timestamp: new Date().toISOString(),
-            isDisapproved: false
-        };
-        const existingNotifications = JSON.parse(localStorage.getItem('progress-notifications') || '[]') as any[];
-        localStorage.setItem('progress-notifications', JSON.stringify([...existingNotifications, notification]));
-        window.dispatchEvent(new StorageEvent('storage', { key: 'progress-notifications' }));
-
-
-        toast({
-            title: "Project Endorsed",
-            description: isClientOrPatchOnly
-                ? "The project has been sent directly to the Production queue."
-                : "The project has been moved to the Item Preparation queue.",
-        });
-        setReviewConfirmLead(null);
-    } catch (e: any) {
-        console.error('Error sending to production:', e);
-        toast({
-            variant: 'destructive',
-            title: 'Action Failed',
-            description: e.message || 'Could not send the project to production.',
-        });
-    }
-  }, [reviewConfirmLead, firestore, toast, calculateDigitizingDeadline, getContactDisplay, formatJoNumberUtil]);
-
-
-  const toggleLeadDetails = useCallback((leadId: string) => {
-    setOpenLeadId(openLeadId === leadId ? null : leadId);
-  }, [openLeadId]);
-  
-  const fileChecklistItems: FileUploadChecklistItem[] = useMemo(() => {
-    if (!reviewConfirmLead) return [];
-    const layout = reviewConfirmLead.layouts?.[0];
-    if (!layout) return [];
-
-    const finalProgramFiles = [
-      ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] }),
-      ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i+1}`, timestamp: Array.isArray(layout.sequenceBackDesignUploadTimes) ? layout.sequenceBackDesignUploadTimes[i] : null }),
-      ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Programmed Logo ${i + 1}`, timestamp: (layout as any).finalProgrammedLogoUploadTimes?.[i], uploadedBy: (layout as any).finalProgrammedLogoUploadedBy?.[i] }),
-      ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Programmed Back Design ${i + 1}`, timestamp: (layout as any).finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: (layout as any).finalProgrammedBackDesignUploadedBy?.[i] }),
-    ];
-    
-    return finalProgramFiles.filter((item): item is FileUploadChecklistItem => !!item);
-  }, [reviewConfirmLead]);
-  
-  const handleImagePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    if (isViewOnly) return;
-    const file = e.clipboardData.files[0];
-    if (file && file.type.startsWith('image/')) {
-        handleImageUpload(file, setter, index);
-    }
-  }, [isViewOnly]);
-
-  const handleImageUpload = (file: File, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-          setter(prev => {
-              const newImages = [...prev];
-              newImages[index] = e.target.result as string;
-              return newImages;
-          });
-      };
-      reader.readAsDataURL(file);
-  };
-  
-  const handleClearImage = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    setter(prev => {
-        const newImages = [...prev];
-        newImages[index] = null;
-        return newImages;
-    });
-  }, []);
-
-  const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
-    e.stopPropagation();
-    setter(prev => prev.filter((_, i) => i !== index));
-  }, []);
-
-  const addFile = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>) => {
-    setter(prev => [...prev, null]);
-  }, []);
-
-  const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, filesState: (FileObject | null)[], index: number) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const newFiles = [...filesState];
-        newFiles[index] = { name: file.name, url: e.target!.result as string };
-        setFilesState(newFiles);
-      };
-      reader.readAsDataURL(file);
-    }
-  }, []);
-
-  const addFileMultiple = useCallback((setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>) => {
-    setFilesState(prev => [...prev, null]);
-  }, []);
-
-  const removeFile = useCallback((setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
-    setFilesState(prev => prev.filter((_, i) => i !== index));
-    if (refs.current && refs.current[index]) {
-      refs.current[index]!.value = '';
-    }
-  }, []);
-  
   const renderUploadDialogContent = useCallback(() => {
     if (!uploadField || !uploadLeadId) return null;
     const isDisabled = isViewOnly;
@@ -1011,7 +1011,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           <div className="space-y-2">
               <div className="flex items-center gap-2">
                   {label && <Label>{label}</Label>}
-                  {!isDisabled && (
+                  {!isDisabled && !isNamesDst && (
                       <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFilesState)}>
                           <PlusCircle className="h-4 w-4" />
                       </Button>
@@ -1147,13 +1147,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       <h4 className="font-semibold text-primary mb-2">Final Program Files</h4>
                       <div className="space-y-4">
                           {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
-                          {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+                          {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
                       </div>
                   </div>
                   <div>
                       <h4 className="font-semibold text-primary mb-2">&nbsp;</h4>
                       <div className="space-y-4">
-                          {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+                          {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
                           {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
                       </div>
                   </div>
@@ -1295,7 +1295,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 </ul>
               </div>
               <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setReviewConfirmLead(null)}>Cancel</AlertDialogCancel>
+                <AlertDialogCancel onClick={()={() => setReviewConfirmLead(null)}>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleConfirmReview}>Done</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -1739,3 +1739,6 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
     );
 };
 
+
+
+    
