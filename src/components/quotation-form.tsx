@@ -1,4 +1,5 @@
 
+
 'use client';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -22,6 +23,12 @@ type QuotationFormProps = {
   removedFees: Record<string, { logo?: boolean; backText?: boolean }>;
   setRemovedFees: React.Dispatch<React.SetStateAction<Record<string, { logo?: boolean; backText?: boolean }>>>;
   isReadOnly?: boolean;
+  editedUnitPrices: Record<string, number>;
+  setEditedUnitPrices: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  editedAddOnPrices: Record<string, number>;
+  setEditedAddOnPrices: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  editedProgrammingFees: Record<string, { logoFee?: number; backTextFee?: number }>;
+  setEditedProgrammingFees: React.Dispatch<React.SetStateAction<Record<string, { logoFee?: number; backTextFee?: number }>>>;
 };
 
 export function QuotationForm({
@@ -37,6 +44,12 @@ export function QuotationForm({
   removedFees,
   setRemovedFees,
   isReadOnly,
+  editedUnitPrices,
+  setEditedUnitPrices,
+  editedAddOnPrices,
+  setEditedAddOnPrices,
+  editedProgrammingFees,
+  setEditedProgrammingFees,
 }: QuotationFormProps) {
   const [payments, setPayments] = useState<Record<string, Payment[]>>({});
   const [balance, setBalance] = useState(0);
@@ -67,6 +80,12 @@ export function QuotationForm({
         isQuotationMode={true}
         removedFees={removedFees}
         setRemovedFees={setRemovedFees}
+        editedUnitPrices={editedUnitPrices}
+        setEditedUnitPrices={setEditedUnitPrices}
+        editedAddOnPrices={editedAddOnPrices}
+        setEditedAddOnPrices={setEditedAddOnPrices}
+        editedProgrammingFees={editedProgrammingFees}
+        setEditedProgrammingFees={setEditedProgrammingFees}
       />
     </div>
   );

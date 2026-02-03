@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/header';
@@ -42,6 +43,11 @@ export default function QuotationPage() {
   const { userProfile } = useUser();
   const pathname = usePathname();
   const canEdit = hasEditPermission(userProfile?.position as any, pathname);
+  
+  const [editedUnitPrices, setEditedUnitPrices] = useState<Record<string, number>>({});
+  const [editedAddOnPrices, setEditedAddOnPrices] = useState<Record<string, number>>({});
+  const [editedProgrammingFees, setEditedProgrammingFees] = useState<Record<string, { logoFee?: number; backTextFee?: number }>>({});
+
 
   const formMethods = useForm<QuotationFormValues>({
     resolver: zodResolver(quotationFormSchema),
@@ -89,6 +95,9 @@ export default function QuotationPage() {
     setGrandTotal(0);
     setRemovedFees({});
     setQuotationNumber(null);
+    setEditedUnitPrices({});
+    setEditedAddOnPrices({});
+    setEditedProgrammingFees({});
   };
 
 
@@ -116,6 +125,12 @@ export default function QuotationPage() {
               removedFees={removedFees}
               setRemovedFees={setRemovedFees}
               isReadOnly={!canEdit}
+              editedUnitPrices={editedUnitPrices}
+              setEditedUnitPrices={setEditedUnitPrices}
+              editedAddOnPrices={editedAddOnPrices}
+              setEditedAddOnPrices={setEditedAddOnPrices}
+              editedProgrammingFees={editedProgrammingFees}
+              setEditedProgrammingFees={setEditedProgrammingFees}
             />
             <div className="space-y-4">
                <div className="flex justify-center gap-2 flex-wrap">

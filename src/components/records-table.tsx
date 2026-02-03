@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useFirestore, useMemoFirebase, useCollection, useUser } from '@/firebase';
@@ -123,6 +124,12 @@ const leadSchema = z.object({
   shipmentStatus: z.string().optional(),
   shippedTimestamp: z.string().optional(),
   forceNewCustomer: z.boolean().optional(),
+  editedUnitPrices: z.record(z.number()).optional(),
+  editedAddOnPrices: z.record(z.number()).optional(),
+  editedProgrammingFees: z.record(z.object({
+    logoFee: z.number().optional(),
+    backTextFee: z.number().optional()
+  })).optional(),
 });
 
 export type Lead = z.infer<typeof leadSchema>;
@@ -368,34 +375,37 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
   
   const processedLeads = useMemo(() => {
     if (!leads) return [];
-  
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
-  
-    leads.forEach(lead => {
-      const name = lead.customerName.toLowerCase();
-      if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
-      }
-      customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
-    });
-  
-    const enrichedLeads: EnrichedLead[] = [];
-  
-    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
-      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-      orders.forEach((lead, index) => {
-        const previousNonSampleOrders = orders
-          .slice(0, index)
-          .filter(o => o.orderType !== 'Item Sample');
 
-        enrichedLeads.push({
-          ...lead,
-          orderNumber: previousNonSampleOrders.length,
-          totalCustomerQuantity,
-        });
-      });
+    const customerOrderGroups: { [key: string]: Lead[] } = {};
+
+    leads.forEach(lead => {
+        const name = lead.customerName.toLowerCase();
+        if (!customerOrderGroups[name]) {
+            customerOrderGroups[name] = [];
+        }
+        customerOrderGroups[name].push(lead);
+    });
+
+    const enrichedLeads: EnrichedLead[] = [];
+
+    Object.values(customerOrderGroups).forEach(({ orders }) => {
+      const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+      
+      const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0), 0);
+      
+      for (let i = 0; i < sortedOrders.length; i++) {
+          const lead = sortedOrders[i];
+          
+          const previousNonSampleOrders = sortedOrders
+              .slice(0, i)
+              .filter(o => o.orderType !== 'Item Sample');
+          
+          enrichedLeads.push({
+              ...lead,
+              orderNumber: previousNonSampleOrders.length,
+              totalCustomerQuantity,
+          });
+      }
     });
   
     return enrichedLeads.sort((a, b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
