@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -21,7 +20,7 @@ import {
 import React, { ChangeEvent, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X, Download } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, Upload, PlusCircle, CheckCircle2, Circle, X, Download, FileText } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { addDays, differenceInDays } from 'date-fns';
 import { cn, formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
@@ -565,7 +564,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 </Button>
                             )}
                           </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{!isViewOnly ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
-                          <input id={`file-input-digitizing-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0]!, setter, index)} disabled={!isViewOnly}/>
+                          <input id={`file-input-digitizing-${label}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={isViewOnly}/>
                       </div>
                       {!isViewOnly && index > 0 && (
                           <Button
@@ -1338,8 +1337,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     <TableRow>
                       <TableCell className="font-medium text-xs align-middle py-3 text-black text-center">
                          <div className="flex items-center justify-center">
-                            <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-5 px-1 mr-1">
-                                {openLeadId === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
+                                {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                             </Button>
                             <div className='flex flex-col items-center'>
                                 <span className="font-medium">{toTitleCase(lead.customerName)}</span>
@@ -1362,7 +1361,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                   ) : (
                                     <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                                   )}
-                                {openLeadId === lead.id && (
+                                {openCustomerDetails === lead.id && (
                                     <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
                                     {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
                                     {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
@@ -1620,6 +1619,3 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
         </Card>
     );
 };
-
-
-
