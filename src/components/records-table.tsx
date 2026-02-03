@@ -239,7 +239,7 @@ const RecordsTableRow = React.memo(({
                           <div className="flex items-center gap-1.5 cursor-pointer">
                             <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                             <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                              {lead.orderNumber + 1}
+                              {lead.orderNumber}
                             </span>
                           </div>
                         </TooltipTrigger>
@@ -261,7 +261,7 @@ const RecordsTableRow = React.memo(({
               </div>
             </TableCell>
             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.salesRepresentative}</TableCell>
-            <TableCell className="text-xs align-middle text-center py-2 text-black">
+            <TableCell className="align-middle py-2 text-center">
               <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                 {lead.priorityType}
               </Badge>
@@ -375,40 +375,53 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
   
   const processedLeads = useMemo(() => {
     if (!leads) return [];
-
-    const customerOrderGroups: { [key: string]: Lead[] } = {};
-
+  
+    const customerOrderGroups: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
+  
     leads.forEach(lead => {
+        // Defensive check to ensure lead.orders is an array before using it
+        if (!Array.isArray(lead.orders)) {
+            return; 
+        }
+
         const name = lead.customerName.toLowerCase();
         if (!customerOrderGroups[name]) {
-            customerOrderGroups[name] = [];
+            customerOrderGroups[name] = { orders: [], totalCustomerQuantity: 0 };
         }
-        customerOrderGroups[name].push(lead);
+        customerOrderGroups[name].orders.push(lead);
     });
 
     const enrichedLeads: EnrichedLead[] = [];
 
-    Object.values(customerOrderGroups).forEach(({ orders }) => {
-      const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-      
-      const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0), 0);
-      
-      for (let i = 0; i < sortedOrders.length; i++) {
-          const lead = sortedOrders[i];
-          
-          const previousNonSampleOrders = sortedOrders
-              .slice(0, i)
-              .filter(o => o.orderType !== 'Item Sample');
-          
-          enrichedLeads.push({
-              ...lead,
-              orderNumber: previousNonSampleOrders.length,
-              totalCustomerQuantity,
-          });
-      }
+    Object.values(customerOrderGroups).forEach((group) => {
+        if (!group || !Array.isArray(group.orders)) {
+          return;
+        }
+        const { orders } = group;
+
+        const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+        
+        const totalCustomerQuantity = orders.reduce((sum, o) => {
+            if (!Array.isArray(o.orders)) return sum;
+            return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
+        }, 0);
+        
+        for (let i = 0; i < sortedOrders.length; i++) {
+            const lead = sortedOrders[i];
+            
+            const previousNonSampleOrders = sortedOrders
+                .slice(0, i)
+                .filter(o => o.orderType !== 'Item Sample');
+            
+            enrichedLeads.push({
+                ...lead,
+                orderNumber: previousNonSampleOrders.length,
+                totalCustomerQuantity,
+            });
+        }
     });
-  
-    return enrichedLeads.sort((a, b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
+
+    return enrichedLeads.sort((a,b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
   }, [leads]);
   
   const filteredLeads = useMemo(() => {
