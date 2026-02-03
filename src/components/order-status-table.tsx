@@ -264,7 +264,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     if (lead.isPacked) return 95;
     
     if (skipsProduction && lead.isEndorsedToLogistics) {
-        return 30;
+        return 90;
     }
     
     if (lead.isDone) return 90;
@@ -543,7 +543,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                             </TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.salesRepresentative}</TableCell>
-                            <TableCell className="text-center align-middle py-3">
+                            <TableCell className="align-middle py-3 text-center">
                                <div className='flex flex-col items-center gap-1'>
                                 <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                                     {lead.priorityType}
@@ -733,4 +733,4 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   );
 }
 
-```
+
