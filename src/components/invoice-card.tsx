@@ -267,16 +267,16 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     setAddOns(prev => {
         const defaultAddOns = { backLogo: 0, names: 0, plusSize: 0, rushFee: 0, shippingFee: 0, logoProgramming: 0, backDesignProgramming: 0, holdingFee: 0 };
         const existingAddOns = { ...defaultAddOns, ...(prev[groupKey] || {}) };
-        
-        const newGroupAddOns = {
-            ...existingAddOns,
-            [addOnType]: 0,
-        };
+      
+      const newGroupAddOns = {
+        ...existingAddOns,
+        [addOnType]: 0,
+      };
 
-        return {
-            ...prev,
-            [groupKey]: newGroupAddOns,
-        };
+      return {
+        ...prev,
+        [groupKey]: newGroupAddOns,
+      };
     });
     setRemovingAddOn(null);
   };
@@ -545,7 +545,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                 </TableCell>
                             </TableRow>
                            )}
-                           {groupAddOns.rushFee > 0 && orderType !== 'Item Sample' && (
+                           {groupAddOns.rushFee > 0 && (
                             <TableRow className="group">
                                 <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                     <div className="flex items-center gap-2">
@@ -557,11 +557,11 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                 </TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-center text-black align-middle" colSpan={3}></TableCell>
                                 <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
-                                    {formatCurrency(groupAddOns.rushFee)}
+                                    {formatCurrency(orderType === 'Item Sample' ? 0 : groupAddOns.rushFee)}
                                 </TableCell>
                             </TableRow>
                            )}
-                             {groupAddOns.shippingFee > 0 && orderType !== 'Item Sample' && (
+                             {groupAddOns.shippingFee > 0 && (
                                 <TableRow className="group">
                                     <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                         <div className="flex items-center gap-2">
@@ -573,11 +573,11 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     </TableCell>
                                     <TableCell className="py-2 px-3 text-xs text-center text-black align-middle" colSpan={3}></TableCell>
                                     <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
-                                        {formatCurrency(groupAddOns.shippingFee)}
+                                        {formatCurrency(orderType === 'Item Sample' ? 0 : groupAddOns.shippingFee)}
                                     </TableCell>
                                 </TableRow>
                             )}
-                             {groupAddOns.logoProgramming > 0 && orderType !== 'Item Sample' && (
+                             {groupAddOns.logoProgramming > 0 && (
                                 <TableRow className="group">
                                     <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                         <div className="flex items-center gap-2">
@@ -589,11 +589,11 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     </TableCell>
                                     <TableCell className="py-2 px-3 text-xs text-center text-black align-middle" colSpan={3}></TableCell>
                                     <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
-                                        {formatCurrency(groupAddOns.logoProgramming)}
+                                        {formatCurrency(orderType === 'Item Sample' ? 0 : groupAddOns.logoProgramming)}
                                     </TableCell>
                                 </TableRow>
                             )}
-                            {groupAddOns.backDesignProgramming > 0 && orderType !== 'Item Sample' && (
+                            {groupAddOns.backDesignProgramming > 0 && (
                                 <TableRow className="group">
                                     <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                         <div className="flex items-center gap-2">
@@ -605,11 +605,11 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     </TableCell>
                                     <TableCell className="py-2 px-3 text-xs text-center text-black align-middle" colSpan={3}></TableCell>
                                     <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
-                                        {formatCurrency(groupAddOns.backDesignProgramming)}
+                                        {formatCurrency(orderType === 'Item Sample' ? 0 : groupAddOns.backDesignProgramming)}
                                     </TableCell>
                                 </TableRow>
                             )}
-                            {groupAddOns.holdingFee > 0 && orderType !== 'Item Sample' && (
+                            {groupAddOns.holdingFee > 0 && (
                                 <TableRow className="group">
                                     <TableCell className="py-2 px-3 text-xs text-black align-middle">
                                         <div className="flex items-center gap-2">
@@ -621,7 +621,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
                                     </TableCell>
                                     <TableCell className="py-2 px-3 text-xs text-center text-black align-middle" colSpan={3}></TableCell>
                                     <TableCell className="py-2 px-3 text-xs text-right text-black align-middle">
-                                        {formatCurrency(groupAddOns.holdingFee)}
+                                        {formatCurrency(orderType === 'Item Sample' ? 0 : groupAddOns.holdingFee)}
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -851,5 +851,7 @@ export function InvoiceCard({ orders, orderType, addOns, setAddOns, discounts, s
     </>
   );
 }
+
+    
 
     
