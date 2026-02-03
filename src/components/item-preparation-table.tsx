@@ -20,16 +20,19 @@ import {
 } from '@/components/ui/card';
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 import { Check, ChevronDown, Send, ChevronUp } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Input } from './ui/input';
-import { useToast } from '@/hooks/use-toast';
 import { cn, formatDateTime, toTitleCase, formatJoNumber } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Checkbox } from './ui/checkbox';
-import { Label } from './ui/label';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
@@ -68,6 +71,7 @@ type Lead = {
   priorityType: 'Rush' | 'Regular';
   deliveryDate?: string;
   isJoPrinted?: boolean;
+  forceNewCustomer?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -648,7 +652,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
                 </TableHeader>
                 <TableBody>
                 {jobOrders?.map((lead) => {
-                  const isRepeat = lead.orderNumber > 0;
+                  const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
                   return (
                     <ItemPreparationTableRowGroup
                         key={lead.id}

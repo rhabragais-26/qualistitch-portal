@@ -58,6 +58,7 @@ type Lead = {
   adjustedDeliveryDate?: string | null;
   lastModifiedBy?: string;
   orderType?: string;
+  forceNewCustomer?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -280,7 +281,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
             <TableBody>
               {auditQueueLeads && auditQueueLeads.length > 0 ? (
                  auditQueueLeads.map(lead => {
-                   const isRepeat = lead.orderNumber > 0;
+                   const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
                    const leadAdjustmentState = adjustmentStates[lead.id] || { status: 'NotSelected' };
                    const isProceedDisabled = leadAdjustmentState.status === 'NotSelected' || (leadAdjustmentState.status === 'Yes' && !leadAdjustmentState.date);
 
