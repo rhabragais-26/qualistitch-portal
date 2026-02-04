@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -261,6 +262,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
   const [reviewConfirmLead, setReviewConfirmLead] = useState<Lead | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
+  
+  const [viewingJoLead, setViewingJoLead] = useState<Lead | null>(null);
   
   const isViewOnly = isReadOnly || filterType === 'COMPLETED';
 
@@ -577,7 +580,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         }
     }
 
-    // Immediately apply optimistic updates to the UI
     setOptimisticChanges(prev => ({
         ...prev,
         [leadId]: {
@@ -588,7 +590,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
     setUncheckConfirmation(null);
 
-    // Define an async function to handle the database operation
     const saveAndUpdate = async () => {
         try {
             const leadDocRef = doc(firestore, 'leads', leadId);
@@ -1527,10 +1528,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                                                <Link href={`/job-order/${lead.id}`} target="_blank">
-                                                    <FileText className="h-4 w-4" />
-                                                </Link>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewingJoLead(lead)}>
+                                                <FileText className="h-4 w-4" />
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>
@@ -1581,6 +1580,106 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             </Table>
           </div>
       </CardContent>
+      {viewingJoLead && (
+        <Dialog open={!!viewingJoLead} onOpenChange={() => setViewingJoLead(null)}>
+            <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>Job Order: {formatJoNumber(viewingJoLead.joNumber)}</DialogTitle>
+                    <DialogDescription>Read-only view of the job order form.</DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="pr-6">
+                    <div className="p-4 bg-white text-black">
+                        {(() => {
+                            const lead = viewingJoLead;
+                            const scesProfile = usersData?.find(u => u.nickname === lead.salesRepresentative);
+                            const scesFullName = scesProfile ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
+                            const totalQuantity = lead.orders.reduce((sum, order: any) => sum + order.quantity, 0);
+                            const contactDisplay = getContactDisplay(lead);
+                            
+                            const deliveryDate = lead.deliveryDate ? format(new Date(lead.deliveryDate), "MMM dd, yyyy") : format(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22), "MMM dd, yyyy");
+                            
+                            return (
+                                <div className="p-10 mx-auto max-w-4xl printable-area mt-16 print-page">
+                                <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
+                        
+                                <div className="grid grid-cols-3 gap-x-8 text-sm mb-6 border-b border-black pb-4">
+                                    <div className="space-y-1">
+                                        <p><strong>Client Name:</strong> {lead.customerName}</p>
+                                        <p><strong>Contact No:</strong> {contactDisplay}</p>
+                                        <p><strong>Delivery Address:</strong> <span className="whitespace-pre-wrap">{lead.location}</span></p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
+                                        <p><strong>Type of Order:</strong> {lead.orderType}</p>
+                                        <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
+                                        <p><strong>SCES Name:</strong> {scesFullName}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
+                                        <p><strong>Courier:</strong> {lead.courier}</p>
+                                        <p><strong>Delivery Date:</strong> {deliveryDate || 'N/A'}</p>
+                                    </div>
+                                </div>
+                        
+                                <h2 className="text-xl font-bold text-center mb-4">ORDER DETAILS</h2>
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow className="bg-gray-200">
+                                      <TableHead className="border border-black p-0.5" colSpan={3}>Item Description</TableHead>
+                                      <TableHead className="border border-black p-0.5" rowSpan={2}>Qty</TableHead>
+                                      <TableHead className="border border-black p-0.5" colSpan={2}>Front Design</TableHead>
+                                      <TableHead className="border border-black p-0.5" colSpan={2}>Back Design</TableHead>
+                                      <TableHead className="border border-black p-0.5" rowSpan={2}>Remarks</TableHead>
+                                    </TableRow>
+                                    <TableRow className="bg-gray-200">
+                                      <TableHead className="border border-black p-0.5 font-medium">Type of Product</TableHead>
+                                      <TableHead className="border border-black p-0.5 font-medium">Color</TableHead>
+                                      <TableHead className="border border-black p-0.5 font-medium">Size</TableHead>
+                                      <TableHead className="border border-black p-0.5 font-medium w-12">Left</TableHead>
+                                      <TableHead className="border border-black p-0.5 font-medium w-12">Right</TableHead>
+                                      <TableHead className="border border-black p-0.5 font-medium w-12">Logo</TableHead>
+                                      <TableHead className="border border-black p-0.5 font-medium w-12">Text</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {lead.orders.map((order: any, index: number) => (
+                                      <TableRow key={index}>
+                                        <TableCell className="border border-black p-0.5 text-center align-middle">{order.productType}</TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center align-middle">{order.color}</TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center">{order.size}</TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center">{order.quantity}</TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center">
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.left || false} disabled />
+                                        </TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center">
+                                           <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.right || false} disabled />
+                                        </TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center">
+                                          <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backLogo || false} disabled />
+                                        </TableCell>
+                                        <TableCell className="border border-black p-0.5 text-center">
+                                          <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backText || false} disabled />
+                                        </TableCell>
+                                        <TableCell className="border border-black p-0.5">
+                                           <p className="text-xs">{order.remarks}</p>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                     <TableRow>
+                                        <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
+                                        <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
+                                        <TableCell colSpan={5}></TableCell>
+                                    </TableRow>
+                                  </TableBody>
+                                </Table>
+                                </div>
+                            )
+                        })()}
+                    </div>
+                </ScrollArea>
+            </DialogContent>
+        </Dialog>
+    )}
     </>
   );
 });
@@ -1590,3 +1689,4 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
