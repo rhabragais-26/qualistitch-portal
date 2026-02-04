@@ -1,9 +1,8 @@
 
 "use client";
 
-import * as React from "react"
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import {useState, useEffect, useMemo, useCallback} from 'react';
 import * as z from 'zod';
 
 import {Button} from '@/components/ui/button';
@@ -112,6 +111,7 @@ type Lead = {
   city?: string;
   province?: string;
   orderType?: string;
+  submissionDateTime: string;
 };
 
 
@@ -408,43 +408,54 @@ export function LeadForm({
     handleCustomerNameChange();
   }, [customerNameValue, selectedLead, setValue]);
   
+  // Effect for dynamic status
   useEffect(() => {
-    if (isEditing && initialLeadData) {
-      const isRepeat = (allLeads?.filter(l => l.customerName.toLowerCase() === initialLeadData.customerName.toLowerCase() && l.orderType !== 'Item Sample').length || 0) > 1;
-      setCustomerStatus(isRepeat ? 'Repeat' : 'New');
-      setOrderCount(isRepeat ? (allLeads?.filter(l => l.customerName.toLowerCase() === initialLeadData.customerName.toLowerCase() && l.orderType !== 'Item Sample').length || 1) -1 : 0);
+    if (isEditing) {
+      if (initialLeadData && allLeads) {
+        const customerNonSampleOrders = allLeads
+          .filter(l => 
+            l.customerName.toLowerCase() === initialLeadData.customerName.toLowerCase() && 
+            l.orderType !== 'Item Sample'
+          )
+          .sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+        
+        const currentOrderIndex = customerNonSampleOrders.findIndex(l => l.id === initialLeadData.id);
+        const previousOrderCount = currentOrderIndex;
+
+        if (previousOrderCount > 0) {
+            setCustomerStatus('Repeat');
+            setOrderCount(currentOrderIndex + 1); // This is the order number (e.g., 2 for the 2nd order)
+        } else {
+            setCustomerStatus('New');
+            setOrderCount(0);
+        }
+      }
+    } else { // New order logic
+      if (!customerNameValue) {
+        setCustomerStatus(null);
+        setOrderCount(0);
+        setManualStatus(null);
+        return;
+      }
+  
+      const matchingLeads = leads?.filter(
+        (lead) => lead.customerName.toLowerCase() === customerNameValue.toLowerCase()
+      ) || [];
+      
+      const nonSampleOrders = matchingLeads.filter(lead => lead.orderType !== 'Item Sample');
+      
+      const dbOrderCount = nonSampleOrders.length;
+      const totalPreviousOrders = dbOrderCount + (manualStatus === 'Repeat' ? manualOrderCount : 0);
+  
+      if (totalPreviousOrders > 0) {
+        setCustomerStatus('Repeat');
+        setOrderCount(totalPreviousOrders);
+      } else {
+        setCustomerStatus('New');
+        setOrderCount(0);
+      }
     }
-  }, [isEditing, initialLeadData, allLeads]);
-
-  // Effect for dynamic status on new order form
-  useEffect(() => {
-    if (isEditing) return;
-
-    if (!customerNameValue) {
-      setCustomerStatus(null);
-      setOrderCount(0);
-      setManualStatus(null);
-      return;
-    }
-
-    const matchingLeads = leads?.filter(
-      (lead) => lead.customerName.toLowerCase() === customerNameValue.toLowerCase()
-    ) || [];
-    
-    // Filter out 'Item Sample' orders
-    const nonSampleOrders = matchingLeads.filter(lead => lead.orderType !== 'Item Sample');
-    
-    const dbOrderCount = nonSampleOrders.length;
-    const totalOrderCount = dbOrderCount + (manualStatus === 'Repeat' ? manualOrderCount : 0);
-
-    if (totalOrderCount > 0) {
-      setCustomerStatus('Repeat');
-      setOrderCount(totalOrderCount);
-    } else {
-      setCustomerStatus('New');
-      setOrderCount(0);
-    }
-  }, [isEditing, customerNameValue, leads, manualStatus, manualOrderCount]);
+  }, [isEditing, initialLeadData, allLeads, customerNameValue, leads, manualStatus, manualOrderCount]);
 
 
   useEffect(() => {
@@ -1214,7 +1225,9 @@ export function LeadForm({
                               ) : (
                                   <Select onValueChange={setNewOrderColor} value={newOrderColor} disabled={!newOrderProductType || isPatches}>
                                   <SelectTrigger><SelectValue placeholder="Select a Color" /></SelectTrigger>
-                                  <SelectContent>{availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}</SelectContent>
+                                  <SelectContent>
+                                      {availableColors.map((color) => (<SelectItem key={color} value={color}>{color}</SelectItem>))}
+                                  </SelectContent>
                                   </Select>
                               )}
                           </div>
