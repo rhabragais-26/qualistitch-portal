@@ -40,6 +40,7 @@ import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
 type Order = {
   productType: string;
@@ -122,6 +123,7 @@ type Lead = {
   joPrintedTimestamp?: string;
   courier?: string;
   shipmentStatus?: 'Pending' | 'Packed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  shippedTimestamp?: string;
   isUnderProgramming?: boolean;
   isPreparedForProduction?: boolean;
   isSentToProduction?: boolean;
@@ -1123,3 +1125,4 @@ export function JobOrderTable({ isReadOnly, filterType }: JobOrderTableProps) {
     </>
   );
 }
+
