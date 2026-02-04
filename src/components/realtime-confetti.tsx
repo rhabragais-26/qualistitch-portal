@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDoc, useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { PartyPopper } from 'lucide-react';
@@ -92,19 +92,18 @@ const LocalConfetti = () => (
     </div>
 );
 
-export function RealtimeConfetti() {
-  const { user, isUserLoading } = useUser();
+function ConfettiContent() {
+  const { user } = useUser();
   const firestore = useFirestore();
   const appStateRef = useMemoFirebase(
-    () => (firestore && user ? doc(firestore, 'appState', 'global') : null),
-    [firestore, user]
+    () => (firestore ? doc(firestore, 'appState', 'global') : null),
+    [firestore]
   );
   const { data: appState } = useDoc<AppState>(appStateRef);
 
   const [visibility, setVisibility] = useState<'hidden' | 'visible' | 'closing'>('hidden');
   const [lastTimestamp, setLastTimestamp] = useState<string | null>(null);
 
-  // On mount, check localStorage for the last seen timestamp to prevent re-showing on refresh
   useEffect(() => {
     const savedTimestamp = localStorage.getItem('confettiLastTimestamp');
     if (savedTimestamp) {
@@ -118,16 +117,13 @@ export function RealtimeConfetti() {
     }
   }, [visibility]);
 
-  // Effect to trigger the confetti when a new event arrives from Firestore
   useEffect(() => {
     if (appState?.showConfetti && appState.confettiTimestamp && appState.confettiTimestamp !== lastTimestamp) {
-      // Store the new timestamp in both state and localStorage
       setLastTimestamp(appState.confettiTimestamp);
       localStorage.setItem('confettiLastTimestamp', appState.confettiTimestamp);
       
       setVisibility('visible');
 
-      // Set a timer to automatically start closing after the duration
       const autoCloseTimer = setTimeout(() => {
         setVisibility('closing');
       }, CONFETTI_DURATION);
@@ -136,25 +132,18 @@ export function RealtimeConfetti() {
     }
   }, [appState, lastTimestamp]);
   
-  // Effect to handle the final cleanup after the closing animation is complete
   useEffect(() => {
     if (visibility === 'closing') {
       const cleanupTimer = setTimeout(() => {
         setVisibility('hidden');
-        // Reset the trigger in Firestore now that it's fully hidden
-        // ONLY if the user is signed in to prevent permission errors for unauthenticated users.
-        if (appStateRef && user) { // <-- MODIFICATION HERE: Added '&& user'
+        if (appStateRef && user) {
           setDocumentNonBlocking(appStateRef, { showConfetti: false, congratsMessage: null, congratsNickname: null, congratsPhotoURL: null }, { merge: true });
         }
       }, FADE_OUT_DURATION);
 
       return () => clearTimeout(cleanupTimer);
     }
-  }, [visibility, appStateRef, user]); // <-- MODIFICATION HERE: Added 'user' to dependency array
-
-  if (isUserLoading || !user) {
-    return null;
-  }
+  }, [visibility, appStateRef, user]);
 
   if (visibility === 'hidden') {
     return null;
@@ -172,4 +161,14 @@ export function RealtimeConfetti() {
       />
     </>
   );
+}
+
+export function RealtimeConfetti() {
+  const { user, isUserLoading } = useUser();
+
+  if (isUserLoading || !user) {
+    return null;
+  }
+
+  return <ConfettiContent />;
 }

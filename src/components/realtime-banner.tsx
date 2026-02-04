@@ -15,14 +15,14 @@ type AppState = {
   announcementSender?: string;
 };
 
-export function RealtimeBanner() {
+function BannerContent() {
   const firestore = useFirestore();
-  const { user, userProfile, isUserLoading } = useUser();
+  const { userProfile } = useUser();
   const pathname = usePathname();
-
+  
   const appStateRef = useMemoFirebase(
-    () => (firestore && user ? doc(firestore, 'appState', 'global') : null),
-    [firestore, user]
+    () => (firestore ? doc(firestore, 'appState', 'global') : null),
+    [firestore]
   );
   const { data: appState } = useDoc<AppState>(appStateRef);
 
@@ -50,7 +50,7 @@ export function RealtimeBanner() {
     }
   };
 
-  if (!isVisible || isUserLoading || !user || !userProfile || pathname === '/login' || pathname === '/pending-approval') {
+  if (!isVisible || !userProfile || pathname === '/login' || pathname === '/pending-approval') {
     return null;
   }
 
@@ -74,4 +74,14 @@ export function RealtimeBanner() {
       </div>
     </div>
   );
+}
+
+export function RealtimeBanner() {
+    const { user, isUserLoading } = useUser();
+
+    if (isUserLoading || !user) {
+        return null;
+    }
+
+    return <BannerContent />;
 }

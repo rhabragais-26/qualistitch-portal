@@ -213,15 +213,20 @@ export default function NewOrderPage() {
         const milestones = [100, 300, 500, 700, 1000];
         const crossedMilestone = milestones.find(m => previousTotalQuantity < m && newTotalQuantity >= m);
 
-        if (crossedMilestone) {
+        if (crossedMilestone && userProfile?.uid) {
           const appStateRef = doc(firestore, 'appState', 'global');
-          setDocumentNonBlocking(appStateRef, {
+        
+          setDocumentNonBlocking(
+            appStateRef,
+            {
               showConfetti: true,
               confettiTimestamp: new Date().toISOString(),
               congratsNickname: userProfile.nickname,
               congratsMessage: `Amazing work for hitting **${newTotalQuantity}** items with a total of **${formatCurrency(newTotalAmount)}** in a single day. Cheers!`,
               congratsPhotoURL: userProfile.photoURL || null,
-          }, { merge: true });
+            },
+            { merge: true }
+          );
         }
     }
 
