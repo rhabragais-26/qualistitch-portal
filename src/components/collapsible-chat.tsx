@@ -75,7 +75,7 @@ export function CollapsibleChat() {
       <div
         className={cn(
           "relative transition-all duration-300 ease-in-out",
-          isExpanded ? "w-96 h-[70vh] max-h-[500px]" : "w-9 h-24"
+          isExpanded ? "w-[400px] h-[70vh] max-h-[500px]" : "w-9 h-24"
         )}
       >
         {/* Chat Window */}
