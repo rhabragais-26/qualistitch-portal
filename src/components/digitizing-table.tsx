@@ -1,3 +1,4 @@
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -135,7 +136,7 @@ type Layout = {
   finalProgrammedLogoUploadedBy?: (string | null)[];
   finalProgrammedBackDesign?: (FileObject | null)[];
   finalProgrammedBackDesignUploadTimes?: (string | null)[];
-  finalProgrammedBackDesignUploadedBy?: string | null)[];
+  finalProgrammedBackDesignUploadedBy?: (string | null)[];
 };
 
 type Lead = {
@@ -1082,7 +1083,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             !isDisabled && "cursor-pointer"
                         )}
                         onClick={() => image && setImageInView(image)}
-                        onDoubleClick={() => handleImagePaste(e, setter, index)}
+                        onDoubleClick={() => !isDisabled && !image && (document.getElementById(`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`)?.click())}
+                        onPaste={(e) => handleImagePaste(e, setter, index)}
                         onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
                       >
                           {image ? (<>
@@ -1100,8 +1102,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 <Trash2 className="h-4 w-4" />
                                 </Button>
                             )}
-                          </>) : (<div className="text-gray-500">  No image uploaded"}</p> </div>)}
-                          
+                          </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{!isDisabled ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
+                          <input id={`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!isDisabled}/>
                       </div>
                       {!isDisabled && index > 0 && (
                           <Button
@@ -1121,71 +1123,64 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
     if (uploadField === 'isUnderProgramming') {
       return (
-        
+        <div className="grid grid-cols-2 gap-4">
             {renderUploadBoxes('Logo Left', initialLogoLeftImages, setInitialLogoLeftImages)}
             {renderUploadBoxes('Logo Right', initialLogoRightImages, setInitialLogoRightImages)}
             {renderUploadBoxes('Back Logo', initialBackLogoImages, setInitialBackLogoImages)}
             {renderUploadBoxes('Back Design', initialBackDesignImages, setInitialBackDesignImages)}
-        
+        </div>
       );
     } else if (uploadField === 'isLogoTesting') {
        return (
-        
-
-            
+        <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
                 {renderUploadBoxes('Logo Left', testLogoLeftImages, setTestLogoLeftImages)}
                 {renderUploadBoxes('Logo Right', testLogoRightImages, setTestLogoRightImages)}
                 {renderUploadBoxes('Back Logo', testBackLogoImages, setTestBackLogoImages)}
                 {renderUploadBoxes('Back Design', testBackDesignImages, setTestBackDesignImages)}
-            
-
-            
-                
-                    No need for testing
-                
-            
-        
+            </div>
+            <div className="flex items-center space-x-2">
+                <Checkbox id="no-testing" checked={noTestingNeeded} onCheckedChange={(checked) => setNoTestingNeeded(!!checked)} disabled={isViewOnly} />
+                <Label htmlFor="no-testing">No need for testing</Label>
+            </div>
+        </div>
       );
     } else if (uploadField === 'isFinalProgram') {
       return (
-          
-
-              
+          <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                   {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
                   {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
                   {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
                   {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
-              
-
-              
-                  
-                      
-                          {renderMultipleFileUpload('', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
-                      
-                  
-                  
-                      Customer wanted Names Only
-                  
-              
-
-              
-                  
-                      
-                          {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
-                          {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
-                      
-                  
-              
-
-              
-                  
-                      
-                          {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
-                          {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
-                      
-                  
-              
-          
+              </div>
+              <div className="flex items-center space-x-2">
+                  <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isViewOnly} />
+                  <Label htmlFor="names-only">Customer wanted Names Only</Label>
+              </div>
+              {isNamesOnly && (
+                  <div className="pl-6 border-l-2 ml-2">
+                      <h4 className="font-medium mb-2">Names (DST)</h4>
+                      {renderMultipleFileUpload('', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
+                  </div>
+              )}
+              {!isNamesOnly && (
+                  <>
+                    <Separator />
+                    <h4 className="font-medium">Final Programmed Files</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                        {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
+                        {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
+                    </div>
+                    <Separator />
+                    <h4 className="font-medium">Sequence Files</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                        {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
+                        {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
+                    </div>
+                  </>
+              )}
+          </div>
       );
     }
     return null;
@@ -1217,349 +1212,335 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
   if (isLoading) {
     return (
-      
+      <div className="p-4">
         {[...Array(5)].map((_, i) => (
-          
+          <Skeleton key={i} className="h-16 w-full mb-2" />
         ))}
-      
+      </div>
     );
   }
 
   if (error) {
-    return Error loading records: {error.message}
+    return <p className="text-destructive p-4">Error loading records: {error.message}</p>
   }
   
   return (
-    
-       
-        
-          
-            
-              Are you sure?
-            
-              Unchecking this box will also uncheck all subsequent steps in the process. This action cannot be undone.
-            
-          
-          
-            Cancel
-            Continue
-          
-        
-      
-       
-        
-          
-            
-              Confirm Receipt
-            
+    <>
+      <AlertDialog open={!!uncheckConfirmation} onOpenChange={(open) => !open && setUncheckConfirmation(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Unchecking this box will mark the task as not done. This will also uncheck all subsequent steps. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmUncheck}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+       <AlertDialog open={!!joReceivedConfirmation} onOpenChange={setJoReceivedConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Receipt</AlertDialogTitle>
+            <AlertDialogDescription>
               Are you sure that the printed J.O. was received and the J.O. number is correct?
-            
-          
-          
-            Cancel
-            Confirm
-          
-        
-      
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmJoReceived}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {reviewConfirmLead && (
-        
-            
-              
-                
-                  
-                    Please review the uploaded files before proceeding. This action will send the project to the Item Preparation queue.
-                  
-                
-              
-                
+        <Dialog open={!!reviewConfirmLead} onOpenChange={() => setReviewConfirmLead(null)}>
+            <DialogContent className="sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Review Before Endorsement</DialogTitle>
+                <DialogDescription>
+                  Please review the uploaded files before proceeding. This action will send the project to the Item Preparation queue.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="max-h-80 overflow-y-auto space-y-2 p-1">
                   {fileChecklistItems.map((item, index) => (
-                    
-                      
-                      {item.label}
-                      
-                      {item.timestamp ? formatDateTime(item.timestamp).dateTime : ''}
-                    
+                    <div key={index} className="flex items-center justify-between p-2 rounded-md bg-gray-100">
+                      <span className="text-sm font-medium">{item.label}</span>
+                      <span className="text-xs text-muted-foreground">{item.timestamp ? formatDateTime(item.timestamp).dateTime : ''}</span>
+                    </div>
                   ))}
                   {fileChecklistItems.length === 0 && (
-                    
-                        
-                        No files have been uploaded for this project.
-                    
+                    <div className="flex items-center justify-center p-4">
+                        <p className="text-muted-foreground">No files have been uploaded for this project.</p>
+                    </div>
                   )}
-                
-              
-              
-                Cancel
-                Done
-              
-            
-        
+                </div>
+              <DialogFooter>
+                <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                <Button onClick={handleConfirmReview}>Done</Button>
+              </DialogFooter>
+            </DialogContent>
+        </Dialog>
       )}
 
-       
-        
-          
-              
+      <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+          <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                  <DialogTitle>
                   {uploadField === 'isUnderProgramming' && 'Upload Initial Program Images'}
                   {uploadField === 'isLogoTesting' && 'Upload Tested Images'}
                   {uploadField === 'isFinalProgram' && 'Upload Final Program Files'}
-              
-              
+                  </DialogTitle>
+                  <DialogDescription>
                   {uploadField === 'isUnderProgramming' && 'Upload the initial program images for client approval.'}
                   {uploadField === 'isLogoTesting' && 'Upload images of the tested embroidery.'}
                   {uploadField === 'isFinalProgram' && 'Upload all final DST, EMB, and sequence files.'}
-              
-          
-          
-              
+                  </DialogDescription>
+              </DialogHeader>
+              <div className="py-4 max-h-[70vh] overflow-y-auto">
                 {renderUploadDialogContent()}
-              
-          
-          
-              
-                  Cancel
-              
-              Save and Update Status
-          
-        
-      
-      
-        
-          
-            
-            
-              
-                Close
-              
-            
-          
-        
-      
+              </div>
+              <DialogFooter>
+                  <DialogClose asChild>
+                      <Button type="button" variant="outline"> Cancel </Button>
+                  </DialogClose>
+                  <Button onClick={handleUploadDialogSave} disabled={isSaveDisabled || isViewOnly}>Save and Update Status</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
+      {imageInView && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center animate-in fade-in"
+          onClick={() => setImageInView(null)}
+        >
+          <div className="relative h-[90vh] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <Image src={imageInView} alt="Enlarged view" layout="fill" objectFit="contain" />
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setImageInView(null)}
+                className="absolute top-4 right-4 text-white hover:bg-white/10 hover:text-white"
+            >
+                <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
+            </Button>
+          </div>
+        </div>
+      )}
 
-      
-        
-            
-              
-                
-                  Programming Queue
-                
-                Job orders with completed program files.' : 'Leads with saved Job Orders ready for digitizing.'}
-              
-            
-             
-                
-                    
-                        Filter by Priority Type:
-                        
-                          
-                            
-                          
-                          
-                            All Priorities
-                            Rush
-                            Regular
-                          
-                        
-                    
-                    
-                        Filter Overdue Status:
-                        
-                          
-                            
-                          
-                          
-                            All Statuses
-                            Overdue
-                            Nearly Overdue
-                          
-                        
-                    
-                    
-                       
-                    
-                    
-                      
-                    
-                  
-                  
-                    
-                      View Programming Queue
-                    
-                     Programming Queue
-                
-            
-        
-      
-      
-           
-            
-                
-                
-                  
-                      Customer
-                      SCES
-                      Priority
-                      J.O. No.
-                      Overdue Status
-                      Digitizer
-                      
-                      
-                      
-                      
-                      
-                      Details
-                      
-                      Received Printed J.O.?
-                      {filterType === 'COMPLETED' ? 'Date Completed' : 'Review'}
-                  
-                
-                
+      <CardHeader>
+        <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>{filterType === 'COMPLETED' ? 'Completed Programs' : 'Programming Queue'}</CardTitle>
+              <CardDescription>
+                {filterType === 'COMPLETED' ? 'Job orders with completed program files.' : 'Leads with saved Job Orders ready for digitizing.'}
+              </CardDescription>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+                <div className="flex items-center gap-4">
+                    <div className='flex items-center gap-2'>
+                        <span className="text-sm font-medium">Filter by Priority Type:</span>
+                        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Select Priority" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="All">All Priorities</SelectItem>
+                                <SelectItem value="Rush">Rush</SelectItem>
+                                <SelectItem value="Regular">Regular</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                        <span className="text-sm font-medium">Filter Overdue Status:</span>
+                        <Select value={overdueFilter} onValueChange={setOverdueFilter}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Select Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="All">All Statuses</SelectItem>
+                                <SelectItem value="Overdue">Overdue</SelectItem>
+                                <SelectItem value="Nearly Overdue">Nearly Overdue</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <Input
+                        placeholder="Search J.O. No..."
+                        value={joNumberSearch}
+                        onChange={(e) => setJoNumberSearch(e.target.value)}
+                        className="bg-gray-100 text-black placeholder:text-gray-500"
+                    />
+                    <Input
+                        placeholder="Search Customer or Company..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-gray-100 text-black placeholder:text-gray-500"
+                    />
+                  </div>
+                  <div className="w-full text-right">
+                    {filterType === 'COMPLETED' ? (
+                        <Link href="/digitizing/programming-queue" className="text-sm text-primary hover:underline">
+                            View Programming Queue
+                        </Link>
+                    ) : (
+                        <Link href="/digitizing/completed-programs" className="text-sm text-primary hover:underline">
+                            View Completed Programs
+                        </Link>
+                    )}
+                </div>
+            </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+           <div className="border rounded-md">
+            <Table>
+                <TableHeader className="bg-neutral-800">
+                  <TableRow>
+                      <TableHead className="text-white font-bold text-xs">Customer</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center">SCES</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center">Overdue Status</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center">Digitizer</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center w-24">Initial Program</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center w-24">Initial Approval</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center w-24">Test</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center w-24">Revision</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center w-24">Final Approval</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center w-24">Final Program</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center">Details</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center w-24">Received Printed J.O.?</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center">{filterType === 'COMPLETED' ? 'Date Completed' : 'Review'}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                 {displayedLeads.map((lead) => {
                   const deadlineInfo = calculateDigitizingDeadline(lead);
-                  const isRepeat = lead.orderNumber > 0;
+                  const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
                   const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)", "Item Sample"];
                   
                   return (
-                  
-                    
-                      
-                         
-                            
-                                  {openCustomerDetails === lead.id ?  : }
-                            
-                            
-                                {toTitleCase(lead.customerName)}
+                  <React.Fragment key={lead.id}>
+                    <TableRow>
+                      <TableCell className="text-xs align-middle">
+                          <div className="flex items-center justify-start">
+                            <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
+                                {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </Button>
+                            <div className='flex flex-col'>
+                                <span className="font-medium">{toTitleCase(lead.customerName)}</span>
                                 {isRepeat ? (
-                                    
-                                      
-                                        
-                                          Repeat Buyer
-                                          
+                                    <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                        <div className="flex items-center gap-1.5 cursor-pointer">
+                                            <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                            <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
                                             {lead.orderNumber + 1}
-                                          
-                                        
-                                        
-                                          Total of {lead.totalCustomerQuantity} items ordered.
-                                        
-                                      
-                                    
-                                  ) : (
-                                     New Customer
-                                  )}
-                                {openCustomerDetails === lead.id && (
-                                     
-                                    {lead.companyName && lead.companyName !== '-' && {getContactDisplay(lead) &&  
+                                            </span>
+                                        </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                        <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    </TooltipProvider>
+                                ) : (
+                                <div className="text-xs text-blue-600 font-semibold">New Customer</div>
                                 )}
-                            
-                        
-                      
-                      {lead.salesRepresentative}
-                      
-                        
-                            
-                              {lead.priorityType}
-                            
-                            
-                                {lead.orderType}
-                            
-                        
-                      
-                      {formatJoNumber(lead.joNumber)}
-                       
-                          {deadlineInfo.text}
-                        
-                        
-                            
-                                
-                                    
-                                    Unassigned
+                                {openCustomerDetails === lead.id && (
+                                <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
+                                    {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
+                                    {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                                </div>
+                                )}
+                            </div>
+                         </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-center">{lead.salesRepresentative}</TableCell>
+                      <TableCell className="text-center">
+                          <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>{lead.priorityType}</Badge>
+                          {specialOrderTypes.includes(lead.orderType) && <p className="text-xs font-bold mt-1">{lead.orderType}</p>}
+                      </TableCell>
+                      <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
+                      <TableCell className={cn(
+                          "text-center text-xs",
+                          deadlineInfo.isOverdue ? "text-red-500 font-bold" : (deadlineInfo.isUrgent ? "text-amber-600 font-bold" : "text-gray-500")
+                        )}>{deadlineInfo.text}</TableCell>
+                        <TableCell className="text-center">
+                            <Select 
+                                value={lead.assignedDigitizer || 'unassigned'}
+                                onValueChange={(value) => handleDigitizerChange(lead.id, value)}
+                                disabled={(isViewOnly && !isAdmin && filterType !== 'COMPLETED') || (filterType === 'COMPLETED' && !isAdmin)}
+                            >
+                                <SelectTrigger className={cn("text-xs h-7", getDigitizerColor(lead.assignedDigitizer))}><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="unassigned">Unassigned</SelectItem>
                                     {digitizers.map(d => (
-                                         {d.nickname}
+                                        <SelectItem key={d.uid} value={d.nickname}>{d.nickname}</SelectItem>
                                     ))}
-                                
-                            
+                                </SelectContent>
+                            </Select>
+                        </TableCell>
                         
+                        {(['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'] as CheckboxField[]).map(field => {
+                            const timestamp = lead[`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp` as keyof Lead] as string | undefined;
+                            return (
+                                <TableCell key={field} className="text-center align-middle">
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                    <Checkbox
+                                        checked={lead[field] || false}
+                                        onCheckedChange={(checked) => handleCheckboxChange(lead.id, field, !!checked)}
+                                        disabled={isViewOnly || (field === 'isRevision' && lead.isFinalApproval)}
+                                        className={isViewOnly ? 'disabled:opacity-100' : ''}
+                                    />
+                                    {timestamp && <div className="text-[10px] text-gray-500">{formatDateTime(timestamp).dateTimeShort}</div>}
+                                </div>
+                                </TableCell>
+                            );
+                        })}
                         
-                          
-                            
-                              
-                              {lead.underProgrammingTimestamp && 
-                            
-                        
-                        
-                           
-                            
-                              
-                              {lead.initialApprovalTimestamp && 
-                            
-                        
-                        
-                          
-                            
-                              
-                              {lead.logoTestingTimestamp && 
-                            
-                        
-                        
-                          
-                            
-                              
-                              {lead.revisionTimestamp && 
-                            
-                        
-                        
-                           
-                            
-                              
-                              {lead.finalApprovalTimestamp && 
-                            
-                        
-                        
-                           
-                            
-                              
-                              {lead.finalProgramTimestamp && 
-                            
-                        
-                        
-                          
-                            
+                        <TableCell className="text-center align-middle">
+                            <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-7 px-2">
                                 View
                                 {openLeadId === lead.id ? (
-                                
+                                <ChevronUp className="h-4 w-4 ml-1" />
                                 ) : (
-                                
+                                <ChevronDown className="h-4 w-4 ml-1" />
                                 )}
-                            
-                            
-                        
-                      
-                       
-                            
-                              
-                              {lead.joHardcopyReceivedTimestamp && 
-                            
-                        
-                        
+                            </Button>
+                        </TableCell>
+                      <TableCell className="text-center align-middle">
+                            <div className="flex flex-col items-center justify-center gap-1">
+                            <Checkbox
+                                checked={lead.isJoHardcopyReceived || false}
+                                onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
+                                disabled={isViewOnly}
+                                className={isViewOnly ? 'disabled:opacity-100' : ''}
+                            />
+                            {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-center align-middle">
                            {filterType === 'COMPLETED' ? (
                                 lead.digitizingArchivedTimestamp && (
-                                    
+                                    <div className="text-xs text-gray-500">
                                         {formatDateTime(lead.digitizingArchivedTimestamp).dateTime}
-                                    
+                                    </div>
                                 )
                            ) : (
-                             
+                            <Button size="sm" onClick={() => setReviewConfirmLead(lead)} disabled={!lead.isFinalProgram || isViewOnly} className="h-7 px-3">
                                 Done
-                            
+                            </Button>
                            )}
-                        
-                    
+                        </TableCell>
+                    </TableRow>
                     {openLeadId === lead.id && (
-                      
-                        
-                           
-                                
+                      <TableRow>
+                        <TableCell colSpan={15}>
+                           <div className="p-4 max-w-4xl mx-auto bg-gray-50 rounded-md my-2">
                                 {(() => {
                                     const layout = lead.layouts?.[0];
                                     if (!layout) return null;
@@ -1617,20 +1598,20 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         }
                                     ];
 
-                                   return imageGroups.map(group => );
+                                   return imageGroups.map(group => <ImageDisplayCard key={group.title} title={group.title} images={group.images} onImageClick={setImageInView} />);
                                })()}
-                            
-                           
-                        
-                      
+                            </div>
+                        </TableCell>
+                      </TableRow>
                     )}
-                  
+                  </React.Fragment>
+                );
                 })}
-                
-            
-          
-      
-    
+                </TableBody>
+            </Table>
+          </div>
+      </CardContent>
+    </>
   );
 });
 DigitizingTableMemo.displayName = 'DigitizingTable';
@@ -1641,19 +1622,21 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
     if (images.length === 0) return null;
 
     return (
-        
-            
-                {title}
-            
-            
+        <Card className="bg-white">
+            <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
+            <CardContent className="flex gap-4 text-xs p-2 flex-wrap">
                 {images.map((img, index) => (
-                    
-                        
-                             {img.label}
-                        
-                         (img.src)} alt={img.label} layout="fill" objectFit="contain" />
-                        
-                        {img.timestamp && {img.uploadedBy && {formatDateTime(img.timestamp).dateTimeShort}
+                    <div key={index} className="flex flex-col items-center text-center w-28">
+                        <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
+                        <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
+                            <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
+                        </div>
+                        {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
+                        {img.uploadedBy && <p className='text-gray-500 text-[10px] font-bold'>by {img.uploadedBy}</p>}
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
     );
 };
 
