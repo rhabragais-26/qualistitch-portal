@@ -203,7 +203,7 @@ type UserProfileInfo = {
 const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: DigitizingTableProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { userProfile } = useUser();
+  const { userProfile, isAdmin } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
@@ -287,7 +287,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   };
 
   const handleDigitizerChange = (leadId: string, digitizerNickname: string) => {
-    if (!firestore || isReadOnly) return;
+    if (!firestore || (isReadOnly && !isAdmin)) return;
     
     const newValue = digitizerNickname === 'unassigned' ? null : digitizerNickname;
 
@@ -630,9 +630,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
     const finalProgramFiles = [
       ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] }),
-      ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i+1}`, timestamp: Array.isArray(layout.sequenceBackDesignUploadTimes) ? layout.sequenceBackDesignUploadTimes[i] : null, uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] }),
-      ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Programmed Logo ${i + 1}`, timestamp: (layout as any).finalProgrammedLogoUploadTimes?.[i], uploadedBy: (layout as any).finalProgrammedLogoUploadedBy?.[i] }),
-      ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Programmed Back Design ${i + 1}`, timestamp: (layout as any).finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: (layout as any).finalProgrammedBackDesignUploadedBy?.[i] }),
+      ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i+1}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i], uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] }),
+      ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Programmed Logo ${i + 1}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] }),
+      ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Programmed Back Design ${i + 1}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] }),
     ];
     
     return finalProgramFiles.filter((item): item is FileUploadChecklistItem => !!item);
@@ -1514,7 +1514,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             <Select
                                 value={lead.assignedDigitizer || 'unassigned'}
                                 onValueChange={(value) => handleDigitizerChange(lead.id, value)}
-                                disabled={isViewOnly}
+                                disabled={(isReadOnly || filterType === 'COMPLETED') && !isAdmin}
                             >
                                 <SelectTrigger className={cn("w-[140px] text-xs h-8 justify-center font-bold", getDigitizerColor(lead.assignedDigitizer))}>
                                     <SelectValue />
@@ -1690,10 +1690,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         {
                                             title: 'Final Program Files',
                                             images: [
-                                                ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Logo ${i + 1}`, timestamp: (layout.finalProgrammedLogoUploadTimes && layout.finalProgrammedLogoUploadTimes[i]) ? layout.finalProgrammedLogoUploadTimes[i] : null, uploadedBy: (layout.finalProgrammedLogoUploadedBy && layout.finalProgrammedLogoUploadedBy[i]) ? layout.finalProgrammedLogoUploadedBy[i] : null }),
-                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Back Design ${i + 1}`, timestamp: (layout.finalProgrammedBackDesignUploadTimes && layout.finalProgrammedBackDesignUploadTimes[i]) ? layout.finalProgrammedBackDesignUploadTimes[i] : null, uploadedBy: (layout.finalProgrammedBackDesignUploadedBy && layout.finalProgrammedBackDesignUploadedBy[i]) ? layout.finalProgrammedBackDesignUploadedBy[i] : null }),
-                                                ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: (layout.sequenceLogoUploadTimes && layout.sequenceLogoUploadTimes[i]) ? layout.sequenceLogoUploadTimes[i] : null, uploadedBy: (layout.sequenceLogoUploadedBy && layout.sequenceLogoUploadedBy[i]) ? layout.sequenceLogoUploadedBy[i] : null }),
-                                                ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i+1}`, timestamp: (layout.sequenceBackDesignUploadTimes && layout.sequenceBackDesignUploadTimes[i]) ? layout.sequenceBackDesignUploadTimes[i] : null, uploadedBy: (layout.sequenceBackDesignUploadedBy && layout.sequenceBackDesignUploadedBy[i]) ? layout.sequenceBackDesignUploadedBy[i] : null }),
+                                                ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Logo ${i + 1}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i] || null, uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] || null }),
+                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Back Design ${i + 1}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i] || null, uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] || null }),
+                                                ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i] || null, uploadedBy: layout.sequenceLogoUploadedBy?.[i] || null }),
+                                                ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i+1}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i] || null, uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] || null }),
                                             ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
                                         }
                                     ];
