@@ -227,8 +227,12 @@ export function ChatLayout() {
 
   // Initial fetch and real-time listener for new messages
   useEffect(() => {
-    if (!messagesRef) return;
+    if (!messagesRef) {
+        setMessages([]); // Clear messages when there's no selected channel
+        return;
+    }
     setMessagesLoading(true);
+    setMessages([]); // Clear messages immediately on channel change
     setHasMore(true);
     const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(20));
 
