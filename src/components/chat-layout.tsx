@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -430,10 +431,10 @@ export function ChatLayout() {
                              </AvatarFallback>
                         </Avatar>
                         </div>
-                        <div className="flex-grow overflow-hidden">
+                        <div className="flex-grow overflow-hidden min-w-0">
                             <div className="flex items-baseline gap-2">
-                                <span className="font-bold">{u.nickname}</span>
-                                {u.position && <span className="text-xs text-black/70">({u.position})</span>}
+                                <span className="font-bold truncate">{u.nickname}</span>
+                                {u.position && <span className="text-xs text-black/70 truncate">({u.position})</span>}
                             </div>
                             {unreadCount > 0 ? (
                                 <p className="text-sm text-black font-bold truncate italic">
@@ -453,7 +454,7 @@ export function ChatLayout() {
                                 <p className="text-sm text-black/70 italic">No conversations yet</p>
                             )}
                         </div>
-                        <div className="flex items-center gap-2 text-xs ml-auto">
+                        <div className="flex items-center gap-2 text-xs ml-auto flex-shrink-0">
                             <div className={cn("w-2.5 h-2.5 rounded-full", isOnline(u.lastSeen) ? "bg-green-500" : "bg-gray-400")} />
                             <span className="text-black/70">{isOnline(u.lastSeen) ? "Active" : "Inactive"}</span>
                         </div>
