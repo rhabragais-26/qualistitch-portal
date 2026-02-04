@@ -13,7 +13,7 @@ export default function JobOrderPage() {
 
   return (
     <Header>
-      <JobOrderTable isReadOnly={!canEdit} />
+      <JobOrderTable isReadOnly={!canEdit} filterType="ONGOING" />
     </Header>
   );
 }

@@ -38,6 +38,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from './ui/label';
 import { ScrollArea } from './ui/scroll-area';
 import Image from 'next/image';
+import Link from 'next/link';
 
 type Order = {
   productType: string;
@@ -140,9 +141,10 @@ type EnrichedLead = Lead & {
 
 interface JobOrderTableProps {
   isReadOnly: boolean;
+  filterType?: 'ONGOING' | 'COMPLETED';
 }
 
-export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
+export function JobOrderTable({ isReadOnly, filterType = 'ONGOING' }: JobOrderTableProps) {
   const firestore = useFirestore();
   const { userProfile, isAdmin } = useUser();
   const { toast } = useToast();
@@ -287,6 +289,16 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     }
   };
   
+  const getOverallStatus = useCallback((lead: Lead): { text: string; variant: "destructive" | "success" | "warning" | "secondary" } => {
+    if (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered') {
+        return { text: 'COMPLETED', variant: 'success' };
+    }
+    if (!lead.joNumber) {
+        return { text: 'PENDING', variant: 'secondary' };
+    }
+    return { text: 'ONGOING', variant: 'warning' };
+  }, []);
+  
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
@@ -341,6 +353,14 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     if (!processedLeads) return [];
     
     return processedLeads.filter(lead => {
+      const overallStatus = getOverallStatus(lead).text;
+      let matchesStatus = true;
+      if (filterType === 'COMPLETED') {
+        matchesStatus = overallStatus === 'COMPLETED';
+      } else if (filterType === 'ONGOING') {
+        matchesStatus = overallStatus === 'ONGOING' || overallStatus === 'PENDING';
+      }
+
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
         (toTitleCase(lead.customerName).toLowerCase().includes(lowercasedSearchTerm) ||
@@ -356,9 +376,9 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
         (joString.toLowerCase().includes(joNumberSearch.toLowerCase()))
         : true;
 
-      return matchesSearch && matchesCsr && matchesJo;
+      return matchesSearch && matchesCsr && matchesJo && matchesStatus;
     });
-  }, [processedLeads, searchTerm, csrFilter, joNumberSearch, formatJoNumber]);
+  }, [processedLeads, searchTerm, csrFilter, joNumberSearch, filterType, formatJoNumber, getOverallStatus]);
   
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
@@ -659,39 +679,52 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
       <CardHeader>
         <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-black">Process Job Order</CardTitle>
+              <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Job Orders' : 'Process Job Order'}</CardTitle>
               <CardDescription className="text-gray-600">
-                A list of all customer orders that have not been completed.
+                {filterType === 'COMPLETED' ? 'A list of all customer orders that have been shipped or delivered.' : 'A list of all customer orders that have not been completed.'}
               </CardDescription>
             </div>
-             <div className="flex items-center gap-4">
-               <Select value={csrFilter} onValueChange={setCsrFilter}>
-                <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
-                  <SelectValue placeholder="Filter by SCES" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All SCES</SelectItem>
-                  {salesRepresentatives.map(csr => (
-                    <SelectItem key={csr} value={csr}>{csr}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="w-full max-w-xs">
-                <Input
-                  placeholder="Search by J.O. No..."
-                  value={joNumberSearch}
-                  onChange={(e) => setJoNumberSearch(e.target.value)}
-                  className="bg-gray-100 text-black placeholder:text-gray-500"
-                />
-              </div>
-              <div className="w-full max-w-sm">
-                <Input
-                  placeholder="Search by customer, company, or contact..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-gray-100 text-black placeholder:text-gray-500"
-                />
-              </div>
+             <div className="flex flex-col items-end gap-2">
+                <div className="flex items-center gap-4">
+                  <Select value={csrFilter} onValueChange={setCsrFilter}>
+                    <SelectTrigger className="w-[180px] bg-gray-100 text-black placeholder:text-gray-500">
+                      <SelectValue placeholder="Filter by SCES" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All SCES</SelectItem>
+                      {salesRepresentatives.map(csr => (
+                        <SelectItem key={csr} value={csr}>{csr}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="w-full max-w-xs">
+                    <Input
+                      placeholder="Search by J.O. No..."
+                      value={joNumberSearch}
+                      onChange={(e) => setJoNumberSearch(e.target.value)}
+                      className="bg-gray-100 text-black placeholder:text-gray-500"
+                    />
+                  </div>
+                  <div className="w-full max-w-sm">
+                    <Input
+                      placeholder="Search by customer, company, or contact..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="bg-gray-100 text-black placeholder:text-gray-500"
+                    />
+                  </div>
+                </div>
+                 <div className="w-full text-right">
+                  {filterType === 'COMPLETED' ? (
+                    <Link href="/job-order" className="text-sm text-primary hover:underline">
+                      View Ongoing Job Orders
+                    </Link>
+                  ) : (
+                    <Link href="/job-order/completed" className="text-sm text-primary hover:underline">
+                      View Completed Job Orders
+                    </Link>
+                  )}
+                </div>
             </div>
         </div>
       </CardHeader>
@@ -716,8 +749,9 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
               </TableHeader>
               <TableBody>
                 {displayedLeads.map((lead) => {
+                  const canDelete = isAdmin || userProfile?.nickname === lead.salesRepresentative;
                   const isJoSaved = !!lead.joNumber;
-                  const isCompleted = lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered';
+                  const isCompleted = filterType === 'COMPLETED';
                   const creationDate = formatDateTime(lead.submissionDateTime);
                   const modifiedDate = formatDateTime(lead.lastModified);
                   const isHovered = hoveredLeadId === lead.id;
@@ -899,5 +933,3 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     </>
   );
 }
-
-    
