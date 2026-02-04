@@ -131,6 +131,7 @@ type Lead = {
   isPostingConsentGranted?: boolean;
   postingConsentTimestamp?: string;
   isFinalApproval?: boolean;
+  forceNewCustomer?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -287,29 +288,48 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
+    const customerOrderGroups: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
   
     leads.forEach(lead => {
-      const name = lead.customerName.toLowerCase();
-      if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
+      // Defensive check
+      if (!Array.isArray(lead.orders)) {
+          return; 
       }
-      customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
-      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
+      const name = lead.customerName.toLowerCase();
+      if (!customerOrderGroups[name]) {
+        customerOrderGroups[name] = { orders: [], totalCustomerQuantity: 0 };
+      }
+      customerOrderGroups[name].orders.push(lead);
     });
-  
+
     const enrichedLeads: EnrichedLead[] = [];
   
-    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
-      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-      orders.forEach((lead, index) => {
-        enrichedLeads.push({
-          ...lead,
-          orderNumber: index + 1,
-          totalCustomerQuantity,
-        });
-      });
+    Object.values(customerOrderGroups).forEach((group) => {
+        if (!group || !Array.isArray(group.orders)) {
+            return;
+        }
+        const { orders } = group;
+
+        const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+        
+        const totalCustomerQuantity = orders.reduce((sum, o) => {
+            if (!Array.isArray(o.orders)) return sum;
+            return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
+        }, 0);
+        
+        for (let i = 0; i < sortedOrders.length; i++) {
+            const lead = sortedOrders[i];
+            
+            const previousNonSampleOrders = sortedOrders
+                .slice(0, i)
+                .filter(o => o.orderType !== 'Item Sample');
+            
+            enrichedLeads.push({
+                ...lead,
+                orderNumber: previousNonSampleOrders.length,
+                totalCustomerQuantity,
+            });
+        }
     });
   
     return enrichedLeads.sort((a,b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
@@ -699,7 +719,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   const creationDate = formatDateTime(lead.submissionDateTime);
                   const modifiedDate = formatDateTime(lead.lastModified);
                   const isHovered = hoveredLeadId === lead.id;
-                  const isRepeat = lead.orderNumber > 1;
+                  const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
                   
                   const layoutImageCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
                   const refImageCount = (() => {
@@ -746,7 +766,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                                           <div className="flex items-center gap-1.5 cursor-pointer">
                                             <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                             <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                              {lead.orderNumber}
+                                              {lead.orderNumber + 1}
                                             </span>
                                           </div>
                                         </TooltipTrigger>

@@ -98,6 +98,7 @@ type Lead = {
   isEmbroideryDone?: boolean;
   isSewing?: boolean;
   finalApprovalTimestamp?: string;
+  forceNewCustomer?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -297,29 +298,42 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
+    const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
   
     leads.forEach(lead => {
-      const name = lead.customerName.toLowerCase();
-      if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
+      if (!Array.isArray(lead.orders)) {
+          return;
       }
-      customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
+      const name = lead.customerName.toLowerCase();
+      if (!customerOrderGroups[name]) {
+        customerOrderGroups[name] = { orders: [] };
+      }
+      customerOrderGroups[name].orders.push(lead);
     });
   
     const enrichedLeads: EnrichedLead[] = [];
   
-    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
-      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-      orders.forEach((lead, index) => {
-        enrichedLeads.push({
-          ...lead,
-          orderNumber: index + 1,
-          totalCustomerQuantity,
-        });
-      });
+    Object.values(customerOrderGroups).forEach(({ orders }) => {
+      const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+      
+      const totalCustomerQuantity = orders.reduce((sum, o) => {
+          if (!Array.isArray(o.orders)) return sum;
+          return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0);
+      }, 0);
+      
+      for (let i = 0; i < sortedOrders.length; i++) {
+          const lead = sortedOrders[i];
+          
+          const previousNonSampleOrders = sortedOrders
+              .slice(0, i)
+              .filter(o => o.orderType !== 'Item Sample');
+          
+          enrichedLeads.push({
+              ...lead,
+              orderNumber: previousNonSampleOrders.length,
+              totalCustomerQuantity,
+          });
+      }
     });
   
     return enrichedLeads;
@@ -507,7 +521,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                   const overallStatus = getOverallStatus(lead);
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
                   const isCollapsibleOpen = openLeadId === lead.id;
-                  const isRepeat = lead.orderNumber > 1;
+                  const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
                   const progress = getProgressValue(lead);
                   const finalProgrammedLogo = lead.layouts?.[0]?.finalProgrammedLogo;
                   const finalProgrammedBackDesign = lead.layouts?.[0]?.finalProgrammedBackDesign;
@@ -524,7 +538,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                           <div className="flex items-center gap-1.5 cursor-pointer mt-1">
                                             <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                             <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                              {lead.orderNumber}
+                                              {lead.orderNumber + 1}
                                             </span>
                                           </div>
                                         </TooltipTrigger>
@@ -732,5 +746,4 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     </Card>
   );
 }
-
 
