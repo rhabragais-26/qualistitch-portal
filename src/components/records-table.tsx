@@ -46,7 +46,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { z, ZodError } from 'zod';
 import { EditOrderDialog } from './edit-order-dialog';
-import { EditLeadFullDialog } from './edit-lead-full-dialog';
 import { FieldErrors } from 'react-hook-form';
 import Link from 'next/link';
 
@@ -187,7 +186,7 @@ const RecordsTableRow = React.memo(({
     isRepeat: boolean;
     isReadOnly: boolean;
     canDelete: boolean;
-    filterType?: 'COMPLETED' | 'ONGOING';
+    filterType?: 'ONGOING' | 'COMPLETED';
     getContactDisplay: (lead: Lead) => string | null;
     toggleCustomerDetails: (id: string) => void;
     handleOpenEditLeadDialog: (lead: Lead) => void;
@@ -239,7 +238,7 @@ const RecordsTableRow = React.memo(({
                           <div className="flex items-center gap-1.5 cursor-pointer">
                             <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                             <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                              {lead.orderNumber}
+                              {lead.orderNumber + 1}
                             </span>
                           </div>
                         </TooltipTrigger>
