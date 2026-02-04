@@ -253,7 +253,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
 
   const finalLogoEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const finalBackDesignEmbUploadRefs = useRef<(HTMLInputElement | null)[]>(([]);
+  const finalBackDesignEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalLogoDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalBackDesignDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalNamesDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -633,7 +633,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         const getInitialImages = (pluralField: ({ url: string } | null)[] | undefined, singularField: string | null | undefined): (string | null)[] => {
             const images: (string | null)[] = [];
             if (pluralField && pluralField.length > 0) {
-                images.push(...pluralField.map(item => item?.url || null));
+                images.push(...pluralField.map(i => i?.url || null));
             } else if (singularField) {
                 images.push(singularField);
             }
@@ -1000,7 +1000,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         handleImageUpload(file, setter, index);
     }
   }, [isViewOnly, handleImageUpload]);
-
+  
   const handleClearImage = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     setter(prev => {
         const newImages = [...prev];
