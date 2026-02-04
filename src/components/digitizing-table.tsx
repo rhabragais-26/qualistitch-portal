@@ -129,6 +129,9 @@ type Layout = {
   sequenceLogo?: (FileObject | null)[];
   sequenceLogoUploadTimes?: (string | null)[];
   sequenceLogoUploadedBy?: (string | null)[];
+  sequenceBackDesign?: (FileObject | null)[];
+  sequenceBackDesignUploadTimes?: (string | null)[];
+  sequenceBackDesignUploadedBy?: (string | null)[];
   finalProgrammedLogo?: (FileObject | null)[];
   finalProgrammedLogoUploadTimes?: (string | null)[];
   finalProgrammedLogoUploadedBy?: (string | null)[];
@@ -1193,6 +1196,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     } else if (uploadField === 'isFinalProgram') {
       return (
           <div className="space-y-4">
+            <h4 className="font-medium text-teal-600">Program Files</h4>
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                 {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
                 {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
@@ -1201,7 +1205,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             </div>
             <Separator/>
             <div className="space-y-2">
-              <Label>Names (DST)</Label>
+              <div className="flex items-center gap-2">
+                <Label>Names (DST)</Label>
+                {!isDisabled && (
+                    <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFinalNamesDst)}>
+                        <PlusCircle className="h-4 w-4" />
+                    </Button>
+                )}
+              </div>
                 <div className="grid grid-cols-2 gap-2">
                     {(finalNamesDst.length > 0 ? finalNamesDst : [null]).map((file, index) => (
                         <div key={index} className="flex items-center gap-2">
@@ -1227,11 +1238,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         </div>
                     ))}
                 </div>
-                 {!isDisabled && (
-                    <Button type="button" size="sm" variant="outline" className="h-8 mt-2" onClick={() => addFileMultiple(setFinalNamesDst)}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add File
-                    </Button>
-                )}
             </div>
             <div className="flex items-center space-x-2 pt-2">
                 <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isViewOnly} />
@@ -1240,13 +1246,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             {!isNamesOnly && (
                 <>
                   <Separator />
-                  <h4 className="font-medium">Final Programmed Images</h4>
+                  <h4 className="font-medium text-teal-600">Final Programmed Images</h4>
                   <div className="grid grid-cols-2 gap-4">
                       {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
                       {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
                   </div>
                   <Separator />
-                  <h4 className="font-medium">Sequence Files</h4>
+                  <h4 className="font-medium text-teal-600">Sequence Images</h4>
                   <div className="grid grid-cols-2 gap-4">
                       {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
                       {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
@@ -1533,7 +1539,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 onValueChange={(value) => handleDigitizerChange(lead.id, value)}
                                 disabled={(isViewOnly && !isAdmin && filterType !== 'COMPLETED') || (filterType === 'COMPLETED' && !isAdmin)}
                             >
-                                <SelectTrigger className={cn("text-xs h-7 w-full flex justify-center", getDigitizerColor(lead.assignedDigitizer))}>
+                                <SelectTrigger className={cn("text-xs h-7 flex justify-center", getDigitizerColor(lead.assignedDigitizer))}>
                                   <span className="flex-1 text-center">
                                     <SelectValue />
                                   </span>
@@ -1616,13 +1622,19 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     {openLeadId === lead.id && (
                       <TableRow>
                         <TableCell colSpan={15}>
-                           <div className="p-2 bg-gray-50 rounded-md my-2">
+                            <div className="p-2 bg-gray-50 rounded-md my-2">
                                 <ScrollArea className="w-full whitespace-nowrap">
                                   <div className="flex gap-4 p-2">
                                     {(lead.layouts || []).map((layout, layoutIndex) => (
-                                      <React.Fragment key={layoutIndex}>
-                                        <ImageDisplayCard title={`Layout Design ${layoutIndex + 1}`} images={layout.layoutImage ? [{ src: layout.layoutImage, label: `Layout ${layoutIndex + 1}`, timestamp: layout.layoutImageUploadTime, uploadedBy: layout.layoutImageUploadedBy }] : []} onImageClick={setImageInView} />
-                                      </React.Fragment>
+                                        <React.Fragment key={layoutIndex}>
+                                            {layout.layoutImage && (
+                                                <ImageDisplayCard 
+                                                    title={`Layout Design ${layoutIndex + 1}`} 
+                                                    images={[{ src: layout.layoutImage, label: `Layout ${layoutIndex + 1}`, timestamp: layout.layoutImageUploadTime, uploadedBy: layout.layoutImageUploadedBy }]}
+                                                    onImageClick={setImageInView} 
+                                                />
+                                            )}
+                                        </React.Fragment>
                                     ))}
                                     <ImageDisplayCard title="Reference Images" images={
                                         (lead.layouts || []).flatMap((layout, layoutIndex) => {
@@ -1817,4 +1829,5 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
