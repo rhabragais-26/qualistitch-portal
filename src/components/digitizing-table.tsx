@@ -1476,7 +1476,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <div className="flex items-center gap-1.5 cursor-pointer">
+                                      <div className="flex items-center gap-1.5 cursor-pointer mt-1">
                                         <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                         <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
                                           {lead.orderNumber + 1}
@@ -1489,15 +1489,19 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                   </Tooltip>
                                 </TooltipProvider>
                               ) : (
-                                <div className="text-xs text-blue-600 font-semibold">New Customer</div>
+                                <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                               )}
                               </div>
                          </div>
                       </TableCell>
                       <TableCell className="text-xs text-center align-middle">{lead.salesRepresentative}</TableCell>
-                      <TableCell className="text-center align-middle">
-                          <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>{lead.priorityType}</Badge>
-                          {specialOrderTypes.includes(lead.orderType) && <p className="text-xs font-bold mt-1">{lead.orderType}</p>}
+                      <TableCell className="align-middle py-3 text-center">
+                          <div className='flex flex-col items-center gap-1'>
+                              <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                                  {lead.priorityType}
+                              </Badge>
+                              {specialOrderTypes.includes(lead.orderType) && <p className="text-xs font-bold mt-1">{lead.orderType}</p>}
+                          </div>
                       </TableCell>
                       <TableCell className="text-xs text-center align-middle">{formatJoNumber(lead.joNumber)}</TableCell>
                       <TableCell className={cn(
