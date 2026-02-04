@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
-import { useFirestore, useUser, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useUser, setDocumentNonBlocking, updateDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { doc, collection, query, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, collection, query, orderBy, deleteDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/header';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -100,13 +100,13 @@ function CostOfGoodsPage() {
     try {
         if (editingCogs) {
             const cogsRef = doc(firestore, 'cost_of_goods', editingCogs.id);
-            await updateDoc(cogsRef, dataToSave);
+            updateDocumentNonBlocking(cogsRef, dataToSave);
             toast({ title: 'Success!', description: 'Cost of Goods record has been updated.' });
             setEditingCogs(null);
         } else {
             const docId = uuidv4();
             const cogsRef = doc(firestore, 'cost_of_goods', docId);
-            await setDoc(cogsRef, { ...dataToSave, id: docId });
+            setDocumentNonBlocking(cogsRef, { ...dataToSave, id: docId }, {});
             toast({ title: 'Success!', description: 'Cost of Goods has been recorded.' });
         }
         form.reset({ date: new Date(), itemDescription: '', supplier: '', quantity: 1, unitCost: 0 });

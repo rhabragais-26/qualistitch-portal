@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
-import { useFirestore, useUser, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useUser, setDocumentNonBlocking, updateDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { doc, collection, query, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, collection, query, orderBy, deleteDoc } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/header';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -97,13 +97,13 @@ function CapitalExpensesPage() {
     try {
         if (editingExpense) {
             const expenseRef = doc(firestore, 'capital_expenses', editingExpense.id);
-            await updateDoc(expenseRef, dataToSave);
+            updateDocumentNonBlocking(expenseRef, dataToSave);
             toast({ title: 'Success!', description: 'Expense has been updated.' });
             setEditingExpense(null);
         } else {
             const docId = uuidv4();
             const expenseRef = doc(firestore, 'capital_expenses', docId);
-            await setDoc(expenseRef, { ...dataToSave, id: docId });
+            setDocumentNonBlocking(expenseRef, { ...dataToSave, id: docId }, {});
             toast({ title: 'Success!', description: 'Expense has been recorded.' });
         }
         form.reset({ date: new Date(), assetName: '', description: '', cost: 0, lifespanInYears: 5 });
