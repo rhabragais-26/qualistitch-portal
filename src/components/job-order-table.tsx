@@ -130,6 +130,7 @@ type Lead = {
   lastModifiedBy?: string;
   isPostingConsentGranted?: boolean;
   postingConsentTimestamp?: string;
+  isFinalApproval?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -193,8 +194,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
   
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+    return formatJoNumberUtil(joNumber);
   }, []);
   
   const getJoStatus = useCallback((lead: Lead) => {
@@ -208,6 +208,17 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     if (lead.isPreparedForProduction) return "Already on Inventory";
     if (lead.joNumber) return "Already on Programming Dept.";
     return <span className="text-gray-500">Not yet endorsed</span>;
+  }, []);
+
+  const getPrintingStatus = useCallback((lead: Lead): { text: string; variant: "warning" | "secondary" } => {
+    const skipsProgramming = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
+    if (skipsProgramming) {
+        return { text: "For Printing", variant: "warning" };
+    }
+    if (lead.isFinalApproval) {
+        return { text: "For Printing", variant: "warning" };
+    }
+    return { text: "Awaiting Client Approval", variant: "secondary" };
   }, []);
 
   const handlePrintedChange = async (leadId: string, checked: boolean) => {
@@ -675,6 +686,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   <TableHead className="text-white font-bold align-middle text-center">J.O. No.</TableHead>
                   <TableHead className="text-center text-white font-bold align-middle">Action</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Uploaded Layout</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Printing Status</TableHead>
                   <TableHead className="text-center text-white font-bold align-middle">Printed</TableHead>
                   <TableHead className="text-center text-white font-bold align-middle w-[150px]">Posting Consent from Client</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">J.O. Status</TableHead>
@@ -712,6 +724,8 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                     return count;
                   })();
 
+                  const printingStatus = getPrintingStatus(lead);
+
                   return (
                     <TableRow key={lead.id} onMouseEnter={() => setHoveredLeadId(lead.id)} onMouseLeave={() => setHoveredLeadId(null)} className={cn(isHovered && "bg-gray-100")}>
                       <TableCell className="text-xs align-middle py-2 text-black text-center">
@@ -720,37 +734,37 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                       </TableCell>
                        <TableCell className="text-xs align-middle text-center py-2 text-black">
                         <div className="flex items-center justify-center">
-                          <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
-                            {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                          </Button>
-                          <div className='flex flex-col items-center'>
-                            <span className="font-medium">{toTitleCase(lead.customerName)}</span>
-                            {isRepeat ? (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-1.5 cursor-pointer">
-                                      <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                      <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                        {lead.orderNumber}
-                                      </span>
+                            <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
+                                {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </Button>
+                            <div className='flex flex-col items-center'>
+                                <span className="font-medium">{toTitleCase(lead.customerName)}</span>
+                                {isRepeat ? (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="flex items-center gap-1.5 cursor-pointer">
+                                            <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                            <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                              {lead.orderNumber}
+                                            </span>
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  ) : (
+                                    <span className="text-xs text-blue-600 font-semibold">New Customer</span>
+                                  )}
+                                {openCustomerDetails === lead.id && (
+                                    <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
+                                        {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
+                                        {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                     </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            ) : (
-                              <span className="text-xs text-blue-600 font-semibold">New Customer</span>
-                            )}
-                            {openCustomerDetails === lead.id && (
-                              <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
-                                {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
-                                {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
-                              </div>
-                            )}
-                          </div>
+                                )}
+                            </div>
                         </div>
                       </TableCell>
                       <TableCell className="text-xs align-middle py-2 text-black text-center">{lead.salesRepresentative}</TableCell>
@@ -813,6 +827,9 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                               <span className="text-destructive">No Uploaded Layout</span>
                           )}
                         </TableCell>
+                       <TableCell className="text-center align-middle text-xs">
+                         <Badge variant={printingStatus.variant}>{printingStatus.text}</Badge>
+                       </TableCell>
                       <TableCell className="text-center align-middle py-2">
                         <div className="flex flex-col items-center justify-center gap-1">
                             <Checkbox
