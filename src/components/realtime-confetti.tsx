@@ -96,8 +96,8 @@ export function RealtimeConfetti() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const appStateRef = useMemoFirebase(
-    () => (firestore ? doc(firestore, 'appState', 'global') : null),
-    [firestore]
+    () => (firestore && user ? doc(firestore, 'appState', 'global') : null),
+    [firestore, user]
   );
   const { data: appState } = useDoc<AppState>(appStateRef);
 

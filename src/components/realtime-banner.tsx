@@ -21,8 +21,8 @@ export function RealtimeBanner() {
   const pathname = usePathname();
 
   const appStateRef = useMemoFirebase(
-    () => (firestore ? doc(firestore, 'appState', 'global') : null),
-    [firestore]
+    () => (firestore && user ? doc(firestore, 'appState', 'global') : null),
+    [firestore, user]
   );
   const { data: appState } = useDoc<AppState>(appStateRef);
 
