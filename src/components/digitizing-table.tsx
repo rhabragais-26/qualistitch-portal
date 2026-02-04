@@ -287,7 +287,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   };
 
   const handleDigitizerChange = (leadId: string, digitizerNickname: string) => {
-    if (!firestore || (isReadOnly && !isAdmin && filterType !== 'COMPLETED')) return;
+    if (!firestore || (isViewOnly && !isAdmin && filterType !== 'COMPLETED')) return;
     
     if (filterType === 'COMPLETED' && !isAdmin) return;
 
@@ -540,7 +540,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 if (nextField) {
                   updatedData[nextField] = false;
                   const nextTimestampField = `${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
-                  updatedData[nextTimestampField] = null;
+                  updateData[nextTimestampField] = null;
                 }
             }
         }
@@ -975,7 +975,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         };
 
         const getInitialSequenceImages = (files?: (FileObject | null)[]): (string|null)[] => {
-            if (!files || files.length === 0) return [];
+            if (!files || files.length === 0) return [null];
             return files.map(f => f?.url || null);
         }
 
@@ -1695,10 +1695,20 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         {
                                             title: 'Final Program Files',
                                             images: [
-                                                ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Logo ${i + 1}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i] || null, uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] || null }),
-                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Back Design ${i + 1}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i] || null, uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] || null }),
-                                                ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i] || null, uploadedBy: layout.sequenceLogoUploadedBy?.[i] || null }),
-                                                ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i+1}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i] || null, uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] || null }),
+                                                ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Logo ${i + 1}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] }),
+                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Back Design ${i + 1}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] }),
+                                                ...(layout.sequenceLogo || []).map((file: any, i) => {
+                                                    if (!file) return null;
+                                                    const url = typeof file === 'string' ? file : file.url;
+                                                    if (!url) return null;
+                                                    return { src: url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] };
+                                                }),
+                                                ...(layout.sequenceBackDesign || []).map((file: any, i) => {
+                                                    if (!file) return null;
+                                                    const url = typeof file === 'string' ? file : file.url;
+                                                    if (!url) return null;
+                                                    return { src: url, label: `Sequence Back Design ${i + 1}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i], uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] };
+                                                }),
                                             ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
                                         }
                                     ];

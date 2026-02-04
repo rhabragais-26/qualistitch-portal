@@ -232,30 +232,40 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
                       </TableCell>
                       <TableCell className="align-middle py-3 text-center">
                         <div className="flex gap-2 justify-center">
-                          {lead.layouts?.[0]?.sequenceLogo?.map((file, i) => file?.url && (
-                            <TooltipProvider key={`seq-logo-${i}`}>
+                          {lead.layouts?.[0]?.sequenceLogo?.map((file: any, i) => {
+                            if (!file) return null;
+                            const url = typeof file === 'string' ? file : file.url;
+                            if (!url) return null;
+                            return (
+                              <TooltipProvider key={`seq-logo-${i}`}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="relative w-16 h-16 border rounded-md cursor-pointer" onClick={() => setImageInView(url)}>
+                                      <Image src={url} alt={`Sequence Logo ${i+1}`} layout="fill" objectFit="contain" />
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p>Sequence Logo {i+1}</p></TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            );
+                          })}
+                          {lead.layouts?.[0]?.sequenceBackDesign?.map((file: any, i) => {
+                            if (!file) return null;
+                            const url = typeof file === 'string' ? file : file.url;
+                            if (!url) return null;
+                            return (
+                             <TooltipProvider key={`seq-back-${i}`}>
                               <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="relative w-16 h-16 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
-                                    <Image src={file.url} alt={`Sequence Logo ${i+1}`} layout="fill" objectFit="contain" />
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent><p>Sequence Logo {i+1}</p></TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ))}
-                          {lead.layouts?.[0]?.sequenceBackDesign?.map((file, i) => file?.url && (
-                           <TooltipProvider key={`seq-back-${i}`}>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="relative w-16 h-16 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
-                                    <Image src={file.url} alt={`Sequence Back Design ${i+1}`} layout="fill" objectFit="contain" />
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent><p>Sequence Back Design {i+1}</p></TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ))}
+                                  <TooltipTrigger asChild>
+                                    <div className="relative w-16 h-16 border rounded-md cursor-pointer" onClick={() => setImageInView(url)}>
+                                      <Image src={url} alt={`Sequence Back Design ${i+1}`} layout="fill" objectFit="contain" />
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent><p>Sequence Back Design {i+1}</p></TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            );
+                          })}
                         </div>
                       </TableCell>
                       <TableCell className="align-middle py-3 text-center">
