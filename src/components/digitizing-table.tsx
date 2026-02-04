@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -527,11 +528,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const confirmUncheck = useCallback(async () => {
     if (!uncheckConfirmation || !firestore) return;
     const { leadId, field } = uncheckConfirmation;
+    const leadDocRef = doc(firestore, 'leads', leadId);
     try {
-        const leadDocRef = doc(firestore, 'leads', leadId);
+        const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
         const updateData: { [key: string]: any } = { 
             [field]: false, 
-            [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: null 
+            [timestampField]: null 
         };
 
         if (field !== 'isJoHardcopyReceived') {
@@ -549,13 +551,18 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             }
         }
         await updateDoc(leadDocRef, updateData);
+        refetch(); // Re-fetch data to update UI
+        toast({
+          title: 'Status Updated',
+          description: 'The status has been successfully reverted.',
+        });
     } catch (e: any) {
         console.error(`Error unchecking ${field}:`, e);
         toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
     } finally {
         setUncheckConfirmation(null);
     }
-  }, [uncheckConfirmation, firestore, toast]);
+  }, [uncheckConfirmation, firestore, toast, refetch]);
 
   const handleConfirmReview = useCallback(async () => {
     if (!reviewConfirmLead || !firestore) return;
