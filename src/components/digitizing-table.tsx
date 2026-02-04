@@ -200,6 +200,31 @@ type UserProfileInfo = {
     position: string;
 };
 
+const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
+    if (!images || images.length === 0) return null;
+
+    return (
+        <Card className="bg-white">
+            <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
+            <CardContent className="flex gap-4 text-xs p-2 flex-wrap justify-center">
+                {images.map((img, index) => (
+                    img.src && (
+                        <div key={index} className="flex flex-col items-center text-center w-28">
+                            <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
+                            <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
+                                <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
+                            </div>
+                            {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
+                            {img.uploadedBy && <p className='text-gray-500 text-[10px] font-bold'>by {img.uploadedBy}</p>}
+                        </div>
+                    )
+                ))}
+            </CardContent>
+        </Card>
+    );
+};
+
+
 const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: DigitizingTableProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -1567,12 +1592,86 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     {openLeadId === lead.id && (
                       <TableRow>
                         <TableCell colSpan={15}>
-                           <div className="p-4 max-w-4xl mx-auto bg-gray-50 rounded-md my-2">
-                            {/* Simplified and direct image display */}
-                           </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
+                           <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 bg-gray-50 rounded-md my-2">
+                            <ImageDisplayCard title="Reference Images" images={(useMemo(() => {
+                                const layout = lead.layouts?.[0];
+                                if (!layout) return [];
+                                const images: any[] = [];
+                                const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
+                                    if (Array.isArray(pluralField)) {
+                                        pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
+                                    } else if (singularField) {
+                                        images.push({ src: singularField, label: `${labelPrefix} 1`, timestamp: singularTime, uploadedBy: singularUploader });
+                                    }
+                                };
+                                addImages((layout as any).refLogoLeftImages, layout.refLogoLeftImage, layout.refLogoLeftImageUploadTime, layout.refLogoLeftImageUploadedBy, 'Logo Left');
+                                addImages((layout as any).refLogoRightImages, layout.refLogoRightImage, layout.refLogoRightImageUploadTime, layout.refLogoRightImageUploadedBy, 'Logo Right');
+                                addImages((layout as any).refBackLogoImages, layout.refBackLogoImage, layout.refBackLogoImageUploadTime, layout.refBackLogoImageUploadedBy, 'Back Logo');
+                                addImages((layout as any).refBackDesignImages, layout.refBackDesignImage, layout.refBackDesignImageUploadTime, layout.refBackDesignImageUploadedBy, 'Back Design');
+                                return images;
+                            }, [lead.layouts]))} onImageClick={setImageInView} />
+                            <ImageDisplayCard title="Layout Designs" images={(useMemo(() => {
+                                const layout = lead.layouts?.[0];
+                                if (!layout?.layoutImage) return [];
+                                return [{ src: layout.layoutImage, label: 'Layout 1', timestamp: layout.layoutImageUploadTime, uploadedBy: layout.layoutImageUploadedBy }];
+                            }, [lead.layouts]))} onImageClick={setImageInView} />
+                            <ImageDisplayCard title="Initial Program Images" images={(useMemo(() => {
+                                const layout = lead.layouts?.[0];
+                                if (!layout) return [];
+                                const images: any[] = [];
+                                const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
+                                    if (Array.isArray(pluralField)) {
+                                        pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
+                                    } else if (singularField) {
+                                        images.push({ src: singularField, label: `${labelPrefix} 1`, timestamp: singularTime, uploadedBy: singularUploader });
+                                    }
+                                };
+                                addImages((layout as any).logoLeftImages, layout.logoLeftImage, layout.logoLeftImageUploadTime, layout.logoLeftImageUploadedBy, 'Logo Left');
+                                addImages((layout as any).logoRightImages, layout.logoRightImage, layout.logoRightImageUploadTime, layout.logoRightImageUploadedBy, 'Logo Right');
+                                addImages((layout as any).backLogoImages, layout.backLogoImage, layout.backLogoImageUploadTime, layout.backLogoImageUploadedBy, 'Back Logo');
+                                addImages((layout as any).backDesignImages, layout.backDesignImage, layout.backDesignImageUploadTime, layout.backDesignImageUploadedBy, 'Back Design');
+                                return images;
+                            }, [lead.layouts]))} onImageClick={setImageInView} />
+                            <ImageDisplayCard title="Tested Images" images={(useMemo(() => {
+                                const layout = lead.layouts?.[0];
+                                if (!layout) return [];
+                                const images: any[] = [];
+                                const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
+                                    if (Array.isArray(pluralField)) {
+                                        pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
+                                    } else if (singularField) {
+                                        images.push({ src: singularField, label: `${labelPrefix} 1`, timestamp: singularTime, uploadedBy: singularUploader });
+                                    }
+                                };
+                                addImages((layout as any).testLogoLeftImages, layout.testLogoLeftImage, layout.testLogoLeftImageUploadTime, layout.testLogoLeftImageUploadedBy, 'Logo Left');
+                                addImages((layout as any).testLogoRightImages, layout.testLogoRightImage, layout.testLogoRightImageUploadTime, layout.testLogoRightImageUploadedBy, 'Logo Right');
+                                addImages((layout as any).testBackLogoImages, layout.testBackLogoImage, layout.testBackLogoImageUploadTime, layout.testBackLogoImageUploadedBy, 'Back Logo');
+                                addImages((layout as any).testBackDesignImages, layout.testBackDesignImage, layout.testBackDesignImageUploadTime, layout.testBackDesignImageUploadedBy, 'Back Design');
+                                return images;
+                            }, [lead.layouts]))} onImageClick={setImageInView} />
+                            <ImageDisplayCard title="Final Program Files" images={(useMemo(() => {
+                                const layout = lead.layouts?.[0];
+                                if (!layout) return [];
+                                const images: any[] = [];
+                                const addFiles = (files: (FileObject | null)[] | undefined, timestamps: (string | null)[] | undefined, uploaders: (string | null)[] | undefined, labelPrefix: string) => {
+                                    if (Array.isArray(files)) {
+                                        files.forEach((file, i) => {
+                                            if (file?.url) {
+                                                images.push({ src: file.url, label: `${labelPrefix} ${i + 1}`, timestamp: timestamps?.[i], uploadedBy: uploaders?.[i] });
+                                            }
+                                        });
+                                    }
+                                };
+                                addFiles(layout.finalProgrammedLogo, layout.finalProgrammedLogoUploadTimes, layout.finalProgrammedLogoUploadedBy, 'Final Logo');
+                                addFiles(layout.finalProgrammedBackDesign, layout.finalProgrammedBackDesignUploadTimes, layout.finalProgrammedBackDesignUploadedBy, 'Final Back Design');
+                                addFiles(layout.sequenceLogo, layout.sequenceLogoUploadTimes, layout.sequenceLogoUploadedBy, 'Sequence Logo');
+                                addFiles(layout.sequenceBackDesign, layout.sequenceBackDesignUploadTimes, layout.sequenceBackDesignUploadedBy, 'Sequence Back Design');
+                                return images;
+                            }, [lead.layouts]))} onImageClick={setImageInView} />
+                        </div>
+                    </TableCell>
+                  </TableRow>
+                )}
                   </React.Fragment>
                 );
                 })}
@@ -1689,6 +1788,7 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
 
 
 
