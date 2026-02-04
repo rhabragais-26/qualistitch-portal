@@ -1442,7 +1442,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                      <TableHead className="text-white font-bold text-xs">Customer</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center">Customer</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center">SCES</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
@@ -1469,31 +1469,28 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   <React.Fragment key={lead.id}>
                     <TableRow>
                       <TableCell className="text-xs align-middle">
-                          <div className="flex items-center justify-start">
-                            <Button variant="ghost" size="sm" onClick={() => {}} className="h-5 px-1 mr-1">
-                                <ChevronDown className="h-4 w-4" />
-                            </Button>
-                            <div className='flex flex-col'>
-                                <span className="font-medium">{toTitleCase(lead.customerName)}</span>
-                                {isRepeat ? (
-                                    <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                        <div className="flex items-center gap-1.5 cursor-pointer">
-                                            <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                            <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                            {lead.orderNumber + 1}
-                                            </span>
-                                        </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                        <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                    </TooltipProvider>
-                                ) : (
+                          <div className="flex items-center justify-center">
+                            <div className='flex flex-col items-center'>
+                              <span className="font-medium">{toTitleCase(lead.customerName)}</span>
+                              {isRepeat ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="flex items-center gap-1.5 cursor-pointer">
+                                        <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                        <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                          {lead.orderNumber + 1}
+                                        </span>
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : (
                                 <div className="text-xs text-blue-600 font-semibold">New Customer</div>
-                                )}
+                              )}
                               </div>
                          </div>
                       </TableCell>
@@ -1513,7 +1510,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 onValueChange={(value) => handleDigitizerChange(lead.id, value)}
                                 disabled={(isViewOnly && !isAdmin && filterType !== 'COMPLETED') || (filterType === 'COMPLETED' && !isAdmin)}
                             >
-                                <SelectTrigger className={cn("text-xs h-7", getDigitizerColor(lead.assignedDigitizer))}><SelectValue /></SelectTrigger>
+                                <SelectTrigger className={cn("text-xs h-7", getDigitizerColor(lead.assignedDigitizer))}>
+                                  <span className="flex-1 text-center">
+                                    <SelectValue />
+                                  </span>
+                                </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="unassigned">Unassigned</SelectItem>
                                     {digitizers.map(d => (
@@ -1592,8 +1593,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     {openLeadId === lead.id && (
                       <TableRow>
                         <TableCell colSpan={15}>
-                           <div className="p-4 bg-gray-50 rounded-md my-2">
-                               <div className="flex gap-4 overflow-x-auto pb-2">
+                           <div className="p-2 bg-gray-50 rounded-md my-2">
+                                <ScrollArea className="w-full whitespace-nowrap">
+                                  <div className="flex gap-4 p-2">
                                     <ImageDisplayCard title="Layout Designs" images={
                                         (lead.layouts || []).map((layout, index) => ({
                                             src: layout.layoutImage,
@@ -1676,7 +1678,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                             return images;
                                         })
                                     } onImageClick={setImageInView} />
-                               </div>
+                                  </div>
+                                </ScrollArea>
                             </div>
                         </TableCell>
                       </TableRow>
@@ -1797,6 +1800,7 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
 
 
 
