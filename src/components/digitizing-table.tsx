@@ -210,7 +210,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [overdueFilter, setOverdueFilter] = useState('All');
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField | 'isJoHardcopyReceived'; } | null>(null);
-  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
 
@@ -265,6 +264,20 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [imageInView, setImageInView] = useState<string | null>(null);
   
   const isViewOnly = isReadOnly || filterType === 'COMPLETED';
+
+  const handleImageUpload = useCallback((file: File, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setter(prev => {
+        const newImages = [...prev];
+        if (e.target?.result) {
+          newImages[index] = e.target.result as string;
+        }
+        return newImages;
+      });
+    };
+    reader.readAsDataURL(file);
+  }, []);
   
   const getDigitizerColor = (nickname?: string | null): string => {
     if (!nickname || nickname === 'unassigned') {
@@ -528,82 +541,82 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const confirmUncheck = useCallback(() => {
     if (!uncheckConfirmation || !firestore || !leads) return;
     const { leadId, field } = uncheckConfirmation;
-  
+
     const leadToUpdate = leads.find(l => l.id === leadId);
     if (!leadToUpdate) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Lead not found for update.' });
-      setUncheckConfirmation(null);
-      return;
+        toast({ variant: 'destructive', title: 'Error', description: 'Lead not found for update.' });
+        setUncheckConfirmation(null);
+        return;
     }
-  
+
     const optimisticUpdate: Partial<Lead> = {};
     const originalState: Partial<Lead> = {};
-  
+
     const processField = (fieldName: CheckboxField | 'isJoHardcopyReceived') => {
-      const timestampFieldName = `${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
-      
-      optimisticUpdate[fieldName] = false;
-      optimisticUpdate[timestampFieldName] = null;
-      
-      originalState[fieldName] = leadToUpdate[fieldName];
-      originalState[timestampFieldName] = leadToUpdate[timestampFieldName];
+        const timestampFieldName = `${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
+        
+        optimisticUpdate[fieldName] = false;
+        optimisticUpdate[timestampFieldName] = null;
+        
+        originalState[fieldName] = leadToUpdate[fieldName];
+        originalState[timestampFieldName] = leadToUpdate[timestampFieldName];
     };
-  
+
     processField(field);
-  
+
     if (field !== 'isJoHardcopyReceived') {
-      const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
-      const currentIndex = sequence.indexOf(field as CheckboxField);
-      if (currentIndex > -1) {
-        for (let i = currentIndex + 1; i < sequence.length; i++) {
-          const nextField = sequence[i];
-          if (nextField) {
-            processField(nextField);
-          }
+        const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
+        const currentIndex = sequence.indexOf(field as CheckboxField);
+
+        if (currentIndex > -1) {
+            for (let i = currentIndex + 1; i < sequence.length; i++) {
+                const nextField = sequence[i];
+                if (nextField) {
+                    processField(nextField);
+                }
+            }
         }
-      }
     }
-  
+
     // Immediately apply optimistic updates to the UI
     setOptimisticChanges(prev => ({
-      ...prev,
-      [leadId]: {
-        ...(prev[leadId] || {}),
-        ...optimisticUpdate,
-      }
+        ...prev,
+        [leadId]: {
+            ...(prev[leadId] || {}),
+            ...optimisticUpdate,
+        }
     }));
-  
+
     setUncheckConfirmation(null);
-  
+
     // Define an async function to handle the database operation
     const saveAndUpdate = async () => {
-      try {
-        const leadDocRef = doc(firestore, 'leads', leadId);
-        await updateDoc(leadDocRef, optimisticUpdate);
-        toast({
-          title: 'Status Updated',
-          description: 'The status has been successfully reverted.',
-        });
-        refetch(); // Sync with DB state
-      } catch (e: any) {
-        console.error(`Error unchecking ${field}:`, e);
-        toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
-        
-        // Rollback UI on failure
-        setOptimisticChanges(prev => ({
-          ...prev,
-          [leadId]: {
-            ...(prev[leadId] || {}),
-            ...originalState,
-          }
-        }));
-      }
+        try {
+            const leadDocRef = doc(firestore, 'leads', leadId);
+            await updateDoc(leadDocRef, optimisticUpdate);
+            toast({
+                title: 'Status Updated',
+                description: 'The status has been successfully reverted.',
+            });
+            refetch(); // Sync with DB state
+        } catch (e: any) {
+            console.error(`Error unchecking ${field}:`, e);
+            toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
+            
+            // Rollback UI on failure
+            setOptimisticChanges(prev => ({
+                ...prev,
+                [leadId]: {
+                    ...(prev[leadId] || {}),
+                    ...originalState,
+                }
+            }));
+        }
     };
-  
-    // Call the async function without awaiting it
+
     saveAndUpdate();
     
-  }, [uncheckConfirmation, firestore, toast, leads, refetch]);
+}, [uncheckConfirmation, firestore, toast, leads, refetch]);
 
   const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, checked: boolean) => {
     const lead = displayedLeads?.find((l) => l.id === leadId);
@@ -1442,8 +1455,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     <TableRow>
                       <TableCell className="text-xs align-middle">
                           <div className="flex items-center justify-start">
-                            <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
-                                {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            <Button variant="ghost" size="sm" onClick={() => {}} className="h-5 px-1 mr-1">
+                                <ChevronDown className="h-4 w-4" />
                             </Button>
                             <div className='flex flex-col'>
                                 <span className="font-medium">{toTitleCase(lead.customerName)}</span>
@@ -1466,13 +1479,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 ) : (
                                 <div className="text-xs text-blue-600 font-semibold">New Customer</div>
                                 )}
-                                {openCustomerDetails === lead.id && (
-                                <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
-                                    {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
-                                    {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
-                                </div>
-                                )}
-                            </div>
+                              </div>
                          </div>
                       </TableCell>
                       <TableCell className="text-xs text-center">{lead.salesRepresentative}</TableCell>
@@ -1519,7 +1526,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         })}
                         
                         <TableCell className="text-center align-middle">
-                            <Button variant="ghost" size="sm" onClick={() => toggleLeadDetails(lead.id)} className="h-7 px-2">
+                            <Button variant="ghost" size="sm" onClick={() => setOpenLeadId(prev => prev === lead.id ? null : lead.id)} className="h-7 px-2">
                                 View
                                 {openLeadId === lead.id ? (
                                 <ChevronUp className="h-4 w-4 ml-1" />
@@ -1596,30 +1603,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         {
                                             title: 'Final Program Files',
                                             images: [
-                                                ...(layout.finalProgrammedLogo || []).map((file, i) => {
-                                                    if (!file) return null;
-                                                    const url = typeof file === 'string' ? file : file.url;
-                                                    if (!url) return null;
-                                                    return { src: url, label: `Final Logo ${i + 1}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] };
-                                                }),
-                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => {
-                                                    if (!file) return null;
-                                                    const url = typeof file === 'string' ? file : file.url;
-                                                    if (!url) return null;
-                                                    return { src: url, label: `Final Back Design ${i + 1}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] };
-                                                }),
-                                                ...(layout.sequenceLogo || []).map((file, i) => {
-                                                    if (!file) return null;
-                                                    const url = typeof file === 'string' ? file : file.url;
-                                                    if (!url) return null;
-                                                    return { src: url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] };
-                                                }),
-                                                ...(layout.sequenceBackDesign || []).map((file, i) => {
-                                                    if (!file) return null;
-                                                    const url = typeof file === 'string' ? file : file.url;
-                                                    if (!url) return null;
-                                                    return { src: url, label: `Sequence Back Design ${i + 1}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i], uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] };
-                                                }),
+                                                ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Logo ${i + 1}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] }),
+                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Back Design ${i + 1}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] }),
+                                                ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] }),
+                                                ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i + 1}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i], uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] }),
                                             ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
                                         }
                                     ];
@@ -1665,8 +1652,3 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
         </Card>
     );
 };
-
-export default ImageDisplayCard;
-
-
-    
