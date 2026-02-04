@@ -287,8 +287,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   };
 
   const handleDigitizerChange = (leadId: string, digitizerNickname: string) => {
-    if (!firestore || (isReadOnly && !isAdmin)) return;
+    if (!firestore || (isReadOnly && !isAdmin && filterType !== 'COMPLETED')) return;
     
+    if (filterType === 'COMPLETED' && !isAdmin) return;
+
     const newValue = digitizerNickname === 'unassigned' ? null : digitizerNickname;
 
     setOptimisticChanges(prev => ({
@@ -959,16 +961,19 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         setUploadField(field);
         const layout = lead.layouts?.[0];
         
-        const getInitialImages = (pluralField: { url: string }[] | undefined, singularField: string | null | undefined): (string|null)[] => {
+        const getInitialImages = (pluralField: ({ url: string } | null)[] | undefined, singularField: string | null | undefined): (string | null)[] => {
             const images: (string | null)[] = [];
             if (pluralField && pluralField.length > 0) {
-              images.push(...pluralField.map(i => i.url));
+                images.push(...pluralField.map(item => item?.url || null));
             } else if (singularField) {
-              images.push(singularField);
+                images.push(singularField);
             }
-            return images.length > 0 ? images : [null];
+            if (images.length === 0) {
+                return [null];
+            }
+            return images;
         };
-        
+
         const getInitialSequenceImages = (files?: (FileObject | null)[]): (string|null)[] => {
             if (!files || files.length === 0) return [];
             return files.map(f => f?.url || null);
@@ -1514,7 +1519,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             <Select
                                 value={lead.assignedDigitizer || 'unassigned'}
                                 onValueChange={(value) => handleDigitizerChange(lead.id, value)}
-                                disabled={(isReadOnly || filterType === 'COMPLETED') && !isAdmin}
+                                disabled={(isViewOnly && !isAdmin) || (filterType === 'COMPLETED' && !isAdmin)}
                             >
                                 <SelectTrigger className={cn("w-[140px] text-xs h-8 justify-center font-bold", getDigitizerColor(lead.assignedDigitizer))}>
                                     <SelectValue />
