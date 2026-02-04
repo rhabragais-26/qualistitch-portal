@@ -525,74 +525,154 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     }
   }, [joReceivedConfirmation, updateStatus, toast]);
 
-  const confirmUncheck = useCallback(async () => {
+  const confirmUncheck = useCallback(() => {
     if (!uncheckConfirmation || !firestore || !leads) return;
     const { leadId, field } = uncheckConfirmation;
-
+  
     const leadToUpdate = leads.find(l => l.id === leadId);
     if (!leadToUpdate) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Lead not found for update.' });
-        setUncheckConfirmation(null);
-        return;
+      toast({ variant: 'destructive', title: 'Error', description: 'Lead not found for update.' });
+      setUncheckConfirmation(null);
+      return;
     }
-
+  
     const optimisticUpdate: Partial<Lead> = {};
     const originalState: Partial<Lead> = {};
-
+  
     const processField = (fieldName: CheckboxField | 'isJoHardcopyReceived') => {
-        const timestampFieldName = `${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
-        
-        optimisticUpdate[fieldName] = false;
-        optimisticUpdate[timestampFieldName] = null;
-        
-        originalState[fieldName] = leadToUpdate[fieldName];
-        originalState[timestampFieldName] = leadToUpdate[timestampFieldName];
+      const timestampFieldName = `${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
+      
+      optimisticUpdate[fieldName] = false;
+      optimisticUpdate[timestampFieldName] = null;
+      
+      originalState[fieldName] = leadToUpdate[fieldName];
+      originalState[timestampFieldName] = leadToUpdate[timestampFieldName];
     };
-
+  
     processField(field);
-
+  
     if (field !== 'isJoHardcopyReceived') {
-        const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
-        const currentIndex = sequence.indexOf(field as CheckboxField);
-        if (currentIndex > -1) {
-            for (let i = currentIndex + 1; i < sequence.length; i++) {
-                const nextField = sequence[i];
-                processField(nextField);
-            }
+      const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
+      const currentIndex = sequence.indexOf(field as CheckboxField);
+      if (currentIndex > -1) {
+        for (let i = currentIndex + 1; i < sequence.length; i++) {
+          const nextField = sequence[i];
+          if (nextField) {
+            processField(nextField);
+          }
         }
+      }
     }
-    
+  
+    // Immediately apply optimistic updates to the UI
     setOptimisticChanges(prev => ({
-        ...prev,
-        [leadId]: {
-            ...(prev[leadId] || {}),
-            ...optimisticUpdate,
-        }
+      ...prev,
+      [leadId]: {
+        ...(prev[leadId] || {}),
+        ...optimisticUpdate,
+      }
     }));
-    
+  
     setUncheckConfirmation(null);
-
-    try {
+  
+    // Define an async function to handle the database operation
+    const saveAndUpdate = async () => {
+      try {
         const leadDocRef = doc(firestore, 'leads', leadId);
         await updateDoc(leadDocRef, optimisticUpdate);
         toast({
           title: 'Status Updated',
           description: 'The status has been successfully reverted.',
         });
-        refetch();
-    } catch (e: any) {
+        refetch(); // Sync with DB state
+      } catch (e: any) {
         console.error(`Error unchecking ${field}:`, e);
         toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
         
+        // Rollback UI on failure
         setOptimisticChanges(prev => ({
-            ...prev,
-            [leadId]: {
-                ...(prev[leadId] || {}),
-                ...originalState,
-            }
+          ...prev,
+          [leadId]: {
+            ...(prev[leadId] || {}),
+            ...originalState,
+          }
         }));
-    }
+      }
+    };
+  
+    // Call the async function without awaiting it
+    saveAndUpdate();
+    
   }, [uncheckConfirmation, firestore, toast, leads, refetch]);
+
+  const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, checked: boolean) => {
+    const lead = displayedLeads?.find((l) => l.id === leadId);
+    if (!lead) return;
+    const isCurrentlyChecked = lead[field] as boolean | undefined || false;
+
+    if (!checked && isCurrentlyChecked) {
+      setUncheckConfirmation({ leadId, field });
+    } else if (checked && !isCurrentlyChecked) {
+      if (field === 'isUnderProgramming' || field === 'isLogoTesting' || field === 'isFinalProgram') {
+        setUploadLeadId(leadId);
+        setUploadField(field);
+        const layout = lead.layouts?.[0];
+        
+        const getInitialImages = (pluralField: ({ url: string } | null)[] | undefined, singularField: string | null | undefined): (string | null)[] => {
+            const images: (string | null)[] = [];
+            if (pluralField && pluralField.length > 0) {
+                images.push(...pluralField.map(item => item?.url || null));
+            } else if (singularField) {
+                images.push(singularField);
+            }
+            if (images.length === 0) {
+                return [null];
+            }
+            return images;
+        };
+
+        const getInitialSequenceImages = (files?: (FileObject | null)[]): (string|null)[] => {
+            if (!files || files.length === 0) return [null];
+            return files.map(f => f?.url || null);
+        }
+
+        if (field === 'isUnderProgramming') {
+            setInitialLogoLeftImages(getInitialImages((layout as any)?.logoLeftImages, layout?.logoLeftImage));
+            setInitialLogoRightImages(getInitialImages((layout as any)?.logoRightImages, layout?.logoRightImage));
+            setInitialBackLogoImages(getInitialImages((layout as any)?.backLogoImages, layout?.backLogoImage));
+            setInitialBackDesignImages(getInitialImages((layout as any)?.backDesignImages, layout?.backDesignImage));
+        } else if (field === 'isLogoTesting') {
+            setNoTestingNeeded(false);
+            setTestLogoLeftImages(getInitialImages((layout as any)?.testLogoLeftImages, layout?.testLogoLeftImage));
+            setTestLogoRightImages(getInitialImages((layout as any)?.testLogoRightImages, layout?.testLogoRightImage));
+            setTestBackLogoImages(getInitialImages((layout as any)?.testBackLogoImages, layout?.testBackLogoImage));
+            setTestBackDesignImages(getInitialImages((layout as any)?.testBackDesignImages, layout?.testBackDesignImage));
+        } else { // isFinalProgram
+          setIsNamesOnly(false);
+          setFinalLogoEmb(layout?.finalLogoEmb?.length ? layout.finalLogoEmb : [null]);
+          setFinalBackDesignEmb(layout?.finalBackDesignEmb?.length ? layout.finalBackDesignEmb : [null]);
+          setFinalLogoDst(layout?.finalLogoDst?.length ? layout.finalLogoDst : [null]);
+          setFinalBackDesignDst(layout?.finalBackDesignDst?.length ? layout.finalBackDesignDst : [null]);
+          setFinalNamesDst(layout?.finalNamesDst || []);
+          setSequenceLogo(getInitialSequenceImages(layout?.sequenceLogo));
+          setSequenceBackDesign(getInitialSequenceImages(layout?.sequenceBackDesign));
+          setFinalProgrammedLogo(getInitialImages((layout as any)?.finalProgrammedLogo, undefined));
+          setFinalProgrammedBackDesign(getInitialImages((layout as any)?.finalProgrammedBackDesign, undefined));
+        }
+        setIsUploadDialogOpen(true);
+      } else {
+        const optimisticUpdate = { [field]: true, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() };
+        setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...optimisticUpdate } }));
+        updateStatus(leadId, field, true).catch(() => {
+             toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
+             setOptimisticChanges(prev => {
+                const { [field!]: _removed, [`${field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[leadId] || {};
+                return { ...prev, [leadId]: rest };
+             });
+        });
+      }
+    }
+  }, [displayedLeads, updateStatus, toast]);
 
   const handleConfirmReview = useCallback(async () => {
     if (!reviewConfirmLead || !firestore) return;
@@ -654,87 +734,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     }
   }, [reviewConfirmLead, firestore, toast, calculateDigitizingDeadline, getContactDisplay, formatJoNumberUtil]);
 
-
-  const toggleLeadDetails = useCallback((leadId: string) => {
-    setOpenLeadId(openLeadId === leadId ? null : leadId);
-  }, [openLeadId]);
-  
-  const fileChecklistItems: FileUploadChecklistItem[] = useMemo(() => {
-    if (!reviewConfirmLead) return [];
-    const layout = reviewConfirmLead.layouts?.[0];
-    if (!layout) return [];
-
-    const finalProgramFiles = [
-      ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] }),
-      ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i+1}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i], uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] }),
-      ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Programmed Logo ${i + 1}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] }),
-      ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Programmed Back Design ${i + 1}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] }),
-    ];
-    
-    return finalProgramFiles.filter((item): item is FileUploadChecklistItem => !!item);
-  }, [reviewConfirmLead]);
-  
-    const handleImageUpload = useCallback((file: File, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-      if (isViewOnly) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-          setter(prev => {
-              const newImages = [...prev];
-              newImages[index] = e.target.result as string;
-              return newImages;
-          });
-      };
-      reader.readAsDataURL(file);
-    }, [isViewOnly]);
-
-  const handleImagePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    if (isViewOnly) return;
-    const file = e.clipboardData.files[0];
-    if (file && file.type.startsWith('image/')) {
-        handleImageUpload(file, setter, index);
-    }
-  }, [isViewOnly, handleImageUpload]);
-
-  const handleClearImage = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    setter(prev => {
-        const newImages = [...prev];
-        newImages[index] = null;
-        return newImages;
-    });
-  }, []);
-
-  const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
-    e.stopPropagation();
-    setter(prev => prev.filter((_, i) => i !== index));
-  }, []);
-
-  const addFile = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>) => {
-    setter(prev => [...prev, null]);
-  }, []);
-
-  const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, filesState: (FileObject | null)[], index: number) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const newFiles = [...filesState];
-        newFiles[index] = { name: file.name, url: e.target!.result as string };
-        setFilesState(newFiles);
-      };
-      reader.readAsDataURL(file);
-    }
-  }, []);
-
-  const addFileMultiple = useCallback((setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>) => {
-    setFilesState(prev => [...prev, null]);
-  }, []);
-
-  const removeFile = useCallback((setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
-    setFilesState(prev => prev.filter((_, i) => i !== index));
-    if (refs.current && refs.current[index]) {
-      refs.current[index]!.value = '';
-    }
-  }, []);
 
   const handleUploadDialogSave = useCallback(async () => {
     if (!uploadLeadId || !uploadField || !firestore || !leads || !userProfile) return;
@@ -982,75 +981,55 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign
   ]);
 
-  const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, checked: boolean) => {
-    const lead = displayedLeads?.find((l) => l.id === leadId);
-    if (!lead) return;
-    const isCurrentlyChecked = lead[field] as boolean | undefined || false;
-
-    if (!checked && isCurrentlyChecked) {
-      setUncheckConfirmation({ leadId, field });
-    } else if (checked && !isCurrentlyChecked) {
-      if (field === 'isUnderProgramming' || field === 'isLogoTesting' || field === 'isFinalProgram') {
-        setUploadLeadId(leadId);
-        setUploadField(field);
-        const layout = lead.layouts?.[0];
-        
-        const getInitialImages = (pluralField: ({ url: string } | null)[] | undefined, singularField: string | null | undefined): (string | null)[] => {
-            const images: (string | null)[] = [];
-            if (pluralField && pluralField.length > 0) {
-                images.push(...pluralField.map(item => item?.url || null));
-            } else if (singularField) {
-                images.push(singularField);
-            }
-            if (images.length === 0) {
-                return [null];
-            }
-            return images;
-        };
-
-        const getInitialSequenceImages = (files?: (FileObject | null)[]): (string|null)[] => {
-            if (!files || files.length === 0) return [null];
-            return files.map(f => f?.url || null);
-        }
-
-        if (field === 'isUnderProgramming') {
-            setInitialLogoLeftImages(getInitialImages((layout as any)?.logoLeftImages, layout?.logoLeftImage));
-            setInitialLogoRightImages(getInitialImages((layout as any)?.logoRightImages, layout?.logoRightImage));
-            setInitialBackLogoImages(getInitialImages((layout as any)?.backLogoImages, layout?.backLogoImage));
-            setInitialBackDesignImages(getInitialImages((layout as any)?.backDesignImages, layout?.backDesignImage));
-        } else if (field === 'isLogoTesting') {
-            setNoTestingNeeded(false);
-            setTestLogoLeftImages(getInitialImages((layout as any)?.testLogoLeftImages, layout?.testLogoLeftImage));
-            setTestLogoRightImages(getInitialImages((layout as any)?.testLogoRightImages, layout?.testLogoRightImage));
-            setTestBackLogoImages(getInitialImages((layout as any)?.testBackLogoImages, layout?.testBackLogoImage));
-            setTestBackDesignImages(getInitialImages((layout as any)?.testBackDesignImages, layout?.testBackDesignImage));
-        } else { // isFinalProgram
-          setIsNamesOnly(false);
-          setFinalLogoEmb(layout?.finalLogoEmb?.length ? layout.finalLogoEmb : [null]);
-          setFinalBackDesignEmb(layout?.finalBackDesignEmb?.length ? layout.finalBackDesignEmb : [null]);
-          setFinalLogoDst(layout?.finalLogoDst?.length ? layout.finalLogoDst : [null]);
-          setFinalBackDesignDst(layout?.finalBackDesignDst?.length ? layout.finalBackDesignDst : [null]);
-          setFinalNamesDst(layout?.finalNamesDst || []);
-          setSequenceLogo(getInitialSequenceImages(layout?.sequenceLogo));
-          setSequenceBackDesign(getInitialSequenceImages(layout?.sequenceBackDesign));
-          setFinalProgrammedLogo(getInitialImages((layout as any)?.finalProgrammedLogo, undefined));
-          setFinalProgrammedBackDesign(getInitialImages((layout as any)?.finalProgrammedBackDesign, undefined));
-        }
-        setIsUploadDialogOpen(true);
-      } else {
-        const optimisticUpdate = { [field]: true, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() };
-        setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...optimisticUpdate } }));
-        updateStatus(leadId, field, true).catch(() => {
-             toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
-             setOptimisticChanges(prev => {
-                const { [field!]: _removed, [`${field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[leadId] || {};
-                return { ...prev, [leadId]: rest };
-             });
-        });
-      }
+  const handleImagePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    if (isViewOnly) return;
+    const file = e.clipboardData.files[0];
+    if (file && file.type.startsWith('image/')) {
+        handleImageUpload(file, setter, index);
     }
-  }, [displayedLeads, updateStatus, toast]);
+  }, [isViewOnly, handleImageUpload]);
 
+  const handleClearImage = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    setter(prev => {
+        const newImages = [...prev];
+        newImages[index] = null;
+        return newImages;
+    });
+  }, []);
+
+  const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
+    e.stopPropagation();
+    setter(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const addFile = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>) => {
+    setter(prev => [...prev, null]);
+  }, []);
+
+  const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, filesState: (FileObject | null)[], index: number) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const newFiles = [...filesState];
+        newFiles[index] = { name: file.name, url: e.target!.result as string };
+        setFilesState(newFiles);
+      };
+      reader.readAsDataURL(file);
+    }
+  }, []);
+
+  const addFileMultiple = useCallback((setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>) => {
+    setFilesState(prev => [...prev, null]);
+  }, []);
+
+  const removeFile = useCallback((setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
+    setFilesState(prev => prev.filter((_, i) => i !== index));
+    if (refs.current && refs.current[index]) {
+      refs.current[index]!.value = '';
+    }
+  }, []);
+  
   const renderUploadDialogContent = useCallback(() => {
     if (!uploadField || !uploadLeadId) return null;
     const isDisabled = isViewOnly;
@@ -1617,15 +1596,25 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         {
                                             title: 'Final Program Files',
                                             images: [
-                                                ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Logo ${i + 1}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] }),
-                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Back Design ${i + 1}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] }),
-                                                ...(layout.sequenceLogo || []).map((file: any, i) => {
+                                                ...(layout.finalProgrammedLogo || []).map((file, i) => {
+                                                    if (!file) return null;
+                                                    const url = typeof file === 'string' ? file : file.url;
+                                                    if (!url) return null;
+                                                    return { src: url, label: `Final Logo ${i + 1}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] };
+                                                }),
+                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => {
+                                                    if (!file) return null;
+                                                    const url = typeof file === 'string' ? file : file.url;
+                                                    if (!url) return null;
+                                                    return { src: url, label: `Final Back Design ${i + 1}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] };
+                                                }),
+                                                ...(layout.sequenceLogo || []).map((file, i) => {
                                                     if (!file) return null;
                                                     const url = typeof file === 'string' ? file : file.url;
                                                     if (!url) return null;
                                                     return { src: url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] };
                                                 }),
-                                                ...(layout.sequenceBackDesign || []).map((file: any, i) => {
+                                                ...(layout.sequenceBackDesign || []).map((file, i) => {
                                                     if (!file) return null;
                                                     const url = typeof file === 'string' ? file : file.url;
                                                     if (!url) return null;
