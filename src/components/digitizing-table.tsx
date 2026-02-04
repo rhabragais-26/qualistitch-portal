@@ -526,43 +526,73 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   }, [joReceivedConfirmation, updateStatus, toast]);
 
   const confirmUncheck = useCallback(async () => {
-    if (!uncheckConfirmation || !firestore) return;
+    if (!uncheckConfirmation || !firestore || !leads) return;
     const { leadId, field } = uncheckConfirmation;
-    const leadDocRef = doc(firestore, 'leads', leadId);
-    try {
-        const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
-        const updateData: { [key: string]: any } = { 
-            [field]: false, 
-            [timestampField]: null 
-        };
 
-        if (field !== 'isJoHardcopyReceived') {
-            const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
-            const currentIndex = sequence.indexOf(field);
-            if (currentIndex > -1) {
-                for (let i = currentIndex + 1; i < sequence.length; i++) {
-                    const nextField = sequence[i];
-                    if (nextField) {
-                      updateData[nextField] = false;
-                      const nextTimestampField = `${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
-                      updateData[nextTimestampField] = null;
-                    }
-                }
+    const leadToUpdate = leads.find(l => l.id === leadId);
+    if (!leadToUpdate) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Lead not found for update.' });
+        setUncheckConfirmation(null);
+        return;
+    }
+
+    const optimisticUpdate: Partial<Lead> = {};
+    const originalState: Partial<Lead> = {};
+
+    const processField = (fieldName: CheckboxField | 'isJoHardcopyReceived') => {
+        const timestampFieldName = `${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
+        
+        optimisticUpdate[fieldName] = false;
+        optimisticUpdate[timestampFieldName] = null;
+        
+        originalState[fieldName] = leadToUpdate[fieldName];
+        originalState[timestampFieldName] = leadToUpdate[timestampFieldName];
+    };
+
+    processField(field);
+
+    if (field !== 'isJoHardcopyReceived') {
+        const sequence: CheckboxField[] = ['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'];
+        const currentIndex = sequence.indexOf(field as CheckboxField);
+        if (currentIndex > -1) {
+            for (let i = currentIndex + 1; i < sequence.length; i++) {
+                const nextField = sequence[i];
+                processField(nextField);
             }
         }
-        await updateDoc(leadDocRef, updateData);
-        refetch(); // Re-fetch data to update UI
+    }
+    
+    setOptimisticChanges(prev => ({
+        ...prev,
+        [leadId]: {
+            ...(prev[leadId] || {}),
+            ...optimisticUpdate,
+        }
+    }));
+    
+    setUncheckConfirmation(null);
+
+    try {
+        const leadDocRef = doc(firestore, 'leads', leadId);
+        await updateDoc(leadDocRef, optimisticUpdate);
         toast({
           title: 'Status Updated',
           description: 'The status has been successfully reverted.',
         });
+        refetch();
     } catch (e: any) {
         console.error(`Error unchecking ${field}:`, e);
         toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
-    } finally {
-        setUncheckConfirmation(null);
+        
+        setOptimisticChanges(prev => ({
+            ...prev,
+            [leadId]: {
+                ...(prev[leadId] || {}),
+                ...originalState,
+            }
+        }));
     }
-  }, [uncheckConfirmation, firestore, toast, refetch]);
+  }, [uncheckConfirmation, firestore, toast, leads, refetch]);
 
   const handleConfirmReview = useCallback(async () => {
     if (!reviewConfirmLead || !firestore) return;
@@ -1228,7 +1258,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   }
 
   if (error) {
-    return <p className="text-destructive p-4">Error loading records: {error.message}</p>
+    return <p className="text-destructive p-4">Error loading records: {error.message}</p>;
   }
   
   return (
@@ -1403,7 +1433,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       <CardContent>
            <div className="border rounded-md">
             <Table>
-                <TableHeader className="bg-neutral-800">
+                <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
                       <TableHead className="text-white font-bold text-xs">Customer</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center">SCES</TableHead>
@@ -1648,3 +1678,6 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
 };
 
 export default ImageDisplayCard;
+
+
+    
