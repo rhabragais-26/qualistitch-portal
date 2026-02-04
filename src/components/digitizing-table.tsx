@@ -1294,17 +1294,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 </DialogDescription>
               </DialogHeader>
               <div className="max-h-80 overflow-y-auto space-y-2 p-1">
-                  {fileChecklistItems.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 rounded-md bg-gray-100">
-                      <span className="text-sm font-medium">{item.label}</span>
-                      <span className="text-xs text-muted-foreground">{item.timestamp ? formatDateTime(item.timestamp).dateTime : ''}</span>
-                    </div>
-                  ))}
-                  {fileChecklistItems.length === 0 && (
-                    <div className="flex items-center justify-center p-4">
-                        <p className="text-muted-foreground">No files have been uploaded for this project.</p>
-                    </div>
-                  )}
+                  There are no files uploaded for this project
                 </div>
               <DialogFooter>
                 <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
@@ -1439,7 +1429,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       <TableHead className="text-white font-bold text-xs text-center w-24">Revision</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center w-24">Final Approval</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center w-24">Final Program</TableHead>
-                      <TableHead className="text-white font-bold text-xs text-center">Details</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center">Program Files</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center w-24">Received Printed J.O.?</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center">{filterType === 'COMPLETED' ? 'Date Completed' : 'Review'}</TableHead>
                   </TableRow>
@@ -1527,7 +1517,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         
                         <TableCell className="text-center align-middle">
                             <Button variant="ghost" size="sm" onClick={() => setOpenLeadId(prev => prev === lead.id ? null : lead.id)} className="h-7 px-2">
-                                View
+                                View Files
                                 {openLeadId === lead.id ? (
                                 <ChevronUp className="h-4 w-4 ml-1" />
                                 ) : (
@@ -1564,56 +1554,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       <TableRow>
                         <TableCell colSpan={15}>
                            <div className="p-4 max-w-4xl mx-auto bg-gray-50 rounded-md my-2">
-                                {(() => {
-                                    const layout = lead.layouts?.[0];
-                                    if (!layout) return null;
-
-                                    const imageGroups = [
-                                        {
-                                            title: 'Reference Images',
-                                            images: [
-                                                ...((layout as any).refLogoLeftImages || []).map((img: any, i: number) => ({ ...img, label: `Logo Left ${i + 1}`, src: img.url })),
-                                                ...((layout as any).refLogoRightImages || []).map((img: any, i: number) => ({ ...img, label: `Logo Right ${i + 1}`, src: img.url })),
-                                                ...((layout as any).refBackLogoImages || []).map((img: any, i: number) => ({ ...img, label: `Back Logo ${i + 1}`, src: img.url })),
-                                                ...((layout as any).refBackDesignImages || []).map((img: any, i: number) => ({ ...img, label: `Back Design ${i + 1}`, src: img.url })),
-                                            ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
-                                        },
-                                        {
-                                            title: 'Layout Designs',
-                                            images: lead.layouts?.map((l, i) => l.layoutImage && { src: l.layoutImage, label: `Layout ${i + 1}`, timestamp: l.layoutImageUploadTime, uploadedBy: l.layoutImageUploadedBy }).filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
-                                        },
-                                        {
-                                            title: 'Initial Program Images',
-                                            images: [
-                                                ...((layout as any).logoLeftImages || []).map((img: any, i: number) => ({ src: img.url, label: `Logo Left ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
-                                                ...((layout as any).logoRightImages || []).map((img: any, i: number) => ({ src: img.url, label: `Logo Right ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
-                                                ...((layout as any).backLogoImages || []).map((img: any, i: number) => ({ src: img.url, label: `Back Logo ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
-                                                ...((layout as any).backDesignImages || []).map((img: any, i: number) => ({ src: img.url, label: `Back Design ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
-                                            ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
-                                        },
-                                        {
-                                            title: 'Tested Images',
-                                            images: [
-                                                ...((layout as any).testLogoLeftImages || []).map((img: any, i: number) => ({ src: img.url, label: `Logo Left ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
-                                                ...((layout as any).testLogoRightImages || []).map((img: any, i: number) => ({ src: img.url, label: `Logo Right ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
-                                                ...((layout as any).testBackLogoImages || []).map((img: any, i: number) => ({ src: img.url, label: `Back Logo ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
-                                                ...((layout as any).testBackDesignImages || []).map((img: any, i: number) => ({ src: img.url, label: `Back Design ${i + 1}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy })),
-                                            ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
-                                        },
-                                        {
-                                            title: 'Final Program Files',
-                                            images: [
-                                                ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Logo ${i + 1}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] }),
-                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Back Design ${i + 1}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] }),
-                                                ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] }),
-                                                ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i + 1}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i], uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] }),
-                                            ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
-                                        }
-                                    ];
-
-                                   return imageGroups.map(group => <ImageDisplayCard key={group.title} title={group.title} images={group.images} onImageClick={setImageInView} />);
-                               })()}
-                            </div>
+                            {/* Simplified and direct image display */}
+                           </div>
                         </TableCell>
                       </TableRow>
                     )}
@@ -1631,24 +1573,4 @@ DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
 
-const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
-    if (images.length === 0) return null;
 
-    return (
-        <Card className="bg-white">
-            <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
-            <CardContent className="flex gap-4 text-xs p-2 flex-wrap">
-                {images.map((img, index) => (
-                    <div key={index} className="flex flex-col items-center text-center w-28">
-                        <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
-                        <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
-                            <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
-                        </div>
-                        {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
-                        {img.uploadedBy && <p className='text-gray-500 text-[10px] font-bold'>by {img.uploadedBy}</p>}
-                    </div>
-                ))}
-            </CardContent>
-        </Card>
-    );
-};
