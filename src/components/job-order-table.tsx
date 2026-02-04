@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, deleteDoc } from 'firebase/firestore';
@@ -211,7 +210,10 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     return <span className="text-gray-500">Not yet endorsed</span>;
   }, []);
 
-  const getPrintingStatus = useCallback((lead: Lead): { text: string; variant: "warning" | "secondary" } => {
+  const getPrintingStatus = useCallback((lead: Lead): { text: string; variant: "warning" | "secondary" | "success" } => {
+    if (lead.isJoPrinted) {
+        return { text: "Printed", variant: "success" };
+    }
     const skipsProgramming = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
     if (skipsProgramming) {
         return { text: "For Printing", variant: "warning" };
@@ -897,3 +899,5 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
     </>
   );
 }
+
+    
