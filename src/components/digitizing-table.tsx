@@ -1468,7 +1468,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
-                      <TableCell className="text-xs align-middle">
+                      <TableCell className="text-xs align-middle text-center">
                           <div className="flex items-center justify-center">
                             <div className='flex flex-col items-center'>
                               <span className="font-medium">{toTitleCase(lead.customerName)}</span>
@@ -1494,23 +1494,23 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                               </div>
                          </div>
                       </TableCell>
-                      <TableCell className="text-xs text-center">{lead.salesRepresentative}</TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-xs text-center align-middle">{lead.salesRepresentative}</TableCell>
+                      <TableCell className="text-center align-middle">
                           <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>{lead.priorityType}</Badge>
                           {specialOrderTypes.includes(lead.orderType) && <p className="text-xs font-bold mt-1">{lead.orderType}</p>}
                       </TableCell>
-                      <TableCell className="text-xs text-center">{formatJoNumber(lead.joNumber)}</TableCell>
+                      <TableCell className="text-xs text-center align-middle">{formatJoNumber(lead.joNumber)}</TableCell>
                       <TableCell className={cn(
-                          "text-center text-xs",
+                          "text-center text-xs align-middle",
                           deadlineInfo.isOverdue ? "text-red-500 font-bold" : (deadlineInfo.isUrgent ? "text-amber-600 font-bold" : "text-gray-500")
                         )}>{deadlineInfo.text}</TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="text-center align-middle">
                             <Select 
                                 value={lead.assignedDigitizer || 'unassigned'}
                                 onValueChange={(value) => handleDigitizerChange(lead.id, value)}
                                 disabled={(isViewOnly && !isAdmin && filterType !== 'COMPLETED') || (filterType === 'COMPLETED' && !isAdmin)}
                             >
-                                <SelectTrigger className={cn("text-xs h-7", getDigitizerColor(lead.assignedDigitizer))}>
+                                <SelectTrigger className={cn("text-xs h-7 w-full", getDigitizerColor(lead.assignedDigitizer))}>
                                   <span className="flex-1 text-center">
                                     <SelectValue />
                                   </span>
@@ -1797,13 +1797,3 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
-
-
-    
-
-
-
-
-
-
-
