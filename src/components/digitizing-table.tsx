@@ -1659,10 +1659,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         {
                                             title: 'Reference Images',
                                             images: [
-                                                ...((layout as any).refLogoLeftImages || []).map((img, i) => ({ ...img, label: `Logo Left ${i + 1}`, src: img.url })),
-                                                ...((layout as any).refLogoRightImages || []).map((img, i) => ({ ...img, label: `Logo Right ${i + 1}`, src: img.url })),
-                                                ...((layout as any).refBackLogoImages || []).map((img, i) => ({ ...img, label: `Back Logo ${i + 1}`, src: img.url })),
-                                                ...((layout as any).refBackDesignImages || []).map((img, i) => ({ ...img, label: `Back Design ${i + 1}`, src: img.url })),
+                                                ...((layout as any).refLogoLeftImages || []).map((img: any, i: number) => ({ ...img, label: `Logo Left ${i + 1}`, src: img.url })),
+                                                ...((layout as any).refLogoRightImages || []).map((img: any, i: number) => ({ ...img, label: `Logo Right ${i + 1}`, src: img.url })),
+                                                ...((layout as any).refBackLogoImages || []).map((img: any, i: number) => ({ ...img, label: `Back Logo ${i + 1}`, src: img.url })),
+                                                ...((layout as any).refBackDesignImages || []).map((img: any, i: number) => ({ ...img, label: `Back Design ${i + 1}`, src: img.url })),
                                             ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
                                         },
                                         {
@@ -1690,10 +1690,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         {
                                             title: 'Final Program Files',
                                             images: [
-                                                ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Logo ${i + 1}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i] || null, uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] || null }),
-                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Back Design ${i + 1}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i] || null, uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] || null }),
-                                                ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: layout.sequenceLogoUploadTimes?.[i] || null, uploadedBy: layout.sequenceLogoUploadedBy?.[i] || null }),
-                                                ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i+1}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i] || null, uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] || null }),
+                                                ...(layout.finalProgrammedLogo || []).map((file, i) => file && { src: file.url, label: `Final Logo ${i + 1}`, timestamp: (layout.finalProgrammedLogoUploadTimes && layout.finalProgrammedLogoUploadTimes[i]) ? layout.finalProgrammedLogoUploadTimes[i] : null, uploadedBy: (layout.finalProgrammedLogoUploadedBy && layout.finalProgrammedLogoUploadedBy[i]) ? layout.finalProgrammedLogoUploadedBy[i] : null }),
+                                                ...(layout.finalProgrammedBackDesign || []).map((file, i) => file && { src: file.url, label: `Final Back Design ${i + 1}`, timestamp: (layout.finalProgrammedBackDesignUploadTimes && layout.finalProgrammedBackDesignUploadTimes[i]) ? layout.finalProgrammedBackDesignUploadTimes[i] : null, uploadedBy: (layout.finalProgrammedBackDesignUploadedBy && layout.finalProgrammedBackDesignUploadedBy[i]) ? layout.finalProgrammedBackDesignUploadedBy[i] : null }),
+                                                ...(layout.sequenceLogo || []).map((file, i) => file && { src: file.url, label: `Sequence Logo ${i + 1}`, timestamp: (layout.sequenceLogoUploadTimes && layout.sequenceLogoUploadTimes[i]) ? layout.sequenceLogoUploadTimes[i] : null, uploadedBy: (layout.sequenceLogoUploadedBy && layout.sequenceLogoUploadedBy[i]) ? layout.sequenceLogoUploadedBy[i] : null }),
+                                                ...(layout.sequenceBackDesign || []).map((file, i) => file && { src: file.url, label: `Sequence Back Design ${i+1}`, timestamp: (layout.sequenceBackDesignUploadTimes && layout.sequenceBackDesignUploadTimes[i]) ? layout.sequenceBackDesignUploadTimes[i] : null, uploadedBy: (layout.sequenceBackDesignUploadedBy && layout.sequenceBackDesignUploadedBy[i]) ? layout.sequenceBackDesignUploadedBy[i] : null }),
                                             ].filter(Boolean) as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]
                                         }
                                     ];
