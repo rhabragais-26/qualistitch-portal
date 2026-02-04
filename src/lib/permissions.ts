@@ -91,6 +91,7 @@ export const defaultPermissions: { [key in UserPosition]?: PageGroup[] } = {
   'Production Head': ['production'],
   'Logistics Officer': ['logistics'],
   'Operations Manager': ['inventory', 'production', 'logistics'],
+  'Operations Head': ['inventory', 'logistics'],
   'Finance': ['finance'],
   'Marketing Head': ['marketing'],
   'Social Media Manager': ['marketing'],
