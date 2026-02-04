@@ -1593,7 +1593,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       <TableRow>
                         <TableCell colSpan={15}>
                            <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 bg-gray-50 rounded-md my-2">
-                            <ImageDisplayCard title="Reference Images" images={(useMemo(() => {
+                            <ImageDisplayCard title="Reference Images" images={(() => {
                                 const layout = lead.layouts?.[0];
                                 if (!layout) return [];
                                 const images: any[] = [];
@@ -1609,13 +1609,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 addImages((layout as any).refBackLogoImages, layout.refBackLogoImage, layout.refBackLogoImageUploadTime, layout.refBackLogoImageUploadedBy, 'Back Logo');
                                 addImages((layout as any).refBackDesignImages, layout.refBackDesignImage, layout.refBackDesignImageUploadTime, layout.refBackDesignImageUploadedBy, 'Back Design');
                                 return images;
-                            }, [lead.layouts]))} onImageClick={setImageInView} />
-                            <ImageDisplayCard title="Layout Designs" images={(useMemo(() => {
+                            })()} onImageClick={setImageInView} />
+                            <ImageDisplayCard title="Layout Designs" images={(() => {
                                 const layout = lead.layouts?.[0];
                                 if (!layout?.layoutImage) return [];
                                 return [{ src: layout.layoutImage, label: 'Layout 1', timestamp: layout.layoutImageUploadTime, uploadedBy: layout.layoutImageUploadedBy }];
-                            }, [lead.layouts]))} onImageClick={setImageInView} />
-                            <ImageDisplayCard title="Initial Program Images" images={(useMemo(() => {
+                            })()} onImageClick={setImageInView} />
+                            <ImageDisplayCard title="Initial Program Images" images={(() => {
                                 const layout = lead.layouts?.[0];
                                 if (!layout) return [];
                                 const images: any[] = [];
@@ -1631,8 +1631,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 addImages((layout as any).backLogoImages, layout.backLogoImage, layout.backLogoImageUploadTime, layout.backLogoImageUploadedBy, 'Back Logo');
                                 addImages((layout as any).backDesignImages, layout.backDesignImage, layout.backDesignImageUploadTime, layout.backDesignImageUploadedBy, 'Back Design');
                                 return images;
-                            }, [lead.layouts]))} onImageClick={setImageInView} />
-                            <ImageDisplayCard title="Tested Images" images={(useMemo(() => {
+                            })()} onImageClick={setImageInView} />
+                            <ImageDisplayCard title="Tested Images" images={(() => {
                                 const layout = lead.layouts?.[0];
                                 if (!layout) return [];
                                 const images: any[] = [];
@@ -1648,8 +1648,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 addImages((layout as any).testBackLogoImages, layout.testBackLogoImage, layout.testBackLogoImageUploadTime, layout.testBackLogoImageUploadedBy, 'Back Logo');
                                 addImages((layout as any).testBackDesignImages, layout.testBackDesignImage, layout.testBackDesignImageUploadTime, layout.testBackDesignImageUploadedBy, 'Back Design');
                                 return images;
-                            }, [lead.layouts]))} onImageClick={setImageInView} />
-                            <ImageDisplayCard title="Final Program Files" images={(useMemo(() => {
+                            })()} onImageClick={setImageInView} />
+                            <ImageDisplayCard title="Final Program Files" images={(() => {
                                 const layout = lead.layouts?.[0];
                                 if (!layout) return [];
                                 const images: any[] = [];
@@ -1667,7 +1667,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 addFiles(layout.sequenceLogo, layout.sequenceLogoUploadTimes, layout.sequenceLogoUploadedBy, 'Sequence Logo');
                                 addFiles(layout.sequenceBackDesign, layout.sequenceBackDesignUploadTimes, layout.sequenceBackDesignUploadedBy, 'Sequence Back Design');
                                 return images;
-                            }, [lead.layouts]))} onImageClick={setImageInView} />
+                            })()} onImageClick={setImageInView} />
                         </div>
                     </TableCell>
                   </TableRow>
@@ -1788,6 +1788,7 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
 
 
 
