@@ -652,7 +652,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
                 </TableHeader>
                 <TableBody>
                 {jobOrders?.map((lead) => {
-                  const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
+                  const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
                   return (
                     <ItemPreparationTableRowGroup
                         key={lead.id}

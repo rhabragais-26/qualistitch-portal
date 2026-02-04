@@ -45,7 +45,7 @@ import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { z, ZodError } from 'zod';
-import { EditOrderDialog } from './edit-order-dialog';
+import { EditLeadFullDialog } from './edit-lead-full-dialog';
 import { FieldErrors } from 'react-hook-form';
 import Link from 'next/link';
 
@@ -391,7 +391,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
     });
 
     const enrichedLeads: EnrichedLead[] = [];
-
+  
     Object.values(customerOrderGroups).forEach((group) => {
         if (!group || !Array.isArray(group.orders)) {
           return;
@@ -419,7 +419,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
             });
         }
     });
-
+  
     return enrichedLeads.sort((a,b) => new Date(b.submissionDateTime).getTime() - new Date(a.submissionDateTime).getTime());
   }, [leads]);
   
@@ -617,7 +617,7 @@ export function RecordsTable({ isReadOnly, filterType }: { isReadOnly: boolean; 
                 <TableBody>
                 {filteredLeads.map((lead) => {
                   const canDelete = isAdmin || userProfile?.nickname === lead.salesRepresentative;
-                  const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
+                  const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
                   return (
                     <React.Fragment key={lead.id}>
                         <RecordsTableRow 

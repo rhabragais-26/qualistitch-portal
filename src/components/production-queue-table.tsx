@@ -125,6 +125,7 @@ type Lead = {
   isFinalProgram?: boolean;
   adjustedDeliveryDate?: string;
   finalApprovalTimestamp?: string;
+  forceNewCustomer?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -798,7 +799,10 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     Object.values(customerOrderGroups).forEach((orders) => {
         const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
         
-        const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0), 0);
+        const totalCustomerQuantity = orders.reduce((sum, o) => {
+            if (!Array.isArray(o.orders)) return sum;
+            return sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0)
+        }, 0);
         
         for (let i = 0; i < sortedOrders.length; i++) {
             const lead = sortedOrders[i];
@@ -915,7 +919,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
             <div className="flex items-center gap-4">
               <div className="w-full max-w-lg">
                 <Input
-                  placeholder="Search customer, company and contact number"
+                  placeholder="Search customer, company, contact..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="bg-gray-100 text-black placeholder:text-gray-500"
@@ -967,31 +971,27 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                 </TableHeader>
                 <TableBody>
                 {productionQueue && productionQueue.length > 0 ? (
-                  productionQueue.map((lead) => (
+                  productionQueue.map((lead) => {
+                    const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
+                    return (
                     <ProductionQueueTableRowGroup
-                      key={lead.id}
-                      lead={lead}
-                      isRepeat={lead.orderNumber > 0}
-                      status={getProductionStatusLabel(lead)}
-                      deadlineInfo={calculateProductionDeadline(lead)}
-                      isCompleted={filterType === 'COMPLETED'}
-                      getContactDisplay={getContactDisplay}
-                      handleJoReceivedChange={handleJoReceivedChange}
-                      handleCheckboxChange={handleCheckboxChange}
-                      handleStatusChange={handleStatusChange}
-                      handleEndorseToLogistics={handleEndorseToLogistics}
-                      setLeadToReopen={() => {}}
-                      toggleLeadDetails={toggleLeadDetails}
-                      openLeadId={openLeadId}
+                        key={lead.id}
+                        lead={lead}
+                        isRepeat={isRepeat}
+                        status={getProductionStatusLabel(lead)}
+                        deadlineInfo={calculateProductionDeadline(lead)}
+                        isCompleted={filterType === 'COMPLETED'}
+                        getContactDisplay={getContactDisplay}
+                        handleJoReceivedChange={handleJoReceivedChange}
+                        handleCheckboxChange={handleCheckboxChange}
+                        handleStatusChange={handleStatusChange}
+                        handleEndorseToLogistics={handleEndorseToLogistics}
+                        setLeadToReopen={() => {}}
+                        toggleLeadDetails={toggleLeadDetails}
+                        openLeadId={openLeadId}
                     />
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={14} className="text-center text-muted-foreground">
-                      No current orders endorsed to production yet.
-                    </TableCell>
-                  </TableRow>
-                )}
+                  )
+                })}
                 </TableBody>
             </Table>
           </div>

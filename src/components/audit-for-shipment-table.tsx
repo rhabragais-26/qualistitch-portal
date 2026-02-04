@@ -187,7 +187,10 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
     Object.values(customerOrderGroups).forEach((orders) => {
         const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
         
-        const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0), 0);
+        const totalCustomerQuantity = orders.reduce((sum, o) => {
+          if (!Array.isArray(o.orders)) return sum;
+          return sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0)
+        }, 0);
         
         for (let i = 0; i < sortedOrders.length; i++) {
             const lead = sortedOrders[i];
@@ -281,7 +284,7 @@ export function AuditForShipmentTable({ isReadOnly }: { isReadOnly: boolean }) {
             <TableBody>
               {auditQueueLeads && auditQueueLeads.length > 0 ? (
                  auditQueueLeads.map(lead => {
-                   const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
+                   const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
                    const leadAdjustmentState = adjustmentStates[lead.id] || { status: 'NotSelected' };
                    const isProceedDisabled = leadAdjustmentState.status === 'NotSelected' || (leadAdjustmentState.status === 'Yes' && !leadAdjustmentState.date);
 

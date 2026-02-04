@@ -719,7 +719,7 @@ export function JobOrderTable({ isReadOnly }: JobOrderTableProps) {
                   const creationDate = formatDateTime(lead.submissionDateTime);
                   const modifiedDate = formatDateTime(lead.lastModified);
                   const isHovered = hoveredLeadId === lead.id;
-                  const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
+                  const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
                   
                   const layoutImageCount = lead.layouts?.filter(l => l.layoutImage).length || 0;
                   const refImageCount = (() => {
