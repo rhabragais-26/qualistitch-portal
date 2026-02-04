@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -254,7 +253,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
 
   const finalLogoEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const finalBackDesignEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const finalBackDesignEmbUploadRefs = useRef<(HTMLInputElement | null)[]>(([]);
   const finalLogoDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalBackDesignDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalNamesDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -1425,11 +1424,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       <TableHead className="text-white font-bold text-xs text-center">Digitizer</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center w-24">Initial Program</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center w-24">Initial Approval</TableHead>
-                      <TableHead className="text-white font-bold text-xs text-center w-24">Test</TableHead>
-                      <TableHead className="text-white font-bold text-xs text-center w-24">Revision</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center w-24">Tested</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center w-24">Under Revision</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center w-24">Final Approval</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center w-24">Final Program</TableHead>
-                      <TableHead className="text-white font-bold text-xs text-center">Program Files</TableHead>
+                      <TableHead className="text-white font-bold text-xs text-center">Details</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center w-24">Received Printed J.O.?</TableHead>
                       <TableHead className="text-white font-bold text-xs text-center">{filterType === 'COMPLETED' ? 'Date Completed' : 'Review'}</TableHead>
                   </TableRow>
@@ -1516,14 +1515,30 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         })}
                         
                         <TableCell className="text-center align-middle">
-                            <Button variant="ghost" size="sm" onClick={() => setOpenLeadId(prev => prev === lead.id ? null : lead.id)} className="h-7 px-2">
-                                View Files
-                                {openLeadId === lead.id ? (
-                                <ChevronUp className="h-4 w-4 ml-1" />
-                                ) : (
-                                <ChevronDown className="h-4 w-4 ml-1" />
-                                )}
-                            </Button>
+                            <div className="flex items-center justify-center">
+                                <Button variant="ghost" size="sm" onClick={() => setOpenLeadId(prev => prev === lead.id ? null : lead.id)} className="h-7 px-2">
+                                    View
+                                    {openLeadId === lead.id ? (
+                                    <ChevronUp className="h-4 w-4" />
+                                    ) : (
+                                    <ChevronDown className="h-4 w-4" />
+                                    )}
+                                </Button>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                                                <Link href={`/job-order/${lead.id}`} target="_blank">
+                                                    <FileText className="h-4 w-4" />
+                                                </Link>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>View Job Order Form</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                         </TableCell>
                       <TableCell className="text-center align-middle">
                             <div className="flex flex-col items-center justify-center gap-1">
@@ -1574,3 +1589,4 @@ DigitizingTableMemo.displayName = 'DigitizingTable';
 export { DigitizingTableMemo as DigitizingTable };
 
 
+    
