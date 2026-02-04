@@ -10,6 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from '@/components/ui/table';
 import {
   Card,
@@ -616,13 +617,13 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
             updateData.isDone = false;
             updateData.doneProductionTimestamp = null;
         } else if (field === 'isEmbroideryDone') {
-            updateData.isSewing = false;
-            updateData.sewingTimestamp = null;
-            updateData.isTrimming = false;
-            updateData.trimmingTimestamp = null;
-            updateData.isDone = false;
-            updateData.sewerType = 'Pending';
-            updateData.doneProductionTimestamp = null;
+          updateData.isSewing = false;
+          updateData.sewingTimestamp = null;
+          updateData.isTrimming = false;
+          updateData.trimmingTimestamp = null;
+          updateData.isDone = false;
+          updateData.sewerType = 'Pending';
+          updateData.doneProductionTimestamp = null;
         } else if (field === 'isCutting') {
           updateData.isEmbroideryDone = false;
           updateData.embroideryDoneTimestamp = null;
@@ -990,8 +991,15 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                         toggleLeadDetails={toggleLeadDetails}
                         openLeadId={openLeadId}
                     />
-                  )
-                })}
+                  );
+                })
+              ) : (
+                <TableRow>
+                    <TableCell colSpan={14} className="text-center text-muted-foreground">
+                        No orders in production queue.
+                    </TableCell>
+                </TableRow>
+              )}
                 </TableBody>
             </Table>
           </div>
