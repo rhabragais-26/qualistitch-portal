@@ -190,37 +190,39 @@ const ShipmentQueueTableRowGroup = React.memo(function ShipmentQueueTableRowGrou
                     </div>
                 </TableCell>
                 <TableCell className="text-xs">
-                    <Collapsible>
-                        <CollapsibleTrigger asChild>
-                            <div className="flex items-center cursor-pointer">
-                                <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                <span className="font-bold">{lead.customerName}</span>
-                            </div>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-[11px] font-normal">
-                            {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
-                            {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
-                        </CollapsibleContent>
-                    </Collapsible>
-                    {isRepeat ? (
-                        <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                            <div className="flex items-center gap-1.5 cursor-pointer mt-1 ml-5">
-                                <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                {lead.orderNumber + 1}
-                                </span>
-                            </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                            <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                            </TooltipContent>
-                        </Tooltip>
-                        </TooltipProvider>
-                    ) : (
-                        <div className="text-xs text-blue-600 font-semibold mt-1 ml-5">New Customer</div>
-                    )}
+                    <div className="flex items-center justify-center">
+                        <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
+                        {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </Button>
+                        <div className='flex flex-col items-center'>
+                            <span className="font-bold">{lead.customerName}</span>
+                            {isRepeat ? (
+                                <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1.5 cursor-pointer">
+                                        <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                        <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                        {lead.orderNumber + 1}
+                                        </span>
+                                    </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                    <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                </TooltipProvider>
+                            ) : (
+                                <div className="text-xs text-blue-600 font-semibold">New Customer</div>
+                            )}
+                            {openCustomerDetails === lead.id && (
+                                <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
+                                    {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
+                                    {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </TableCell>
                 <TableCell className="text-center align-middle py-2">
                     <div className="flex flex-col items-center justify-center gap-1">
@@ -712,7 +714,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
 
   const processedLeads = useMemo(() => {
     if (!leads) return [];
-  
+
     const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
   
     leads.forEach(lead => {
@@ -794,6 +796,10 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
 
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   
+  const toggleCustomerDetails = useCallback((leadId: string) => {
+    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
+  }, [openCustomerDetails]);
+
   return (
     <>
       <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
@@ -1058,3 +1064,5 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     </>
   );
 }
+
+    
