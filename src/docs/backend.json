@@ -42,6 +42,16 @@
             "names": { "type": "string" }
           }
         },
+        "heads": {
+          "type": "object",
+          "properties": {
+            "leftLogo": { "type": "string" },
+            "rightLogo": { "type": "string" },
+            "backLogo": { "type": "string" },
+            "backDesign": { "type": "string" },
+            "names": { "type": "string" }
+          }
+        },
         "startTime": {
           "type": "object",
           "properties": {

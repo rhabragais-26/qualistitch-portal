@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { collection, query, where, doc, setDoc } from 'firebase/firestore';
@@ -99,6 +100,13 @@ type LogData = {
         backDesign: string;
         names: string;
     };
+    heads: {
+        leftLogo: string;
+        rightLogo: string;
+        backLogo: string;
+        backDesign: string;
+        names: string;
+    };
     startTime: TimeValue;
     endTime: TimeValue;
     shift: string[];
@@ -159,6 +167,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                         stitches: log.stitches,
                         rpm: log.rpm,
                         quantity: log.quantity,
+                        heads: log.heads || { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
                         startTime: log.startTime,
                         endTime: log.endTime,
                         shift: log.shift,
@@ -186,6 +195,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
             handleLogChange(leadId, 'quantity', '', designKey);
             handleLogChange(leadId, 'stitches', '', designKey);
             handleLogChange(leadId, 'rpm', '', designKey);
+            handleLogChange(leadId, 'heads', '', designKey);
         }
     };
 
@@ -201,12 +211,13 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                 stitches: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' }, 
                 rpm: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
                 quantity: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
+                heads: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
                 startTime: { hour: '', minute: '', period: 'AM' },
                 endTime: { hour: '', minute: '', period: 'AM' },
                 shift: [] 
             }));
 
-            if ((field === 'stitches' || field === 'rpm' || field === 'quantity') && subField && subField in newLog[field]) {
+            if ((field === 'stitches' || field === 'rpm' || field === 'quantity' || field === 'heads') && subField && subField in newLog[field]) {
                 newLog[field][subField as DesignType] = value;
             } else if ((field === 'startTime' || field === 'endTime') && subField && (subField === 'hour' || subField === 'minute' || subField === 'period')) {
                 const timeField = newLog[field];
@@ -241,6 +252,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                 stitches: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
                 rpm: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
                 quantity: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
+                heads: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
                 startTime: { hour: '', minute: '', period: 'AM' },
                 endTime: { hour: '', minute: '', period: 'AM' },
                 shift: [],
@@ -479,7 +491,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                 <TableHead className="text-white font-bold text-xs">Customer</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
-                                <TableHead colSpan={5} className="text-white font-bold text-xs text-center">Embroidery Details</TableHead>
+                                <TableHead colSpan={6} className="text-white font-bold text-xs text-center">Embroidery Details</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center w-[220px]">Duration</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Shift</TableHead>
                                 <TableHead className="text-white font-bold text-xs text-center">Action</TableHead>
@@ -491,6 +503,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                     stitches: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' }, 
                                     rpm: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
                                     quantity: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
+                                    heads: { leftLogo: '', rightLogo: '', backLogo: '', backDesign: '', names: '' },
                                     startTime: { hour: '', minute: '', period: 'AM' },
                                     endTime: { hour: '', minute: '', period: 'AM' },
                                     shift: []
@@ -543,7 +556,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-xs text-center align-middle"><Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>{lead.priorityType}</Badge></TableCell>
-                                    <TableCell colSpan={5} className="p-0 align-top">
+                                    <TableCell colSpan={6} className="p-0 align-top">
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="border-0">
@@ -551,6 +564,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                     <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs border-r w-[80px]">Quantity</TableHead>
                                                     <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs border-r w-[100px]">No. of Stitches</TableHead>
                                                     <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs border-r w-[100px]">Machine RPM</TableHead>
+                                                    <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs border-r w-[80px]">No. of Heads</TableHead>
                                                     <TableHead className="p-1 h-auto text-center text-blue-900 font-bold text-xs">Est. Time</TableHead>
                                                 </TableRow>
                                             </TableHeader>
@@ -602,6 +616,15 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                                 disabled={!isChecked || isDisabled}
                                                             />
                                                         </TableCell>
+                                                        <TableCell className="p-1 border-r w-[80px]">
+                                                            <Input
+                                                                type="text" 
+                                                                className="h-7 text-xs text-center" 
+                                                                value={logData.heads[design.key as DesignType]}
+                                                                onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'heads', e.target.value, design.key as DesignType)}
+                                                                disabled={!isChecked || isDisabled}
+                                                            />
+                                                        </TableCell>
                                                         <TableCell className="p-1 text-xs text-center align-middle">
                                                             {estTime}
                                                         </TableCell>
@@ -610,7 +633,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                             </TableBody>
                                             <TableFooter>
                                                 <TableRow>
-                                                    <TableCell colSpan={4} className="text-right font-bold py-1 px-2 text-black">Total Estimated Time</TableCell>
+                                                    <TableCell colSpan={5} className="text-right font-bold py-1 px-2 text-black">Total Estimated Time</TableCell>
                                                     <TableCell className="text-center font-bold py-1 px-2 text-black">{calculateTotalEstTime(logData, lead)}</TableCell>
                                                 </TableRow>
                                             </TableFooter>
