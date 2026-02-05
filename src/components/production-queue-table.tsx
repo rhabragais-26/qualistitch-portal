@@ -258,7 +258,7 @@ const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, o
     if (!images || images.length === 0) return null;
 
     return (
-        <Card className="bg-white flex-shrink-0">
+        <Card className="bg-white flex-shrink-0 w-auto">
             <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
             <CardContent className="flex gap-4 text-xs p-2 flex-wrap justify-center">
                 {images.map((img, index) => (
@@ -471,7 +471,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     handleStatusChange: (leadId: string, field: "productionType" | "sewerType", value: string) => void;
     setViewingJoLead: React.Dispatch<React.SetStateAction<Lead | null>>;
     filterType?: 'ONGOING' | 'COMPLETED';
-}) {
+}) => {
     const deadlineInfo = calculateProductionDeadline(lead);
     const productionStatus = getProductionStatusLabel(lead);
     const isCollapsibleOpen = openLeadId === lead.id;
@@ -698,6 +698,12 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
   const { data: usersData } = useCollection<UserProfileInfo>(usersQuery);
   
+  const formatJoNumber = useCallback((joNumber: number | undefined) => {
+    if (!joNumber) return '';
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+  }, []);
+
   const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(prev => prev === leadId ? null : leadId);
   }, []);
@@ -799,10 +805,11 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   const handleReopenCase = async (leadToReopen: Lead) => {
     if (!firestore) return;
     try {
-      const caseDocRef = doc(firestore, 'leads', leadToReopen.id);
+      const caseDocRef = doc(firestore, 'operationalCases', leadToReopen.id);
       
       await updateDoc(caseDocRef, { 
-        isEndorsedToLogistics: false,
+        isArchived: false,
+        isDeleted: false,
       });
 
       toast({
@@ -1001,7 +1008,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(searchTerm.replace(/-/g, ''))))
         : true;
       
-      const joString = formatJoNumberUtil(lead.joNumber);
+      const joString = formatJoNumber(lead.joNumber);
       const matchesJo = joNumberSearch ? joString.toLowerCase().includes(joNumberSearch.toLowerCase()) : true;
       
       return matchesSearch && matchesJo;
@@ -1011,13 +1018,13 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         return aDeadline.remainingDays - bDeadline.remainingDays;
     });
 
-  }, [processedLeads, searchTerm, joNumberSearch, filterType, formatJoNumberUtil, calculateProductionDeadline]);
+  }, [processedLeads, searchTerm, joNumberSearch, filterType, formatJoNumber, calculateProductionDeadline]);
 
   if (isLoading) {
     return (
       <div className="space-y-2 p-4">
         {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full" />
+          <Skeleton key={i} className="h-16 w-full bg-gray-200" />
         ))}
       </div>
     );
