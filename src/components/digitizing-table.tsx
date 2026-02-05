@@ -209,11 +209,11 @@ type UserProfileInfo = {
 
 const hasLayoutContent = (layout: Layout) => {
     return layout.layoutImage || 
-            layout.dstLogoLeft || 
-            layout.dstLogoRight || 
-            layout.dstBackLogo || 
-            layout.dstBackText || 
-            (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
+           layout.dstLogoLeft || 
+           layout.dstLogoRight || 
+           layout.dstBackLogo || 
+           layout.dstBackText || 
+           (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
 };
 
 const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
@@ -1384,7 +1384,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   {uploadField === 'isFinalProgram' && 'Upload all final DST, EMB, and sequence files.'}
                   </DialogDescription>
               </DialogHeader>
-              <div className="py-4 max-h-[70vh] overflow-y-auto">
+              <div className="py-4 max-h-[70vh] overflow-y-auto modern-scrollbar">
                 {renderUploadDialogContent()}
               </div>
               <DialogFooter>
@@ -1588,7 +1588,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         
                         <TableCell className="text-center align-middle">
                             <div className="flex items-center justify-center">
-                                <Button variant="ghost" size="sm" onClick={() => setOpenLeadId(prev => prev === lead.id ? null : lead.id)} className="h-7 px-2 bg-gray-200 hover:bg-gray-200">
+                                <Button variant="ghost" size="sm" onClick={() => setOpenLeadId(prev => prev === lead.id ? null : lead.id)} className="h-7 px-2 bg-gray-200 hover:bg-gray-300">
                                     View
                                     {openLeadId === lead.id ? (
                                     <ChevronUp className="h-4 w-4" />
@@ -1755,9 +1755,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             const totalQuantity = lead.orders.reduce((sum, order: any) => sum + order.quantity, 0);
                             const contactDisplay = getContactDisplay(lead);
                             
-                            const deliveryDate = lead.deliveryDate ? format(new Date(lead.deliveryDate), "MMM dd, yyyy") : format(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22), "MMM dd, yyyy");
+                            const deliveryDate = lead.adjustedDeliveryDate ? format(new Date(lead.adjustedDeliveryDate), "MMM dd, yyyy") : (lead.deliveryDate ? format(new Date(lead.deliveryDate), "MMM dd, yyyy") : format(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22), "MMM dd, yyyy"));
 
-                            const layoutsToPrint = lead.layouts?.filter(hasLayoutContent) || [];
+                            const layoutsToPrint = lead.layouts?.filter(l => hasLayoutContent(l as Layout)) || [];
                             
                             return (
                               <>
@@ -1837,6 +1837,65 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                       </TableRow>
                                     </TableBody>
                                   </Table>
+                                  <div className="text-xs mb-2 pt-2">
+                                    <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
+                                      <div className="space-y-1">
+                                          <p className="font-bold italic">Prepared by:</p>
+                                          <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
+                                          <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                       <div className="space-y-1">
+                                          <p className="font-bold italic">Noted by:</p>
+                                          <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
+                                          <p className="text-center font-bold">Sales Head</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+
+                                      <div className="col-span-2 mt-0">
+                                          <p className="font-bold italic">Approved by:</p>
+                                      </div>
+
+
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Programming</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Inventory</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Production Line Leader</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Production Supervisor</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                       <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Quality Control</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Logistics</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                       <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Operations Supervisor</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                  </div>
                                 </div>
                                 {layoutsToPrint.map((layout, layoutIndex) => (
                                     <div key={layoutIndex} className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300">
@@ -1912,6 +1971,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
 
