@@ -18,7 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, ChangeEvent } from 'react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
 import { Label } from './ui/label';
@@ -716,6 +716,10 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
   
     leads.forEach(lead => {
+      // Defensive check to ensure lead.orders is an array before using it
+      if (!Array.isArray(lead.orders)) {
+          return; 
+      }
       const name = lead.customerName.toLowerCase();
       if (!customerOrderGroups[name]) {
         customerOrderGroups[name] = { orders: [] };
@@ -726,7 +730,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     const enrichedLeads: EnrichedLead[] = [];
   
     Object.values(customerOrderGroups).forEach(({ orders }) => {
-      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+      const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
       
       const totalCustomerQuantity = orders.reduce((sum, o) => {
           if (!Array.isArray(o.orders)) return sum;
