@@ -382,9 +382,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                     <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                         {lead.priorityType}
                     </Badge>
-                    {lead.orderType && (
-                      <div className="text-gray-500 text-sm font-bold mt-1">{lead.orderType}</div>
-                    )}
+                    <div className="text-gray-500 text-sm font-bold mt-1">{lead.orderType}</div>
                    </div>
                 </TableCell>
                 <TableCell className={cn(
@@ -886,7 +884,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
                         isRepeat={isRepeat}
                         isReadOnly={isReadOnly}
                         getProductionStatus={getProductionStatusLabel}
-                        formatJoNumber={formatJoNumber}
+                        formatJoNumber={formatJoNumberUtil}
                         getContactDisplay={getContactDisplay}
                         handleCheckboxChange={handleCheckboxChange}
                         setLeadToEndorse={setLeadToEndorse}
@@ -963,5 +961,3 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
 ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
-
-  
