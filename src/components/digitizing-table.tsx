@@ -707,7 +707,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     }
   }, [joReceivedConfirmation, updateStatus, toast]);
 
-  const confirmUncheck = useCallback(() => {
+  const confirmUncheck = useCallback(async () => {
     if (!uncheckConfirmation || !firestore || !leads) return;
     const { leadId, field } = uncheckConfirmation;
 
@@ -1337,72 +1337,45 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       );
     } else if (uploadField === 'isFinalProgram') {
       return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-              <div>
+        <div className="space-y-4">
+            {/* Program Files Section */}
+            <div>
                 <h4 className="font-bold text-lg text-teal-700 text-center mb-2">Program Files</h4>
-                {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
-                {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
-                <Separator className="my-4" />
-                {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
-                {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
-                <Separator className="my-4" />
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-teal-600">Names (DST)</h4>
-                      {!isDisabled && (
-                        <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFinalNamesDst)}>
-                            <PlusCircle className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 gap-2">
-                        {(finalNamesDst.length > 0 ? finalNamesDst : [null]).map((file, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                                {file && file.name ? (
-                                    <div className="flex items-center gap-2 flex-1 p-2 border rounded-md bg-gray-100 h-9">
-                                        <FileText className="h-4 w-4 text-gray-500" />
-                                        <span className="text-xs truncate font-medium text-blue-600">{file.name}</span>
-                                    </div>
-                                ) : (
-                                    <Input
-                                        ref={el => { if (finalNamesDstUploadRefs.current) finalNamesDstUploadRefs.current[index] = el }}
-                                        type="file"
-                                        className="text-xs flex-1 h-9"
-                                        onChange={(e) => handleMultipleFileUpload(e, setFinalNamesDst, finalNamesDst, index)}
-                                        disabled={isDisabled}
-                                    />
-                                )}
-                                {!isDisabled && (
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setFinalNamesDst, index, finalNamesDstUploadRefs)}>
-                                      <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                )}
-                            </div>
-                        ))}
+                <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                    {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
+                    {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+                    {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+                    {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
+                    <div className="col-span-2">
+                      {renderMultipleFileUpload('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
                     </div>
                 </div>
-              </div>
-
-              <div>
-                <h4 className="font-bold text-lg text-teal-700 text-center mb-2">Sequence Images</h4>
-                {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
-                {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
-              </div>
             </div>
-            
+
+            <Separator className="my-4" />
+
+            {/* Sequence Images Section */}
+            <div>
+                <h4 className="font-bold text-lg text-teal-700 text-center mb-2">Sequence Images</h4>
+                <div className="grid grid-cols-2 gap-4">
+                    {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
+                    {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
+                </div>
+            </div>
+
             <div className="flex items-center space-x-2 pt-2">
-                <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isViewOnly} />
+                <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={checked => setIsNamesOnly(!!checked)} disabled={isViewOnly} />
                 <Label htmlFor="names-only">Customer wanted Names Only</Label>
             </div>
+            
             {!isNamesOnly && (
                 <>
-                  <Separator className="my-4" />
-                  <h4 className="font-bold text-lg text-teal-700 text-center mb-2">Final Programmed Images</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                      {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
-                      {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
-                  </div>
+                    <Separator className="my-4" />
+                    <h4 className="font-bold text-lg text-teal-700 text-center mb-2">Final Programmed Images</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                        {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
+                        {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
+                    </div>
                 </>
             )}
         </div>
@@ -1795,7 +1768,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         <Dialog open={!!viewingJoLead} onOpenChange={() => setViewingJoLead(null)}>
             <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle>Job Order: {formatJoNumber(viewingJoLead.joNumber)}</DialogTitle>
+                    <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="pr-6">
@@ -1815,7 +1788,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                               <>
                                 <div className="p-10 mx-auto max-w-4xl print-page">
                                   <div className="text-left mb-4">
-                                      <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumber(lead.joNumber)}</span></p>
+                                      <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span></p>
                                   </div>
                                   <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
@@ -1952,7 +1925,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 {layoutsToPrint.map((layout, layoutIndex) => (
                                     <div key={layoutIndex} className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300">
                                       <div className="text-left mb-4">
-                                          <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumber(lead.joNumber)}</span> - Layout {layoutIndex + 1}</p>
+                                          <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span> - Layout {layoutIndex + 1}</p>
                                       </div>
                                       
                                        {layout.layoutImage && (
@@ -2023,5 +1996,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
