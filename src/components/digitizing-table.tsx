@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -417,7 +418,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
   const finalLogoEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalBackDesignEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const finalLogoDstUploadRefs = useRef<(HTMLInputElement | null)[]>(([]);
+  const finalLogoDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalBackDesignDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalNamesDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -1335,46 +1336,44 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         </div>
       );
     } else if (uploadField === 'isFinalProgram') {
-      return (
-        <div className="space-y-4">
-          <div>
-            <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Program Files</h4>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-              {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
-              {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
-              {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
-              {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
-              <div className="col-span-2">
-                {renderMultipleFileUpload('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs, 'grid-cols-2')}
-              </div>
+        return (
+            <div className="space-y-4">
+                <div>
+                    <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Program Files</h4>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                        {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
+                        {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+                        {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+                        {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
+                        <div className="col-span-2">
+                            {renderMultipleFileUpload('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs, 'grid-cols-2')}
+                        </div>
+                    </div>
+                </div>
+                <Separator className="my-4" />
+                <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isViewOnly} />
+                    <Label htmlFor="names-only">Customer wanted Names Only</Label>
+                </div>
+                <div>
+                    <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Sequence Images</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                        {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
+                        {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
+                    </div>
+                </div>
+                {isNamesOnly ? null : (
+                    <>
+                        <Separator className="my-4" />
+                        <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Final Programmed Images</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
+                            {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
+                        </div>
+                    </>
+                )}
             </div>
-          </div>
-          
-          <Separator className="my-4" />
-          
-          <div className="flex items-center space-x-2 pt-2">
-            <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isViewOnly} />
-            <Label htmlFor="names-only">Customer wanted Names Only</Label>
-          </div>
-
-          <div>
-            <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Sequence Images</h4>
-            <div className="grid grid-cols-2 gap-4">
-              {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
-              {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
-            </div>
-          </div>
-          
-          <>
-            <Separator className="my-4" />
-            <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Final Programmed Images</h4>
-            <div className="grid grid-cols-2 gap-4">
-              {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
-              {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
-            </div>
-          </>
-        </div>
-      );
+        );
     }
     return null;
   }, [
@@ -1391,16 +1390,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       if (uploadField !== 'isFinalProgram') return false;
 
       if (isNamesOnly) {
-          // If only names are wanted, only a Names (DST) file is required.
-          return finalNamesDst.every(f => !f);
+        return finalNamesDst.every((f) => !f);
       }
       
-      // Otherwise, all other file types are required.
-      const hasEmb = finalLogoEmb.some(f => f) || finalBackDesignEmb.some(f => f);
-      const hasDst = finalLogoDst.some(f => f) || finalBackDesignDst.some(f => f);
-      const hasSequence = sequenceLogo.some(img => img) || sequenceBackDesign.some(img => img);
-      const hasProgrammedImage = finalProgrammedLogo.some(img => img) || finalProgrammedBackDesign.some(img => img);
-
+      const hasEmb = finalLogoEmb.some((f) => f) || finalBackDesignEmb.some((f) => f);
+      const hasDst = finalLogoDst.some((f) => f) || finalBackDesignDst.some((f) => f);
+      const hasSequence = sequenceLogo.some((img) => img) || sequenceBackDesign.some((img) => img);
+      const hasProgrammedImage = finalProgrammedLogo.some((img) => img) || finalProgrammedBackDesign.some((img) => img);
+    
       return !(hasEmb && hasDst && hasSequence && hasProgrammedImage);
   }, [isNamesOnly, finalNamesDst, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, uploadField]);
 
@@ -1729,8 +1726,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             <Checkbox
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                disabled={isViewOnly}
-                                className={isViewOnly ? 'disabled:opacity-100' : ''}
+                                disabled={isViewOnly || isCompleted || !(lead.orderType !== 'Stock (Jacket Only)' && lead.orderType !== 'Item Sample' && lead.orderType !== 'Stock Design')}
+                                className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                             </div>
@@ -1794,7 +1791,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                           <p><strong>Delivery Address:</strong> <span className="whitespace-pre-wrap">{lead.location}</span></p>
                                       </div>
                                       <div className="space-y-1">
-                                          <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')</p>
+                                          <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
                                           <p><strong>Type of Order:</strong> {lead.orderType}</p>
                                           <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                                           <p><strong>SCES Name:</strong> {scesFullName}</p>
@@ -1992,4 +1989,3 @@ DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
 
-    
