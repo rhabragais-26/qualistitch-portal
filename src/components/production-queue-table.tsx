@@ -286,25 +286,39 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
 
   const handleDownload = useCallback(async (url: string, name: string) => {
     try {
-      const response = await fetch(url, { mode: 'cors' });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const blob = await response.blob();
-      const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(link.href);
+        const response = await fetch(url, { mode: 'cors' });
+        if (!response.ok) {
+            // Try fetching with a proxy if direct fetch fails
+            const proxyUrl = `https://cors-anywhere.herokuapp.com/${url}`;
+            const proxyResponse = await fetch(proxyUrl);
+            if (!proxyResponse.ok) {
+                throw new Error(`HTTP error! status: ${proxyResponse.status}`);
+            }
+            const blob = await proxyResponse.blob();
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(link.href);
+        } else {
+            const blob = await response.blob();
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(link.href);
+        }
     } catch (err) {
-      console.error('File download failed:', err);
-      toast({
-        variant: 'destructive',
-        title: 'Download Failed',
-        description: 'Could not download the file. Please check your network connection and file permissions.',
-      });
+        console.error('File download failed:', err);
+        toast({
+            variant: 'destructive',
+            title: 'Download Failed',
+            description: 'Could not download the file. Please check your network connection and file permissions.',
+        });
     }
   }, [toast]);
 
@@ -1345,5 +1359,6 @@ ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
 export { ProductionQueueTableMemo as ProductionQueueTable };
     
     
+
 
 
