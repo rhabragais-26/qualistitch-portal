@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -253,7 +254,7 @@ const hasLayoutContent = (layout: Layout) => {
            (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
 };
 
-const ImageDisplayCard = React.memo(({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
+const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
     if (!images || images.length === 0) return null;
 
     return (
@@ -262,8 +263,8 @@ const ImageDisplayCard = React.memo(({ title, images, onImageClick }: { title: s
             <CardContent className="flex gap-2 text-xs p-2 flex-wrap justify-center">
                 {images.map((img, index) => (
                     img.src && (
-                        <div key={index} className="flex flex-col items-center text-center w-24">
-                            <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
+                        <div key={index} className="flex flex-col items-center text-center">
+                            <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-24" title={img.label}>{img.label}</p>
                             <div className="relative w-20 h-20 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
                                 <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
                             </div>
@@ -806,6 +807,34 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
         title: "Case Reopened",
         description: "The case has been moved back to the active list.",
       });
+
+      const joNumberInt = leadToReopen.joNumber;
+      if(joNumberInt) {
+        const leadsRef = collection(firestore, 'leads');
+        const q = query(leadsRef, where("joNumber", "==", joNumberInt));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          const leadDoc = querySnapshot.docs[0];
+          const leadDocRef = doc(firestore, 'leads', leadDoc.id);
+
+          await updateDoc(leadDocRef, {
+            isQualityApproved: false,
+            qualityApprovedTimestamp: null,
+            isPacked: false,
+            packedTimestamp: null,
+            isSalesAuditRequested: false,
+            salesAuditRequestedTimestamp: null,
+            isSalesAuditComplete: false,
+            salesAuditCompleteTimestamp: null,
+            shipmentStatus: 'Pending',
+            shippedTimestamp: null,
+            deliveredTimestamp: null,
+            isRecheckingQuality: true,
+          });
+        }
+      }
+
     } catch (e: any) {
       console.error("Error reopening case: ", e);
       toast({
@@ -1149,7 +1178,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <div className="flex-1 overflow-y-auto pr-6">
+                <ScrollArea className="pr-6">
                     <div className="p-4 bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
@@ -1317,3 +1346,4 @@ ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
 export { ProductionQueueTableMemo as ProductionQueueTable };
     
     
+
