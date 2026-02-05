@@ -389,6 +389,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   const [remarks, setRemarks] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived'; } | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
@@ -798,11 +799,6 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
         return matchesSearch && matchesJo;
     });
   }, [processedLeads, searchTerm, joNumberSearch, filterType, formatJoNumber]);
-
-  
-  const toggleCustomerDetails = useCallback((leadId: string) => {
-    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
-  }, [openCustomerDetails]);
 
   return (
     <>
