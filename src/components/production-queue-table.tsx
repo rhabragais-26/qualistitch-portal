@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { collection, query, doc, updateDoc, getDocs, where } from 'firebase/firestore';
@@ -397,11 +396,11 @@ type ProductionQueueTableProps = {
 };
 
 type UserProfileInfo = {
-  uid: string;
-  firstName: string;
-  lastName: string;
-  nickname: string;
-};
+    uid: string;
+    firstName: string;
+    lastName: string;
+    nickname: string;
+  };
 
 const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRowGroup({
     lead,
@@ -420,7 +419,8 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     openLeadId,
     calculateProductionDeadline,
     handleStatusChange,
-    setViewingJoLead
+    setViewingJoLead,
+    filterType
 }: {
     lead: EnrichedLead;
     isRepeat: boolean;
@@ -437,9 +437,9 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     setOpenLeadId: React.Dispatch<React.SetStateAction<string | null>>;
     openLeadId: string | null;
     calculateProductionDeadline: (lead: Lead) => { text: React.ReactNode; isOverdue: boolean; isUrgent: boolean; remainingDays: number; };
-    activeCasesByJo: Map<string, string>;
     handleStatusChange: (leadId: string, field: "productionType" | "sewerType", value: string) => void;
     setViewingJoLead: React.Dispatch<React.SetStateAction<Lead | null>>;
+    filterType?: 'ONGOING' | 'COMPLETED';
 }) {
     const deadlineInfo = calculateProductionDeadline(lead);
     const productionStatus = getProductionStatusLabel(lead);
@@ -507,13 +507,9 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                 </TableCell>
                 <TableCell className={cn(
                     "text-center text-xs align-middle py-3",
-                    (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered')
-                    ? "text-green-600 font-medium"
-                    : deadlineInfo.isOverdue
-                    ? "text-red-500 font-bold"
-                    : deadlineInfo.isUrgent
-                    ? "text-amber-600 font-bold"
-                    : ""
+                    (lead.isDone)
+                    ? (deadlineInfo.isOverdue ? "text-red-500 font-bold" : "text-green-600 font-medium")
+                    : (deadlineInfo.isOverdue ? "text-red-500 font-bold" : (deadlineInfo.isUrgent ? "text-amber-600 font-bold" : ""))
                 )}>{deadlineInfo.text}</TableCell>
                 <TableCell className="text-center align-middle py-2">
                     <div className="flex items-center justify-center">
@@ -661,6 +657,8 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
   const [leadToEndorse, setLeadToEndorse] = useState<Lead | null>(null);
   const [leadToReopen, setLeadToReopen] = useState<Lead | null>(null);
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
+  const [viewingJoLead, setViewingJoLead] = useState<Lead | null>(null);
+  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   
   const isCompleted = filterType === 'COMPLETED';
 
@@ -672,9 +670,10 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
   const { data: usersData } = useCollection<UserProfileInfo>(usersQuery);
-
-  const [viewingJoLead, setViewingJoLead] = useState<Lead | null>(null);
-
+  
+  const toggleCustomerDetails = useCallback((leadId: string) => {
+    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
+  }, [openCustomerDetails]);
 
   const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, value: boolean) => {
     if (!value) {
