@@ -628,7 +628,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const filteredLeads = React.useMemo(() => {
     if (!processedLeads) return [];
     
+    const orderTypesToSkip = ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'];
+
     const leadsWithJo = processedLeads.filter(lead => {
+        if (filterType === 'ONGOING' && orderTypesToSkip.includes(lead.orderType)) {
+            return false;
+        }
         const matchesFilterType = filterType === 'COMPLETED' ? lead.isDigitizingArchived : !lead.isDigitizingArchived;
         return lead.joNumber && matchesFilterType;
     });
@@ -2018,4 +2023,5 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
