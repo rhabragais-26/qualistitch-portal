@@ -1354,9 +1354,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
           </div>
           
           <div className="flex items-center space-x-2 pt-2">
-            <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isViewOnly} />
+            <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => {
+              setIsNamesOnly(!!checked);
+            }} disabled={isViewOnly} />
             <Label htmlFor="names-only">Customer wanted Names Only</Label>
           </div>
+
           <Separator className="my-4" />
       
           <div>
@@ -1367,16 +1370,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             </div>
           </div>
           
-          {!isNamesOnly && (
-            <>
-              <Separator className="my-4" />
-              <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Final Programmed Images</h4>
-              <div className="grid grid-cols-2 gap-4">
-                {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
-                {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
-              </div>
-            </>
-          )}
+          <>
+            <Separator className="my-4" />
+            <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Final Programmed Images</h4>
+            <div className="grid grid-cols-2 gap-4">
+              {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
+              {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
+            </div>
+          </>
         </div>
       );
     }
@@ -1395,9 +1396,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       if (uploadField !== 'isFinalProgram') return false;
 
       if (isNamesOnly) {
+          // If only names are wanted, only a Names (DST) file is required.
           return finalNamesDst.every(f => !f);
       }
       
+      // Otherwise, all other file types are required.
       const hasEmb = finalLogoEmb.some(f => f) || finalBackDesignEmb.some(f => f);
       const hasDst = finalLogoDst.some(f => f) || finalBackDesignDst.some(f => f);
       const hasSequence = sequenceLogo.some(img => img) || sequenceBackDesign.some(img => img);
