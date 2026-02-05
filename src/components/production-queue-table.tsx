@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -284,15 +283,27 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
   const [imageInView, setImageInView] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleDownload = (url: string, name: string) => {
+  const handleDownload = async (url: string, name: string) => {
     try {
-        window.open(url, '_blank');
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
         console.error('File download failed:', err);
         toast({
             variant: "destructive",
             title: "Download Failed",
-            description: "Could not open the file link. Please check your browser's popup blocker settings.",
+            description: "Could not download the file. Please check your network connection and file permissions.",
         });
     }
   };
@@ -857,7 +868,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
 
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
-    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
     if (mobile && landline) {
       return `${mobile} / ${landline}`;
@@ -1309,4 +1320,5 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
 ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
+    
     
