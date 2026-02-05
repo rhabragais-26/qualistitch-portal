@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -285,26 +286,21 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
 
   const handleDownload = async (url: string, name: string) => {
     try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const blob = await response.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(blobUrl);
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.download = name; // Set download attribute
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (err) {
-        console.error('File download failed:', err);
-        toast({
-            variant: "destructive",
-            title: "Download Failed",
-            description: "Could not download the file. Please check your network connection and file permissions.",
-        });
+      console.error('File download failed:', err);
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "Could not download the file. Please check your network connection and file permissions.",
+      });
     }
   };
 
@@ -703,8 +699,8 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
   const { data: usersData } = useCollection<UserProfileInfo>(usersQuery);
   
   const toggleCustomerDetails = useCallback((leadId: string) => {
-    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
-  }, [openCustomerDetails]);
+    setOpenCustomerDetails(prev => prev === leadId ? null : leadId);
+  }, []);
 
   const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, value: boolean) => {
     if (!value) {
@@ -868,8 +864,8 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
 
   const getContactDisplay = useCallback((lead: Lead) => {
     const mobile = lead.contactNumber && lead.contactNumber !== '-' ? lead.contactNumber.replace(/-/g, '') : null;
-    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
-
+    const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
+    
     if (mobile && landline) {
       return `${mobile} / ${landline}`;
     }
@@ -898,42 +894,44 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
   const processedLeads = useMemo(() => {
     if (!leads) return [];
 
-    const customerOrderGroups: { [key: string]: Lead[] } = {};
-
-    // Group all orders by customer
+    const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
+  
     leads.forEach(lead => {
-        const name = lead.customerName.toLowerCase();
-        if (!customerOrderGroups[name]) {
-            customerOrderGroups[name] = [];
-        }
-        customerOrderGroups[name].push(lead);
+      if (!Array.isArray(lead.orders)) {
+          return; 
+      }
+      const name = lead.customerName.toLowerCase();
+      if (!customerOrderGroups[name]) {
+        customerOrderGroups[name] = { orders: [] };
+      }
+      customerOrderGroups[name].orders.push(lead);
     });
-
+  
     const enrichedLeads: EnrichedLead[] = [];
-
-    Object.values(customerOrderGroups).forEach((orders) => {
-        const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-        
-        const totalCustomerQuantity = orders.reduce((sum, o) => {
+  
+    Object.values(customerOrderGroups).forEach(({ orders }) => {
+      const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+      
+      const totalCustomerQuantity = orders.reduce((sum, o) => {
           if (!Array.isArray(o.orders)) return sum;
           return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
-        }, 0);
-        
-        for (let i = 0; i < sortedOrders.length; i++) {
-            const lead = sortedOrders[i];
-            
-            const previousNonSampleOrders = sortedOrders
-                .slice(0, i)
-                .filter(o => o.orderType !== 'Item Sample');
-            
-            enrichedLeads.push({
-                ...lead,
-                orderNumber: previousNonSampleOrders.length,
-                totalCustomerQuantity,
-            });
-        }
+      }, 0);
+      
+      for (let i = 0; i < sortedOrders.length; i++) {
+          const lead = sortedOrders[i];
+          
+          const previousNonSampleOrders = sortedOrders
+              .slice(0, i)
+              .filter(o => o.orderType !== 'Item Sample');
+          
+          enrichedLeads.push({
+              ...lead,
+              orderNumber: previousNonSampleOrders.length + 1,
+              totalCustomerQuantity,
+          });
+      }
     });
-
+  
     return enrichedLeads;
 }, [leads]);
   
@@ -1064,7 +1062,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
               <TableBody>
                 {productionQueue && productionQueue.length > 0 ? (
                   productionQueue.map((lead) => {
-                   const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
+                   const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
                     return (
                         <ProductionQueueTableRowGroup
                             key={lead.id}
