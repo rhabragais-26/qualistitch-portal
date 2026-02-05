@@ -151,7 +151,7 @@ const ShipmentQueueTableRowGroup = React.memo(function ShipmentQueueTableRowGrou
     waybillNumbers: Record<string, string[]>;
     setShippingLead: React.Dispatch<React.SetStateAction<Lead | null>>;
     setDeliveringLead: React.Dispatch<React.SetStateAction<Lead | null>>;
-}) => {
+}) {
     const status = getStatus(lead);
     const deliveryDate = lead.adjustedDeliveryDate ? new Date(lead.adjustedDeliveryDate) : (lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22));
     
@@ -230,7 +230,7 @@ const ShipmentQueueTableRowGroup = React.memo(function ShipmentQueueTableRowGrou
                         disabled={isReadOnly || isCompleted}
                         className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                         />
-                        {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
+                        {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                     </div>
                 </TableCell>
                 <TableCell className="text-center">
@@ -354,6 +354,16 @@ const ShipmentQueueTableRowGroup = React.memo(function ShipmentQueueTableRowGrou
     );
 });
 ShipmentQueueTableRowGroup.displayName = 'ShipmentQueueTableRowGroup';
+
+const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success" } => {
+    if (lead.shipmentStatus === 'Delivered') return { text: 'Delivered', variant: 'success' };
+    if (lead.shipmentStatus === 'Shipped') return { text: 'Shipped', variant: 'success' };
+    if (lead.isPacked) return { text: "Already Packed", variant: "default" };
+    if (lead.isSalesAuditRequested) return { text: "On-going Audit", variant: "warning" };
+    if (lead.isQualityApproved) return { text: "Approved Quality", variant: "default" };
+    if (lead.isRecheckingQuality) return { text: "Re-checking Quality", variant: "destructive" };
+    return { text: lead.shipmentStatus || 'Pending', variant: 'secondary' };
+}
 
 export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: ShipmentQueueTableProps) {
   const firestore = useFirestore();
@@ -700,17 +710,6 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
         }
     }, [uncheckConfirmation, firestore, toast]);
 
-
-  const getStatus = (lead: Lead): { text: string; variant: "default" | "secondary" | "destructive" | "warning" | "success" } => {
-    if (lead.shipmentStatus === 'Delivered') return { text: 'Delivered', variant: 'success' };
-    if (lead.shipmentStatus === 'Shipped') return { text: 'Shipped', variant: 'success' };
-    if (lead.isPacked) return { text: "Already Packed", variant: "default" };
-    if (lead.isSalesAuditRequested) return { text: "On-going Audit", variant: "warning" };
-    if (lead.isQualityApproved) return { text: "Approved Quality", variant: "default" };
-    if (lead.isRecheckingQuality) return { text: "Re-checking Quality", variant: "destructive" };
-    return { text: lead.shipmentStatus || 'Pending', variant: 'secondary' };
-  }
-
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
@@ -789,6 +788,8 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     });
   }, [processedLeads, searchTerm, joNumberSearch, filterType, formatJoNumber]);
 
+  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
+  
   return (
     <>
       <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
