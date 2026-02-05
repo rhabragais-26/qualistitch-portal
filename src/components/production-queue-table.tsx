@@ -258,7 +258,7 @@ const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, o
     if (!images || images.length === 0) return null;
 
     return (
-        <Card className="bg-white flex-shrink-0 w-auto">
+        <Card className="bg-white flex-shrink-0">
             <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
             <CardContent className="flex gap-4 text-xs p-2 flex-wrap justify-center">
                 {images.map((img, index) => (
@@ -471,7 +471,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     handleStatusChange: (leadId: string, field: "productionType" | "sewerType", value: string) => void;
     setViewingJoLead: React.Dispatch<React.SetStateAction<Lead | null>>;
     filterType?: 'ONGOING' | 'COMPLETED';
-}) => {
+}) {
     const deadlineInfo = calculateProductionDeadline(lead);
     const productionStatus = getProductionStatusLabel(lead);
     const isCollapsibleOpen = openLeadId === lead.id;
@@ -700,8 +700,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
+    return formatJoNumberUtil(joNumber);
   }, []);
 
   const toggleCustomerDetails = useCallback((leadId: string) => {
@@ -1278,6 +1277,65 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                                       </TableRow>
                                     </TableBody>
                                   </Table>
+                                  <div className="text-xs mb-2 pt-2">
+                                    <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
+                                      <div className="space-y-1">
+                                          <p className="font-bold italic">Prepared by:</p>
+                                          <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
+                                          <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                       <div className="space-y-1">
+                                          <p className="font-bold italic">Noted by:</p>
+                                          <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
+                                          <p className="text-center font-bold">Sales Head</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+
+                                      <div className="col-span-2 mt-0">
+                                          <p className="font-bold italic">Approved by:</p>
+                                      </div>
+
+
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Programming</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Inventory</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Production Line Leader</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Production Supervisor</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                       <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Quality Control</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Logistics</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                       <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Operations Supervisor</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                  </div>
                                 </div>
                                 {layoutsToPrint.map((layout, layoutIndex) => (
                                     <div key={layoutIndex} className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300">
