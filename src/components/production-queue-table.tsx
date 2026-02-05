@@ -254,7 +254,7 @@ const hasLayoutContent = (layout: Layout) => {
            (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
 };
 
-const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
+const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) {
     if (!images || images.length === 0) return null;
 
     return (
@@ -284,9 +284,9 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
   const [imageInView, setImageInView] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleDownload = async (url: string, name: string) => {
+  const handleDownload = useCallback(async (url: string, name: string) => {
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { mode: 'cors' });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -303,11 +303,10 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
       toast({
         variant: 'destructive',
         title: 'Download Failed',
-        description:
-          'Could not download the file. Please check your network connection and file permissions.',
+        description: 'Could not download the file. Please check your network connection and file permissions.',
       });
     }
-  };
+  }, [toast]);
 
   const finalDstFiles = useMemo(() => {
     if (!lead.layouts) return [];
@@ -1178,7 +1177,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="pr-6">
+                <div className="flex-1 overflow-y-auto pr-6">
                     <div className="p-4 bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
@@ -1346,4 +1345,5 @@ ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
 export { ProductionQueueTableMemo as ProductionQueueTable };
     
     
+
 
