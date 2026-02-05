@@ -317,19 +317,17 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
     return (
         <TableRow>
             <TableCell colSpan={15}>
-                <div className="p-2 bg-gray-50 rounded-md my-2">
-                    <ScrollArea className="w-full whitespace-nowrap">
-                        <div className="flex gap-4 p-2">
-                            {allImages.map(group => (
-                                <ImageDisplayCard 
-                                    key={group.title}
-                                    title={group.title}
-                                    images={group.images as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]} 
-                                    onImageClick={setImageInView} 
-                                />
-                            ))}
-                        </div>
-                    </ScrollArea>
+                 <div className="p-2 bg-gray-50 rounded-md my-2">
+                    <div className="flex flex-wrap gap-4 p-2">
+                        {allImages.map(group => (
+                            <ImageDisplayCard 
+                                key={group.title}
+                                title={group.title}
+                                images={group.images as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]} 
+                                onImageClick={setImageInView} 
+                            />
+                        ))}
+                    </div>
                 </div>
             </TableCell>
         </TableRow>
@@ -632,8 +630,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     
     const leadsWithJo = processedLeads.filter(lead => {
         const matchesFilterType = filterType === 'COMPLETED' ? lead.isDigitizingArchived : !lead.isDigitizingArchived;
-        const shouldBypass = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
-        return lead.joNumber && matchesFilterType && !shouldBypass;
+        return lead.joNumber && matchesFilterType;
     });
 
     const filtered = leadsWithJo.filter(lead => {
@@ -2021,13 +2018,4 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
-
-
-
-
-
-
-
-
-
 
