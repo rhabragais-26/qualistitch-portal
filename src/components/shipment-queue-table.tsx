@@ -25,7 +25,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2, ChevronUp } from 'lucide-react';
+import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2, ChevronUp, X } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { cn, formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
@@ -389,13 +389,18 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   const [remarks, setRemarks] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived'; } | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
   
   const [waybillNumbers, setWaybillNumbers] = useState<Record<string, string[]>>({});
   const [editingWaybills, setEditingWaybills] = useState<{ leadId: string; numbers: string[] } | null>(null);
+
+  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
+
+  const toggleCustomerDetails = useCallback((leadId: string) => {
+    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
+  }, [openCustomerDetails]);
 
   const isCompleted = filterType === 'COMPLETED';
   
@@ -724,7 +729,6 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
   
     leads.forEach(lead => {
-      // Defensive check to ensure lead.orders is an array before using it
       if (!Array.isArray(lead.orders)) {
           return; 
       }
