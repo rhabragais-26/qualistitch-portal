@@ -180,6 +180,7 @@ type Lead = {
   recipientName?: string;
   courier?: string;
   deliveryDate?: string;
+  paymentType?: string;
 }
 
 type EnrichedLead = Lead & {
@@ -216,7 +217,7 @@ const hasLayoutContent = (layout: Layout) => {
            (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
 };
 
-const CollapsibleContentRow = React.memo(({ lead, setImageInView }: { lead: Lead, setImageInView: (url: string | null) => void }) => {
+const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, setImageInView }: { lead: Lead, setImageInView: (url: string | null) => void }) {
     const allImages = useMemo(() => {
         const imageGroups = [
             {
@@ -1332,66 +1333,70 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     } else if (uploadField === 'isFinalProgram') {
       return (
           <div className="space-y-4">
-            <h4 className="font-medium text-teal-600">Program Files</h4>
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <div>
+                <h4 className="font-bold text-lg text-teal-700 text-center mb-2">Program Files</h4>
                 {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
                 {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+                <Separator className="my-4" />
                 {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
                 {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
-            </div>
-            <Separator/>
-            <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-teal-600">Names (DST)</h4>
-                  {!isDisabled && (
-                    <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFinalNamesDst)}>
-                        <PlusCircle className="h-4 w-4" />
-                    </Button>
-                  )}
+                <Separator className="my-4" />
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium text-teal-600">Names (DST)</h4>
+                      {!isDisabled && (
+                        <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFinalNamesDst)}>
+                            <PlusCircle className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 gap-2">
+                        {(finalNamesDst.length > 0 ? finalNamesDst : [null]).map((file, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                                {file && file.name ? (
+                                    <div className="flex items-center gap-2 flex-1 p-2 border rounded-md bg-gray-100 h-9">
+                                        <FileText className="h-4 w-4 text-gray-500" />
+                                        <span className="text-xs truncate font-medium text-blue-600">{file.name}</span>
+                                    </div>
+                                ) : (
+                                    <Input
+                                        ref={el => { if (finalNamesDstUploadRefs.current) finalNamesDstUploadRefs.current[index] = el }}
+                                        type="file"
+                                        className="text-xs flex-1 h-9"
+                                        onChange={(e) => handleMultipleFileUpload(e, setFinalNamesDst, finalNamesDst, index)}
+                                        disabled={isDisabled}
+                                    />
+                                )}
+                                {!isDisabled && (
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setFinalNamesDst, index, finalNamesDstUploadRefs)}>
+                                      <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                    {(finalNamesDst.length > 0 ? finalNamesDst : [null]).map((file, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                            {file && file.name ? (
-                                <div className="flex items-center gap-2 flex-1 p-2 border rounded-md bg-gray-100 h-9">
-                                    <FileText className="h-4 w-4 text-gray-500" />
-                                    <span className="text-xs truncate font-medium text-blue-600">{file.name}</span>
-                                </div>
-                            ) : (
-                                <Input
-                                    ref={el => { if (finalNamesDstUploadRefs.current) finalNamesDstUploadRefs.current[index] = el }}
-                                    type="file"
-                                    className="text-xs flex-1 h-9"
-                                    onChange={(e) => handleMultipleFileUpload(e, setFinalNamesDst, finalNamesDst, index)}
-                                    disabled={isDisabled}
-                                />
-                            )}
-                            {!isDisabled && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeFile(setFinalNamesDst, index, finalNamesDstUploadRefs)}>
-                                  <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                        </div>
-                    ))}
-                </div>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-lg text-teal-700 text-center mb-2">Sequence Images</h4>
+                {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
+                {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
+              </div>
             </div>
+            
             <div className="flex items-center space-x-2 pt-2">
                 <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isViewOnly} />
                 <Label htmlFor="names-only">Customer wanted Names Only</Label>
             </div>
             {!isNamesOnly && (
                 <>
-                  <Separator />
-                  <h4 className="font-medium text-teal-600">Final Programmed Images</h4>
+                  <Separator className="my-4" />
+                  <h4 className="font-bold text-lg text-teal-700 text-center mb-2">Final Programmed Images</h4>
                   <div className="grid grid-cols-2 gap-4">
                       {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
                       {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
-                  </div>
-                  <Separator />
-                  <h4 className="font-medium text-teal-600">Sequence Images</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                      {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
-                      {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
                   </div>
                 </>
             )}
@@ -1656,9 +1661,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       </TableCell>
                       <TableCell className="text-xs text-center align-middle">{lead.salesRepresentative}</TableCell>
                       <TableCell className="align-middle py-3 text-center">
-                          <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                              {lead.priorityType}
-                          </Badge>
+                        <div className='flex flex-col items-center gap-1'>
+                            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                                {lead.priorityType}
+                            </Badge>
+                            {lead.orderType && (
+                            <div className="text-gray-500 text-sm font-bold mt-1 whitespace-nowrap">{lead.orderType}</div>
+                            )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-xs text-center align-middle">{formatJoNumber(lead.joNumber)}</TableCell>
                       <TableCell className={cn(
@@ -1715,7 +1725,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-teal-600 hover:text-black hover:bg-transparent" onClick={() => setViewingJoLead(lead)}>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-black hover:text-black hover:bg-transparent" onClick={() => setViewingJoLead(lead)}>
                                                 <FileText className="h-4 w-4" />
                                             </Button>
                                         </TooltipTrigger>
@@ -1964,18 +1974,18 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                               <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
                                             </tr>
                                           </thead>
-                                          <tbody>
+                                          <TableBody>
                                             {layout.namedOrders?.map((order, orderIndex) => (
-                                              <tr key={order.id || `named-order-${orderIndex}`}>
+                                              <TableRow key={orderIndex}>
                                                 <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
                                                 <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
                                                 <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
                                                 <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
                                                 <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
                                                 <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
-                                              </tr>
+                                              </TableRow>
                                             ))}
-                                          </tbody>
+                                          </TableBody>
                                         </table>
                                     </div>
                                   ))}
@@ -1993,6 +2003,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
 
