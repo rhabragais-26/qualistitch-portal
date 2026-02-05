@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { collection, query, doc, updateDoc, getDocs, where } from 'firebase/firestore';
@@ -33,6 +34,7 @@ import { Input } from './ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { addDays, differenceInDays, format } from 'date-fns';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
@@ -400,10 +402,9 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
     }
   }, [uncheckConfirmation, firestore, toast]);
 
-  const handleEndorseToLogistics = useCallback(async () => {
-    if (!leadToEndorse || !firestore) return;
-    const lead = leadToEndorse;
-    const leadDocRef = doc(firestore, 'leads', lead.id);
+  const handleEndorseToLogistics = useCallback(async (leadId: string) => {
+    if (!firestore) return;
+    const leadDocRef = doc(firestore, 'leads', leadId);
     try {
         await updateDoc(leadDocRef, { isEndorsedToLogistics: true, endorsedToLogisticsTimestamp: new Date().toISOString() });
         toast({
@@ -420,7 +421,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
     } finally {
         setLeadToEndorse(null);
     }
-  }, [leadToEndorse, firestore, toast]);
+  }, [firestore, toast]);
   
   const handleReopenCase = async (caseItem: Lead) => {
     if (!firestore) return;
@@ -617,7 +618,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleEndorseToLogistics}>Confirm</AlertDialogAction>
+                      <AlertDialogAction onClick={() => handleEndorseToLogistics(leadToEndorse.id)}>Confirm</AlertDialogAction>
                   </AlertDialogFooter>
               </AlertDialogContent>
           </AlertDialog>
@@ -702,169 +703,41 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
                 </TableHeader>
                 <TableBody>
                 {productionQueue && productionQueue.length > 0 ? (
-                  productionQueue.map((lead) => {
-                    const status = getProductionStatusLabel(lead);
-                    const deadlineInfo = calculateProductionDeadline(lead);
-                    const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
-                    return (
-                        <React.Fragment key={lead.id}>
-                        <TableRow>
-                          <TableCell className="text-xs align-middle text-center">
-                            <div className="font-bold">{toTitleCase(lead.customerName)}</div>
-                            {isRepeat ? (
-                                <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                    <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
-                                        <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                        <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                        {lead.orderNumber}
-                                        </span>
-                                    </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                    <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                                </TooltipProvider>
-                            ) : (
-                            <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-xs text-center align-middle">
-                            <div className="flex items-center justify-center gap-1">
-                                <span>{formatJoNumberUtil(lead.joNumber)}</span>
-                                {activeCasesByJo.has(formatJoNumberUtil(lead.joNumber)) && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                    <TooltipTrigger>
-                                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{activeCasesByJo.get(formatJoNumberUtil(lead.joNumber))}</p>
-                                    </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center align-middle">
-                            <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                              {lead.priorityType}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className={cn("text-center text-xs align-middle", deadlineInfo.isOverdue ? "text-red-500 font-bold" : (deadlineInfo.isUrgent ? "text-orange-500 font-bold" : "text-gray-600"))}>
-                            {deadlineInfo.text}
-                          </TableCell>
-                          <TableCell className="text-center align-middle">
-                            <Button variant="link" size="sm" className="h-7 p-1 text-xs" onClick={() => setOpenLeadId(prev => prev === lead.id ? null : lead.id)}>
-                              View Docs
-                              <ChevronDown className={cn("h-4 w-4 ml-1 transition-transform", openLeadId === lead.id && "rotate-180")}/>
-                            </Button>
-                          </TableCell>
-                          <TableCell className="text-center align-middle">
-                              <Checkbox 
-                                  checked={!!lead.isCutting}
-                                  onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isCutting', !!checked)}
-                                  disabled={isReadOnly || isCompleted}
-                                  className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
-                              />
-                              {lead.cuttingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.cuttingTimestamp).dateTimeShort}</div>}
-                          </TableCell>
-                          <TableCell className="text-center align-middle">
-                              <Select value={lead.productionType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'productionType', value)} disabled={isReadOnly || isCompleted}>
-                                <SelectTrigger className={cn("text-xs h-7", getStatusColor(lead.productionType))}>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {productionOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                                </SelectContent>
-                              </Select>
-                          </TableCell>
-                          <TableCell className="text-center align-middle">
-                                <Checkbox 
-                                  checked={!!lead.isEmbroideryDone}
-                                  onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isEmbroideryDone', !!checked)}
-                                  disabled={!lead.isCutting || isReadOnly || isCompleted}
-                                  className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
-                                />
-                                {lead.embroideryDoneTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.embroideryDoneTimestamp).dateTimeShort}</div>}
-                          </TableCell>
-                          <TableCell className="text-center align-middle">
-                               <Select value={lead.sewerType || 'Pending'} onValueChange={(value) => handleStatusChange(lead.id, 'sewerType', value)} disabled={isReadOnly || isCompleted}>
-                                <SelectTrigger className={cn("text-xs h-7", getStatusColor(lead.sewerType))}>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {productionOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                                </SelectContent>
-                              </Select>
-                          </TableCell>
-                          <TableCell className="text-center align-middle">
-                              <Checkbox 
-                                  checked={!!lead.isSewing}
-                                  onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
-                                  disabled={!lead.isEmbroideryDone || isReadOnly || isCompleted}
-                                  className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
-                              />
-                              {lead.sewingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
-                          </TableCell>
-                          <TableCell className="text-center align-middle">
-                              <Checkbox 
-                                  checked={!!lead.isTrimming}
-                                  onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isTrimming', !!checked)}
-                                  disabled={!lead.isSewing || isReadOnly || isCompleted}
-                                  className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
-                              />
-                              {lead.trimmingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.trimmingTimestamp).dateTimeShort}</div>}
-                          </TableCell>
-                          <TableCell className="text-center align-middle text-xs">
-                            <Badge variant={status.variant}>{status.text}</Badge>
-                            {lead.doneProductionTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.doneProductionTimestamp).dateTimeShort}</div>}
-                          </TableCell>
-                           <TableCell className="text-center align-middle">
-                            {isCompleted ? (
-                                <Button size="sm" className="h-7 text-xs bg-gray-500" onClick={() => setLeadToReopen(lead)} disabled={isReadOnly}>
-                                  <RefreshCcw className="mr-2 h-3 w-3"/> Reopen
-                                </Button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  className={cn("h-7 px-3 text-white font-bold", lead.isDone ? 'bg-primary hover:bg-primary/90' : 'bg-gray-400')}
-                                  disabled={!lead.isDone || isReadOnly}
-                                  onClick={() => setLeadToEndorse(lead)}
-                                >
-                                  <Send className="mr-2 h-4 w-4" /> Endorse
-                                </Button>
-                              )}
-                          </TableCell>
-                        </TableRow>
-                         {openLeadId === lead.id && (
-                             <TableRow>
-                                 <TableCell colSpan={13}>
-                                    <ProductionDocuments lead={lead} />
-                                 </TableCell>
-                             </TableRow>
-                         )}
-                        </React.Fragment>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={13} className="text-center text-muted-foreground">
-                    No orders in production queue.
-                  </TableCell>
-                </TableRow>
-              )}
+                  productionQueue.map((lead) => (
+                    <ProductionQueueTableRowGroup
+                      key={lead.id}
+                      lead={lead}
+                      isCompleted={isCompleted}
+                      isRepeat={!lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0}
+                      isReadOnly={isReadOnly}
+                      getProductionStatus={getProductionStatusLabel}
+                      formatJoNumber={formatJoNumber}
+                      getContactDisplay={getContactDisplay}
+                      handleCheckboxChange={handleCheckboxChange}
+                      setLeadToEndorse={setLeadToEndorse}
+                      handleReopenCase={handleReopenCase}
+                      setOpenLeadId={setOpenLeadId}
+                      openLeadId={openLeadId}
+                      calculateProductionDeadline={calculateProductionDeadline}
+                      activeCasesByJo={activeCasesByJo}
+                      handleStatusChange={handleStatusChange}
+                    />
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={13} className="text-center text-muted-foreground">
+                      No orders in production queue.
+                    </TableCell>
+                  </TableRow>
+                )}
                 </TableBody>
             </Table>
           </div>
       </CardContent>
     </Card>
+    </>
   );
 });
 ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
-
-    
