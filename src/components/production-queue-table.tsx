@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -250,21 +251,21 @@ const hasLayoutContent = (layout: Layout) => {
            (layout as any).dstLogoRight || 
            (layout as any).dstBackLogo || 
            (layout as any).dstBackText || 
-           (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
+           ((layout as any).namedOrders && (layout as any).namedOrders.length > 0 && (layout as any).namedOrders.some((o: any) => o.name || o.backText));
 };
 
 const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) {
     if (!images || images.length === 0) return null;
 
     return (
-        <Card className="bg-white w-fit">
+        <Card className="bg-white flex-shrink-0">
             <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
-            <CardContent className="flex gap-2 text-xs p-2 flex-wrap justify-center">
+            <CardContent className="flex gap-4 text-xs p-2 flex-wrap justify-center">
                 {images.map((img, index) => (
                     img.src && (
-                        <div key={index} className="flex flex-col items-center text-center">
-                            <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-24" title={img.label}>{img.label}</p>
-                            <div className="relative w-20 h-20 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
+                        <div key={index} className="flex flex-col items-center text-center w-28">
+                            <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
+                            <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
                                 <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
                             </div>
                             {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
@@ -1071,8 +1072,8 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
             <Table>
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
+                  <TableHead className="text-white font-bold align-middle text-center">J.O. Number</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Customer Details</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">J.O. No.</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Overdue Status</TableHead>
                   <TableHead className="text-white font-bold align-middle text-center">Production Documents</TableHead>
@@ -1341,7 +1342,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
       )}
     </>
   );
-});
+}
 const ProductionQueueTableMemo = React.memo(ProductionQueueTable);
 ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
 
@@ -1351,5 +1352,7 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
 
 
 
+
+    
 
     
