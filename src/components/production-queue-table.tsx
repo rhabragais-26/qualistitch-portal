@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { collection, query, doc, updateDoc, getDocs, where } from 'firebase/firestore';
@@ -19,7 +20,7 @@ import {
 } from '@/components/ui/card';
 import React, { useState, useMemo, useCallback, useEffect, ChangeEvent } from 'react';
 import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from './ui/dialog';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -40,11 +41,29 @@ import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
+type DesignDetails = {
+  left?: boolean;
+  right?: boolean;
+  backLogo?: boolean;
+  backText?: boolean;
+};
+
 type Order = {
   productType: string;
   color: string;
   size: string;
   quantity: number;
+  remarks?: string;
+  design?: DesignDetails;
+};
+
+type NamedOrder = {
+  id: string;
+  name: string;
+  color: string;
+  size: string;
+  quantity: number;
+  backText: string;
 }
 
 type FileObject = {
@@ -53,16 +72,90 @@ type FileObject = {
 };
 
 type Layout = {
+  id: string;
   layoutImage?: string;
+  layoutImageUploadTime?: string | null;
+  layoutImageUploadedBy?: string | null;
+  refLogoLeftImage?: string | null;
+  refLogoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refLogoLeftImageUploadTime?: string | null;
+  refLogoLeftImageUploadedBy?: string | null;
+  refLogoRightImage?: string | null;
+  refLogoRightImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refLogoRightImageUploadTime?: string | null;
+  refLogoRightImageUploadedBy?: string | null;
+  refBackLogoImage?: string | null;
+  refBackLogoImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refBackLogoImageUploadTime?: string | null;
+  refBackLogoImageUploadedBy?: string | null;
+  refBackDesignImage?: string | null;
+  refBackDesignImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  refBackDesignImageUploadTime?: string | null;
+  refBackDesignImageUploadedBy?: string | null;
   dstLogoLeft?: string;
   dstLogoRight?: string;
   dstBackLogo?: string;
   dstBackText?: string;
+  namedOrders?: NamedOrder[];
+  logoLeftImage?: string | null;
+  logoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  logoLeftImageUploadTime?: string | null;
+  logoLeftImageUploadedBy?: string | null;
+  logoRightImage?: string | null;
+  logoRightImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  logoRightImageUploadTime?: string | null;
+  logoRightImageUploadedBy?: string | null;
+  backLogoImage?: string | null;
+  backLogoImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  backLogoImageUploadTime?: string | null;
+  backLogoImageUploadedBy?: string | null;
+  backDesignImage?: string | null;
+  backDesignImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  backDesignImageUploadTime?: string | null;
+  backDesignImageUploadedBy?: string | null;
+  testLogoLeftImage?: string | null;
+  testLogoLeftImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  testLogoLeftImageUploadTime?: string | null;
+  testLogoLeftImageUploadedBy?: string | null;
+  testLogoRightImage?: string | null;
+  testLogoRightImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  testLogoRightImageUploadTime?: string | null;
+  testLogoRightImageUploadedBy?: string | null;
+  testBackLogoImage?: string | null;
+  testBackLogoImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  testBackLogoImageUploadTime?: string | null;
+  testBackLogoImageUploadedBy?: string | null;
+  testBackDesignImage?: string | null;
+  testBackDesignImages?: { url: string; uploadTime: string; uploadedBy: string; }[];
+  testBackDesignImageUploadTime?: string | null;
+  testBackDesignImageUploadedBy?: string | null;
+  finalLogoEmb?: (FileObject | null)[];
+  finalLogoEmbUploadTimes?: (string | null)[];
+  finalLogoEmbUploadedBy?: (string | null)[];
+  finalBackDesignEmb?: (FileObject | null)[];
+  finalBackDesignEmbUploadTimes?: (string | null)[];
+  finalBackDesignEmbUploadedBy?: (string | null)[];
   finalLogoDst?: (FileObject | null)[];
+  finalLogoDstUploadTimes?: (string | null)[];
+  finalLogoDstUploadedBy?: (string | null)[];
   finalBackDesignDst?: (FileObject | null)[];
+  finalBackDesignDstUploadTimes?: (string | null)[];
+  finalBackDesignDstUploadedBy?: (string | null)[];
   finalNamesDst?: (FileObject | null)[];
+  finalNamesDstUploadTimes?: (string | null)[];
+  finalNamesDstUploadedBy?: (string | null)[];
   sequenceLogo?: (FileObject | null)[];
+  sequenceLogoUploadTimes?: (string | null)[];
+  sequenceLogoUploadedBy?: (string | null)[];
   sequenceBackDesign?: (FileObject | null)[];
+  sequenceBackDesignUploadTimes?: (string | null)[];
+  sequenceBackDesignUploadedBy?: (string | null)[];
+  finalProgrammedLogo?: (FileObject | null)[];
+  finalProgrammedLogoUploadTimes?: (string | null)[];
+  finalProgrammedLogoUploadedBy?: (string | null)[];
+  finalProgrammedBackDesign?: (FileObject | null)[];
+  finalProgrammedBackDesignUploadTimes?: (string | null)[];
+  finalProgrammedBackDesignUploadedBy?: (string | null)[];
 };
 
 type ProductionType = "Pending" | "In-house" | "Outsource 1" | "Outsource 2" | "Outsource 3";
@@ -70,15 +163,25 @@ type ProductionType = "Pending" | "In-house" | "Outsource 1" | "Outsource 2" | "
 type Lead = {
   id: string;
   customerName: string;
+  recipientName?: string;
   companyName?: string;
   contactNumber: string;
+  contactNumber2?: string;
   landlineNumber?: string;
+  location: string;
+  salesRepresentative: string;
+  scesFullName?: string;
+  priorityType: 'Rush' | 'Regular';
+  paymentType: string;
   orderType: string;
   orders: Order[];
-  joNumber?: number;
-  isSentToProduction?: boolean;
-  priorityType: 'Rush' | 'Regular';
   submissionDateTime: string;
+  deliveryDate?: string;
+  courier: string;
+  joNumber?: number;
+  layouts?: Layout[];
+  publiclyPrintable?: boolean;
+  lastModifiedBy?: string;
   isCutting?: boolean;
   cuttingTimestamp?: string;
   isSewing?: boolean;
@@ -93,12 +196,11 @@ type Lead = {
   isEndorsedToLogistics?: boolean;
   endorsedToLogisticsTimestamp?: string;
   doneProductionTimestamp?: string;
-  deliveryDate?: string;
   adjustedDeliveryDate?: string;
   finalApprovalTimestamp?: string;
-  layouts?: Layout[];
+  isSentToProduction?: boolean;
   forceNewCustomer?: boolean;
-}
+};
 
 type EnrichedLead = Lead & {
   orderNumber: number;
@@ -143,80 +245,94 @@ const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success
     return { text: "Pending", variant: "secondary" };
 };
 
+const hasLayoutContent = (layout: Layout) => {
+    return layout.layoutImage || 
+           (layout as any).dstLogoLeft || 
+           (layout as any).dstLogoRight || 
+           (layout as any).dstBackLogo || 
+           (layout as any).dstBackText || 
+           (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
+};
+
+const ImageDisplayCard = React.memo(({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
+    if (!images || images.length === 0) return null;
+
+    return (
+        <Card className="bg-white flex-shrink-0">
+            <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
+            <CardContent className="flex gap-4 text-xs p-2 flex-wrap justify-center">
+                {images.map((img, index) => (
+                    img.src && (
+                        <div key={index} className="flex flex-col items-center text-center w-28">
+                            <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
+                            <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
+                                <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
+                            </div>
+                            {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
+                            {img.uploadedBy && <p className='text-gray-500 text-[10px] font-bold'>by {img.uploadedBy}</p>}
+                        </div>
+                    )
+                ))}
+            </CardContent>
+        </Card>
+    );
+});
+ImageDisplayCard.displayName = 'ImageDisplayCard';
+
 const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { lead: Lead }) {
   const [imageInView, setImageInView] = useState<string | null>(null);
-  
-  const finalFiles = [
-    ...(lead.layouts?.[0]?.finalLogoDst?.filter(f => f).map(f => ({ ...f, type: 'Logo (DST)' })) || []),
-    ...(lead.layouts?.[0]?.finalBackDesignDst?.filter(f => f).map(f => ({ ...f, type: 'Back Design (DST)' })) || []),
-    ...(lead.layouts?.[0]?.finalNamesDst?.filter(f => f).map(f => ({ ...f, type: 'Name (DST)' })) || []),
-  ];
-
-  const handleJobOrderPrint = () => {
-    const jobOrderUrl = `/job-order/${lead.id}/print?view=true`;
-    window.open(jobOrderUrl, '_blank', 'width=1200,height=800,scrollbars=yes');
-  };
+  const { toast } = useToast();
 
   const handleDownload = async (url: string, name: string) => {
     try {
         const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const blob = await response.blob();
-        const fileHandle = await (window as any).showSaveFilePicker({
-            suggestedName: name,
+        const objectUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+        console.error('File download failed:', err);
+        toast({
+            variant: "destructive",
+            title: "Download Failed",
+            description: "Could not download the file. Please try again.",
         });
-        const writable = await fileHandle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-    } catch (err) {
-        console.error('File save failed:', err);
     }
   };
 
-  const hasFilesToDownload = useMemo(() => {
-    const sequenceLogoFiles = lead.layouts?.[0]?.sequenceLogo?.some(s => s?.url);
-    const sequenceBackFiles = lead.layouts?.[0]?.sequenceBackDesign?.some(s => s?.url);
-    return finalFiles.length > 0 || sequenceLogoFiles || sequenceBackFiles;
-  }, [finalFiles, lead.layouts]);
+  const finalDstFiles = useMemo(() => {
+    return [
+      ...(lead.layouts?.[0]?.finalLogoDst?.filter(f => f).map(f => ({ ...f, type: 'Logo' })) || []),
+      ...(lead.layouts?.[0]?.finalBackDesignDst?.filter(f => f).map(f => ({ ...f, type: 'Back Design' })) || []),
+      ...(lead.layouts?.[0]?.finalNamesDst?.filter(f => f).map(f => ({ ...f, type: 'Name' })) || []),
+    ];
+  }, [lead.layouts]);
 
-  const handleDownloadAll = async () => {
-    if (!hasFilesToDownload) return;
-    try {
-        const dirHandle = await (window as any).showDirectoryPicker();
-        
-        const filesToDownload: { name: string; url: string; type: string; }[] = [];
+  const sequenceImages = useMemo(() => {
+    return [
+      ...(lead.layouts?.[0]?.sequenceLogo?.filter(f => f).map(f => ({ ...f, type: 'Sequence Logo' })) || []),
+      ...(lead.layouts?.[0]?.sequenceBackDesign?.filter(f => f).map(f => ({ ...f, type: 'Sequence Back Design' })) || []),
+    ].map((img, i) => ({ src: img.url, label: `${img.type} ${i + 1}` }));
+  }, [lead.layouts]);
 
-        if(finalFiles.length > 0) {
-            filesToDownload.push(...finalFiles.filter((f): f is FileObject & { type: string } => !!f));
-        }
+  const finalProgramImages = useMemo(() => {
+    return [
+      ...(lead.layouts?.[0]?.finalProgrammedLogo?.filter(f => f).map(f => ({ ...f, type: 'Final Program Logo' })) || []),
+      ...(lead.layouts?.[0]?.finalProgrammedBackDesign?.filter(f => f).map(f => ({ ...f, type: 'Final Program Back Design' })) || []),
+    ].map((img, i) => ({ src: img.url, label: `${img.type} ${i + 1}` }));
+  }, [lead.layouts]);
 
-        const sequenceLogoFiles = lead.layouts?.[0]?.sequenceLogo?.filter((s): s is FileObject => !!s?.url);
-        if(sequenceLogoFiles){
-            sequenceLogoFiles.forEach((file, index) => {
-                filesToDownload.push({ name: `sequence-logo-${index + 1}.png`, url: file.url, type: 'Sequence' });
-            });
-        }
-
-        const sequenceBackFiles = lead.layouts?.[0]?.sequenceBackDesign?.filter((s): s is FileObject => !!s?.url);
-        if(sequenceBackFiles){
-            sequenceBackFiles.forEach((file, index) => {
-                filesToDownload.push({ name: `sequence-back-${index + 1}.png`, url: file.url, type: 'Sequence' });
-            });
-        }
-        
-        for (const file of filesToDownload) {
-            if(file) {
-                const response = await fetch(file.url);
-                const blob = await response.blob();
-                const fileHandle = await dirHandle.getFileHandle(file.name, { create: true });
-                const writable = await fileHandle.createWritable();
-                await writable.write(blob);
-                await writable.close();
-            }
-        }
-    } catch (err) {
-        console.error('Download all failed:', err);
-    }
-  };
+  const layoutImages = useMemo(() => {
+    return lead.layouts?.filter(l => l.layoutImage).map((l, i) => ({ src: l.layoutImage!, label: `Layout ${i + 1}` })) || [];
+  }, [lead.layouts]);
 
 
   return (
@@ -240,47 +356,34 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
           </div>
         </div>
       )}
-      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-2 gap-x-6">
+      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Column 1: DST Files */}
         <div className="space-y-4">
+            <h3 className="font-bold text-lg text-primary">Final Program Files (DST)</h3>
             <div className="space-y-2">
-                <h3 className="font-bold text-lg text-primary">Job Order and Layout</h3>
-                <Button onClick={handleJobOrderPrint} variant="default" size="lg" className="bg-primary text-white hover:bg-primary/90">
-                    Check Job Order and Layout
-                </Button>
-            </div>
-            <div>
-                <h3 className="font-bold text-lg text-primary">Final Program Files</h3>
-                <div className="max-h-48 overflow-y-auto pr-2 mt-2">
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                        {finalFiles.map((file, index) => (
-                        file && 
-                        <div key={index} className="flex items-center justify-between p-1 bg-white rounded-md border">
-                            <span className="truncate text-xs pl-1"><strong>{file.type}:</strong> {file.name}</span>
-                            <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-7 w-7 text-primary">
-                                <Download className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        ))}
-                    </div>
-                </div>
-                <Button onClick={handleDownloadAll} disabled={!hasFilesToDownload} size="sm" className="text-white font-bold mt-2"><Download className="mr-2 h-4 w-4" />Download All</Button>
+                {finalDstFiles.length > 0 ? (
+                    finalDstFiles.map((file, index) => (
+                        file && file.url && file.name && (
+                            <div key={index} className="flex items-center justify-between p-2 bg-white rounded-md border text-sm">
+                                <span className="truncate pr-2"><strong>{file.type}:</strong> {file.name}</span>
+                                <Button onClick={() => handleDownload(file.url, file.name)} variant="ghost" size="icon" className="h-7 w-7 text-primary">
+                                    <Download className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )
+                    ))
+                ) : <p className="text-xs text-muted-foreground">No DST files available.</p>}
             </div>
         </div>
 
-        <div className="space-y-2">
-          <h3 className="font-bold text-lg text-primary">Sequence</h3>
-          <div className="flex gap-2 flex-wrap">
-              {lead.layouts?.[0]?.sequenceLogo?.map((seq, index) => seq && seq.url && (
-              <div key={`seq-logo-${index}`} className="relative cursor-pointer w-32 h-32" onClick={() => setImageInView(seq.url)}>
-                  <Image src={seq.url} alt={`Sequence Logo ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border"/>
-              </div>
-              ))}
-              {lead.layouts?.[0]?.sequenceBackDesign?.map((seq, index) => seq && seq.url && (
-                  <div key={`seq-back-${index}`} className="relative cursor-pointer w-32 h-32" onClick={() => setImageInView(seq.url)}>
-                  <Image src={seq.url} alt={`Sequence Back Design ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md border"/>
-              </div>
-              ))}
-          </div>
+        {/* Column 2: Image Thumbnails */}
+        <div className="space-y-4">
+            <ImageDisplayCard title="Layouts" images={layoutImages} onImageClick={setImageInView} />
+        </div>
+        
+        <div className="space-y-4">
+            <ImageDisplayCard title="Sequence" images={sequenceImages} onImageClick={setImageInView} />
+            <ImageDisplayCard title="Final Program Images" images={finalProgramImages} onImageClick={setImageInView} />
         </div>
       </div>
     </>
@@ -293,28 +396,41 @@ type ProductionQueueTableProps = {
   filterType?: 'ONGOING' | 'COMPLETED';
 };
 
+type UserProfileInfo = {
+  uid: string;
+  firstName: string;
+  lastName: string;
+  nickname: string;
+};
+
 const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRowGroup({
     lead,
-    isReadOnly,
-    filterType,
-    getProductionStatus,
-    formatJoNumber,
+    isRepeat,
     getContactDisplay,
+    toggleCustomerDetails,
+    openCustomerDetails,
+    isReadOnly,
+    isCompleted,
+    activeCasesByJo,
+    formatJoNumber,
     handleCheckboxChange,
     setLeadToEndorse,
     handleReopenCase,
     setOpenLeadId,
     openLeadId,
     calculateProductionDeadline,
-    activeCasesByJo,
     handleStatusChange,
+    setViewingJoLead
 }: {
     lead: EnrichedLead;
-    isReadOnly: boolean;
-    filterType?: 'ONGOING' | 'COMPLETED';
-    getProductionStatus: (lead: Lead) => { text: string; variant: "success" | "warning" | "secondary" | "default" | "destructive" };
-    formatJoNumber: (joNumber: number | undefined) => string;
+    isRepeat: boolean;
     getContactDisplay: (lead: Lead) => string | null;
+    toggleCustomerDetails: (leadId: string) => void;
+    openCustomerDetails: string | null;
+    isReadOnly: boolean;
+    isCompleted: boolean;
+    activeCasesByJo: Map<string, string>;
+    formatJoNumber: (joNumber: number | undefined) => string;
     handleCheckboxChange: (leadId: string, field: CheckboxField, checked: boolean) => void;
     setLeadToEndorse: React.Dispatch<React.SetStateAction<Lead | null>>;
     handleReopenCase: (lead: Lead) => void;
@@ -323,43 +439,48 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     calculateProductionDeadline: (lead: Lead) => { text: React.ReactNode; isOverdue: boolean; isUrgent: boolean; remainingDays: number; };
     activeCasesByJo: Map<string, string>;
     handleStatusChange: (leadId: string, field: "productionType" | "sewerType", value: string) => void;
+    setViewingJoLead: React.Dispatch<React.SetStateAction<Lead | null>>;
 }) {
-    const isCompleted = filterType === 'COMPLETED';
     const deadlineInfo = calculateProductionDeadline(lead);
-    const productionStatus = getProductionStatus(lead);
+    const productionStatus = getProductionStatusLabel(lead);
     const isCollapsibleOpen = openLeadId === lead.id;
-    const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
 
     return (
         <React.Fragment>
             <TableRow>
                 <TableCell className="text-xs align-middle text-center py-2 text-black">
-                    <div className="font-bold">{toTitleCase(lead.customerName)}</div>
-                    {isRepeat ? (
-                        <TooltipProvider>
-                            <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
-                                <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                    {lead.orderNumber + 1}
-                                </span>
+                    <div className="flex items-center justify-center">
+                        <div className='flex flex-col items-center'>
+                            <span className="font-bold">{toTitleCase(lead.customerName)}</span>
+                            {isRepeat ? (
+                                <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1.5 cursor-pointer mt-1">
+                                        <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                        <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                        {lead.orderNumber + 1}
+                                        </span>
+                                    </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                    <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                </TooltipProvider>
+                            ) : (
+                                <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                            )}
+                            {openCustomerDetails === lead.id && (
+                                <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
+                                    {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
+                                    {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                 </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                            </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    ) : (
-                        <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                    )}
-                    <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
-                        {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
-                        {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                            )}
+                        </div>
                     </div>
                 </TableCell>
-                <TableCell className="text-xs align-middle text-center py-2 text-black">
+                <TableCell className="text-xs text-center align-middle">
                     <div className="flex items-center justify-center gap-1">
                         <span>{formatJoNumber(lead.joNumber)}</span>
                         {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
@@ -386,18 +507,37 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                 </TableCell>
                 <TableCell className={cn(
                     "text-center text-xs align-middle py-3",
-                    deadlineInfo.isOverdue ? "text-red-500 font-bold" : (deadlineInfo.isUrgent ? "text-amber-600 font-bold" : "text-gray-500")
-                    )}>{deadlineInfo.text}
-                </TableCell>
-                <TableCell className="text-center align-middle py-3">
-                    <Button variant="ghost" size="sm" onClick={() => setOpenLeadId(prev => prev === lead.id ? null : lead.id)} className="h-7 px-2">
-                        View
-                        {isCollapsibleOpen ? (
-                        <ChevronUp className="h-4 w-4" />
-                        ) : (
-                        <ChevronDown className="h-4 w-4" />
-                        )}
-                    </Button>
+                    (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered')
+                    ? "text-green-600 font-medium"
+                    : deadlineInfo.isOverdue
+                    ? "text-red-500 font-bold"
+                    : deadlineInfo.isUrgent
+                    ? "text-amber-600 font-bold"
+                    : ""
+                )}>{deadlineInfo.text}</TableCell>
+                <TableCell className="text-center align-middle py-2">
+                    <div className="flex items-center justify-center">
+                        <Button variant="ghost" size="sm" onClick={() => setOpenLeadId(prev => prev === lead.id ? null : lead.id)} className="h-7 px-2 bg-gray-200 hover:bg-gray-300">
+                            View
+                            {isCollapsibleOpen ? (
+                            <ChevronUp className="h-4 w-4" />
+                            ) : (
+                            <ChevronDown className="h-4 w-4" />
+                            )}
+                        </Button>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-black hover:text-black hover:bg-transparent" onClick={() => setViewingJoLead(lead)}>
+                                        <FileText className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>View Job Order Form</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
                 </TableCell>
                 <TableCell className="text-center align-middle py-2">
                     <div className="flex flex-col items-center justify-center gap-1">
@@ -505,6 +645,12 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
 });
 ProductionQueueTableRowGroup.displayName = 'ProductionQueueTableRowGroup';
 
+type UserProfileInfo = {
+    uid: string;
+    firstName: string;
+    lastName: string;
+    nickname: string;
+  };
 
 const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
   const firestore = useFirestore();
@@ -523,6 +669,12 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
 
   const operationalCasesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'operationalCases')) : null, [firestore]);
   const { data: operationalCases } = useCollection<OperationalCase>(operationalCasesQuery);
+
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
+  const { data: usersData } = useCollection<UserProfileInfo>(usersQuery);
+
+  const [viewingJoLead, setViewingJoLead] = useState<Lead | null>(null);
+
 
   const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, value: boolean) => {
     if (!value) {
@@ -809,7 +961,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
     return (
       <div className="space-y-2 p-4">
         {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full bg-gray-200" />
+          <Skeleton key={i} className="h-16 w-full" />
         ))}
       </div>
     );
@@ -849,7 +1001,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
                   />
                 </div>
               </div>
-              <div className="w-full text-right">
+               <div className="w-full text-right">
                 {filterType === 'COMPLETED' ? (
                   <Link href="/production/production-queue" className="text-sm text-primary hover:underline">
                     View Production Queue
@@ -885,25 +1037,32 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
               </TableHeader>
               <TableBody>
                 {productionQueue && productionQueue.length > 0 ? (
-                  productionQueue.map((lead) => (
-                    <ProductionQueueTableRowGroup
-                        key={lead.id}
-                        lead={lead}
-                        isCompleted={isCompleted}
-                        isReadOnly={isReadOnly}
-                        getProductionStatus={getProductionStatusLabel}
-                        formatJoNumber={formatJoNumberUtil}
-                        getContactDisplay={getContactDisplay}
-                        handleCheckboxChange={handleCheckboxChange}
-                        setLeadToEndorse={setLeadToEndorse}
-                        handleReopenCase={handleReopenCase}
-                        setOpenLeadId={setOpenLeadId}
-                        openLeadId={openLeadId}
-                        calculateProductionDeadline={calculateProductionDeadline}
-                        activeCasesByJo={activeCasesByJo}
-                        handleStatusChange={handleStatusChange}
-                    />
-                  ))
+                  productionQueue.map((lead) => {
+                   const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
+                    return (
+                        <ProductionQueueTableRowGroup
+                            key={lead.id}
+                            lead={lead}
+                            isRepeat={isRepeat}
+                            getContactDisplay={getContactDisplay}
+                            toggleCustomerDetails={toggleCustomerDetails}
+                            openCustomerDetails={openCustomerDetails}
+                            isReadOnly={isReadOnly}
+                            isCompleted={isCompleted}
+                            activeCasesByJo={activeCasesByJo}
+                            formatJoNumber={formatJoNumberUtil}
+                            handleCheckboxChange={handleCheckboxChange}
+                            setLeadToEndorse={setLeadToEndorse}
+                            handleReopenCase={handleReopenCase}
+                            setOpenLeadId={setOpenLeadId}
+                            openLeadId={openLeadId}
+                            calculateProductionDeadline={calculateProductionDeadline}
+                            handleStatusChange={handleStatusChange}
+                            setViewingJoLead={setViewingJoLead}
+                            filterType={filterType}
+                        />
+                    )
+                  })
                 ) : (
                   <TableRow>
                     <TableCell colSpan={13} className="text-center text-muted-foreground">
@@ -961,6 +1120,173 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
                   </AlertDialogFooter>
               </AlertDialogContent>
           </AlertDialog>
+      )}
+      {viewingJoLead && (
+        <Dialog open={!!viewingJoLead} onOpenChange={() => setViewingJoLead(null)}>
+            <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
+                    <DialogDescription>Read-only view of the job order form.</DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 overflow-y-auto pr-6">
+                    <div className="p-4 bg-white text-black">
+                        {(() => {
+                            const lead = viewingJoLead;
+                            const scesProfile = usersData?.find(u => u.nickname === lead.salesRepresentative);
+                            const scesFullName = scesProfile ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
+                            const totalQuantity = lead.orders.reduce((sum: any, order: any) => sum + order.quantity, 0);
+                            const contactDisplay = getContactDisplay(lead);
+                            
+                            const deliveryDate = lead.adjustedDeliveryDate ? format(new Date(lead.adjustedDeliveryDate), "MMM dd, yyyy") : (lead.deliveryDate ? format(new Date(lead.deliveryDate), "MMM dd, yyyy") : format(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22), "MMM dd, yyyy"));
+
+                            const layoutsToPrint = lead.layouts?.filter(l => hasLayoutContent(l as Layout)) || [];
+                            
+                            return (
+                              <>
+                                <div className="p-10 mx-auto max-w-4xl print-page">
+                                  <div className="text-left mb-4">
+                                      <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span></p>
+                                  </div>
+                                  <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
+
+                                  <div className="grid grid-cols-3 gap-x-8 text-sm mb-6 border-b border-black pb-4">
+                                      <div className="space-y-1">
+                                          <p><strong>Client Name:</strong> {lead.customerName}</p>
+                                          <p><strong>Contact No:</strong> {contactDisplay}</p>
+                                          <p><strong>Delivery Address:</strong> <span className="whitespace-pre-wrap">{lead.location}</span></p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
+                                          <p><strong>Type of Order:</strong> {lead.orderType}</p>
+                                          <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
+                                          <p><strong>SCES Name:</strong> {scesFullName}</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
+                                          <p><strong>Courier:</strong> {lead.courier}</p>
+                                          <p><strong>Delivery Date:</strong> {deliveryDate || 'N/A'}</p>
+                                      </div>
+                                  </div>
+
+                                  <h2 className="text-xl font-bold text-center mb-4">ORDER DETAILS</h2>
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow className="bg-gray-200">
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={3}>Item Description</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Qty</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Front Design</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Back Design</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Remarks</TableHead>
+                                      </TableRow>
+                                      <TableRow className="bg-gray-200">
+                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Type of Product</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Color</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Size</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Left</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Right</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Logo</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Text</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {lead.orders.map((order: any, index: number) => (
+                                        <TableRow key={index}>
+                                          <TableCell className="border border-black p-0.5 text-center align-middle">{order.productType}</TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center align-middle">{order.color}</TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center">{order.size}</TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center">{order.quantity}</TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center">
+                                              <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.left || false} disabled />
+                                          </TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center">
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.right || false} disabled />
+                                          </TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center">
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backLogo || false} disabled />
+                                          </TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center">
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backText || false} disabled />
+                                          </TableCell>
+                                          <TableCell className="border border-black p-0.5">
+                                            <p className="text-xs">{order.remarks}</p>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                       <TableRow>
+                                          <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
+                                          <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
+                                          <TableCell colSpan={5}></TableCell>
+                                      </TableRow>
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                                {layoutsToPrint.map((layout, layoutIndex) => (
+                                    <div key={layoutIndex} className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300">
+                                      <div className="text-left mb-4">
+                                          <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span> - Layout {layoutIndex + 1}</p>
+                                      </div>
+                                      
+                                       {layout.layoutImage && (
+                                         <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
+                                            <Image 
+                                                src={layout.layoutImage} 
+                                                alt={`Layout ${layoutIndex + 1}`} 
+                                                layout="fill"
+                                                objectFit="contain"
+                                            />
+                                          </div>
+                                        )}
+                                      
+                                      <h2 className="text-2xl font-bold text-center mb-4">
+                                        {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
+                                      </h2>
+                                        <table className="w-full border-collapse border border-black mb-6">
+                                            <tbody>
+                                                <tr>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstLogoLeft}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstBackLogo}</p></td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstLogoRight}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstBackText}</p></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                            
+                                        <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
+                                        <table className="w-full border-collapse border border-black text-xs">
+                                          <thead>
+                                            <tr className="bg-gray-200">
+                                              <th className="border border-black p-1 text-center align-middle">No.</th>
+                                              <th className="border border-black p-1 text-center align-middle">Names</th>
+                                              <th className="border border-black p-1 text-center align-middle">Color</th>
+                                              <th className="border border-black p-1 text-center align-middle">Sizes</th>
+                                              <th className="border border-black p-1 text-center align-middle">Qty</th>
+                                              <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
+                                            </tr>
+                                          </thead>
+                                          <TableBody>
+                                            {layout.namedOrders?.map((order, orderIndex) => (
+                                              <TableRow key={orderIndex}>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
+                                              </TableRow>
+                                            ))}
+                                          </TableBody>
+                                        </table>
+                                    </div>
+                                  ))}
+                              </>
+                            )
+                        })()}
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
       )}
     </>
   );
