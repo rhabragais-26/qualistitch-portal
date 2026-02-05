@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -418,7 +417,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
   const finalLogoEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalBackDesignEmbUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const finalLogoDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const finalLogoDstUploadRefs = useRef<(HTMLInputElement | null)[]>(([]);
   const finalBackDesignDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
   const finalNamesDstUploadRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -869,8 +868,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         if (isClientOrPatchOnly) {
             updateData.isSentToProduction = true;
             updateData.sentToProductionTimestamp = new Date().toISOString();
-        } else {
-            updateData.isPreparedForProduction = true;
         }
 
         await updateDoc(leadDocRef, updateData);
@@ -1353,15 +1350,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             </div>
           </div>
           
+          <Separator className="my-4" />
+          
           <div className="flex items-center space-x-2 pt-2">
-            <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => {
-              setIsNamesOnly(!!checked);
-            }} disabled={isViewOnly} />
+            <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isViewOnly} />
             <Label htmlFor="names-only">Customer wanted Names Only</Label>
           </div>
 
-          <Separator className="my-4" />
-      
           <div>
             <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Sequence Images</h4>
             <div className="grid grid-cols-2 gap-4">
@@ -1799,7 +1794,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                           <p><strong>Delivery Address:</strong> <span className="whitespace-pre-wrap">{lead.location}</span></p>
                                       </div>
                                       <div className="space-y-1">
-                                          <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
+                                          <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')</p>
                                           <p><strong>Type of Order:</strong> {lead.orderType}</p>
                                           <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
                                           <p><strong>SCES Name:</strong> {scesFullName}</p>
@@ -1996,3 +1991,5 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
+    
