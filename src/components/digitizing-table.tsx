@@ -173,6 +173,7 @@ type Lead = {
   digitizingArchivedTimestamp?: string;
   isPreparedForProduction?: boolean;
   isSentToProduction?: boolean;
+  forceNewCustomer?: boolean;
 }
 
 type EnrichedLead = Lead & {
@@ -1493,7 +1494,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   return (
                   <React.Fragment key={lead.id}>
                     <TableRow>
-                      <TableCell className="text-xs align-middle text-center">
+                      <TableCell className="text-xs align-middle py-3 text-black text-center">
                           <div className="flex items-center justify-center">
                             <div className='flex flex-col items-center'>
                               <span className="font-medium">{toTitleCase(lead.customerName)}</span>
@@ -1572,7 +1573,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         
                         <TableCell className="text-center align-middle">
                             <div className="flex items-center justify-center">
-                                <Button variant="ghost" size="sm" onClick={() => setOpenLeadId(prev => prev === lead.id ? null : lead.id)} className="h-7 px-2">
+                                <Button variant="ghost" size="sm" onClick={() => setOpenLeadId(prev => prev === lead.id ? null : lead.id)} className="h-7 px-2 bg-gray-200 hover:bg-gray-200">
                                     View
                                     {openLeadId === lead.id ? (
                                     <ChevronUp className="h-4 w-4" />
@@ -1583,7 +1584,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewingJoLead(lead)}>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-teal-600 hover:bg-black hover:text-white" onClick={() => setViewingJoLead(lead)}>
                                                 <FileText className="h-4 w-4" />
                                             </Button>
                                         </TooltipTrigger>
@@ -1829,5 +1830,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
