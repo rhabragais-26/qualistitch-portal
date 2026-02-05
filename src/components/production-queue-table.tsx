@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { collection, query, doc, updateDoc, getDocs, where } from 'firebase/firestore';
@@ -25,7 +24,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, FileText, Download, X, Eye } from 'lucide-react';
+import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, FileText, Download, X, Eye, ChevronUp } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { cn, formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
@@ -506,6 +505,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
 });
 ProductionQueueTableRowGroup.displayName = 'ProductionQueueTableRowGroup';
 
+
 const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
@@ -855,7 +855,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
         <CardContent>
           <div className="border rounded-md">
             <Table>
-              <TableHeader className="bg-neutral-800">
+              <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
                   <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Customer</TableHead>
                   <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">J.O. No.</TableHead>
@@ -961,3 +961,5 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
 ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
+
+    
