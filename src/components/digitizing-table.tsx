@@ -40,6 +40,7 @@ import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebas
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import Link from 'next/link';
+import { Switch } from './ui/switch';
 
 type NamedOrder = {
   id: string;
@@ -383,6 +384,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
   const isLoading = areLeadsLoading || areUsersLoading;
   const error = leadsError || usersError;
+  
+  const [enableReupload, setEnableReupload] = useState(false);
 
   const digitizers = useMemo(() => {
     if (!usersData) return [];
@@ -1589,7 +1592,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         className="bg-gray-100 text-black placeholder:text-gray-500"
                     />
                   </div>
-                  <div className="w-full text-right">
+                  <div className="w-full text-right flex items-center justify-end gap-4">
+                    {filterType === 'COMPLETED' && isAdmin && (
+                        <div className="flex items-center gap-2">
+                            <Label htmlFor="enable-reupload" className="text-sm font-medium">Enable Re-upload</Label>
+                            <Switch id="enable-reupload" checked={enableReupload} onCheckedChange={setEnableReupload} />
+                        </div>
+                    )}
                     {filterType === 'COMPLETED' ? (
                         <Link href="/digitizing/programming-queue" className="text-sm text-primary hover:underline">
                             View Programming Queue
@@ -1629,6 +1638,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 {displayedLeads.map((lead) => {
                   const deadlineInfo = calculateDigitizingDeadline(lead);
                   const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
+                  const isCompleted = filterType === 'COMPLETED';
                   
                   return (
                   <React.Fragment key={lead.id}>
@@ -1666,7 +1676,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 {lead.priorityType}
                             </Badge>
                             {lead.orderType && (
-                            <div className="text-gray-500 text-sm font-bold mt-1 whitespace-nowrap">{lead.orderType}</div>
+                              <div className="text-gray-500 text-sm font-bold mt-1 whitespace-nowrap">{lead.orderType}</div>
                             )}
                         </div>
                       </TableCell>
@@ -1697,14 +1707,22 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         
                         {(['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'] as CheckboxField[]).map(field => {
                             const timestamp = lead[`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp` as keyof Lead] as string | undefined;
+                            let isDisabled = isViewOnly || (field === 'isRevision' && lead.isFinalApproval);
+                            if (field === 'isFinalProgram' && filterType === 'COMPLETED' && enableReupload) {
+                                isDisabled = false;
+                            }
+                            
+                            const className = (isReadOnly || (isCompleted && !(field === 'isFinalProgram' && enableReupload)))
+                                ? 'disabled:opacity-100'
+                                : '';
                             return (
                                 <TableCell key={field} className="text-center align-middle">
                                 <div className="flex flex-col items-center justify-center gap-1">
                                     <Checkbox
                                         checked={lead[field] || false}
                                         onCheckedChange={(checked) => handleCheckboxChange(lead.id, field, !!checked)}
-                                        disabled={isViewOnly || (field === 'isRevision' && lead.isFinalApproval)}
-                                        className={isViewOnly ? 'disabled:opacity-100' : ''}
+                                        disabled={isDisabled}
+                                        className={className}
                                     />
                                     {timestamp && <div className="text-[10px] text-gray-500">{formatDateTime(timestamp).dateTimeShort}</div>}
                                 </div>
@@ -1725,7 +1743,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-black hover:text-black hover:bg-transparent" onClick={() => setViewingJoLead(lead)}>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-black hover:bg-transparent hover:text-black" onClick={() => setViewingJoLead(lead)}>
                                                 <FileText className="h-4 w-4" />
                                             </Button>
                                         </TooltipTrigger>
@@ -2003,6 +2021,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
 
