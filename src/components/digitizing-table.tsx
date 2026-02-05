@@ -1584,7 +1584,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-teal-600 hover:bg-black hover:text-white" onClick={() => setViewingJoLead(lead)}>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-teal-600 hover:text-black hover:bg-transparent" onClick={() => setViewingJoLead(lead)}>
                                                 <FileText className="h-4 w-4" />
                                             </Button>
                                         </TooltipTrigger>
@@ -1830,6 +1830,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
 
