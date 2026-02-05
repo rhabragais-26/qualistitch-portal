@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, FileText, Download, X, Eye } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { cn, formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
@@ -286,6 +287,11 @@ const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
 });
 ProductionDocuments.displayName = 'ProductionDocuments';
 
+type ProductionQueueTableProps = {
+  isReadOnly: boolean;
+  filterType?: 'ONGOING' | 'COMPLETED';
+};
+
 const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
@@ -295,6 +301,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
   const [leadToEndorse, setLeadToEndorse] = useState<Lead | null>(null);
   const [leadToReopen, setLeadToReopen] = useState<Lead | null>(null);
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
+  const isCompleted = filterType === 'COMPLETED';
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
@@ -499,10 +506,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
     Object.values(customerOrderGroups).forEach((orders) => {
         const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
         
-        const totalCustomerQuantity = orders.reduce((sum, o) => {
-            if (!Array.isArray(o.orders)) return sum;
-            return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
-        }, 0);
+        const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0), 0);
         
         for (let i = 0; i < sortedOrders.length; i++) {
             const lead = sortedOrders[i];
@@ -727,7 +731,23 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
                             <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                             )}
                           </TableCell>
-                          <TableCell className="text-xs text-center align-middle">{formatJoNumberUtil(lead.joNumber)}</TableCell>
+                          <TableCell className="text-xs text-center align-middle">
+                            <div className="flex items-center justify-center gap-1">
+                                <span>{formatJoNumberUtil(lead.joNumber)}</span>
+                                {activeCasesByJo.has(formatJoNumberUtil(lead.joNumber)) && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                    <TooltipTrigger>
+                                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{activeCasesByJo.get(formatJoNumberUtil(lead.joNumber))}</p>
+                                    </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                                )}
+                            </div>
+                          </TableCell>
                           <TableCell className="text-center align-middle">
                             <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                               {lead.priorityType}
