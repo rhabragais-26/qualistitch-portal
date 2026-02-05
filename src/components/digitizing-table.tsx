@@ -216,7 +216,126 @@ const hasLayoutContent = (layout: Layout) => {
            (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
 };
 
-const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
+const CollapsibleContentRow = React.memo(({ lead, setImageInView }: { lead: Lead, setImageInView: (url: string | null) => void }) => {
+    const allImages = useMemo(() => {
+        const imageGroups = [
+            {
+                title: 'Layout Design',
+                images: (lead.layouts || []).map((layout, layoutIndex) => (
+                    layout.layoutImage ? { 
+                        src: layout.layoutImage, 
+                        label: `Layout ${layoutIndex + 1}`, 
+                        timestamp: layout.layoutImageUploadTime, 
+                        uploadedBy: layout.layoutImageUploadedBy 
+                    } : null
+                )).filter(Boolean)
+            },
+            {
+                title: 'Reference Images',
+                images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
+                    const images: any[] = [];
+                    const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
+                        const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
+                        if (Array.isArray(pluralField)) {
+                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
+                        } else if (singularField) {
+                            images.push({ src: singularField, label: `${labelPrefix}${labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
+                        }
+                    };
+                    addImages((layout as any).refLogoLeftImages, layout.refLogoLeftImage, layout.refLogoLeftImageUploadTime, layout.refLogoLeftImageUploadedBy, 'Ref Logo Left');
+                    addImages((layout as any).refLogoRightImages, layout.refLogoRightImage, layout.refLogoRightImageUploadTime, layout.refLogoRightImageUploadedBy, 'Ref Logo Right');
+                    addImages((layout as any).refBackLogoImages, layout.refBackLogoImage, layout.refBackLogoImageUploadTime, layout.refBackLogoImageUploadedBy, 'Ref Back Logo');
+                    addImages((layout as any).refBackDesignImages, layout.refBackDesignImage, layout.refBackDesignImageUploadTime, layout.refBackDesignImageUploadedBy, 'Ref Back Design');
+                    return images;
+                })
+            },
+            {
+                title: 'Initial Program Images',
+                images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
+                    const images: any[] = [];
+                    const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
+                        const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
+                        if (Array.isArray(pluralField)) {
+                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
+                        } else if (singularField) {
+                            images.push({ src: singularField, label: `${labelPrefix}${labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
+                        }
+                    };
+                    addImages((layout as any).logoLeftImages, layout.logoLeftImage, layout.logoLeftImageUploadTime, layout.logoLeftImageUploadedBy, 'Logo Left');
+                    addImages((layout as any).logoRightImages, layout.logoRightImage, layout.logoRightImageUploadTime, layout.logoRightImageUploadedBy, 'Logo Right');
+                    addImages((layout as any).backLogoImages, layout.backLogoImage, layout.backLogoImageUploadTime, layout.backLogoImageUploadedBy, 'Back Logo');
+                    addImages((layout as any).backDesignImages, layout.backDesignImage, layout.backDesignImageUploadTime, layout.backDesignImageUploadedBy, 'Back Design');
+                    return images;
+                })
+            },
+            {
+                title: 'Tested Images',
+                images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
+                    const images: any[] = [];
+                    const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
+                         const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
+                        if (Array.isArray(pluralField)) {
+                            pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
+                        } else if (singularField) {
+                            images.push({ src: singularField, label: `${labelPrefix}${labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
+                        }
+                    };
+                    addImages((layout as any).testLogoLeftImages, layout.testLogoLeftImage, layout.testLogoLeftImageUploadTime, layout.testLogoLeftImageUploadedBy, 'Test Logo Left');
+                    addImages((layout as any).testLogoRightImages, layout.testLogoRightImage, layout.testLogoRightImageUploadTime, layout.testLogoRightImageUploadedBy, 'Test Logo Right');
+                    addImages((layout as any).testBackLogoImages, layout.testBackLogoImage, layout.testBackLogoImageUploadTime, layout.testBackLogoImageUploadedBy, 'Test Back Logo');
+                    addImages((layout as any).testBackDesignImages, layout.testBackDesignImage, layout.testBackDesignImageUploadTime, layout.testBackDesignImageUploadedBy, 'Test Back Design');
+                    return images;
+                })
+            },
+            {
+                title: 'Final Program Files',
+                images: (lead.layouts || []).flatMap((layout, layoutIndex) => {
+                    const images: any[] = [];
+                    const addFiles = (files: (FileObject | null)[] | undefined, timestamps: (string | null)[] | undefined, uploaders: (string | null)[] | undefined, labelPrefix: string) => {
+                        const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
+                        if (Array.isArray(files)) {
+                            files.forEach((file, i) => {
+                                if (file?.url) {
+                                    images.push({ src: file.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: timestamps?.[i], uploadedBy: uploaders?.[i] });
+                                }
+                            });
+                        }
+                    };
+                    addFiles(layout.finalProgrammedLogo, layout.finalProgrammedLogoUploadTimes, layout.finalProgrammedLogoUploadedBy, 'Final Logo');
+                    addFiles(layout.finalProgrammedBackDesign, layout.finalProgrammedBackDesignUploadTimes, layout.finalProgrammedBackDesignUploadedBy, 'Final Back Design');
+                    addFiles(layout.sequenceLogo, layout.sequenceLogoUploadTimes, layout.sequenceLogoUploadedBy, 'Sequence Logo');
+                    addFiles(layout.sequenceBackDesign, layout.sequenceBackDesignUploadTimes, layout.sequenceBackDesignUploadedBy, 'Sequence Back Design');
+                    return images;
+                })
+            }
+        ];
+        return imageGroups.filter(group => group.images && group.images.length > 0);
+    }, [lead.layouts]);
+
+    return (
+        <TableRow>
+            <TableCell colSpan={15}>
+                <div className="p-2 bg-gray-50 rounded-md my-2">
+                    <ScrollArea className="w-full whitespace-nowrap">
+                        <div className="flex gap-4 p-2">
+                            {allImages.map(group => (
+                                <ImageDisplayCard 
+                                    key={group.title}
+                                    title={group.title}
+                                    images={group.images as { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[]} 
+                                    onImageClick={setImageInView} 
+                                />
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </div>
+            </TableCell>
+        </TableRow>
+    );
+});
+CollapsibleContentRow.displayName = 'CollapsibleContentRow';
+
+const ImageDisplayCard = React.memo(({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
     if (!images || images.length === 0) return null;
 
     return (
@@ -238,7 +357,8 @@ const ImageDisplayCard = ({ title, images, onImageClick }: { title: string; imag
             </CardContent>
         </Card>
     );
-};
+});
+ImageDisplayCard.displayName = 'ImageDisplayCard';
 
 
 const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: DigitizingTableProps) {
@@ -1092,7 +1212,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       return (
           <div className="space-y-2">
               <div className="flex items-center gap-2">
-                  <Label>{label}</Label>
+                  <h4 className="font-medium text-teal-600">{label}</h4>
                   {!isDisabled && (
                       <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFilesState)}>
                           <PlusCircle className="h-4 w-4" />
@@ -1221,14 +1341,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             </div>
             <Separator/>
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label>Names (DST)</Label>
-                {!isDisabled && (
+                <div className="flex items-center gap-2">
+                  <h4 className="font-medium text-teal-600">Names (DST)</h4>
+                  {!isDisabled && (
                     <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-gray-200" onClick={() => addFileMultiple(setFinalNamesDst)}>
                         <PlusCircle className="h-4 w-4" />
                     </Button>
-                )}
-              </div>
+                  )}
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                     {(finalNamesDst.length > 0 ? finalNamesDst : [null]).map((file, index) => (
                         <div key={index} className="flex items-center gap-2">
@@ -1504,7 +1624,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 {displayedLeads.map((lead) => {
                   const deadlineInfo = calculateDigitizingDeadline(lead);
                   const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
-                  const specialOrderTypes = ["MTO", "Stock Design", "Stock (Jacket Only)", "Item Sample"];
                   
                   return (
                   <React.Fragment key={lead.id}>
@@ -1537,12 +1656,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                       </TableCell>
                       <TableCell className="text-xs text-center align-middle">{lead.salesRepresentative}</TableCell>
                       <TableCell className="align-middle py-3 text-center">
-                          <div className='flex flex-col items-center gap-1'>
-                              <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
-                                  {lead.priorityType}
-                              </Badge>
-                              {specialOrderTypes.includes(lead.orderType) && <p className="text-xs font-bold mt-1">{lead.orderType}</p>}
-                          </div>
+                          <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
+                              {lead.priorityType}
+                          </Badge>
                       </TableCell>
                       <TableCell className="text-xs text-center align-middle">{formatJoNumber(lead.joNumber)}</TableCell>
                       <TableCell className={cn(
@@ -1636,101 +1752,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         </TableCell>
                     </TableRow>
                     {openLeadId === lead.id && (
-                      <TableRow>
-                        <TableCell colSpan={15}>
-                            <div className="p-2 bg-gray-50 rounded-md my-2">
-                                <ScrollArea className="w-full whitespace-nowrap">
-                                  <div className="flex gap-4 p-2">
-                                    {(lead.layouts || []).map((layout, layoutIndex) => (
-                                        <React.Fragment key={layoutIndex}>
-                                            {layout.layoutImage && (
-                                                <ImageDisplayCard 
-                                                    title={`Layout Design ${layoutIndex + 1}`} 
-                                                    images={[{ src: layout.layoutImage, label: `Layout ${layoutIndex + 1}`, timestamp: layout.layoutImageUploadTime, uploadedBy: layout.layoutImageUploadedBy }]}
-                                                    onImageClick={setImageInView} 
-                                                />
-                                            )}
-                                        </React.Fragment>
-                                    ))}
-                                    <ImageDisplayCard title="Reference Images" images={
-                                        (lead.layouts || []).flatMap((layout, layoutIndex) => {
-                                            const images: any[] = [];
-                                            const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
-                                                const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
-                                                if (Array.isArray(pluralField)) {
-                                                    pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
-                                                } else if (singularField) {
-                                                    images.push({ src: singularField, label: `${labelPrefix}${labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
-                                                }
-                                            };
-                                            addImages((layout as any).refLogoLeftImages, layout.refLogoLeftImage, layout.refLogoLeftImageUploadTime, layout.refLogoLeftImageUploadedBy, 'Ref Logo Left');
-                                            addImages((layout as any).refLogoRightImages, layout.refLogoRightImage, layout.refLogoRightImageUploadTime, layout.refLogoRightImageUploadedBy, 'Ref Logo Right');
-                                            addImages((layout as any).refBackLogoImages, layout.refBackLogoImage, layout.refBackLogoImageUploadTime, layout.refBackLogoImageUploadedBy, 'Ref Back Logo');
-                                            addImages((layout as any).refBackDesignImages, layout.refBackDesignImage, layout.refBackDesignImageUploadTime, layout.refBackDesignImageUploadedBy, 'Ref Back Design');
-                                            return images;
-                                        })
-                                    } onImageClick={setImageInView} />
-                                    <ImageDisplayCard title="Initial Program Images" images={
-                                        (lead.layouts || []).flatMap((layout, layoutIndex) => {
-                                            const images: any[] = [];
-                                            const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
-                                                const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
-                                                if (Array.isArray(pluralField)) {
-                                                    pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
-                                                } else if (singularField) {
-                                                    images.push({ src: singularField, label: `${labelPrefix}${labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
-                                                }
-                                            };
-                                            addImages((layout as any).logoLeftImages, layout.logoLeftImage, layout.logoLeftImageUploadTime, layout.logoLeftImageUploadedBy, 'Logo Left');
-                                            addImages((layout as any).logoRightImages, layout.logoRightImage, layout.logoRightImageUploadTime, layout.logoRightImageUploadedBy, 'Logo Right');
-                                            addImages((layout as any).backLogoImages, layout.backLogoImage, layout.backLogoImageUploadTime, layout.backLogoImageUploadedBy, 'Back Logo');
-                                            addImages((layout as any).backDesignImages, layout.backDesignImage, layout.backDesignImageUploadTime, layout.backDesignImageUploadedBy, 'Back Design');
-                                            return images;
-                                        })
-                                    } onImageClick={setImageInView} />
-                                    <ImageDisplayCard title="Tested Images" images={
-                                        (lead.layouts || []).flatMap((layout, layoutIndex) => {
-                                            const images: any[] = [];
-                                            const addImages = (pluralField: any, singularField: any, singularTime: any, singularUploader: any, labelPrefix: string) => {
-                                                 const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
-                                                if (Array.isArray(pluralField)) {
-                                                    pluralField.forEach((img, i) => { if (img?.url) images.push({ src: img.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: img.uploadTime, uploadedBy: img.uploadedBy }); });
-                                                } else if (singularField) {
-                                                    images.push({ src: singularField, label: `${labelPrefix}${labelSuffix}`, timestamp: singularTime, uploadedBy: singularUploader });
-                                                }
-                                            };
-                                            addImages((layout as any).testLogoLeftImages, layout.testLogoLeftImage, layout.testLogoLeftImageUploadTime, layout.testLogoLeftImageUploadedBy, 'Test Logo Left');
-                                            addImages((layout as any).testLogoRightImages, layout.testLogoRightImage, layout.testLogoRightImageUploadTime, layout.testLogoRightImageUploadedBy, 'Test Logo Right');
-                                            addImages((layout as any).testBackLogoImages, layout.testBackLogoImage, layout.testBackLogoImageUploadTime, layout.testBackLogoImageUploadedBy, 'Test Back Logo');
-                                            addImages((layout as any).testBackDesignImages, layout.testBackDesignImage, layout.testBackDesignImageUploadTime, layout.testBackDesignImageUploadedBy, 'Test Back Design');
-                                            return images;
-                                        })
-                                    } onImageClick={setImageInView} />
-                                    <ImageDisplayCard title="Final Program Files" images={
-                                        (lead.layouts || []).flatMap((layout, layoutIndex) => {
-                                            const images: any[] = [];
-                                            const addFiles = (files: (FileObject | null)[] | undefined, timestamps: (string | null)[] | undefined, uploaders: (string | null)[] | undefined, labelPrefix: string) => {
-                                                const labelSuffix = (lead.layouts?.length ?? 0) > 1 ? ` L${layoutIndex + 1}` : '';
-                                                if (Array.isArray(files)) {
-                                                    files.forEach((file, i) => {
-                                                        if (file?.url) {
-                                                            images.push({ src: file.url, label: `${labelPrefix} ${i + 1}${labelSuffix}`, timestamp: timestamps?.[i], uploadedBy: uploaders?.[i] });
-                                                        }
-                                                    });
-                                                }
-                                            };
-                                            addFiles(layout.finalProgrammedLogo, layout.finalProgrammedLogoUploadTimes, layout.finalProgrammedLogoUploadedBy, 'Final Logo');
-                                            addFiles(layout.finalProgrammedBackDesign, layout.finalProgrammedBackDesignUploadTimes, layout.finalProgrammedBackDesignUploadedBy, 'Final Back Design');
-                                            addFiles(layout.sequenceLogo, layout.sequenceLogoUploadTimes, layout.sequenceLogoUploadedBy, 'Sequence Logo');
-                                            addFiles(layout.sequenceBackDesign, layout.sequenceBackDesignUploadTimes, layout.sequenceBackDesignUploadedBy, 'Sequence Back Design');
-                                            return images;
-                                        })
-                                    } onImageClick={setImageInView} />
-                                  </div>
-                                </ScrollArea>
-                            </div>
-                        </TableCell>
-                      </TableRow>
+                        <CollapsibleContentRow lead={lead} setImageInView={setImageInView} />
                     )}
                   </React.Fragment>
                 );
@@ -1971,6 +1993,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
 
