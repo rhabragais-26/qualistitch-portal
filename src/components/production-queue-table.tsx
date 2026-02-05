@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -286,38 +285,24 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
 
   const handleDownload = useCallback(async (url: string, name: string) => {
     try {
-        const response = await fetch(url, { mode: 'cors' });
+        const response = await fetch(url);
         if (!response.ok) {
-            // Try fetching with a proxy if direct fetch fails
-            const proxyUrl = `https://cors-anywhere.herokuapp.com/${url}`;
-            const proxyResponse = await fetch(proxyUrl);
-            if (!proxyResponse.ok) {
-                throw new Error(`HTTP error! status: ${proxyResponse.status}`);
-            }
-            const blob = await proxyResponse.blob();
-            const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.download = name;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(link.href);
-        } else {
-            const blob = await response.blob();
-            const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.download = name;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(link.href);
+             throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const blob = await response.blob();
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(link.href);
     } catch (err) {
         console.error('File download failed:', err);
         toast({
             variant: 'destructive',
             title: 'Download Failed',
-            description: 'Could not download the file. Please check your network connection and file permissions.',
+            description: 'Could not download the file. Please check your network connection and CORS policy.',
         });
     }
   }, [toast]);
@@ -493,40 +478,8 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     return (
         <React.Fragment>
             <TableRow>
-                <TableCell className="text-xs align-middle text-center py-2 text-black">
-                    <div className="flex items-center justify-center">
-                        <div className='flex flex-col items-center'>
-                            <span className="font-bold">{toTitleCase(lead.customerName)}</span>
-                            {isRepeat ? (
-                                <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-1.5 cursor-pointer mt-1">
-                                        <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                        <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                          {lead.orderNumber + 1}
-                                        </span>
-                                    </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                    <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                                </TooltipProvider>
-                            ) : (
-                                <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                            )}
-                            {openCustomerDetails === lead.id && (
-                                <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
-                                    {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
-                                    {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </TableCell>
-                <TableCell className="text-xs text-center align-middle">
-                    <div className="flex items-center justify-center gap-1">
+                <TableCell className="text-xs text-left">
+                    <div className="flex items-center justify-start gap-1">
                         <span>{formatJoNumber(lead.joNumber)}</span>
                         {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
                         <TooltipProvider>
@@ -540,6 +493,41 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                             </Tooltip>
                         </TooltipProvider>
                         )}
+                    </div>
+                </TableCell>
+                <TableCell className="text-xs">
+                    <div className="flex items-center justify-center">
+                        <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
+                        {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </Button>
+                        <div className='flex flex-col items-center'>
+                            <span className="font-bold">{lead.customerName}</span>
+                            {isRepeat ? (
+                                <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1.5 cursor-pointer">
+                                        <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                        <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                        {lead.orderNumber + 1}
+                                        </span>
+                                    </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                    <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                </TooltipProvider>
+                            ) : (
+                                <div className="text-xs text-blue-600 font-semibold">New Customer</div>
+                            )}
+                            {openCustomerDetails === lead.id && (
+                                <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
+                                    {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
+                                    {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </TableCell>
                 <TableCell className="align-middle py-3 text-center">
@@ -972,7 +960,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     });
   
     return enrichedLeads;
-}, [leads]);
+  }, [leads]);
   
   const activeCasesByJo = useMemo(() => {
     if (!operationalCases) return new Map();
@@ -1083,19 +1071,19 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
             <Table>
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
-                  <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Customer</TableHead>
-                  <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">J.O. No.</TableHead>
-                  <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Priority</TableHead>
-                  <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Overdue Status</TableHead>
-                  <TableHead className="text-white font-bold align-middle py-2 px-2 text-xs text-center">Production Documents</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Start Production</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Production Category</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Embroidery</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Sewing Category</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Done Sewing</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Trimming/Cleaning</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Production Status</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center py-2 px-2 text-xs">Endorsement</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Customer Details</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">J.O. No.</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Overdue Status</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Production Documents</TableHead>
+                  <TableHead className="text-center text-white font-bold align-middle">Start Production</TableHead>
+                  <TableHead className="text-center text-white font-bold align-middle">Production Category</TableHead>
+                  <TableHead className="text-center text-white font-bold align-middle">Done Embroidery</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Sewing Category</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Done Sewing</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Trimming/Cleaning</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Production Status</TableHead>
+                  <TableHead className="text-white font-bold align-middle text-center">Endorsement</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1113,7 +1101,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                             isReadOnly={isReadOnly}
                             isCompleted={isCompleted}
                             activeCasesByJo={activeCasesByJo}
-                            formatJoNumber={formatJoNumberUtil}
+                            formatJoNumber={formatJoNumber}
                             handleCheckboxChange={handleCheckboxChange}
                             setLeadToEndorse={setLeadToEndorse}
                             handleReopenCase={handleReopenCase}
@@ -1354,6 +1342,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     </>
   );
 });
+const ProductionQueueTableMemo = React.memo(ProductionQueueTable);
 ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
@@ -1362,3 +1351,5 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
 
 
 
+
+    
