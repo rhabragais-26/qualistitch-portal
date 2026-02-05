@@ -25,7 +25,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2, ChevronUp } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { cn, formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
@@ -110,6 +110,250 @@ type ShipmentQueueTableProps = {
   isReadOnly: boolean;
   filterType?: 'ONGOING' | 'COMPLETED';
 };
+
+const ShipmentQueueTableRowGroup = React.memo(function ShipmentQueueTableRowGroup({
+    lead,
+    isRepeat,
+    getContactDisplay,
+    toggleCustomerDetails,
+    openCustomerDetails,
+    isReadOnly,
+    isCompleted,
+    activeCasesByJo,
+    formatJoNumber,
+    handleRequestSalesAudit,
+    handleApproveQuality,
+    setDisapprovingLead,
+    packingLead,
+    setPackingLead,
+    handleWaybillPrintedChange,
+    handleOpenWaybillDialog,
+    waybillNumbers,
+    setShippingLead,
+    setDeliveringLead,
+}: {
+    lead: EnrichedLead;
+    isRepeat: boolean;
+    getContactDisplay: (lead: Lead) => string | null;
+    toggleCustomerDetails: (leadId: string) => void;
+    openCustomerDetails: string | null;
+    isReadOnly: boolean;
+    isCompleted: boolean;
+    activeCasesByJo: Map<string, string>;
+    formatJoNumber: (joNumber: number | undefined) => string;
+    handleRequestSalesAudit: (lead: Lead) => void;
+    handleApproveQuality: (lead: Lead) => void;
+    setDisapprovingLead: React.Dispatch<React.SetStateAction<Lead | null>>;
+    packingLead: { lead: Lead; isPacking: boolean } | null;
+    setPackingLead: React.Dispatch<React.SetStateAction<{ lead: Lead; isPacking: boolean; } | null>>;
+    handleWaybillPrintedChange: (leadId: string, checked: boolean) => void;
+    handleOpenWaybillDialog: (lead: Lead) => void;
+    waybillNumbers: Record<string, string[]>;
+    setShippingLead: React.Dispatch<React.SetStateAction<Lead | null>>;
+    setDeliveringLead: React.Dispatch<React.SetStateAction<Lead | null>>;
+}) => {
+    const status = getStatus(lead);
+    const deliveryDate = lead.adjustedDeliveryDate ? new Date(lead.adjustedDeliveryDate) : (lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22));
+    
+    let daysOverdue: number | null = null;
+    if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
+        const shippedDate = new Date(lead.shippedTimestamp);
+        const overdueDaysAtShipment = differenceInDays(shippedDate, deliveryDate);
+        if (overdueDaysAtShipment > 0) {
+            daysOverdue = overdueDaysAtShipment;
+        }
+    } else if (lead.shipmentStatus !== 'Shipped' && lead.shipmentStatus !== 'Delivered') {
+        const currentOverdueDays = differenceInDays(new Date(), deliveryDate);
+        if (currentOverdueDays > 0) {
+            daysOverdue = currentOverdueDays;
+        }
+    }
+    
+    return (
+        <React.Fragment>
+            <TableRow>
+                <TableCell className="text-xs text-left">
+                    <div className="flex items-center justify-start gap-1">
+                        <span>{formatJoNumber(lead.joNumber)}</span>
+                        {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
+                        <TooltipProvider>
+                            <Tooltip>
+                            <TooltipTrigger>
+                                <AlertTriangle className="h-4 w-4 text-red-500" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
+                            </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                        )}
+                    </div>
+                </TableCell>
+                <TableCell className="text-xs">
+                    <Collapsible>
+                        <CollapsibleTrigger asChild>
+                            <div className="flex items-center cursor-pointer">
+                                <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
+                                <span className="font-bold">{lead.customerName}</span>
+                            </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-[11px] font-normal">
+                            {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
+                            {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                        </CollapsibleContent>
+                    </Collapsible>
+                    {isRepeat ? (
+                        <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1.5 cursor-pointer mt-1 ml-5">
+                                <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                {lead.orderNumber + 1}
+                                </span>
+                            </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                            <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                        </TooltipProvider>
+                    ) : (
+                        <div className="text-xs text-blue-600 font-semibold mt-1 ml-5">New Customer</div>
+                    )}
+                </TableCell>
+                <TableCell className="text-center align-middle py-2">
+                    <div className="flex flex-col items-center justify-center gap-1">
+                        <Checkbox
+                        checked={lead.isJoHardcopyReceived || false}
+                        onCheckedChange={(checked) => handleWaybillPrintedChange(lead.id, !!checked)}
+                        disabled={isReadOnly || isCompleted}
+                        className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
+                        />
+                        {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
+                    </div>
+                </TableCell>
+                <TableCell className="text-center">
+                    {lead.isQualityApproved ? (
+                        <div className="flex flex-col items-center justify-center gap-1">
+                            <div className="flex items-center font-bold text-green-600 text-xs">
+                                <Check className="h-4 w-4 mr-1" />
+                                Approved
+                            </div>
+                            {lead.qualityApprovedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.qualityApprovedTimestamp).dateTimeShort}</div>}
+                        </div>
+                    ) : (
+                        <div className="flex gap-2 justify-center">
+                            <Button size="sm" className={cn("h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => handleApproveQuality(lead)} disabled={(lead.orderType !== 'Stock (Jacket Only)' && !lead.isJoHardcopyReceived) || isReadOnly || isCompleted}>Approve</Button>
+                            <Button size="sm" variant="destructive" className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => setDisapprovingLead(lead)} disabled={(lead.orderType !== 'Stock (Jacket Only)' && !lead.isJoHardcopyReceived) || isReadOnly || isCompleted}>Disapprove</Button>
+                        </div>
+                    )}
+                </TableCell>
+                <TableCell className="text-xs text-center">
+                    {lead.photoshootDate ? format(new Date(lead.photoshootDate), 'MMM-dd') : '-'}
+                </TableCell>
+                <TableCell className="text-center">
+                <div className="flex flex-col items-center justify-center gap-1">
+                    <Checkbox
+                        checked={!!lead.isPacked}
+                        onCheckedChange={(checked) => {
+                        setPackingLead({ lead, isPacking: !!checked });
+                        }}
+                        disabled={!lead.isQualityApproved || isReadOnly || isCompleted}
+                        className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
+                    />
+                    {lead.isPacked && lead.packedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.packedTimestamp).dateTimeShort}</div>}
+                </div>
+                </TableCell>
+                <TableCell className="text-center">
+                    {lead.isSalesAuditRequested ? (
+                        <div className="flex flex-col items-center justify-center gap-1">
+                            <span className="text-orange-500 font-bold text-xs">Requested</span>
+                            {lead.salesAuditRequestedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.salesAuditRequestedTimestamp).dateTimeShort}</div>}
+                        </div>
+                    ) : lead.isSalesAuditComplete ? (
+                        <div className="flex flex-col items-center justify-center gap-1">
+                            <span className="text-blue-600 font-bold text-xs">Done Audit</span>
+                            {lead.salesAuditCompleteTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.salesAuditCompleteTimestamp).dateTimeShort}</div>}
+                        </div>
+                    ) : (
+                        <Button size="sm" className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => handleRequestSalesAudit(lead)} disabled={!lead.isPacked || isReadOnly || isCompleted}>
+                            Request Audit from Sales
+                        </Button>
+                    )}
+                </TableCell>
+                <TableCell className={cn("text-xs text-center", lead.adjustedDeliveryDate && "font-bold")}>
+                    {format(deliveryDate, "MMM dd, yyyy")}
+                    {lead.adjustedDeliveryDate && <div className="text-gray-500 text-[10px]">(Adjusted)</div>}
+                    {daysOverdue !== null && daysOverdue > 0 && <div className="text-red-500 font-medium">({daysOverdue} days overdue)</div>}
+                </TableCell>
+                <TableCell className="text-xs text-center">{lead.courier}</TableCell>
+                <TableCell className="text-center">
+                    <Checkbox
+                        checked={lead.isWaybillPrinted}
+                        onCheckedChange={(checked) => handleWaybillPrintedChange(lead.id, !!checked)}
+                        disabled={isReadOnly || isCompleted || !lead.isSalesAuditComplete}
+                        className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
+                    />
+                </TableCell>
+                <TableCell>
+                    <div className="relative">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-start text-left font-normal h-8"
+                            onClick={() => handleOpenWaybillDialog(lead)}
+                            disabled={!lead.isWaybillPrinted || isReadOnly || isCompleted}
+                        >
+                            Add Waybill No.
+                        </Button>
+                        {(waybillNumbers[lead.id]?.length || 0) > 0 && (
+                            <Badge className="absolute -top-2 -right-2">{waybillNumbers[lead.id].length}</Badge>
+                        )}
+                    </div>
+                </TableCell>
+                <TableCell className="text-xs text-center">
+                <Badge variant={status.variant}>{status.text}</Badge>
+                </TableCell>
+                <TableCell className="text-center">
+                    {filterType === 'COMPLETED' ? (
+                        lead.shipmentStatus === 'Delivered' ? (
+                            <div className="flex flex-col items-center gap-1">
+                                <div className="flex items-center text-sm text-green-600 font-semibold">
+                                    <Check className="mr-2 h-4 w-4" /> Delivered
+                                </div>
+                                {lead.deliveredTimestamp && (
+                                    <div className="text-xs text-gray-500">
+                                        {formatDateTime(lead.deliveredTimestamp).dateTimeShort}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <Button
+                                size="sm"
+                                className={cn("h-7 text-xs font-bold", isReadOnly && "disabled:opacity-100")}
+                                onClick={() => setDeliveringLead(lead)}
+                                disabled={isReadOnly}
+                            >
+                                Mark as Delivered
+                            </Button>
+                        )
+                    ) : (
+                        <Button
+                          size="sm"
+                          className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")}
+                          onClick={() => setShippingLead(lead)}
+                          disabled={!lead.isSalesAuditComplete || isReadOnly || isCompleted}
+                        >
+                          Ship Now
+                        </Button>
+                    )}
+                </TableCell>
+            </TableRow>
+        </React.Fragment>
+    );
+});
+ShipmentQueueTableRowGroup.displayName = 'ShipmentQueueTableRowGroup';
 
 export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: ShipmentQueueTableProps) {
   const firestore = useFirestore();
@@ -547,9 +791,9 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
 
   return (
     <>
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
-      <CardHeader className="pb-4">
-        <div className="flex justify-between items-start">
+      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
+        <CardHeader className="pb-4">
+          <div className="flex justify-between items-start">
             <div>
                 <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Shipments' : 'Shipment Queue'}</CardTitle>
                 <CardDescription className="text-gray-600">
@@ -585,232 +829,64 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                   )}
                 </div>
             </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="border rounded-md">
-          <Table>
-            <TableHeader className="bg-neutral-800">
-              <TableRow>
-                <TableHead className="text-white font-bold text-xs text-left">J.O. Number</TableHead>
-                <TableHead className="text-white font-bold text-xs">Customer</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center w-[150px]">Received Printed J.O.?</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Quality Check</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Photoshoot Request</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Packed</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Sales Audit</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Expected Delivery Date</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Courier</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Waybill Printed</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Waybill No.</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">Status</TableHead>
-                <TableHead className="text-white font-bold text-xs text-center">{filterType === 'COMPLETED' ? 'Mark as Delivered' : 'Ship Order'}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {shipmentQueueLeads && shipmentQueueLeads.length > 0 ? (
-                 shipmentQueueLeads.map(lead => {
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader className="bg-neutral-800">
+                <TableRow>
+                  <TableHead className="text-white font-bold text-xs text-left">J.O. Number</TableHead>
+                  <TableHead className="text-white font-bold text-xs">Customer</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center w-[150px]">Received Printed J.O.?</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Quality Check</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Photoshoot Request</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Packed</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Sales Audit</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Expected Delivery Date</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Courier</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Waybill Printed</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Waybill No.</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Status</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">{filterType === 'COMPLETED' ? 'Mark as Delivered' : 'Ship Order'}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {shipmentQueueLeads && shipmentQueueLeads.length > 0 ? (
+                 shipmentQueueLeads.map((lead) => {
                    const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
-                   const status = getStatus(lead);
-                   const deliveryDate = lead.adjustedDeliveryDate ? new Date(lead.adjustedDeliveryDate) : (lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22));
-                   
-                   let daysOverdue: number | null = null;
-                   if (lead.shipmentStatus === 'Shipped' && lead.shippedTimestamp) {
-                       const shippedDate = new Date(lead.shippedTimestamp);
-                       const overdueDaysAtShipment = differenceInDays(shippedDate, deliveryDate);
-                       if (overdueDaysAtShipment > 0) {
-                           daysOverdue = overdueDaysAtShipment;
-                       }
-                   } else if (lead.shipmentStatus !== 'Shipped' && lead.shipmentStatus !== 'Delivered') {
-                       const currentOverdueDays = differenceInDays(new Date(), deliveryDate);
-                       if (currentOverdueDays > 0) {
-                           daysOverdue = currentOverdueDays;
-                       }
-                   }
-
                    return (
-                      <TableRow key={lead.id}>
-                        <TableCell className="text-xs text-left">
-                          <div className="flex items-center justify-start gap-1">
-                                <span>{formatJoNumber(lead.joNumber)}</span>
-                                {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                    <TooltipTrigger>
-                                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
-                                    </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                )}
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          <Collapsible>
-                              <CollapsibleTrigger asChild>
-                                  <div className="flex items-center cursor-pointer">
-                                      <ChevronDown className="h-4 w-4 mr-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                      <span className="font-bold">{lead.customerName}</span>
-                                  </div>
-                              </CollapsibleTrigger>
-                              <CollapsibleContent className="pt-1 pl-6 text-gray-500 text-[11px] font-normal">
-                                  {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
-                                  {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
-                              </CollapsibleContent>
-                          </Collapsible>
-                          {isRepeat ? (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-1.5 cursor-pointer mt-1 ml-5">
-                                    <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                    <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                      {lead.orderNumber}
-                                    </span>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ) : (
-                            <div className="text-xs text-blue-600 font-semibold mt-1 ml-5">New Customer</div>
-                          )}
-                        </TableCell>
-                         <TableCell className="text-center align-middle py-2">
-                            <div className="flex flex-col items-center justify-center gap-1">
-                                <Checkbox
-                                checked={lead.isJoHardcopyReceived || false}
-                                onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                disabled={isReadOnly || isCompleted}
-                                className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
-                                />
-                                {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                            {lead.isQualityApproved ? (
-                                <div className="flex flex-col items-center justify-center gap-1">
-                                    <div className="flex items-center font-bold text-green-600 text-xs">
-                                        <Check className="h-4 w-4 mr-1" />
-                                        Approved
-                                    </div>
-                                    {lead.qualityApprovedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.qualityApprovedTimestamp).dateTimeShort}</div>}
-                                </div>
-                            ) : (
-                                <div className="flex gap-2 justify-center">
-                                    <Button size="sm" className={cn("h-7 text-xs bg-green-600 hover:bg-green-700 text-white font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => handleApproveQuality(lead)} disabled={(lead.orderType !== 'Stock (Jacket Only)' && !lead.isJoHardcopyReceived) || isReadOnly || isCompleted}>Approve</Button>
-                                    <Button size="sm" variant="destructive" className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => setDisapprovingLead(lead)} disabled={(lead.orderType !== 'Stock (Jacket Only)' && !lead.isJoHardcopyReceived) || isReadOnly || isCompleted}>Disapprove</Button>
-                                </div>
-                            )}
-                        </TableCell>
-                        <TableCell className="text-xs text-center">
-                          {lead.photoshootDate ? format(new Date(lead.photoshootDate), 'MMM-dd') : '-'}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex flex-col items-center justify-center gap-1">
-                            <Checkbox
-                              checked={!!lead.isPacked}
-                              onCheckedChange={(checked) => {
-                                setPackingLead({ lead, isPacking: !!checked });
-                              }}
-                              disabled={!lead.isQualityApproved || isReadOnly || isCompleted}
-                              className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
-                            />
-                            {lead.isPacked && lead.packedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.packedTimestamp).dateTimeShort}</div>}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                           {lead.isSalesAuditRequested ? (
-                                <div className="flex flex-col items-center justify-center gap-1">
-                                    <span className="text-orange-500 font-bold text-xs">Requested</span>
-                                    {lead.salesAuditRequestedTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.salesAuditRequestedTimestamp).dateTimeShort}</div>}
-                                </div>
-                           ) : lead.isSalesAuditComplete ? (
-                                <div className="flex flex-col items-center justify-center gap-1">
-                                    <span className="text-blue-600 font-bold text-xs">Done Audit</span>
-                                    {lead.salesAuditCompleteTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.salesAuditCompleteTimestamp).dateTimeShort}</div>}
-                                </div>
-                           ) : (
-                                <Button size="sm" className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")} onClick={() => handleRequestSalesAudit(lead)} disabled={!lead.isPacked || isReadOnly || isCompleted}>
-                                    Request Audit from Sales
-                                </Button>
-                           )}
-                        </TableCell>
-                        <TableCell className={cn("text-xs text-center", lead.adjustedDeliveryDate && "font-bold")}>
-                           {format(deliveryDate, "MMM dd, yyyy")}
-                           {lead.adjustedDeliveryDate && <div className="text-gray-500 text-[10px]">(Adjusted)</div>}
-                           {daysOverdue !== null && daysOverdue > 0 && <div className="text-red-500 font-medium">({daysOverdue} days overdue)</div>}
-                        </TableCell>
-                        <TableCell className="text-xs text-center">{lead.courier}</TableCell>
-                        <TableCell className="text-center">
-                            <Checkbox
-                                checked={lead.isWaybillPrinted}
-                                onCheckedChange={(checked) => handleWaybillPrintedChange(lead.id, !!checked)}
-                                disabled={isReadOnly || isCompleted || !lead.isSalesAuditComplete}
-                                className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
-                            />
-                        </TableCell>
-                        <TableCell>
-                            <div className="relative">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-full justify-start text-left font-normal h-8"
-                                    onClick={() => handleOpenWaybillDialog(lead)}
-                                    disabled={!lead.isWaybillPrinted || isReadOnly || isCompleted}
-                                >
-                                    Add Waybill No.
-                                </Button>
-                                {(waybillNumbers[lead.id]?.length || 0) > 0 && (
-                                    <Badge className="absolute -top-2 -right-2">{waybillNumbers[lead.id].length}</Badge>
-                                )}
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-xs text-center">
-                          <Badge variant={status.variant}>{status.text}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                            {filterType === 'COMPLETED' ? (
-                                lead.shipmentStatus === 'Delivered' ? (
-                                    <div className="flex flex-col items-center gap-1">
-                                        <div className="flex items-center text-sm text-green-600 font-semibold">
-                                            <Check className="mr-2 h-4 w-4" /> Delivered
-                                        </div>
-                                        {lead.deliveredTimestamp && (
-                                            <div className="text-xs text-gray-500">
-                                                {formatDateTime(lead.deliveredTimestamp).dateTimeShort}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <Button
-                                        size="sm"
-                                        className={cn("h-7 text-xs font-bold", isReadOnly && "disabled:opacity-100")}
-                                        onClick={() => setDeliveringLead(lead)}
-                                        disabled={isReadOnly}
-                                    >
-                                        Mark as Delivered
-                                    </Button>
-                                )
-                            ) : (
-                                <Button
-                                  size="sm"
-                                  className={cn("h-7 text-xs font-bold", isReadOnly || isCompleted ? "disabled:opacity-100" : "")}
-                                  onClick={() => setShippingLead(lead)}
-                                  disabled={!lead.isSalesAuditComplete || isReadOnly || isCompleted}
-                                >
-                                  Ship Now
-                                </Button>
-                            )}
-                        </TableCell>
-                      </TableRow>
-                    </React.Fragment>
-                  )
-                })}
+                      <ShipmentQueueTableRowGroup
+                          key={lead.id}
+                          lead={lead}
+                          isRepeat={isRepeat}
+                          getContactDisplay={getContactDisplay}
+                          toggleCustomerDetails={toggleCustomerDetails}
+                          openCustomerDetails={openCustomerDetails}
+                          isReadOnly={isReadOnly}
+                          isCompleted={isCompleted}
+                          activeCasesByJo={activeCasesByJo}
+                          formatJoNumber={formatJoNumber}
+                          handleRequestSalesAudit={handleRequestSalesAudit}
+                          handleApproveQuality={handleApproveQuality}
+                          setDisapprovingLead={setDisapprovingLead}
+                          packingLead={packingLead}
+                          setPackingLead={setPackingLead}
+                          handleWaybillPrintedChange={handleWaybillPrintedChange}
+                          handleOpenWaybillDialog={handleOpenWaybillDialog}
+                          waybillNumbers={waybillNumbers}
+                          setShippingLead={setShippingLead}
+                          setDeliveringLead={setDeliveringLead}
+                      />
+                   )
+                 })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={13} className="text-center text-muted-foreground">
+                      {filterType === 'COMPLETED' ? 'No completed shipments found.' : 'No items in the shipment queue.'}
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
