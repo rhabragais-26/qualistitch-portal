@@ -27,7 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2 } from 'lucide-react';
 import { Badge } from './ui/badge';
-import { cn, formatDateTime, toTitleCase } from '@/lib/utils';
+import { cn, formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Input } from './ui/input';
@@ -39,6 +39,7 @@ import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 type Order = {
   productType: string;
@@ -89,6 +90,7 @@ type Lead = {
   isDone?: boolean;
   photoshootDate?: string;
   layouts?: Layout[];
+  forceNewCustomer?: boolean;
 }
 
 type OperationalCase = {
@@ -468,29 +470,39 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   const processedLeads = useMemo(() => {
     if (!leads) return [];
   
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
+    const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
   
     leads.forEach(lead => {
       const name = lead.customerName.toLowerCase();
-      if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
+      if (!customerOrderGroups[name]) {
+        customerOrderGroups[name] = { orders: [] };
       }
-      customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
+      customerOrderGroups[name].orders.push(lead);
     });
   
     const enrichedLeads: EnrichedLead[] = [];
   
-    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
+    Object.values(customerOrderGroups).forEach(({ orders }) => {
       orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-      orders.forEach((lead, index) => {
-        enrichedLeads.push({
-          ...lead,
-          orderNumber: index + 1,
-          totalCustomerQuantity,
-        });
-      });
+      
+      const totalCustomerQuantity = orders.reduce((sum, o) => {
+          if (!Array.isArray(o.orders)) return sum;
+          return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
+      }, 0);
+      
+      for (let i = 0; i < sortedOrders.length; i++) {
+          const lead = sortedOrders[i];
+          
+          const previousNonSampleOrders = sortedOrders
+              .slice(0, i)
+              .filter(o => o.orderType !== 'Item Sample');
+          
+          enrichedLeads.push({
+              ...lead,
+              orderNumber: previousNonSampleOrders.length,
+              totalCustomerQuantity,
+          });
+      }
     });
   
     return enrichedLeads;
@@ -598,7 +610,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
             <TableBody>
               {shipmentQueueLeads && shipmentQueueLeads.length > 0 ? (
                  shipmentQueueLeads.map(lead => {
-                   const isRepeat = lead.orderNumber > 1;
+                   const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
                    const status = getStatus(lead);
                    const deliveryDate = lead.adjustedDeliveryDate ? new Date(lead.adjustedDeliveryDate) : (lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22));
                    
@@ -796,21 +808,15 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                             )}
                         </TableCell>
                       </TableRow>
-                   )
-                 })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={13} className="text-center text-muted-foreground">
-                    No orders in shipment queue.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
-     {disapprovingLead && (
+                    </React.Fragment>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+      {disapprovingLead && (
         <Dialog open={!!disapprovingLead} onOpenChange={() => { setDisapprovingLead(null); setRemarks(''); }}>
           <DialogContent>
             <DialogHeader>
