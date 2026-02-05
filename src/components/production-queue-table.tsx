@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import { collection, query, doc, updateDoc, getDocs, where } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
 import {
   Table,
   TableBody,
@@ -259,12 +260,12 @@ const ImageDisplayCard = React.memo(({ title, images, onImageClick }: { title: s
     return (
         <Card className="bg-white flex-shrink-0">
             <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
-            <CardContent className="flex gap-4 text-xs p-2 flex-wrap justify-center">
+            <CardContent className="flex gap-2 text-xs p-2 flex-wrap justify-center">
                 {images.map((img, index) => (
                     img.src && (
-                        <div key={index} className="flex flex-col items-center text-center w-28">
+                        <div key={index} className="flex flex-col items-center text-center w-24">
                             <p className="font-semibold text-gray-500 mb-1 text-xs truncate w-full" title={img.label}>{img.label}</p>
-                            <div className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
+                            <div className="relative w-20 h-20 border rounded-md cursor-pointer" onClick={() => onImageClick(img.src)}>
                                 <Image src={img.src} alt={img.label} layout="fill" objectFit="contain" />
                             </div>
                             {img.timestamp && <p className='text-gray-500 text-[10px] mt-1'>{formatDateTime(img.timestamp).dateTimeShort}</p>}
@@ -278,61 +279,82 @@ const ImageDisplayCard = React.memo(({ title, images, onImageClick }: { title: s
 });
 ImageDisplayCard.displayName = 'ImageDisplayCard';
 
+
 const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { lead: Lead }) {
   const [imageInView, setImageInView] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleDownload = async (url: string, name: string) => {
+  const handleDownload = (url: string, name: string) => {
     try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const blob = await response.blob();
-        const objectUrl = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = objectUrl;
-        a.download = name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(objectUrl);
+        window.open(url, '_blank');
     } catch (err) {
         console.error('File download failed:', err);
         toast({
             variant: "destructive",
             title: "Download Failed",
-            description: "Could not download the file. Please try again.",
+            description: "Could not open the file link. Please check your browser's popup blocker settings.",
         });
     }
   };
 
   const finalDstFiles = useMemo(() => {
-    return [
-      ...(lead.layouts?.[0]?.finalLogoDst?.filter(f => f).map(f => ({ ...f, type: 'Logo' })) || []),
-      ...(lead.layouts?.[0]?.finalBackDesignDst?.filter(f => f).map(f => ({ ...f, type: 'Back Design' })) || []),
-      ...(lead.layouts?.[0]?.finalNamesDst?.filter(f => f).map(f => ({ ...f, type: 'Name' })) || []),
-    ];
-  }, [lead.layouts]);
+    if (!lead.layouts) return [];
+    return lead.layouts.flatMap((layout, layoutIndex) => {
+        const layoutLabel = lead.layouts!.length > 1 ? ` (L${layoutIndex + 1})` : '';
+        const files: { name: string; url: string; type: string }[] = [];
 
-  const sequenceImages = useMemo(() => {
-    return [
-      ...(lead.layouts?.[0]?.sequenceLogo?.filter(f => f).map(f => ({ ...f, type: 'Sequence Logo' })) || []),
-      ...(lead.layouts?.[0]?.sequenceBackDesign?.filter(f => f).map(f => ({ ...f, type: 'Sequence Back Design' })) || []),
-    ].map((img, i) => ({ src: img.url, label: `${img.type} ${i + 1}` }));
-  }, [lead.layouts]);
-
-  const finalProgramImages = useMemo(() => {
-    return [
-      ...(lead.layouts?.[0]?.finalProgrammedLogo?.filter(f => f).map(f => ({ ...f, type: 'Final Program Logo' })) || []),
-      ...(lead.layouts?.[0]?.finalProgrammedBackDesign?.filter(f => f).map(f => ({ ...f, type: 'Final Program Back Design' })) || []),
-    ].map((img, i) => ({ src: img.url, label: `${img.type} ${i + 1}` }));
+        (layout.finalLogoDst || []).forEach(f => {
+            if (f) files.push({ ...f, type: `Logo${layoutLabel}` });
+        });
+        (layout.finalBackDesignDst || []).forEach(f => {
+            if (f) files.push({ ...f, type: `Back Design${layoutLabel}` });
+        });
+        (layout.finalNamesDst || []).forEach(f => {
+            if (f) files.push({ ...f, type: `Name${layoutLabel}` });
+        });
+        return files;
+    });
   }, [lead.layouts]);
 
   const layoutImages = useMemo(() => {
-    return lead.layouts?.filter(l => l.layoutImage).map((l, i) => ({ src: l.layoutImage!, label: `Layout ${i + 1}` })) || [];
+    if (!lead.layouts) return [];
+    return lead.layouts.map((layout, i) => ({
+      src: layout.layoutImage!,
+      label: `Layout ${i + 1}`,
+      timestamp: layout.layoutImageUploadTime,
+      uploadedBy: layout.layoutImageUploadedBy,
+    })).filter(img => img.src);
   }, [lead.layouts]);
 
+  const sequenceImages = useMemo(() => {
+    if (!lead.layouts) return [];
+    return lead.layouts.flatMap((layout, layoutIndex) => {
+      const layoutLabel = lead.layouts!.length > 1 ? ` L${layoutIndex + 1}` : '';
+      const images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[] = [];
+      (layout.sequenceLogo || []).forEach((f, i) => {
+        if (f) images.push({ src: f.url, label: `Sequence Logo ${i + 1}${layoutLabel}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] });
+      });
+      (layout.sequenceBackDesign || []).forEach((f, i) => {
+        if (f) images.push({ src: f.url, label: `Sequence Back ${i + 1}${layoutLabel}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i], uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] });
+      });
+      return images;
+    });
+  }, [lead.layouts]);
+  
+  const finalProgramImages = useMemo(() => {
+    if (!lead.layouts) return [];
+    return lead.layouts.flatMap((layout, layoutIndex) => {
+      const layoutLabel = lead.layouts!.length > 1 ? ` L${layoutIndex + 1}` : '';
+      const images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[] = [];
+      (layout.finalProgrammedLogo || []).forEach((f, i) => {
+        if (f) images.push({ src: f.url, label: `Final Logo ${i + 1}${layoutLabel}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] });
+      });
+      (layout.finalProgrammedBackDesign || []).forEach((f, i) => {
+        if (f) images.push({ src: f.url, label: `Final Back ${i + 1}${layoutLabel}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] });
+      });
+      return images;
+    });
+  }, [lead.layouts]);
 
   return (
     <>
@@ -356,7 +378,6 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
         </div>
       )}
       <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Column 1: DST Files */}
         <div className="space-y-4">
             <h3 className="font-bold text-lg text-primary">Final Program Files (DST)</h3>
             <div className="space-y-2">
@@ -375,14 +396,13 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
             </div>
         </div>
 
-        {/* Column 2: Image Thumbnails */}
         <div className="space-y-4">
-            <ImageDisplayCard title="Layouts" images={layoutImages} onImageClick={setImageInView} />
+          <ImageDisplayCard title="Layouts" images={layoutImages} onImageClick={setImageInView} />
+          <ImageDisplayCard title="Final Program Images" images={finalProgramImages} onImageClick={setImageInView} />
         </div>
         
         <div className="space-y-4">
-            <ImageDisplayCard title="Sequence" images={sequenceImages} onImageClick={setImageInView} />
-            <ImageDisplayCard title="Final Program Images" images={finalProgramImages} onImageClick={setImageInView} />
+          <ImageDisplayCard title="Sequence" images={sequenceImages} onImageClick={setImageInView} />
         </div>
       </div>
     </>
@@ -459,7 +479,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                                     <div className="flex items-center gap-1.5 cursor-pointer mt-1">
                                         <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                         <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                        {lead.orderNumber + 1}
+                                        {lead.orderNumber}
                                         </span>
                                     </div>
                                     </TooltipTrigger>
@@ -607,7 +627,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                     <Badge variant={productionStatus.variant}>{productionStatus.text}</Badge>
                 </TableCell>
                 <TableCell className="text-center align-middle py-2">
-                    {isCompleted ? (
+                    {filterType === 'COMPLETED' ? (
                         <div className="flex flex-col items-center gap-1">
                            <Button size="sm" className="h-7 text-xs font-bold bg-green-600 hover:bg-green-700 text-white" disabled>
                                 Endorsed
@@ -983,22 +1003,18 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
             </div>
             <div className="flex flex-col items-end gap-2">
               <div className="flex items-center gap-4">
-                <div className="w-full max-w-lg">
-                  <Input
-                    placeholder="Search customer, company or contact..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="bg-gray-100 text-black placeholder:text-gray-500"
-                  />
-                </div>
-                <div className="w-full max-w-xs">
-                   <Input
-                    placeholder="Search by J.O. No..."
-                    value={joNumberSearch}
-                    onChange={(e) => setJoNumberSearch(e.target.value)}
-                    className="bg-gray-100 text-black placeholder:text-gray-500"
-                  />
-                </div>
+                <Input
+                  placeholder="Search customer, company or contact..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
+                <Input
+                  placeholder="Search by J.O. No..."
+                  value={joNumberSearch}
+                  onChange={(e) => setJoNumberSearch(e.target.value)}
+                  className="bg-gray-100 text-black placeholder:text-gray-500"
+                />
               </div>
                <div className="w-full text-right">
                 {filterType === 'COMPLETED' ? (
@@ -1293,5 +1309,4 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
 ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
-
     
