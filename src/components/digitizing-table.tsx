@@ -318,7 +318,7 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
         <TableRow>
             <TableCell colSpan={15}>
                  <div className="p-2 bg-gray-50 rounded-md my-2">
-                    <div className="flex flex-wrap gap-4 p-2">
+                    <div className="flex flex-wrap gap-4 p-2 justify-center">
                         {allImages.map(group => (
                             <ImageDisplayCard 
                                 key={group.title}
@@ -1352,17 +1352,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               </div>
             </div>
           </div>
-      
-          <Separator className="my-4" />
-      
+          
           <div className="flex items-center space-x-2 pt-2">
-            <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(e) => {
-              const target = e.target as HTMLInputElement;
-              setIsNamesOnly(target.checked);
-            }} disabled={isViewOnly} />
+            <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isViewOnly} />
             <Label htmlFor="names-only">Customer wanted Names Only</Label>
           </div>
-
+          <Separator className="my-4" />
+      
           <div>
             <h4 className="font-bold text-lg text-left text-teal-700 mb-2">Sequence Images</h4>
             <div className="grid grid-cols-2 gap-4">
@@ -1997,8 +1993,3 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
-
-
-
-
-
