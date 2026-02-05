@@ -1743,7 +1743,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-black hover:bg-transparent hover:text-black" onClick={() => setViewingJoLead(lead)}>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-black hover:text-black hover:bg-transparent" onClick={() => setViewingJoLead(lead)}>
                                                 <FileText className="h-4 w-4" />
                                             </Button>
                                         </TooltipTrigger>
@@ -1840,20 +1840,20 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                   <Table>
                                     <TableHeader>
                                       <TableRow className="bg-gray-200">
-                                        <TableHead className="border border-black p-0.5" colSpan={3}>Item Description</TableHead>
-                                        <TableHead className="border border-black p-0.5" rowSpan={2}>Qty</TableHead>
-                                        <TableHead className="border border-black p-0.5" colSpan={2}>Front Design</TableHead>
-                                        <TableHead className="border border-black p-0.5" colSpan={2}>Back Design</TableHead>
-                                        <TableHead className="border border-black p-0.5" rowSpan={2}>Remarks</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={3}>Item Description</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Qty</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Front Design</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Back Design</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Remarks</TableHead>
                                       </TableRow>
                                       <TableRow className="bg-gray-200">
-                                        <TableHead className="border border-black p-0.5 font-medium">Type of Product</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium">Color</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium">Size</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium w-12">Left</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium w-12">Right</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium w-12">Logo</TableHead>
-                                        <TableHead className="border border-black p-0.5 font-medium w-12">Text</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Type of Product</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Color</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Size</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Left</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Right</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Logo</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Text</TableHead>
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -2021,6 +2021,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
 
