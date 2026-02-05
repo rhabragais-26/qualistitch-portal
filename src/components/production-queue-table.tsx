@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { collection, query, doc, updateDoc, getDocs, where } from 'firebase/firestore';
@@ -143,7 +144,7 @@ const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success
     return { text: "Pending", variant: "secondary" };
 };
 
-const ProductionDocuments = React.memo(({ lead }: { lead: Lead }) => {
+const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { lead: Lead }) {
   const [imageInView, setImageInView] = useState<string | null>(null);
   
   const finalFiles = [
@@ -517,6 +518,8 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
   const [leadToReopen, setLeadToReopen] = useState<Lead | null>(null);
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
 
+  const isCompleted = filterType === 'COMPLETED';
+
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
@@ -723,7 +726,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
         customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
       }
       customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
+      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
       customerOrderStats[name].totalCustomerQuantity += orderQuantity;
     });
   
@@ -961,4 +964,4 @@ ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
 
-    
+  
