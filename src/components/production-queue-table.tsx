@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -258,7 +257,7 @@ const ImageDisplayCard = React.memo(({ title, images, onImageClick }: { title: s
     if (!images || images.length === 0) return null;
 
     return (
-        <Card className="bg-white flex-shrink-0">
+        <Card className="bg-white w-fit">
             <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
             <CardContent className="flex gap-2 text-xs p-2 flex-wrap justify-center">
                 {images.map((img, index) => (
@@ -286,20 +285,25 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
 
   const handleDownload = async (url: string, name: string) => {
     try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const blob = await response.blob();
       const link = document.createElement('a');
-      link.href = url;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.download = name; // Set download attribute
+      link.href = window.URL.createObjectURL(blob);
+      link.download = name;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(link.href);
     } catch (err) {
       console.error('File download failed:', err);
       toast({
-        variant: "destructive",
-        title: "Download Failed",
-        description: "Could not download the file. Please check your network connection and file permissions.",
+        variant: 'destructive',
+        title: 'Download Failed',
+        description:
+          'Could not download the file. Please check your network connection and file permissions.',
       });
     }
   };
@@ -384,7 +388,7 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
           </div>
         </div>
       )}
-      <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-3 gap-6">
+       <div className="p-4 bg-gray-100 border-t-2 border-gray-300 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="space-y-4">
             <h3 className="font-bold text-lg text-primary">Final Program Files (DST)</h3>
             <div className="space-y-2">
@@ -486,7 +490,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                                     <div className="flex items-center gap-1.5 cursor-pointer mt-1">
                                         <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                         <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                        {lead.orderNumber}
+                                          {lead.orderNumber + 1}
                                         </span>
                                     </div>
                                     </TooltipTrigger>
@@ -668,14 +672,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
 });
 ProductionQueueTableRowGroup.displayName = 'ProductionQueueTableRowGroup';
 
-type UserProfileInfo = {
-    uid: string;
-    firstName: string;
-    lastName: string;
-    nickname: string;
-  };
-
-const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
+export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
@@ -686,9 +683,9 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [viewingJoLead, setViewingJoLead] = useState<Lead | null>(null);
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
-  
-  const isCompleted = filterType === 'COMPLETED';
 
+  const isCompleted = filterType === 'COMPLETED';
+  
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
@@ -723,7 +720,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
     updateDoc(leadDocRef, updateData).catch((e: any) => {
         console.error(`Error updating ${field}:`, e);
         toast({
-            variant: 'destructive',
+            variant: "destructive",
             title: "Update Failed",
             description: e.message || "Could not update the status.",
         });
@@ -926,7 +923,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
           
           enrichedLeads.push({
               ...lead,
-              orderNumber: previousNonSampleOrders.length + 1,
+              orderNumber: previousNonSampleOrders.length,
               totalCustomerQuantity,
           });
       }
