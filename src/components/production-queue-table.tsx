@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, ChangeEvent } from 'react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
 import { Label } from './ui/label';
@@ -295,9 +295,8 @@ type ProductionQueueTableProps = {
 
 const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRowGroup({
     lead,
-    isCompleted,
-    isRepeat,
     isReadOnly,
+    filterType,
     getProductionStatus,
     formatJoNumber,
     getContactDisplay,
@@ -311,9 +310,8 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     handleStatusChange,
 }: {
     lead: EnrichedLead;
-    isCompleted: boolean;
-    isRepeat: boolean;
     isReadOnly: boolean;
+    filterType?: 'ONGOING' | 'COMPLETED';
     getProductionStatus: (lead: Lead) => { text: string; variant: "success" | "warning" | "secondary" | "default" | "destructive" };
     formatJoNumber: (joNumber: number | undefined) => string;
     getContactDisplay: (lead: Lead) => string | null;
@@ -326,9 +324,11 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     activeCasesByJo: Map<string, string>;
     handleStatusChange: (leadId: string, field: "productionType" | "sewerType", value: string) => void;
 }) {
+    const isCompleted = filterType === 'COMPLETED';
     const deadlineInfo = calculateProductionDeadline(lead);
     const productionStatus = getProductionStatus(lead);
     const isCollapsibleOpen = openLeadId === lead.id;
+    const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
 
     return (
         <React.Fragment>
@@ -342,7 +342,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                                 <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
                                 <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                 <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                    {lead.orderNumber}
+                                    {lead.orderNumber + 1}
                                 </span>
                                 </div>
                             </TooltipTrigger>
@@ -515,7 +515,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
   const [leadToEndorse, setLeadToEndorse] = useState<Lead | null>(null);
   const [leadToReopen, setLeadToReopen] = useState<Lead | null>(null);
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
-
+  
   const isCompleted = filterType === 'COMPLETED';
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -715,34 +715,45 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
   
   const processedLeads = useMemo(() => {
     if (!leads) return [];
-  
-    const customerOrderStats: { [key: string]: { orders: Lead[], totalCustomerQuantity: number } } = {};
-  
+
+    const customerOrderGroups: { [key: string]: Lead[] } = {};
+
+    // Group all orders by customer
     leads.forEach(lead => {
-      const name = lead.customerName.toLowerCase();
-      if (!customerOrderStats[name]) {
-        customerOrderStats[name] = { orders: [], totalCustomerQuantity: 0 };
-      }
-      customerOrderStats[name].orders.push(lead);
-      const orderQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-      customerOrderStats[name].totalCustomerQuantity += orderQuantity;
+        const name = lead.customerName.toLowerCase();
+        if (!customerOrderGroups[name]) {
+            customerOrderGroups[name] = [];
+        }
+        customerOrderGroups[name].push(lead);
     });
-  
+
     const enrichedLeads: EnrichedLead[] = [];
-  
-    Object.values(customerOrderStats).forEach(({ orders, totalCustomerQuantity }) => {
-      orders.sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-      orders.forEach((lead, index) => {
-        enrichedLeads.push({
-          ...lead,
-          orderNumber: index + 1,
-          totalCustomerQuantity,
-        });
-      });
+
+    Object.values(customerOrderGroups).forEach((orders) => {
+        const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+        
+        const totalCustomerQuantity = orders.reduce((sum, o) => {
+          if (!Array.isArray(o.orders)) return sum;
+          return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
+        }, 0);
+        
+        for (let i = 0; i < sortedOrders.length; i++) {
+            const lead = sortedOrders[i];
+            
+            const previousNonSampleOrders = sortedOrders
+                .slice(0, i)
+                .filter(o => o.orderType !== 'Item Sample');
+            
+            enrichedLeads.push({
+                ...lead,
+                orderNumber: previousNonSampleOrders.length,
+                totalCustomerQuantity,
+            });
+        }
     });
-  
+
     return enrichedLeads;
-  }, [leads]);
+}, [leads]);
   
   const activeCasesByJo = useMemo(() => {
     if (!operationalCases) return new Map();
@@ -838,7 +849,7 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
                   />
                 </div>
               </div>
-               <div className="w-full text-right">
+              <div className="w-full text-right">
                 {filterType === 'COMPLETED' ? (
                   <Link href="/production/production-queue" className="text-sm text-primary hover:underline">
                     View Production Queue
@@ -874,14 +885,11 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
               </TableHeader>
               <TableBody>
                 {productionQueue && productionQueue.length > 0 ? (
-                  productionQueue.map((lead) => {
-                    const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
-                    return (
-                      <ProductionQueueTableRowGroup
+                  productionQueue.map((lead) => (
+                    <ProductionQueueTableRowGroup
                         key={lead.id}
                         lead={lead}
                         isCompleted={isCompleted}
-                        isRepeat={isRepeat}
                         isReadOnly={isReadOnly}
                         getProductionStatus={getProductionStatusLabel}
                         formatJoNumber={formatJoNumberUtil}
@@ -894,9 +902,8 @@ const ProductionQueueTableMemo = React.memo(function ProductionQueueTable({ isRe
                         calculateProductionDeadline={calculateProductionDeadline}
                         activeCasesByJo={activeCasesByJo}
                         handleStatusChange={handleStatusChange}
-                      />
-                    );
-                  })
+                    />
+                  ))
                 ) : (
                   <TableRow>
                     <TableCell colSpan={13} className="text-center text-muted-foreground">
