@@ -111,6 +111,30 @@ type ShipmentQueueTableProps = {
   filterType?: 'ONGOING' | 'COMPLETED';
 };
 
+type ShipmentQueueTableRowGroupProps = {
+  lead: EnrichedLead;
+  isRepeat: boolean;
+  getContactDisplay: (lead: Lead) => string | null;
+  toggleCustomerDetails: (leadId: string) => void;
+  openCustomerDetails: string | null;
+  isReadOnly: boolean;
+  isCompleted: boolean;
+  activeCasesByJo: Map<string, string>;
+  formatJoNumber: (joNumber: number | undefined) => string;
+  handleRequestSalesAudit: (lead: Lead) => void;
+  handleApproveQuality: (lead: Lead) => void;
+  setDisapprovingLead: React.Dispatch<React.SetStateAction<Lead | null>>;
+  packingLead: { lead: Lead; isPacking: boolean } | null;
+  setPackingLead: React.Dispatch<React.SetStateAction<{ lead: Lead; isPacking: boolean; } | null>>;
+  handleWaybillPrintedChange: (leadId: string, checked: boolean) => void;
+  handleOpenWaybillDialog: (lead: Lead) => void;
+  waybillNumbers: Record<string, string[]>;
+  setShippingLead: React.Dispatch<React.SetStateAction<Lead | null>>;
+  setDeliveringLead: React.Dispatch<React.SetStateAction<Lead | null>>;
+  filterType?: 'ONGOING' | 'COMPLETED';
+};
+
+
 const ShipmentQueueTableRowGroup = React.memo(function ShipmentQueueTableRowGroup({
     lead,
     isRepeat,
@@ -131,27 +155,8 @@ const ShipmentQueueTableRowGroup = React.memo(function ShipmentQueueTableRowGrou
     waybillNumbers,
     setShippingLead,
     setDeliveringLead,
-}: {
-    lead: EnrichedLead;
-    isRepeat: boolean;
-    getContactDisplay: (lead: Lead) => string | null;
-    toggleCustomerDetails: (leadId: string) => void;
-    openCustomerDetails: string | null;
-    isReadOnly: boolean;
-    isCompleted: boolean;
-    activeCasesByJo: Map<string, string>;
-    formatJoNumber: (joNumber: number | undefined) => string;
-    handleRequestSalesAudit: (lead: Lead) => void;
-    handleApproveQuality: (lead: Lead) => void;
-    setDisapprovingLead: React.Dispatch<React.SetStateAction<Lead | null>>;
-    packingLead: { lead: Lead; isPacking: boolean } | null;
-    setPackingLead: React.Dispatch<React.SetStateAction<{ lead: Lead; isPacking: boolean; } | null>>;
-    handleWaybillPrintedChange: (leadId: string, checked: boolean) => void;
-    handleOpenWaybillDialog: (lead: Lead) => void;
-    waybillNumbers: Record<string, string[]>;
-    setShippingLead: React.Dispatch<React.SetStateAction<Lead | null>>;
-    setDeliveringLead: React.Dispatch<React.SetStateAction<Lead | null>>;
-}) {
+    filterType,
+}: ShipmentQueueTableRowGroupProps) {
     const status = getStatus(lead);
     const deliveryDate = lead.adjustedDeliveryDate ? new Date(lead.adjustedDeliveryDate) : (lead.deliveryDate ? new Date(lead.deliveryDate) : addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22));
     
@@ -794,7 +799,6 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     });
   }, [processedLeads, searchTerm, joNumberSearch, filterType, formatJoNumber]);
 
-  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
   
   const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
@@ -865,7 +869,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
               <TableBody>
                 {shipmentQueueLeads && shipmentQueueLeads.length > 0 ? (
                  shipmentQueueLeads.map((lead) => {
-                   const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
+                   const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
                    return (
                       <ShipmentQueueTableRowGroup
                           key={lead.id}
@@ -888,6 +892,7 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
                           waybillNumbers={waybillNumbers}
                           setShippingLead={setShippingLead}
                           setDeliveringLead={setDeliveringLead}
+                          filterType={filterType}
                       />
                    )
                  })
@@ -1064,5 +1069,3 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
     </>
   );
 }
-
-    
