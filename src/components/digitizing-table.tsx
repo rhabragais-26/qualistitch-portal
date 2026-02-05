@@ -1338,46 +1338,44 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     } else if (uploadField === 'isFinalProgram') {
       return (
         <div className="space-y-4">
-            {/* Program Files Section */}
-            <div>
-                <h4 className="font-bold text-lg text-teal-700 text-center mb-2">Program Files</h4>
-                <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-                    {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
-                    {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
-                    {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
-                    {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
-                    <div className="col-span-2">
-                      {renderMultipleFileUpload('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
-                    </div>
-                </div>
+          <div>
+            <h4 className="font-bold text-lg text-teal-700 text-left mb-2">Program Files</h4>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              {renderMultipleFileUpload('Logo (EMB)', finalLogoEmb, setFinalLogoEmb, finalLogoEmbUploadRefs)}
+              {renderMultipleFileUpload('Back Design (EMB)', finalBackDesignEmb, setFinalBackDesignEmb, finalBackDesignEmbUploadRefs)}
+              {renderMultipleFileUpload('Logo (DST)', finalLogoDst, setFinalLogoDst, finalLogoDstUploadRefs)}
+              {renderMultipleFileUpload('Back Design (DST)', finalBackDesignDst, setFinalBackDesignDst, finalBackDesignDstUploadRefs)}
+              <div className="col-span-2">
+                {renderMultipleFileUpload('Names (DST)', finalNamesDst, setFinalNamesDst, finalNamesDstUploadRefs)}
+              </div>
             </div>
-
-            <Separator className="my-4" />
-
-            {/* Sequence Images Section */}
-            <div>
-                <h4 className="font-bold text-lg text-teal-700 text-center mb-2">Sequence Images</h4>
-                <div className="grid grid-cols-2 gap-4">
-                    {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
-                    {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
-                </div>
+          </div>
+      
+          <Separator className="my-4" />
+      
+          <div>
+            <h4 className="font-bold text-lg text-teal-700 text-left mb-2">Sequence Images</h4>
+            <div className="grid grid-cols-2 gap-4">
+              {renderUploadBoxes('Sequence Logo', sequenceLogo, setSequenceLogo)}
+              {renderUploadBoxes('Sequence Back Design', sequenceBackDesign, setSequenceBackDesign)}
             </div>
-
-            <div className="flex items-center space-x-2 pt-2">
-                <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={checked => setIsNamesOnly(!!checked)} disabled={isViewOnly} />
-                <Label htmlFor="names-only">Customer wanted Names Only</Label>
-            </div>
-            
-            {!isNamesOnly && (
-                <>
-                    <Separator className="my-4" />
-                    <h4 className="font-bold text-lg text-teal-700 text-center mb-2">Final Programmed Images</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                        {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
-                        {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
-                    </div>
-                </>
-            )}
+          </div>
+      
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox id="names-only" checked={isNamesOnly} onChange={e => setIsNamesOnly(e.target.checked)} disabled={isViewOnly} />
+            <Label htmlFor="names-only">Customer wanted Names Only</Label>
+          </div>
+      
+          {!isNamesOnly && (
+            <>
+              <Separator className="my-4" />
+              <h4 className="font-bold text-lg text-teal-700 text-left mb-2">Final Programmed Images</h4>
+              <div className="grid grid-cols-2 gap-4">
+                {renderUploadBoxes('Final Programmed Logo', finalProgrammedLogo, setFinalProgrammedLogo)}
+                {renderUploadBoxes('Final Programmed Back Design', finalProgrammedBackDesign, setFinalProgrammedBackDesign)}
+              </div>
+            </>
+          )}
         </div>
       );
     }
@@ -1996,6 +1994,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
 
