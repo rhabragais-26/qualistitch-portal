@@ -585,14 +585,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const submissionDate = new Date(lead.submissionDateTime);
     const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
     const deadlineDate = addDays(submissionDate, deadlineDays);
-
+  
     if (lead.isFinalProgram && lead.finalProgramTimestamp) {
-        const completionDate = new Date(lead.finalProgramTimestamp);
-        const finalRemainingDays = differenceInDays(deadlineDate, completionDate);
-        if (finalRemainingDays < 0) {
-            return { text: `Completed ${Math.abs(finalRemainingDays)} day(s) late`, isOverdue: true, isUrgent: false, remainingDays: finalRemainingDays };
-        }
-        return { text: `Completed`, isOverdue: false, isUrgent: false, remainingDays: finalRemainingDays };
+      const completionDate = new Date(lead.finalProgramTimestamp);
+      const finalRemainingDays = differenceInDays(deadlineDate, completionDate);
+      if (finalRemainingDays < 0) {
+        return { text: `Completed ${Math.abs(finalRemainingDays)} day(s) late`, isOverdue: true, isUrgent: false, remainingDays: finalRemainingDays };
+      }
+      return { text: `Completed`, isOverdue: false, isUrgent: false, remainingDays: finalRemainingDays };
     }
     
     const remainingDays = differenceInDays(deadlineDate, new Date());
@@ -605,6 +605,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
     }
   }, []);
+  
 
   const updateStatus = useCallback((leadId: string, field: CheckboxField | 'isJoHardcopyReceived', value: boolean) => {
     if (!firestore) return Promise.reject(new Error("Firestore not available"));
@@ -910,12 +911,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         }
         setIsUploadDialogOpen(true);
       } else {
-        const optimisticUpdate = { [field]: true, [`'${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}'`]: new Date().toISOString() };
+        const optimisticUpdate = { [field]: true, [`'${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}'Timestamp`]: new Date().toISOString() };
         setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...optimisticUpdate } }));
         updateStatus(leadId, field, true).catch(() => {
              toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
              setOptimisticChanges(prev => {
-                const { [field!]: _removed, [`'${field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}'`]: _removedTs, ...rest } = prev[leadId] || {};
+                const { [field!]: _removed, [`'${field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}'Timestamp`]: _removedTs, ...rest } = prev[leadId] || {};
                 return { ...prev, [leadId]: rest };
              });
         });
@@ -1228,13 +1229,16 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign
   ]);
   
+  const isCompleted = filterType === 'COMPLETED';
+
   const handleImagePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    if (isViewOnly) return;
+    const isEffectivelyReadOnly = isReadOnly || (isCompleted && !enableReupload);
+    if (isEffectivelyReadOnly) return;
     const file = e.clipboardData.files[0];
     if (file && file.type.startsWith('image/')) {
         handleImageUpload(file, setter, index);
     }
-  }, [isViewOnly, handleImageUpload]);
+  }, [isReadOnly, isCompleted, enableReupload, handleImageUpload]);
   
   const handleClearImage = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     setter(prev => {
@@ -1279,7 +1283,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   
   const renderUploadDialogContent = useCallback(() => {
     if (!uploadField || !uploadLeadId) return null;
-    const isDisabled = isViewOnly;
+    const isDisabled = isReadOnly || (filterType === 'COMPLETED' && !enableReupload);
     
     const renderMultipleFileUpload = (label: string, filesState: (FileObject|null)[], setFilesState: React.Dispatch<React.SetStateAction<(FileObject|null)[]>>, refs: React.MutableRefObject<(HTMLInputElement | null)[]>, gridCols = "grid-cols-1") => {
       return (
@@ -1421,7 +1425,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 </div>
                 <Separator className="my-4" />
                 <div className="flex items-center space-x-2 pt-2">
-                    <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isViewOnly} />
+                    <Checkbox id="names-only" checked={isNamesOnly} onCheckedChange={(checked) => setIsNamesOnly(!!checked)} disabled={isDisabled} />
                     <Label htmlFor="names-only">Customer wanted Names Only</Label>
                 </div>
                 <div>
@@ -1446,7 +1450,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     }
     return null;
   }, [
-      uploadField, uploadLeadId, isViewOnly, handleImagePaste, handleImageUpload, handleClearImage, 
+      uploadField, uploadLeadId, isViewOnly, filterType, enableReupload, isReadOnly,
+      handleImagePaste, handleImageUpload, handleClearImage, 
       handleRemoveImage, addFile, handleMultipleFileUpload, removeFile, addFileMultiple, setImageInView,
       initialLogoLeftImages, initialLogoRightImages, initialBackLogoImages, initialBackDesignImages, 
       testLogoLeftImages, testLogoRightImages, testBackLogoImages, testBackDesignImages, 
@@ -1570,7 +1575,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   <DialogClose asChild>
                       <Button type="button" variant="outline"> Cancel </Button>
                   </DialogClose>
-                  <Button onClick={handleUploadDialogSave} disabled={isSaveDisabled || isViewOnly}>Save and Update Status</Button>
+                  <Button onClick={handleUploadDialogSave} disabled={isSaveDisabled || (isReadOnly || (filterType === 'COMPLETED' && !enableReupload))}>Save and Update Status</Button>
               </DialogFooter>
           </DialogContent>
       </Dialog>
@@ -1818,7 +1823,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                     </div>
                                 )
                            ) : (
-                            <Button size="sm" onClick={() => setReviewConfirmLead(lead)} disabled={!lead.isFinalProgram || (isJoHardcopyRequired && !lead.isJoHardcopyReceived) || isViewOnly} className="h-7 px-3">
+                            <Button size="sm" onClick={() => setReviewConfirmLead(lead)} disabled={!lead.isFinalProgram || (isJoHardcopyRequired && !lead.isJoHardcopyReceived) || isReadOnly} className="h-7 px-3">
                                 Done
                             </Button>
                            )}
@@ -2066,6 +2071,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTableMemo';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
 
