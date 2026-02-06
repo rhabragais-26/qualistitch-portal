@@ -335,7 +335,7 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
 });
 CollapsibleContentRow.displayName = 'CollapsibleContentRow';
 
-const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
+const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) {
     if (!images || images.length === 0) return null;
 
     return (
@@ -376,9 +376,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch } = useCollection<Lead>(leadsQuery);
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
-  const { data: usersData, isLoading: areUsersLoading, error: usersError } = useCollection<UserProfileInfo>(usersQuery, undefined, { listen: false });
+  const { data: usersData, isLoading: areUsersLoading, error: usersError } = useCollection<UserProfileInfo>(usersQuery);
 
   const isLoading = areLeadsLoading || areUsersLoading;
   const error = leadsError || usersError;
@@ -655,7 +655,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     Object.values(customerOrderGroups).forEach((orders) => {
         const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
         
-        const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0), 0);
+        const totalCustomerQuantity = orders.reduce((sum, o) => {
+          if (!Array.isArray(o.orders)) return sum;
+          return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
+        }, 0);
         
         for (let i = 0; i < sortedOrders.length; i++) {
             const lead = sortedOrders[i];
@@ -724,9 +727,10 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
-    return filteredLeads.map(lead => {
-      return { ...lead, ...(optimisticChanges[lead.id] || {}) };
-    });
+    return filteredLeads.map(lead => ({
+      ...lead,
+      ...(optimisticChanges[lead.id] || {})
+    }));
   }, [filteredLeads, optimisticChanges]);
   
   const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
@@ -2053,5 +2057,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
