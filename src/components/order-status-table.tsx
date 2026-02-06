@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -22,7 +21,7 @@ import { Skeleton } from './ui/skeleton';
 import React, { useState, useMemo, useCallback } from 'react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronUp, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, FileText } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { differenceInDays, addDays, format } from 'date-fns';
 import { cn, formatDateTime, toTitleCase, formatJoNumber } from '@/lib/utils';
@@ -36,12 +35,40 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { Progress } from './ui/progress';
 import Link from 'next/link';
 import { AlertTriangle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import { Separator } from './ui/separator';
+import { Checkbox } from './ui/checkbox';
+
 
 type Order = {
   productType: string;
   color: string;
   size: string;
   quantity: number;
+  design?: DesignDetails;
+  remarks?: string;
+}
+
+type DesignDetails = {
+  left?: boolean;
+  right?: boolean;
+  backLogo?: boolean;
+  backText?: boolean;
+};
+
+type NamedOrder = {
+  id: string;
+  name: string;
+  color: string;
+  size: string;
+  quantity: number;
+  backText: string;
 }
 
 type FileObject = {
@@ -50,7 +77,13 @@ type FileObject = {
 };
 
 type Layout = {
-  layoutImage?: string | null;
+  id: string;
+  layoutImage?: string;
+  dstLogoLeft?: string;
+  dstLogoRight?: string;
+  dstBackLogo?: string;
+  dstBackText?: string;
+  namedOrders?: NamedOrder[];
   finalProgrammedLogo?: (FileObject | null)[];
   finalProgrammedBackDesign?: (FileObject | null)[];
 };
@@ -64,6 +97,8 @@ type Lead = {
   companyName?: string;
   contactNumber: string;
   landlineNumber?: string;
+  location: string;
+  scesFullName?: string;
   orderType: string;
   orders: Order[];
   priorityType: 'Rush' | 'Regular';
@@ -99,6 +134,9 @@ type Lead = {
   isSewing?: boolean;
   finalApprovalTimestamp?: string;
   forceNewCustomer?: boolean;
+  recipientName?: string;
+  courier?: string;
+  paymentType?: string;
 }
 
 type EnrichedLead = Lead & {
@@ -121,6 +159,13 @@ type OperationalCase = {
   isDeleted?: boolean;
 };
 
+type UserProfileInfo = {
+  uid: string;
+  firstName: string;
+  lastName: string;
+  nickname: string;
+};
+
 export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONGOING' | 'COMPLETED' }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
@@ -128,16 +173,20 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   const [overdueStatusFilter, setOverdueStatusFilter] = useState('All');
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
+  const [viewingJoLead, setViewingJoLead] = useState<Lead | null>(null);
 
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
   const operationalCasesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'operationalCases')) : null, [firestore]);
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
   
   const { data: leads, isLoading: areLeadsLoading, error: leadsError } = useCollection<Lead>(leadsQuery);
   const { data: operationalCases, isLoading: areCasesLoading, error: casesError } = useCollection<OperationalCase>(operationalCasesQuery);
+  const { data: usersData, isLoading: areUsersLoading, error: usersError } = useCollection<UserProfileInfo>(usersQuery);
 
-  const isLoading = areLeadsLoading || areCasesLoading;
-  const error = leadsError || casesError;
+
+  const isLoading = areLeadsLoading || areCasesLoading || areUsersLoading;
+  const error = leadsError || casesError || usersError;
   
   const toggleLeadDetails = useCallback((leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
@@ -318,7 +367,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
       
       const totalCustomerQuantity = orders.reduce((sum, o) => {
           if (!Array.isArray(o.orders)) return sum;
-          return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0);
+          return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
       }, 0);
       
       for (let i = 0; i < sortedOrders.length; i++) {
@@ -424,6 +473,232 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
           </div>
         </div>
       )}
+      {viewingJoLead && (
+        <Dialog open={!!viewingJoLead} onOpenChange={() => setViewingJoLead(null)}>
+            <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>Job Order: {formatJoNumber(viewingJoLead.joNumber)}</DialogTitle>
+                    <DialogDescription>Read-only view of the job order form.</DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="pr-6">
+                    <div className="p-4 bg-white text-black">
+                        {(() => {
+                            const lead = viewingJoLead;
+                            const scesProfile = usersData?.find(u => u.nickname === lead.salesRepresentative);
+                            const scesFullName = scesProfile ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
+                            const totalQuantity = lead.orders.reduce((sum: any, order: any) => sum + order.quantity, 0);
+                            const contactDisplay = getContactDisplay(lead);
+                            
+                            const deliveryDate = lead.adjustedDeliveryDate ? format(new Date(lead.adjustedDeliveryDate), "MMM dd, yyyy") : (lead.deliveryDate ? format(new Date(lead.deliveryDate), "MMM dd, yyyy") : format(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22), "MMM dd, yyyy"));
+
+                            const layoutsToPrint = lead.layouts?.filter(l => hasLayoutContent(l as Layout)) || [];
+                            
+                            return (
+                              <>
+                                <div className="p-10 mx-auto max-w-4xl print-page">
+                                  <div className="text-left mb-4">
+                                      <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumber(lead.joNumber)}</span></p>
+                                  </div>
+                                  <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
+
+                                  <div className="grid grid-cols-3 gap-x-8 text-sm mb-6 border-b border-black pb-4">
+                                      <div className="space-y-1">
+                                          <p><strong>Client Name:</strong> {lead.customerName}</p>
+                                          <p><strong>Contact No:</strong> {contactDisplay}</p>
+                                          <p><strong>Delivery Address:</strong> <span className="whitespace-pre-wrap">{lead.location}</span></p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p><strong>Date of Transaction:</strong> {format(new Date(lead.submissionDateTime), 'MMM dd, yyyy')}</p>
+                                          <p><strong>Type of Order:</strong> {lead.orderType}</p>
+                                          <p><strong>Terms of Payment:</strong> {lead.paymentType}</p>
+                                          <p><strong>SCES Name:</strong> {scesFullName}</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p><strong>Recipient's Name:</strong> {lead.recipientName || lead.customerName}</p>
+                                          <p><strong>Courier:</strong> {lead.courier}</p>
+                                          <p><strong>Delivery Date:</strong> {deliveryDate || 'N/A'}</p>
+                                      </div>
+                                  </div>
+
+                                  <h2 className="text-xl font-bold text-center mb-4">ORDER DETAILS</h2>
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow className="bg-gray-200">
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={3}>Item Description</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Qty</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Front Design</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" colSpan={2}>Back Design</TableHead>
+                                        <TableHead className="border border-black p-0.5 text-center align-middle" rowSpan={2}>Remarks</TableHead>
+                                      </TableRow>
+                                      <TableRow className="bg-gray-200">
+                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Type of Product</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Color</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium text-center align-middle">Size</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Left</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Right</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Logo</TableHead>
+                                        <TableHead className="border border-black p-0.5 font-medium w-12 text-center align-middle">Text</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {lead.orders.map((order: any, index: number) => (
+                                        <TableRow key={index}>
+                                          <TableCell className="border border-black p-0.5 text-center align-middle">{order.productType}</TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center align-middle">{order.color}</TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center">{order.size}</TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center">{order.quantity}</TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center">
+                                              <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.left || false} disabled />
+                                          </TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center">
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.right || false} disabled />
+                                          </TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center">
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backLogo || false} disabled />
+                                          </TableCell>
+                                          <TableCell className="border border-black p-0.5 text-center">
+                                            <Checkbox className="mx-auto disabled:opacity-100" checked={order.design?.backText || false} disabled />
+                                          </TableCell>
+                                          <TableCell className="border border-black p-0.5">
+                                            <p className="text-xs">{order.remarks}</p>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                       <TableRow>
+                                          <TableCell colSpan={3} className="text-right font-bold p-0.5">TOTAL</TableCell>
+                                          <TableCell className="text-center font-bold p-0.5">{totalQuantity} PCS</TableCell>
+                                          <TableCell colSpan={5}></TableCell>
+                                      </TableRow>
+                                    </TableBody>
+                                  </Table>
+                                  <div className="text-xs mb-2 pt-2">
+                                    <p className="text-xs mb-2 italic"><strong>Note:</strong> Specific details for logo and back text on the next page</p>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-2 gap-x-16 gap-y-4 text-xs mt-2">
+                                      <div className="space-y-1">
+                                          <p className="font-bold italic">Prepared by:</p>
+                                          <p className="pt-8 border-b border-black text-center font-semibold">{scesFullName}</p>
+                                          <p className="text-center font-bold">Sales &amp; Customer Engagement Specialist</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                       <div className="space-y-1">
+                                          <p className="font-bold italic">Noted by:</p>
+                                          <p className="pt-8 border-b border-black text-center font-semibold">Myreza Banawon</p>
+                                          <p className="text-center font-bold">Sales Head</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+
+                                      <div className="col-span-2 mt-0">
+                                          <p className="font-bold italic">Approved by:</p>
+                                      </div>
+
+
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Programming</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Inventory</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Production Line Leader</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Production Supervisor</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                       <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Quality Control</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                      <div className="space-y-1">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Logistics</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                       <div className="col-span-2 mx-auto w-1/2 space-y-1 pt-4">
+                                          <p className="pt-8 border-b border-black"></p>
+                                          <p className="text-center font-semibold">Operations Supervisor</p>
+                                          <p className="text-center">(Name &amp; Signature, Date)</p>
+                                      </div>
+                                  </div>
+                                </div>
+                                {layoutsToPrint.map((layout, layoutIndex) => (
+                                    <div key={layoutIndex} className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300">
+                                      <div className="text-left mb-4">
+                                          <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumber(lead.joNumber)}</span> - Layout {layoutIndex + 1}</p>
+                                      </div>
+                                      
+                                       {layout.layoutImage && (
+                                         <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
+                                            <Image 
+                                                src={layout.layoutImage} 
+                                                alt={`Layout ${layoutIndex + 1}`} 
+                                                layout="fill"
+                                                objectFit="contain"
+                                            />
+                                          </div>
+                                        )}
+                                      
+                                      <h2 className="text-2xl font-bold text-center mb-4">
+                                        {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
+                                      </h2>
+                                        <table className="w-full border-collapse border border-black mb-6">
+                                            <tbody>
+                                                <tr>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstLogoLeft}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstBackLogo}</p></td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstLogoRight}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstBackText}</p></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                            
+                                        <h2 className="text-2xl font-bold text-center mb-4">NAMES</h2>
+                                        <table className="w-full border-collapse border border-black text-xs">
+                                          <thead>
+                                            <tr className="bg-gray-200">
+                                              <th className="border border-black p-1 text-center align-middle">No.</th>
+                                              <th className="border border-black p-1 text-center align-middle">Names</th>
+                                              <th className="border border-black p-1 text-center align-middle">Color</th>
+                                              <th className="border border-black p-1 text-center align-middle">Sizes</th>
+                                              <th className="border border-black p-1 text-center align-middle">Qty</th>
+                                              <th className="border border-black p-1 text-center align-middle">BACK TEXT</th>
+                                            </tr>
+                                          </thead>
+                                          <TableBody>
+                                            {layout.namedOrders?.map((order, orderIndex) => (
+                                              <TableRow key={orderIndex}>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{orderIndex + 1}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.name}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.color}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.size}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.quantity}</TableCell>
+                                                <TableCell className="border border-black p-1 text-center align-middle">{order.backText}</TableCell>
+                                              </TableRow>
+                                            ))}
+                                          </TableBody>
+                                        </table>
+                                    </div>
+                                  ))}
+                              </>
+                            )
+                        })()}
+                    </div>
+                </ScrollArea>
+            </DialogContent>
+        </Dialog>
+      )}
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start">
             <div>
@@ -500,7 +775,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
               <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white font-bold align-middle w-[250px]">Customer</TableHead>
+                    <TableHead className="text-white font-bold align-middle">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle w-[150px] text-center">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle w-[150px] text-center">SCES</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px]">Priority Type</TableHead>
@@ -530,39 +805,71 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                     <React.Fragment key={lead.id}>
                         <TableRow className="border-b-2 border-gray-300">
                             <TableCell className="font-medium align-middle py-3 text-black text-sm">
-                                <div className="font-bold">{toTitleCase(lead.customerName)}</div>
-                                {isRepeat ? (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <div className="flex items-center gap-1.5 cursor-pointer mt-1">
-                                            <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
-                                            <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
-                                              {lead.orderNumber + 1}
-                                            </span>
-                                          </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  ) : (
-                                    <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
-                                  )}
-                                <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
-                                    {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
-                                    {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                                <div className="flex items-center justify-start gap-1">
+                                    <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
+                                    {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                    </Button>
+                                    <div className='flex flex-col items-start'>
+                                        <span className="font-bold">{toTitleCase(lead.customerName)}</span>
+                                        {isRepeat ? (
+                                            <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                <div className="flex items-center gap-1.5 cursor-pointer mt-1">
+                                                    <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
+                                                    <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
+                                                    {lead.orderNumber + 1}
+                                                    </span>
+                                                </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                <p>Total of {lead.totalCustomerQuantity} items ordered.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            </TooltipProvider>
+                                        ) : (
+                                            <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
+                                        )}
+                                        {openCustomerDetails === lead.id && (
+                                            <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
+                                                {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
+                                                {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </TableCell>
-                            <TableCell className="text-xs align-middle text-center py-2 text-black">{formatJoNumber(lead.joNumber)}</TableCell>
+                            <TableCell className="text-xs align-middle text-center py-2 text-black">
+                              <div className="flex flex-col items-center justify-center gap-2">
+                                <div className="flex items-center justify-center">
+                                  <span>{formatJoNumber(lead.joNumber)}</span>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-black hover:text-black hover:bg-transparent" onClick={() => setViewingJoLead(lead)}>
+                                          <FileText className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>View Job Order Form</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
+                                {lead.layouts?.[0]?.layoutImage && (
+                                    <div className="relative w-24 h-16 mt-1 border rounded-md cursor-pointer" onClick={() => setImageInView(lead.layouts![0].layoutImage!)}>
+                                        <Image src={lead.layouts[0].layoutImage} alt="Layout Thumbnail" layout="fill" objectFit="contain" />
+                                    </div>
+                                )}
+                              </div>
+                            </TableCell>
                             <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.salesRepresentative}</TableCell>
                             <TableCell className="align-middle py-3 text-center">
                                <div className='flex flex-col items-center gap-1'>
                                 <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                                     {lead.priorityType}
                                 </Badge>
-                                <div className="text-gray-500 text-sm font-bold mt-1 whitespace-nowrap">{lead.orderType}</div>
+                                <div className="text-gray-500 text-sm font-bold mt-1">{lead.orderType}</div>
                                </div>
                             </TableCell>
                             <TableCell className="text-center align-middle py-3">
@@ -738,12 +1045,11 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                     </React.Fragment>
                   );
                 })}
-                </TableBody>
-              </Table>
-            </ScrollArea>
-          </div>
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        </div>
       </CardContent>
     </Card>
   );
 }
-
