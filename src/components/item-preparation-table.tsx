@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -20,141 +18,52 @@ import {
 } from '@/components/ui/card';
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from './ui/dialog';
 import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { v4 as uuidv4 } from 'uuid';
 import { Check, ChevronDown, Send, ChevronUp } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Input } from './ui/input';
 import { cn, formatDateTime, toTitleCase, formatJoNumber } from '@/lib/utils';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Checkbox } from './ui/checkbox';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-type Order = {
-  productType: string;
-  color: string;
-  size: string;
-  quantity: number;
-}
+// Types
+type Order = { productType: string; color: string; size: string; quantity: number; };
+type Lead = { id: string; customerName: string; companyName?: string; contactNumber: string; landlineNumber?: string; orders: Order[]; joNumber?: number; orderType: string; submissionDateTime: string; isDigitizingArchived?: boolean; isJoHardcopyReceived?: boolean; joHardcopyReceivedTimestamp?: string; isPreparedForProduction?: boolean; isSentToProduction?: boolean; endorsedToLogisticsTimestamp?: string; isEndorsedToLogistics?: boolean; forceNewCustomer?: boolean; };
+type EnrichedLead = Lead & { orderNumber: number; totalCustomerQuantity: number; };
+type ItemPreparationTableProps = { isReadOnly: boolean; filterType?: 'ONGOING' | 'COMPLETED'; };
 
-type Lead = {
-  id: string;
-  customerName: string;
-  companyName?: string;
-  contactNumber: string;
-  landlineNumber?: string;
-  orders: Order[];
-  joNumber?: number;
-  orderType: string;
-  submissionDateTime: string;
-  isUnderProgramming?: boolean;
-  isInitialApproval?: boolean;
-  isLogoTesting?: boolean;
-  isRevision?: boolean;
-  isFinalApproval?: boolean;
-  isFinalProgram?: boolean;
-  isDigitizingArchived?: boolean;
-  isJoHardcopyReceived?: boolean;
-  joHardcopyReceivedTimestamp?: string;
-  isPreparedForProduction?: boolean;
-  isSentToProduction?: boolean;
-  isEndorsedToLogistics?: boolean;
-  sentToProductionTimestamp?: string;
-  priorityType: 'Rush' | 'Regular';
-  deliveryDate?: string;
-  isJoPrinted?: boolean;
-  forceNewCustomer?: boolean;
-}
+// Helper components are often co-located or imported. Assuming they are available.
+const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRowGroup({ lead, isRepeat, getProgrammingStatus, formatJoNumber, getContactDisplay, handleJoReceivedChange, handleOpenPreparedDialog, setLeadToSend, isReadOnly, filterType, openCustomerDetails, toggleCustomerDetails }: any) {
+  const totalQuantity = lead.orders.reduce((sum: number, order: Order) => sum + (order.quantity || 0), 0);
+  const numOrders = lead.orders.length;
+  const programmingStatus = getProgrammingStatus(lead);
+  const shouldSkipProduction = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
+  const isCompleted = filterType === 'COMPLETED';
 
-type EnrichedLead = Lead & {
-  orderNumber: number;
-  totalCustomerQuantity: number;
-};
-
-type OperationalCase = {
-  id: string;
-  joNumber: string;
-  caseType: string;
-  isArchived?: boolean;
-  isDeleted?: boolean;
-};
-
-const programmingStatusOptions = [
-    'All',
-    'Final Program Uploaded',
-    'Final Program Approved',
-    'Under Revision',
-    'Done Testing',
-    'Initial Program Approved',
-    'Done Initial Program',
-    'Pending Initial Program'
-];
-
-type ItemPreparationTableProps = {
-  isReadOnly: boolean;
-  filterType?: 'ONGOING' | 'COMPLETED';
-};
-
-const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRowGroup({
-    lead,
-    isRepeat,
-    getProgrammingStatus,
-    formatJoNumber,
-    getContactDisplay,
-    handleJoReceivedChange,
-    handleOpenPreparedDialog,
-    setLeadToSend,
-    isReadOnly,
-    filterType,
-}: {
-    lead: EnrichedLead;
-    isRepeat: boolean;
-    getProgrammingStatus: (lead: Lead) => { text: string; variant: "success" | "destructive" | "warning" | "default" | "secondary"; };
-    formatJoNumber: (joNumber: number | undefined) => string;
-    getContactDisplay: (lead: Lead) => string | null;
-    handleJoReceivedChange: (leadId: string, checked: boolean) => void;
-    handleOpenPreparedDialog: (lead: Lead) => void;
-    setLeadToSend: (lead: Lead) => void;
-    isReadOnly: boolean;
-    filterType?: 'ONGOING' | 'COMPLETED';
-}) {
-    const totalQuantity = lead.orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
-    const numOrders = lead.orders.length;
-    const programmingStatus = getProgrammingStatus(lead);
-    const shouldSkipProduction = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
-    const isCompleted = filterType === 'COMPLETED';
-
-    return (
-        <React.Fragment>
-            {lead.orders.map((order, orderIndex) => (
-                <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex === 0 ? "border-t-2 border-black" : ""}>
-                    {orderIndex === 0 && (
-                        <TableCell rowSpan={numOrders + 1} className="font-medium text-xs align-middle py-3 text-black border-b-2 border-black text-center">
-                            <Collapsible>
-                                <CollapsibleTrigger asChild>
-                                    <div className="flex items-center justify-center cursor-pointer">
-                                        <span>{toTitleCase(lead.customerName)}</span>
-                                        <ChevronDown className="h-4 w-4 ml-1 transition-transform [&[data-state=open]]:rotate-180" />
-                                    </div>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="pt-2 text-gray-500 space-y-1">
-                                    {lead.companyName && lead.companyName !== '-' && <div><strong>Company:</strong> {toTitleCase(lead.companyName)}</div>}
-                                    {getContactDisplay(lead) && <div><strong>Contact:</strong> {getContactDisplay(lead)}</div>}
-                                </CollapsibleContent>
-                            </Collapsible>
-                            {isRepeat ? (
+  return (
+      <React.Fragment>
+          {lead.orders.map((order: Order, orderIndex: number) => (
+              <TableRow key={`${lead.id}-${orderIndex}`} className={orderIndex === 0 ? "border-t-2 border-black" : ""}>
+                  {orderIndex === 0 && (
+                      <TableCell rowSpan={numOrders + 1} className="font-medium text-xs align-middle py-3 text-black border-b-2 border-black text-center">
+                           <div className="flex items-center justify-center">
+                            <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
+                              {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </Button>
+                            <div className='flex flex-col items-center'>
+                              <span className="font-medium">{toTitleCase(lead.customerName)}</span>
+                              {isRepeat ? (
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <div className="flex items-center justify-center gap-1.5 cursor-pointer mt-1">
+                                      <div className="flex items-center gap-1.5 cursor-pointer mt-1">
                                         <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                         <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
                                           {lead.orderNumber + 1}
@@ -169,105 +78,132 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                               ) : (
                                 <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                               )}
-                        </TableCell>
-                    )}
-                    {orderIndex === 0 && (
-                        <TableCell rowSpan={numOrders + 1} className="text-xs align-middle py-3 text-black border-b-2 border-black text-center">
-                        <div>{formatJoNumber(lead.joNumber)}</div>
-                        </TableCell>
-                    )}
-                    {orderIndex === 0 && (
-                        <TableCell rowSpan={numOrders + 1} className="align-middle py-3 border-b-2 border-black text-center">
-                        <Badge variant={programmingStatus.variant as any}>{programmingStatus.text}</Badge>
-                        {shouldSkipProduction && <p className="text-xs font-bold mt-1">{lead.orderType}</p>}
-                        </TableCell>
-                    )}
-                    {orderIndex === 0 && (
-                        <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
-                        <div className="flex flex-col items-center justify-center gap-1">
-                            <Checkbox
-                                checked={lead.isJoHardcopyReceived || false}
-                                onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                disabled={shouldSkipProduction ? false : !lead.isDigitizingArchived || isReadOnly || isCompleted}
-                                className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
-                            />
-                            {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
-                        </div>
-                    </TableCell>
-                    )}
-                <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
-                    <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
-                    <TableCell className="py-1 px-2 text-xs text-black text-center">{order.size}</TableCell>
-                    <TableCell className="py-1 px-2 text-xs text-black text-center">{order.quantity}</TableCell>
-                    {orderIndex === 0 && (
-                        <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
-                        {lead.isPreparedForProduction ? (
-                            <div className="flex items-center justify-center text-sm text-green-600 font-semibold">
-                                <Check className="mr-2 h-4 w-4" /> Prepared
-                            </div>
-                            ) : (
-                                <Button
-                                    size="sm"
-                                    onClick={() => handleOpenPreparedDialog(lead)}
-                                    className="h-7 px-2"
-                                    disabled={isReadOnly || isCompleted || !(lead.isJoHardcopyReceived || shouldSkipProduction)}
-                                >
-                                    Prepared
-                                </Button>
-                            )}
-                        </TableCell>
-                    )}
-                    {orderIndex === 0 && (
-                        <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
-                            {lead.isSentToProduction || lead.isEndorsedToLogistics ? (
-                            <div className="flex flex-col items-center gap-1">
-                                <div className="flex items-center text-sm text-green-600 font-semibold">
-                                    <Check className="mr-2 h-4 w-4" /> Sent
+                              {openCustomerDetails === lead.id && (
+                                <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
+                                  {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
+                                  {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                 </div>
-                                <div className="text-xs text-gray-500">
-                                    <div>{formatDateTime(lead.sentToProductionTimestamp!).dateTimeShort}</div>
-                                </div>
+                              )}
                             </div>
-                            ) : (
-                                <Button
-                                    size="sm"
-                                    onClick={() => setLeadToSend(lead)}
-                                    disabled={!lead.isPreparedForProduction || isReadOnly || isCompleted}
-                                    className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
-                                >
-                                    <Send className="mr-2 h-4 w-4" /> 
-                                    {shouldSkipProduction ? 'Send to Logistics' : 'Send to Prod'}
-                                </Button>
-                            )}
-                        </TableCell>
-                    )}
-                </TableRow>
-            ))}
-            <TableRow className="border-b-2 border-black bg-gray-50">
-                <TableCell colSpan={3} className="py-1 px-2 text-xs font-bold text-right">Total Quantity</TableCell>
-                <TableCell className="py-1 px-2 text-xs text-center font-bold">{totalQuantity}</TableCell>
-            </TableRow>
-        </React.Fragment>
-    );
+                          </div>
+                      </TableCell>
+                  )}
+                  {orderIndex === 0 && <TableCell rowSpan={numOrders + 1} className="text-xs align-middle py-3 text-black border-b-2 border-black text-center">{formatJoNumber(lead.joNumber)}</TableCell>}
+                  {orderIndex === 0 && <TableCell rowSpan={numOrders + 1} className="align-middle py-3 border-b-2 border-black text-center"><Badge variant={programmingStatus.variant}>{programmingStatus.text}</Badge></TableCell>}
+                  {orderIndex === 0 && (
+                      <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
+                          <div className="flex flex-col items-center justify-center gap-1">
+                              <Checkbox
+                                  checked={lead.isJoHardcopyReceived || false}
+                                  onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
+                                  disabled={shouldSkipProduction ? false : !lead.isDigitizingArchived || isReadOnly || isCompleted}
+                                  className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
+                              />
+                              {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
+                          </div>
+                      </TableCell>
+                  )}
+                  <TableCell className="py-1 px-2 text-xs text-black">{order.productType}</TableCell>
+                  <TableCell className="py-1 px-2 text-xs text-black">{order.color}</TableCell>
+                  <TableCell className="py-1 px-2 text-xs text-black text-center">{order.size}</TableCell>
+                  <TableCell className="py-1 px-2 text-xs text-black text-center">{order.quantity}</TableCell>
+                  {orderIndex === 0 && (
+                      <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
+                          {lead.isPreparedForProduction ? (
+                              <div className="flex items-center justify-center text-sm text-green-600 font-semibold">
+                                  <Check className="mr-2 h-4 w-4" /> Prepared
+                              </div>
+                          ) : (
+                              <Button
+                                  size="sm"
+                                  onClick={() => handleOpenPreparedDialog(lead)}
+                                  className="h-7 px-2"
+                                  disabled={isReadOnly || isCompleted || !(lead.isJoHardcopyReceived || shouldSkipProduction)}
+                              >
+                                  Prepared
+                              </Button>
+                          )}
+                      </TableCell>
+                  )}
+                  {orderIndex === 0 && (
+                      <TableCell rowSpan={numOrders + 1} className="text-center align-middle py-2 border-b-2 border-black">
+                          {lead.isSentToProduction || lead.isEndorsedToLogistics ? (
+                              <div className="flex flex-col items-center gap-1">
+                                  <div className="flex items-center text-sm text-green-600 font-semibold">
+                                      <Check className="mr-2 h-4 w-4" /> Sent
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                      <div>{formatDateTime(lead.endorsedToLogisticsTimestamp!).dateTimeShort}</div>
+                                  </div>
+                              </div>
+                          ) : (
+                              <Button
+                                  size="sm"
+                                  onClick={() => setLeadToSend(lead)}
+                                  disabled={!lead.isPreparedForProduction || isReadOnly || isCompleted}
+                                  className={cn("h-7 px-2", !lead.isPreparedForProduction && "bg-gray-400")}
+                              >
+                                  {shouldSkipProduction ? 'Send to Logistics' : 'Send to Prod'}
+                              </Button>
+                          )}
+                      </TableCell>
+                  )}
+              </TableRow>
+          ))}
+          <TableRow className="border-b-2 border-black bg-gray-50">
+              <TableCell colSpan={3} className="py-1 px-2 text-xs font-bold text-right">Total Quantity</TableCell>
+              <TableCell className="py-1 px-2 text-xs text-center font-bold">{totalQuantity}</TableCell>
+          </TableRow>
+      </React.Fragment>
+  );
 });
 ItemPreparationTableRowGroup.displayName = 'ItemPreparationTableRowGroup';
 
 
 const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isReadOnly, filterType = 'ONGOING' }: ItemPreparationTableProps) {
   const firestore = useFirestore();
+  const { toast } = useToast();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const { toast } = useToast();
-
-  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
-
   const [confirmingLead, setConfirmingLead] = useState<Lead | null>(null);
   const [leadToSend, setLeadToSend] = useState<Lead | null>(null);
   const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived'; } | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
+  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
+
+  const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
+  const { data: leads, isLoading: areLeadsLoading, error: leadsError, refetch: refetchLeads } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  
+  const isLoading = areLeadsLoading;
+  const error = leadsError;
+
+  useEffect(() => {
+    if (!firestore || !leads || isReadOnly || filterType !== 'ONGOING') return;
+
+    const leadsToUpdate = leads.filter(lead => {
+        const isReadyForPrep = lead.isDigitizingArchived || ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
+        return isReadyForPrep && !lead.isJoHardcopyReceived && !lead.isSentToProduction && !lead.isEndorsedToLogistics;
+    });
+
+    if (leadsToUpdate.length > 0) {
+        const updates = leadsToUpdate.map(lead => {
+            const leadDocRef = doc(firestore, 'leads', lead.id);
+            return updateDoc(leadDocRef, {
+                isJoHardcopyReceived: true,
+                joHardcopyReceivedTimestamp: new Date().toISOString(),
+            });
+        });
+        
+        Promise.all(updates).then(() => {
+            refetchLeads();
+        }).catch(error => {
+            console.error("Error automatically updating J.O. receipt status:", error);
+        });
+    }
+  }, [leads, firestore, isReadOnly, filterType, refetchLeads]);
 
 
   const getProgrammingStatus = useCallback((lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
@@ -294,12 +230,6 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
     return mobile || landline || null;
   }, []);
 
-  const formatJoNumber = useCallback((joNumber: number | undefined) => {
-    if (!joNumber) return '';
-    const currentYear = new Date().getFullYear().toString().slice(-2);
-    return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
-  }, []);
-
   const handleOpenPreparedDialog = useCallback((lead: Lead) => {
     setConfirmingLead(lead);
     setCheckedItems({});
@@ -323,6 +253,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
             title: "Status Updated",
             description: "The status has been updated successfully.",
         });
+        refetchLeads();
     } catch (e: any) {
         console.error(`Error updating ${field}:`, e);
         toast({
@@ -331,7 +262,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
             description: e.message || "Could not update the status.",
         });
     }
-  }, [firestore, toast]);
+  }, [firestore, toast, refetchLeads]);
   
   const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
     const lead = leads?.find((l) => l.id === leadId);
@@ -352,30 +283,20 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
     try {
         const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
         await updateDoc(leadDocRef, { [field]: false, [timestampField]: null });
+        refetchLeads();
     } catch (e: any) {
         console.error(`Error unchecking ${field}:`, e);
         toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
     } finally {
         setUncheckConfirmation(null);
     }
-  }, [uncheckConfirmation, firestore, toast]);
+  }, [uncheckConfirmation, firestore, toast, refetchLeads]);
 
   const confirmJoReceived = useCallback(async () => {
     if (!joReceivedConfirmation || !firestore) return;
-    const leadDocRef = doc(firestore, 'leads', joReceivedConfirmation);
-    try {
-      await updateDoc(leadDocRef, { 
-        isJoHardcopyReceived: true,
-        joHardcopyReceivedTimestamp: new Date().toISOString()
-      });
-    } catch (e: any) {
-      console.error("Error updating J.O. receipt status:", e);
-      toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
-    } finally {
-      setJoReceivedConfirmation(null);
-    }
-  }, [joReceivedConfirmation, firestore, toast]);
-
+    await handleUpdateStatus(joReceivedConfirmation, 'isJoHardcopyReceived', true);
+    setJoReceivedConfirmation(null);
+  }, [joReceivedConfirmation, firestore, handleUpdateStatus]);
 
   const handleConfirmPrepared = useCallback(async () => {
     if (!confirmingLead) return;
@@ -392,25 +313,22 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
     return confirmingLead.orders.length === Object.keys(checkedItems).filter(key => checkedItems[parseInt(key)]).length;
   }, [confirmingLead, checkedItems]);
 
-  const handleConfirmSendToProd = useCallback(async () => {
+  const handleConfirmSendTo = useCallback(async () => {
     if (!leadToSend) return;
-    await handleUpdateStatus(leadToSend.id, 'isSentToProduction', true);
+    const shouldSkipProduction = ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(leadToSend.orderType);
+    if (shouldSkipProduction) {
+        await handleUpdateStatus(leadToSend.id, 'isEndorsedToLogistics', true);
+    } else {
+        await handleUpdateStatus(leadToSend.id, 'isSentToProduction', true);
+    }
     setLeadToSend(null);
   }, [leadToSend, handleUpdateStatus]);
   
-  const handleConfirmSendToLogistics = useCallback(async () => {
-    if (!leadToSend) return;
-    await handleUpdateStatus(leadToSend.id, 'isEndorsedToLogistics', true);
-    setLeadToSend(null);
-  }, [leadToSend, handleUpdateStatus]);
-
-
   const processedLeads = useMemo(() => {
     if (!leads) return [];
 
     const customerOrderGroups: { [key: string]: Lead[] } = {};
 
-    // Group all orders by customer
     leads.forEach(lead => {
         const name = lead.customerName.toLowerCase();
         if (!customerOrderGroups[name]) {
@@ -423,20 +341,15 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 
     Object.values(customerOrderGroups).forEach((orders) => {
         const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-        
         const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0), 0);
         
         for (let i = 0; i < sortedOrders.length; i++) {
             const lead = sortedOrders[i];
-            
-            // Count previous non-sample orders for this customer
-            const previousNonSampleOrders = sortedOrders
-                .slice(0, i)
-                .filter(o => o.orderType !== 'Item Sample');
+            const previousNonSampleOrders = sortedOrders.slice(0, i).filter(o => o.orderType !== 'Item Sample');
             
             enrichedLeads.push({
                 ...lead,
-                orderNumber: previousNonSampleOrders.length, // 0-indexed count
+                orderNumber: previousNonSampleOrders.length,
                 totalCustomerQuantity,
             });
         }
@@ -445,8 +358,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
     return enrichedLeads;
   }, [leads]);
 
-
-  const jobOrders = React.useMemo(() => {
+  const jobOrders = useMemo(() => {
     if (!processedLeads) return [];
     
     const leadsInQueue = processedLeads.filter(lead => {
@@ -484,14 +396,17 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
       
       return (matchesSearch && matchesJo && matchesStatus);
     });
+
   }, [processedLeads, searchTerm, joNumberSearch, statusFilter, formatJoNumber, getProgrammingStatus, filterType]);
+
+  const toggleCustomerDetails = useCallback((leadId: string) => {
+    setOpenCustomerDetails(openCustomerDetails === leadId ? null : leadId);
+  }, [openCustomerDetails]);
 
   if (isLoading) {
     return (
       <div className="space-y-2 p-4">
-        {[...Array(10)].map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full bg-gray-200" />
-        ))}
+        {[...Array(10)].map((_, i) => (<Skeleton key={i} className="h-12 w-full bg-gray-200" />))}
       </div>
     );
   }
@@ -501,7 +416,100 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
   }
 
   return (
-    <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
+    <>
+      <Card className="w-full shadow-xl animate-in fade-in-50 duration-500 bg-white text-black h-full flex flex-col border-none">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Endorsements' : 'Item Preparation'}</CardTitle>
+              <CardDescription className="text-gray-600">
+                {filterType === 'COMPLETED' ? 'Job orders that have been endorsed.' : 'Job orders ready for item preparation.'}
+              </CardDescription>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Filter Program Status:</span>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-[200px] bg-gray-100 text-black placeholder:text-gray-500">
+                            <SelectValue placeholder="Filter by Status" />
+                        </SelectTrigger>
+                    </Select>
+                    </div>
+                    <div className="w-full max-w-lg">
+                    <Input
+                        placeholder="Search customer, company, contact..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-gray-100 text-black placeholder:text-gray-500"
+                    />
+                    </div>
+                    <div className="w-full max-w-xs">
+                    <Input
+                        placeholder="Search by J.O. No..."
+                        value={joNumberSearch}
+                        onChange={(e) => setJoNumberSearch(e.target.value)}
+                        className="bg-gray-100 text-black placeholder:text-gray-500"
+                    />
+                    </div>
+                </div>
+                 <div className="w-full text-right">
+                {filterType === 'COMPLETED' ? (
+                  <Link href="/inventory/item-preparation-for-production" className="text-sm text-primary hover:underline">
+                    View Item Preparation Queue
+                  </Link>
+                ) : (
+                  <Link href="/inventory/completed-endorsement" className="text-sm text-primary hover:underline">
+                    View Completed Endorsements
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader className="bg-neutral-800">
+                <TableRow>
+                  <TableHead className="text-white font-bold text-xs">Customer</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">J.O. No.</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Programming Status</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center w-[150px]">Received Printed J.O.?</TableHead>
+                  <TableHead className="text-white font-bold text-xs">Product Type</TableHead>
+                  <TableHead className="text-white font-bold text-xs">Color</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Size</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Qty</TableHead>
+                  <TableHead className="text-white font-bold text-center">Preparation Status</TableHead>
+                  <TableHead className="text-white font-bold text-center">Endorsement</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {jobOrders?.map((lead) => {
+                  const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
+                  return (
+                    <ItemPreparationTableRowGroup
+                      key={lead.id}
+                      lead={lead}
+                      isRepeat={isRepeat}
+                      getProgrammingStatus={getProgrammingStatus}
+                      formatJoNumber={formatJoNumber}
+                      getContactDisplay={getContactDisplay}
+                      handleJoReceivedChange={handleJoReceivedChange}
+                      handleOpenPreparedDialog={handleOpenPreparedDialog}
+                      setLeadToSend={setLeadToSend}
+                      isReadOnly={isReadOnly}
+                      filterType={filterType}
+                      openCustomerDetails={openCustomerDetails}
+                      toggleCustomerDetails={toggleCustomerDetails}
+                    />
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
       <AlertDialog open={!!confirmingLead} onOpenChange={() => setConfirmingLead(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -532,7 +540,6 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
       {leadToSend && (
           <AlertDialog open={!!leadToSend} onOpenChange={() => setLeadToSend(null)}>
               <AlertDialogContent>
@@ -544,7 +551,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(leadToSend.orderType) ? handleConfirmSendToLogistics : handleConfirmSendToProd}>Confirm</AlertDialogAction>
+                      <AlertDialogAction onClick={handleConfirmSendTo}>Confirm</AlertDialogAction>
                   </AlertDialogFooter>
               </AlertDialogContent>
           </AlertDialog>
@@ -577,103 +584,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
-
-      <CardHeader className="pb-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completed Endorsements' : 'Item Preparation'}</CardTitle>
-            <CardDescription className="text-gray-600">
-              {filterType === 'COMPLETED' ? 'Job orders that have been endorsed.' : 'Job orders ready for item preparation.'}
-            </CardDescription>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Filter Program Status:</span>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[200px] bg-gray-100 text-black placeholder:text-gray-500">
-                        <SelectValue placeholder="Filter by Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {programmingStatusOptions.map(status => (
-                            <SelectItem key={status} value={status}>{status}</SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="w-full max-w-lg">
-                  <Input
-                    placeholder="Search customer, company, contact..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="bg-gray-100 text-black placeholder:text-gray-500"
-                  />
-                </div>
-                <div className="w-full max-w-xs">
-                   <Input
-                    placeholder="Search by J.O. No..."
-                    value={joNumberSearch}
-                    onChange={(e) => setJoNumberSearch(e.target.value)}
-                    className="bg-gray-100 text-black placeholder:text-gray-500"
-                  />
-                </div>
-              </div>
-              <div className="w-full text-right">
-                {filterType === 'COMPLETED' ? (
-                  <Link href="/inventory/item-preparation-for-production" className="text-sm text-primary hover:underline">
-                    View Item Preparation Queue
-                  </Link>
-                ) : (
-                  <Link href="/inventory/completed-endorsement" className="text-sm text-primary hover:underline">
-                    View Completed Endorsements
-                  </Link>
-                )}
-              </div>
-            </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-           <div className="border rounded-md">
-            <Table>
-                <TableHeader className="bg-neutral-800 sticky top-0 z-10">
-                  <TableRow>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Customer</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">J.O. No.</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Programming Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center w-[150px]">Received Printed J.O.?</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">Product Type</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2">Color</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Size</TableHead>
-                    <TableHead className="text-white font-bold align-middle py-1 text-xs px-2 text-center">Qty</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center py-1 text-xs px-2">Preparation Status</TableHead>
-                    <TableHead className="text-white font-bold align-middle text-center py-1 text-xs px-2">Endorsement</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                {jobOrders?.map((lead) => {
-                  const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
-                  return (
-                    <ItemPreparationTableRowGroup
-                        key={lead.id}
-                        lead={lead}
-                        isRepeat={isRepeat}
-                        getProgrammingStatus={getProgrammingStatus}
-                        formatJoNumber={formatJoNumber}
-                        getContactDisplay={getContactDisplay}
-                        handleJoReceivedChange={handleJoReceivedChange}
-                        handleOpenPreparedDialog={handleOpenPreparedDialog}
-                        setLeadToSend={setLeadToSend}
-                        isReadOnly={isReadOnly}
-                        filterType={filterType}
-                    />
-                  )
-                })}
-                </TableBody>
-            </Table>
-          </div>
-      </CardContent>
-    </Card>
+    </>
   );
 });
 ItemPreparationTableMemo.displayName = 'ItemPreparationTableMemo';
