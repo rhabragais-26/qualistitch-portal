@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -295,7 +294,7 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
     try {
         const response = await fetch(url);
         if (!response.ok) {
-             throw new Error(`HTTP error! status: ${'\'\'\''}response.status{'\'\'\''}`);
+             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const blob = await response.blob();
         const fileHandle = await (window as any).showSaveFilePicker({
@@ -439,6 +438,28 @@ type UserProfileInfo = {
     nickname: string;
   };
 
+type ProductionQueueTableRowGroupProps = {
+    lead: EnrichedLead;
+    isRepeat: boolean;
+    getContactDisplay: (lead: Lead) => string | null;
+    toggleCustomerDetails: (leadId: string) => void;
+    openCustomerDetails: string | null;
+    isReadOnly: boolean;
+    isCompleted: boolean;
+    activeCasesByJo: Map<string, string>;
+    formatJoNumber: (joNumber: number | undefined) => string;
+    handleCheckboxChange: (leadId: string, field: CheckboxField, checked: boolean) => void;
+    setLeadToEndorse: React.Dispatch<React.SetStateAction<Lead | null>>;
+    handleReopenCase: (lead: Lead) => void;
+    setOpenLeadId: React.Dispatch<React.SetStateAction<string | null>>;
+    openLeadId: string | null;
+    calculateProductionDeadline: (lead: Lead) => { text: React.ReactNode; isOverdue: boolean; isUrgent: boolean; remainingDays: number; };
+    handleStatusChange: (leadId: string, field: "productionType" | "sewerType", value: string) => void;
+    setViewingJoLead: React.Dispatch<React.SetStateAction<Lead | null>>;
+    getProductionStatusLabel: (lead: Lead) => { text: string; variant: "success" | "warning" | "secondary" | "default" | "destructive" };
+    filterType?: 'ONGOING' | 'COMPLETED';
+};
+
 const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRowGroup({
     lead,
     isRepeat,
@@ -457,27 +478,9 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     calculateProductionDeadline,
     handleStatusChange,
     setViewingJoLead,
+    getProductionStatusLabel,
     filterType
-}: {
-    lead: EnrichedLead;
-    isRepeat: boolean;
-    getContactDisplay: (lead: Lead) => string | null;
-    toggleCustomerDetails: (leadId: string) => void;
-    openCustomerDetails: string | null;
-    isReadOnly: boolean;
-    isCompleted: boolean;
-    activeCasesByJo: Map<string, string>;
-    formatJoNumber: (joNumber: number | undefined) => string;
-    handleCheckboxChange: (leadId: string, field: CheckboxField, checked: boolean) => void;
-    setLeadToEndorse: React.Dispatch<React.SetStateAction<Lead | null>>;
-    handleReopenCase: (lead: Lead) => void;
-    setOpenLeadId: React.Dispatch<React.SetStateAction<string | null>>;
-    openLeadId: string | null;
-    calculateProductionDeadline: (lead: Lead) => { text: React.ReactNode; isOverdue: boolean; isUrgent: boolean; remainingDays: number; };
-    handleStatusChange: (leadId: string, field: "productionType" | "sewerType", value: string) => void;
-    setViewingJoLead: React.Dispatch<React.SetStateAction<Lead | null>>;
-    filterType?: 'ONGOING' | 'COMPLETED';
-}) {
+}: ProductionQueueTableRowGroupProps) {
     const deadlineInfo = calculateProductionDeadline(lead);
     const productionStatus = getProductionStatusLabel(lead);
     const isCollapsibleOpen = openLeadId === lead.id;
@@ -485,7 +488,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     return (
         <React.Fragment>
             <TableRow>
-                 <TableCell className="text-xs text-center">
+                 <TableCell className="text-xs text-center align-middle">
                     <div className="flex items-center justify-center">
                         <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
                         {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -1201,7 +1204,7 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
               <TableBody>
                 {productionQueue && productionQueue.length > 0 ? (
                   productionQueue.map((lead) => {
-                   const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
+                   const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample';
                     return (
                         <ProductionQueueTableRowGroup
                             key={lead.id}
@@ -1222,6 +1225,7 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
                             calculateProductionDeadline={calculateProductionDeadline}
                             handleStatusChange={handleStatusChange}
                             setViewingJoLead={setViewingJoLead}
+                            getProductionStatusLabel={getProductionStatusLabel}
                             filterType={filterType}
                         />
                     )
@@ -1296,7 +1300,7 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
                         {(() => {
                             const lead = viewingJoLead;
                             const scesProfile = usersData?.find(u => u.nickname === lead.salesRepresentative);
-                            const scesFullName = scesProfile ? toTitleCase(`${'\'\'\''}scesProfile.firstName{'\'\'\''} ${'\'\'\''}scesProfile.lastName{'\'\'\''}`) : toTitleCase(lead.salesRepresentative);
+                            const scesFullName = scesProfile ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
                             const totalQuantity = lead.orders.reduce((sum: any, order: any) => sum + order.quantity, 0);
                             const contactDisplay = getContactDisplay(lead);
                             
@@ -1452,7 +1456,7 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
                                          <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
                                             <Image 
                                                 src={layout.layoutImage} 
-                                                alt={`Layout ${'\'\'\''}layoutIndex + 1{'\'\'\''}`} 
+                                                alt={`Layout ${layoutIndex + 1}`} 
                                                 layout="fill"
                                                 objectFit="contain"
                                             />
@@ -1517,19 +1521,6 @@ const ProductionQueueTableMemo = React.memo(ProductionQueueTableBase);
 ProductionQueueTableMemo.displayName = 'ProductionQueueTable';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
-    
-
-
-
-
-    
-
-    
-
-
-
-    
-
     
 
     
