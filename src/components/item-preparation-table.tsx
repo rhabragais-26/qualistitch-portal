@@ -586,6 +586,3 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTableMemo';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
-
-
-```
