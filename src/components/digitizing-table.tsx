@@ -612,7 +612,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const leadDocRef = doc(firestore, 'leads', leadId);
     const now = new Date().toISOString();
 
-    const timestampField = `'${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}'Timestamp`;
+    const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
     
     const updateData: { [key: string]: any } = { 
         [field]: value,
@@ -628,7 +628,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 const nextField = sequence[i];
                 if (nextField) {
                   updateData[nextField] = false;
-                  const nextTimestampField = `'${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}'`;
+                  const nextTimestampField = `${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
                   updateData[nextTimestampField] = null;
                 }
             }
@@ -792,7 +792,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const originalState: Partial<Lead> = {};
 
     const processField = (fieldName: CheckboxField | 'isJoHardcopyReceived') => {
-        const timestampFieldName = `'${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}'Timestamp` as keyof Lead;
+        const timestampFieldName = `${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
         
         optimisticUpdate[fieldName] = false;
         optimisticUpdate[timestampFieldName] = null;
@@ -911,12 +911,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         }
         setIsUploadDialogOpen(true);
       } else {
-        const optimisticUpdate = { [field]: true, [`'${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}'Timestamp`]: new Date().toISOString() };
+        const optimisticUpdate = { [field]: true, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() };
         setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...optimisticUpdate } }));
         updateStatus(leadId, field, true).catch(() => {
              toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
              setOptimisticChanges(prev => {
-                const { [field!]: _removed, [`'${field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}'Timestamp`]: _removedTs, ...rest } = prev[leadId] || {};
+                const { [field!]: _removed, [`${field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[leadId] || {};
                 return { ...prev, [leadId]: rest };
              });
         });
@@ -945,7 +945,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         
         const deadlineInfo = calculateDigitizingDeadline(lead);
         const notification = {
-            id: `progress-'${lead.id}'-'${new Date().toISOString()}'`,
+            id: `progress-${lead.id}-${new Date().toISOString()}`,
             type: 'progress',
             leadId: lead.id,
             joNumber: formatJoNumberUtil(lead.joNumber),
@@ -989,14 +989,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     if (uploadField === 'isLogoTesting' && noTestingNeeded) {
         const optimisticUpdate = {
             [uploadField]: true,
-            [`'${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}'Timestamp`]: new Date().toISOString()
+            [`${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: new Date().toISOString()
         };
         setOptimisticChanges(prev => ({ ...prev, [uploadLeadId]: { ...prev[uploadLeadId], ...optimisticUpdate } }));
         setIsUploadDialogOpen(false);
         updateStatus(uploadLeadId, uploadField, true).catch(() => {
             toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
             setOptimisticChanges(prev => {
-                const { [uploadField!]: _removed, [`'${uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}'Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
+                const { [uploadField!]: _removed, [`${uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
                 return { ...prev, [uploadLeadId]: rest };
              });
         });
@@ -1006,7 +1006,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     // Optimistic UI updates
     const optimisticUpdate = {
         [uploadField]: true,
-        [`'${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}'Timestamp`]: new Date().toISOString()
+        [`${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: new Date().toISOString()
     };
     setOptimisticChanges(prev => ({ ...prev, [uploadLeadId]: { ...prev[uploadLeadId], ...optimisticUpdate } }));
     setIsUploadDialogOpen(false); // Close dialog immediately
@@ -1017,21 +1017,21 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const uploadAndGetURL = async (lead: Lead, imageData: string | null, fieldName: string, index: number): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
         if (!imageData) return null;
         if (imageData.startsWith('http')) {
-            const pluralFieldName = `'${fieldName}'s`;
+            const pluralFieldName = `${fieldName}s`;
             const existingArray = (lead.layouts?.[0]?.[pluralFieldName as keyof Layout] as { url: string; uploadTime: string; uploadedBy: string }[]) || [];
             const existingImageObject = existingArray.find(img => img.url === imageData);
             if (existingImageObject) return existingImageObject;
             
             if (lead.layouts?.[0]?.[fieldName as keyof Layout] === imageData) {
-                const timestamp = lead.layouts?.[0]?.[`'${fieldName}'UploadTime` as keyof Layout] as string | null;
-                const uploader = lead.layouts?.[0]?.[`'${fieldName}'UploadedBy` as keyof Layout] as string | null;
+                const timestamp = lead.layouts?.[0]?.[`${fieldName}UploadTime` as keyof Layout] as string | null;
+                const uploader = lead.layouts?.[0]?.[`${fieldName}UploadedBy` as keyof Layout] as string | null;
                 return { url: imageData, uploadTime: timestamp || now, uploadedBy: uploader || userProfile.nickname };
             }
             return { url: imageData, uploadTime: now, uploadedBy: userProfile.nickname };
         }
         if(!imageData.startsWith('data:')) return null;
 
-        const storageRef = ref(storage, `leads-images/'${uploadLeadId}'/'${fieldName}'_${index}_'${Date.now()}'`);
+        const storageRef = ref(storage, `leads-images/${uploadLeadId}/${fieldName}_${index}_${Date.now()}`);
         const snapshot = await uploadString(storageRef, imageData, 'data_url');
         const downloadURL = await getDownloadURL(snapshot.ref);
         return { url: downloadURL, uploadTime: now, uploadedBy: userProfile.nickname };
@@ -1041,7 +1041,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       return Promise.all(
         files.map(async (file, index) => {
           if (!file || !file.url.startsWith('data:')) return file;
-          const urlData = await uploadAndGetURL(lead, file.url, `'${folderName}'/${index}_'${file.name}'`, index);
+          const urlData = await uploadAndGetURL(lead, file.url, `${folderName}/${index}_${file.name}`, index);
           return urlData ? { name: file.name, url: urlData.url } : null;
         })
       );
@@ -1056,7 +1056,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         const uploads = await Promise.all(images.map((img, i) => uploadAndGetURL(lead, img, fieldName, i)));
         const successfulUploads = uploads.filter((u): u is { url: string; uploadTime: string; uploadedBy: string } => !!u);
         return {
-            files: successfulUploads.map(u => ({ name: `'${fieldName}'_'${Date.now()}'.png`, url: u.url })),
+            files: successfulUploads.map(u => ({ name: `${fieldName}_${Date.now()}.png`, url: u.url })),
             timestamps: successfulUploads.map(u => u.uploadTime),
             uploaders: successfulUploads.map(u => u.uploadedBy)
         };
@@ -1194,7 +1194,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       currentLayouts[0] = updatedFirstLayout;
       const leadDocRef = doc(firestore, 'leads', uploadLeadId);
 
-      const timestampField = `'${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}'`;
+      const timestampField = `${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`;
       const updatePayload = {
         layouts: currentLayouts,
         [uploadField]: true,
@@ -1213,7 +1213,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       console.error('Error saving images or status:', e);
       // Revert optimistic update
       setOptimisticChanges(prev => {
-        const { [uploadField!]: _removed, [`'${uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}'Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
+        const { [uploadField!]: _removed, [`${uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
         return { ...prev, [uploadLeadId]: rest };
       });
       toast({
@@ -1346,12 +1346,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             !isDisabled && "cursor-pointer"
                         )}
                         onClick={() => image && setImageInView(image)}
-                        onDoubleClick={() => !isDisabled && !image && (document.getElementById(`file-input-job-order-'${label.replace(/\s+/g, '-')}'-${index}`)?.click())}
+                        onDoubleClick={() => !isDisabled && !image && (document.getElementById(`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`)?.click())}
                         onPaste={(e) => handleImagePaste(e, setter, index)}
                         onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
                       >
                           {image ? (<>
-                            <Image src={image} alt={`'${label}' '${index + 1}'`} layout="fill" objectFit="contain" className="rounded-md" />
+                            <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
                             {!isDisabled && (
                                 <Button
                                 variant="destructive"
@@ -1366,7 +1366,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 </Button>
                             )}
                           </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{!isDisabled ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
-                          <input id={`file-input-job-order-'${label.replace(/\s+/g, '-')}'-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!isDisabled}/>
+                          <input id={`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!isDisabled}/>
                       </div>
                       {!isDisabled && index > 0 && displayImages.length > 1 && (
                           <Button
@@ -1761,7 +1761,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         </TableCell>
                         
                         {(['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'] as CheckboxField[]).map(field => {
-                            const timestamp = lead[`'${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}'Timestamp` as keyof Lead] as string | undefined;
+                            const timestamp = lead[`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp` as keyof Lead] as string | undefined;
                             let isDisabled = isReadOnly || (isCompleted && !(field === 'isFinalProgram' && enableReupload));
                             
                             const className = isDisabled ? 'disabled:opacity-100' : '';
@@ -1774,7 +1774,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         disabled={isDisabled}
                                         className={className}
                                     />
-                                    {timestamp && <div className="text-[10px] text-gray-500">{formatDateTime(timestamp).dateTimeShort}</div>}
+                                    {timestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(timestamp).dateTimeShort}</div>}
                                 </div>
                                 </TableCell>
                             );
@@ -1851,7 +1851,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         {(() => {
                             const lead = viewingJoLead;
                             const scesProfile = usersData?.find(u => u.nickname === lead.salesRepresentative);
-                            const scesFullName = scesProfile ? toTitleCase(`'${scesProfile.firstName}' '${scesProfile.lastName}'`) : toTitleCase(lead.salesRepresentative);
+                            const scesFullName = scesProfile ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
                             const totalQuantity = lead.orders.reduce((sum: any, order: any) => sum + order.quantity, 0);
                             const contactDisplay = getContactDisplay(lead);
                             
@@ -2061,7 +2061,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             )
                         })()}
                     </div>
-                </ScrollArea>
+                </div>
             </DialogContent>
         </Dialog>
       )}
@@ -2071,10 +2071,4 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTableMemo';
 
 export { DigitizingTableMemo as DigitizingTable };
-
-
-
-
-
-
 
