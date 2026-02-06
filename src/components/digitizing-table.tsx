@@ -591,7 +591,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       const completionDate = new Date(lead.finalProgramTimestamp);
       const finalRemainingDays = differenceInDays(deadlineDate, completionDate);
       if (finalRemainingDays < 0) {
-        return { text: `Completed ${'\'\''}Math.abs(finalRemainingDays)} day(s) late`, isOverdue: true, isUrgent: false, remainingDays: finalRemainingDays };
+        return { text: `Completed ${Math.abs(finalRemainingDays)} day(s) late`, isOverdue: true, isUrgent: false, remainingDays: finalRemainingDays };
       }
       return { text: `Completed`, isOverdue: false, isUrgent: false, remainingDays: finalRemainingDays };
     }
@@ -599,11 +599,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const remainingDays = differenceInDays(deadlineDate, new Date());
     
     if (remainingDays < 0) {
-      return { text: `${'\'\''}Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
+      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
     } else if (remainingDays <= 2) {
-      return { text: `${'\'\''}remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
     } else {
-      return { text: `${'\'\''}remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
     }
   }, []);
   
