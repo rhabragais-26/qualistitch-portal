@@ -587,12 +587,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const deadlineDate = addDays(submissionDate, deadlineDays);
 
     if (lead.isFinalProgram && lead.finalProgramTimestamp) {
-      const completionDate = new Date(lead.finalProgramTimestamp);
-      const finalRemainingDays = differenceInDays(deadlineDate, completionDate);
-      if (finalRemainingDays < 0) {
-        return { text: `Completed ${Math.abs(finalRemainingDays)} day(s) late`, isOverdue: true, isUrgent: false, remainingDays: finalRemainingDays };
-      }
-      return { text: `Completed ${finalRemainingDays} day(s) early`, isOverdue: false, isUrgent: false, remainingDays: finalRemainingDays };
+        const completionDate = new Date(lead.finalProgramTimestamp);
+        const finalRemainingDays = differenceInDays(deadlineDate, completionDate);
+        if (finalRemainingDays < 0) {
+            return { text: `Completed ${Math.abs(finalRemainingDays)} day(s) late`, isOverdue: true, isUrgent: false, remainingDays: finalRemainingDays };
+        }
+        return { text: `Completed`, isOverdue: false, isUrgent: false, remainingDays: finalRemainingDays };
     }
     
     const remainingDays = differenceInDays(deadlineDate, new Date());
@@ -1619,7 +1619,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     </div>
                     <div className='flex items-center gap-2'>
                         <span className="text-sm font-medium">Filter Overdue Status:</span>
-                        <Select value={overdueFilter} onValueChange={setOverdueFilter}>
+                        <Select value={overdueStatusFilter} onValueChange={setOverdueStatusFilter}>
                             <SelectTrigger className="w-[180px]">
                                 <SelectValue placeholder="Select Status" />
                             </SelectTrigger>
@@ -2056,7 +2056,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             )
                         })()}
                     </div>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
       )}
@@ -2066,6 +2066,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTableMemo';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
 
