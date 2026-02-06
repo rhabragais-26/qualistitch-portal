@@ -180,31 +180,6 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
   const isLoading = areLeadsLoading;
   const error = leadsError;
 
-  useEffect(() => {
-    if (!firestore || !leads || isReadOnly || filterType !== 'ONGOING') return;
-
-    const leadsToUpdate = leads.filter(lead => {
-        const isReadyForPrep = lead.isDigitizingArchived || ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
-        return isReadyForPrep && !lead.isJoHardcopyReceived && !lead.isSentToProduction && !lead.isEndorsedToLogistics;
-    });
-
-    if (leadsToUpdate.length > 0) {
-        const updates = leadsToUpdate.map(lead => {
-            const leadDocRef = doc(firestore, 'leads', lead.id);
-            return updateDoc(leadDocRef, {
-                isJoHardcopyReceived: true,
-                joHardcopyReceivedTimestamp: new Date().toISOString(),
-            });
-        });
-        
-        Promise.all(updates).then(() => {
-            refetchLeads();
-        }).catch(error => {
-            console.error("Error automatically updating J.O. receipt status:", error);
-        });
-    }
-  }, [leads, firestore, isReadOnly, filterType, refetchLeads]);
-
 
   const getProgrammingStatus = useCallback((lead: Lead): { text: string, variant: "success" | "destructive" | "warning" | "default" | "secondary" } => {
     if (['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType)) {
@@ -386,9 +361,9 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
         : true;
       
       const joString = lead.joNumber?.toString().padStart(5, '0') || '';
-      const formattedJoString = formatJoNumber(lead.joNumber);
+      const formattedJoString = formatJoNumber(lead.joNumber).toLowerCase();
       const matchesJo = joNumberSearch ? 
-        (joString.includes(joNumberSearch) || formattedJoString.toLowerCase().includes(joNumberSearch.toLowerCase()))
+        (joString.includes(joNumberSearch) || formattedJoString.includes(joNumberSearch.toLowerCase()))
         : true;
         
       const currentStatus = getProgrammingStatus(lead).text;
