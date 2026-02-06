@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -829,7 +827,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
 
                   return (
                     <React.Fragment key={lead.id}>
-                        <TableRow className="border-b-2 border-gray-300">
+                        <TableRow>
                             <TableCell className="text-xs align-middle py-3 text-black text-center w-[200px] px-2">
                                 <div className="flex items-center justify-center gap-1">
                                     <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
@@ -1016,57 +1014,59 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                         </TableRow>
                         {isCollapsibleOpen && (
                           <TableRow>
-                              <TableCell colSpan={9} className="p-0">
-                              <div className="p-4 max-w-xl mx-auto bg-blue-50 rounded-md my-2">
-                                <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
-                                <Table>
-                                  <TableHeader>
-                                    <TableRow>
-                                      <TableHead className="py-1 px-2 text-black font-bold">Product</TableHead>
-                                      <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
-                                      <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
-                                      <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
-                                    </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                    {lead.orders.map((order, index) => (
-                                      <TableRow key={index} className="border-0">
-                                        <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.productType}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.color}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.size}</TableCell>
-                                        <TableCell className="py-1 px-2 text-xs text-black text-right align-middle">{order.quantity}</TableCell>
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
-                                  {lead.orders && lead.orders.length > 1 && (
-                                    <TableFooter>
-                                        <TableRow>
-                                        <TableCell colSpan={3} className="text-right font-bold text-black pt-1 px-2">Total Quantity</TableCell>
-                                        <TableCell className="font-bold text-black text-right pt-1 px-2">{totalQuantity}</TableCell>
-                                        </TableRow>
-                                    </TableFooter>
-                                  )}
-                                </Table>
-                                {(finalProgrammedLogo?.some(f => f?.url) || finalProgrammedBackDesign?.some(f => f?.url)) && (
+                              <TableCell colSpan={13} className="p-0">
+                                <div className="p-4 bg-blue-50 rounded-md my-2 grid grid-cols-2 gap-4 max-w-4xl mx-auto">
                                     <div>
-                                        <h4 className="font-semibold text-black mb-2">Final Programmed Designs</h4>
-                                        <div className="flex gap-2 flex-wrap">
-                                            {finalProgrammedLogo?.map((file, index) => file?.url && (
-                                                <div key={`fp-logo-${index}`} className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
-                                                    <Image src={file.url} alt={`Final Programmed Logo ${index + 1}`} layout="fill" objectFit="contain" />
-                                                </div>
-                                            ))}
-                                            {finalProgrammedBackDesign?.map((file, index) => file?.url && (
-                                                <div key={`fp-back-${index}`} className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
-                                                    <Image src={file.url} alt={`Final Programmed Back Design ${index + 1}`} layout="fill" objectFit="contain" />
-                                                </div>
-                                            ))}
-                                        </div>
+                                      <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
+                                      <Table>
+                                        <TableHeader>
+                                          <TableRow>
+                                            <TableHead className="py-1 px-2 text-black font-bold">Product</TableHead>
+                                            <TableHead className="py-1 px-2 text-black font-bold">Color</TableHead>
+                                            <TableHead className="py-1 px-2 text-black font-bold">Size</TableHead>
+                                            <TableHead className="py-1 px-2 text-black font-bold text-right">Quantity</TableHead>
+                                          </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                          {lead.orders.map((order, index) => (
+                                            <TableRow key={index} className="border-0">
+                                              <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.productType}</TableCell>
+                                              <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.color}</TableCell>
+                                              <TableCell className="py-1 px-2 text-xs text-black align-middle">{order.size}</TableCell>
+                                              <TableCell className="py-1 px-2 text-xs text-black text-right align-middle">{order.quantity}</TableCell>
+                                            </TableRow>
+                                          ))}
+                                        </TableBody>
+                                        {lead.orders && lead.orders.length > 1 && (
+                                          <TableFooter>
+                                              <TableRow>
+                                              <TableCell colSpan={3} className="text-right font-bold text-black pt-1 px-2">Total Quantity</TableCell>
+                                              <TableCell className="font-bold text-black text-right pt-1 px-2">{totalQuantity}</TableCell>
+                                              </TableRow>
+                                          </TableFooter>
+                                        )}
+                                      </Table>
                                     </div>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
+                                    {(finalProgrammedLogo?.some(f => f?.url) || finalProgrammedBackDesign?.some(f => f?.url)) && (
+                                        <div>
+                                            <h4 className="font-semibold text-black mb-2 text-center">Final Programmed Designs</h4>
+                                            <div className="flex gap-2 flex-wrap justify-center">
+                                                {finalProgrammedLogo?.map((file, index) => file?.url && (
+                                                    <div key={`fp-logo-${index}`} className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
+                                                        <Image src={file.url} alt={`Final Programmed Logo ${index + 1}`} layout="fill" objectFit="contain" />
+                                                    </div>
+                                                ))}
+                                                {finalProgrammedBackDesign?.map((file, index) => file?.url && (
+                                                    <div key={`fp-back-${index}`} className="relative w-24 h-24 border rounded-md cursor-pointer" onClick={() => setImageInView(file.url)}>
+                                                        <Image src={file.url} alt={`Final Programmed Back Design ${index + 1}`} layout="fill" objectFit="contain" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
                         )}
                     </React.Fragment>
                   );
@@ -1079,4 +1079,3 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     </Card>
   );
 }
-
