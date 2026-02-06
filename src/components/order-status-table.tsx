@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -365,7 +366,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   
     leads.forEach(lead => {
       if (!Array.isArray(lead.orders)) {
-          return;
+          return; 
       }
       const name = lead.customerName.toLowerCase();
       if (!customerOrderGroups[name]) {
@@ -720,7 +721,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                             )
                         })()}
                     </div>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
       )}
@@ -813,6 +814,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                 </TableHeader>
                 <TableBody>
                 {leadsWithCases.map((lead) => {
+                  const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
                   const deadlineInfo = calculateDeadline(lead);
                   const programmingStatus = getProgrammingStatus(lead);
                   const itemPreparationStatus = getItemPreparationStatus(lead);
@@ -821,7 +823,6 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                   const overallStatus = getOverallStatus(lead);
                   const totalQuantity = lead.orders.reduce((sum, order) => sum + order.quantity, 0);
                   const isCollapsibleOpen = openLeadId === lead.id;
-                  const isRepeat = !lead.forceNewCustomer && lead.orderNumber > 0;
                   const progress = getProgressValue(lead);
                   const finalProgrammedLogo = lead.layouts?.[0]?.finalProgrammedLogo;
                   const finalProgrammedBackDesign = lead.layouts?.[0]?.finalProgrammedBackDesign;
@@ -829,7 +830,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow className="border-b-2 border-gray-300">
-                            <TableCell className="font-medium align-middle py-3 text-black text-sm px-2 text-center">
+                            <TableCell className="text-xs align-middle py-3 text-black text-center w-[200px] px-2">
                                 <div className="flex items-center justify-center gap-1">
                                     <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
                                     {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -864,7 +865,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                     </div>
                                 </div>
                             </TableCell>
-                            <TableCell className="text-xs align-middle text-center py-2 text-black px-2">
+                            <TableCell className="text-xs align-middle text-center py-2 text-black w-[150px] px-2">
                               <div className="flex flex-col items-center justify-center gap-2">
                                 <div className="flex items-center justify-center">
                                   <span>{formatJoNumberUtil(lead.joNumber)}</span>
@@ -888,8 +889,8 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell className="text-xs align-middle text-center py-2 text-black px-2">{lead.salesRepresentative}</TableCell>
-                            <TableCell className="align-middle py-3 text-center px-2">
+                            <TableCell className="text-xs align-middle text-center py-2 text-black w-[150px] px-2">{lead.salesRepresentative}</TableCell>
+                            <TableCell className="align-middle py-3 text-center px-2 w-[150px]">
                                <div className='flex flex-col items-center gap-1'>
                                 <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                                     {lead.priorityType}
@@ -897,13 +898,13 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                 <div className="text-gray-500 text-sm font-bold mt-1">{lead.orderType}</div>
                                </div>
                             </TableCell>
-                            <TableCell className="text-center align-middle py-3 px-2">
+                            <TableCell className="text-center align-middle py-3 px-2 w-[150px]">
                                <div onClick={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100 mt-1">
                                     <span className="font-semibold text-sm">{totalQuantity} items</span>
                                     {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                                 </div>
                             </TableCell>
-                             <TableCell className="align-middle py-3 px-2">
+                             <TableCell className="align-middle py-3 px-2 w-[400px]">
                                 <div className="border rounded-md p-2 mt-1">
                                     <div className="relative pt-4">
                                         <div
@@ -947,7 +948,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                 </div>
                             </TableCell>
                             <TableCell className={cn(
-                              "text-center text-xs align-middle py-3 px-2",
+                              "text-center text-xs align-middle py-3 px-2 w-[150px]",
                                 (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered')
                                 ? "text-green-600 font-medium"
                                 : deadlineInfo.isOverdue
@@ -956,7 +957,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                 ? "text-amber-600 font-bold"
                                 : ""
                             )}>{deadlineInfo.text}</TableCell>
-                            <TableCell className="text-center text-xs align-middle py-3 font-medium px-2">
+                            <TableCell className="text-center text-xs align-middle py-3 font-medium px-2 w-[150px]">
                                 {lead.operationalCase ? (
                                   <Popover>
                                     <PopoverTrigger asChild>
@@ -1009,7 +1010,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                     <span className="text-muted-foreground">-</span>
                                 )}
                             </TableCell>
-                            <TableCell className="text-center align-middle p-1 font-medium px-2">
+                            <TableCell className="text-center align-middle p-1 font-medium px-2 w-[120px]">
                                 <Badge variant={overallStatus.variant} className="uppercase rounded-md text-sm">{overallStatus.text}</Badge>
                             </TableCell>
                         </TableRow>
@@ -1078,3 +1079,4 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     </Card>
   );
 }
+
