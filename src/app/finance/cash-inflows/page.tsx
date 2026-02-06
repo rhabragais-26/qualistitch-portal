@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -504,7 +503,7 @@ export default function CashInflowsPage() {
                     >Yesterday</Button>
                     <Button
                         variant={activeQuickFilter === 'today' ? 'default' : 'outline'}
-                        onClick={() => {
+                        onClick={()={() => {
                             if (activeQuickFilter === 'today') {
                                 setActiveQuickFilter(null);
                                 setDateFilter('All');
@@ -541,7 +540,7 @@ export default function CashInflowsPage() {
                 <Table>
                   <TableHeader className="sticky top-0 bg-neutral-800 z-10">
                     <TableRow>
-                      <TableHead className="text-white font-bold">Date Recorded</TableHead>
+                      <TableHead className="text-white font-bold whitespace-nowrap">Date Recorded</TableHead>
                       <TableHead className="text-white font-bold text-center whitespace-nowrap">Actual Date of Transaction</TableHead>
                       <TableHead className="text-white font-bold">Description</TableHead>
                       <TableHead className="text-white font-bold">Customer Name</TableHead>
@@ -568,7 +567,7 @@ export default function CashInflowsPage() {
                     ) : filteredInflows.length > 0 ? (
                       filteredInflows.map((inflow, index) => (
                         <TableRow key={`${inflow.id}-${index}`}>
-                            <TableCell className="font-bold">
+                            <TableCell className="font-bold whitespace-nowrap">
                                 <div>{format(parseISO(inflow.date), 'MMM dd, yyyy')}</div>
                                 <div className="text-xs text-muted-foreground">{format(parseISO(inflow.date), 'h:mm a')}</div>
                             </TableCell>
@@ -696,3 +695,4 @@ export default function CashInflowsPage() {
     </>
   );
 }
+    
