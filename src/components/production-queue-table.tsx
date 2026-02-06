@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -200,6 +201,7 @@ type Lead = {
   finalApprovalTimestamp?: string;
   isSentToProduction?: boolean;
   forceNewCustomer?: boolean;
+  endorsedToLogisticsBy?: string;
 };
 
 type EnrichedLead = Lead & {
@@ -291,7 +293,7 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
     try {
         const response = await fetch(url);
         if (!response.ok) {
-             throw new Error(`HTTP error! status: ${response.status}`);
+             throw new Error(`HTTP error! status: ${'\'\'\''}response.status{'\'\'\''}`);
         }
         const blob = await response.blob();
         const fileHandle = await (window as any).showSaveFilePicker({
@@ -313,17 +315,17 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
   const finalDstFiles = useMemo(() => {
     if (!lead.layouts) return [];
     return lead.layouts.flatMap((layout, layoutIndex) => {
-        const layoutLabel = lead.layouts!.length > 1 ? ` (L${layoutIndex + 1})` : '';
+        const layoutLabel = lead.layouts!.length > 1 ? ` (L${'\'\'\''}layoutIndex + 1{'\'\'\''})` : '';
         const files: { name: string; url: string; type: string }[] = [];
 
         (layout.finalLogoDst || []).forEach(f => {
-            if (f) files.push({ ...f, type: `Logo${layoutLabel}` });
+            if (f) files.push({ ...f, type: `Logo${'\'\'\''}layoutLabel{'\'\'\''}` });
         });
         (layout.finalBackDesignDst || []).forEach(f => {
-            if (f) files.push({ ...f, type: `Back Design${layoutLabel}` });
+            if (f) files.push({ ...f, type: `Back Design${'\'\'\''}layoutLabel{'\'\'\''}` });
         });
         (layout.finalNamesDst || []).forEach(f => {
-            if (f) files.push({ ...f, type: `Name${layoutLabel}` });
+            if (f) files.push({ ...f, type: `Name${'\'\'\''}layoutLabel{'\'\'\''}` });
         });
         return files;
     });
@@ -333,7 +335,7 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
     if (!lead.layouts) return [];
     return lead.layouts.map((layout, i) => ({
       src: layout.layoutImage!,
-      label: `Layout ${i + 1}`,
+      label: `Layout ${'\'\'\''}i + 1{'\'\'\''}`,
       timestamp: layout.layoutImageUploadTime,
       uploadedBy: layout.layoutImageUploadedBy,
     })).filter(img => img.src);
@@ -342,13 +344,13 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
   const sequenceImages = useMemo(() => {
     if (!lead.layouts) return [];
     return lead.layouts.flatMap((layout, layoutIndex) => {
-      const layoutLabel = lead.layouts!.length > 1 ? ` L${layoutIndex + 1}` : '';
+      const layoutLabel = lead.layouts!.length > 1 ? ` L${'\'\'\''}layoutIndex + 1{'\'\'\''}` : '';
       const images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[] = [];
       (layout.sequenceLogo || []).forEach((f, i) => {
-        if (f) images.push({ src: f.url, label: `Sequence Logo ${i + 1}${layoutLabel}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] });
+        if (f) images.push({ src: f.url, label: `Sequence Logo ${'\'\'\''}i + 1{'\'\'\''}${'\'\'\''}layoutLabel{'\'\'\''}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] });
       });
       (layout.sequenceBackDesign || []).forEach((f, i) => {
-        if (f) images.push({ src: f.url, label: `Sequence Back ${i + 1}${layoutLabel}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i], uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] });
+        if (f) images.push({ src: f.url, label: `Sequence Back ${'\'\'\''}i + 1{'\'\'\''}${'\'\'\''}layoutLabel{'\'\'\''}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i], uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] });
       });
       return images;
     });
@@ -357,13 +359,13 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
   const finalProgramImages = useMemo(() => {
     if (!lead.layouts) return [];
     return lead.layouts.flatMap((layout, layoutIndex) => {
-      const layoutLabel = lead.layouts!.length > 1 ? ` L${layoutIndex + 1}` : '';
+      const layoutLabel = lead.layouts!.length > 1 ? ` L${'\'\'\''}layoutIndex + 1{'\'\'\''}` : '';
       const images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[] = [];
       (layout.finalProgrammedLogo || []).forEach((f, i) => {
-        if (f) images.push({ src: f.url, label: `Final Logo ${i + 1}${layoutLabel}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] });
+        if (f) images.push({ src: f.url, label: `Final Logo ${'\'\'\''}i + 1{'\'\'\''}${'\'\'\''}layoutLabel{'\'\'\''}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] });
       });
       (layout.finalProgrammedBackDesign || []).forEach((f, i) => {
-        if (f) images.push({ src: f.url, label: `Final Back ${i + 1}${layoutLabel}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] });
+        if (f) images.push({ src: f.url, label: `Final Back ${'\'\'\''}i + 1{'\'\'\''}${'\'\'\''}layoutLabel{'\'\'\''}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] });
       });
       return images;
     });
@@ -492,7 +494,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                                 <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-1.5 cursor-pointer">
+                                    <div className="flex items-center gap-1.5 cursor-pointer mt-1">
                                         <span className="text-xs text-yellow-600 font-semibold">Repeat Buyer</span>
                                         <span className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-yellow-600 text-yellow-700 text-[10px] font-bold">
                                         {lead.orderNumber + 1}
@@ -505,7 +507,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                                 </Tooltip>
                                 </TooltipProvider>
                             ) : (
-                                <div className="text-xs text-blue-600 font-semibold">New Customer</div>
+                                <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                             )}
                             {openCustomerDetails === lead.id && (
                                 <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
@@ -648,7 +650,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                            <Button size="sm" className="h-7 text-xs font-bold bg-green-600 hover:bg-green-700 text-white" disabled>
                                 Endorsed
                            </Button>
-                           <span className="text-xs text-gray-500">{formatDateTime(lead.endorsedToLogisticsTimestamp!).dateTimeShort}</span>
+                           <span className="text-xs text-gray-500">{lead.endorsedToLogisticsTimestamp ? formatDateTime(lead.endorsedToLogisticsTimestamp).dateTimeShort : ''}</span>
                            {lead.endorsedToLogisticsBy && <span className="font-bold text-xs">by {lead.endorsedToLogisticsBy}</span>}
                            <Button size="sm" variant="outline" className="h-7 text-xs mt-1" onClick={() => handleReopenCase(lead)}>
                                 <RefreshCcw className="mr-2 h-4 w-4" /> Reopen
@@ -690,6 +692,8 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [viewingJoLead, setViewingJoLead] = useState<Lead | null>(null);
   const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
+  const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
+
 
   const isCompleted = filterType === 'COMPLETED';
   
@@ -718,8 +722,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     }
     
     if (!firestore) return;
-    const leadDocRef = doc(firestore, 'leads', leadId);
-    
+
     const now = new Date().toISOString();
     const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
     const updateData: {[key:string]: any} = { [field]: value, [timestampField]: now };
@@ -729,6 +732,15 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
       updateData.doneProductionTimestamp = now;
     }
 
+    setOptimisticChanges(prev => ({
+        ...prev,
+        [leadId]: {
+            ...prev[leadId],
+            ...updateData,
+        }
+    }));
+    
+    const leadDocRef = doc(firestore, 'leads', leadId);
     updateDoc(leadDocRef, updateData).catch((e: any) => {
         console.error(`Error updating ${field}:`, e);
         toast({
@@ -736,53 +748,88 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
             title: "Update Failed",
             description: e.message || "Could not update the status.",
         });
+        setOptimisticChanges(prev => {
+            const newChanges = { ...prev };
+            const leadChanges = { ...newChanges[leadId] };
+            delete leadChanges[field];
+            delete leadChanges[timestampField as keyof Lead];
+             if (field === 'isTrimming') {
+                delete leadChanges['isDone'];
+                delete leadChanges['doneProductionTimestamp'];
+            }
+            newChanges[leadId] = leadChanges;
+            return newChanges;
+        });
     });
   }, [firestore, toast]);
   
   const confirmUncheck = useCallback(async () => {
-    if (!uncheckConfirmation || !firestore) return;
+    if (!uncheckConfirmation || !firestore || !leads) return;
     const { leadId, field } = uncheckConfirmation;
+
+    const leadToUpdate = leads.find(l => l.id === leadId);
+    if (!leadToUpdate) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Lead not found for update.' });
+        setUncheckConfirmation(null);
+        return;
+    }
+    
+    const optimisticUpdate: Partial<Lead> = {};
+    const originalState: Partial<Lead> = {};
+
+    const createFieldUpdates = (fieldName: CheckboxField) => {
+        const timestampFieldName = `${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
+        optimisticUpdate[fieldName] = false;
+        optimisticUpdate[timestampFieldName] = null;
+        originalState[fieldName] = leadToUpdate[fieldName];
+        originalState[timestampFieldName] = leadToUpdate[timestampFieldName];
+    };
+
+    createFieldUpdates(field);
+    const sequence: CheckboxField[] = ['isCutting', 'isEmbroideryDone', 'isSewing', 'isTrimming'];
+    const currentIndex = sequence.indexOf(field);
+
+    if (currentIndex > -1) {
+        for (let i = currentIndex + 1; i < sequence.length; i++) {
+            createFieldUpdates(sequence[i]);
+        }
+        if (field === 'isSewing' || field === 'isTrimming') {
+            optimisticUpdate.isDone = false;
+            optimisticUpdate.doneProductionTimestamp = null;
+            originalState.isDone = leadToUpdate.isDone;
+            originalState.doneProductionTimestamp = leadToUpdate.doneProductionTimestamp;
+        }
+        if (field === 'isEmbroideryDone') {
+            optimisticUpdate.sewerType = 'Pending';
+            originalState.sewerType = leadToUpdate.sewerType;
+        }
+        if (field === 'isCutting') {
+            optimisticUpdate.productionType = 'Pending';
+            originalState.productionType = leadToUpdate.productionType;
+            optimisticUpdate.sewerType = 'Pending';
+            originalState.sewerType = leadToUpdate.sewerType;
+        }
+    }
+
+    setOptimisticChanges(prev => ({
+        ...prev,
+        [leadId]: { ...(prev[leadId] || {}), ...optimisticUpdate },
+    }));
+
+    setUncheckConfirmation(null);
+    
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
-        const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
-        const updateData: {[key:string]: any} = { [field]: false, [timestampField]: null };
-
-        if (field === 'isTrimming') {
-            updateData.isDone = false;
-            updateData.doneProductionTimestamp = null;
-        } else if (field === 'isSewing') {
-            updateData.isTrimming = false;
-            updateData.trimmingTimestamp = null;
-            updateData.isDone = false;
-            updateData.doneProductionTimestamp = null;
-        } else if (field === 'isEmbroideryDone') {
-          updateData.isSewing = false;
-          updateData.sewingTimestamp = null;
-          updateData.isTrimming = false;
-          updateData.trimmingTimestamp = null;
-          updateData.isDone = false;
-          updateData.sewerType = 'Pending';
-          updateData.doneProductionTimestamp = null;
-        } else if (field === 'isCutting') {
-          updateData.isEmbroideryDone = false;
-          updateData.embroideryDoneTimestamp = null;
-          updateData.isSewing = false;
-          updateData.sewingTimestamp = null;
-          updateData.isTrimming = false;
-          updateData.trimmingTimestamp = null;
-          updateData.isDone = false;
-          updateData.productionType = 'Pending';
-          updateData.sewerType = 'Pending';
-          updateData.doneProductionTimestamp = null;
-        }
-        await updateDoc(leadDocRef, updateData);
+        await updateDoc(leadDocRef, optimisticUpdate);
     } catch (e: any) {
         console.error(`Error unchecking ${field}:`, e);
         toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
-    } finally {
-        setUncheckConfirmation(null);
+        setOptimisticChanges(prev => ({
+            ...prev,
+            [leadId]: { ...(prev[leadId] || {}), ...originalState },
+        }));
     }
-  }, [uncheckConfirmation, firestore, toast]);
+  }, [uncheckConfirmation, firestore, toast, leads]);
 
   const handleEndorseToLogistics = useCallback(async (leadId: string) => {
     if (!firestore || !userProfile) return;
@@ -1006,7 +1053,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
       );
     }
     
-    return relevantLeads.filter(lead => {
+    const filtered = relevantLeads.filter(lead => {
       const lowercasedSearchTerm = searchTerm.toLowerCase();
       const matchesSearch = searchTerm ?
         (lead.customerName.toLowerCase().includes(lowercasedSearchTerm) ||
@@ -1019,13 +1066,20 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
       const matchesJo = joNumberSearch ? joString.toLowerCase().includes(joNumberSearch.toLowerCase()) : true;
       
       return matchesSearch && matchesJo;
-    }).sort((a, b) => {
+    });
+
+    const sorted = filtered.sort((a, b) => {
         const aDeadline = calculateProductionDeadline(a);
         const bDeadline = calculateProductionDeadline(b);
         return aDeadline.remainingDays - bDeadline.remainingDays;
     });
 
-  }, [processedLeads, searchTerm, joNumberSearch, filterType, formatJoNumber, calculateProductionDeadline]);
+    return sorted.map(lead => ({
+        ...lead,
+        ...(optimisticChanges[lead.id] || {})
+    }));
+
+  }, [processedLeads, searchTerm, joNumberSearch, filterType, formatJoNumber, calculateProductionDeadline, optimisticChanges]);
 
   if (isLoading) {
     return (
@@ -1086,8 +1140,8 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
             <Table>
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
-                  <TableHead className="text-white font-bold text-xs text-center">Customer Details</TableHead>
-                  <TableHead className="text-white font-bold text-xs text-left">J.O. Number</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Customer</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">J.O. Number</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Overdue Status</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Production Documents</TableHead>
@@ -1199,7 +1253,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                         {(() => {
                             const lead = viewingJoLead;
                             const scesProfile = usersData?.find(u => u.nickname === lead.salesRepresentative);
-                            const scesFullName = scesProfile ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
+                            const scesFullName = scesProfile ? toTitleCase(`${'\'\'\''}scesProfile.firstName{'\'\'\''}} ${'\'\'\''}scesProfile.lastName{'\'\'\''}`) : toTitleCase(lead.salesRepresentative);
                             const totalQuantity = lead.orders.reduce((sum: any, order: any) => sum + order.quantity, 0);
                             const contactDisplay = getContactDisplay(lead);
                             
@@ -1355,7 +1409,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                                          <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
                                             <Image 
                                                 src={layout.layoutImage} 
-                                                alt={`Layout ${layoutIndex + 1}`} 
+                                                alt={`Layout ${'\'\'\''}layoutIndex + 1{'\'\'\''}`} 
                                                 layout="fill"
                                                 objectFit="contain"
                                             />
@@ -1363,7 +1417,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                                         )}
                                       
                                       <h2 className="text-2xl font-bold text-center mb-4">
-                                        {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
+                                        {layoutsToPrint.length > 1 ? `LAYOUT #${'\'\'\''}layoutIndex + 1{'\'\'\''}` : "LAYOUT"}
                                       </h2>
                                         <table className="w-full border-collapse border border-black mb-6">
                                             <tbody>
@@ -1431,5 +1485,7 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
     
 
 
+
+    
 
     
