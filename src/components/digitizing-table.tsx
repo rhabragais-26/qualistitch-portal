@@ -383,7 +383,18 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const isLoading = areLeadsLoading || areUsersLoading;
   const error = leadsError || usersError;
   
-  const [enableReupload, setEnableReupload] = useState(false);
+  const [enableReupload, setEnableReupload] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return localStorage.getItem('digitizingEnableReupload') === 'true';
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('digitizingEnableReupload', String(enableReupload));
+    }
+  }, [enableReupload]);
 
   const digitizers = useMemo(() => {
     if (!usersData) return [];
@@ -614,7 +625,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 const nextField = sequence[i];
                 if (nextField) {
                   updateData[nextField] = false;
-                  const nextTimestampField = `${'\'\'\''}nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3){'\'\'\''}Timestamp`;
+                  const nextTimestampField = `${'\'\'\''}nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3){'\'\'\''}`;
                   updateData[nextTimestampField] = null;
                 }
             }
@@ -1744,14 +1755,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         
                         {(['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'] as CheckboxField[]).map(field => {
                             const timestamp = lead[`${'\'\'\''}field.replace('is', '').charAt(0).toLowerCase() + field.slice(3){'\'\'\''}` as keyof Lead] as string | undefined;
-                            let isDisabled = isViewOnly || (field === 'isRevision' && lead.isFinalApproval);
-                            if (field === 'isFinalProgram' && filterType === 'COMPLETED' && enableReupload) {
-                                isDisabled = false;
-                            }
+                            let isDisabled = isReadOnly || (isCompleted && !(field === 'isFinalProgram' && enableReupload));
                             
-                            const className = (isReadOnly || (isCompleted && !(field === 'isFinalProgram' && enableReupload)))
-                                ? 'disabled:opacity-100'
-                                : '';
+                            const className = isDisabled ? 'disabled:opacity-100' : '';
                             return (
                                 <TableCell key={field} className="text-center align-middle">
                                 <div className="flex flex-col items-center justify-center gap-1">
@@ -1796,8 +1802,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             <Checkbox
                                 checked={lead.isJoHardcopyReceived || false}
                                 onCheckedChange={(checked) => handleJoReceivedChange(lead.id, !!checked)}
-                                disabled={isViewOnly || isCompleted || !(lead.orderType !== 'Stock (Jacket Only)' && lead.orderType !== 'Item Sample' && lead.orderType !== 'Stock Design')}
-                                className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
+                                disabled={isReadOnly || (isCompleted && !enableReupload) || !isJoHardcopyRequired}
+                                className={isReadOnly || (isCompleted && !enableReupload) ? 'disabled:opacity-100' : ''}
                             />
                             {lead.joHardcopyReceivedTimestamp && <div className="text-[10px] text-gray-500">{formatDateTime(lead.joHardcopyReceivedTimestamp).dateTimeShort}</div>}
                             </div>
@@ -1994,7 +2000,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                          <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
                                             <Image 
                                                 src={layout.layoutImage} 
-                                                alt={`Layout ${'\'\'\''}layoutIndex + 1{'\'\'\''}`} 
+                                                alt={`Layout ${layoutIndex + 1}`} 
                                                 layout="fill"
                                                 objectFit="contain"
                                             />
@@ -2002,7 +2008,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         )}
                                       
                                       <h2 className="text-2xl font-bold text-center mb-4">
-                                        {layoutsToPrint.length > 1 ? `LAYOUT #${'\'\'\''}layoutIndex + 1{'\'\'\''}` : "LAYOUT"}
+                                        {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
                                       </h2>
                                         <table className="w-full border-collapse border border-black mb-6">
                                             <tbody>
@@ -2058,4 +2064,5 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTableMemo';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
