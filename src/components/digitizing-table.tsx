@@ -723,9 +723,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       const matchesPriority = priorityFilter === 'All' || lead.priorityType === priorityFilter;
 
       const deadlineInfo = calculateDigitizingDeadline(lead);
-      const matchesOverdue = overdueFilter === 'All' ||
-        (overdueFilter === 'Overdue' && deadlineInfo.isOverdue) ||
-        (overdueFilter === 'Nearly Overdue' && !deadlineInfo.isOverdue && deadlineInfo.isUrgent);
+      const matchesOverdue = overdueStatusFilter === 'All' ||
+        (overdueStatusFilter === 'Overdue' && deadlineInfo.isOverdue) ||
+        (overdueStatusFilter === 'Nearly Overdue' && !deadlineInfo.isOverdue && deadlineInfo.isUrgent);
 
       return matchesSearch && matchesJo && matchesPriority && matchesOverdue;
     });
@@ -736,7 +736,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         return aDeadline.remainingDays - bDeadline.remainingDays;
     });
 
-  }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueFilter, formatJoNumber, calculateDigitizingDeadline, filterType]);
+  }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueStatusFilter, formatJoNumber, calculateDigitizingDeadline, filterType]);
 
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
@@ -1525,7 +1525,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   Please review the uploaded files before proceeding. This action will send the project to the Item Preparation queue.
                 </DialogDescription>
               </DialogHeader>
-              <div className="max-h-80 overflow-y-auto space-y-2 p-1">
+              <ScrollArea className="max-h-80 overflow-y-auto space-y-2 p-1">
                 {allFinalFiles.length > 0 ? (
                     <div className="space-y-2">
                     {allFinalFiles.map((file, index) => (
@@ -1540,7 +1540,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 ) : (
                     <p className="text-center text-muted-foreground py-4">There are no files uploaded for this project</p>
                 )}
-              </div>
+              </ScrollArea>
               <DialogFooter>
                 <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
                 <Button onClick={handleConfirmReview} disabled={isReadOnly || !lead?.isJoHardcopyReceived}>Done</Button>
@@ -1563,9 +1563,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                   {uploadField === 'isFinalProgram' && 'Upload all final DST, EMB, and sequence files.'}
                   </DialogDescription>
               </DialogHeader>
-              <div className="py-4 max-h-[70vh] overflow-y-auto modern-scrollbar">
+              <ScrollArea className="py-4 max-h-[70vh] overflow-y-auto modern-scrollbar">
                 {renderUploadDialogContent()}
-              </div>
+              </ScrollArea>
               <DialogFooter>
                   <DialogClose asChild>
                       <Button type="button" variant="outline"> Cancel </Button>
@@ -2066,6 +2066,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTableMemo';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
 
