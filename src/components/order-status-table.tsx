@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -163,6 +164,7 @@ type UserProfileInfo = {
   firstName: string;
   lastName: string;
   nickname: string;
+  position?: string;
 };
 
 const hasLayoutContent = (layout: Layout) => {
@@ -824,6 +826,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                   const progress = getProgressValue(lead);
                   const finalProgrammedLogo = lead.layouts?.[0]?.finalProgrammedLogo;
                   const finalProgrammedBackDesign = lead.layouts?.[0]?.finalProgrammedBackDesign;
+                  const scesProfile = usersData?.find(u => u.nickname === lead.salesRepresentative);
 
                   return (
                     <React.Fragment key={lead.id}>
@@ -887,7 +890,10 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell className="text-xs align-middle text-center py-2 text-black w-[150px] px-2">{lead.salesRepresentative}</TableCell>
+                            <TableCell className="text-xs align-middle text-center py-2 text-black w-[150px] px-2">
+                                <div>{lead.salesRepresentative}</div>
+                                {scesProfile?.position && <div className="text-gray-500 text-[10px]">({scesProfile.position})</div>}
+                            </TableCell>
                             <TableCell className="align-middle py-3 text-center px-2 w-[150px]">
                                <div className='flex flex-col items-center gap-1'>
                                 <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
@@ -1079,3 +1085,5 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
     </Card>
   );
 }
+
+    
