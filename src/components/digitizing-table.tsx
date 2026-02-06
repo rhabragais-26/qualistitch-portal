@@ -211,11 +211,11 @@ type UserProfileInfo = {
 
 const hasLayoutContent = (layout: Layout) => {
     return layout.layoutImage || 
-           layout.dstLogoLeft || 
-           layout.dstLogoRight || 
-           layout.dstBackLogo || 
-           layout.dstBackText || 
-           (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
+           (layout as any).dstLogoLeft || 
+           (layout as any).dstLogoRight || 
+           (layout as any).dstBackLogo || 
+           (layout as any).dstBackText || 
+           ((layout as any).namedOrders && (layout as any).namedOrders.length > 0 && (layout as any).namedOrders.some((o: any) => o.name || o.backText));
 };
 
 const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, setImageInView }: { lead: Lead, setImageInView: (url: string | null) => void }) {
@@ -335,11 +335,11 @@ const CollapsibleContentRow = React.memo(function CollapsibleContentRow({ lead, 
 });
 CollapsibleContentRow.displayName = 'CollapsibleContentRow';
 
-const ImageDisplayCard = React.memo(({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
+const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, onImageClick }: { title: string; images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[], onImageClick: (src: string) => void }) => {
     if (!images || images.length === 0) return null;
 
     return (
-        <Card className="bg-white flex-shrink-0">
+        <Card className="bg-white flex-shrink-0 w-auto">
             <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
             <CardContent className="flex gap-4 text-xs p-2 flex-wrap justify-center">
                 {images.map((img, index) => (
@@ -429,6 +429,58 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [viewingJoLead, setViewingJoLead] = useState<Lead | null>(null);
   
   const isViewOnly = isReadOnly || filterType === 'COMPLETED';
+
+  const allFinalFiles = useMemo(() => {
+    if (!reviewConfirmLead || !reviewConfirmLead.layouts) return [];
+    
+    const files: { name: string; url: string; type: string }[] = [];
+
+    reviewConfirmLead.layouts.forEach((layout, layoutIndex) => {
+      const layoutLabel = reviewConfirmLead.layouts!.length > 1 ? ` (Layout ${layoutIndex + 1})` : '';
+
+      (layout.finalLogoEmb || []).forEach(f => {
+        if (f) files.push({ ...f, type: `EMB Logo${layoutLabel}` });
+      });
+      (layout.finalBackDesignEmb || []).forEach(f => {
+        if (f) files.push({ ...f, type: `EMB Back Design${layoutLabel}` });
+      });
+      (layout.finalLogoDst || []).forEach(f => {
+        if (f) files.push({ ...f, type: `DST Logo${layoutLabel}` });
+      });
+      (layout.finalBackDesignDst || []).forEach(f => {
+        if (f) files.push({ ...f, type: `DST Back Design${layoutLabel}` });
+      });
+      (layout.finalNamesDst || []).forEach(f => {
+        if (f) files.push({ ...f, type: `DST Name${layoutLabel}` });
+      });
+    });
+
+    return files;
+  }, [reviewConfirmLead]);
+
+  const handleDownload = useCallback(async (url: string, name: string) => {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+             throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const blob = await response.blob();
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(link.href);
+    } catch (err) {
+        console.error('File download failed:', err);
+        toast({
+            variant: 'destructive',
+            title: 'Download Failed',
+            description: 'Could not download the file. Please check your network connection and CORS policy.',
+        });
+    }
+  }, [toast]);
 
   const handleImageUpload = useCallback((file: File, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     const reader = new FileReader();
@@ -910,7 +962,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             description: e.message || 'Could not send the project to production.',
         });
     }
-  }, [reviewConfirmLead, firestore, toast, calculateDigitizingDeadline, getContactDisplay, formatJoNumberUtil]);
+  }, [reviewConfirmLead, firestore, toast, calculateDigitizingDeadline, getContactDisplay]);
 
 
   const handleUploadDialogSave = useCallback(async () => {
@@ -1457,8 +1509,21 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 </DialogDescription>
               </DialogHeader>
               <div className="max-h-80 overflow-y-auto space-y-2 p-1">
-                  There are no files uploaded for this project
-                </div>
+                {allFinalFiles.length > 0 ? (
+                    <div className="space-y-2">
+                    {allFinalFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 rounded-md border text-sm">
+                        <span className="truncate pr-2"><strong>{file.type}:</strong> {file.name}</span>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={() => handleDownload(file.url, file.name)}>
+                            <Download className="h-4 w-4" />
+                        </Button>
+                        </div>
+                    ))}
+                    </div>
+                ) : (
+                    <p className="text-center text-muted-foreground py-4">There are no files uploaded for this project</p>
+                )}
+              </div>
               <DialogFooter>
                 <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
                 <Button onClick={handleConfirmReview}>Done</Button>
@@ -1769,7 +1834,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             const lead = viewingJoLead;
                             const scesProfile = usersData?.find(u => u.nickname === lead.salesRepresentative);
                             const scesFullName = scesProfile ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
-                            const totalQuantity = lead.orders.reduce((sum, order: any) => sum + order.quantity, 0);
+                            const totalQuantity = lead.orders.reduce((sum: any, order: any) => sum + order.quantity, 0);
                             const contactDisplay = getContactDisplay(lead);
                             
                             const deliveryDate = lead.adjustedDeliveryDate ? format(new Date(lead.adjustedDeliveryDate), "MMM dd, yyyy") : (lead.deliveryDate ? format(new Date(lead.deliveryDate), "MMM dd, yyyy") : format(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 7 : 22), "MMM dd, yyyy"));
@@ -1937,12 +2002,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         <table className="w-full border-collapse border border-black mb-6">
                                             <tbody>
                                                 <tr>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p></td>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstLogoLeft}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstBackLogo}</p></td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p></td>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstLogoRight}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstBackText}</p></td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -1978,14 +2043,15 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             )
                         })()}
                     </div>
-                </ScrollArea>
+                </div>
             </DialogContent>
         </Dialog>
-    )}
+      )}
     </>
   );
 });
 DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
