@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -174,6 +175,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [imageInView, setImageInView] = useState<string | null>(null);
   const [viewingJoLead, setViewingJoLead] = useState<Lead | null>(null);
+  const [openCustomerDetails, setOpenCustomerDetails] = useState<string | null>(null);
 
   const firestore = useFirestore();
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -191,6 +193,10 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   const toggleLeadDetails = useCallback((leadId: string) => {
     setOpenLeadId(openLeadId === leadId ? null : leadId);
   }, [openLeadId]);
+
+  const toggleCustomerDetails = useCallback((leadId: string) => {
+    setOpenCustomerDetails(prev => (prev === leadId ? null : leadId));
+  }, []);
 
   const calculateDeadline = useCallback((lead: Lead) => {
     const getDeadline = () => {
