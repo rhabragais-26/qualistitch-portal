@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -295,15 +294,14 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
              throw new Error(`HTTP error! status: ${response.status}`);
         }
         const blob = await response.blob();
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.download = name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(link.href);
+        const fileHandle = await (window as any).showSaveFilePicker({
+            suggestedName: name,
+        });
+        const writable = await fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
     } catch (err) {
-        console.error('File download failed:', err);
+        console.error('File save failed:', err);
         toast({
             variant: 'destructive',
             title: 'Download Failed',
@@ -483,24 +481,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     return (
         <React.Fragment>
             <TableRow>
-                <TableCell className="text-xs text-left">
-                    <div className="flex items-center justify-start gap-1">
-                        <span>{formatJoNumber(lead.joNumber)}</span>
-                        {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
-                        <TooltipProvider>
-                            <Tooltip>
-                            <TooltipTrigger>
-                                <AlertTriangle className="h-4 w-4 text-red-500" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
-                            </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        )}
-                    </div>
-                </TableCell>
-                <TableCell className="text-xs">
+                <TableCell className="text-xs text-center">
                     <div className="flex items-center justify-center">
                         <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
                         {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -533,6 +514,23 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                                 </div>
                             )}
                         </div>
+                    </div>
+                </TableCell>
+                <TableCell className="text-xs text-left">
+                    <div className="flex items-center justify-start gap-1">
+                        <span>{formatJoNumber(lead.joNumber)}</span>
+                        {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
+                        <TooltipProvider>
+                            <Tooltip>
+                            <TooltipTrigger>
+                                <AlertTriangle className="h-4 w-4 text-red-500" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
+                            </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                        )}
                     </div>
                 </TableCell>
                 <TableCell className="align-middle py-3 text-center">
@@ -651,6 +649,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                                 Endorsed
                            </Button>
                            <span className="text-xs text-gray-500">{formatDateTime(lead.endorsedToLogisticsTimestamp!).dateTimeShort}</span>
+                           {lead.endorsedToLogisticsBy && <span className="font-bold text-xs">by {lead.endorsedToLogisticsBy}</span>}
                            <Button size="sm" variant="outline" className="h-7 text-xs mt-1" onClick={() => handleReopenCase(lead)}>
                                 <RefreshCcw className="mr-2 h-4 w-4" /> Reopen
                            </Button>
@@ -684,6 +683,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const { toast } = useToast();
+  const { userProfile } = useUser();
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField; } | null>(null);
   const [leadToEndorse, setLeadToEndorse] = useState<Lead | null>(null);
   const [leadToReopen, setLeadToReopen] = useState<Lead | null>(null);
@@ -694,13 +694,13 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   const isCompleted = filterType === 'COMPLETED';
   
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
 
   const operationalCasesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'operationalCases')) : null, [firestore]);
-  const { data: operationalCases } = useCollection<OperationalCase>(operationalCasesQuery);
+  const { data: operationalCases } = useCollection<OperationalCase>(operationalCasesQuery, undefined, { listen: false });
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
-  const { data: usersData } = useCollection<UserProfileInfo>(usersQuery);
+  const { data: usersData } = useCollection<UserProfileInfo>(usersQuery, undefined, { listen: false });
   
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
@@ -785,10 +785,14 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
   }, [uncheckConfirmation, firestore, toast]);
 
   const handleEndorseToLogistics = useCallback(async (leadId: string) => {
-    if (!firestore) return;
+    if (!firestore || !userProfile) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     try {
-        await updateDoc(leadDocRef, { isEndorsedToLogistics: true, endorsedToLogisticsTimestamp: new Date().toISOString() });
+        await updateDoc(leadDocRef, { 
+            isEndorsedToLogistics: true, 
+            endorsedToLogisticsTimestamp: new Date().toISOString(),
+            endorsedToLogisticsBy: userProfile.nickname,
+        });
         toast({
             title: "Endorsed to Logistics",
             description: "The order has been sent to the logistics team.",
@@ -803,7 +807,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     } finally {
         setLeadToEndorse(null);
     }
-  }, [firestore, toast]);
+  }, [firestore, toast, userProfile]);
   
   const handleReopenCase = async (leadToReopen: Lead) => {
     if (!firestore) return;
@@ -1082,8 +1086,8 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
             <Table>
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
+                  <TableHead className="text-white font-bold text-xs text-center">Customer Details</TableHead>
                   <TableHead className="text-white font-bold text-xs text-left">J.O. Number</TableHead>
-                  <TableHead className="text-white font-bold text-xs">Customer Details</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Overdue Status</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Production Documents</TableHead>
@@ -1426,3 +1430,6 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
 
     
 
+
+
+    
