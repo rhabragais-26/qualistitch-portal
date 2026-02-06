@@ -321,12 +321,13 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 
     const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
 
+    // Group all orders by customer
     leads.forEach(lead => {
         const name = lead.customerName.toLowerCase();
         if (!customerOrderGroups[name]) {
             customerOrderGroups[name] = { orders: [] };
         }
-        customerOrderGroups[name].push(lead);
+        customerOrderGroups[name].orders.push(lead);
     });
 
     const enrichedLeads: EnrichedLead[] = [];
@@ -595,4 +596,5 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTableMemo';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
 
