@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/card';
 import React, { useState, useMemo, useCallback, useEffect, ChangeEvent } from 'react';
 import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from './ui/dialog';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -177,24 +177,7 @@ const ShipmentQueueTableRowGroup = React.memo(function ShipmentQueueTableRowGrou
     return (
         <React.Fragment>
             <TableRow>
-                <TableCell className="text-xs text-left">
-                    <div className="flex items-center justify-start gap-1">
-                        <span>{formatJoNumber(lead.joNumber)}</span>
-                        {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
-                        <TooltipProvider>
-                            <Tooltip>
-                            <TooltipTrigger>
-                                <AlertTriangle className="h-4 w-4 text-red-500" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
-                            </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        )}
-                    </div>
-                </TableCell>
-                <TableCell className="text-xs">
+                <TableCell className="text-xs text-center align-middle">
                     <div className="flex items-center justify-center">
                         <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
                         {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -227,6 +210,23 @@ const ShipmentQueueTableRowGroup = React.memo(function ShipmentQueueTableRowGrou
                                 </div>
                             )}
                         </div>
+                    </div>
+                </TableCell>
+                <TableCell className="text-xs text-left">
+                    <div className="flex items-center justify-start gap-1">
+                        <span>{formatJoNumber(lead.joNumber)}</span>
+                        {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
+                        <TooltipProvider>
+                            <Tooltip>
+                            <TooltipTrigger>
+                                <AlertTriangle className="h-4 w-4 text-red-500" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{activeCasesByJo.get(formatJoNumber(lead.joNumber))}</p>
+                            </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                        )}
                     </div>
                 </TableCell>
                 <TableCell className="text-center align-middle py-2">
@@ -391,7 +391,6 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
   const [searchTerm, setSearchTerm] = useState('');
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: 'isJoHardcopyReceived'; } | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
-  const [imageInView, setImageInView] = useState<string | null>(null);
   
   const [waybillNumbers, setWaybillNumbers] = useState<Record<string, string[]>>({});
   const [editingWaybills, setEditingWaybills] = useState<{ leadId: string; numbers: string[] } | null>(null);
@@ -851,8 +850,8 @@ export function ShipmentQueueTable({ isReadOnly, filterType = 'ONGOING' }: Shipm
             <Table>
               <TableHeader className="bg-neutral-800">
                 <TableRow>
+                  <TableHead className="text-white font-bold text-xs text-center align-middle">Customer</TableHead>
                   <TableHead className="text-white font-bold text-xs text-left">J.O. Number</TableHead>
-                  <TableHead className="text-white font-bold text-xs">Customer</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center w-[150px]">Received Printed J.O.?</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Quality Check</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Photoshoot Request</TableHead>
