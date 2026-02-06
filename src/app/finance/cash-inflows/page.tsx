@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -503,7 +504,7 @@ export default function CashInflowsPage() {
                     >Yesterday</Button>
                     <Button
                         variant={activeQuickFilter === 'today' ? 'default' : 'outline'}
-                        onClick={()={() => {
+                        onClick={() => {
                             if (activeQuickFilter === 'today') {
                                 setActiveQuickFilter(null);
                                 setDateFilter('All');
@@ -695,4 +696,6 @@ export default function CashInflowsPage() {
     </>
   );
 }
+    
+
     
