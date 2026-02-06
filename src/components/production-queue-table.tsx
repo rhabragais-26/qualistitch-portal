@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -523,8 +524,8 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                         </div>
                     </div>
                 </TableCell>
-                <TableCell className="text-xs align-middle text-center py-2 text-black">
-                    <div className="flex items-center justify-center gap-1">
+                <TableCell className="text-xs text-left">
+                    <div className="flex items-center justify-start gap-1">
                         <span>{formatJoNumber(lead.joNumber)}</span>
                         {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
                         <TooltipProvider>
@@ -1187,7 +1188,7 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
                   <TableHead className="text-white font-bold text-xs text-center">Customer</TableHead>
-                  <TableHead className="text-white font-bold text-xs text-center">J.O. Number</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-left">J.O. Number</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Overdue Status</TableHead>
                   <TableHead className="text-white font-bold text-xs text-center">Production Documents</TableHead>
@@ -1204,7 +1205,7 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
               <TableBody>
                 {productionQueue && productionQueue.length > 0 ? (
                   productionQueue.map((lead) => {
-                   const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample';
+                   const isRepeat = !lead.forceNewCustomer && lead.orderType !== 'Item Sample' && lead.orderNumber > 0;
                     return (
                         <ProductionQueueTableRowGroup
                             key={lead.id}
@@ -1517,6 +1518,7 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
     </>
   );
 }
+
 const ProductionQueueTableMemo = React.memo(ProductionQueueTableBase);
 ProductionQueueTableMemo.displayName = 'ProductionQueueTable';
 
