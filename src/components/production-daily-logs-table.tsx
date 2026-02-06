@@ -579,6 +579,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                                     checked={isChecked}
                                                                     onCheckedChange={(checked) => handleDesignCheckboxChange(lead.id, design.key as DesignType, !!checked)}
                                                                     disabled={isDisabled}
+                                                                    className="disabled:opacity-100"
                                                                 />
                                                                 <Label htmlFor={`${lead.id}-${design.key}`} className="ml-2 text-xs">{design.label}</Label>
                                                             </div>
@@ -586,7 +587,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         <TableCell className="p-1 border-r w-[80px]">
                                                             <Input
                                                                 type="text" 
-                                                                className="h-7 text-xs text-center" 
+                                                                className="h-7 text-xs text-center disabled:opacity-100" 
                                                                 value={logData.quantity[design.key as DesignType]}
                                                                 onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'quantity', e.target.value, design.key as DesignType)}
                                                                 disabled={!isChecked || isDisabled}
@@ -595,7 +596,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         <TableCell className="p-1 border-r w-[100px]">
                                                             <Input 
                                                                 type="text" 
-                                                                className="h-7 text-xs text-center" 
+                                                                className="h-7 text-xs text-center disabled:opacity-100" 
                                                                 value={logData.stitches[design.key as DesignType] ? new Intl.NumberFormat().format(Number(logData.stitches[design.key as DesignType].replace(/,/g, ''))) : ''}
                                                                 onChange={(e) => {
                                                                     const sanitizedValue = e.target.value.replace(/,/g, '');
@@ -609,7 +610,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         <TableCell className="p-1 border-r w-[100px]">
                                                             <Input
                                                                 type="text" 
-                                                                className="h-7 text-xs text-center" 
+                                                                className="h-7 text-xs text-center disabled:opacity-100" 
                                                                 value={logData.rpm[design.key as DesignType]}
                                                                 onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'rpm', e.target.value, design.key as DesignType)}
                                                                 disabled={!isChecked || isDisabled}
@@ -618,7 +619,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         <TableCell className="p-1 border-r w-[80px]">
                                                             <Input
                                                                 type="text" 
-                                                                className="h-7 text-xs text-center" 
+                                                                className="h-7 text-xs text-center disabled:opacity-100" 
                                                                 value={logData.heads[design.key as DesignType]}
                                                                 onChange={(e) => /^\d*$/.test(e.target.value) && handleLogChange(lead.id, 'heads', e.target.value, design.key as DesignType)}
                                                                 disabled={!isChecked || isDisabled}
@@ -655,7 +656,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                                 handleLogChange(lead.id, 'startTime', val.padStart(2, '0'), 'hour');
                                                             }
                                                         }}
-                                                        className="w-12 h-8 text-xs text-center"
+                                                        className="w-12 h-8 text-xs text-center disabled:opacity-100"
                                                         disabled={isDisabled}
                                                     />
                                                     <span>:</span>
@@ -671,11 +672,11 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                                 handleLogChange(lead.id, 'startTime', val.padStart(2, '0'), 'minute');
                                                             }
                                                         }}
-                                                        className="w-12 h-8 text-xs text-center"
+                                                        className="w-12 h-8 text-xs text-center disabled:opacity-100"
                                                         disabled={isDisabled}
                                                     />
                                                     <Select value={logData.startTime.period} onValueChange={(v) => handleLogChange(lead.id, 'startTime', v, 'period')} disabled={isDisabled}>
-                                                        <SelectTrigger className="w-[65px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                                                        <SelectTrigger className="w-[65px] h-8 text-xs disabled:opacity-100"><SelectValue /></SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="AM">AM</SelectItem>
                                                             <SelectItem value="PM">PM</SelectItem>
@@ -698,7 +699,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                                 handleLogChange(lead.id, 'endTime', val.padStart(2, '0'), 'hour');
                                                             }
                                                         }}
-                                                        className="w-12 h-8 text-xs text-center"
+                                                        className="w-12 h-8 text-xs text-center disabled:opacity-100"
                                                         disabled={isDisabled}
                                                     />
                                                     <span>:</span>
@@ -714,11 +715,11 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                                 handleLogChange(lead.id, 'endTime', val.padStart(2, '0'), 'minute');
                                                             }
                                                         }}
-                                                        className="w-12 h-8 text-xs text-center"
+                                                        className="w-12 h-8 text-xs text-center disabled:opacity-100"
                                                         disabled={isDisabled}
                                                     />
                                                     <Select value={logData.endTime.period} onValueChange={(v) => handleLogChange(lead.id, 'endTime', v, 'period')} disabled={isDisabled}>
-                                                        <SelectTrigger className="w-[65px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                                                        <SelectTrigger className="w-[65px] h-8 text-xs disabled:opacity-100"><SelectValue /></SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="AM">AM</SelectItem>
                                                             <SelectItem value="PM">PM</SelectItem>
@@ -744,6 +745,7 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
                                                         checked={(logData.shift || []).includes(shiftOption)}
                                                         onCheckedChange={(checked) => handleShiftChange(lead.id, shiftOption, !!checked)}
                                                         disabled={isDisabled}
+                                                        className="disabled:opacity-100"
                                                     />
                                                     <Label htmlFor={`${lead.id}-${shiftOption}`} className="text-xs font-normal">
                                                         {shiftOption}
