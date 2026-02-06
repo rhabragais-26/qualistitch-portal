@@ -10,6 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from '@/components/ui/table';
 import {
   Card,
@@ -36,11 +37,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from './ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { addDays } from 'date-fns';
 
-// Types
 type Order = { productType: string; color: string; size: string; quantity: number; };
-type Lead = { id: string; customerName: string; companyName?: string; contactNumber: string; landlineNumber?: string; orders: Order[]; joNumber?: number; orderType: string; submissionDateTime: string; isDigitizingArchived?: boolean; isJoHardcopyReceived?: boolean; joHardcopyReceivedTimestamp?: string; isPreparedForProduction?: boolean; isSentToProduction?: boolean; endorsedToLogisticsTimestamp?: string; isEndorsedToLogistics?: boolean; forceNewCustomer?: boolean; lastModifiedBy?: string; };
-type EnrichedLead = Lead & { orderNumber: number; totalCustomerQuantity: number; };
+type Lead = { id: string; customerName: string; companyName?: string; contactNumber: string; landlineNumber?: string; orders: Order[]; joNumber?: number; orderType: string; submissionDateTime: string; isDigitizingArchived?: boolean; isJoHardcopyReceived?: boolean; joHardcopyReceivedTimestamp?: string; isPreparedForProduction?: boolean; isSentToProduction?: boolean; endorsedToLogisticsTimestamp?: string; isEndorsedToLogistics?: boolean; forceNewCustomer?: boolean; lastModifiedBy?: string; endorsedToLogisticsBy?: string; };
+type EnrichedLead = Lead & {
+  orderNumber: number;
+  totalCustomerQuantity: number;
+};
 type ItemPreparationTableProps = { isReadOnly: boolean; filterType?: 'ONGOING' | 'COMPLETED'; };
 
 // Helper components are often co-located or imported. Assuming they are available.
@@ -136,10 +140,12 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                                   <div className="flex items-center text-sm text-green-600 font-semibold">
                                       <Check className="mr-2 h-4 w-4" /> Sent
                                   </div>
-                                  <div className="text-xs text-gray-500">
-                                      <div>{formatDateTime(lead.endorsedToLogisticsTimestamp!).dateTimeShort}</div>
-                                      {lead.lastModifiedBy && <div className="font-bold">by {lead.lastModifiedBy}</div>}
-                                  </div>
+                                  {lead.endorsedToLogisticsTimestamp && (
+                                    <div className="text-xs text-gray-500">
+                                      <div>{formatDateTime(lead.endorsedToLogisticsTimestamp).dateTimeShort}</div>
+                                      {lead.endorsedToLogisticsBy && <div className="font-bold">by {lead.endorsedToLogisticsBy}</div>}
+                                    </div>
+                                  )}
                               </div>
                           ) : (
                               <Button
@@ -230,6 +236,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
         updateData.joHardcopyReceivedTimestamp = value ? new Date().toISOString() : null;
     } else if (field === 'isSentToProduction' || field === 'isEndorsedToLogistics') {
       updateData.endorsedToLogisticsTimestamp = new Date().toISOString();
+      updateData.endorsedToLogisticsBy = userProfile.nickname;
     }
 
     try {
@@ -312,19 +319,19 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
   const processedLeads = useMemo(() => {
     if (!leads) return [];
 
-    const customerOrderGroups: { [key: string]: Lead[] } = {};
+    const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
 
     leads.forEach(lead => {
         const name = lead.customerName.toLowerCase();
         if (!customerOrderGroups[name]) {
-            customerOrderGroups[name] = [];
+            customerOrderGroups[name] = { orders: [] };
         }
         customerOrderGroups[name].push(lead);
     });
 
     const enrichedLeads: EnrichedLead[] = [];
 
-    Object.values(customerOrderGroups).forEach((orders) => {
+    Object.values(customerOrderGroups).forEach(({ orders }) => {
         const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
         
         const totalCustomerQuantity = orders.reduce((sum, o) => {
@@ -342,7 +349,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
             
             enrichedLeads.push({
                 ...lead,
-                orderNumber: previousNonSampleOrders.length, // 0-indexed count
+                orderNumber: previousNonSampleOrders.length,
                 totalCustomerQuantity,
             });
         }
@@ -355,19 +362,21 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
   const jobOrders = useMemo(() => {
     if (!processedLeads) return [];
     
+    const orderTypesToSkip = ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'];
+
     const leadsInQueue = processedLeads.filter(lead => {
-      if (filterType === 'COMPLETED') {
-        return lead.isSentToProduction || lead.isEndorsedToLogistics;
-      }
-      
-      const isClientOrPatchOnly = lead.orders.every(o => o.productType === 'Client Owned' || o.productType === 'Patches');
-      if (isClientOrPatchOnly) {
-        return false;
-      }
-      
-      const isReadyForPrep = lead.isDigitizingArchived || ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
-      const isNotProcessed = !lead.isSentToProduction && !lead.isEndorsedToLogistics;
-      return lead.joNumber && isReadyForPrep && isNotProcessed;
+        if (filterType === 'COMPLETED') {
+            return lead.isSentToProduction || lead.isEndorsedToLogistics;
+        }
+        
+        const isClientOrPatchOnly = lead.orders.every(o => o.productType === 'Client Owned' || o.productType === 'Patches');
+        if (isClientOrPatchOnly) {
+            return false;
+        }
+        
+        const isReadyForPrep = lead.isDigitizingArchived || ['Stock (Jacket Only)', 'Stock Design', 'Item Sample'].includes(lead.orderType);
+        const isNotProcessed = !lead.isSentToProduction && !lead.isEndorsedToLogistics;
+        return lead.joNumber && isReadyForPrep && isNotProcessed;
     });
     
     return leadsInQueue.filter(lead => {
@@ -586,3 +595,4 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTableMemo';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+

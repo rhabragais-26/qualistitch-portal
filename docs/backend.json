@@ -2,55 +2,6 @@
 
 {
   "entities": {
-    "UnclosedLead": {
-      "title": "UnclosedLead",
-      "type": "object",
-      "description": "Represents an unclosed lead not yet converted to an order.",
-      "properties": {
-        "id": { "type": "string" },
-        "date": { "type": "string", "format": "date-time" },
-        "leads": { "type": "string" },
-        "contactDetails": { "type": "string" },
-        "quantity": { "type": "string" },
-        "estimatedTotalAmount": { "type": "string" },
-        "layoutSent": { "type": "boolean" },
-        "quotationSent": { "type": "boolean" },
-        "forSampleJacket": { "type": "boolean" },
-        "forMeetUp": { "type": "boolean" },
-        "dateOfMeetUp": { "type": "string" },
-        "estimatedDateForDp": { "type": "string" },
-        "status": { "type": "string" },
-        "remarks": { "type": "string" },
-        "nextFollowUpDate": { "type": "string" },
-        "sces": { "type": "string" },
-        "createdBy": { "type": "string" }
-      },
-      "required": ["id", "date", "leads", "sces", "createdBy"]
-    },
-    "DailyAd": {
-      "title": "DailyAd",
-      "type": "object",
-      "description": "Represents a daily ad with associated images.",
-      "properties": {
-        "id": { "type": "string" },
-        "date": { "type": "string", "format": "date-time" },
-        "adAccount": { "type": "string" },
-        "images": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": { "type": "string" },
-              "url": { "type": "string", "format": "uri" }
-            },
-            "required": ["name", "url"]
-          }
-        },
-        "submittedBy": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "date", "adAccount", "images", "submittedBy", "timestamp"]
-    },
     "EmbroideryLog": {
       "title": "EmbroideryLog",
       "type": "object",
@@ -82,6 +33,16 @@
           }
         },
         "quantity": {
+          "type": "object",
+          "properties": {
+            "leftLogo": { "type": "string" },
+            "rightLogo": { "type": "string" },
+            "backLogo": { "type": "string" },
+            "backDesign": { "type": "string" },
+            "names": { "type": "string" }
+          }
+        },
+        "heads": {
           "type": "object",
           "properties": {
             "leftLogo": { "type": "string" },
@@ -483,10 +444,6 @@
           "type": "string",
           "description": "Province of the lead."
         },
-        "forceNewCustomer": {
-          "type": "boolean",
-          "description": "Admin override to treat a repeat customer as new for display purposes."
-        },
         "paymentType": {
           "type": "string",
           "description": "Payment type for the lead (Partially Paid, Fully Paid, COD)."
@@ -651,6 +608,8 @@
         "isDone": { "type": "boolean", "description": "Indicates if the order is completely done." },
         "doneProductionTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the production is marked as done." },
         "isEndorsedToLogistics": { "type": "boolean", "description": "Indicates if the order has been endorsed to logistics." },
+        "endorsedToLogisticsTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the order was endorsed to logistics." },
+        "endorsedToLogisticsBy": { "type": "string", "description": "Nickname of the user who endorsed the order to logistics." },
         "deliveredTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp for when the order was delivered." },
         "isDigitizingArchived": {
           "type": "boolean",
@@ -1038,26 +997,6 @@
   "firestore": {
     "structure": [
       {
-        "path": "/unclosedLeads/{unclosedLeadId}",
-        "definition": {
-          "entityName": "UnclosedLead",
-          "schema": {
-            "$ref": "#/backend/entities/UnclosedLead"
-          },
-          "description": "Stores unclosed lead data."
-        }
-      },
-      {
-        "path": "/dailyAds/{adId}",
-        "definition": {
-          "entityName": "DailyAd",
-          "schema": {
-            "$ref": "#/backend/entities/DailyAd"
-          },
-          "description": "Stores entries for daily ads."
-        }
-      },
-      {
         "path": "/embroidery_logs/{logId}",
         "definition": {
           "entityName": "EmbroideryLog",
@@ -1348,3 +1287,4 @@
     "reasoning": "The data structure is designed to store lead information collected via the LeadTracker application. To ensure security and efficient data retrieval, leads are stored under a collection called `leads`. This design promotes a flat structure, avoiding nested collections and complex queries, especially considering the app's focus is on data input rather than deeply relational data. Each lead document contains all relevant lead data. This simplifies data access and minimizes the need for complex joins or subqueries, aligning with the app's focus on simplicity and ease of use.\\n\\n**Authorization Independence:** Since there are no explicit user roles, collaborative features, or ownership details mentioned in the requirements, the system assumes open access to leads. If access control becomes a requirement in the future, a `members` map or a separate `/roles` collection would be used in combination with denormalization to achieve authorization independence.\\n\\n**QAPs (Rules are not Filters):** The structure supports secure `list` operations because all lead data is stored within a single, top-level collection. Security rules can be applied at the collection level, ensuring that only authorized users can access lead data, without needing to filter data based on document content. If more sophisticated access controls are required (e.g., restricting access based on CSR assignment), denormalization of CSR assignment directly into the lead documents combined with security rules based on the `request.auth.uid` will ensure that filtering within the rules is not required."
   }
 }
+
