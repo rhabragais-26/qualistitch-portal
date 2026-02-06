@@ -24,7 +24,7 @@ import { Button } from './ui/button';
 import { ChevronDown, ChevronUp, X, FileText } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { differenceInDays, addDays, format } from 'date-fns';
-import { cn, formatDateTime, toTitleCase, formatJoNumber } from '@/lib/utils';
+import { cn, formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import Image from 'next/image';
@@ -167,12 +167,12 @@ type UserProfileInfo = {
 };
 
 const hasLayoutContent = (layout: Layout) => {
-  return layout.layoutImage || 
-         layout.dstLogoLeft || 
-         layout.dstLogoRight || 
-         layout.dstBackLogo || 
-         layout.dstBackText || 
-         (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
+    return layout.layoutImage || 
+           layout.dstLogoLeft || 
+           layout.dstLogoRight || 
+           layout.dstBackLogo || 
+           layout.dstBackText || 
+           (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
 };
 
 export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONGOING' | 'COMPLETED' }) {
@@ -422,7 +422,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
         (lead.landlineNumber && lead.landlineNumber.replace(/-/g, '').includes(lowercasedSearchTerm.replace(/-/g, ''))))
         : true;
       
-      const joString = formatJoNumber(lead.joNumber);
+      const joString = formatJoNumberUtil(lead.joNumber);
       const matchesJo = joNumberSearch ? joString.toLowerCase().includes(joNumberSearch.toLowerCase()) : true;
 
       const overallStatus = getOverallStatus(lead).text;
@@ -442,7 +442,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
         return aDeadline.remainingDays - bDeadline.remainingDays;
     });
 
-  }, [processedLeads, searchTerm, joNumberSearch, overallStatusFilter, overdueStatusFilter, formatJoNumber, getOverallStatus, calculateDeadline, filterType]);
+  }, [processedLeads, searchTerm, joNumberSearch, overallStatusFilter, overdueStatusFilter, formatJoNumberUtil, getOverallStatus, calculateDeadline, filterType]);
   
   const activeCasesByJo = useMemo(() => {
     if (!operationalCases) return new Map();
@@ -458,10 +458,10 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   const leadsWithCases = useMemo(() => {
     if (!filteredLeads) return [];
     return filteredLeads.map(lead => {
-      const matchingCase = operationalCases?.find(c => c.joNumber === formatJoNumber(lead.joNumber) && !c.isArchived && !c.isDeleted);
+      const matchingCase = operationalCases?.find(c => c.joNumber === formatJoNumberUtil(lead.joNumber) && !c.isArchived && !c.isDeleted);
       return { ...lead, operationalCase: matchingCase };
     });
-  }, [filteredLeads, operationalCases, formatJoNumber]);
+  }, [filteredLeads, operationalCases, formatJoNumberUtil]);
 
   if (isLoading) {
     return (
@@ -502,7 +502,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
         <Dialog open={!!viewingJoLead} onOpenChange={() => setViewingJoLead(null)}>
             <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle>Job Order: {formatJoNumber(viewingJoLead.joNumber)}</DialogTitle>
+                    <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="pr-6">
@@ -522,7 +522,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                               <>
                                 <div className="p-10 mx-auto max-w-4xl print-page">
                                   <div className="text-left mb-4">
-                                      <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumber(lead.joNumber)}</span></p>
+                                      <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span></p>
                                   </div>
                                   <h1 className="text-2xl font-bold text-center mb-6 border-b-4 border-black pb-2">JOB ORDER FORM</h1>
 
@@ -659,7 +659,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                 {layoutsToPrint.map((layout, layoutIndex) => (
                                     <div key={layoutIndex} className="p-10 mx-auto max-w-4xl print-page mt-8 pt-8 border-t-4 border-dashed border-gray-300">
                                       <div className="text-left mb-4">
-                                          <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumber(lead.joNumber)}</span> - Layout {layoutIndex + 1}</p>
+                                          <p className="font-bold"><span className="text-primary">J.O. No:</span> <span className="inline-block border-b border-black">{formatJoNumberUtil(lead.joNumber)}</span> - Layout {layoutIndex + 1}</p>
                                       </div>
                                       
                                        {layout.layoutImage && (
@@ -720,7 +720,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                             )
                         })()}
                     </div>
-                </ScrollArea>
+                </div>
             </DialogContent>
         </Dialog>
       )}
@@ -800,7 +800,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
               <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white font-bold align-middle px-2">Customer</TableHead>
+                    <TableHead className="text-white font-bold align-middle px-2 text-center w-[200px]">Customer</TableHead>
                     <TableHead className="text-white font-bold align-middle w-[150px] text-center px-2">J.O. No.</TableHead>
                     <TableHead className="text-white font-bold align-middle w-[150px] text-center px-2">SCES</TableHead>
                     <TableHead className="text-center text-white font-bold align-middle w-[150px] px-2">Priority Type</TableHead>
@@ -829,12 +829,12 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow className="border-b-2 border-gray-300">
-                            <TableCell className="font-medium align-middle py-3 text-black text-sm px-2">
-                                <div className="flex items-center justify-start gap-1">
+                            <TableCell className="font-medium align-middle py-3 text-black text-sm px-2 text-center">
+                                <div className="flex items-center justify-center gap-1">
                                     <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
                                     {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                     </Button>
-                                    <div className='flex flex-col items-start'>
+                                    <div className='flex flex-col items-center'>
                                         <span className="font-bold">{toTitleCase(lead.customerName)}</span>
                                         {isRepeat ? (
                                             <TooltipProvider>
@@ -856,7 +856,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                             <div className="text-xs text-blue-600 font-semibold mt-1">New Customer</div>
                                         )}
                                         {openCustomerDetails === lead.id && (
-                                            <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal">
+                                            <div className="mt-1 space-y-0.5 text-gray-500 text-[11px] font-normal text-center">
                                                 {lead.companyName && lead.companyName !== '-' && <div>{toTitleCase(lead.companyName)}</div>}
                                                 {getContactDisplay(lead) && <div>{getContactDisplay(lead)}</div>}
                                             </div>
@@ -867,7 +867,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                             <TableCell className="text-xs align-middle text-center py-2 text-black px-2">
                               <div className="flex flex-col items-center justify-center gap-2">
                                 <div className="flex items-center justify-center">
-                                  <span>{formatJoNumber(lead.joNumber)}</span>
+                                  <span>{formatJoNumberUtil(lead.joNumber)}</span>
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
@@ -968,7 +968,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                           <div className="space-y-1">
                                             <h4 className="font-medium leading-none">{lead.operationalCase.caseType}</h4>
                                             <p className="text-sm text-muted-foreground">
-                                              Case for J.O. {formatJoNumber(parseInt(lead.operationalCase.joNumber.split('-')[2], 10))}
+                                              Case for J.O. {formatJoNumberUtil(parseInt(lead.operationalCase.joNumber.split('-')[2], 10))}
                                             </p>
                                           </div>
                                           <div className="grid gap-2 text-sm">
