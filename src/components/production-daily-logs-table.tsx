@@ -282,10 +282,9 @@ export function EmbroideryDailyLogsTable({ isReadOnly }: { isReadOnly: boolean }
             if (checkedDesigns[lead.id]?.[key]) {
                 const stitches = parseInt(log.stitches[key].replace(/,/g, ''), 10) || 0;
                 const rpm = parseInt(log.rpm[key], 10) || 0;
-                const quantity = parseInt(log.quantity[key], 10) || 0;
 
-                if (stitches > 0 && rpm > 0 && quantity > 0) {
-                    totalTimeInMinutes += ((stitches / rpm) * quantity) + 5;
+                if (stitches > 0 && rpm > 0) {
+                    totalTimeInMinutes += (stitches / rpm);
                 }
             }
         }
