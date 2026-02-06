@@ -662,7 +662,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         if (!customerOrderGroups[name]) {
             customerOrderGroups[name] = { orders: [] };
         }
-        customerOrderGroups[name].push(lead);
+        customerOrderGroups[name].orders.push(lead);
     });
 
     const enrichedLeads: EnrichedLead[] = [];
@@ -2027,7 +2027,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                          <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
                                             <Image 
                                                 src={layout.layoutImage} 
-                                                alt={`Layout ${'\'\''}layoutIndex + 1}`} 
+                                                alt={`Layout ${layoutIndex + 1}`} 
                                                 layout="fill"
                                                 objectFit="contain"
                                             />
@@ -2035,7 +2035,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         )}
                                       
                                       <h2 className="text-2xl font-bold text-center mb-4">
-                                        {layoutsToPrint.length > 1 ? `LAYOUT #${'\'\''}layoutIndex + 1}` : "LAYOUT"}
+                                        {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
                                       </h2>
                                         <table className="w-full border-collapse border border-black mb-6">
                                             <tbody>
@@ -2093,4 +2093,4 @@ DigitizingTableMemo.displayName = 'DigitizingTable';
 export { DigitizingTableMemo as DigitizingTable };
 
 
-
+    
