@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -165,6 +166,15 @@ type UserProfileInfo = {
   nickname: string;
 };
 
+const hasLayoutContent = (layout: Layout) => {
+  return layout.layoutImage || 
+         layout.dstLogoLeft || 
+         layout.dstLogoRight || 
+         layout.dstBackLogo || 
+         layout.dstBackText || 
+         (layout.namedOrders && layout.namedOrders.length > 0 && layout.namedOrders.some(o => o.name || o.backText));
+};
+
 export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONGOING' | 'COMPLETED' }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
@@ -187,23 +197,14 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
 
   const isLoading = areLeadsLoading || areCasesLoading || areUsersLoading;
   const error = leadsError || casesError || usersError;
-  
-  const toggleLeadDetails = useCallback((leadId: string) => {
-    setOpenLeadId(openLeadId === leadId ? null : leadId);
-  }, [openLeadId]);
 
   const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(prev => (prev === leadId ? null : leadId));
   }, []);
-
-  const hasLayoutContent = (layout: Layout) => {
-    return layout.layoutImage || 
-           (layout as any).dstLogoLeft || 
-           (layout as any).dstLogoRight || 
-           (layout as any).dstBackLogo || 
-           (layout as any).dstBackText || 
-           ((layout as any).namedOrders && (layout as any).namedOrders.length > 0 && (layout as any).namedOrders.some((o: any) => o.name || o.backText));
-  };
+  
+  const toggleLeadDetails = useCallback((leadId: string) => {
+    setOpenLeadId(openLeadId === leadId ? null : leadId);
+  }, [openLeadId]);
 
   const calculateDeadline = useCallback((lead: Lead) => {
     const getDeadline = () => {
@@ -443,10 +444,21 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
 
   }, [processedLeads, searchTerm, joNumberSearch, overallStatusFilter, overdueStatusFilter, formatJoNumber, getOverallStatus, calculateDeadline, filterType]);
   
+  const activeCasesByJo = useMemo(() => {
+    if (!operationalCases) return new Map();
+    const map = new Map<string, string>();
+    operationalCases.forEach(c => {
+        if (!c.isArchived && !c.isDeleted) {
+            map.set(c.joNumber, c.caseType);
+        }
+    });
+    return map;
+  }, [operationalCases]);
+
   const leadsWithCases = useMemo(() => {
-    if (!filteredLeads || !operationalCases) return [];
+    if (!filteredLeads) return [];
     return filteredLeads.map(lead => {
-      const matchingCase = operationalCases.find(c => c.joNumber === formatJoNumber(lead.joNumber) && !c.isArchived && !c.isDeleted);
+      const matchingCase = operationalCases?.find(c => c.joNumber === formatJoNumber(lead.joNumber) && !c.isArchived && !c.isDeleted);
       return { ...lead, operationalCase: matchingCase };
     });
   }, [filteredLeads, operationalCases, formatJoNumber]);
@@ -667,12 +679,12 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                         <table className="w-full border-collapse border border-black mb-6">
                                             <tbody>
                                                 <tr>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstLogoLeft}</p></td>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstBackLogo}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p></td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstLogoRight}</p></td>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstBackText}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p></td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -788,15 +800,15 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
               <Table>
                 <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="text-white font-bold align-middle">Customer</TableHead>
-                    <TableHead className="text-white font-bold align-middle w-[150px] text-center">J.O. No.</TableHead>
-                    <TableHead className="text-white font-bold align-middle w-[150px] text-center">SCES</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle w-[150px]">Priority Type</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle w-[150px]">Ordered Items</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle w-[400px]">Order Fulfillment Progress</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle w-[150px]">Overdue Status</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle w-[150px]">Operational Case</TableHead>
-                    <TableHead className="text-center text-white font-bold align-middle w-[120px]">Overall Status</TableHead>
+                    <TableHead className="text-white font-bold align-middle px-2">Customer</TableHead>
+                    <TableHead className="text-white font-bold align-middle w-[150px] text-center px-2">J.O. No.</TableHead>
+                    <TableHead className="text-white font-bold align-middle w-[150px] text-center px-2">SCES</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[150px] px-2">Priority Type</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[150px] px-2">Ordered Items</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[400px] px-2">Order Fulfillment Progress</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[150px] px-2">Overdue Status</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[150px] px-2">Operational Case</TableHead>
+                    <TableHead className="text-center text-white font-bold align-middle w-[120px] px-2">Overall Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -817,7 +829,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                   return (
                     <React.Fragment key={lead.id}>
                         <TableRow className="border-b-2 border-gray-300">
-                            <TableCell className="font-medium align-middle py-3 text-black text-sm">
+                            <TableCell className="font-medium align-middle py-3 text-black text-sm px-2">
                                 <div className="flex items-center justify-start gap-1">
                                     <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
                                     {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -852,7 +864,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                     </div>
                                 </div>
                             </TableCell>
-                            <TableCell className="text-xs align-middle text-center py-2 text-black">
+                            <TableCell className="text-xs align-middle text-center py-2 text-black px-2">
                               <div className="flex flex-col items-center justify-center gap-2">
                                 <div className="flex items-center justify-center">
                                   <span>{formatJoNumber(lead.joNumber)}</span>
@@ -876,8 +888,8 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell className="text-xs align-middle text-center py-2 text-black">{lead.salesRepresentative}</TableCell>
-                            <TableCell className="align-middle py-3 text-center">
+                            <TableCell className="text-xs align-middle text-center py-2 text-black px-2">{lead.salesRepresentative}</TableCell>
+                            <TableCell className="align-middle py-3 text-center px-2">
                                <div className='flex flex-col items-center gap-1'>
                                 <Badge variant={lead.priorityType === 'Rush' ? 'destructive' : 'secondary'}>
                                     {lead.priorityType}
@@ -885,13 +897,13 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                 <div className="text-gray-500 text-sm font-bold mt-1">{lead.orderType}</div>
                                </div>
                             </TableCell>
-                            <TableCell className="text-center align-middle py-3">
+                            <TableCell className="text-center align-middle py-3 px-2">
                                <div onClick={() => toggleLeadDetails(lead.id)} className="inline-flex items-center justify-center gap-2 cursor-pointer rounded-md px-3 py-1 hover:bg-gray-100 mt-1">
                                     <span className="font-semibold text-sm">{totalQuantity} items</span>
                                     {isCollapsibleOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                                 </div>
                             </TableCell>
-                             <TableCell className="align-middle py-3">
+                             <TableCell className="align-middle py-3 px-2">
                                 <div className="border rounded-md p-2 mt-1">
                                     <div className="relative pt-4">
                                         <div
@@ -935,7 +947,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                 </div>
                             </TableCell>
                             <TableCell className={cn(
-                              "text-center text-xs align-middle py-3",
+                              "text-center text-xs align-middle py-3 px-2",
                                 (lead.shipmentStatus === 'Shipped' || lead.shipmentStatus === 'Delivered')
                                 ? "text-green-600 font-medium"
                                 : deadlineInfo.isOverdue
@@ -944,7 +956,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                 ? "text-amber-600 font-bold"
                                 : ""
                             )}>{deadlineInfo.text}</TableCell>
-                            <TableCell className="text-center text-xs align-middle py-3 font-medium">
+                            <TableCell className="text-center text-xs align-middle py-3 font-medium px-2">
                                 {lead.operationalCase ? (
                                   <Popover>
                                     <PopoverTrigger asChild>
@@ -997,14 +1009,14 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
                                     <span className="text-muted-foreground">-</span>
                                 )}
                             </TableCell>
-                            <TableCell className="text-center align-middle p-1 font-medium">
+                            <TableCell className="text-center align-middle p-1 font-medium px-2">
                                 <Badge variant={overallStatus.variant} className="uppercase rounded-md text-sm">{overallStatus.text}</Badge>
                             </TableCell>
                         </TableRow>
                         {isCollapsibleOpen && (
                           <TableRow>
-                              <TableCell colSpan={9}>
-                              <div className="p-4 max-w-xl mx-auto bg-gray-50 rounded-md my-2">
+                              <TableCell colSpan={9} className="p-0">
+                              <div className="p-4 max-w-xl mx-auto bg-blue-50 rounded-md my-2">
                                 <h4 className="font-semibold text-black mb-2 text-center">Ordered Items</h4>
                                 <Table>
                                   <TableHeader>
