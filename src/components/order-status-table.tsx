@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import {
@@ -197,6 +195,15 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
   const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(prev => (prev === leadId ? null : leadId));
   }, []);
+
+  const hasLayoutContent = (layout: Layout) => {
+    return layout.layoutImage || 
+           (layout as any).dstLogoLeft || 
+           (layout as any).dstLogoRight || 
+           (layout as any).dstBackLogo || 
+           (layout as any).dstBackText || 
+           ((layout as any).namedOrders && (layout as any).namedOrders.length > 0 && (layout as any).namedOrders.some((o: any) => o.name || o.backText));
+  };
 
   const calculateDeadline = useCallback((lead: Lead) => {
     const getDeadline = () => {
@@ -705,7 +712,7 @@ export function OrderStatusTable({ filterType = 'ONGOING' }: { filterType?: 'ONG
             </DialogContent>
         </Dialog>
       )}
-      <CardHeader className="pb-4">
+      <CardHeader>
         <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-black">{filterType === 'COMPLETED' ? 'Completely Delivered Orders' : 'Overall Order Status & Progress'}</CardTitle>
