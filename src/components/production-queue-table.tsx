@@ -25,7 +25,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, FileText, Download, X, Eye, ChevronUp } from 'lucide-react';
+import { Check, ChevronDown, RefreshCcw, AlertTriangle, Send, Plus, Trash2, ChevronUp, X, Eye, FileText, Download } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { cn, formatDateTime, toTitleCase, formatJoNumber as formatJoNumberUtil } from '@/lib/utils';
 import { Checkbox } from './ui/checkbox';
@@ -159,6 +159,7 @@ type Layout = {
 };
 
 type ProductionType = "Pending" | "In-house" | "Outsource 1" | "Outsource 2" | "Outsource 3";
+type SewerType = ProductionType | "Not Applicable";
 
 type Lead = {
   id: string;
@@ -190,7 +191,7 @@ type Lead = {
   trimmingTimestamp?: string;
   isDone?: boolean;
   productionType?: ProductionType;
-  sewerType?: ProductionType;
+  sewerType?: SewerType;
   isEmbroideryDone?: boolean;
   embroideryDoneTimestamp?: string;
   isEndorsedToLogistics?: boolean;
@@ -218,8 +219,9 @@ type OperationalCase = {
 type CheckboxField = 'isCutting' | 'isEmbroideryDone' | 'isSewing' | 'isTrimming';
 
 const productionOptions: ProductionType[] = ["Pending", "In-house", "Outsource 1", "Outsource 2", "Outsource 3"];
+const sewerOptions: SewerType[] = ["Pending", "In-house", "Outsource 1", "Outsource 2", "Outsource 3", "Not Applicable"];
 
-const getStatusColor = (status?: ProductionType) => {
+const getStatusColor = (status?: ProductionType | SewerType) => {
   switch (status) {
     case 'In-house':
       return 'bg-yellow-100 text-yellow-800';
@@ -229,6 +231,8 @@ const getStatusColor = (status?: ProductionType) => {
         return 'bg-indigo-100 text-indigo-800';
     case 'Outsource 3':
         return 'bg-blue-100 text-blue-800';
+    case 'Not Applicable':
+        return 'bg-gray-300 text-gray-800';
     case 'Pending':
     default:
       return 'bg-gray-100 text-gray-800';
@@ -609,7 +613,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            {productionOptions.map(opt => (
+                            {sewerOptions.map(opt => (
                                 <SelectItem key={opt} value={opt} className="text-xs">{opt}</SelectItem>
                             ))}
                         </SelectContent>
@@ -620,7 +624,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                         <Checkbox
                         checked={!!lead.isSewing}
                         onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isSewing', !!checked)}
-                        disabled={!lead.isEmbroideryDone || isReadOnly || isCompleted}
+                        disabled={!lead.isEmbroideryDone || lead.sewerType === 'Not Applicable' || isReadOnly || isCompleted}
                         className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                         />
                         {lead.sewingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.sewingTimestamp).dateTimeShort}</div>}
@@ -631,7 +635,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                         <Checkbox
                             checked={!!lead.isTrimming}
                             onCheckedChange={(checked) => handleCheckboxChange(lead.id, 'isTrimming', !!checked)}
-                            disabled={!lead.isSewing || isReadOnly || isCompleted}
+                            disabled={!(lead.isSewing || lead.sewerType === 'Not Applicable') || isReadOnly || isCompleted}
                             className={isReadOnly || isCompleted ? 'disabled:opacity-100' : ''}
                         />
                         {lead.trimmingTimestamp && <div className="text-[10px] text-gray-500 whitespace-nowrap">{formatDateTime(lead.trimmingTimestamp).dateTimeShort}</div>}
@@ -1078,19 +1082,19 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
             <Table>
               <TableHeader className="bg-neutral-800 sticky top-0 z-10">
                 <TableRow>
-                  <TableHead className="text-white font-bold align-middle text-center">J.O. Number</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Customer Details</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Priority</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Overdue Status</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Production Documents</TableHead>
-                  <TableHead className="text-center text-white font-bold align-middle">Start Production</TableHead>
-                  <TableHead className="text-center text-white font-bold align-middle">Production Category</TableHead>
-                  <TableHead className="text-center text-white font-bold align-middle">Done Embroidery</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Sewing Category</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Done Sewing</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Trimming/Cleaning</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Production Status</TableHead>
-                  <TableHead className="text-white font-bold align-middle text-center">Endorsement</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-left">J.O. Number</TableHead>
+                  <TableHead className="text-white font-bold text-xs">Customer Details</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Priority</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Overdue Status</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Production Documents</TableHead>
+                  <TableHead className="text-center text-white font-bold text-xs">Start Production</TableHead>
+                  <TableHead className="text-center text-white font-bold text-xs">Production Category</TableHead>
+                  <TableHead className="text-center text-white font-bold text-xs">Done Embroidery</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Sewing Category</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Done Sewing</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Trimming/Cleaning</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Production Status</TableHead>
+                  <TableHead className="text-white font-bold text-xs text-center">Endorsement</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1360,12 +1364,12 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                                         <table className="w-full border-collapse border border-black mb-6">
                                             <tbody>
                                                 <tr>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstLogoLeft}</p></td>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstBackLogo}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO LEFT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoLeft}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK LOGO:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackLogo}</p></td>
                                                 </tr>
                                                 <tr>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstLogoRight}</p></td>
-                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{(layout as any).dstBackText}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST LOGO RIGHT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstLogoRight}</p></td>
+                                                    <td className="border border-black p-2 w-1/2"><strong>DST BACK TEXT:</strong><p className="mt-1 whitespace-pre-wrap">{layout.dstBackText}</p></td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -1421,3 +1425,4 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
     
 
     
+
