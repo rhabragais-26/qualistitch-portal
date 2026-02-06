@@ -1548,7 +1548,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               </ScrollArea>
               <DialogFooter>
                 <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                <Button onClick={handleConfirmReview} disabled={isReadOnly || !lead?.isJoHardcopyReceived}>Done</Button>
+                <Button onClick={handleConfirmReview} disabled={isReadOnly || !(lead?.isJoHardcopyReceived || ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'].includes(lead?.orderType || ''))}>Done</Button>
               </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -1823,7 +1823,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                     </div>
                                 )
                            ) : (
-                            <Button size="sm" onClick={() => setReviewConfirmLead(lead)} disabled={!lead.isFinalProgram || (isJoHardcopyRequired && !lead.isJoHardcopyReceived) || isReadOnly} className="h-7 px-3">
+                            <Button size="sm" onClick={() => setReviewConfirmLead(lead)} disabled={isReadOnly || !lead.isFinalProgram || !lead.isJoHardcopyReceived}>
                                 Done
                             </Button>
                            )}
@@ -2061,7 +2061,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             )
                         })()}
                     </div>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
       )}
@@ -2071,4 +2071,5 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTableMemo';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
