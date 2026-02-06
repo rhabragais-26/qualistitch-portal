@@ -582,13 +582,8 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   }, []);
 
   const calculateDigitizingDeadline = useCallback((lead: Lead) => {
-    if (lead.isFinalProgram) {
-        const finalProgramTime = lead.finalProgramTimestamp ? new Date(lead.finalProgramTimestamp) : new Date();
-        const remainingDays = differenceInDays(addDays(new Date(lead.submissionDateTime), lead.priorityType === 'Rush' ? 2 : 6), finalProgramTime);
-        if (remainingDays < 0) {
-            return { text: `${'\'\'\''}Math.abs(remainingDays){'\'\'\''} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
-        }
-        return { text: `${'\'\'\''}remainingDays{'\'\'\''} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
+    if (lead.isFinalProgram && lead.finalProgramTimestamp) {
+      return { text: `Completed`, isOverdue: false, isUrgent: false, remainingDays: 0 };
     }
     const submissionDate = new Date(lead.submissionDateTime);
     const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
@@ -596,11 +591,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const remainingDays = differenceInDays(deadlineDate, new Date());
     
     if (remainingDays < 0) {
-      return { text: `${'\'\'\''}Math.abs(remainingDays){'\'\'\''} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
+      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
     } else if (remainingDays <= 2) {
-      return { text: `${'\'\'\''}remainingDays{'\'\'\''} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
     } else {
-      return { text: `${'\'\'\''}remainingDays{'\'\'\''} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
+      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
     }
   }, []);
 
@@ -1225,7 +1220,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, finalNamesDst, isNamesOnly,
       sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign
   ]);
-
+  
   const handleImagePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     if (isViewOnly) return;
     const file = e.clipboardData.files[0];
@@ -1541,7 +1536,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               </div>
               <DialogFooter>
                 <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                <Button onClick={handleConfirmReview}>Done</Button>
+                <Button onClick={handleConfirmReview} disabled={isReadOnly}>Done</Button>
               </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -2064,5 +2059,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 DigitizingTableMemo.displayName = 'DigitizingTableMemo';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
