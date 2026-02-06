@@ -37,6 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Label } from '@/components/ui/label';
 
 
 // Types for downpayments from leads
@@ -50,6 +51,7 @@ type Payment = {
   verified?: boolean;
   verifiedBy?: string;
   verifiedTimestamp?: string;
+  actualTransactionDate?: string;
 };
 
 type Lead = {
@@ -236,7 +238,8 @@ export default function CashInflowsPage() {
   const [editingInflow, setEditingInflow] = useState<OtherCashInflow | null>(null);
   const [deletingInflow, setDeletingInflow] = useState<OtherCashInflow | null>(null);
   const { toast } = useToast();
-  const [verifyingPayment, setVerifyingPayment] = useState<{ leadId: string; paymentIndex: number } | null>(null);
+  const [verifyingPayment, setVerifyingPayment] = useState<{ leadId: string; paymentIndex: number; timestamp: string; } | null>(null);
+  const [editedTransactionDate, setEditedTransactionDate] = useState<string>('');
   const [activeQuickFilter, setActiveQuickFilter] = useState<'yesterday' | 'today' | null>(null);
 
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
@@ -286,6 +289,7 @@ export default function CashInflowsPage() {
                     verified: p.verified,
                     verifiedBy: p.verifiedBy,
                     verifiedTimestamp: p.verifiedTimestamp,
+                    actualTransactionDate: p.actualTransactionDate,
                     type: p.type
                 };
             })
@@ -300,6 +304,7 @@ export default function CashInflowsPage() {
         paymentIndex: -1,
         type: 'other' as const,
         verified: true,
+        actualTransactionDate: inflow.date,
     }));
     
     return [...leadPayments, ...other].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -381,7 +386,7 @@ export default function CashInflowsPage() {
   const handleConfirmVerification = async () => {
     if (!verifyingPayment || !firestore || !userProfile) return;
 
-    const { leadId, paymentIndex } = verifyingPayment;
+    const { leadId, paymentIndex, timestamp: originalTimestamp } = verifyingPayment;
     const leadRef = doc(firestore, 'leads', leadId);
 
     try {
@@ -394,11 +399,15 @@ export default function CashInflowsPage() {
         const updatedPayments = [...(leadData.payments || [])];
         
         if (updatedPayments[paymentIndex]) {
+             const originalDate = format(parseISO(originalTimestamp), 'yyyy-MM-dd');
+             const hasDateChanged = editedTransactionDate !== originalDate;
+
             updatedPayments[paymentIndex] = {
                 ...updatedPayments[paymentIndex],
                 verified: true,
                 verifiedBy: userProfile.nickname,
                 verifiedTimestamp: new Date().toISOString(),
+                actualTransactionDate: hasDateChanged ? new Date(editedTransactionDate).toISOString() : (updatedPayments[paymentIndex].actualTransactionDate || null),
             };
         } else {
             throw new Error("Payment not found at the specified index.");
@@ -421,6 +430,7 @@ export default function CashInflowsPage() {
         });
     } finally {
         setVerifyingPayment(null);
+        setEditedTransactionDate('');
     }
   };
 
@@ -532,6 +542,7 @@ export default function CashInflowsPage() {
                   <TableHeader className="sticky top-0 bg-neutral-800 z-10">
                     <TableRow>
                       <TableHead className="text-white font-bold">Date</TableHead>
+                      <TableHead className="text-white font-bold w-[180px] text-center">Actual Date of Transaction</TableHead>
                       <TableHead className="text-white font-bold">Description</TableHead>
                       <TableHead className="text-white font-bold">Customer Name</TableHead>
                       <TableHead className="text-white font-bold">Payment Method</TableHead>
@@ -544,20 +555,40 @@ export default function CashInflowsPage() {
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
-                        <TableCell colSpan={8}>
+                        <TableCell colSpan={9}>
                           <Skeleton className="h-24 w-full" />
                         </TableCell>
                       </TableRow>
                     ) : error ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-destructive">
+                        <TableCell colSpan={9} className="text-center text-destructive">
                           Error loading data: {error.message}
                         </TableCell>
                       </TableRow>
                     ) : filteredInflows.length > 0 ? (
                       filteredInflows.map((inflow, index) => (
                         <TableRow key={`${inflow.id}-${index}`}>
-                            <TableCell className="font-bold">{format(parseISO(inflow.date), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell className="font-bold">
+                                <div>{format(parseISO(inflow.date), 'MMM dd, yyyy')}</div>
+                                <div className="text-xs text-muted-foreground">{format(parseISO(inflow.date), 'h:mm a')}</div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                                {(() => {
+                                    const actualDateStr = (inflow as any).actualTransactionDate;
+                                    const originalDateStr = inflow.date;
+                                    
+                                    const displayDate = actualDateStr ? new Date(actualDateStr) : new Date(originalDateStr);
+                                    const formattedDisplayDate = format(displayDate, 'MMM dd, yyyy');
+
+                                    const isDifferent = actualDateStr && (format(new Date(actualDateStr), 'yyyy-MM-dd') !== format(new Date(originalDateStr), 'yyyy-MM-dd'));
+
+                                    return (
+                                        <div className={cn('text-xs', isDifferent && 'text-blue-600 font-bold')}>
+                                            {formattedDisplayDate}
+                                        </div>
+                                    );
+                                })()}
+                            </TableCell>
                             <TableCell>{inflow.description}</TableCell>
                             <TableCell>{(inflow as any).customerName}</TableCell>
                             <TableCell>{inflow.paymentMode}</TableCell>
@@ -584,7 +615,11 @@ export default function CashInflowsPage() {
                                       )}
                                   </div>
                                 ) : (
-                                  <Button size="sm" onClick={() => setVerifyingPayment({ leadId: inflow.leadId, paymentIndex: inflow.paymentIndex })}>
+                                  <Button size="sm" onClick={() => {
+                                      setVerifyingPayment({ leadId: inflow.leadId, paymentIndex: inflow.paymentIndex, timestamp: inflow.date });
+                                      const dateToEdit = (inflow as any).actualTransactionDate || inflow.date;
+                                      setEditedTransactionDate(format(parseISO(dateToEdit), 'yyyy-MM-dd'));
+                                  }}>
                                     Verify
                                   </Button>
                                 )
@@ -603,7 +638,7 @@ export default function CashInflowsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground">
+                        <TableCell colSpan={9} className="text-center text-muted-foreground">
                           No cash inflow data available for the selected filters.
                         </TableCell>
                       </TableRow>
@@ -630,17 +665,31 @@ export default function CashInflowsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
-     <AlertDialog open={!!verifyingPayment} onOpenChange={() => setVerifyingPayment(null)}>
+     <AlertDialog open={!!verifyingPayment} onOpenChange={(open) => {
+        if (!open) {
+            setVerifyingPayment(null);
+            setEditedTransactionDate('');
+        }
+     }}>
       <AlertDialogContent>
           <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-          <AlertDialogDescription>
-              Please confirm that this payment has been received.
-          </AlertDialogDescription>
+            <AlertDialogTitle>Verify Payment</AlertDialogTitle>
+            <AlertDialogDescription>
+                Please confirm that this payment has been received. You can adjust the actual transaction date if it differs from the recording date.
+            </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="py-4 space-y-2">
+            <Label htmlFor="transaction-date">Actual Date of Transaction</Label>
+            <Input
+                id="transaction-date"
+                type="date"
+                value={editedTransactionDate}
+                onChange={(e) => setEditedTransactionDate(e.target.value)}
+            />
+          </div>
           <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirmVerification}>Confirm</AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmVerification}>Confirm</AlertDialogAction>
           </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
