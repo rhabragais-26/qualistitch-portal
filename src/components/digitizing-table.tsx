@@ -339,7 +339,7 @@ const ImageDisplayCard = React.memo(function ImageDisplayCard({ title, images, o
     if (!images || images.length === 0) return null;
 
     return (
-        <Card className="bg-white flex-shrink-0 w-auto">
+        <Card className="bg-white flex-shrink-0">
             <CardHeader className="p-2"><CardTitle className="text-sm text-center">{title}</CardTitle></CardHeader>
             <CardContent className="flex gap-4 text-xs p-2 flex-wrap justify-center">
                 {images.map((img, index) => (
@@ -2047,16 +2047,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             )
                         })()}
                     </div>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
       )}
     </>
   );
 });
-DigitizingTableMemo.displayName = 'DigitizingTable';
+DigitizingTableMemo.displayName = 'DigitizingTableMemo';
 
 export { DigitizingTableMemo as DigitizingTable };
-
-
-
