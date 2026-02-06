@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -38,7 +39,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 // Types
 type Order = { productType: string; color: string; size: string; quantity: number; };
-type Lead = { id: string; customerName: string; companyName?: string; contactNumber: string; landlineNumber?: string; orders: Order[]; joNumber?: number; orderType: string; submissionDateTime: string; isDigitizingArchived?: boolean; isJoHardcopyReceived?: boolean; joHardcopyReceivedTimestamp?: string; isPreparedForProduction?: boolean; isSentToProduction?: boolean; endorsedToLogisticsTimestamp?: string; isEndorsedToLogistics?: boolean; forceNewCustomer?: boolean; };
+type Lead = { id: string; customerName: string; companyName?: string; contactNumber: string; landlineNumber?: string; orders: Order[]; joNumber?: number; orderType: string; submissionDateTime: string; isDigitizingArchived?: boolean; isJoHardcopyReceived?: boolean; joHardcopyReceivedTimestamp?: string; isPreparedForProduction?: boolean; isSentToProduction?: boolean; endorsedToLogisticsTimestamp?: string; isEndorsedToLogistics?: boolean; forceNewCustomer?: boolean; lastModifiedBy?: string; };
 type EnrichedLead = Lead & { orderNumber: number; totalCustomerQuantity: number; };
 type ItemPreparationTableProps = { isReadOnly: boolean; filterType?: 'ONGOING' | 'COMPLETED'; };
 
@@ -137,6 +138,7 @@ const ItemPreparationTableRowGroup = React.memo(function ItemPreparationTableRow
                                   </div>
                                   <div className="text-xs text-gray-500">
                                       <div>{formatDateTime(lead.endorsedToLogisticsTimestamp!).dateTimeShort}</div>
+                                      {lead.lastModifiedBy && <div className="font-bold">by {lead.lastModifiedBy}</div>}
                                   </div>
                               </div>
                           ) : (
@@ -165,6 +167,7 @@ ItemPreparationTableRowGroup.displayName = 'ItemPreparationTableRowGroup';
 
 const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isReadOnly, filterType = 'ONGOING' }: ItemPreparationTableProps) {
   const firestore = useFirestore();
+  const { userProfile } = useUser();
   const { toast } = useToast();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
@@ -214,15 +217,19 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
   }, []);
 
   const handleUpdateStatus = useCallback(async (leadId: string, field: 'isPreparedForProduction' | 'isSentToProduction' | 'isEndorsedToLogistics' | 'isJoHardcopyReceived', value: boolean) => {
-    if (!firestore) return;
+    if (!firestore || !userProfile) return;
     const leadDocRef = doc(firestore, 'leads', leadId);
     
-    const updateData: { [key: string]: any } = { [field]: value };
+    const updateData: { [key: string]: any } = { 
+        [field]: value,
+        lastModified: new Date().toISOString(),
+        lastModifiedBy: userProfile.nickname,
+    };
 
     if (field === 'isJoHardcopyReceived') {
         updateData.joHardcopyReceivedTimestamp = value ? new Date().toISOString() : null;
     } else if (field === 'isSentToProduction' || field === 'isEndorsedToLogistics') {
-      updateData.sentToProductionTimestamp = new Date().toISOString();
+      updateData.endorsedToLogisticsTimestamp = new Date().toISOString();
     }
 
     try {
@@ -240,7 +247,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
             description: e.message || "Could not update the status.",
         });
     }
-  }, [firestore, toast, refetchLeads]);
+  }, [firestore, toast, refetchLeads, userProfile]);
   
   const handleJoReceivedChange = useCallback((leadId: string, checked: boolean) => {
     const lead = leads?.find((l) => l.id === leadId);
@@ -322,7 +329,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
         
         const totalCustomerQuantity = orders.reduce((sum, o) => {
           if (!Array.isArray(o.orders)) return sum;
-          return sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0)
+          return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0)
         }, 0);
         
         for (let i = 0; i < sortedOrders.length; i++) {
@@ -344,6 +351,7 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
     return enrichedLeads;
   }, [leads]);
 
+  
   const jobOrders = useMemo(() => {
     if (!processedLeads) return [];
     
@@ -578,3 +586,4 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 ItemPreparationTableMemo.displayName = 'ItemPreparationTableMemo';
 
 export { ItemPreparationTableMemo as ItemPreparationTable };
+
