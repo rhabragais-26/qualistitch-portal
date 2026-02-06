@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -251,16 +252,6 @@ const getStatusColor = (status?: ProductionType | SewerType) => {
   }
 };
 
-const getProductionStatusLabel = (lead: Lead): { text: string; variant: "success" | "warning" | "secondary" | "default" | "destructive" } => {
-    if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
-    if (lead.isDone) return { text: "Done Production", variant: "success" };
-    if (lead.isTrimming) return { text: "Trimming/Cleaning", variant: "warning" };
-    if (lead.isSewing) return { text: "Done Sewing", variant: "warning" };
-    if (lead.isEmbroideryDone) return { text: "Endorsed to Sewer", variant: "warning" };
-    if(lead.isCutting) return { text: "Ongoing Embroidery", variant: "warning" };
-    return { text: "Pending", variant: "secondary" };
-};
-
 const hasLayoutContent = (layout: Layout) => {
     return layout.layoutImage || 
            (layout as any).dstLogoLeft || 
@@ -304,7 +295,7 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
     try {
         const response = await fetch(url);
         if (!response.ok) {
-             throw new Error(`HTTP error! status: ${response.status}`);
+             throw new Error(`HTTP error! status: ${'\'\'\''}response.status{'\'\'\''}`);
         }
         const blob = await response.blob();
         const fileHandle = await (window as any).showSaveFilePicker({
@@ -529,8 +520,8 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
                         </div>
                     </div>
                 </TableCell>
-                <TableCell className="text-xs text-left">
-                    <div className="flex items-center justify-start gap-1">
+                <TableCell className="text-xs align-middle text-center py-2 text-black">
+                    <div className="flex items-center justify-center gap-1">
                         <span>{formatJoNumber(lead.joNumber)}</span>
                         {activeCasesByJo.has(formatJoNumber(lead.joNumber)) && (
                         <TooltipProvider>
@@ -693,10 +684,11 @@ ProductionQueueTableRowGroup.displayName = 'ProductionQueueTableRowGroup';
 
 function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
   const firestore = useFirestore();
+  const { userProfile } = useUser();
+  const { toast } = useToast();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
-  const { toast } = useToast();
-  const { userProfile } = useUser();
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField; } | null>(null);
   const [leadToEndorse, setLeadToEndorse] = useState<Lead | null>(null);
   const [leadToReopen, setLeadToReopen] = useState<Lead | null>(null);
@@ -709,13 +701,13 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
   const isCompleted = filterType === 'COMPLETED';
   
   const leadsQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'leads')) : null, [firestore]);
-  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery, undefined, { listen: false });
+  const { data: leads, isLoading, error } = useCollection<Lead>(leadsQuery);
 
   const operationalCasesQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'operationalCases')) : null, [firestore]);
-  const { data: operationalCases } = useCollection<OperationalCase>(operationalCasesQuery, undefined, { listen: false });
+  const { data: operationalCases } = useCollection<OperationalCase>(operationalCasesQuery);
 
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
-  const { data: usersData } = useCollection<UserProfileInfo>(usersQuery, undefined, { listen: false });
+  const { data: usersData } = useCollection<UserProfileInfo>(usersQuery);
   
   const formatJoNumber = useCallback((joNumber: number | undefined) => {
     if (!joNumber) return '';
@@ -725,6 +717,21 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
   const toggleCustomerDetails = useCallback((leadId: string) => {
     setOpenCustomerDetails(prev => prev === leadId ? null : leadId);
   }, []);
+
+  const getProductionStatusLabel = useCallback((lead: Lead): { text: string; variant: "success" | "warning" | "secondary" | "default" | "destructive" } => {
+    if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
+    if (lead.isDone) return { text: "Done Production", variant: "success" };
+    if (lead.isTrimming) return { text: "Trimming/Cleaning", variant: "warning" };
+    if (lead.isSewing) return { text: "Done Sewing", variant: "warning" };
+    if (lead.isEmbroideryDone) {
+        if (lead.sewerType === 'Not Applicable') {
+            return { text: "Endorsed to Trimmer", variant: "warning" };
+        }
+        return { text: "Endorsed to Sewer", variant: "warning" };
+    }
+    if(lead.isCutting) return { text: "Ongoing Embroidery", variant: "warning" };
+    return { text: 'Pending', variant: 'secondary' };
+}, []);
 
   const handleCheckboxChange = useCallback((leadId: string, field: CheckboxField, value: boolean) => {
     if (!value) {
@@ -888,11 +895,6 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
       await updateDoc(caseDocRef, { 
         isArchived: false,
         isDeleted: false,
-      });
-
-      toast({
-        title: "Case Reopened",
-        description: "The case has been moved back to the active list.",
       });
 
       const joNumberInt = leadToReopen.joNumber;
@@ -1294,7 +1296,7 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
                         {(() => {
                             const lead = viewingJoLead;
                             const scesProfile = usersData?.find(u => u.nickname === lead.salesRepresentative);
-                            const scesFullName = scesProfile ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
+                            const scesFullName = scesProfile ? toTitleCase(`${'\'\'\''}scesProfile.firstName{'\'\'\''} ${'\'\'\''}scesProfile.lastName{'\'\'\''}`) : toTitleCase(lead.salesRepresentative);
                             const totalQuantity = lead.orders.reduce((sum: any, order: any) => sum + order.quantity, 0);
                             const contactDisplay = getContactDisplay(lead);
                             
@@ -1450,7 +1452,7 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
                                          <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
                                             <Image 
                                                 src={layout.layoutImage} 
-                                                alt={`Layout ${layoutIndex + 1}`} 
+                                                alt={`Layout ${'\'\'\''}layoutIndex + 1{'\'\'\''}`} 
                                                 layout="fill"
                                                 objectFit="contain"
                                             />
