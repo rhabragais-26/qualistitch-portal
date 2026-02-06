@@ -370,6 +370,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const [openLeadId, setOpenLeadId] = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [overdueStatusFilter, setOverdueStatusFilter] = useState('All');
+  const [digitizerFilter, setDigitizerFilter] = useState('All');
   const [uncheckConfirmation, setUncheckConfirmation] = useState<{ leadId: string; field: CheckboxField | 'isJoHardcopyReceived'; } | null>(null);
   const [joReceivedConfirmation, setJoReceivedConfirmation] = useState<string | null>(null);
   const [optimisticChanges, setOptimisticChanges] = useState<Record<string, Partial<Lead>>>({});
@@ -473,7 +474,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     try {
         const response = await fetch(url);
         if (!response.ok) {
-             throw new Error(`HTTP error! status: '${response.status}'`);
+             throw new Error(`HTTP error! status: '${'\'\''}response.status{'\'\'\''}`);
         }
         const blob = await response.blob();
         const link = document.createElement('a');
@@ -548,7 +549,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     }).then(() => {
         toast({
             title: 'Digitizer Assigned',
-            description: `'${newValue || 'Unassigned'}' has been assigned.`,
+            description: `'${'\'\''}newValue || 'Unassigned'${'\'\''}' has been assigned.`,
         });
     }).catch((e: any) => {
         toast({
@@ -571,7 +572,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const landline = lead.landlineNumber && lead.landlineNumber !== '-' ? lead.landlineNumber.replace(/-/g, '') : null;
 
     if (mobile && landline) {
-      return `'${mobile} / ${landline}'`;
+      return `'${'\'\''}mobile} / ${'\'\''}landline}'`;
     }
     return mobile || landline || null;
   }, []);
@@ -590,7 +591,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       const completionDate = new Date(lead.finalProgramTimestamp);
       const finalRemainingDays = differenceInDays(deadlineDate, completionDate);
       if (finalRemainingDays < 0) {
-        return { text: `Completed ${Math.abs(finalRemainingDays)} day(s) late`, isOverdue: true, isUrgent: false, remainingDays: finalRemainingDays };
+        return { text: `Completed ${'\'\''}Math.abs(finalRemainingDays)} day(s) late`, isOverdue: true, isUrgent: false, remainingDays: finalRemainingDays };
       }
       return { text: `Completed`, isOverdue: false, isUrgent: false, remainingDays: finalRemainingDays };
     }
@@ -598,11 +599,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const remainingDays = differenceInDays(deadlineDate, new Date());
     
     if (remainingDays < 0) {
-      return { text: `${Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
+      return { text: `${'\'\''}Math.abs(remainingDays)} day(s) overdue`, isOverdue: true, isUrgent: false, remainingDays };
     } else if (remainingDays <= 2) {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
+      return { text: `${'\'\''}remainingDays} day(s) remaining`, isOverdue: false, isUrgent: true, remainingDays };
     } else {
-      return { text: `${remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
+      return { text: `${'\'\''}remainingDays} day(s) remaining`, isOverdue: false, isUrgent: false, remainingDays };
     }
   }, []);
   
@@ -612,7 +613,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const leadDocRef = doc(firestore, 'leads', leadId);
     const now = new Date().toISOString();
 
-    const timestampField = `${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
+    const timestampField = `${'\'\''}field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`;
     
     const updateData: { [key: string]: any } = { 
         [field]: value,
@@ -628,7 +629,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                 const nextField = sequence[i];
                 if (nextField) {
                   updateData[nextField] = false;
-                  const nextTimestampField = `${nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
+                  const nextTimestampField = `${'\'\''}nextField.replace('is', '').charAt(0).toLowerCase() + nextField.slice(3)}Timestamp`;
                   updateData[nextTimestampField] = null;
                 }
             }
@@ -653,20 +654,20 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   const processedLeads = useMemo(() => {
     if (!leads) return [];
 
-    const customerOrderGroups: { [key: string]: Lead[] } = {};
+    const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
 
     // Group all orders by customer
     leads.forEach(lead => {
         const name = lead.customerName.toLowerCase();
         if (!customerOrderGroups[name]) {
-            customerOrderGroups[name] = [];
+            customerOrderGroups[name] = { orders: [] };
         }
         customerOrderGroups[name].push(lead);
     });
 
     const enrichedLeads: EnrichedLead[] = [];
 
-    Object.values(customerOrderGroups).forEach((orders) => {
+    Object.values(customerOrderGroups).forEach(({ orders }) => {
         const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
         
         const totalCustomerQuantity = orders.reduce((sum, o) => {
@@ -728,7 +729,11 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         (overdueStatusFilter === 'Overdue' && deadlineInfo.isOverdue) ||
         (overdueStatusFilter === 'Nearly Overdue' && !deadlineInfo.isOverdue && deadlineInfo.isUrgent);
 
-      return matchesSearch && matchesJo && matchesPriority && matchesOverdue;
+      const matchesDigitizer = digitizerFilter === 'All' || 
+        (digitizerFilter === 'unassigned' && !lead.assignedDigitizer) || 
+        lead.assignedDigitizer === digitizerFilter;
+
+      return matchesSearch && matchesJo && matchesPriority && matchesOverdue && matchesDigitizer;
     });
 
     return filtered.sort((a, b) => {
@@ -737,7 +742,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         return aDeadline.remainingDays - bDeadline.remainingDays;
     });
 
-  }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueStatusFilter, formatJoNumber, calculateDigitizingDeadline, filterType]);
+  }, [processedLeads, searchTerm, joNumberSearch, priorityFilter, overdueStatusFilter, digitizerFilter, formatJoNumber, calculateDigitizingDeadline, filterType]);
 
   const displayedLeads = useMemo(() => {
     if (!filteredLeads) return [];
@@ -792,7 +797,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const originalState: Partial<Lead> = {};
 
     const processField = (fieldName: CheckboxField | 'isJoHardcopyReceived') => {
-        const timestampFieldName = `${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
+        const timestampFieldName = `${'\'\''}fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
         
         optimisticUpdate[fieldName] = false;
         optimisticUpdate[timestampFieldName] = null;
@@ -837,7 +842,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
             });
             refetch(); // Sync with DB state
         } catch (e: any) {
-            console.error(`Error unchecking '${field}':`, e);
+            console.error(`Error unchecking '${'\'\''}field}':`, e);
             toast({ variant: "destructive", title: "Update Failed", description: e.message || "Could not update the status." });
             
             // Rollback UI on failure
@@ -911,12 +916,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         }
         setIsUploadDialogOpen(true);
       } else {
-        const optimisticUpdate = { [field]: true, [`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() };
+        const optimisticUpdate = { [field]: true, [`${'\'\''}field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp`]: new Date().toISOString() };
         setOptimisticChanges(prev => ({ ...prev, [leadId]: { ...prev[leadId], ...optimisticUpdate } }));
         updateStatus(leadId, field, true).catch(() => {
              toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
              setOptimisticChanges(prev => {
-                const { [field!]: _removed, [`${field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[leadId] || {};
+                const { [field!]: _removed, [`${'\'\''}field!.replace('is', '').charAt(0).toLowerCase() + field!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[leadId] || {};
                 return { ...prev, [leadId]: rest };
              });
         });
@@ -945,7 +950,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         
         const deadlineInfo = calculateDigitizingDeadline(lead);
         const notification = {
-            id: `progress-${lead.id}-${new Date().toISOString()}`,
+            id: `progress-${'\'\''}lead.id}-${'\'\''}new Date().toISOString()}`,
             type: 'progress',
             leadId: lead.id,
             joNumber: formatJoNumberUtil(lead.joNumber),
@@ -989,14 +994,14 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     if (uploadField === 'isLogoTesting' && noTestingNeeded) {
         const optimisticUpdate = {
             [uploadField]: true,
-            [`${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: new Date().toISOString()
+            [`${'\'\''}uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: new Date().toISOString()
         };
         setOptimisticChanges(prev => ({ ...prev, [uploadLeadId]: { ...prev[uploadLeadId], ...optimisticUpdate } }));
         setIsUploadDialogOpen(false);
         updateStatus(uploadLeadId, uploadField, true).catch(() => {
             toast({ variant: 'destructive', title: 'Update Failed', description: 'Changes could not be saved.' });
             setOptimisticChanges(prev => {
-                const { [uploadField!]: _removed, [`${uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
+                const { [uploadField!]: _removed, [`${'\'\''}uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
                 return { ...prev, [uploadLeadId]: rest };
              });
         });
@@ -1006,7 +1011,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     // Optimistic UI updates
     const optimisticUpdate = {
         [uploadField]: true,
-        [`${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: new Date().toISOString()
+        [`${'\'\''}uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`]: new Date().toISOString()
     };
     setOptimisticChanges(prev => ({ ...prev, [uploadLeadId]: { ...prev[uploadLeadId], ...optimisticUpdate } }));
     setIsUploadDialogOpen(false); // Close dialog immediately
@@ -1017,21 +1022,21 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const uploadAndGetURL = async (lead: Lead, imageData: string | null, fieldName: string, index: number): Promise<{ url: string; uploadTime: string; uploadedBy: string } | null> => {
         if (!imageData) return null;
         if (imageData.startsWith('http')) {
-            const pluralFieldName = `${fieldName}s`;
+            const pluralFieldName = `${'\'\''}fieldName}s`;
             const existingArray = (lead.layouts?.[0]?.[pluralFieldName as keyof Layout] as { url: string; uploadTime: string; uploadedBy: string }[]) || [];
             const existingImageObject = existingArray.find(img => img.url === imageData);
             if (existingImageObject) return existingImageObject;
             
             if (lead.layouts?.[0]?.[fieldName as keyof Layout] === imageData) {
-                const timestamp = lead.layouts?.[0]?.[`${fieldName}UploadTime` as keyof Layout] as string | null;
-                const uploader = lead.layouts?.[0]?.[`${fieldName}UploadedBy` as keyof Layout] as string | null;
+                const timestamp = lead.layouts?.[0]?.[`${'\'\''}fieldName}UploadTime` as keyof Layout] as string | null;
+                const uploader = lead.layouts?.[0]?.[`${'\'\''}fieldName}UploadedBy` as keyof Layout] as string | null;
                 return { url: imageData, uploadTime: timestamp || now, uploadedBy: uploader || userProfile.nickname };
             }
             return { url: imageData, uploadTime: now, uploadedBy: userProfile.nickname };
         }
         if(!imageData.startsWith('data:')) return null;
 
-        const storageRef = ref(storage, `leads-images/${uploadLeadId}/${fieldName}_${index}_${Date.now()}`);
+        const storageRef = ref(storage, `leads-images/${'\'\''}uploadLeadId}/${'\'\''}fieldName}_${'\'\''}index}_${'\'\''}Date.now()}`);
         const snapshot = await uploadString(storageRef, imageData, 'data_url');
         const downloadURL = await getDownloadURL(snapshot.ref);
         return { url: downloadURL, uploadTime: now, uploadedBy: userProfile.nickname };
@@ -1041,7 +1046,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       return Promise.all(
         files.map(async (file, index) => {
           if (!file || !file.url.startsWith('data:')) return file;
-          const urlData = await uploadAndGetURL(lead, file.url, `${folderName}/${index}_${file.name}`, index);
+          const urlData = await uploadAndGetURL(lead, file.url, `${'\'\''}folderName}/${'\'\''}index}_${'\'\''}file.name}`, index);
           return urlData ? { name: file.name, url: urlData.url } : null;
         })
       );
@@ -1056,7 +1061,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         const uploads = await Promise.all(images.map((img, i) => uploadAndGetURL(lead, img, fieldName, i)));
         const successfulUploads = uploads.filter((u): u is { url: string; uploadTime: string; uploadedBy: string } => !!u);
         return {
-            files: successfulUploads.map(u => ({ name: `${fieldName}_${Date.now()}.png`, url: u.url })),
+            files: successfulUploads.map(u => ({ name: `${'\'\''}fieldName}_${'\'\''}Date.now()}.png`, url: u.url })),
             timestamps: successfulUploads.map(u => u.uploadTime),
             uploaders: successfulUploads.map(u => u.uploadedBy)
         };
@@ -1194,7 +1199,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       currentLayouts[0] = updatedFirstLayout;
       const leadDocRef = doc(firestore, 'leads', uploadLeadId);
 
-      const timestampField = `${uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`;
+      const timestampField = `${'\'\''}uploadField.replace('is', '').charAt(0).toLowerCase() + uploadField.slice(3)}Timestamp`;
       const updatePayload = {
         layouts: currentLayouts,
         [uploadField]: true,
@@ -1213,7 +1218,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       console.error('Error saving images or status:', e);
       // Revert optimistic update
       setOptimisticChanges(prev => {
-        const { [uploadField!]: _removed, [`${uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
+        const { [uploadField!]: _removed, [`${'\'\''}uploadField!.replace('is', '').charAt(0).toLowerCase() + uploadField!.slice(3)}Timestamp`]: _removedTs, ...rest } = prev[uploadLeadId] || {};
         return { ...prev, [uploadLeadId]: rest };
       });
       toast({
@@ -1346,12 +1351,12 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             !isDisabled && "cursor-pointer"
                         )}
                         onClick={() => image && setImageInView(image)}
-                        onDoubleClick={() => !isDisabled && !image && (document.getElementById(`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`)?.click())}
+                        onDoubleClick={() => !isDisabled && !image && (document.getElementById(`file-input-job-order-${'\'\''}label.replace(/\s+/g, '-')}-${'\'\''}index}`)?.click())}
                         onPaste={(e) => handleImagePaste(e, setter, index)}
                         onMouseDown={(e) => { if (e.detail > 1) e.preventDefault(); }}
                       >
                           {image ? (<>
-                            <Image src={image} alt={`${label} ${index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
+                            <Image src={image} alt={`${'\'\''}label} ${'\'\''}index + 1}`} layout="fill" objectFit="contain" className="rounded-md" />
                             {!isDisabled && (
                                 <Button
                                 variant="destructive"
@@ -1366,7 +1371,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                 </Button>
                             )}
                           </>) : (<div className="text-gray-500"> <Upload className="mx-auto h-12 w-12" /> <p>{!isDisabled ? "Double-click to upload or paste image" : "No image uploaded"}</p> </div>)}
-                          <input id={`file-input-job-order-${label.replace(/\s+/g, '-')}-${index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!isDisabled}/>
+                          <input id={`file-input-job-order-${'\'\''}label.replace(/\s+/g, '-')}-${'\'\''}index}`} type="file" accept="image/*" className="hidden" onChange={(e) => {if(e.target.files?.[0]) handleImageUpload(e.target.files[0], setter, index)}} disabled={!isDisabled}/>
                       </div>
                       {!isDisabled && index > 0 && displayImages.length > 1 && (
                           <Button
@@ -1635,6 +1640,21 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             </SelectContent>
                         </Select>
                     </div>
+                    <div className='flex items-center gap-2'>
+                        <span className="text-sm font-medium">Filter by Digitizer:</span>
+                        <Select value={digitizerFilter} onValueChange={setDigitizerFilter}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Select Digitizer" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="All">All Digitizers</SelectItem>
+                                <SelectItem value="unassigned">Unassigned</SelectItem>
+                                {digitizers.map(d => (
+                                    <SelectItem key={d.uid} value={d.nickname}>{d.nickname}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                     <Input
                         placeholder="Search J.O. No..."
                         value={joNumberSearch}
@@ -1761,7 +1781,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         </TableCell>
                         
                         {(['isUnderProgramming', 'isInitialApproval', 'isLogoTesting', 'isRevision', 'isFinalApproval', 'isFinalProgram'] as CheckboxField[]).map(field => {
-                            const timestamp = lead[`${field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp` as keyof Lead] as string | undefined;
+                            const timestamp = lead[`${'\'\''}field.replace('is', '').charAt(0).toLowerCase() + field.slice(3)}Timestamp` as keyof Lead] as string | undefined;
                             let isDisabled = isReadOnly || (isCompleted && !(field === 'isFinalProgram' && enableReupload));
                             
                             const className = isDisabled ? 'disabled:opacity-100' : '';
@@ -1851,7 +1871,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                         {(() => {
                             const lead = viewingJoLead;
                             const scesProfile = usersData?.find(u => u.nickname === lead.salesRepresentative);
-                            const scesFullName = scesProfile ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
+                            const scesFullName = scesProfile ? toTitleCase(`${'\'\''}scesProfile.firstName} ${'\'\''}scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
                             const totalQuantity = lead.orders.reduce((sum: any, order: any) => sum + order.quantity, 0);
                             const contactDisplay = getContactDisplay(lead);
                             
@@ -2007,7 +2027,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                          <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
                                             <Image 
                                                 src={layout.layoutImage} 
-                                                alt={`Layout ${layoutIndex + 1}`} 
+                                                alt={`Layout ${'\'\''}layoutIndex + 1}`} 
                                                 layout="fill"
                                                 objectFit="contain"
                                             />
@@ -2015,7 +2035,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                         )}
                                       
                                       <h2 className="text-2xl font-bold text-center mb-4">
-                                        {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
+                                        {layoutsToPrint.length > 1 ? `LAYOUT #${'\'\''}layoutIndex + 1}` : "LAYOUT"}
                                       </h2>
                                         <table className="w-full border-collapse border border-black mb-6">
                                             <tbody>
@@ -2068,8 +2088,9 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     </>
   );
 });
-DigitizingTableMemo.displayName = 'DigitizingTableMemo';
+DigitizingTableMemo.displayName = 'DigitizingTable';
 
 export { DigitizingTableMemo as DigitizingTable };
+
 
 
