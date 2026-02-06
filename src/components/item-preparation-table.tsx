@@ -1,3 +1,4 @@
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -32,6 +33,8 @@ import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter } from './ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 // Types
 type Order = { productType: string; color: string; size: string; quantity: number; };
@@ -316,15 +319,23 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
 
     Object.values(customerOrderGroups).forEach((orders) => {
         const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-        const totalCustomerQuantity = orders.reduce((sum, o) => sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0), 0);
+        
+        const totalCustomerQuantity = orders.reduce((sum, o) => {
+          if (!Array.isArray(o.orders)) return sum;
+          return sum + o.orders.reduce((orderSum, item) => orderSum + item.quantity, 0)
+        }, 0);
         
         for (let i = 0; i < sortedOrders.length; i++) {
             const lead = sortedOrders[i];
-            const previousNonSampleOrders = sortedOrders.slice(0, i).filter(o => o.orderType !== 'Item Sample');
+            
+            // Count previous non-sample orders for this customer
+            const previousNonSampleOrders = sortedOrders
+                .slice(0, i)
+                .filter(o => o.orderType !== 'Item Sample');
             
             enrichedLeads.push({
                 ...lead,
-                orderNumber: previousNonSampleOrders.length,
+                orderNumber: previousNonSampleOrders.length, // 0-indexed count
                 totalCustomerQuantity,
             });
         }
@@ -381,7 +392,9 @@ const ItemPreparationTableMemo = React.memo(function ItemPreparationTable({ isRe
   if (isLoading) {
     return (
       <div className="space-y-2 p-4">
-        {[...Array(10)].map((_, i) => (<Skeleton key={i} className="h-12 w-full bg-gray-200" />))}
+        {[...Array(10)].map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full bg-gray-200" />
+        ))}
       </div>
     );
   }
