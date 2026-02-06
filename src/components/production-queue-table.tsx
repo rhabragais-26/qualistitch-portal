@@ -176,28 +176,40 @@ type Lead = {
   orderType: string;
   orders: Order[];
   submissionDateTime: string;
+
   deliveryDate?: string;
   courier: string;
   joNumber?: number;
   layouts?: Layout[];
+
   publiclyPrintable?: boolean;
   lastModifiedBy?: string;
+
   isCutting?: boolean;
-  cuttingTimestamp?: string;
+  cuttingTimestamp?: string | null;
+
   isSewing?: boolean;
-  sewingTimestamp?: string;
+  sewingTimestamp?: string | null;
+
   isTrimming?: boolean;
-  trimmingTimestamp?: string;
+  trimmingTimestamp?: string | null;
+
   isDone?: boolean;
+
   productionType?: ProductionType;
   sewerType?: SewerType;
+
   isEmbroideryDone?: boolean;
-  embroideryDoneTimestamp?: string;
+  embroideryDoneTimestamp?: string | null;
+
   isEndorsedToLogistics?: boolean;
-  endorsedToLogisticsTimestamp?: string;
-  doneProductionTimestamp?: string;
+  endorsedToLogisticsTimestamp?: string | null;
+
+  doneProductionTimestamp?: string | null;
+
   adjustedDeliveryDate?: string;
-  finalApprovalTimestamp?: string;
+  finalApprovalTimestamp?: string | null;
+
   isSentToProduction?: boolean;
   forceNewCustomer?: boolean;
   endorsedToLogisticsBy?: string;
@@ -679,7 +691,7 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
 });
 ProductionQueueTableRowGroup.displayName = 'ProductionQueueTableRowGroup';
 
-export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
+function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
   const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
@@ -776,13 +788,26 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     const optimisticUpdate: Partial<Lead> = {};
     const originalState: Partial<Lead> = {};
 
-    const createFieldUpdates = (fieldName: CheckboxField) => {
-        const timestampFieldName = `${fieldName.replace('is', '').charAt(0).toLowerCase() + fieldName.slice(3)}Timestamp` as keyof Lead;
-        optimisticUpdate[fieldName] = false;
-        optimisticUpdate[timestampFieldName] = null;
-        originalState[fieldName] = leadToUpdate[fieldName];
-        originalState[timestampFieldName] = leadToUpdate[timestampFieldName];
-    };
+    type LeadTimestampKey =
+  | 'cuttingTimestamp'
+  | 'embroideryDoneTimestamp'
+  | 'sewingTimestamp'
+  | 'trimmingTimestamp'
+  | 'doneProductionTimestamp';
+
+  const createFieldUpdates = (fieldName: CheckboxField) => {
+  const timestampFieldName =
+    (`${fieldName.replace('is', '').charAt(0).toLowerCase()}${fieldName.slice(3)}Timestamp`) as LeadTimestampKey;
+
+  // optimistic update
+  optimisticUpdate[fieldName] = false;
+  optimisticUpdate[timestampFieldName] = null;
+
+  // snapshot original values
+  const original = leadToUpdate as Lead;
+  originalState[fieldName] = original[fieldName];
+  originalState[timestampFieldName] = original[timestampFieldName];
+};
 
     createFieldUpdates(field);
     const sequence: CheckboxField[] = ['isCutting', 'isEmbroideryDone', 'isSewing', 'isTrimming'];
@@ -1486,11 +1511,10 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     </>
   );
 }
-const ProductionQueueTableMemo = React.memo(ProductionQueueTable);
-ProductionQueueTableMemo.displayName = 'ProductionQueueTableMemo';
+const ProductionQueueTableMemo = React.memo(ProductionQueueTableBase);
+ProductionQueueTableMemo.displayName = 'ProductionQueueTable';
 
 export { ProductionQueueTableMemo as ProductionQueueTable };
-    
     
 
 
