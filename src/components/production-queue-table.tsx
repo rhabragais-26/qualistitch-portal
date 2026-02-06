@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -293,7 +292,7 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
     try {
         const response = await fetch(url);
         if (!response.ok) {
-             throw new Error(`HTTP error! status: ${'\'\'\''}response.status{'\'\'\''}`);
+             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const blob = await response.blob();
         const fileHandle = await (window as any).showSaveFilePicker({
@@ -315,17 +314,17 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
   const finalDstFiles = useMemo(() => {
     if (!lead.layouts) return [];
     return lead.layouts.flatMap((layout, layoutIndex) => {
-        const layoutLabel = lead.layouts!.length > 1 ? ` (L${'\'\'\''}layoutIndex + 1{'\'\'\''})` : '';
+        const layoutLabel = lead.layouts!.length > 1 ? ` (L${layoutIndex + 1})` : '';
         const files: { name: string; url: string; type: string }[] = [];
 
         (layout.finalLogoDst || []).forEach(f => {
-            if (f) files.push({ ...f, type: `Logo${'\'\'\''}layoutLabel{'\'\'\''}` });
+            if (f) files.push({ ...f, type: `Logo${layoutLabel}` });
         });
         (layout.finalBackDesignDst || []).forEach(f => {
-            if (f) files.push({ ...f, type: `Back Design${'\'\'\''}layoutLabel{'\'\'\''}` });
+            if (f) files.push({ ...f, type: `Back Design${layoutLabel}` });
         });
         (layout.finalNamesDst || []).forEach(f => {
-            if (f) files.push({ ...f, type: `Name${'\'\'\''}layoutLabel{'\'\'\''}` });
+            if (f) files.push({ ...f, type: `Name${layoutLabel}` });
         });
         return files;
     });
@@ -335,7 +334,7 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
     if (!lead.layouts) return [];
     return lead.layouts.map((layout, i) => ({
       src: layout.layoutImage!,
-      label: `Layout ${'\'\'\''}i + 1{'\'\'\''}`,
+      label: `Layout ${i + 1}`,
       timestamp: layout.layoutImageUploadTime,
       uploadedBy: layout.layoutImageUploadedBy,
     })).filter(img => img.src);
@@ -344,13 +343,13 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
   const sequenceImages = useMemo(() => {
     if (!lead.layouts) return [];
     return lead.layouts.flatMap((layout, layoutIndex) => {
-      const layoutLabel = lead.layouts!.length > 1 ? ` L${'\'\'\''}layoutIndex + 1{'\'\'\''}` : '';
+      const layoutLabel = lead.layouts!.length > 1 ? ` L${layoutIndex + 1}` : '';
       const images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[] = [];
       (layout.sequenceLogo || []).forEach((f, i) => {
-        if (f) images.push({ src: f.url, label: `Sequence Logo ${'\'\'\''}i + 1{'\'\'\''}${'\'\'\''}layoutLabel{'\'\'\''}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] });
+        if (f) images.push({ src: f.url, label: `Sequence Logo ${i + 1}${layoutLabel}`, timestamp: layout.sequenceLogoUploadTimes?.[i], uploadedBy: layout.sequenceLogoUploadedBy?.[i] });
       });
       (layout.sequenceBackDesign || []).forEach((f, i) => {
-        if (f) images.push({ src: f.url, label: `Sequence Back ${'\'\'\''}i + 1{'\'\'\''}${'\'\'\''}layoutLabel{'\'\'\''}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i], uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] });
+        if (f) images.push({ src: f.url, label: `Sequence Back ${i + 1}${layoutLabel}`, timestamp: layout.sequenceBackDesignUploadTimes?.[i], uploadedBy: layout.sequenceBackDesignUploadedBy?.[i] });
       });
       return images;
     });
@@ -359,13 +358,13 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
   const finalProgramImages = useMemo(() => {
     if (!lead.layouts) return [];
     return lead.layouts.flatMap((layout, layoutIndex) => {
-      const layoutLabel = lead.layouts!.length > 1 ? ` L${'\'\'\''}layoutIndex + 1{'\'\'\''}` : '';
+      const layoutLabel = lead.layouts!.length > 1 ? ` L${layoutIndex + 1}` : '';
       const images: { src: string; label: string; timestamp?: string | null; uploadedBy?: string | null }[] = [];
       (layout.finalProgrammedLogo || []).forEach((f, i) => {
-        if (f) images.push({ src: f.url, label: `Final Logo ${'\'\'\''}i + 1{'\'\'\''}${'\'\'\''}layoutLabel{'\'\'\''}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] });
+        if (f) images.push({ src: f.url, label: `Final Logo ${i + 1}${layoutLabel}`, timestamp: layout.finalProgrammedLogoUploadTimes?.[i], uploadedBy: layout.finalProgrammedLogoUploadedBy?.[i] });
       });
       (layout.finalProgrammedBackDesign || []).forEach((f, i) => {
-        if (f) images.push({ src: f.url, label: `Final Back ${'\'\'\''}i + 1{'\'\'\''}${'\'\'\''}layoutLabel{'\'\'\''}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] });
+        if (f) images.push({ src: f.url, label: `Final Back ${i + 1}${layoutLabel}`, timestamp: layout.finalProgrammedBackDesignUploadTimes?.[i], uploadedBy: layout.finalProgrammedBackDesignUploadedBy?.[i] });
       });
       return images;
     });
@@ -483,13 +482,13 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
     return (
         <React.Fragment>
             <TableRow>
-                <TableCell className="text-xs text-center">
+                 <TableCell className="text-xs text-center">
                     <div className="flex items-center justify-center">
                         <Button variant="ghost" size="sm" onClick={() => toggleCustomerDetails(lead.id)} className="h-5 px-1 mr-1">
                         {openCustomerDetails === lead.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </Button>
                         <div className='flex flex-col items-center'>
-                            <span className="font-bold">{lead.customerName}</span>
+                            <span className="font-bold">{toTitleCase(lead.customerName)}</span>
                             {isRepeat ? (
                                 <TooltipProvider>
                                 <Tooltip>
@@ -961,23 +960,40 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
     return mobile || landline || null;
   }, []);
 
-  const handleStatusChange = useCallback(async (leadId: string, field: "productionType" | "sewerType", value: string) => {
+  const handleStatusChange = useCallback((leadId: string, field: "productionType" | "sewerType", value: string) => {
     if (!firestore) return;
+
+    setOptimisticChanges(prev => ({
+        ...prev,
+        [leadId]: {
+            ...prev[leadId],
+            [field]: value
+        }
+    }));
+
     const leadDocRef = doc(firestore, 'leads', leadId);
-    try {
-      await updateDoc(leadDocRef, { [field]: value });
-      toast({
-        title: "Status Updated",
-        description: "The production status has been updated.",
+    updateDoc(leadDocRef, { [field]: value })
+      .then(() => {
+        toast({
+          title: "Status Updated",
+          description: "The production status has been updated.",
+        });
+      })
+      .catch((e: any) => {
+        console.error(`Error updating ${field}:`, e);
+        toast({
+          variant: "destructive",
+          title: "Update Failed",
+          description: e.message || "Could not update the status.",
+        });
+        setOptimisticChanges(prev => {
+            const newChanges = { ...prev };
+            const leadChanges = { ...newChanges[leadId] };
+            delete leadChanges[field as keyof Lead];
+            newChanges[leadId] = leadChanges;
+            return newChanges;
+        });
       });
-    } catch (e: any) {
-      console.error(`Error updating ${field}:`, e);
-      toast({
-        variant: "destructive",
-        title: "Update Failed",
-        description: e.message || "Could not update the status.",
-      });
-    }
   }, [firestore, toast]);
   
   const processedLeads = useMemo(() => {
@@ -1253,7 +1269,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                         {(() => {
                             const lead = viewingJoLead;
                             const scesProfile = usersData?.find(u => u.nickname === lead.salesRepresentative);
-                            const scesFullName = scesProfile ? toTitleCase(`${'\'\'\''}scesProfile.firstName{'\'\'\''}} ${'\'\'\''}scesProfile.lastName{'\'\'\''}`) : toTitleCase(lead.salesRepresentative);
+                            const scesFullName = scesProfile ? toTitleCase(`${scesProfile.firstName} ${scesProfile.lastName}`) : toTitleCase(lead.salesRepresentative);
                             const totalQuantity = lead.orders.reduce((sum: any, order: any) => sum + order.quantity, 0);
                             const contactDisplay = getContactDisplay(lead);
                             
@@ -1409,7 +1425,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                                          <div className="relative w-full h-[500px] border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center mb-4">
                                             <Image 
                                                 src={layout.layoutImage} 
-                                                alt={`Layout ${'\'\'\''}layoutIndex + 1{'\'\'\''}`} 
+                                                alt={`Layout ${layoutIndex + 1}`} 
                                                 layout="fill"
                                                 objectFit="contain"
                                             />
@@ -1417,7 +1433,7 @@ export function ProductionQueueTable({ isReadOnly, filterType = 'ONGOING' }: Pro
                                         )}
                                       
                                       <h2 className="text-2xl font-bold text-center mb-4">
-                                        {layoutsToPrint.length > 1 ? `LAYOUT #${'\'\'\''}layoutIndex + 1{'\'\'\''}` : "LAYOUT"}
+                                        {layoutsToPrint.length > 1 ? `LAYOUT #${layoutIndex + 1}` : "LAYOUT"}
                                       </h2>
                                         <table className="w-full border-collapse border border-black mb-6">
                                             <tbody>
@@ -1485,6 +1501,8 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
     
 
 
+
+    
 
     
 
