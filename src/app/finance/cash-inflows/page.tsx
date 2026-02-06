@@ -542,7 +542,7 @@ export default function CashInflowsPage() {
                   <TableHeader className="sticky top-0 bg-neutral-800 z-10">
                     <TableRow>
                       <TableHead className="text-white font-bold">Date</TableHead>
-                      <TableHead className="text-white font-bold w-[180px] text-center">Actual Date of Transaction</TableHead>
+                      <TableHead className="text-white font-bold text-center whitespace-nowrap">Actual Date of Transaction</TableHead>
                       <TableHead className="text-white font-bold">Description</TableHead>
                       <TableHead className="text-white font-bold">Customer Name</TableHead>
                       <TableHead className="text-white font-bold">Payment Method</TableHead>
@@ -572,7 +572,7 @@ export default function CashInflowsPage() {
                                 <div>{format(parseISO(inflow.date), 'MMM dd, yyyy')}</div>
                                 <div className="text-xs text-muted-foreground">{format(parseISO(inflow.date), 'h:mm a')}</div>
                             </TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="text-center whitespace-nowrap">
                                 {(() => {
                                     const actualDateStr = (inflow as any).actualTransactionDate;
                                     const originalDateStr = inflow.date;
@@ -583,7 +583,7 @@ export default function CashInflowsPage() {
                                     const isDifferent = actualDateStr && (format(new Date(actualDateStr), 'yyyy-MM-dd') !== format(new Date(originalDateStr), 'yyyy-MM-dd'));
 
                                     return (
-                                        <div className={cn('text-xs', isDifferent && 'text-blue-600 font-bold')}>
+                                        <div className={cn('font-bold', isDifferent && 'text-blue-600')}>
                                             {formattedDisplayDate}
                                         </div>
                                     );
