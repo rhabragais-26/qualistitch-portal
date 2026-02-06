@@ -36,13 +36,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 // Types for downpayments from leads
 type Payment = {
   id?: string;
-  type: 'down' | 'full' | 'balance' | 'additional';
+  type: 'down' | 'full' | 'balance' | 'additional' | 'securityDeposit';
   amount: number;
   mode: string;
   timestamp?: string;
@@ -262,6 +262,7 @@ export default function CashInflowsPage() {
                     case 'full': description = 'Full Payment'; break;
                     case 'balance': description = 'Balance Payment'; break;
                     case 'additional': description = 'Additional Payment'; break;
+                    case 'securityDeposit': description = 'Security Deposit'; break;
                     default: description = 'Payment'; break;
                 }
                 
