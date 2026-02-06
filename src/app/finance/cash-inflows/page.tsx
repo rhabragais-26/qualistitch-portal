@@ -323,9 +323,9 @@ export default function CashInflowsPage() {
     const uniqueDates = new Set<string>();
 
     combinedInflows.forEach(inflow => {
-        const date = parseISO(inflow.date);
-        uniqueMonths.add(format(date, 'yyyy-MM'));
-        uniqueDates.add(format(date, 'yyyy-MM-dd'));
+        const filterDate = inflow.actualTransactionDate ? parseISO(inflow.actualTransactionDate) : parseISO(inflow.date);
+        uniqueMonths.add(format(filterDate, 'yyyy-MM'));
+        uniqueDates.add(format(filterDate, 'yyyy-MM-dd'));
     });
 
     const monthOpts = ['All', ...Array.from(uniqueMonths).sort((a,b) => b.localeCompare(a))];
@@ -341,9 +341,9 @@ export default function CashInflowsPage() {
   
   const filteredInflows = useMemo(() => {
     return combinedInflows.filter(inflow => {
-        const inflowDate = parseISO(inflow.date);
-        const inflowDateStr = format(inflowDate, 'yyyy-MM-dd');
-        const inflowMonthStr = format(inflowDate, 'yyyy-MM');
+        const filterDate = inflow.actualTransactionDate ? parseISO(inflow.actualTransactionDate) : parseISO(inflow.date);
+        const inflowDateStr = format(filterDate, 'yyyy-MM-dd');
+        const inflowMonthStr = format(filterDate, 'yyyy-MM');
 
         const matchesMonth = monthFilter === 'All' || inflowMonthStr === monthFilter;
         const matchesDate = dateFilter === 'All' || inflowDateStr === dateFilter;
@@ -407,7 +407,7 @@ export default function CashInflowsPage() {
                 verified: true,
                 verifiedBy: userProfile.nickname,
                 verifiedTimestamp: new Date().toISOString(),
-                actualTransactionDate: hasDateChanged ? new Date(editedTransactionDate).toISOString() : (updatedPayments[paymentIndex].actualTransactionDate || null),
+                actualTransactionDate: hasDateChanged ? new Date(editedTransactionDate).toISOString() : (updatedPayments[paymentIndex].actualTransactionDate || originalTimestamp),
             };
         } else {
             throw new Error("Payment not found at the specified index.");
@@ -541,7 +541,7 @@ export default function CashInflowsPage() {
                 <Table>
                   <TableHeader className="sticky top-0 bg-neutral-800 z-10">
                     <TableRow>
-                      <TableHead className="text-white font-bold">Date</TableHead>
+                      <TableHead className="text-white font-bold">Date Recorded</TableHead>
                       <TableHead className="text-white font-bold text-center whitespace-nowrap">Actual Date of Transaction</TableHead>
                       <TableHead className="text-white font-bold">Description</TableHead>
                       <TableHead className="text-white font-bold">Customer Name</TableHead>
