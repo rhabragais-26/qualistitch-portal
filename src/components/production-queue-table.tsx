@@ -36,8 +36,7 @@ import { addDays, differenceInDays, format } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useCollection, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
-import { getStorage, ref, getBlob } from 'firebase/storage';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -291,26 +290,21 @@ ImageDisplayCard.displayName = 'ImageDisplayCard';
 const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { lead: Lead }) {
   const [imageInView, setImageInView] = useState<string | null>(null);
   const { toast } = useToast();
-  const app = useFirebaseApp();
 
   const handleDownload = useCallback(async (url: string, name: string) => {
-    if (!app) {
-        toast({ variant: 'destructive', title: 'Download Failed', description: 'Firebase app not available.' });
-        return;
-    }
-    const storage = getStorage(app);
     try {
-        const fileRef = ref(storage, url);
-        const blob = await getBlob(fileRef);
-
+        const response = await fetch(url);
+        if (!response.ok) {
+             throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const blob = await response.blob();
         const link = document.createElement('a');
-        const blobUrl = window.URL.createObjectURL(blob);
-        link.href = blobUrl;
+        link.href = window.URL.createObjectURL(blob);
         link.download = name;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        window.URL.revokeObjectURL(blobUrl);
+        window.URL.revokeObjectURL(link.href);
     } catch (err: any) {
         console.error('File download failed:', err);
         toast({
@@ -319,7 +313,7 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
             description: err.message || 'Could not download the file. Please check your permissions and network.',
         });
     }
-  }, [app, toast]);
+  }, [toast]);
 
   const finalDstFiles = useMemo(() => {
     if (!lead.layouts) return [];
@@ -1533,4 +1527,5 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
     
 
     
+
 
