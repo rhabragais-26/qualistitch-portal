@@ -1241,7 +1241,52 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     
       return !(hasEmb && hasDst && hasSequence && hasProgrammedImage);
   }, [isNamesOnly, finalNamesDst, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, uploadField]);
-
+  
+  const addFile = (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>) => {
+    setter(prev => [...prev, null]);
+  };
+  const handleRemoveImage = (e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+      e.stopPropagation();
+      setter(prev => prev.filter((_, i) => i !== index));
+  };
+  const handleClearImage = (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    setter(prev => {
+        const newImages = [...prev];
+        newImages[index] = null;
+        return newImages;
+    });
+  };
+  const handleImagePaste = (e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
+    if (isReadOnly || (filterType === 'COMPLETED' && !enableReupload)) return;
+    const file = e.clipboardData.files[0];
+    if (file && file.type.startsWith('image/')) {
+        handleImageUpload(file, setter, index);
+    }
+  };
+  const addFileMultiple = (setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>) => {
+    setter(prev => [...prev, null]);
+  };
+  const removeFile = (setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
+    setter(prev => prev.filter((_, i) => i !== index));
+    if (refs.current && refs.current[index]) {
+        refs.current[index]!.value = '';
+    }
+  };
+  const handleMultipleFileUpload = (event: ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, filesState: (FileObject | null)[], index: number) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const newFileObject: FileObject = { name: file.name, url: e.target?.result as string };
+        setter(prev => {
+          const newFiles = [...prev];
+          newFiles[index] = newFileObject;
+          return newFiles;
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const renderUploadDialogContent = useCallback(() => {
     if (!uploadField || !uploadLeadId) return null;
@@ -1421,22 +1466,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded,
       finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs
   ]);
-  
-  const isSaveDisabled = useMemo(() => {
-      if (uploadField !== 'isFinalProgram') return false;
-
-      if (isNamesOnly) {
-        return finalNamesDst.every((f) => !f);
-      }
-      
-      const hasEmb = finalLogoEmb.some((f) => f) || finalBackDesignEmb.some((f) => f);
-      const hasDst = finalLogoDst.some((f) => f) || finalBackDesignDst.some((f) => f);
-      const hasSequence = sequenceLogo.some((img) => img) || sequenceBackDesign.some((img) => img);
-      const hasProgrammedImage = finalProgrammedLogo.some((img) => img) || finalProgrammedBackDesign.some((img) => img);
-    
-      return !(hasEmb && hasDst && hasSequence && hasProgrammedImage);
-  }, [isNamesOnly, finalNamesDst, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, uploadField]);
-
 
   if (isLoading) {
     return (
@@ -1800,7 +1829,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                     </div>
                                 )
                            ) : (
-                            <Button size="sm" onClick={() => setReviewConfirmLead(lead)} disabled={isReadOnly || !lead.isFinalProgram || !isJoHardcopyRequired || lead.isDigitizingArchived}>
+                            <Button size="sm" onClick={() => setReviewConfirmLead(lead)} disabled={isReadOnly || !lead.isFinalProgram || !lead.isJoHardcopyReceived || lead.isDigitizingArchived}>
                                 Done
                             </Button>
                            )}
@@ -1823,7 +1852,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="pr-6">
+                <ScrollArea className="flex-1 overflow-y-auto pr-6">
                     <div className="p-4 bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
@@ -2038,7 +2067,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             )
                         })()}
                     </div>
-                </ScrollArea>
+                </div>
             </DialogContent>
         </Dialog>
       )}
@@ -2051,3 +2080,4 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
