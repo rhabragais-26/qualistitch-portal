@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -656,6 +655,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
     const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
 
+    // Group all orders by customer
     leads.forEach(lead => {
         const name = lead.customerName.toLowerCase();
         if (!customerOrderGroups[name]) {
@@ -1228,19 +1228,31 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   ]);
   
   const isSaveDisabled = useMemo(() => {
-      if (uploadField !== 'isFinalProgram') return false;
+    if (uploadField !== 'isFinalProgram') return false;
 
-      if (isNamesOnly) {
-        return finalNamesDst.every((f) => !f);
-      }
-      
-      const hasEmb = finalLogoEmb.some((f) => f) || finalBackDesignEmb.some((f) => f);
-      const hasDst = finalLogoDst.some((f) => f) || finalBackDesignDst.some((f) => f);
-      const hasSequence = sequenceLogo.some((img) => img) || sequenceBackDesign.some((img) => img);
-      const hasProgrammedImage = finalProgrammedLogo.some((img) => img) || finalProgrammedBackDesign.some((img) => img);
+    if (isNamesOnly) {
+      return finalNamesDst.every((f) => !f);
+    }
     
-      return !(hasEmb && hasDst && hasSequence && hasProgrammedImage);
-  }, [isNamesOnly, finalNamesDst, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, uploadField]);
+    const hasEmb = finalLogoEmb.some((f) => f) || finalBackDesignEmb.some((f) => f);
+    const hasDst = finalLogoDst.some((f) => f) || finalBackDesignDst.some((f) => f);
+    const hasSequence = sequenceLogo.some((img) => img) || sequenceBackDesign.some((img) => img);
+    const hasProgrammedImage = finalProgrammedLogo.some((img) => img) || finalProgrammedBackDesign.some((img) => img);
+  
+    return !(hasEmb && hasDst && hasSequence && hasProgrammedImage);
+}, [
+    isNamesOnly,
+    finalNamesDst,
+    finalLogoEmb,
+    finalBackDesignEmb,
+    finalLogoDst,
+    finalBackDesignDst,
+    sequenceLogo,
+    sequenceBackDesign,
+    finalProgrammedLogo,
+    finalProgrammedBackDesign,
+    uploadField
+]);
   
   const addFile = (setter: React.Dispatch<React.SetStateAction<(string | null)[]>>) => {
     setter(prev => [...prev, null]);
@@ -2067,7 +2079,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             )
                         })()}
                     </div>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
       )}
@@ -2081,3 +2093,5 @@ export { DigitizingTableMemo as DigitizingTable };
 
     
 
+
+    
