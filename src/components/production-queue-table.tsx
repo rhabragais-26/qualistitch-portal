@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query, getDocs, where } from 'firebase/firestore';
@@ -304,7 +303,15 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
     }
     const storage = getStorage(app);
     try {
-      const fileRef = ref(storage, url);
+      const pathStartIndex = url.indexOf('/o/') + 3;
+      const pathEndIndex = url.indexOf('?alt=media');
+      if (pathStartIndex === 2 || pathEndIndex === -1) {
+        throw new Error('Invalid Firebase Storage URL format.');
+      }
+      const encodedPath = url.substring(pathStartIndex, pathEndIndex);
+      const decodedPath = decodeURIComponent(encodedPath);
+
+      const fileRef = ref(storage, decodedPath);
       const blob = await getBlob(fileRef);
 
       const link = document.createElement('a');
@@ -1541,6 +1548,7 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
     
 
     
+
 
 
 

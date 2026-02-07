@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase, useFirebaseApp, useToast } from '@/firebase';
@@ -84,32 +83,40 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
 
   const handleDownload = useCallback(async (url: string, name: string) => {
     if (!app) {
-        toast({
-            variant: "destructive",
-            title: "Download Failed",
-            description: "Firebase services are not available.",
-        });
-        return;
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "Firebase app is not available.",
+      });
+      return;
     }
     const storage = getStorage(app);
     try {
-        const fileRef = ref(storage, url);
-        const blob = await getBlob(fileRef);
-        
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.download = name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(link.href);
+      const pathStartIndex = url.indexOf('/o/') + 3;
+      const pathEndIndex = url.indexOf('?alt=media');
+      if (pathStartIndex === 2 || pathEndIndex === -1) {
+        throw new Error('Invalid Firebase Storage URL format.');
+      }
+      const encodedPath = url.substring(pathStartIndex, pathEndIndex);
+      const decodedPath = decodeURIComponent(encodedPath);
+      
+      const fileRef = ref(storage, decodedPath);
+      const blob = await getBlob(fileRef);
+
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(link.href);
     } catch (err: any) {
-        console.error('File download failed:', err);
-        toast({
-            variant: 'destructive',
-            title: 'Download Failed',
-            description: err.message || 'Could not download the file. Please check your permissions and network.',
-        });
+      console.error('File download failed:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Download Failed',
+        description: err.message || 'Could not download the file. Please check your permissions and network.',
+      });
     }
   }, [app, toast]);
 

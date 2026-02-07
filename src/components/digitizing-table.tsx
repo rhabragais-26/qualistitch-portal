@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -482,8 +481,18 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     }
     const storage = getStorage(app);
     try {
-      // Create a reference from the download URL
-      const fileRef = ref(storage, url);
+      // Extract the path from the URL.
+      // e.g. https://firebasestorage.googleapis.com/v0/b/bucket-name.appspot.com/o/path%2Fto%2Ffile.jpg?alt=media&token=...
+      // The path is the URL-encoded string between /o/ and ?alt=media
+      const pathStartIndex = url.indexOf('/o/') + 3;
+      const pathEndIndex = url.indexOf('?alt=media');
+      if (pathStartIndex === 2 || pathEndIndex === -1) {
+          throw new Error('Invalid Firebase Storage URL format.');
+      }
+      const encodedPath = url.substring(pathStartIndex, pathEndIndex);
+      const decodedPath = decodeURIComponent(encodedPath);
+
+      const fileRef = ref(storage, decodedPath);
       const blob = await getBlob(fileRef);
 
       // Create a link and trigger the download
@@ -670,7 +679,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
     const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
 
-    // Group all orders by customer
     leads.forEach(lead => {
         const name = lead.customerName.toLowerCase();
         if (!customerOrderGroups[name]) {
@@ -1879,7 +1887,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                     <DialogTitle>Job Order: {formatJoNumberUtil(viewingJoLead.joNumber)}</DialogTitle>
                     <DialogDescription>Read-only view of the job order form.</DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="flex-1 overflow-y-auto pr-6">
+                <ScrollArea className="pr-6">
                     <div className="p-4 bg-white text-black">
                         {(() => {
                             const lead = viewingJoLead;
@@ -2094,7 +2102,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             )
                         })()}
                     </div>
-                </ScrollArea>
+                </div>
             </DialogContent>
         </Dialog>
       )}
@@ -2110,3 +2118,4 @@ export { DigitizingTableMemo as DigitizingTable };
 
 
     
+
