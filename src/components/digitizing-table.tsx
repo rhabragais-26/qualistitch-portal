@@ -549,7 +549,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     }).then(() => {
         toast({
             title: 'Digitizer Assigned',
-            description: `'${'\'\''}newValue || 'Unassigned'${'\'\''}' has been assigned.`,
+            description: `'${'\'\''}newValue || 'Unassigned'${'\'\'\''}' has been assigned.`,
         });
     }).catch((e: any) => {
         toast({
@@ -656,7 +656,6 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
 
     const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
 
-    // Group all orders by customer
     leads.forEach(lead => {
         const name = lead.customerName.toLowerCase();
         if (!customerOrderGroups[name]) {
@@ -678,14 +677,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
         for (let i = 0; i < sortedOrders.length; i++) {
             const lead = sortedOrders[i];
             
-            // Count previous non-sample orders for this customer
             const previousNonSampleOrders = sortedOrders
                 .slice(0, i)
                 .filter(o => o.orderType !== 'Item Sample');
             
             enrichedLeads.push({
                 ...lead,
-                orderNumber: previousNonSampleOrders.length, // 0-indexed count
+                orderNumber: previousNonSampleOrders.length,
                 totalCustomerQuantity,
             });
         }
@@ -1234,58 +1232,22 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign
   ]);
   
-  const isCompleted = filterType === 'COMPLETED';
+  const isSaveDisabled = useMemo(() => {
+      if (uploadField !== 'isFinalProgram') return false;
 
-  const handleImagePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    const isEffectivelyReadOnly = isReadOnly || (isCompleted && !enableReupload);
-    if (isEffectivelyReadOnly) return;
-    const file = e.clipboardData.files[0];
-    if (file && file.type.startsWith('image/')) {
-        handleImageUpload(file, setter, index);
-    }
-  }, [isReadOnly, isCompleted, enableReupload, handleImageUpload]);
-  
-  const handleClearImage = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
-    setter(prev => {
-        const newImages = [...prev];
-        newImages[index] = null;
-        return newImages;
-    });
-  }, []);
+      if (isNamesOnly) {
+        return finalNamesDst.every((f) => !f);
+      }
+      
+      const hasEmb = finalLogoEmb.some((f) => f) || finalBackDesignEmb.some((f) => f);
+      const hasDst = finalLogoDst.some((f) => f) || finalBackDesignDst.some((f) => f);
+      const hasSequence = sequenceLogo.some((img) => img) || sequenceBackDesign.some((img) => img);
+      const hasProgrammedImage = finalProgrammedLogo.some((img) => img) || finalProgrammedBackDesign.some((img) => img);
+    
+      return !(hasEmb && hasDst && hasSequence && hasProgrammedImage);
+  }, [isNamesOnly, finalNamesDst, finalLogoEmb, finalBackDesignEmb, finalLogoDst, finalBackDesignDst, sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, uploadField]);
 
-  const handleRemoveImage = useCallback((e: React.MouseEvent, setter: React.Dispatch<React.SetStateAction<(string|null)[]>>, index: number) => {
-    e.stopPropagation();
-    setter(prev => prev.filter((_, i) => i !== index));
-  }, []);
 
-  const addFile = useCallback((setter: React.Dispatch<React.SetStateAction<(string | null)[]>>) => {
-    setter(prev => [...prev, null]);
-  }, []);
-
-  const handleMultipleFileUpload = useCallback((event: ChangeEvent<HTMLInputElement>, setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, filesState: (FileObject | null)[], index: number) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const newFiles = [...filesState];
-        newFiles[index] = { name: file.name, url: e.target!.result as string };
-        setFilesState(newFiles);
-      };
-      reader.readAsDataURL(file);
-    }
-  }, []);
-
-  const addFileMultiple = useCallback((setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>) => {
-    setFilesState(prev => [...prev, null]);
-  }, []);
-
-  const removeFile = useCallback((setFilesState: React.Dispatch<React.SetStateAction<(FileObject | null)[]>>, index: number, refs: React.MutableRefObject<(HTMLInputElement | null)[]>) => {
-    setFilesState(prev => prev.filter((_, i) => i !== index));
-    if (refs.current && refs.current[index]) {
-      refs.current[index]!.value = '';
-    }
-  }, []);
-  
   const renderUploadDialogContent = useCallback(() => {
     if (!uploadField || !uploadLeadId) return null;
     const isDisabled = isReadOnly || (filterType === 'COMPLETED' && !enableReupload);
@@ -1553,7 +1515,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               </ScrollArea>
               <DialogFooter>
                 <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                <Button onClick={handleConfirmReview} disabled={isReadOnly || !(lead?.isJoHardcopyReceived || ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'].includes(lead?.orderType || ''))}>Done</Button>
+                <Button onClick={handleConfirmReview} disabled={isReadOnly || !(reviewConfirmLead?.isJoHardcopyReceived || ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'].includes(reviewConfirmLead?.orderType || ''))}>Done</Button>
               </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -2081,7 +2043,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             )
                         })()}
                     </div>
-                </ScrollArea>
+                </div>
             </DialogContent>
         </Dialog>
       )}
