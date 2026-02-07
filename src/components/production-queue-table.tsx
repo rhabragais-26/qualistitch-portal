@@ -294,28 +294,39 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
   const app = useFirebaseApp();
 
   const handleDownload = useCallback(async (url: string, name: string) => {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-             throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const blob = await response.blob();
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.download = name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(link.href);
-    } catch (err) {
-        console.error('File download failed:', err);
-        toast({
-            variant: 'destructive',
-            title: 'Download Failed',
-            description: 'Could not download the file. Please check your network connection and CORS policy.',
-        });
+    if (!app) {
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "Firebase app is not available.",
+      });
+      return;
     }
-  }, [toast]);
+    const storage = getStorage(app);
+    try {
+      const fileRef = ref(storage, url);
+      const blob = await getBlob(fileRef);
+
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(link.href);
+    } catch (error: any) {
+      console.error('File download failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Download Failed',
+        description:
+          error.code === 'storage/object-not-found'
+            ? 'File not found. It may have been moved or deleted.'
+            : error.message ||
+              'Could not download file. Please check permissions and network.',
+      });
+    }
+  }, [app, toast]);
 
   const finalDstFiles = useMemo(() => {
     if (!lead.layouts) return [];
@@ -1530,6 +1541,7 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
     
 
     
+
 
 
 
