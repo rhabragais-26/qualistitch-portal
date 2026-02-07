@@ -36,7 +36,8 @@ import { addDays, differenceInDays, format } from 'date-fns';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
+import { getStorage, ref, getBlob } from 'firebase/storage';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -290,29 +291,35 @@ ImageDisplayCard.displayName = 'ImageDisplayCard';
 const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { lead: Lead }) {
   const [imageInView, setImageInView] = useState<string | null>(null);
   const { toast } = useToast();
+  const app = useFirebaseApp();
 
   const handleDownload = useCallback(async (url: string, name: string) => {
+    if (!app) {
+        toast({ variant: 'destructive', title: 'Download Failed', description: 'Firebase app not available.' });
+        return;
+    }
+    const storage = getStorage(app);
     try {
-        const response = await fetch(url);
-        if (!response.ok) {
-             throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const blob = await response.blob();
-        const fileHandle = await (window as any).showSaveFilePicker({
-            suggestedName: name,
-        });
-        const writable = await fileHandle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-    } catch (err) {
-        console.error('File save failed:', err);
+        const fileRef = ref(storage, url);
+        const blob = await getBlob(fileRef);
+
+        const link = document.createElement('a');
+        const blobUrl = window.URL.createObjectURL(blob);
+        link.href = blobUrl;
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+    } catch (err: any) {
+        console.error('File download failed:', err);
         toast({
             variant: 'destructive',
             title: 'Download Failed',
-            description: 'Could not download the file. Please check your network connection and CORS policy.',
+            description: err.message || 'Could not download the file. Please check your permissions and network.',
         });
     }
-  }, [toast]);
+  }, [app, toast]);
 
   const finalDstFiles = useMemo(() => {
     if (!lead.layouts) return [];
@@ -726,11 +733,11 @@ function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: Produc
     if (lead.isEndorsedToLogistics) return { text: "Endorsed to Logistics", variant: "success" };
     if (lead.isDone) return { text: "Done Production", variant: "success" };
     if (lead.isTrimming) return { text: "Trimming/Cleaning", variant: "warning" };
+    if (lead.sewerType === 'Not Applicable' && lead.isEmbroideryDone) {
+        return { text: "Endorsed to Trimmer", variant: "warning" };
+    }
     if (lead.isSewing) return { text: "Done Sewing", variant: "warning" };
     if (lead.isEmbroideryDone) {
-        if (lead.sewerType === 'Not Applicable') {
-            return { text: "Endorsed to Trimmer", variant: "warning" };
-        }
         return { text: "Endorsed to Sewer", variant: "warning" };
     }
     if(lead.isCutting) return { text: "Ongoing Embroidery", variant: "warning" };
@@ -1526,3 +1533,4 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
     
 
     
+
