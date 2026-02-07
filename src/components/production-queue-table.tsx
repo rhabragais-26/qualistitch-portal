@@ -322,7 +322,7 @@ const ProductionDocuments = React.memo(function ProductionDocuments({ lead }: { 
             description: err.message || 'Could not download the file. Please check your permissions and network.',
         });
     }
-  }, [app, toast]);
+}, [app, toast]);
 
   const finalDstFiles = useMemo(() => {
     if (!lead.layouts) return [];
@@ -696,7 +696,41 @@ const ProductionQueueTableRowGroup = React.memo(function ProductionQueueTableRow
 });
 ProductionQueueTableRowGroup.displayName = 'ProductionQueueTableRowGroup';
 
-function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
+type ProductionQueueTableProps = {
+  isReadOnly: boolean;
+  filterType?: 'ONGOING' | 'COMPLETED';
+};
+
+type UserProfileInfo = {
+    uid: string;
+    firstName: string;
+    lastName: string;
+    nickname: string;
+  };
+
+type ProductionQueueTableRowGroupProps = {
+    lead: EnrichedLead;
+    isRepeat: boolean;
+    getContactDisplay: (lead: Lead) => string | null;
+    toggleCustomerDetails: (leadId: string) => void;
+    openCustomerDetails: string | null;
+    isReadOnly: boolean;
+    isCompleted: boolean;
+    activeCasesByJo: Map<string, string>;
+    formatJoNumber: (joNumber: number | undefined) => string;
+    handleCheckboxChange: (leadId: string, field: CheckboxField, checked: boolean) => void;
+    setLeadToEndorse: React.Dispatch<React.SetStateAction<Lead | null>>;
+    handleReopenCase: (lead: Lead) => void;
+    setOpenLeadId: React.Dispatch<React.SetStateAction<string | null>>;
+    openLeadId: string | null;
+    calculateProductionDeadline: (lead: Lead) => { text: React.ReactNode; isOverdue: boolean; isUrgent: boolean; remainingDays: number; };
+    handleStatusChange: (leadId: string, field: "productionType" | "sewerType", value: string) => void;
+    setViewingJoLead: React.Dispatch<React.SetStateAction<Lead | null>>;
+    getProductionStatusLabel: (lead: Lead) => { text: string; variant: "success" | "warning" | "secondary" | "default" | "destructive" };
+    filterType?: 'ONGOING' | 'COMPLETED';
+};
+
+const ProductionQueueTableBase = React.memo(function ProductionQueueTableBase({ isReadOnly, filterType = 'ONGOING' }: ProductionQueueTableProps) {
   const firestore = useFirestore();
   const { userProfile } = useUser();
   const { toast } = useToast();
@@ -1536,6 +1570,7 @@ export { ProductionQueueTableMemo as ProductionQueueTable };
     
 
     
+
 
 
 

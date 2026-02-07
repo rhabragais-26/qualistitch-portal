@@ -2,7 +2,8 @@
 
 'use client';
 
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useFirebaseApp, useToast } from '@/firebase';
+import { getStorage, ref, getBlob } from 'firebase/storage';
 import { collection, query } from 'firebase/firestore';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -58,6 +59,8 @@ type Lead = {
 
 const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTable() {
   const firestore = useFirestore();
+  const app = useFirebaseApp();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [joNumberSearch, setJoNumberSearch] = useState('');
   const [fileSearch, setFileSearch] = useState('');
@@ -79,20 +82,36 @@ const ProgramFilesDatabaseTableMemo = React.memo(function ProgramFilesDatabaseTa
     return `QSBP-${currentYear}-${joNumber.toString().padStart(5, '0')}`;
   }, []);
 
-  const handleDownload = async (url: string, name: string) => {
-    try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const fileHandle = await (window as any).showSaveFilePicker({
-            suggestedName: name,
+  const handleDownload = useCallback(async (url: string, name: string) => {
+    if (!app) {
+        toast({
+            variant: "destructive",
+            title: "Download Failed",
+            description: "Firebase services are not available.",
         });
-        const writable = await fileHandle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-    } catch (err) {
-        console.error('File save failed:', err);
+        return;
     }
-  };
+    const storage = getStorage(app);
+    try {
+        const fileRef = ref(storage, url);
+        const blob = await getBlob(fileRef);
+        
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(link.href);
+    } catch (err: any) {
+        console.error('File download failed:', err);
+        toast({
+            variant: 'destructive',
+            title: 'Download Failed',
+            description: err.message || 'Could not download the file. Please check your permissions and network.',
+        });
+    }
+  }, [app, toast]);
 
   const filteredLeads = useMemo(() => {
     if (!leads) return [];
