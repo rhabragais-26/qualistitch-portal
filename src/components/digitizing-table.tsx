@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { doc, updateDoc, collection, query } from 'firebase/firestore';
@@ -35,8 +36,8 @@ import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useFirebaseApp } from '@/firebase';
+import { getStorage, ref, uploadString, getDownloadURL, deleteObject, getBlob } from 'firebase/storage';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import Link from 'next/link';
 import { Switch } from './ui/switch';
@@ -362,6 +363,7 @@ ImageDisplayCard.displayName = 'ImageDisplayCard';
 
 const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, filterType = 'ONGOING' }: DigitizingTableProps) {
   const firestore = useFirestore();
+  const app = useFirebaseApp();
   const { toast } = useToast();
   const { userProfile, isAdmin } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
@@ -470,28 +472,41 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   }, [reviewConfirmLead]);
 
   const handleDownload = useCallback(async (url: string, name: string) => {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-             throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const blob = await response.blob();
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.download = name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(link.href);
-    } catch (err) {
-        console.error('File download failed:', err);
-        toast({
-            variant: 'destructive',
-            title: 'Download Failed',
-            description: 'Could not download the file. Please check your network connection and CORS policy.',
-        });
+    if (!app) {
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "Firebase app is not available.",
+      });
+      return;
     }
-  }, [toast]);
+    const storage = getStorage(app);
+    try {
+      // Create a reference from the download URL
+      const fileRef = ref(storage, url);
+      const blob = await getBlob(fileRef);
+
+      // Create a link and trigger the download
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(link.href);
+    } catch (error: any) {
+      console.error('File download failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Download Failed',
+        description:
+          error.code === 'storage/object-not-found'
+            ? 'File not found. It may have been moved or deleted.'
+            : error.message ||
+              'Could not download file. Please check permissions and network.',
+      });
+    }
+  }, [app, toast]);
 
   const handleImageUpload = useCallback((file: File, setter: React.Dispatch<React.SetStateAction<(string | null)[]>>, index: number) => {
     const reader = new FileReader();
@@ -1478,7 +1493,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
       sequenceLogo, sequenceBackDesign, finalProgrammedLogo, finalProgrammedBackDesign, noTestingNeeded,
       finalLogoEmbUploadRefs, finalBackDesignEmbUploadRefs, finalLogoDstUploadRefs, finalBackDesignDstUploadRefs, finalNamesDstUploadRefs
   ]);
-
+  
   if (isLoading) {
     return (
       <div className="p-4">
