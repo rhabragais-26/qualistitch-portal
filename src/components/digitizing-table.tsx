@@ -587,13 +587,13 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
     const deadlineDays = lead.priorityType === 'Rush' ? 2 : 6;
     const deadlineDate = addDays(submissionDate, deadlineDays);
   
-    if (lead.isFinalProgram && lead.finalProgramTimestamp) {
-      const completionDate = new Date(lead.finalProgramTimestamp);
-      const finalRemainingDays = differenceInDays(deadlineDate, completionDate);
-      if (finalRemainingDays < 0) {
-        return { text: `Completed ${Math.abs(finalRemainingDays)} day(s) late`, isOverdue: true, isUrgent: false, remainingDays: finalRemainingDays };
-      }
-      return { text: `Completed`, isOverdue: false, isUrgent: false, remainingDays: finalRemainingDays };
+    if (lead.isDigitizingArchived && lead.digitizingArchivedTimestamp) {
+        const completionDate = new Date(lead.digitizingArchivedTimestamp);
+        const finalRemainingDays = differenceInDays(deadlineDate, completionDate);
+        if (finalRemainingDays < 0) {
+            return { text: `Completed ${Math.abs(finalRemainingDays)} day(s) late`, isOverdue: true, isUrgent: false, remainingDays: finalRemainingDays };
+        }
+        return { text: `Completed`, isOverdue: false, isUrgent: false, remainingDays: finalRemainingDays };
     }
     
     const remainingDays = differenceInDays(deadlineDate, new Date());
@@ -653,40 +653,40 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
   
   const processedLeads = useMemo(() => {
     if (!leads) return [];
-  
+
     const customerOrderGroups: { [key: string]: { orders: Lead[] } } = {};
-  
+
     leads.forEach(lead => {
-      const name = lead.customerName.toLowerCase();
-      if (!customerOrderGroups[name]) {
-        customerOrderGroups[name] = { orders: [] };
-      }
-      customerOrderGroups[name].orders.push(lead);
+        const name = lead.customerName.toLowerCase();
+        if (!customerOrderGroups[name]) {
+            customerOrderGroups[name] = { orders: [] };
+        }
+        customerOrderGroups[name].orders.push(lead);
     });
-  
+
     const enrichedLeads: EnrichedLead[] = [];
-  
+
     Object.values(customerOrderGroups).forEach(({ orders }) => {
-      const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
-  
-      const totalCustomerQuantity = orders.reduce((sum, o) => {
-        if (!Array.isArray(o.orders)) return sum;
-        return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0);
-      }, 0);
-  
-      for (let i = 0; i < sortedOrders.length; i++) {
-        const lead = sortedOrders[i];
-        const previousNonSampleOrders = sortedOrders.slice(0, i).filter(o => o.orderType !== 'Item Sample');
-        enrichedLeads.push({
-          ...lead,
-          orderNumber: previousNonSampleOrders.length,
-          totalCustomerQuantity,
-        });
-      }
+        const sortedOrders = [...orders].sort((a, b) => new Date(a.submissionDateTime).getTime() - new Date(b.submissionDateTime).getTime());
+        
+        const totalCustomerQuantity = orders.reduce((sum, o) => {
+            if (!Array.isArray(o.orders)) return sum;
+            return sum + o.orders.reduce((orderSum, item) => orderSum + (item.quantity || 0), 0);
+        }, 0);
+        
+        for (let i = 0; i < sortedOrders.length; i++) {
+            const lead = sortedOrders[i];
+            const previousNonSampleOrders = sortedOrders.slice(0, i).filter(o => o.orderType !== 'Item Sample');
+            enrichedLeads.push({
+                ...lead,
+                orderNumber: previousNonSampleOrders.length,
+                totalCustomerQuantity,
+            });
+        }
     });
-  
+
     return enrichedLeads;
-  }, [leads]);
+}, [leads]);
   
   const filteredLeads = React.useMemo(() => {
     if (!processedLeads) return [];
@@ -1510,7 +1510,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
               </ScrollArea>
               <DialogFooter>
                 <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                <Button onClick={handleConfirmReview} disabled={isReadOnly || !(reviewConfirmLead?.isJoHardcopyReceived || ['Stock (Jacket Only)', 'Item Sample', 'Stock Design'].includes(reviewConfirmLead?.orderType || ''))}>Done</Button>
+                <Button onClick={handleConfirmReview} disabled={isReadOnly || !reviewConfirmLead}>Done</Button>
               </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -1800,7 +1800,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                                     </div>
                                 )
                            ) : (
-                            <Button size="sm" onClick={() => setReviewConfirmLead(lead)} disabled={isReadOnly || !lead.isFinalProgram || !lead.isJoHardcopyReceived}>
+                            <Button size="sm" onClick={() => setReviewConfirmLead(lead)} disabled={isReadOnly || !lead.isFinalProgram || !isJoHardcopyRequired || lead.isDigitizingArchived}>
                                 Done
                             </Button>
                            )}
@@ -2038,7 +2038,7 @@ const DigitizingTableMemo = React.memo(function DigitizingTable({ isReadOnly, fi
                             )
                         })()}
                     </div>
-                </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
       )}
